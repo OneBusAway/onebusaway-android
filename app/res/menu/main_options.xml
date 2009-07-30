@@ -1,0 +1,8 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/my_location"
+          android:title="@string/main_option_mylocation" 
+          android:icon="@drawable/ic_menu_mylocation" />
+    <item android:id="@+id/find_route"
+          android:title="@string/main_option_findroute" 
+          android:icon="@drawable/ic_menu_search" />
+</menu>

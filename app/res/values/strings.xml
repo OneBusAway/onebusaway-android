@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SeattleBusBot</string>
+    
+    <!--  Option strings -->
+    <string name="main_option_mylocation">My Location</string>
+    <string name="main_option_findroute">Find Route</string>
+</resources>

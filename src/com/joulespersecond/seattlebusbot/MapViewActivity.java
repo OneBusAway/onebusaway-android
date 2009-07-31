@@ -74,9 +74,11 @@ public class MapViewActivity extends MapActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.my_location) {
+    		return true;
     	}
     	else if (item.getItemId() == R.id.find_route) {
     		new GetRouteTask().execute("0001_8");
+    		return true;
     	}
     	return false;
     }

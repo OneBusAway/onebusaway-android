@@ -3,6 +3,8 @@ package com.joulespersecond.seattlebusbot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.ListActivity;
 import android.os.AsyncTask;
@@ -11,18 +13,26 @@ import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 public class StopInfoActivity extends ListActivity {
 	private static final String TAG = "StopInfoActivity";
+	private static final long RefreshPeriod = 60*1000;
+
 	public static final String STOP_ID = ".StopId";
 	
 	private StopInfoListAdapter mAdapter;
 	private View mListHeader;
+	private String mStopId;
+	private final Timer mTimer = new Timer();
 	
 	private static final int getStopDirectionText(String direction) {
 		if (direction.equals("N")) {
@@ -81,7 +91,6 @@ public class StopInfoActivity extends ListActivity {
 			
 			if (predicted != 0) {
 				eta = (predicted - now)/(60*1000);
-				// TODO: Put these strings in strings.xml
 				if (predicted > scheduled) {
 					long delay = (predicted - scheduled)/(60*1000);
 					String format = getResources().getString(
@@ -225,6 +234,7 @@ public class StopInfoActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.stop_info);
 		ListView listView = getListView();
@@ -237,9 +247,44 @@ public class StopInfoActivity extends ListActivity {
 		setListAdapter(mAdapter);
 		
 		Bundle bundle = getIntent().getExtras();
-		String stopId = bundle.getString(STOP_ID);
-		if (stopId != null) {
-			new GetArrivalInfoTask().execute(stopId);		
-		}
+		mStopId = bundle.getString(STOP_ID);
+		refresh();
 	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	MenuInflater inflater = getMenuInflater();
+    	inflater.inflate(R.menu.stop_info_options, menu);
+    	return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	if (item.getItemId() == R.id.show_on_map) {
+    		return true;
+    	}
+    	else if (item.getItemId() == R.id.refresh) {
+    		refresh();
+    		return true;
+    	}
+    	return false;
+    }
+    @Override
+    public void onPause() {
+    	mTimer.cancel();
+    	super.onPause();
+    }
+    @Override
+    public void onResume() {
+    	mTimer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				refresh();				
+			} 		
+    	}, RefreshPeriod, RefreshPeriod);
+    	super.onResume();
+    }
+    private void refresh() {
+		if (mStopId != null) {
+			new GetArrivalInfoTask().execute(mStopId);		
+		}    	
+    }
 }

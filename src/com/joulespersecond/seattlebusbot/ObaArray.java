@@ -32,4 +32,15 @@ public class ObaArray {
 	getStop(int index) {
 		return new ObaStop(ObaApi.getChildObj(mArray, index));
 	}
+	
+	/**
+	 * Returns an arrival object for the specified index.
+	 * 
+	 * @param index The child index.
+	 * @return The arrival object, or an empty object if it isn't an arrival info.
+	 */
+	public ObaArrivalInfo 
+	getArrivalInfo(int index) {
+		return new ObaArrivalInfo(ObaApi.getChildObj(mArray, index));
+	}
 }

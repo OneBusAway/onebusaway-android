@@ -16,10 +16,10 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 public class MapViewActivity extends MapActivity {
-	private static final String TAG = "TransitBotActivity";
+	private static final String TAG = "MapViewActivity";
 	
-	MyLocationOverlay mLocationOverlay;
-	StopOverlay mStopOverlay;
+	private MyLocationOverlay mLocationOverlay;
+	private StopOverlay mStopOverlay;
 	
 	private class GetRouteTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
@@ -45,7 +45,7 @@ public class MapViewActivity extends MapActivity {
 	    	}
 	        	
 	        mStopOverlay = new StopOverlay(result.getData().getStops(),
-	        			getResources());
+	        			MapViewActivity.this);
 	        mapOverlays.add(mStopOverlay);
 	        mapView.postInvalidate();
 	        setProgressBarIndeterminateVisibility(false);
@@ -76,7 +76,7 @@ public class MapViewActivity extends MapActivity {
     	if (item.getItemId() == R.id.my_location) {
     	}
     	else if (item.getItemId() == R.id.find_route) {
-    		new GetRouteTask().execute("0001_10");
+    		new GetRouteTask().execute("0001_8");
     	}
     	return false;
     }
@@ -92,7 +92,7 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-    	// TODO: The MapView automatically saves its position so we don't have to.
+    	// TODO: Save whether or not we have any overlays, and what the state of those are.
     	super.onSaveInstanceState(outState);
     }                   
     @Override

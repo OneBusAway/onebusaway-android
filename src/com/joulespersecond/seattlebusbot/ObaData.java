@@ -18,9 +18,37 @@ public class ObaData {
 	 * 
 	 * @return The list of stops, or an empty array.
 	 */
-	public ObaArray
+	public ObaArray 
 	getStops() {
 		return new ObaArray(ObaApi.getChildArray(mData, "stops"));
+	}
+	/**
+	 * Retrieves the Stop for this response.
+	 * 
+	 * @return The list of stops, or an empty object.
+	 */
+	public ObaStop 
+	getStop() {
+		return new ObaStop(ObaApi.getChildObj(mData, "stop"));
+	}
+	/**
+	 * Retrieves the list of Nearby Stops for the stop.
+	 * 
+	 * @return The list of nearby stops, or an empty array.
+	 */
+	public ObaArray
+	getNearbyStops() {
+		return new ObaArray(ObaApi.getChildArray(mData, "nearbyStops"));
+	}
+	
+	/**
+	 * Retrieves the list of arrivals and departures.
+	 * 
+	 * @return The list of arrivals/departures, or an empty array.
+	 */
+	public ObaArray
+	getArrivalsAndDepartures() {
+		return new ObaArray(ObaApi.getChildArray(mData, "arrivalsAndDepartures"));
 	}
 	/*
 	public ObaPolylinesArray

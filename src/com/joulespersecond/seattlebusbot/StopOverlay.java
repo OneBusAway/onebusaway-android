@@ -1,6 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
-import android.content.res.Resources;
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
@@ -9,7 +10,7 @@ import com.google.android.maps.OverlayItem;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	private ObaArray mStops;
-	private Resources mResources;
+	private Activity mActivity;
 	
 	private static final int getResourceIdForDirection(String direction) {
 		if (direction.equals("N")) {
@@ -35,10 +36,10 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	}
 	
 	public StopOverlay(ObaArray stops, 
-			Resources resources) {
-		super(boundCenterBottom(resources.getDrawable(R.drawable.stop_n)));
+			Activity activity) {
+		super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_n)));
 		mStops = stops;
-		mResources = resources;
+		mActivity = activity;
 		populate();
 	}
 	@Override
@@ -49,13 +50,21 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 				stop.getName(),
 				"");
 		int res = getResourceIdForDirection(stop.getDirection());
-		Drawable marker = mResources.getDrawable(res);
+		Drawable marker = mActivity.getResources().getDrawable(res);
 		item.setMarker(boundCenterBottom(marker));
 		return item;
 	}
 	@Override
 	public int size() {
 		return mStops.length();
+	}
+	@Override
+	protected boolean onTap(int index) {
+		ObaStop stop = mStops.getStop(index);
+		Intent myIntent = new Intent(mActivity, StopInfoActivity.class);
+		myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
+		mActivity.startActivity(myIntent);
+		return true;
 	}
 
 }

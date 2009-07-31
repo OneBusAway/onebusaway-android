@@ -5,4 +5,24 @@
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>
     <string name="main_option_findroute">Find Route</string>
+    
+    <!--  Stop Info -->
+    <string name="stop_info_title">Stop Information</string>
+    <string name="stop_info_loading">Loading...</string>
+    <string name="stop_info_ontime">On time</string>
+    <string name="stop_info_delayed">%d minute delay</string>
+    <string name="stop_info_early">%d minute early</string>
+    <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
+    <string name="stop_info_scheduled_departure">Scheduled departure</string>
+    <string name="stop_info_eta_now">NOW</string>
+    
+    <!-- General strings -->
+    <string name="direction_n">Northbound</string>
+    <string name="direction_ne">Northeast bound</string>
+    <string name="direction_e">Eastbound</string>
+    <string name="direction_se">Southeast bound</string>
+    <string name="direction_s">Southbound</string>
+    <string name="direction_sw">Southwest bound</string>
+    <string name="direction_w">Westbound</string>
+    <string name="direction_nw">Northwest bound</string>
 </resources>

@@ -11,6 +11,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".StopInfoActivity"
+                  android:label="@string/stop_info_title">
+        </activity>
         <uses-library android:name="com.google.android.maps" />
     </application>
     <uses-sdk android:minSdkVersion="3" />

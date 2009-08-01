@@ -18,6 +18,9 @@
     <string name="stop_info_option_showonmap">Show On Map</string>
     <string name="stop_info_option_refresh">Refresh</string>
     
+    <!-- Route Info  -->
+    <string name="route_info_title">Route Information</string>
+    
     <!-- General strings -->
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>

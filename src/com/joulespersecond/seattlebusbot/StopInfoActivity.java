@@ -7,6 +7,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.ListActivity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -34,7 +35,7 @@ public class StopInfoActivity extends ListActivity {
 	private String mStopId;
 	private final Timer mTimer = new Timer();
 	
-	private static final int getStopDirectionText(String direction) {
+	public static final int getStopDirectionText(String direction) {
 		if (direction.equals("N")) {
 			return R.string.direction_n;
 		} else if (direction.equals("NW")) {
@@ -216,17 +217,15 @@ public class StopInfoActivity extends ListActivity {
 		}
 		@Override
 		protected void onPostExecute(ObaResponse result) {
-	    	if (result.getCode() != ObaApi.OBA_OK) {
-	    		Log.v(TAG, "Request failed: " + result.getText());
-	    		return;
-	    	}
-	    	ObaStop stop = result.getData().getStop();
-	    	TextView name = (TextView)mListHeader.findViewById(R.id.name);
-	    	name.setText(stop.getName());
-	    	TextView direction = (TextView)mListHeader.findViewById(R.id.direction);
-	    	direction.setText(getStopDirectionText(stop.getDirection()));
+	    	if (result.getCode() == ObaApi.OBA_OK) {
+	    		ObaStop stop = result.getData().getStop();
+	    		TextView name = (TextView)mListHeader.findViewById(R.id.name);
+	    		name.setText(stop.getName());
+	    		TextView direction = (TextView)mListHeader.findViewById(R.id.direction);
+	    		direction.setText(getStopDirectionText(stop.getDirection()));
 	    	
-	    	mAdapter.setData(result);
+	    		mAdapter.setData(result);
+	    	}
 	        setProgressBarIndeterminateVisibility(false);
 		}
 	}
@@ -281,6 +280,14 @@ public class StopInfoActivity extends ListActivity {
 			} 		
     	}, RefreshPeriod, RefreshPeriod);
     	super.onResume();
+    }
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+    	// Go to the Route Information Activity
+    	StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
+		Intent myIntent = new Intent(this, RouteInfoActivity.class);
+		myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
+		startActivity(myIntent);
     }
     private void refresh() {
 		if (mStopId != null) {

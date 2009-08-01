@@ -14,6 +14,9 @@
         <activity android:name=".StopInfoActivity"
                   android:label="@string/stop_info_title">
         </activity>
+        <activity android:name=".RouteInfoActivity"
+                  android:label="@string/route_info_title">
+        </activity>
         <uses-library android:name="com.google.android.maps" />
     </application>
     <uses-sdk android:minSdkVersion="3" />

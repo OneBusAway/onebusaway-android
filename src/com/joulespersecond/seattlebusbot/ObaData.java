@@ -42,6 +42,16 @@ public class ObaData {
 	}
 	
 	/**
+	 * Retrieves this object as a route.
+	 * 
+	 * @return This object as a route.
+	 */
+	public ObaRoute
+	getThisRoute() {
+		return new ObaRoute(mData);
+	}
+ 	
+	/**
 	 * Retrieves the list of arrivals and departures.
 	 * 
 	 * @return The list of arrivals/departures, or an empty array.

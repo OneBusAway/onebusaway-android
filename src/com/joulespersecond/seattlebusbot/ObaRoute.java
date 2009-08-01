@@ -1,5 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ObaRoute {
@@ -40,7 +41,33 @@ public class ObaRoute {
 	getLongName() {
 		return mData.optString("longName");
 	}
-	// TODO: Agency information
-	// (This might be useful if we wanted to display different artwork for the
-	//  different agencies.)
+	
+	/**
+	 * Returns the name of the agency running this route.
+	 * 
+	 * @return The name of the agency running this route.
+	 */
+	public String
+	getAgencyName() {
+		try {
+			JSONObject agency = mData.getJSONObject("agency");
+			return agency.getString("name");
+		} catch (JSONException e) {
+			return "";
+		}
+	}
+	/**
+	 * Returns the ID of the agency running this route.
+	 * 
+	 * @return The ID of the agency running this route.
+	 */
+	public String
+	getAgencyId() {
+		try {
+			JSONObject agency = mData.getJSONObject("agency");
+			return agency.getString("id");
+		} catch (JSONException e) {
+			return "";
+		}		
+	}
 }

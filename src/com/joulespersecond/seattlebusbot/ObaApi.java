@@ -20,6 +20,8 @@ public class ObaApi {
 	// NOTE: This could be provided by Settings to use different versions of the server.
 	private static final String OBA_URL = "http://api.onebusaway.org/api/where";
 	
+	private static final double E6 = 1000*1000;
+	
 	private static final ObaResponse
 	doRequest(String urlStr) {
 		ObaResponse response = null;
@@ -87,7 +89,33 @@ public class ObaApi {
 			int lonSpan,
 			String query,
 			int maxCount) {
-		return null;
+		String url = String.format("%s/stops-for-location.json?key=%s&lat=%f&lon=%f", 
+				OBA_URL, 
+				API_KEY,
+				(double)location.getLatitudeE6()/E6,
+				(double)location.getLongitudeE6()/E6);
+		if (radius != 0) {
+			url += "&radius=";
+			url += String.valueOf(radius);
+		}
+		if (latSpan != 0) {
+			url += "&latSpan=";
+			url += String.valueOf(latSpan/E6);
+		}
+		if (lonSpan != 0) {
+			url += "&lonSpan=";
+			url += String.valueOf(lonSpan/E6);
+		}
+		if (query != null) {
+			url += "&query=";
+			// TODO: Escape string
+			url += query;
+		}
+		if (maxCount != 0) {
+			url += "&maxCount=";
+			url += String.valueOf(maxCount);
+		}
+ 		return doRequest(url);
 	}
 	/**
 	 * Search for routes by location in a specified radius, 
@@ -182,6 +210,6 @@ public class ObaApi {
 	
 	public static final GeoPoint
 	makeGeoPoint(double lat, double lon) {
-		return new GeoPoint((int)(lat*1000*1000), (int)(lon*1000*1000));
+		return new GeoPoint((int)(lat*E6), (int)(lon*E6));
 	}
 }

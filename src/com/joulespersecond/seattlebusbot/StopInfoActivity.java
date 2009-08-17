@@ -6,10 +6,13 @@ import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
@@ -27,6 +30,7 @@ import android.widget.TextView;
 public class StopInfoActivity extends ListActivity {
 	private static final String TAG = "StopInfoActivity";
 	private static final long RefreshPeriod = 60*1000;
+	private static final int LOADING_DIALOG_KEY = 0;
 
 	public static final String STOP_ID = ".StopId";
 	
@@ -184,21 +188,21 @@ public class StopInfoActivity extends ListActivity {
 			TextView status = (TextView)view.findViewById(R.id.status);
 			TextView etaView = (TextView)view.findViewById(R.id.eta);
 			
-			StopInfo info = mInfo.get(position);
+			StopInfo stopInfo = mInfo.get(position);
 			
-			route.setText(info.info.getShortName());
-			destination.setText(info.info.getHeadsign());
-			status.setText(info.statusText);
+			route.setText(stopInfo.info.getShortName());
+			destination.setText(stopInfo.info.getHeadsign());
+			status.setText(stopInfo.statusText);
 			
-			if (info.eta == 0) {
+			if (stopInfo.eta == 0) {
 				etaView.setText(R.string.stop_info_eta_now);
 			}
 			else {
-				etaView.setText(String.valueOf(info.eta));
+				etaView.setText(String.valueOf(stopInfo.eta));
 			}
 			
 			time.setText(DateUtils.formatDateTime(StopInfoActivity.this, 
-					info.displayTime, 
+					stopInfo.displayTime, 
 					DateUtils.FORMAT_SHOW_TIME|
 					DateUtils.FORMAT_NO_NOON|
 					DateUtils.FORMAT_NO_MIDNIGHT));			
@@ -207,9 +211,17 @@ public class StopInfoActivity extends ListActivity {
 	}
 	
 	private class GetArrivalInfoTask extends AsyncTask<String,Void,ObaResponse> {
+		public GetArrivalInfoTask(boolean silent) {
+			super();
+			mSilent = silent;
+		}
 		@Override
 		protected void onPreExecute() {
-	        setProgressBarIndeterminateVisibility(true);
+			if (mSilent) {
+				setProgressBarIndeterminateVisibility(true);
+			} else {
+				showDialog(LOADING_DIALOG_KEY);
+			}
 		}
 		@Override
 		protected ObaResponse doInBackground(String... params) {
@@ -226,14 +238,22 @@ public class StopInfoActivity extends ListActivity {
 	    	
 	    		mAdapter.setData(result);
 	    	}
-	        setProgressBarIndeterminateVisibility(false);
+	    	else {
+	    		// TODO: Set some form of error message.
+	    	}
+	    	if (mSilent) {
+				setProgressBarIndeterminateVisibility(false);	    		
+	    	} else {
+		    	dismissDialog(LOADING_DIALOG_KEY);	    		
+	    	}
 		}
+		private boolean mSilent;
 	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.stop_info);
 		ListView listView = getListView();
@@ -247,7 +267,7 @@ public class StopInfoActivity extends ListActivity {
 		
 		Bundle bundle = getIntent().getExtras();
 		mStopId = bundle.getString(STOP_ID);
-		refresh();
+		refresh(false);
 	}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -261,7 +281,7 @@ public class StopInfoActivity extends ListActivity {
     		return true;
     	}
     	else if (item.getItemId() == R.id.refresh) {
-    		refresh();
+    		refresh(false);
     		return true;
     	}
     	return false;
@@ -276,7 +296,7 @@ public class StopInfoActivity extends ListActivity {
     	mTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				refresh();				
+				mRefreshHandler.post(mRefresh);			
 			} 		
     	}, RefreshPeriod, RefreshPeriod);
     	super.onResume();
@@ -285,13 +305,38 @@ public class StopInfoActivity extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	// Go to the Route Information Activity
     	StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
-		Intent myIntent = new Intent(this, RouteInfoActivity.class);
-		myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
-		startActivity(myIntent);
+    	if (stop != null) {
+    		Intent myIntent = new Intent(this, RouteInfoActivity.class);
+    		myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
+    		startActivity(myIntent);
+    	}
     }
-    private void refresh() {
+    @Override
+    protected Dialog onCreateDialog(int id) {
+    	switch (id) {
+    	case LOADING_DIALOG_KEY:
+    		ProgressDialog dialog = new ProgressDialog(this);
+    		dialog.setMessage(getResources().getString(R.string.stop_info_loading));
+    		dialog.setIndeterminate(true);
+    		dialog.setCancelable(true);
+    		return dialog;
+    	}
+    	return null;
+    }
+    
+    // Similar to the annoying bit in MapViewActivity, the timer is run
+    // in a separate task, so we need to post back to the main thread 
+    // to run our AsyncTask. We can't do everything in the timer thread
+    // because the progressBar has to be modified in the UI (main) thread.
+    final Handler mRefreshHandler = new Handler();
+    final Runnable mRefresh = new Runnable() {
+    	public void run() {
+			refresh(true);
+    	}
+    };
+    private void refresh(boolean silent) {
 		if (mStopId != null) {
-			new GetArrivalInfoTask().execute(mStopId);		
+			new GetArrivalInfoTask(silent).execute(mStopId);		
 		}    	
     }
 }

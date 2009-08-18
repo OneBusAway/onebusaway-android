@@ -37,7 +37,7 @@ public class StopInfoActivity extends ListActivity {
 	private StopInfoListAdapter mAdapter;
 	private View mListHeader;
 	private String mStopId;
-	private final Timer mTimer = new Timer();
+	private Timer mTimer;
 	
 	public static final int getStopDirectionText(String direction) {
 		if (direction.equals("N")) {
@@ -289,10 +289,14 @@ public class StopInfoActivity extends ListActivity {
     @Override
     public void onPause() {
     	mTimer.cancel();
+    	mTimer = null;
     	super.onPause();
     }
     @Override
     public void onResume() {
+    	if (mTimer == null) {
+    		mTimer = new Timer();
+    	}
     	mTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {

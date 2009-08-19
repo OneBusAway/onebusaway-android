@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="header_line1_color">#ffffff</color>
+    <color name="stop_info_route_color">#ffffff</color>
+    <color name="stop_info_eta_color">#ffffff</color>
+    <color name="stop_info_info_color">#ffffff</color>
+    
+    <color name="route_info_name_color">#ffffff</color>
+</resources>

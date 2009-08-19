@@ -14,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -48,7 +49,7 @@ public class RouteInfoActivity extends ListActivity {
 			View newView;
 			if (convertView == null) {
 				LayoutInflater inflater = getLayoutInflater();
-				newView = inflater.inflate(android.R.layout.two_line_list_item, null);
+				newView = inflater.inflate(R.layout.route_info_listitem, null);
 			}
 			else {
 				newView = convertView;
@@ -65,8 +66,8 @@ public class RouteInfoActivity extends ListActivity {
 			notifyDataSetChanged();
 		}
 		private void setData(View view, int position) {
-			TextView name = (TextView)view.findViewById(android.R.id.text1);
-			TextView direction = (TextView)view.findViewById(android.R.id.text2);
+			TextView name = (TextView)view.findViewById(R.id.name);
+			TextView direction = (TextView)view.findViewById(R.id.direction);
 			
 			ObaStop stop = mStops.getStop(position);
 			name.setText(stop.getName());
@@ -126,6 +127,7 @@ public class RouteInfoActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
 		setContentView(R.layout.route_info);
 		ListView listView = getListView();

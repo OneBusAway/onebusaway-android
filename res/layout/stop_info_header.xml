@@ -2,15 +2,22 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingTop="@dimen/header_padding"
+    android:paddingBottom="@dimen/header_padding">
     <TextView
         android:id="@+id/name"
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/header_line1_size"
+        android:textColor="@color/header_line1_color"
+        android:textStyle="bold"
+        android:gravity="center_horizontal">
     </TextView>
     <TextView
         android:id="@+id/direction"
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
     </TextView>
 </LinearLayout>

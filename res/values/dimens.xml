@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="header_line1_size">20sp</dimen>
+    <dimen name="header_padding">5sp</dimen>
+    
+    <dimen name="stop_info_route_size">35sp</dimen>
+    <dimen name="stop_info_eta_size">35sp</dimen>
+    <dimen name="stop_info_subinfo_size">12sp</dimen>
+    
+    <dimen name="route_info_name_size">18sp</dimen>
+    <dimen name="route_info_direction_size">12sp</dimen>
+</resources>

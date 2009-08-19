@@ -1,21 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-    <TextView
-        android:id="@+id/short_name"
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-    <TextView
-        android:id="@+id/long_name"
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-    <TextView
-        android:id="@+id/agency"
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-</LinearLayout>
+    android:orientation="vertical"
+    android:paddingTop="@dimen/header_padding"
+    android:paddingBottom="@dimen/header_padding">
+    <TableRow>
+        <TextView
+            android:id="@+id/short_name"
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:textColor="@color/header_line1_color"
+            android:textSize="@dimen/stop_info_route_size"
+            android:padding="5sp"
+            android:singleLine="false">
+        </TextView>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_column="1">
+            <TextView
+                android:id="@+id/long_name"
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:textColor="@color/route_info_name_color"
+                android:textSize="@dimen/header_line1_size"
+                android:textStyle="bold">
+            </TextView>
+            <TextView
+                android:id="@+id/agency"
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content">
+            </TextView>
+        </LinearLayout>
+    </TableRow>
+</TableLayout>

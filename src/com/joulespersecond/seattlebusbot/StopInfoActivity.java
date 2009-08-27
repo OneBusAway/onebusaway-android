@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -30,7 +29,6 @@ import android.widget.TextView;
 public class StopInfoActivity extends ListActivity {
 	private static final String TAG = "StopInfoActivity";
 	private static final long RefreshPeriod = 60*1000;
-	private static final int LOADING_DIALOG_KEY = 0;
 
 	public static final String STOP_ID = ".StopId";
 	
@@ -217,10 +215,12 @@ public class StopInfoActivity extends ListActivity {
 		}
 		@Override
 		protected void onPreExecute() {
-			if (mSilent) {
-				setProgressBarIndeterminateVisibility(true);
-			} else {
-				showDialog(LOADING_DIALOG_KEY);
+			if (!mSilent) {
+				mDialog = ProgressDialog.show(
+					StopInfoActivity.this,
+					"",
+					getResources().getString(R.string.stop_info_loading),
+					true, true);
 			}
 		}
 		@Override
@@ -241,19 +241,19 @@ public class StopInfoActivity extends ListActivity {
 	    	else {
 	    		// TODO: Set some form of error message.
 	    	}
-	    	if (mSilent) {
-				setProgressBarIndeterminateVisibility(false);	    		
-	    	} else {
-		    	dismissDialog(LOADING_DIALOG_KEY);	    		
-	    	}
+			if (mDialog != null) {
+				mDialog.dismiss();
+				mDialog = null;
+			}
 		}
+		
+		private ProgressDialog mDialog;
 		private boolean mSilent;
 	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		setContentView(R.layout.stop_info);
@@ -315,18 +315,6 @@ public class StopInfoActivity extends ListActivity {
     		myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
     		startActivity(myIntent);
     	}
-    }
-    @Override
-    protected Dialog onCreateDialog(int id) {
-    	switch (id) {
-    	case LOADING_DIALOG_KEY:
-    		ProgressDialog dialog = new ProgressDialog(this);
-    		dialog.setMessage(getResources().getString(R.string.stop_info_loading));
-    		dialog.setIndeterminate(true);
-    		dialog.setCancelable(true);
-    		return dialog;
-    	}
-    	return null;
     }
     
     // Similar to the annoying bit in MapViewActivity, the timer is run

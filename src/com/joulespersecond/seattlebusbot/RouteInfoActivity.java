@@ -2,7 +2,6 @@ package com.joulespersecond.seattlebusbot;
 
 import org.json.JSONArray;
 
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -21,9 +20,6 @@ import android.widget.TextView;
 
 public class RouteInfoActivity extends ListActivity {
 	//private static final String TAG = "RouteInfoActivity";
-	private static final int LOADING_DIALOG_KEY = 0;
-	private static final int LOADING_DIALOG2_KEY = 1;
-	
 	public static final String ROUTE_ID = ".RouteId";
 
 	private RouteInfoListAdapter mAdapter;
@@ -76,10 +72,18 @@ public class RouteInfoActivity extends ListActivity {
 
 	}	
 	
+	private ProgressDialog showLoadingDialog() {
+		return ProgressDialog.show(this, 
+				"", 
+				getResources().getString(R.string.route_info_loading),
+				true,
+				true);
+	}
+	
 	private class GetRouteInfoTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
-	        showDialog(LOADING_DIALOG_KEY);
+			mDialog = showLoadingDialog();
 		}
 		@Override
 		protected ObaResponse doInBackground(String... params) {
@@ -100,14 +104,17 @@ public class RouteInfoActivity extends ListActivity {
 	    	else {
 	    		// TODO: Show some error text in the "empty" field.
 	    	}
-	        dismissDialog(LOADING_DIALOG_KEY);
+	    	if (mDialog != null) {
+	    		mDialog.dismiss();
+	    	}
 		}
+		ProgressDialog mDialog;
 	}
 	
 	private class GetStopsForRouteTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
-	        showDialog(LOADING_DIALOG2_KEY);
+			mDialog = showLoadingDialog();
 		}
 		@Override
 		protected ObaResponse doInBackground(String... params) {
@@ -120,8 +127,11 @@ public class RouteInfoActivity extends ListActivity {
 	    	} else {
 	    		// TODO: Show some error text in the "empty" field.
 	    	}
-	        dismissDialog(LOADING_DIALOG2_KEY);		
+	    	if (mDialog != null) {
+	    		mDialog.dismiss();
+	    	}
 		}
+		ProgressDialog mDialog;
 	}
 	
 	@Override
@@ -163,18 +173,5 @@ public class RouteInfoActivity extends ListActivity {
 		Intent myIntent = new Intent(this, StopInfoActivity.class);
 		myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
 		startActivity(myIntent);
-    }
-    @Override
-    protected Dialog onCreateDialog(int id) {
-    	switch (id) {
-    	case LOADING_DIALOG_KEY:
-    	case LOADING_DIALOG2_KEY:
-    		ProgressDialog dialog = new ProgressDialog(this);
-    		dialog.setMessage(getResources().getString(R.string.route_info_loading));
-    		dialog.setIndeterminate(true);
-    		dialog.setCancelable(true);
-    		return dialog;
-    	}
-    	return null;
     }
 }

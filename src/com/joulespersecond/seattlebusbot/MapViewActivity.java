@@ -1,6 +1,8 @@
 package com.joulespersecond.seattlebusbot;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,8 +20,19 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 public class MapViewActivity extends MapActivity {
+	private MapView mMapView;
 	private MyLocationOverlay mLocationOverlay;
 	private StopOverlay mStopOverlay;
+	
+	// There's a major hole in the MapView in that there's apparently 
+	// no way of getting an event when the user pans the view.
+	// Oh well, we'll just set a timer and poll.
+	// When we see the map center change, we'll wait for a second or so
+	// and then request new stops.
+	private Timer mTimer;
+	private GeoPoint mMapCenter;
+	private boolean mMapCenterWaitFlag = false;
+	private static final int CenterPollPeriod = 2000;
 	
 	private class GetRouteTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
@@ -75,11 +88,12 @@ public class MapViewActivity extends MapActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
-        MapView mapView = (MapView)findViewById(R.id.mapview);
-        mapView.setBuiltInZoomControls(true);
+        mMapView = (MapView)findViewById(R.id.mapview);
+        mMapView.setBuiltInZoomControls(true);
+        mMapCenter = mMapView.getMapCenter();
         // Add the MyLocation Overlay
-        mLocationOverlay = new MyLocationOverlay(this, mapView);
-    	List<Overlay> mapOverlays = mapView.getOverlays();
+        mLocationOverlay = new MyLocationOverlay(this, mMapView);
+    	List<Overlay> mapOverlays = mMapView.getOverlays();
     	mapOverlays.add(mLocationOverlay);
     	// TODO: Only go to MyLocation if this is due to launching.
     	setMyLocation();
@@ -105,13 +119,13 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onPause() {
     	mLocationOverlay.disableMyLocation();
+    	mTimer.cancel(); 	
     	super.onPause();
     }
     @Override
     public void onResume() {
     	mLocationOverlay.enableMyLocation();
-    	// TODO: Reset overlays -- add the MyLocation overlay, 
-    	// add the route overlay
+    	watchMapCenter(); 
     	super.onResume();
     }
     @Override
@@ -125,6 +139,34 @@ public class MapViewActivity extends MapActivity {
     	return false;
     }
     
+    private void watchMapCenter() {
+    	mTimer = new Timer();
+    	mTimer.schedule(new TimerTask() {
+    		@Override
+    		public void run() {
+    			// If the map center has moved:
+    			//		If the wait flag is set:
+    			//			Set the new center
+    			//			Request new stops
+    			//			Clear the wait flag
+    			//		Else:
+    			//			Set the wait flag
+    			//			
+    			GeoPoint newCenter = mMapView.getMapCenter();
+    			if (!newCenter.equals(mMapCenter)) {
+    				if (mMapCenterWaitFlag) {
+    					mMapCenter = newCenter;
+    					mMapCenterWaitFlag = false;
+    					// This is run in another thread, so post back to the UI thread.
+    					mGetStopsHandler.post(mGetStopsFromCenter);
+    				} else {
+    					mMapCenterWaitFlag = true;
+    				}
+    			}
+    		}
+    	}, CenterPollPeriod, CenterPollPeriod);
+    }
+    
     // This is a bit annoying: runOnFirstFix() calls its runnable either
     // immediately or on another thread (AsyncTask). Since we don't know
     // what thread the runnable will be run on , and since AsyncTasks have
@@ -136,15 +178,23 @@ public class MapViewActivity extends MapActivity {
     		setMyLocation(mLocationOverlay.getMyLocation());
     	}
     };
+    final Runnable mGetStopsFromCenter = new Runnable() {
+    	public void run() {
+    		getStopsByLocation(mMapCenter);
+    	}
+    };
     private void setMyLocation(GeoPoint point) {
-		MapView mapView = (MapView)findViewById(R.id.mapview);
-		MapController mapCtrl = mapView.getController();
+		MapController mapCtrl = mMapView.getController();
 		mapCtrl.animateTo(point);
 		mapCtrl.setZoom(16);
+		mMapCenter = point;
+		getStopsByLocation(point);   	
+    }
+    private void getStopsByLocation(GeoPoint point) {
 		GetStopsByLocationInfo info = new GetStopsByLocationInfo(
-				mapView.getLatitudeSpan(),
-				mapView.getLongitudeSpan());
-		new GetStopsByLocationTask().execute(point, info);     	
+				mMapView.getLatitudeSpan(),
+				mMapView.getLongitudeSpan());
+		new GetStopsByLocationTask().execute(point, info);       	
     }
     
     private void setMyLocation() {
@@ -161,8 +211,7 @@ public class MapViewActivity extends MapActivity {
 		}
     }
     private void setStopOverlay(ObaArray stops) {
-        MapView mapView = (MapView)findViewById(R.id.mapview);
-    	List<Overlay> mapOverlays = mapView.getOverlays();
+    	List<Overlay> mapOverlays = mMapView.getOverlays();
 		// If there is an existing StopOverlay, remove it.
     	if (mStopOverlay != null) {
         	mapOverlays.remove(mStopOverlay);
@@ -170,6 +219,6 @@ public class MapViewActivity extends MapActivity {
 
         mStopOverlay = new StopOverlay(stops, this);
         mapOverlays.add(mStopOverlay);
-        mapView.postInvalidate();
+        mMapView.postInvalidate();
     }
 }

@@ -5,6 +5,7 @@
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>
     <string name="main_option_findroute">Find Route</string>
+    <string name="main_option_findstop">Find Stop</string>
     
     <!--  Stop Info -->
     <string name="stop_info_title">Stop Information</string>
@@ -22,6 +23,10 @@
     <!-- Route Info  -->
     <string name="route_info_title">Route Information</string>
     <string name="route_info_loading">Getting route information...</string>
+    
+    <!-- Find -->
+    <string name="find_route">Find route</string>
+    <string name="find_stop">Find stop</string>
     
     <!-- General strings -->
     <string name="direction_n">Northbound</string>

@@ -5,4 +5,7 @@
     <item android:id="@+id/find_route"
           android:title="@string/main_option_findroute" 
           android:icon="@drawable/ic_menu_search" />
+    <item android:id="@+id/find_stop"
+          android:title="@string/main_option_findstop" 
+          android:icon="@drawable/ic_menu_search" />
 </menu>

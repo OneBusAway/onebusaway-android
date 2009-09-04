@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,6 +35,7 @@ public class MapViewActivity extends MapActivity {
 	private boolean mMapCenterWaitFlag = false;
 	private static final int CenterPollPeriod = 2000;
 	
+	/*
 	private class GetRouteTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
@@ -51,6 +53,7 @@ public class MapViewActivity extends MapActivity {
 	        setProgressBarIndeterminateVisibility(false); 
 		}		
 	}
+	*/
 	
 	private class GetStopsByLocationInfo {
 		int latSpan;
@@ -111,7 +114,15 @@ public class MapViewActivity extends MapActivity {
     		return true;
     	}
     	else if (item.getItemId() == R.id.find_route) {
-    		new GetRouteTask().execute("0001_8");
+    		Intent myIntent = new Intent(this, FindActivity.class);
+    		myIntent.putExtra(FindActivity.CURRENT_TAB, FindActivity.TAB_FIND_ROUTE);
+    		startActivity(myIntent);
+    		return true;
+    	}
+    	else if (item.getItemId() == R.id.find_stop) {
+    		Intent myIntent = new Intent(this, FindActivity.class);
+    		myIntent.putExtra(FindActivity.CURRENT_TAB, FindActivity.TAB_FIND_STOP);
+    		startActivity(myIntent);
     		return true;
     	}
     	return false;

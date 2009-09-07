@@ -92,14 +92,20 @@ public class RouteInfoActivity extends ListActivity {
 		@Override
 		protected void onPostExecute(ObaResponse result) {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
-	    		ObaRoute stop = result.getData().getThisRoute();
-	    		TextView shortName = (TextView)mListHeader.findViewById(R.id.short_name);
-	    		TextView longName = (TextView)mListHeader.findViewById(R.id.long_name);
-	    		TextView agency = (TextView)mListHeader.findViewById(R.id.agency);
+	    		ObaRoute route = result.getData().getThisRoute();
+	    		TextView shortNameText = (TextView)mListHeader.findViewById(R.id.short_name);
+	    		TextView longNameText = (TextView)mListHeader.findViewById(R.id.long_name);
+	    		TextView agencyText = (TextView)mListHeader.findViewById(R.id.agency);
 	    	
-	    		shortName.setText(stop.getShortName());
-	    		longName.setText(stop.getLongName());
-	    		agency.setText(stop.getAgencyName());
+	    		String shortName = route.getShortName();
+	    		String longName = route.getLongName();
+	    		
+	    		shortNameText.setText(shortName);
+	    		longNameText.setText(longName);
+	    		agencyText.setText(route.getAgencyName());
+	    		
+	    		RoutesDbAdapter.addRoute(RouteInfoActivity.this, 
+	    				route.getId(), shortName, longName);
 	    	}
 	    	else {
 	    		// TODO: Show some error text in the "empty" field.

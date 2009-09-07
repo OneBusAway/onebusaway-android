@@ -15,16 +15,6 @@
             android:id="@android:id/tabcontent"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
-            <TextView 
-                android:id="@+id/find_stop"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent" 
-                android:text="this is a tab" />
-            <TextView 
-                android:id="@+id/find_route"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent" 
-                android:text="this is another tab" />
         </FrameLayout>
     </LinearLayout>
 </TabHost>

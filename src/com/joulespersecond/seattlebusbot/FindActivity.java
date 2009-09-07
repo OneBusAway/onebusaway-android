@@ -1,6 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.TabActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
 import android.widget.TabHost;
@@ -22,18 +23,19 @@ public class FindActivity extends TabActivity {
 	    
 	    mTabHost.addTab(mTabHost.newTabSpec(TAB_FIND_STOP)
 	    			.setIndicator(getResources().getString(R.string.find_stop))
-	    			.setContent(R.id.find_stop));
+	    			.setContent(new Intent(this, FindStopActivity.class)));
 	    mTabHost.addTab(mTabHost.newTabSpec(TAB_FIND_ROUTE)
 	    			.setIndicator(getResources().getString(R.string.find_route))
-	    			.setContent(R.id.find_route));
-	    
+	    			.setContent(new Intent(this, FindRouteActivity.class)));
+	    	    
 		Bundle bundle = getIntent().getExtras();
 		String tab = bundle.getString(CURRENT_TAB);
-		if (tab == TAB_FIND_STOP) {
+		if (tab.equals(TAB_FIND_STOP)) {
 		    mTabHost.setCurrentTab(0);			
 		}
-		else if (tab == TAB_FIND_ROUTE) {
+		else if (tab.equals(TAB_FIND_ROUTE)) {
 			mTabHost.setCurrentTab(1);
 		}
+
 	}
 }

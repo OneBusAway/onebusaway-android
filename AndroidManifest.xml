@@ -20,6 +20,12 @@
         <activity android:name=".FindActivity"
                   android:label="">
         </activity>
+        <activity android:name=".FindStopActivity"
+                  android:label="">
+        </activity>
+        <activity android:name=".FindRouteActivity"
+                  android:label="">
+        </activity>
         <uses-library android:name="com.google.android.maps" />
     </application>
     <uses-sdk android:minSdkVersion="3" />

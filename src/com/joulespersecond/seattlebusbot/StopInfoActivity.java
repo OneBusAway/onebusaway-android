@@ -187,9 +187,10 @@ public class StopInfoActivity extends ListActivity {
 			TextView etaView = (TextView)view.findViewById(R.id.eta);
 			
 			StopInfo stopInfo = mInfo.get(position);
+			ObaArrivalInfo arrivalInfo = stopInfo.info;
 			
-			route.setText(stopInfo.info.getShortName());
-			destination.setText(stopInfo.info.getHeadsign());
+			route.setText(arrivalInfo.getShortName());
+			destination.setText(arrivalInfo.getHeadsign());
 			status.setText(stopInfo.statusText);
 			
 			if (stopInfo.eta == 0) {
@@ -198,20 +199,20 @@ public class StopInfoActivity extends ListActivity {
 			else {
 				etaView.setText(String.valueOf(stopInfo.eta));
 			}
-			
+
 			time.setText(DateUtils.formatDateTime(StopInfoActivity.this, 
 					stopInfo.displayTime, 
 					DateUtils.FORMAT_SHOW_TIME|
 					DateUtils.FORMAT_NO_NOON|
-					DateUtils.FORMAT_NO_MIDNIGHT));			
+					DateUtils.FORMAT_NO_MIDNIGHT));	
 		}
-
 	}
 	
 	private class GetArrivalInfoTask extends AsyncTask<String,Void,ObaResponse> {
-		public GetArrivalInfoTask(boolean silent) {
+		public GetArrivalInfoTask(boolean updateDb, boolean silent) {
 			super();
 			mSilent = silent;
+			mUpdateDb = updateDb;
 		}
 		@Override
 		protected void onPreExecute() {
@@ -231,12 +232,22 @@ public class StopInfoActivity extends ListActivity {
 		protected void onPostExecute(ObaResponse result) {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
 	    		ObaStop stop = result.getData().getStop();
-	    		TextView name = (TextView)mListHeader.findViewById(R.id.name);
-	    		name.setText(stop.getName());
-	    		TextView direction = (TextView)mListHeader.findViewById(R.id.direction);
-	    		direction.setText(getStopDirectionText(stop.getDirection()));
+	    		String code = stop.getCode();
+	    		String name = stop.getName();
+	    		String direction = stop.getDirection();
+	    		
+	    		TextView nameText = (TextView)mListHeader.findViewById(R.id.name);
+	    		nameText.setText(name);
+	    		TextView directionText = (TextView)mListHeader.findViewById(R.id.direction);
+	    		directionText.setText(getStopDirectionText(direction));
 	    	
-	    		mAdapter.setData(result);
+	    		mAdapter.setData(result);	    		
+				
+	    		if (mUpdateDb) {
+	    			// Update the database
+	    			StopsDbAdapter.addStop(StopInfoActivity.this,
+	    					stop.getId(), code, name, direction);
+	    		}
 	    	}
 	    	else {
 	    		// TODO: Set some form of error message.
@@ -249,6 +260,7 @@ public class StopInfoActivity extends ListActivity {
 		
 		private ProgressDialog mDialog;
 		private boolean mSilent;
+		private boolean mUpdateDb;
 	}
 	
 	@Override
@@ -268,7 +280,7 @@ public class StopInfoActivity extends ListActivity {
 		
 		Bundle bundle = getIntent().getExtras();
 		mStopId = bundle.getString(STOP_ID);
-		refresh(false);
+		refresh(true, false);
 	}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -282,7 +294,7 @@ public class StopInfoActivity extends ListActivity {
     		return true;
     	}
     	else if (item.getItemId() == R.id.refresh) {
-    		refresh(false);
+    		refresh(false, false);
     		return true;
     	}
     	return false;
@@ -324,12 +336,12 @@ public class StopInfoActivity extends ListActivity {
     final Handler mRefreshHandler = new Handler();
     final Runnable mRefresh = new Runnable() {
     	public void run() {
-			refresh(true);
+			refresh(false, true);
     	}
     };
-    private void refresh(boolean silent) {
+    private void refresh(boolean updateDb, boolean silent) {
 		if (mStopId != null) {
-			new GetArrivalInfoTask(silent).execute(mStopId);		
+			new GetArrivalInfoTask(updateDb, silent).execute(mStopId);		
 		}    	
     }
 }

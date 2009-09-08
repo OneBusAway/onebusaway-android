@@ -21,11 +21,20 @@
                   android:label="">
         </activity>
         <activity android:name=".FindStopActivity"
-                  android:label="">
+                  android:label="@string/stop_shortcut">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".FindRouteActivity"
-                  android:label="">
+                  android:label="@string/route_shortcut">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+        
         <uses-library android:name="com.google.android.maps" />
     </application>
     <uses-sdk android:minSdkVersion="3" />

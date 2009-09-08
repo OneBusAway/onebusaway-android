@@ -60,6 +60,11 @@ public class RoutesDbAdapter {
     	adapter.close();
     }
     
+    public static final int FAVORITE_COL_ROUTEID = 0;
+    public static final int FAVORITE_COL_SHORTNAME = 1;
+    public static final int FAVORITE_COL_LONGNAME = 2;
+    public static final int FAVORITE_COL_USECOUNT = 3;
+    
     public Cursor getFavoriteRoutes() {
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 

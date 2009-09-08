@@ -33,6 +33,9 @@
     <string name="search_stop_searching">Finding stops...</string>
     <string name="search_route_searching">Finding routes...</string>
     
+    <string name="route_shortcut">Bus route</string>
+    <string name="stop_shortcut">Bus stop</string>
+    
     <!-- General strings -->
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>

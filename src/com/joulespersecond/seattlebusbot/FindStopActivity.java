@@ -4,6 +4,7 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -16,16 +17,24 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 public class FindStopActivity extends ListActivity {
+    private static final String EXTRA_KEY = "com.joulespersecond.seattlebusbot.FindStopActivity";
+
 	//private static final String TAG = "FindStopActivity";
 	
 	private StopsDbAdapter mDbAdapter;
 	private View mListHeader;
+	private boolean mShortcutMode = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.find_stop);
+		
+		Intent myIntent = getIntent();
+		if (myIntent.getAction().equals(Intent.ACTION_CREATE_SHORTCUT)) {
+			mShortcutMode = true;
+		}
 		
 		mDbAdapter = new StopsDbAdapter(this);
 		mDbAdapter.open();
@@ -66,6 +75,7 @@ public class FindStopActivity extends ListActivity {
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	String stopId;
+    	String stopName;
     	// Get the adapter (this may or may not be a SimpleCursorAdapter)
     	HeaderViewListAdapter hdrAdapter = (HeaderViewListAdapter)l.getAdapter();
     	ListAdapter adapter = hdrAdapter.getWrappedAdapter();
@@ -75,15 +85,21 @@ public class FindStopActivity extends ListActivity {
     		Cursor c = cursorAdapter.getCursor();
     		c.moveToPosition(position - l.getHeaderViewsCount());
     		stopId = c.getString(StopsDbAdapter.FAVORITE_COL_STOPID);
+    		stopName = c.getString(StopsDbAdapter.FAVORITE_COL_NAME);
     	}
     	else {
     		// Simple adapter, search results
     		return;
     	}
-    	// Go to the Stop Information Activity
-    	Intent myIntent = new Intent(this, StopInfoActivity.class);
-		myIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
-		startActivity(myIntent);
+
+		if (mShortcutMode) {
+			makeShortcut(stopId, stopName);
+		}
+		else {
+	    	Intent myIntent = new Intent(this, StopInfoActivity.class);
+			myIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
+			startActivity(myIntent);			
+		}
     }
 	
 	private void fillFavorites() {
@@ -115,6 +131,26 @@ public class FindStopActivity extends ListActivity {
 			}
 		});
 		setListAdapter(simpleAdapter);
+	}
+	
+	private void makeShortcut(String stopId, String stopName) {
+		Intent shortcutIntent = new Intent(this, StopInfoActivity.class);
+		shortcutIntent.setAction(Intent.ACTION_MAIN);
+		// TODO: Move this to strings.xml (or do we need it at all?)
+		shortcutIntent.putExtra(EXTRA_KEY, "SeattleBusBot stop shortcut");
+		shortcutIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
+		
+		// Set up the container intent
+		Intent intent = new Intent();
+		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, stopName);
+		Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
+		        this,  R.drawable.icon);
+		intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
+
+		// Now, return the result to the launcher
+		setResult(RESULT_OK, intent);
+		finish();
 	}
 	
 	// TODO: We want to search for the stop, but the only API we are given requires

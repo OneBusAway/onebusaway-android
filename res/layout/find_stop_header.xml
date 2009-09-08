@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/header_padding"
-    android:paddingBottom="@dimen/header_padding">
-</LinearLayout>
+    android:stretchColumns="0"
+    android:shrinkColumns="1">
+    <TableRow>
+        <EditText 
+            android:id="@+id/search_text"
+            android:layout_column="0"
+            android:hint="@string/search_stop_hint"
+            android:gravity="center_vertical"
+            android:numeric="integer" 
+            android:singleLine="true" />
+        <Button
+            android:id="@+id/search"
+            android:layout_column="1"
+            android:text="@string/find" 
+            android:gravity="center_vertical"/>
+    </TableRow>
+</TableLayout>

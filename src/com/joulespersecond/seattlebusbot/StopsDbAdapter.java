@@ -69,6 +69,12 @@ public class StopsDbAdapter {
     	adapter.close();
     }
     
+    public static final int FAVORITE_COL_STOPID = 0;
+    public static final int FAVORITE_COL_CODE = 1;
+    public static final int FAVORITE_COL_NAME = 2;
+    public static final int FAVORITE_COL_DIRECTION = 3;
+    public static final int FAVORITE_COL_USECOUNT = 4;
+    
     public Cursor getFavoriteStops() {
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 

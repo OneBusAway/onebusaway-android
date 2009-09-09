@@ -59,6 +59,12 @@ public class RoutesDbAdapter {
     	adapter.addRoute(routeId, shortName, longName);
     	adapter.close();
     }
+    public static void clearFavorites(Context ctx) {
+    	RoutesDbAdapter adapter = new RoutesDbAdapter(ctx);
+    	adapter.open();
+    	adapter.clearFavorites();
+    	adapter.close();
+    }
     
     public static final int FAVORITE_COL_ROUTEID = 0;
     public static final int FAVORITE_COL_SHORTNAME = 1;
@@ -83,5 +89,8 @@ public class RoutesDbAdapter {
         	cursor.moveToFirst();
         }
         return cursor;
+    }
+    public void clearFavorites() {
+    	mDb.execSQL("delete from " + DbHelper.ROUTES_TABLE);
     }
 }

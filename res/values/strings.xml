@@ -28,6 +28,7 @@
     <string name="find_route">Find route</string>
     <string name="find_stop">Find stop</string>
     <string name="find">Find</string>
+    <string name="find_option_clearfavorites">Clear favorites</string>
     <string name="search_stop_hint">Enter a stop ID</string>
     <string name="search_route_hint">Enter a route ID</string>
     <string name="search_stop_searching">Finding stops...</string>

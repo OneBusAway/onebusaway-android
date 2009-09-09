@@ -68,6 +68,12 @@ public class StopsDbAdapter {
     	adapter.addStop(stopId, code, name, direction);
     	adapter.close();
     }
+    public static void clearFavorites(Context ctx) {
+    	StopsDbAdapter adapter = new StopsDbAdapter(ctx);
+    	adapter.open();
+    	adapter.clearFavorites();
+    	adapter.close();
+    }
     
     public static final int FAVORITE_COL_STOPID = 0;
     public static final int FAVORITE_COL_CODE = 1;
@@ -94,5 +100,8 @@ public class StopsDbAdapter {
         	cursor.moveToFirst();
         }
         return cursor;
+    }
+    public void clearFavorites() {
+    	mDb.execSQL("delete from " + DbHelper.STOPS_TABLE);
     }
 }

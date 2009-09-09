@@ -26,7 +26,7 @@ public class FindRouteActivity extends ListActivity {
 		setContentView(R.layout.find_route);
 		
 		Intent myIntent = getIntent();
-		if (myIntent.getAction().equals(Intent.ACTION_CREATE_SHORTCUT)) {
+		if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
 			mShortcutMode = true;
 		}
 		

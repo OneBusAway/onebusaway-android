@@ -3,6 +3,9 @@ package com.joulespersecond.seattlebusbot;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Window;
 import android.widget.TabHost;
 
@@ -38,4 +41,23 @@ public class FindActivity extends TabActivity {
 		}
 
 	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	MenuInflater inflater = getMenuInflater();
+    	inflater.inflate(R.menu.find_options, menu);
+    	return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	if (item.getItemId() == R.id.clear_favorites) {
+    		clearFavorites();
+    		return true;
+    	}
+    	return false;
+    }
+    
+    private void clearFavorites() {
+    	RoutesDbAdapter.clearFavorites(this);
+    	StopsDbAdapter.clearFavorites(this);
+    }
 }

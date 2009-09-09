@@ -17,8 +17,6 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 public class FindStopActivity extends ListActivity {
-    private static final String EXTRA_KEY = "com.joulespersecond.seattlebusbot.FindStopActivity";
-
 	//private static final String TAG = "FindStopActivity";
 	
 	private StopsDbAdapter mDbAdapter;
@@ -70,6 +68,11 @@ public class FindStopActivity extends ListActivity {
 		});
 		
 		fillFavorites();
+	}
+	@Override
+	protected void onDestroy() {
+		mDbAdapter.close();
+		super.onDestroy();
 	}
 	
     @Override
@@ -134,10 +137,8 @@ public class FindStopActivity extends ListActivity {
 	}
 	
 	private void makeShortcut(String stopId, String stopName) {
-		Intent shortcutIntent = new Intent(this, StopInfoActivity.class);
-		shortcutIntent.setAction(Intent.ACTION_MAIN);
-		// TODO: Move this to strings.xml (or do we need it at all?)
-		shortcutIntent.putExtra(EXTRA_KEY, "SeattleBusBot stop shortcut");
+		Intent shortcutIntent = new Intent(Intent.ACTION_MAIN);
+		shortcutIntent.setClass(this, StopInfoActivity.class);
 		shortcutIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
 		
 		// Set up the container intent

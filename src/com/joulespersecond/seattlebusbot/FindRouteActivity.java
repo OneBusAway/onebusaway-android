@@ -13,8 +13,6 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
 public class FindRouteActivity extends ListActivity {
-    private static final String EXTRA_KEY = "com.joulespersecond.seattlebusbot.FindRouteActivity";
-
 	private RoutesDbAdapter mDbAdapter;
 	private View mListHeader;
 	private boolean mShortcutMode = false;
@@ -41,6 +39,11 @@ public class FindRouteActivity extends ListActivity {
 		
 		fillFavorites();
 	}
+	@Override
+	protected void onDestroy() {
+		mDbAdapter.close();
+		super.onDestroy();
+	}
 	
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -55,7 +58,7 @@ public class FindRouteActivity extends ListActivity {
     		Cursor c = cursorAdapter.getCursor();
     		c.moveToPosition(position - l.getHeaderViewsCount());
     		routeId = c.getString(RoutesDbAdapter.FAVORITE_COL_ROUTEID);
-    		routeName = c.getString(RoutesDbAdapter.FAVORITE_COL_LONGNAME);
+    		routeName = c.getString(RoutesDbAdapter.FAVORITE_COL_SHORTNAME);
     	}
     	else {
     		// Simple adapter, search results
@@ -91,8 +94,7 @@ public class FindRouteActivity extends ListActivity {
 	
 	private void makeShortcut(String routeId, String routeName) {
 		Intent shortcutIntent = new Intent(Intent.ACTION_MAIN);
-		// TODO: Move this to strings.xml (or do we need it at all?)
-		shortcutIntent.putExtra(EXTRA_KEY, "SeattleBusBot route shortcut");
+		shortcutIntent.setClass(this, RouteInfoActivity.class);
 		shortcutIntent.putExtra(RouteInfoActivity.ROUTE_ID, routeId);
 		
 		// Set up the container intent

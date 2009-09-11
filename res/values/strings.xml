@@ -11,8 +11,14 @@
     <string name="stop_info_title">Stop Information</string>
     <string name="stop_info_loading">Getting stop information...</string>
     <string name="stop_info_ontime">On time</string>
-    <string name="stop_info_delayed">%d minute delay</string>
-    <string name="stop_info_early">%d minute early</string>
+    <string name="stop_info_arrive_delayed1">1 minute delay</string>
+    <string name="stop_info_arrive_delayed">%d minute delay</string>
+    <string name="stop_info_arrive_early1">1 minute early</string>
+    <string name="stop_info_arrive_early">%d minutes early</string>
+    <string name="stop_info_depart_delayed1">Departed 1 minute late</string>
+    <string name="stop_info_depart_delayed">Departed %d minutes late</string>
+    <string name="stop_info_depart_early1">Departed 1 minute early</string>
+    <string name="stop_info_depart_early">Departed %d minutes early</string>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
     <string name="stop_info_eta_now">NOW</string>

@@ -72,46 +72,101 @@ public class StopInfoActivity extends ListActivity {
 		public long eta;
 		public long displayTime;
 		public String statusText;
+		public int color;
+		
+		private static final int ms_in_mins = 60*1000;
 		
 		public StopInfo(ObaArrivalInfo _info, long now) {
 			info = _info;
-		    // TODO: Decide what to do when the departure and arrival times differ significantly.
-			
-			// The ETA:
-			// if predictedArrivalTime != 0:
-			//       ETA = predictedArrivalTime - now
-			//       if predictedArrivalTime > scheduledArrivalTime:
-			//			status = "delayed"
-			//		 else if predictedArrivalTime < scheduledArrivalTime:
-			//			status = "early"
-			//		 else:
-			//			status = "on time"
-			// else:
-			//		 ETA = scheduledArrivalTime - now
-			//		 status = "scheduled arrival"
-			long scheduled = info.getScheduledArrivalTime();
-			long predicted = info.getPredictedArrivalTime();
+			// First, all times have to have to be converted to 'minutes'
+			final long nowMins = now/ms_in_mins;
+			final long scheduled = info.getScheduledArrivalTime();
+			final long predicted = info.getPredictedArrivalTime();
+			final long scheduledMins = scheduled/ms_in_mins;
+			final long predictedMins = predicted/ms_in_mins;
 			
 			if (predicted != 0) {
-				eta = (predicted - now)/(60*1000);
-				if (predicted > scheduled) {
-					long delay = (predicted - scheduled)/(60*1000);
-					String format = getResources().getString(
-							R.string.stop_info_delayed);
-					statusText = String.format(format, delay);
-				} else if (predicted < scheduled) {
-					long delay = (scheduled - predicted)/(60*1000);
-					String format = getResources().getString(
-							R.string.stop_info_early);
-					statusText = String.format(format, delay);					
-				} else {
-					statusText = getResources().getString(
-							R.string.stop_info_ontime);
-				}
+				color = R.color.stop_info_ontime;
+				
+				eta = predictedMins - nowMins;
 				displayTime = predicted;
+				final long delay = predictedMins - scheduledMins;
+				
+				if (eta >= 0) {
+					// Bus is arriving
+					if (delay > 0) {
+						// Arriving delayed
+						color = R.color.stop_info_delayed;
+						if (delay == 1) {
+							statusText = getResources().getString(
+									R.string.stop_info_arrive_delayed1);							
+						}
+						else {
+							String fmt = getResources().getString(
+									R.string.stop_info_arrive_delayed);
+							statusText = String.format(fmt, delay);						
+						}
+					}
+					else if (delay < 0) {
+						// Arriving early
+						color = R.color.stop_info_early;
+						if (delay == -1) {
+							statusText = getResources().getString(
+									R.string.stop_info_arrive_early1);							
+						}
+						else {
+							String fmt = getResources().getString(
+									R.string.stop_info_arrive_early);
+							statusText = String.format(fmt, delay);								
+						}
+					}
+					else {
+						// Arriving on time
+						color = R.color.stop_info_ontime;
+						statusText = getResources().getString(
+								R.string.stop_info_ontime);
+					}
+				} 
+				else {
+					// Bus is departing
+					if (delay > 0) {
+						// Departing delayed
+						color = R.color.stop_info_delayed;
+						if (delay == 1) {
+							statusText = getResources().getString(
+									R.string.stop_info_depart_delayed1);							
+						}
+						else {
+							String fmt = getResources().getString(
+									R.string.stop_info_depart_delayed);
+							statusText = String.format(fmt, delay);						
+						}
+					} 
+					else if (delay < 0) {
+						// Departing early
+						color = R.color.stop_info_early;
+						if (delay == -1) {
+							statusText = getResources().getString(
+									R.string.stop_info_depart_early1);							
+						}
+						else {
+							String fmt = getResources().getString(
+									R.string.stop_info_depart_early);
+							statusText = String.format(fmt, delay);						
+						}
+					}
+					else {
+						// Departing on time
+						color = R.color.stop_info_ontime;
+						statusText = getResources().getString(
+								R.string.stop_info_ontime);
+					}
+				}				
 			}
 			else {
-				eta = (scheduled - now)/(60*1000);
+				color = R.color.stop_info_ontime;
+				
+				eta = scheduledMins - nowMins;
 				displayTime = scheduled;
 				if (eta > 0) {
 					statusText = getResources().getString(
@@ -121,7 +176,6 @@ public class StopInfoActivity extends ListActivity {
 							R.string.stop_info_scheduled_departure);					
 				}
 			}
-
 		}
 	}
 
@@ -192,13 +246,17 @@ public class StopInfoActivity extends ListActivity {
 			route.setText(arrivalInfo.getShortName());
 			destination.setText(arrivalInfo.getHeadsign());
 			status.setText(stopInfo.statusText);
-			
+
 			if (stopInfo.eta == 0) {
 				etaView.setText(R.string.stop_info_eta_now);
 			}
 			else {
 				etaView.setText(String.valueOf(stopInfo.eta));
 			}
+			
+			int color = getResources().getColor(stopInfo.color);
+			//status.setTextColor(color); // This just doesn't look very good.
+			etaView.setTextColor(color);
 
 			time.setText(DateUtils.formatDateTime(StopInfoActivity.this, 
 					stopInfo.displayTime, 

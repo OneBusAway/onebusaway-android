@@ -38,6 +38,9 @@
         <TextView
             android:layout_column="2"
             android:id="@+id/eta"
+            android:minWidth="60sp"
+            android:maxLines="1"
+            android:gravity="right"
             android:textSize="@dimen/stop_info_eta_size"
             android:textColor="@color/stop_info_eta_color"
             android:paddingRight="10sp">

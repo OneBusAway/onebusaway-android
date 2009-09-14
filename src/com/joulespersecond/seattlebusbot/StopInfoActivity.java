@@ -8,6 +8,7 @@ import java.util.TimerTask;
 
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -117,7 +118,7 @@ public class StopInfoActivity extends ListActivity {
 						else {
 							String fmt = getResources().getString(
 									R.string.stop_info_arrive_early);
-							statusText = String.format(fmt, delay);								
+							statusText = String.format(fmt, -delay);								
 						}
 					}
 					else {
@@ -152,7 +153,7 @@ public class StopInfoActivity extends ListActivity {
 						else {
 							String fmt = getResources().getString(
 									R.string.stop_info_depart_early);
-							statusText = String.format(fmt, delay);						
+							statusText = String.format(fmt, -delay);						
 						}
 					}
 					else {
@@ -279,7 +280,13 @@ public class StopInfoActivity extends ListActivity {
 					StopInfoActivity.this,
 					"",
 					getResources().getString(R.string.stop_info_loading),
-					true, true);
+					true, 
+					true,
+					new DialogInterface.OnCancelListener() {
+						public void onCancel(DialogInterface arg0) {
+							finish();
+						}
+					});
 			}
 		}
 		@Override
@@ -315,6 +322,13 @@ public class StopInfoActivity extends ListActivity {
 				mDialog = null;
 			}
 		}
+		@Override
+		protected void onCancelled() {
+			if (mDialog != null) {
+				mDialog.dismiss();
+				mDialog = null;
+			}
+		}
 		
 		private ProgressDialog mDialog;
 		private boolean mSilent;
@@ -340,6 +354,13 @@ public class StopInfoActivity extends ListActivity {
 		mStopId = bundle.getString(STOP_ID);
 		refresh(true, false);
 	}
+	/*
+	@Override
+	public void onDestroy() {
+		Log.i(TAG, "onDestroy");
+		super.onDestroy();
+	}
+	*/
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inflater = getMenuInflater();

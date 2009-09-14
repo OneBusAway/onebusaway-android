@@ -4,6 +4,7 @@ import org.json.JSONArray;
 
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -70,29 +71,45 @@ public class RouteInfoActivity extends ListActivity {
 			direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));		
 		}
 
-	}	
-	
-	private ProgressDialog showLoadingDialog() {
-		return ProgressDialog.show(this, 
-				"", 
-				getResources().getString(R.string.route_info_loading),
-				true,
-				true);
 	}
 	
-	private class GetRouteInfoTask extends AsyncTask<String,Void,ObaResponse> {
+	private class GetRouteInfoTaskReturn {
+		public ObaResponse routeInfo;
+		public ObaResponse stopsForRoute;
+		
+		GetRouteInfoTaskReturn(ObaResponse info, ObaResponse stops) {
+			routeInfo = info;
+			stopsForRoute = stops;
+		}
+	}
+	
+	private class GetRouteInfoTask extends AsyncTask<String,Void,GetRouteInfoTaskReturn> {
 		@Override
 		protected void onPreExecute() {
-			mDialog = showLoadingDialog();
+			mDialog = ProgressDialog.show(RouteInfoActivity.this, 
+					"", 
+					getResources().getString(R.string.route_info_loading),
+					true,
+					true,
+					new DialogInterface.OnCancelListener() {
+						public void onCancel(DialogInterface arg0) {
+							finish();
+						}
+					});
 		}
 		@Override
-		protected ObaResponse doInBackground(String... params) {
-			return ObaApi.getRouteById(params[0]);
+		protected GetRouteInfoTaskReturn doInBackground(String... params) {
+			return new GetRouteInfoTaskReturn(
+					ObaApi.getRouteById(params[0]),
+					ObaApi.getStopsForRoute(params[0]));
 		}
 		@Override
-		protected void onPostExecute(ObaResponse result) {
-	    	if (result.getCode() == ObaApi.OBA_OK) {
-	    		ObaRoute route = result.getData().getThisRoute();
+		protected void onPostExecute(GetRouteInfoTaskReturn result) {
+			ObaResponse routeInfo = result.routeInfo;
+			ObaResponse stops = result.stopsForRoute;
+			
+	    	if (routeInfo.getCode() == ObaApi.OBA_OK) {
+	    		ObaRoute route = routeInfo.getData().getThisRoute();
 	    		TextView shortNameText = (TextView)mListHeader.findViewById(R.id.short_name);
 	    		TextView longNameText = (TextView)mListHeader.findViewById(R.id.long_name);
 	    		TextView agencyText = (TextView)mListHeader.findViewById(R.id.agency);
@@ -110,31 +127,15 @@ public class RouteInfoActivity extends ListActivity {
 	    	else {
 	    		// TODO: Show some error text in the "empty" field.
 	    	}
-	    	if (mDialog != null) {
-	    		mDialog.dismiss();
-	    	}
-		}
-		ProgressDialog mDialog;
-	}
-	
-	private class GetStopsForRouteTask extends AsyncTask<String,Void,ObaResponse> {
-		@Override
-		protected void onPreExecute() {
-			mDialog = showLoadingDialog();
-		}
-		@Override
-		protected ObaResponse doInBackground(String... params) {
-			return ObaApi.getStopsForRoute(params[0]);
-		}
-		@Override
-		protected void onPostExecute(ObaResponse result) {
-	    	if (result.getCode() == ObaApi.OBA_OK) {
-	    		mAdapter.setData(result);
-	    	} else {
-	    		// TODO: Show some error text in the "empty" field.
+	    	if (stops.getCode() == ObaApi.OBA_OK) {
+	    		mAdapter.setData(stops);	    		
+	    	} 
+	    	else {
+	    		// TODO: Show some error text 
 	    	}
 	    	if (mDialog != null) {
 	    		mDialog.dismiss();
+	    		mDialog = null;
 	    	}
 		}
 		ProgressDialog mDialog;
@@ -157,7 +158,6 @@ public class RouteInfoActivity extends ListActivity {
 		Bundle bundle = getIntent().getExtras();
 		mRouteId = bundle.getString(ROUTE_ID);
 		new GetRouteInfoTask().execute(mRouteId);
-		new GetStopsForRouteTask().execute(mRouteId);
 	}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

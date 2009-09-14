@@ -52,7 +52,6 @@ public class StopsDbAdapter {
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
         	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
-        	cursor.close();
         }
         else {
         	// Insert a new entry
@@ -60,6 +59,10 @@ public class StopsDbAdapter {
         	args.put(DbHelper.KEY_USECOUNT, 1);
         	mDb.insert(DbHelper.STOPS_TABLE, null, args);
         }
+    	// Make sure the cursor is closed if it exists
+    	if (cursor != null) {
+    		cursor.close();
+    	}
     }
     public static void addStop(Context ctx, String stopId, String code, 
     		String name, String direction) {

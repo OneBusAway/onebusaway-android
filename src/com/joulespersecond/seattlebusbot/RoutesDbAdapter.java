@@ -43,7 +43,6 @@ public class RoutesDbAdapter {
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
         	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
-        	cursor.close();
         }
         else {
         	// Insert a new entry
@@ -51,6 +50,10 @@ public class RoutesDbAdapter {
         	args.put(DbHelper.KEY_USECOUNT, 1);
         	mDb.insert(DbHelper.ROUTES_TABLE, null, args);
         }
+    	// Make sure the cursor is closed if it exists
+    	if (cursor != null) {
+    		cursor.close();
+    	}
     }
     public static void addRoute(Context ctx, String routeId, String shortName, 
     		String longName) {

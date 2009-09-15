@@ -38,6 +38,9 @@ public class StopInfoActivity extends ListActivity {
 	private String mStopId;
 	private Timer mTimer;
 	
+	private GetArrivalInfoTask mAsyncTask;
+	private ProgressDialog mDialog;
+	
 	public static final int getStopDirectionText(String direction) {
 		if (direction.equals("N")) {
 			return R.string.direction_n;
@@ -276,17 +279,7 @@ public class StopInfoActivity extends ListActivity {
 		@Override
 		protected void onPreExecute() {
 			if (!mSilent) {
-				mDialog = ProgressDialog.show(
-					StopInfoActivity.this,
-					"",
-					getResources().getString(R.string.stop_info_loading),
-					true, 
-					true,
-					new DialogInterface.OnCancelListener() {
-						public void onCancel(DialogInterface arg0) {
-							finish();
-						}
-					});
+				showLoadingDialog();
 			}
 		}
 		@Override
@@ -317,20 +310,13 @@ public class StopInfoActivity extends ListActivity {
 	    	else {
 	    		// TODO: Set some form of error message.
 	    	}
-			if (mDialog != null) {
-				mDialog.dismiss();
-				mDialog = null;
-			}
+	    	dismissLoadingDialog();
 		}
 		@Override
 		protected void onCancelled() {
-			if (mDialog != null) {
-				mDialog.dismiss();
-				mDialog = null;
-			}
+			dismissLoadingDialog();
 		}
-		
-		private ProgressDialog mDialog;
+
 		private boolean mSilent;
 		private boolean mUpdateDb;
 	}
@@ -354,13 +340,15 @@ public class StopInfoActivity extends ListActivity {
 		mStopId = bundle.getString(STOP_ID);
 		refresh(true, false);
 	}
-	/*
 	@Override
 	public void onDestroy() {
-		Log.i(TAG, "onDestroy");
+		// Do this before the async task does -- it leaks the window for some reason.
+		dismissLoadingDialog();
+		if (mAsyncTask != null) {
+			mAsyncTask.cancel(true);
+		}
 		super.onDestroy();
 	}
-	*/
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inflater = getMenuInflater();
@@ -420,7 +408,33 @@ public class StopInfoActivity extends ListActivity {
     };
     private void refresh(boolean updateDb, boolean silent) {
 		if (mStopId != null) {
-			new GetArrivalInfoTask(updateDb, silent).execute(mStopId);		
+			if (mAsyncTask == null || 
+					(mAsyncTask.getStatus() == AsyncTask.Status.FINISHED)) {
+				mAsyncTask = new GetArrivalInfoTask(updateDb, silent);
+				mAsyncTask.execute(mStopId);
+			}
 		}    	
+    }
+    
+    private void showLoadingDialog() {
+    	if (mDialog == null) {
+			mDialog = ProgressDialog.show(
+					this,
+					"",
+					getResources().getString(R.string.stop_info_loading),
+					true, 
+					true,
+					new DialogInterface.OnCancelListener() {
+						public void onCancel(DialogInterface arg0) {
+							finish();
+						}
+					});
+    	}
+    }
+    private void dismissLoadingDialog() {
+    	if (mDialog != null) {
+    		mDialog.dismiss();
+    		mDialog = null;
+    	}
     }
 }

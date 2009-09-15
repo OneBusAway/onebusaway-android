@@ -27,6 +27,9 @@ public class RouteInfoActivity extends ListActivity {
 	private View mListHeader;
 	private String mRouteId;
 	
+	private GetRouteInfoTask mAsyncTask;
+	private ProgressDialog mDialog;
+	
 	private class RouteInfoListAdapter extends BaseAdapter {
 		private ObaArray mStops;
 		
@@ -86,16 +89,7 @@ public class RouteInfoActivity extends ListActivity {
 	private class GetRouteInfoTask extends AsyncTask<String,Void,GetRouteInfoTaskReturn> {
 		@Override
 		protected void onPreExecute() {
-			mDialog = ProgressDialog.show(RouteInfoActivity.this, 
-					"", 
-					getResources().getString(R.string.route_info_loading),
-					true,
-					true,
-					new DialogInterface.OnCancelListener() {
-						public void onCancel(DialogInterface arg0) {
-							finish();
-						}
-					});
+			showLoadingDialog();
 		}
 		@Override
 		protected GetRouteInfoTaskReturn doInBackground(String... params) {
@@ -133,12 +127,12 @@ public class RouteInfoActivity extends ListActivity {
 	    	else {
 	    		// TODO: Show some error text 
 	    	}
-	    	if (mDialog != null) {
-	    		mDialog.dismiss();
-	    		mDialog = null;
-	    	}
+	    	dismissLoadingDialog();
 		}
-		ProgressDialog mDialog;
+		@Override
+		protected void onCancelled() {
+			dismissLoadingDialog();
+		}
 	}
 	
 	@Override
@@ -157,7 +151,16 @@ public class RouteInfoActivity extends ListActivity {
 		
 		Bundle bundle = getIntent().getExtras();
 		mRouteId = bundle.getString(ROUTE_ID);
-		new GetRouteInfoTask().execute(mRouteId);
+		mAsyncTask = new GetRouteInfoTask();
+		mAsyncTask.execute(mRouteId);
+	}
+	@Override
+	public void onDestroy() {
+		// Do this before cancelling the async task, 
+		// since it doesn't dismiss the dialog properly.
+		dismissLoadingDialog();
+		mAsyncTask.cancel(true);
+		super.onDestroy();
 	}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -179,5 +182,26 @@ public class RouteInfoActivity extends ListActivity {
 		Intent myIntent = new Intent(this, StopInfoActivity.class);
 		myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
 		startActivity(myIntent);
+    }
+    
+    private void showLoadingDialog() {
+    	if (mDialog == null) {
+			mDialog = ProgressDialog.show(this, 
+					"", 
+					getResources().getString(R.string.route_info_loading),
+					true,
+					true,
+					new DialogInterface.OnCancelListener() {
+						public void onCancel(DialogInterface arg0) {
+							finish();
+						}
+					});
+    	}
+    }
+    private void dismissLoadingDialog() {
+    	if (mDialog != null) {
+    		mDialog.dismiss();
+    		mDialog = null;
+    	}   	
     }
 }

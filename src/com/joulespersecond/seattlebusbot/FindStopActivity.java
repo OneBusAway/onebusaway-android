@@ -1,31 +1,48 @@
 package com.joulespersecond.seattlebusbot;
 
+import java.util.Iterator;
+import java.util.List;
+
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.HeaderViewListAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import com.google.android.maps.GeoPoint;
+
 public class FindStopActivity extends ListActivity {
-	//private static final String TAG = "FindStopActivity";
+	private static final String TAG = "FindStopActivity";
 	
 	private StopsDbAdapter mDbAdapter;
-	private View mListHeader;
 	private boolean mShortcutMode = false;
+	
+	private FindStopTask mAsyncTask;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		
 		setContentView(R.layout.find_stop);
 		
@@ -37,17 +54,14 @@ public class FindStopActivity extends ListActivity {
 		mDbAdapter = new StopsDbAdapter(this);
 		mDbAdapter.open();
 		
-		// Inflate the header
-		ListView listView = getListView();
-		LayoutInflater inflater = getLayoutInflater();
-		mListHeader = inflater.inflate(R.layout.find_stop_header, null);
-		listView.addHeaderView(mListHeader);
-		
-		TextView textView = (TextView)mListHeader.findViewById(R.id.search_text);
+		TextView textView = (TextView)findViewById(R.id.search_text);
 		textView.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {	
 				if (s.length() >= 5) {
 					doSearch(s);
+				}
+				else if (s.length() == 0) {
+					fillFavorites();
 				}
 			}
 			public void beforeTextChanged(CharSequence s, int start, int count,
@@ -56,13 +70,12 @@ public class FindStopActivity extends ListActivity {
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {				
 			}
-			
 		});
 		// If the user clicks the button (and there's text), the do the search
-		Button button = (Button)mListHeader.findViewById(R.id.search);
+		Button button = (Button)findViewById(R.id.search);
 		button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				TextView textView = (TextView)mListHeader.findViewById(R.id.search_text);
+				TextView textView = (TextView)findViewById(R.id.search_text);
 				doSearch(textView.getText());			
 			}
 		});
@@ -72,6 +85,9 @@ public class FindStopActivity extends ListActivity {
 	@Override
 	protected void onDestroy() {
 		mDbAdapter.close();
+		if (mAsyncTask != null) {
+			mAsyncTask.cancel(true);
+		}
 		super.onDestroy();
 	}
 	
@@ -80,8 +96,7 @@ public class FindStopActivity extends ListActivity {
     	String stopId;
     	String stopName;
     	// Get the adapter (this may or may not be a SimpleCursorAdapter)
-    	HeaderViewListAdapter hdrAdapter = (HeaderViewListAdapter)l.getAdapter();
-    	ListAdapter adapter = hdrAdapter.getWrappedAdapter();
+    	ListAdapter adapter = l.getAdapter();
     	if (adapter instanceof SimpleCursorAdapter) {
     		// Get the cursor and fetch the stop ID from that.
     		SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
@@ -90,8 +105,13 @@ public class FindStopActivity extends ListActivity {
     		stopId = c.getString(StopsDbAdapter.FAVORITE_COL_STOPID);
     		stopName = c.getString(StopsDbAdapter.FAVORITE_COL_NAME);
     	}
+    	else if (adapter instanceof SearchResultsListAdapter) {
+    		ObaStop stop = (ObaStop)adapter.getItem(position);
+    		stopId = stop.getId();
+    		stopName = stop.getName();
+    	}
     	else {
-    		// Simple adapter, search results
+    		Log.e(TAG, "Unknown adapter. Giving up!");
     		return;
     	}
 
@@ -103,6 +123,24 @@ public class FindStopActivity extends ListActivity {
 			myIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
 			startActivity(myIntent);			
 		}
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	MenuInflater inflater = getMenuInflater();
+    	inflater.inflate(R.menu.find_options, menu);
+    	return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	if (item.getItemId() == R.id.clear_favorites) {
+    		clearFavorites();
+    		return true;
+    	}
+    	return false;
+    }
+    
+    private void clearFavorites() {
+    	StopsDbAdapter.clearFavorites(this);
     }
 	
 	private void fillFavorites() {
@@ -154,49 +192,117 @@ public class FindStopActivity extends ListActivity {
 		finish();
 	}
 	
-	// TODO: We want to search for the stop, but the only API we are given requires
-	// a latitude and longitude. This activity itself doesn't appear to depend on 
-	// the user's position, so we shouldn't really use it for searching.
-	// The OBA website allows you to search for a stop like "11014" without the "1_"
-	// agency prefix, and it doesn't know your position. I need to look into the OBA code
-	// and see what's going on.
-	/*
+	private class SearchResultsListAdapter extends BaseAdapter {
+		private ObaArray mStops;
+		
+		public SearchResultsListAdapter(ObaResponse response) {
+			mStops = response.getData().getStops();
+		}
+		public int getCount() {
+			return mStops.length();
+		}
+		public Object getItem(int position) {
+			return mStops.getStop(position);
+		}
+		public long getItemId(int position) {
+			return position;
+		}
+		public View getView(int position, View convertView, ViewGroup parent) {
+			ViewGroup newView;
+			if (convertView == null) {
+				LayoutInflater inflater = getLayoutInflater();
+				newView = (ViewGroup)inflater.inflate(R.layout.find_stop_listitem, null);
+			}
+			else {
+				newView = (ViewGroup)convertView;
+			}
+			setData(newView, position);
+			return newView;
+		}
+		public boolean hasStableIds() {
+			return false;
+		}
+		
+		private void setData(ViewGroup view, int position) {
+			TextView route = (TextView)view.findViewById(R.id.name);
+			TextView direction = (TextView)view.findViewById(R.id.direction);
+
+			ObaStop stop = mStops.getStop(position);
+			route.setText(stop.getName());
+			direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
+		}
+	}
+	
 	private class FindStopTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
-			mDialog = ProgressDialog.show(
-					FindStopActivity.this,
-					"",
-					getResources().getString(R.string.search_stop_searching),
-					true, true);
+			showSearching();
 		}
 		@Override
 		protected ObaResponse doInBackground(String... params) {
 			String stopId = params[0];
-			// TODO Auto-generated method stub
-			return null;
+			return ObaApi.getStopsByLocation(
+					getLocation(FindStopActivity.this), 0, 0, 0, stopId, 0);
 		}
 		@Override
 		protected void onPostExecute(ObaResponse result) {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
-
+	    		setListAdapter(new SearchResultsListAdapter(result));
 	    	}
 	    	else {
 	    		// TODO: Set some form of error message.
 	    	}
-			if (mDialog != null) {
-				mDialog.dismiss();
-				mDialog = null;
-			}
+	    	hideSearching();
 		}
-		private ProgressDialog mDialog;
+		@Override
+		protected void onCancelled() {	
+			hideSearching();
+		}
 	}
-	*/
 	
 	private void doSearch(CharSequence text) {
 		if (text.length() == 0) {
 			return;
 		}
-		//new FindStopTask().execute(text.toString());
+		if (mAsyncTask != null) {
+			// Try to cancel it
+			mAsyncTask.cancel(true);
+		}
+		mAsyncTask = new FindStopTask();
+		mAsyncTask.execute(text.toString());
+	}
+	
+	private void showSearching() {
+    	setProgressBarIndeterminateVisibility(true);
+	}
+	private void hideSearching() {
+		setProgressBarIndeterminateVisibility(false);
+	}
+	
+	// We need to provide the API for a location used to disambiguate
+	// stop IDs in case of collision, or to provide multiple results
+	// in the case multiple agencies. But we really don't need it to be very accurate.
+	public static GeoPoint getLocation(Context cxt) {
+		LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
+		List<String> providers = mgr.getProviders(true);
+		Location last = null;
+		for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+			Location loc = mgr.getLastKnownLocation(i.next());
+			// If this provider has a last location, and either:
+			// 1. We don't have a last location, 
+			// 2. Our last location is older than this location.
+			if (loc != null &&
+				(last == null || loc.getTime() > last.getTime())) {
+				last = loc;
+			}
+		}
+		if (last != null) {
+			return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());			
+		}
+		else {
+			// Make up a fake "Seattle" location.
+			// ll=47.620975,-122.347355
+			return ObaApi.makeGeoPoint(47.620975, -122.347355);
+		}
 	}
 }

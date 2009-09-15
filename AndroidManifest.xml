@@ -26,9 +26,6 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".FindActivity"
-                  android:label="">
-        </activity>
         <activity android:name=".FindStopActivity"
                   android:label="@string/stop_shortcut">
             <intent-filter>

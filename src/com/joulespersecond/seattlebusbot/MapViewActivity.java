@@ -114,14 +114,12 @@ public class MapViewActivity extends MapActivity {
     		return true;
     	}
     	else if (item.getItemId() == R.id.find_route) {
-    		Intent myIntent = new Intent(this, FindActivity.class);
-    		myIntent.putExtra(FindActivity.CURRENT_TAB, FindActivity.TAB_FIND_ROUTE);
+    		Intent myIntent = new Intent(this, FindRouteActivity.class);
     		startActivity(myIntent);
     		return true;
     	}
     	else if (item.getItemId() == R.id.find_stop) {
-    		Intent myIntent = new Intent(this, FindActivity.class);
-    		myIntent.putExtra(FindActivity.CURRENT_TAB, FindActivity.TAB_FIND_STOP);
+    		Intent myIntent = new Intent(this, FindStopActivity.class);
     		startActivity(myIntent);
     		return true;
     	}

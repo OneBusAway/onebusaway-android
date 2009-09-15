@@ -38,7 +38,7 @@
     <string name="find_hint_nofavoritestops">You don\'t have any favorite stops. Stops that you use most will appear in this list.</string>
     <string name="find_hint_nofavoriteroutes">You don\'t have any favorite routes. Routes that you use most will appear in this list.</string>
     <string name="search_stop_hint">Enter a stop ID</string>
-    <string name="search_route_hint">Enter a route ID</string>
+    <string name="search_route_hint">Enter a route number</string>
     <string name="search_stop_searching">Finding stops...</string>
     <string name="search_route_searching">Finding routes...</string>
     

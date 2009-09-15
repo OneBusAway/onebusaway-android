@@ -32,6 +32,16 @@ public class ObaArray {
 	getStop(int index) {
 		return new ObaStop(ObaApi.getChildObj(mArray, index));
 	}
+	/**
+	 * Returns a route object for the specified index.
+	 * 
+	 * @param index The child index.
+	 * @return The route object, or an empty object if it isn't a route.
+	 */
+	public ObaRoute
+	getRoute(int index) {
+		return new ObaRoute(ObaApi.getChildObj(mArray, index));
+	}
 	
 	/**
 	 * Returns an arrival object for the specified index.

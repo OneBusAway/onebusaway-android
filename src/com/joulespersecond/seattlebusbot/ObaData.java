@@ -22,6 +22,15 @@ public class ObaData {
 	getStops() {
 		return new ObaArray(ObaApi.getChildArray(mData, "stops"));
 	}
+	/** 
+	 * Retrieves the list of routes, if they exist.
+	 * 
+	 * @return The list of routes, or an empty array.
+	 */
+	public ObaArray
+	getRoutes() {
+		return new ObaArray(ObaApi.getChildArray(mData, "routes"));
+	}
 	/**
 	 * Retrieves the Stop for this response.
 	 * 

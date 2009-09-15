@@ -108,8 +108,12 @@ public class ObaApi {
 		}
 		if (query != null) {
 			url += "&query=";
-			// TODO: Escape string
-			url += query;
+			try {
+				url += URLEncoder.encode(query, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return null; 
+			}
 		}
 		if (maxCount != 0) {
 			url += "&maxCount=";
@@ -127,10 +131,28 @@ public class ObaApi {
 	 * @return A response object.
 	 */
 	public static final ObaResponse
-	getRoutesForLocation(GeoPoint location,
+	getRoutesByLocation(GeoPoint location,
 			int radius,
 			String query) {
-		return null;
+		String url = String.format("%s/routes-for-location.json?key=%s&lat=%f&lon=%f", 
+				OBA_URL, 
+				API_KEY,
+				(double)location.getLatitudeE6()/E6,
+				(double)location.getLongitudeE6()/E6);
+		if (radius != 0) {
+			url += "&radius=";
+			url += String.valueOf(radius);
+		}
+		if (query != null) {
+			url += "&query=";
+			try {
+				url += URLEncoder.encode(query, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return null; 
+			}
+		}
+ 		return doRequest(url);
 	}
 	/**
 	 * Get a list of stops that are services by a given route, including 

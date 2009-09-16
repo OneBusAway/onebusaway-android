@@ -4,10 +4,14 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,15 +25,22 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 public class MapViewActivity extends MapActivity {
+	private static final String TAG = "MapViewActivity";
+	
 	public static final String GO_TO_LOCATION = ".GoToLocation";
 	public static final String STARRED_STOP_ID = ".StarredStopId";
 	public static final String CENTER_LAT = ".CenterLat";
 	public static final String CENTER_LON = ".CenterLon";
 	public static final String UPDATE_STOPS_ON_MOVE = ".UpdateStopsOnMove";
+	// Switches into Route mode -- .UpdateStopsOnMove is by default 'false'
+	public static final String ROUTE_ID = ".RouteId";	
+	// If this is specified, it is a JSON string that corresponds to a ObaResponse
+	public static final String STOP_DATA = ".StopData";
 	
 	private MapView mMapView;
 	private MyLocationOverlay mLocationOverlay;
 	private StopOverlay mStopOverlay;
+	private String mRouteId;
 	private String mStarredStopId;
 	// This will cause the StopOverlay to refresh with the center moves
 	private boolean mUpdateStopsOnMove = false;
@@ -44,8 +55,7 @@ public class MapViewActivity extends MapActivity {
 	private boolean mMapCenterWaitFlag = false;
 	private static final int CenterPollPeriod = 2000;
 	
-	/*
-	private class GetRouteTask extends AsyncTask<String,Void,ObaResponse> {
+	private class GetStopsForRouteTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
 	        setProgressBarIndeterminateVisibility(true);
@@ -62,7 +72,30 @@ public class MapViewActivity extends MapActivity {
 	        setProgressBarIndeterminateVisibility(false); 
 		}		
 	}
-	*/
+	private class GetStopsForRouteTask2 extends AsyncTask<String,Void,ObaResponse> {
+		@Override
+		protected void onPreExecute() {
+	        setProgressBarIndeterminateVisibility(true);
+		}
+		@Override
+		protected ObaResponse doInBackground(String... params) {
+			try {
+				return new ObaResponse(new JSONObject(params[0]));
+			} catch (JSONException e) {
+				Log.e(TAG, "Expected JSON data, got something else entirely: " + params[0]);
+				// I guess we don't have stop data...
+				e.printStackTrace();
+				return new ObaResponse("JSON error");
+			}
+		}
+		@Override
+		protected void onPostExecute(ObaResponse result) {
+	    	if (result.getCode() == ObaApi.OBA_OK) {
+	    		setStopOverlay(result.getData().getStops());
+	    	}
+	        setProgressBarIndeterminateVisibility(false); 
+		}		
+	}
 	
 	private class GetStopsByLocationInfo {
 		int latSpan;
@@ -110,8 +143,12 @@ public class MapViewActivity extends MapActivity {
     	
     	Bundle bundle = getIntent().getExtras();
     	if (bundle != null) {
+    		mRouteId = bundle.getString(ROUTE_ID);
+    		boolean routeMode = isRouteMode();
+    		String stopData = bundle.getString(STOP_DATA);
+    		
     		mStarredStopId = bundle.getString(STARRED_STOP_ID);
-    		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, true);
+    		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, !routeMode);
     	
     		double centerLat = bundle.getDouble(CENTER_LAT);
     		double centerLon = bundle.getDouble(CENTER_LON);
@@ -121,11 +158,16 @@ public class MapViewActivity extends MapActivity {
     			MapController mapCtrl = mMapView.getController();
     			mapCtrl.setCenter(point);
     			mapCtrl.setZoom(18);
-    			mMapCenter = point;    
-    			getStopsByLocation(mMapCenter);
+    			mMapCenter = point; 
+    			if (!routeMode) {
+    				getStopsByLocation(mMapCenter);
+    			}
     		}
-    		else if (bundle.getBoolean(GO_TO_LOCATION, true)) {
+    		else if (bundle.getBoolean(GO_TO_LOCATION, !routeMode)) {
     			setMyLocation();
+    		}
+    		if (routeMode) {
+    			getStopsForRoute(stopData);
     		}
     	}
     	else {
@@ -161,7 +203,9 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onPause() {
     	mLocationOverlay.disableMyLocation();
-    	mTimer.cancel(); 	
+    	if (mTimer != null) {
+        	mTimer.cancel();   		
+    	}
     	super.onPause();
     }
     @Override
@@ -240,6 +284,15 @@ public class MapViewActivity extends MapActivity {
 				mMapView.getLongitudeSpan());
 		new GetStopsByLocationTask().execute(point, info);       	
     }
+    private void getStopsForRoute(String stopData) {
+    	if (stopData != null) {
+    		new GetStopsForRouteTask2().execute(stopData);
+    	}
+    	else {
+    		assert(mRouteId != null);
+    		new GetStopsForRouteTask().execute(mRouteId);
+    	}
+    }
     
     private void setMyLocation() {
 		GeoPoint point = mLocationOverlay.getMyLocation();
@@ -264,5 +317,8 @@ public class MapViewActivity extends MapActivity {
         mStopOverlay = new StopOverlay(stops, this, mStarredStopId);
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
+    }
+    private boolean isRouteMode() {
+    	return mRouteId != null;
     }
 }

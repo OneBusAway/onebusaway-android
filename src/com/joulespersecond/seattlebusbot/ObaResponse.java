@@ -39,4 +39,8 @@ public class ObaResponse {
 	getData() {
 		return new ObaData(ObaApi.getChildObj(mResponse, "data"));
 	}
+	public String
+	toString() {
+		return mResponse.toString();
+	}
 }

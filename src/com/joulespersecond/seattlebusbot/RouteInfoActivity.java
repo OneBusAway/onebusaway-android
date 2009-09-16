@@ -26,6 +26,10 @@ public class RouteInfoActivity extends ListActivity {
 	private RouteInfoListAdapter mAdapter;
 	private View mListHeader;
 	private String mRouteId;
+	// This is saved for the "Show On Map" option -- 
+	// As a string since converting the data from an ObaResponse
+	// back to a string is expensive.
+	private String mStopsResponse;
 	
 	private GetRouteInfoTask mAsyncTask;
 	private ProgressDialog mDialog;
@@ -79,10 +83,12 @@ public class RouteInfoActivity extends ListActivity {
 	private class GetRouteInfoTaskReturn {
 		public ObaResponse routeInfo;
 		public ObaResponse stopsForRoute;
+		public String stopsForRouteString;
 		
 		GetRouteInfoTaskReturn(ObaResponse info, ObaResponse stops) {
 			routeInfo = info;
 			stopsForRoute = stops;
+			stopsForRouteString = stopsForRoute.toString();
 		}
 	}
 	
@@ -101,6 +107,7 @@ public class RouteInfoActivity extends ListActivity {
 		protected void onPostExecute(GetRouteInfoTaskReturn result) {
 			ObaResponse routeInfo = result.routeInfo;
 			ObaResponse stops = result.stopsForRoute;
+			mStopsResponse = result.stopsForRouteString;
 			
 	    	if (routeInfo.getCode() == ObaApi.OBA_OK) {
 	    		ObaRoute route = routeInfo.getData().getThisRoute();
@@ -171,6 +178,10 @@ public class RouteInfoActivity extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.show_on_map) {
+        	Intent myIntent = new Intent(this, MapViewActivity.class);
+        	myIntent.putExtra(MapViewActivity.ROUTE_ID, mRouteId);
+        	myIntent.putExtra(MapViewActivity.STOP_DATA, mStopsResponse);
+        	startActivity(myIntent);
     		return true;
     	}
     	return false;

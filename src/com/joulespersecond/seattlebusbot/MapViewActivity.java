@@ -21,9 +21,18 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 public class MapViewActivity extends MapActivity {
+	public static final String GO_TO_LOCATION = ".GoToLocation";
+	public static final String STARRED_STOP_ID = ".StarredStopId";
+	public static final String CENTER_LAT = ".CenterLat";
+	public static final String CENTER_LON = ".CenterLon";
+	public static final String UPDATE_STOPS_ON_MOVE = ".UpdateStopsOnMove";
+	
 	private MapView mMapView;
 	private MyLocationOverlay mLocationOverlay;
 	private StopOverlay mStopOverlay;
+	private String mStarredStopId;
+	// This will cause the StopOverlay to refresh with the center moves
+	private boolean mUpdateStopsOnMove = false;
 	
 	// There's a major hole in the MapView in that there's apparently 
 	// no way of getting an event when the user pans the view.
@@ -98,8 +107,32 @@ public class MapViewActivity extends MapActivity {
         mLocationOverlay = new MyLocationOverlay(this, mMapView);
     	List<Overlay> mapOverlays = mMapView.getOverlays();
     	mapOverlays.add(mLocationOverlay);
-    	// TODO: Only go to MyLocation if this is due to launching.
-    	setMyLocation();
+    	
+    	Bundle bundle = getIntent().getExtras();
+    	if (bundle != null) {
+    		mStarredStopId = bundle.getString(STARRED_STOP_ID);
+    		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, true);
+    	
+    		double centerLat = bundle.getDouble(CENTER_LAT);
+    		double centerLon = bundle.getDouble(CENTER_LON);
+    	
+    		if (centerLat != 0.0 && centerLon != 0.0) {
+    			GeoPoint point = ObaApi.makeGeoPoint(centerLat, centerLon);
+    			MapController mapCtrl = mMapView.getController();
+    			mapCtrl.setCenter(point);
+    			mapCtrl.setZoom(18);
+    			mMapCenter = point;    
+    			getStopsByLocation(mMapCenter);
+    		}
+    		else if (bundle.getBoolean(GO_TO_LOCATION, true)) {
+    			setMyLocation();
+    		}
+    	}
+    	else {
+    		// No extras means just default behavior
+    		mUpdateStopsOnMove = true;
+    		setMyLocation();
+    	}
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -134,7 +167,9 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onResume() {
     	mLocationOverlay.enableMyLocation();
-    	watchMapCenter(); 
+    	if (mUpdateStopsOnMove) {
+    		watchMapCenter();
+    	} 
     	super.onResume();
     }
     @Override
@@ -226,7 +261,7 @@ public class MapViewActivity extends MapActivity {
         	mapOverlays.remove(mStopOverlay);
     	}
 
-        mStopOverlay = new StopOverlay(stops, this);
+        mStopOverlay = new StopOverlay(stops, this, mStarredStopId);
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }

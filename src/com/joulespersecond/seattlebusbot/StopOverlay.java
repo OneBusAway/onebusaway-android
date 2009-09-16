@@ -11,6 +11,7 @@ import com.google.android.maps.OverlayItem;
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	private ObaArray mStops;
 	private Activity mActivity;
+	private String mStarredId;
 	
 	private static final int getResourceIdForDirection(String direction) {
 		if (direction.equals("N")) {
@@ -34,12 +35,36 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 			return R.drawable.stop_n;
 		}		
 	}
+	private static final int getResourceIdForDirectionStarred(String direction) {
+		if (direction.equals("N")) {
+			return R.drawable.stop_n_star;
+		} else if (direction.equals("NW")) {
+			return R.drawable.stop_nw_star;	    			
+		} else if (direction.equals("W")) {
+			return R.drawable.stop_w_star;	    			
+		} else if (direction.equals("SW")) {
+			return R.drawable.stop_sw_star;	
+		} else if (direction.equals("S")) {
+			return R.drawable.stop_s_star;	
+		} else if (direction.equals("SE")) {
+			return R.drawable.stop_se_star;	
+		} else if (direction.equals("E")) {
+			return R.drawable.stop_e_star;	
+		} else if (direction.equals("NE")) {
+			return R.drawable.stop_ne_star; 		    	    		
+		} else {
+			Log.v("TransitBotStopOverlay", "Unknown direction: " + direction);
+			return R.drawable.stop_n_star;
+		}		
+	}	
 	
 	public StopOverlay(ObaArray stops, 
-			Activity activity) {
+			Activity activity,
+			String starredStopId) {
 		super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_n)));
 		mStops = stops;
 		mActivity = activity;
+		mStarredId = starredStopId;
 		populate();
 	}
 	@Override
@@ -49,7 +74,13 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 		OverlayItem item = new OverlayItem(stop.getLocation(), 
 				stop.getName(),
 				"");
-		int res = getResourceIdForDirection(stop.getDirection());
+		int res;
+		if (stop.getId().equals(mStarredId)) {
+			res = getResourceIdForDirectionStarred(stop.getDirection());
+		}
+		else {
+			res = getResourceIdForDirection(stop.getDirection());
+		}
 		Drawable marker = mActivity.getResources().getDrawable(res);
 		item.setMarker(boundCenterBottom(marker));
 		return item;
@@ -66,5 +97,4 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 		mActivity.startActivity(myIntent);
 		return true;
 	}
-
 }

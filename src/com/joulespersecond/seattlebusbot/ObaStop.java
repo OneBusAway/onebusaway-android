@@ -59,6 +59,25 @@ public class ObaStop {
 		}
 	}
 	/**
+	 * Returns the latitude of the stop as a double.
+	 * 
+	 * @return The latitude of the stop, or 0 if it doesn't exist.
+	 */
+	public double
+	getLatitude() {
+		return mData.optDouble("lat");
+	}
+	/**
+	 * Returns the longitude of the stop as a double.
+	 * 
+	 * @return The longitude of the stop, or 0 if it doesn't exist.
+	 */
+	public double 
+	getLongitude() {
+		return mData.optDouble("lon");
+	}
+	
+	/**
 	 * Returns the direction of the stop (ex "NW", "E").
 	 * 
 	 * @return The direction of the stop.

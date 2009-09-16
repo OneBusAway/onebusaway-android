@@ -36,6 +36,10 @@ public class StopInfoActivity extends ListActivity {
 	private StopInfoListAdapter mAdapter;
 	private View mListHeader;
 	private String mStopId;
+	// Store this as two doubles, since we only store this to pass
+	// it into the ShowOnMap intent, which expects it as doubles anyway.
+	private double mStopLat;
+	private double mStopLon;
 	private Timer mTimer;
 	
 	private GetArrivalInfoTask mAsyncTask;
@@ -293,6 +297,8 @@ public class StopInfoActivity extends ListActivity {
 	    		String code = stop.getCode();
 	    		String name = stop.getName();
 	    		String direction = stop.getDirection();
+	    		mStopLat = stop.getLatitude();
+	    		mStopLon = stop.getLongitude();
 	    		
 	    		TextView nameText = (TextView)mListHeader.findViewById(R.id.name);
 	    		nameText.setText(name);
@@ -358,6 +364,12 @@ public class StopInfoActivity extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.show_on_map) {
+        	Intent myIntent = new Intent(this, MapViewActivity.class);
+        	myIntent.putExtra(MapViewActivity.STARRED_STOP_ID, mStopId);
+        	myIntent.putExtra(MapViewActivity.GO_TO_LOCATION, false);
+        	myIntent.putExtra(MapViewActivity.CENTER_LAT, mStopLat);
+        	myIntent.putExtra(MapViewActivity.CENTER_LON, mStopLon);
+        	startActivity(myIntent);
     		return true;
     	}
     	else if (item.getItemId() == R.id.refresh) {

@@ -26,10 +26,11 @@ public class RoutesDbAdapter {
     }
     
     public void addRoute(String routeId, String shortName, String longName) {
+    	final String where = DbHelper.KEY_ROUTEID + " = '" + routeId + "'";
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
         				new String[] { DbHelper.KEY_USECOUNT }, // rows
-        				DbHelper.KEY_ROUTEID + " = '" + routeId + "'", // selection (where)
+        				where, // selection (where)
         				null, // selectionArgs
         				null, // groupBy
         				null, // having
@@ -43,6 +44,7 @@ public class RoutesDbAdapter {
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
         	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	mDb.update(DbHelper.ROUTES_TABLE, args, where, null);
         }
         else {
         	// Insert a new entry

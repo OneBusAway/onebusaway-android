@@ -34,10 +34,11 @@ public class StopsDbAdapter {
      * @param name
      */
     public void addStop(String stopId, String code, String name, String direction) {
+    	final String where = DbHelper.KEY_STOPID + " = '" + stopId + "'";
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
         				new String[] { DbHelper.KEY_USECOUNT }, // rows
-        				DbHelper.KEY_STOPID + " = '" + stopId + "'", // selection (where)
+        				where, // selection (where)
         				null, // selectionArgs
         				null, // groupBy
         				null, // having
@@ -52,6 +53,7 @@ public class StopsDbAdapter {
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
         	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	mDb.update(DbHelper.STOPS_TABLE, args, where, null);
         }
         else {
         	// Insert a new entry

@@ -30,13 +30,22 @@ public class ObaApi {
 			URLConnection conn = url.openConnection();
 			conn.connect();
 			BufferedReader in = new BufferedReader(
-					new InputStreamReader(conn.getInputStream()));
+					new InputStreamReader(conn.getInputStream()),
+					8*1024);
 			
-			String data = "", inputLine;
-			while ((inputLine = in.readLine()) != null) {
-				data += inputLine;
+			StringBuffer data;
+			int len = conn.getContentLength();
+			if (len == -1) {
+				data = new StringBuffer(); // default size
 			}
-			response = new ObaResponse(new JSONObject(data));
+			else {
+				data = new StringBuffer(len);
+			}
+			String inputLine;
+			while ((inputLine = in.readLine()) != null) {
+				data.append(inputLine);
+			}
+			response = new ObaResponse(new JSONObject(data.toString()));
 
 		} catch (IOException e) {
 			response = new ObaResponse("Unable to connect: " + e.toString());

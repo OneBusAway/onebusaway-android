@@ -101,7 +101,7 @@ public class FindRouteActivity extends ListActivity {
     		routeName = c.getString(RoutesDbAdapter.FAVORITE_COL_SHORTNAME);
     	}
     	else if (adapter instanceof SearchResultsListAdapter) {
-    		ObaRoute route = (ObaRoute)adapter.getItem(position);
+    		ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
     		routeId = route.getId();
     		routeName = route.getShortName();
     	}

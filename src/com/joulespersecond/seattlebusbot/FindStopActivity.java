@@ -106,7 +106,7 @@ public class FindStopActivity extends ListActivity {
     		stopName = c.getString(StopsDbAdapter.FAVORITE_COL_NAME);
     	}
     	else if (adapter instanceof SearchResultsListAdapter) {
-    		ObaStop stop = (ObaStop)adapter.getItem(position);
+    		ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
     		stopId = stop.getId();
     		stopName = stop.getName();
     	}

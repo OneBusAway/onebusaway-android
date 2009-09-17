@@ -144,6 +144,12 @@ public class FindStopActivity extends ListActivity {
     }
 	
 	private void fillFavorites() {
+		// Cancel any current search.
+		if (mAsyncTask != null) {
+			mAsyncTask.cancel(true);
+			mAsyncTask = null;
+		}
+		
 		Cursor c = mDbAdapter.getFavoriteStops();
 		startManagingCursor(c);
 		

@@ -139,12 +139,17 @@ public class FindRouteActivity extends ListActivity {
     }
 	
 	private void fillFavorites() {
+		// Cancel any current search.
+		if (mAsyncTask != null) {
+			mAsyncTask.cancel(true);
+			mAsyncTask = null;
+		}
 		Cursor c = mDbAdapter.getFavoriteRoutes();
 		startManagingCursor(c);
 		
 		// Make sure the "empty" text is correct.
 		TextView empty = (TextView) findViewById(android.R.id.empty);
-		empty.setText(R.string.find_hint_nofavoritestops);
+		empty.setText(R.string.find_hint_nofavoriteroutes);
 		
 		String[] from = new String[] { 
 				DbHelper.KEY_SHORTNAME,

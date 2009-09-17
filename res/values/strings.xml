@@ -32,7 +32,7 @@
     
     <!-- Find -->
     <string name="find_route_title">Find Route</string>
-    <string name="find_stop_title">Find Route</string>
+    <string name="find_stop_title">Find Stop</string>
     <string name="find">Find</string>
     <string name="find_option_clearfavorites">Clear favorites</string>
     <string name="find_hint_nofavoritestops">You don\'t have any favorite stops. Stops that you use most will appear in this list.</string>

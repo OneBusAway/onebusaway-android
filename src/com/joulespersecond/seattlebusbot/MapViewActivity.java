@@ -55,14 +55,10 @@ public class MapViewActivity extends MapActivity {
 	private boolean mMapCenterWaitFlag = false;
 	private static final int CenterPollPeriod = 2000;
 	
-	private class GetStopsForRouteTask extends AsyncTask<String,Void,ObaResponse> {
+	private abstract class GetStopsForRouteTaskBase extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
 	        setProgressBarIndeterminateVisibility(true);
-		}
-		@Override
-		protected ObaResponse doInBackground(String... params) {
-			return ObaApi.getStopsForRoute(params[0]);
 		}
 		@Override
 		protected void onPostExecute(ObaResponse result) {
@@ -72,11 +68,15 @@ public class MapViewActivity extends MapActivity {
 	        setProgressBarIndeterminateVisibility(false); 
 		}		
 	}
-	private class GetStopsForRouteTask2 extends AsyncTask<String,Void,ObaResponse> {
+	
+	private class GetStopsForRouteTask extends GetStopsForRouteTaskBase {
 		@Override
-		protected void onPreExecute() {
-	        setProgressBarIndeterminateVisibility(true);
-		}
+		protected ObaResponse doInBackground(String... params) {
+			return ObaApi.getStopsForRoute(params[0]);
+		}	
+	}
+	
+	private class GetStopsForRouteTask2 extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected ObaResponse doInBackground(String... params) {
 			try {
@@ -87,14 +87,7 @@ public class MapViewActivity extends MapActivity {
 				e.printStackTrace();
 				return new ObaResponse("JSON error");
 			}
-		}
-		@Override
-		protected void onPostExecute(ObaResponse result) {
-	    	if (result.getCode() == ObaApi.OBA_OK) {
-	    		setStopOverlay(result.getData().getStops());
-	    	}
-	        setProgressBarIndeterminateVisibility(false); 
-		}		
+		}	
 	}
 	
 	private class GetStopsByLocationInfo {

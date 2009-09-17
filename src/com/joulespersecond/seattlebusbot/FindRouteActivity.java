@@ -128,14 +128,10 @@ public class FindRouteActivity extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.clear_favorites) {
-    		clearFavorites();
+        	RoutesDbAdapter.clearFavorites(this);
     		return true;
     	}
     	return false;
-    }
-    
-    private void clearFavorites() {
-    	RoutesDbAdapter.clearFavorites(this);
     }
 	
 	private void fillFavorites() {

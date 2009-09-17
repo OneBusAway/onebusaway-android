@@ -133,14 +133,10 @@ public class FindStopActivity extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.clear_favorites) {
-    		clearFavorites();
+        	StopsDbAdapter.clearFavorites(this);
     		return true;
     	}
     	return false;
-    }
-    
-    private void clearFavorites() {
-    	StopsDbAdapter.clearFavorites(this);
     }
 	
 	private void fillFavorites() {
@@ -236,7 +232,7 @@ public class FindStopActivity extends ListActivity {
 	private class FindStopTask extends AsyncTask<String,Void,ObaResponse> {
 		@Override
 		protected void onPreExecute() {
-			showSearching();
+	    	setProgressBarIndeterminateVisibility(true);
 		}
 		@Override
 		protected ObaResponse doInBackground(String... params) {
@@ -252,11 +248,11 @@ public class FindStopActivity extends ListActivity {
 	    	else {
 	    		// TODO: Set some form of error message.
 	    	}
-	    	hideSearching();
+			setProgressBarIndeterminateVisibility(false);
 		}
 		@Override
 		protected void onCancelled() {	
-			hideSearching();
+			setProgressBarIndeterminateVisibility(false);
 		}
 	}
 	
@@ -270,13 +266,6 @@ public class FindStopActivity extends ListActivity {
 		}
 		mAsyncTask = new FindStopTask();
 		mAsyncTask.execute(text.toString());
-	}
-	
-	private void showSearching() {
-    	setProgressBarIndeterminateVisibility(true);
-	}
-	private void hideSearching() {
-		setProgressBarIndeterminateVisibility(false);
 	}
 	
 	// We need to provide the API for a location used to disambiguate

@@ -49,6 +49,10 @@ public class FindRouteActivity extends ListActivity {
 			mShortcutMode = true;
 		}
 		
+		if (!mShortcutMode) {
+			setTitle(R.string.find_route_title);
+		}
+		
 		mDbAdapter = new RoutesDbAdapter(this);
 		mDbAdapter.open();
 		
@@ -138,6 +142,10 @@ public class FindRouteActivity extends ListActivity {
 		Cursor c = mDbAdapter.getFavoriteRoutes();
 		startManagingCursor(c);
 		
+		// Make sure the "empty" text is correct.
+		TextView empty = (TextView) findViewById(android.R.id.empty);
+		empty.setText(R.string.find_hint_nofavoritestops);
+		
 		String[] from = new String[] { 
 				DbHelper.KEY_SHORTNAME,
 				DbHelper.KEY_LONGNAME 
@@ -223,6 +231,8 @@ public class FindRouteActivity extends ListActivity {
 		@Override
 		protected void onPostExecute(ObaResponse result) {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
+	    		TextView empty = (TextView) findViewById(android.R.id.empty);
+	    		empty.setText(R.string.find_hint_noresults);
 	    		setListAdapter(new SearchResultsListAdapter(result));
 	    	}
 	    	else {

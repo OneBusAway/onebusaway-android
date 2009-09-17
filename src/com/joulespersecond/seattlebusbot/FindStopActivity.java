@@ -51,6 +51,10 @@ public class FindStopActivity extends ListActivity {
 			mShortcutMode = true;
 		}
 		
+		if (!mShortcutMode) {
+			setTitle(R.string.find_stop_title);
+		}
+		
 		mDbAdapter = new StopsDbAdapter(this);
 		mDbAdapter.open();
 		
@@ -142,6 +146,10 @@ public class FindStopActivity extends ListActivity {
 	private void fillFavorites() {
 		Cursor c = mDbAdapter.getFavoriteStops();
 		startManagingCursor(c);
+		
+		// Make sure the "empty" text is correct.
+		TextView empty = (TextView) findViewById(android.R.id.empty);
+		empty.setText(R.string.find_hint_nofavoritestops);
 		
 		String[] from = new String[] { 
 				DbHelper.KEY_NAME,
@@ -243,6 +251,8 @@ public class FindStopActivity extends ListActivity {
 		@Override
 		protected void onPostExecute(ObaResponse result) {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
+	    		TextView empty = (TextView) findViewById(android.R.id.empty);
+	    		empty.setText(R.string.find_hint_noresults);
 	    		setListAdapter(new SearchResultsListAdapter(result));
 	    	}
 	    	else {

@@ -36,6 +36,7 @@ public class StopInfoActivity extends ListActivity {
 	private StopInfoListAdapter mAdapter;
 	private View mListHeader;
 	private String mStopId;
+	private String mStopName;
 	// Store this as two doubles, since we only store this to pass
 	// it into the ShowOnMap intent, which expects it as doubles anyway.
 	private double mStopLat;
@@ -299,6 +300,7 @@ public class StopInfoActivity extends ListActivity {
 	    		String direction = stop.getDirection();
 	    		mStopLat = stop.getLatitude();
 	    		mStopLon = stop.getLongitude();
+	    		mStopName = name;
 	    		
 	    		TextView nameText = (TextView)mListHeader.findViewById(R.id.name);
 	    		nameText.setText(name);
@@ -310,7 +312,7 @@ public class StopInfoActivity extends ListActivity {
 	    		if (mUpdateDb) {
 	    			// Update the database
 	    			StopsDbAdapter.addStop(StopInfoActivity.this,
-	    					stop.getId(), code, name, direction);
+	    					stop.getId(), code, name, direction, true);
 	    		}
 	    	}
 	    	else {
@@ -402,8 +404,21 @@ public class StopInfoActivity extends ListActivity {
     	// Go to the Route Information Activity
     	StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
     	if (stop != null) {
-    		Intent myIntent = new Intent(this, RouteInfoActivity.class);
-    		myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
+    		ObaArrivalInfo stopInfo = stop.info;
+    		// The TripInfo activity needs:
+    		// 1. Trip ID
+    		// 2. Route Name
+    		// 3. Stop ID
+    		// 4. Departure Time
+    		Intent myIntent = new Intent(this, TripInfoActivity.class);
+    		myIntent.putExtra(TripInfoActivity.TRIP_ID, stopInfo.getTripId());
+    		myIntent.putExtra(TripInfoActivity.ROUTE_ID, stopInfo.getRouteId());
+    		myIntent.putExtra(TripInfoActivity.ROUTE_NAME, stopInfo.getShortName());
+    		myIntent.putExtra(TripInfoActivity.STOP_ID, mStopId);
+       		myIntent.putExtra(TripInfoActivity.STOP_NAME, mStopName);
+    		myIntent.putExtra(TripInfoActivity.DEPARTURE_TIME, 
+    				stopInfo.getScheduledDepartureTime());
+    		myIntent.putExtra(TripInfoActivity.HEADSIGN, stopInfo.getHeadsign());
     		startActivity(myIntent);
     	}
     }

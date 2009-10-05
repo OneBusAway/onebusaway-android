@@ -33,7 +33,11 @@ public class StopsDbAdapter {
      * @param code
      * @param name
      */
-    public void addStop(String stopId, String code, String name, String direction) {
+    public void addStop(String stopId, 
+    		String code, 
+    		String name, 
+    		String direction,
+    		boolean markAsUsed) {
     	final String where = DbHelper.KEY_STOPID + " = '" + stopId + "'";
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
@@ -52,13 +56,20 @@ public class StopsDbAdapter {
        
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
-        	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	if (markAsUsed) {
+        		args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	} 
         	mDb.update(DbHelper.STOPS_TABLE, args, where, null);
         }
         else {
         	// Insert a new entry
         	args.put(DbHelper.KEY_STOPID, stopId);
-        	args.put(DbHelper.KEY_USECOUNT, 1);
+        	if (markAsUsed) {
+            	args.put(DbHelper.KEY_USECOUNT, 1);        		
+        	}
+        	else {
+            	args.put(DbHelper.KEY_USECOUNT, 0);
+        	}
         	mDb.insert(DbHelper.STOPS_TABLE, null, args);
         }
     	// Make sure the cursor is closed if it exists
@@ -67,10 +78,10 @@ public class StopsDbAdapter {
     	}
     }
     public static void addStop(Context ctx, String stopId, String code, 
-    		String name, String direction) {
+    		String name, String direction, boolean markAsUsed) {
     	StopsDbAdapter adapter = new StopsDbAdapter(ctx);
     	adapter.open();
-    	adapter.addStop(stopId, code, name, direction);
+    	adapter.addStop(stopId, code, name, direction, markAsUsed);
     	adapter.close();
     }
     public static void clearFavorites(Context ctx) {

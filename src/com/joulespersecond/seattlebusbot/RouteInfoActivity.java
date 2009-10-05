@@ -123,7 +123,7 @@ public class RouteInfoActivity extends ListActivity {
 	    		agencyText.setText(route.getAgencyName());
 	    		
 	    		RoutesDbAdapter.addRoute(RouteInfoActivity.this, 
-	    				route.getId(), shortName, longName);
+	    				route.getId(), shortName, longName, true);
 	    	}
 	    	else {
 	    		// TODO: Show some error text in the "empty" field.

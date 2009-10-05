@@ -25,7 +25,10 @@ public class RoutesDbAdapter {
         mDbHelper.close();
     }
     
-    public void addRoute(String routeId, String shortName, String longName) {
+    public void addRoute(String routeId, 
+    		String shortName, 
+    		String longName,
+    		boolean markAsUsed) {
     	final String where = DbHelper.KEY_ROUTEID + " = '" + routeId + "'";
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
@@ -43,13 +46,20 @@ public class RoutesDbAdapter {
        
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
-        	args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	if (markAsUsed) {
+        		args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
+        	}
         	mDb.update(DbHelper.ROUTES_TABLE, args, where, null);
         }
         else {
         	// Insert a new entry
         	args.put(DbHelper.KEY_ROUTEID, routeId);
-        	args.put(DbHelper.KEY_USECOUNT, 1);
+        	if (markAsUsed) {
+            	args.put(DbHelper.KEY_USECOUNT, 1);        		
+        	}
+        	else {
+            	args.put(DbHelper.KEY_USECOUNT, 0);
+        	}
         	mDb.insert(DbHelper.ROUTES_TABLE, null, args);
         }
     	// Make sure the cursor is closed if it exists
@@ -58,10 +68,10 @@ public class RoutesDbAdapter {
     	}
     }
     public static void addRoute(Context ctx, String routeId, String shortName, 
-    		String longName) {
+    		String longName, boolean markAsUsed) {
     	RoutesDbAdapter adapter = new RoutesDbAdapter(ctx);
     	adapter.open();
-    	adapter.addRoute(routeId, shortName, longName);
+    	adapter.addRoute(routeId, shortName, longName, markAsUsed);
     	adapter.close();
     }
     public static void clearFavorites(Context ctx) {

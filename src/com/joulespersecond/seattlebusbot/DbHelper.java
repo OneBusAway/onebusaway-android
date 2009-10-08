@@ -23,18 +23,19 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String KEY_USECOUNT = "use_count";
     public static final String KEY_SHORTNAME = "short_name";
     public static final String KEY_LONGNAME = "long_name";
+    
     public static final String KEY_STOP = "stop_id";
     public static final String KEY_ROUTE = "route_id";
+    public static final String KEY_DEPARTURE = "departure";
     public static final String KEY_HEADSIGN = "headsign";
     public static final String KEY_REMINDER = "reminder";
     public static final String KEY_REPEAT = "repeat";
-    public static final String KEY_DEPARTURE = "departure";
 	
     /**
      * Database creation sql statement
      */
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 10;
     
     private static final String CREATE_STOPS = 
         "create table " +
@@ -50,29 +51,40 @@ public class DbHelper extends SQLiteOpenHelper {
     		ROUTES_TABLE 	+ " (" + 
     		KEY_ROUTEID 	+ " varchar primary key, " + 
     		KEY_SHORTNAME 	+ " varchar not null, " +
-    		KEY_LONGNAME 	+ " varchar not null, " +
+    		KEY_LONGNAME 	+ " varchar, " +
     		KEY_USECOUNT 	+ " integer not null" +
     		");";  
-    // NOTE: The trip ID cannot be a primary key, because one 
-    // could see a case where someone wants to be notified
-    // for multiple stops along a single trip (very corner case, but possible).
-    // When accessing this table, the caller needs to be aware that
-    // there may not be rows in the stops and routes tables that correspond
+
+    //
+    // Note, in our case "trips" does not mean the same as what GTFS
+    // means as "trips". A GTFS trip is one complete run of a particular route,
+    // whereas our trip is a user's notion of frequently used routes,
+    // stops, and departure times (I get on a particular bus at a particular stop
+    // at a particular time every day.)
+    //
+    // TripID cannot be a primary key because one can imagine having two
+    // "trips" where the user may want to be reminded of the same
+    // GTFS trip at multiple stops.
+    // 
+    // There may not be rows in the stops and routes tables that correspond
     // to the KEY_STOP and KEY_ROUTE IDs. In this case, it should either
     // ask the server for the info, or use some defaults.
+    //
+    // Departure := The number of minutes from midnight of the scheduled departure
+    // Reminder  := The number of minutes before PredictedDeparture to notify the user.
+    // Repeat    := Value defined in TripDbAdapter
+    //
     private static final String CREATE_TRIPS = 
     	"create table " +
     		TRIPS_TABLE 	+ " (" +
-    		KEY_TRIPID 		+ " varchar not null, " +
+    		KEY_TRIPID		+ " varchar not null, " +
     		KEY_STOP 		+ " varchar not null, " +
     		KEY_ROUTE       + " varchar not null, " +
+    		KEY_DEPARTURE   + " integer not null, " + 
     		KEY_HEADSIGN    + " varchar not null, " +
-    		KEY_DEPARTURE   + " time not null, " + 
     		KEY_NAME        + " varchar not null, " +
-    		// Reminder is the number of minutes before, or null if there is no reminder
-    		KEY_REMINDER 	+ " integer, " + 
-    		// Repeat is a constant defined in TripsDbAdapter, or null if there is no reminder
-    		KEY_REPEAT 		+ " integer" +
+    		KEY_REMINDER 	+ " integer not null, " + 
+    		KEY_REPEAT 		+ " integer not null" +
     		");";
     
     DbHelper(Context context) {

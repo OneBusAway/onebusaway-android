@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:padding="10sp"
+    android:orientation="vertical">
+    <TextView 
+        android:id="@+id/name"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/route_info_name_size"
+        android:textColor="@color/route_info_name_color">
+    </TextView>
+    <TextView
+        android:id="@+id/headsign"
+        android:textSize="@dimen/route_info_direction_size"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content">
+    </TextView> 
+    <TextView
+        android:id="@+id/departure_time"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content">
+    </TextView> 
+    <TextView
+        android:id="@+id/reminder_time"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content">
+    </TextView> 
+    <TextView
+        android:id="@+id/reminder_repeats"
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content">
+    </TextView> 
+</LinearLayout>

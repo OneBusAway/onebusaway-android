@@ -177,20 +177,28 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	if (item.getItemId() == R.id.my_location) {
+    	final int id = item.getItemId();
+    	if (id == R.id.my_location) {
     		setMyLocation();
     		return true;
     	}
-    	else if (item.getItemId() == R.id.find_route) {
+    	else if (id == R.id.find_route) {
     		Intent myIntent = new Intent(this, FindRouteActivity.class);
     		startActivity(myIntent);
     		return true;
     	}
-    	else if (item.getItemId() == R.id.find_stop) {
+    	else if (id == R.id.find_stop) {
     		Intent myIntent = new Intent(this, FindStopActivity.class);
     		startActivity(myIntent);
     		return true;
     	}
+    	/*
+    	else if (id == R.id.view_trips) {
+    		Intent myIntent = new Intent(this, TripListActivity.class);
+    		startActivity(myIntent);
+    		return true;    		
+    	}
+		*/
     	return false;
     }
     @Override

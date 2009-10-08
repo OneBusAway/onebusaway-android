@@ -18,7 +18,7 @@ public class ObaApi {
 	
 	private static final String API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
 	// NOTE: This could be provided by Settings to use different versions of the server.
-	private static final String OBA_URL = "http://api.onebusaway.org/api/where";
+	private static final String OBA_URL = "http://soak-api.onebusaway.org/api/where";
 	
 	private static final double E6 = 1000*1000;
 	

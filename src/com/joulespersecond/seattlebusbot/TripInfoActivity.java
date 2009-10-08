@@ -23,8 +23,6 @@ public class TripInfoActivity extends Activity {
 	public static final String HEADSIGN = ".Headsign";
 	public static final String DEPARTURE_TIME = ".Depart";
 	
-	private static final int TOAST_SAVED_DURATION = 5;
-	
 	private TripsDbAdapter mDbAdapter;
 	private String mTripId;
 	private String mRouteId;
@@ -62,6 +60,10 @@ public class TripInfoActivity extends Activity {
 			return;
 		}
 		
+		// If we have the route name, ensure that it's in the DB.
+		if (mRouteName != null) {
+			RoutesDbAdapter.addRoute(this, mRouteId, mRouteName, null, false);
+		}
 		// TODO: If mRouteName or mStopName are not available,
 		// look them up in the routes and stops table
 		
@@ -128,7 +130,6 @@ public class TripInfoActivity extends Activity {
 		super.onDestroy();
 	}
 	
-
 	private void saveTrip() {
 		// Things that need updating:
 		// Any constant values (trip info not editable by user)
@@ -141,19 +142,19 @@ public class TripInfoActivity extends Activity {
 		final TextView nameView = (TextView)findViewById(R.id.name);
 		
 		final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
-		final int repeats = repeatsView.getSelectedItemPosition();
+		int repeats = selectionToRepeat(repeatsView.getSelectedItemPosition());
 		
 		mDbAdapter.addTrip(mTripId, 
 				mStopId, 
 				mRouteId,
+				mDepartTime,
 				mHeadsign,
-				mDepartTime, 
 				nameView.getText().toString(), 
 				reminder, 
 				repeats);
 		finish();
 		
-		Toast.makeText(this, R.string.trip_info_saved, TOAST_SAVED_DURATION).show();
+		Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
 	}
 	private void discardChanges() {
 		finish();
@@ -183,7 +184,7 @@ public class TripInfoActivity extends Activity {
 			final int repeat = cursor.getInt(TripsDbAdapter.TRIP_COL_REPEAT);
 			
 			reminder.setSelection(reminderToSelection(time));
-			repeats.setSelection(repeat);
+			repeats.setSelection(repeatToSelection(repeat));
 
 			if (name != null) {
 				tripName.setText(name);
@@ -239,5 +240,21 @@ public class TripInfoActivity extends Activity {
 			Log.e(TAG, "Invalid selection: " + selection);
 			return 0;
 		}		
+	}
+	private static int repeatToSelection(int repeat) {
+		switch (repeat) {
+		case TripsDbAdapter.REPEAT_ONETIME:	return 0;
+		case TripsDbAdapter.REPEAT_DAILY:	return 1;
+		case TripsDbAdapter.REPEAT_WEEKDAY:	return 2;
+		}
+		return 0;
+	}
+	private static int selectionToRepeat(int selection) {
+		switch (selection) {
+		case 0:	return TripsDbAdapter.REPEAT_ONETIME;
+		case 1:	return TripsDbAdapter.REPEAT_DAILY;
+		case 2:	return TripsDbAdapter.REPEAT_WEEKDAY;
+		}
+		return TripsDbAdapter.REPEAT_ONETIME;
 	}
 }

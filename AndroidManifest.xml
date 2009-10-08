@@ -20,8 +20,17 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+        <activity android:name=".RouteInfoActivity"
+                  android:label="@string/route_info_title">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
         <activity android:name=".TripInfoActivity"
                   android:label="@string/trip_info_title">
+        </activity>
+        <activity android:name=".TripListActivity"
+                  android:label="@string/trip_list_title">
         </activity>
         <activity android:name=".FindStopActivity"
                   android:label="@string/stop_shortcut">

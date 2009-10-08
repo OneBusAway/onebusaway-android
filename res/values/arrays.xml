@@ -16,6 +16,6 @@
         <item>One-time event</item>
         <item>Daily</item>
         <item>Every weekday (Mon-Fri)</item>
-        <item>Weekly</item>
+        <!-- <item>Weekly</item> --> 
     </string-array>
 </resources>

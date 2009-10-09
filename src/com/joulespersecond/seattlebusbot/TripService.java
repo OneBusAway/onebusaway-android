@@ -34,7 +34,7 @@ import android.os.RemoteException;
 public class TripService extends Service {
 	public static final String TAG = "TripService";
 	
-	private static final int LOOKAHEAD_DURATION = 10*60;
+	//private static final int LOOKAHEAD_DURATION = 10*60;
 	
     @Override
     public void onCreate() {

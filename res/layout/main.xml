@@ -11,6 +11,7 @@
         android:layout_height="fill_parent"
         android:clickable="true"
         android:apiKey="0FyPlkxcKszHw2S3DnCDY4nuttJuSj42oZ4Diqw"
+        android:focusableInTouchMode="true"
     />
 </RelativeLayout>
 

@@ -367,7 +367,7 @@ public class StopInfoActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.show_on_map) {
         	Intent myIntent = new Intent(this, MapViewActivity.class);
-        	myIntent.putExtra(MapViewActivity.STARRED_STOP_ID, mStopId);
+        	myIntent.putExtra(MapViewActivity.FOCUS_STOP_ID, mStopId);
         	myIntent.putExtra(MapViewActivity.GO_TO_LOCATION, false);
         	myIntent.putExtra(MapViewActivity.CENTER_LAT, mStopLat);
         	myIntent.putExtra(MapViewActivity.CENTER_LON, mStopLon);

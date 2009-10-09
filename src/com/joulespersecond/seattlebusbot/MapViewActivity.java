@@ -12,23 +12,28 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 
 public class MapViewActivity extends MapActivity {
 	private static final String TAG = "MapViewActivity";
 	
 	public static final String GO_TO_LOCATION = ".GoToLocation";
-	public static final String STARRED_STOP_ID = ".StarredStopId";
+	public static final String FOCUS_STOP_ID = ".FocusStopId";
 	public static final String CENTER_LAT = ".CenterLat";
 	public static final String CENTER_LON = ".CenterLon";
 	public static final String UPDATE_STOPS_ON_MOVE = ".UpdateStopsOnMove";
@@ -41,7 +46,6 @@ public class MapViewActivity extends MapActivity {
 	private MyLocationOverlay mLocationOverlay;
 	private StopOverlay mStopOverlay;
 	private String mRouteId;
-	private String mStarredStopId;
 	// This will cause the StopOverlay to refresh with the center moves
 	private boolean mUpdateStopsOnMove = false;
 	
@@ -140,7 +144,7 @@ public class MapViewActivity extends MapActivity {
     		boolean routeMode = isRouteMode();
     		String stopData = bundle.getString(STOP_DATA);
     		
-    		mStarredStopId = bundle.getString(STARRED_STOP_ID);
+    		//String focusID = bundle.getString(FOCUS_STOP_ID);
     		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, !routeMode);
     	
     		double centerLat = bundle.getDouble(CENTER_LAT);
@@ -308,6 +312,9 @@ public class MapViewActivity extends MapActivity {
 			setMyLocation(point);
 		}
     }
+    
+    final Handler mStopChangedHandler = new Handler();
+
     private void setStopOverlay(ObaArray stops) {
     	List<Overlay> mapOverlays = mMapView.getOverlays();
 		// If there is an existing StopOverlay, remove it.
@@ -315,7 +322,23 @@ public class MapViewActivity extends MapActivity {
         	mapOverlays.remove(mStopOverlay);
     	}
 
-        mStopOverlay = new StopOverlay(stops, this, mStarredStopId);
+        mStopOverlay = new StopOverlay(stops, this);
+        mStopOverlay.setOnFocusChangeListener(new OnFocusChangeListener() {
+			@SuppressWarnings("unchecked")
+			public void onFocusChanged(ItemizedOverlay overlay,
+					final OverlayItem newFocus) {
+			 	mStopChangedHandler.post(new Runnable() {
+			    	public void run() {
+			    		Toast toast = Toast.makeText(MapViewActivity.this, 
+			    				newFocus.getTitle(),
+			    				Toast.LENGTH_LONG);
+			    		toast.setGravity(Gravity.TOP, 0, 0);
+			    		toast.show();
+			    	}
+			 	});	
+			}
+        	
+        });
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }

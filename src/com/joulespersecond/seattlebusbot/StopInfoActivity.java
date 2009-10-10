@@ -316,7 +316,8 @@ public class StopInfoActivity extends ListActivity {
 	    		}
 	    	}
 	    	else {
-	    		// TODO: Set some form of error message.
+	    		TextView empty = (TextView)findViewById(android.R.id.empty);
+	    		empty.setText(R.string.generic_comm_error);
 	    	}
 	    	dismissLoadingDialog();
 		}

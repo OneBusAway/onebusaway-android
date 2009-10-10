@@ -109,6 +109,8 @@ public class RouteInfoActivity extends ListActivity {
 			ObaResponse stops = result.stopsForRoute;
 			mStopsResponse = result.stopsForRouteString;
 			
+			TextView empty = (TextView)findViewById(android.R.id.empty);
+			
 	    	if (routeInfo.getCode() == ObaApi.OBA_OK) {
 	    		ObaRoute route = routeInfo.getData().getThisRoute();
 	    		TextView shortNameText = (TextView)mListHeader.findViewById(R.id.short_name);
@@ -126,13 +128,13 @@ public class RouteInfoActivity extends ListActivity {
 	    				route.getId(), shortName, longName, true);
 	    	}
 	    	else {
-	    		// TODO: Show some error text in the "empty" field.
+	    		empty.setText(R.string.generic_comm_error);
 	    	}
 	    	if (stops.getCode() == ObaApi.OBA_OK) {
 	    		mAdapter.setData(stops);	    		
 	    	} 
 	    	else {
-	    		// TODO: Show some error text 
+	    		empty.setText(R.string.generic_comm_error);
 	    	}
 	    	dismissLoadingDialog();
 		}

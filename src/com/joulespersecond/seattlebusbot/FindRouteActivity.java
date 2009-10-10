@@ -235,13 +235,13 @@ public class FindRouteActivity extends ListActivity {
 		}
 		@Override
 		protected void onPostExecute(ObaResponse result) {
+    		TextView empty = (TextView) findViewById(android.R.id.empty);
 	    	if (result.getCode() == ObaApi.OBA_OK) {
-	    		TextView empty = (TextView) findViewById(android.R.id.empty);
 	    		empty.setText(R.string.find_hint_noresults);
 	    		setListAdapter(new SearchResultsListAdapter(result));
 	    	}
 	    	else {
-	    		// TODO: Set some form of error message.
+	    		empty.setText(R.string.generic_comm_error);
 	    	}
 	    	hideSearching();
 		}

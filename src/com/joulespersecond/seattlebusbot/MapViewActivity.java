@@ -12,12 +12,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -28,6 +28,7 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
+import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
 	private static final String TAG = "MapViewActivity";
@@ -42,7 +43,7 @@ public class MapViewActivity extends MapActivity {
 	// If this is specified, it is a JSON string that corresponds to a ObaResponse
 	public static final String STOP_DATA = ".StopData";
 	
-	private MapView mMapView;
+	public MapView mMapView;
 	private MyLocationOverlay mLocationOverlay;
 	private StopOverlay mStopOverlay;
 	private String mRouteId;
@@ -314,31 +315,54 @@ public class MapViewActivity extends MapActivity {
     }
     
     final Handler mStopChangedHandler = new Handler();
+    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
+		@SuppressWarnings("unchecked")
+		public void onFocusChanged(ItemizedOverlay overlay,
+				final OverlayItem newFocus) {
+		 	mStopChangedHandler.post(new Runnable() {
+		    	public void run() {
+		    		final View popup = findViewById(R.id.map_popup);
+		    		if (newFocus == null) {
+		    			popup.setVisibility(View.GONE);
+		    			return;
+		    		}
+		    		
+		    		final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
+		    		final ObaStop stop = item.getStop();
+		    		
+		    		final TextView name = (TextView)popup.findViewById(R.id.stop_name);
+		    		name.setText(stop.getName());
+		    		
+		    		final TextView direction = (TextView)popup.findViewById(R.id.direction);
+		    		direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
 
+		    		// Right now the popup is always at the top of the screen.
+		    		popup.setVisibility(View.VISIBLE);
+		    	}    
+		 	});
+		}
+	};
+    
     private void setStopOverlay(ObaArray stops) {
     	List<Overlay> mapOverlays = mMapView.getOverlays();
 		// If there is an existing StopOverlay, remove it.
+		final View popup = findViewById(R.id.map_popup);
+		popup.setVisibility(View.GONE);
+		String focused = null;
+		
     	if (mStopOverlay != null) {
+    		StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
+    		if (item != null) {
+    			focused = item.getStop().getId();
+    		}
         	mapOverlays.remove(mStopOverlay);
     	}
 
         mStopOverlay = new StopOverlay(stops, this);
-        mStopOverlay.setOnFocusChangeListener(new OnFocusChangeListener() {
-			@SuppressWarnings("unchecked")
-			public void onFocusChanged(ItemizedOverlay overlay,
-					final OverlayItem newFocus) {
-			 	mStopChangedHandler.post(new Runnable() {
-			    	public void run() {
-			    		Toast toast = Toast.makeText(MapViewActivity.this, 
-			    				newFocus.getTitle(),
-			    				Toast.LENGTH_LONG);
-			    		toast.setGravity(Gravity.TOP, 0, 0);
-			    		toast.show();
-			    	}
-			 	});	
-			}
-        	
-        });
+        mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
+        if (focused != null) {
+        	mStopOverlay.setFocusById(focused);
+        }
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }

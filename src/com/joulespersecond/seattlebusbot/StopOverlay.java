@@ -41,6 +41,18 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 		}		
 	}
 	
+	public class StopOverlayItem extends OverlayItem {
+		private ObaStop mStop;
+
+		public StopOverlayItem(ObaStop stop) {
+			super(stop.getLocation(), stop.getName(), "");
+			mStop = stop;
+		}
+		public ObaStop getStop() {
+			return mStop;
+		}
+	}
+	
 	public StopOverlay(ObaArray stops, 
 			Activity activity) {
 		super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_n)));
@@ -52,9 +64,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	protected OverlayItem 
 	createItem(int i) {
 		final ObaStop stop = mStops.getStop(i);
-		final OverlayItem item = new OverlayItem(stop.getLocation(), 
-				stop.getName(),
-				stop.getName());
+		final OverlayItem item = new StopOverlayItem(stop);
 		int res = getResourceIdForDirection(stop.getDirection());
 		final Drawable marker = mActivity.getResources().getDrawable(res);
 		item.setMarker(boundCenterBottom(marker));
@@ -66,19 +76,30 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	}
 	@Override
 	public boolean onTrackballEvent(MotionEvent event, MapView view) {
-		// TODO: Detect scrolls that change to DPad keys.
-		/*
-		final int action = event.getAction();
-		Log.d(TAG, "Trackball event: " + action);
-		if (action == MotionEvent.ACTION_DOWN) {
-			Log.d(TAG, "Down event");
-			return true;
+		final float xDiff = event.getX();
+		final float yDiff = event.getY();
+		OverlayItem next = null;
+		
+		// Up
+		if (yDiff <= -1) {
+			next = findNext(getFocus(), true, true);
 		}
-		else if (action == MotionEvent.ACTION_UP) {
-			Log.d(TAG, "Up event");
-			return true;
+		// Down
+		else if (yDiff >= 1) {
+			next = findNext(getFocus(), true, false);
 		}
-		*/
+		// Right
+		else if (xDiff >= 1) {
+			next = findNext(getFocus(), false, true);
+		}
+		// Left
+		else if (xDiff <= -1) {
+			next = findNext(getFocus(), false, false);
+		}
+		if (next != null) {
+			setFocus(next);
+			view.postInvalidate();
+		}
 		return true;
 	}
 	@Override
@@ -106,6 +127,17 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 		}
 		return true;
 	}
+	void setFocusById(String id) {
+		final int size = size();
+		for (int i=0; i < size; ++i) {
+			StopOverlayItem item = (StopOverlayItem)getItem(i);
+			if (id.equals(item.getStop().getId())) {
+				setFocus(item);
+				break;
+			}
+		}
+	}
+	
 	/*
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event, MapView view) {

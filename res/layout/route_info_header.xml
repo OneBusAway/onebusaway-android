@@ -1,37 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/HeaderGroup"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/header_padding"
-    android:paddingBottom="@dimen/header_padding">
-    <TableRow>
-        <TextView
-            android:id="@+id/short_name"
-            android:layout_width="fill_parent" 
-            android:layout_height="wrap_content"
-            android:layout_column="0"
-            android:textColor="@color/header_line1_color"
-            android:textSize="@dimen/stop_info_route_size"
-            android:padding="5sp"
-            android:singleLine="false">
-        </TextView>
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_column="1">
+    android:layout_height="wrap_content">
+    <TableLayout 
+        style="@style/HeaderItem"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TableRow>
             <TextView
-                android:id="@+id/long_name"
+                android:id="@+id/short_name"
+                style="@style/RouteInfoShortName"
                 android:layout_width="fill_parent" 
                 android:layout_height="wrap_content"
-                android:textColor="@color/route_info_name_color"
-                android:textSize="@dimen/header_line1_size"
-                android:textStyle="bold">
+                android:layout_column="0"
+                android:singleLine="false">
             </TextView>
-            <TextView
-                android:id="@+id/agency"
-                android:layout_width="fill_parent" 
-                android:layout_height="wrap_content">
-            </TextView>
-        </LinearLayout>
-    </TableRow>
-</TableLayout>
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_column="1">
+                <TextView
+                    android:id="@+id/long_name"
+                    style="@style/RouteInfoLongName"
+                    android:layout_width="fill_parent" 
+                    android:layout_height="wrap_content">
+                </TextView>
+                <TextView
+                    android:id="@+id/agency"
+                    style="@style/RouteInfoAgency"
+                    android:layout_width="fill_parent" 
+                    android:layout_height="wrap_content">
+                </TextView>
+            </LinearLayout>
+        </TableRow>
+    </TableLayout>   
+</LinearLayout>
+

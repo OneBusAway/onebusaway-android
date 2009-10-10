@@ -5,9 +5,6 @@
          android:layout_height="fill_parent">
      <TextView  
         android:id="@+id/stop_name" 
-        android:textSize="@dimen/header_line1_size"
-        android:textStyle="bold"
-        android:textColor="@color/header_line1_color"
         android:layout_width="fill_parent" 
         android:layout_height="wrap_content">
     </TextView>
@@ -19,27 +16,23 @@
         <TextView 
             android:text="@string/trip_info_route" 
             android:id="@+id/route_name" 
-            android:textSize="16sp" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content">
         </TextView>
         <TextView
             android:text=" - "            
-            android:textSize="16sp" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content">
         </TextView> 
         <TextView 
             android:text="Headsign"
             android:id="@+id/headsign"
-            android:textSize="16sp" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content">
         </TextView>
     </LinearLayout>
     <TextView 
-        android:text="@string/trip_info_depart"
-        android:textSize="16sp" 
+        android:text="@string/trip_info_depart" 
         android:id="@+id/departure_time" 
         android:layout_width="wrap_content" 
         android:layout_height="wrap_content">
@@ -48,26 +41,19 @@
     <TextView 
         android:text="@string/trip_info_name" 
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textColor="@color/header_line1_color"
-        android:paddingTop="15sp">
+        android:layout_height="wrap_content">
     </TextView>
     <EditText 
         android:hint="@string/trip_info_name_hint" 
         android:id="@+id/name" 
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content"
-        android:paddingTop="5sp">
+        android:layout_height="wrap_content">
     </EditText>
 
     <TextView 
         android:text="@string/trip_info_reminder_header" 
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textColor="@color/header_line1_color"
-        android:paddingTop="5sp">
+        android:layout_height="wrap_content">
     </TextView>
     <Spinner 
         android:id="@+id/trip_info_reminder_time" 
@@ -77,10 +63,7 @@
     
     <TextView android:text="@string/trip_info_reminder_repeat" 
         android:layout_width="fill_parent" 
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textColor="@color/header_line1_color"
-        android:paddingTop="5sp">
+        android:layout_height="wrap_content">
     </TextView>
     <Spinner 
         android:id="@+id/trip_info_reminder_repeats" 

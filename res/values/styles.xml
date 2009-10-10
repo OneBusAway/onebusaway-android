@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Themes -->
+    <style name="BusBotTheme" parent="@android:style/Theme.Light">
+    </style>
+    
+    <!--  Styles -->
+    <style name="HeaderGroup">
+        <item name="android:padding">5dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+    <style name="HeaderItem">
+        <item name="android:background">@drawable/header_bg</item>
+        <item name="android:padding">4dp</item>
+    </style>
+    <style name="HeaderList">
+        <item name="android:headerDividersEnabled">false</item>
+    </style>
+    <style name="ListItem">
+        <item name="android:padding">10sp</item>
+    </style>
+    <style name="HeaderText">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+    <style name="Header2Text">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:gravity">center_horizontal</item>
+    </style>
+    <style name="Line1Text">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="Line2Text">
+    </style>
+    
+    <!-- StopInfo -->
+    <style name="StopInfoRoute">
+        <item name="android:textSize">36sp</item>
+        <item name="android:paddingLeft">5dp</item>
+    </style>
+    <style name="StopInfoDestination">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="StopInfoTime">
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="StopInfoStatus">
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="StopInfoEta">
+        <item name="android:textSize">36sp</item>
+    </style>
+    
+    <!--  RouteInfo -->
+    <style name="RouteInfoShortName">
+        <item name="android:textSize">36sp</item>
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:paddingRight">5dp</item>
+    </style>
+    <style name="RouteInfoLongName">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="RouteInfoAgency">
+        <item name="android:textColor">#ffffff</item>
+    </style>
+</resources>

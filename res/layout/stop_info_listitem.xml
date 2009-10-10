@@ -2,47 +2,45 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:stretchColumns="1"
-    android:shrinkColumns="2">
+    android:stretchColumns="2"
+    android:shrinkColumns="1">
     <TableRow>
        <TextView
             android:layout_column="0"
             android:id="@+id/route"
-            android:layout_width="80sp"
-            android:textSize="@dimen/stop_info_route_size"
-            android:textColor="@color/stop_info_route_color">
+            android:layout_width="90sp"
+            android:gravity="center"
+            style="@style/StopInfoRoute">
         </TextView>
         <LinearLayout
             android:orientation="vertical"
-            android:layout_column="1">
+            android:layout_column="1"
+            android:gravity="left">
             <TextView
                  android:id="@+id/destination"
+                 style="@style/StopInfoDestination"
                  android:layout_width="wrap_content" 
-                 android:layout_height="wrap_content"
-                 android:textColor="@color/stop_info_info_color"
-                 android:textStyle="bold">
+                 android:layout_height="wrap_content">
             </TextView>
             <TextView
                  android:id="@+id/time"
+                 style="@style/StopInfoTime"
                  android:layout_width="wrap_content" 
-                 android:layout_height="wrap_content"
-                 android:textSize="@dimen/stop_info_subinfo_size">
+                 android:layout_height="wrap_content">
             </TextView>     
             <TextView
                  android:id="@+id/status"
+                 style="@style/StopInfoStatus"
                  android:layout_width="wrap_content" 
-                 android:layout_height="wrap_content"
-                 android:textSize="@dimen/stop_info_subinfo_size">
+                 android:layout_height="wrap_content">
             </TextView>
         </LinearLayout>
         <TextView
             android:layout_column="2"
             android:id="@+id/eta"
-            android:minWidth="60sp"
+            style="@style/StopInfoEta"
             android:maxLines="1"
             android:gravity="right"
-            android:textSize="@dimen/stop_info_eta_size"
-            android:textColor="@color/stop_info_eta_color"
             android:paddingRight="10sp">
         </TextView>
     </TableRow>

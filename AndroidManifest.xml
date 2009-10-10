@@ -6,6 +6,7 @@
     <application 
         android:icon="@drawable/icon" 
         android:label="@string/app_name"
+        android:theme="@style/BusBotTheme"
         android:debuggable="true">
         <activity android:name=".MapViewActivity"
                   android:label="@string/app_name">

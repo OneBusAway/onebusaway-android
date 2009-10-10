@@ -190,6 +190,10 @@ public class RouteInfoActivity extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	// Go to the Stop Information Activity
     	ObaStop stop = (ObaStop)getListView().getItemAtPosition(position);
+    	if (stop == null) {
+    		// Header item
+    		return;
+    	}
 		Intent myIntent = new Intent(this, StopInfoActivity.class);
 		myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
 		startActivity(myIntent);

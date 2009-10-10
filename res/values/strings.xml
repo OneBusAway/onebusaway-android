@@ -3,7 +3,7 @@
     <string name="app_name">SeattleBusBot</string>
     
     <!-- Generic -->
-    <string name="generic_comm_error">Sorry, there was a communication error and we can't show this information. Try again and it might work.</string>
+    <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
     
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>

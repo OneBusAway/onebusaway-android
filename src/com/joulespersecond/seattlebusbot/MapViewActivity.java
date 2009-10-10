@@ -48,6 +48,7 @@ public class MapViewActivity extends MapActivity {
 	private MyLocationOverlay mLocationOverlay;
 	public StopOverlay mStopOverlay;
 	private String mRouteId;
+	private String mFocusStopId;
 	// This will cause the StopOverlay to refresh with the center moves
 	private boolean mUpdateStopsOnMove = false;
 	
@@ -82,7 +83,7 @@ public class MapViewActivity extends MapActivity {
 		}	
 	}
 	
-	private class GetStopsForRouteTask2 extends AsyncTask<String,Void,ObaResponse> {
+	private class GetStopsForRouteTask2 extends GetStopsForRouteTaskBase {
 		@Override
 		protected ObaResponse doInBackground(String... params) {
 			try {
@@ -150,7 +151,7 @@ public class MapViewActivity extends MapActivity {
     		boolean routeMode = isRouteMode();
     		String stopData = bundle.getString(STOP_DATA);
     		
-    		//String focusID = bundle.getString(FOCUS_STOP_ID);
+    		mFocusStopId = bundle.getString(FOCUS_STOP_ID);
     		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, !routeMode);
     	
     		double centerLat = bundle.getDouble(CENTER_LAT);
@@ -375,6 +376,11 @@ public class MapViewActivity extends MapActivity {
         mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
         if (focused != null) {
         	mStopOverlay.setFocusById(focused);
+        }
+        else if (mFocusStopId != null) {
+        	mStopOverlay.setFocusById(mFocusStopId);
+        	// This is a one-shot thing, and it only happens from an intent.
+        	mFocusStopId = null;
         }
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();

@@ -1,7 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -150,9 +149,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 		final OverlayItem item = getItem(index);
 		if (item.equals(getFocus())) {
 			ObaStop stop = mStops.getStop(index);
-			Intent myIntent = new Intent(mActivity, StopInfoActivity.class);
-			myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
-			mActivity.startActivity(myIntent);			
+			MapViewActivity.goToStop(mActivity, stop);
 		}
 		else {
 			setFocus(getItem(index));

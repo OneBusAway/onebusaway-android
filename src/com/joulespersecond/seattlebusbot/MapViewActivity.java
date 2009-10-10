@@ -7,6 +7,7 @@ import java.util.TimerTask;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -45,7 +46,7 @@ public class MapViewActivity extends MapActivity {
 	
 	public MapView mMapView;
 	private MyLocationOverlay mLocationOverlay;
-	private StopOverlay mStopOverlay;
+	public StopOverlay mStopOverlay;
 	private String mRouteId;
 	// This will cause the StopOverlay to refresh with the center moves
 	private boolean mUpdateStopsOnMove = false;
@@ -138,6 +139,10 @@ public class MapViewActivity extends MapActivity {
         mLocationOverlay = new MyLocationOverlay(this, mMapView);
     	List<Overlay> mapOverlays = mMapView.getOverlays();
     	mapOverlays.add(mLocationOverlay);
+    	
+    	// Initialize the links
+    	TextView arrival = (TextView)findViewById(R.id.show_arrival_info);
+    	arrival.setOnClickListener(mOnShowArrivals);
     	
     	Bundle bundle = getIntent().getExtras();
     	if (bundle != null) {
@@ -342,6 +347,14 @@ public class MapViewActivity extends MapActivity {
 		 	});
 		}
 	};
+	final View.OnClickListener mOnShowArrivals = new View.OnClickListener() {
+		public void onClick(View v) {
+			StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
+			if (item != null) {
+				goToStop(MapViewActivity.this, item.getStop());
+			}
+		}
+	};
     
     private void setStopOverlay(ObaArray stops) {
     	List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -366,6 +379,13 @@ public class MapViewActivity extends MapActivity {
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }
+    
+    public static void goToStop(Context context, ObaStop stop) {
+    	Intent myIntent = new Intent(context, StopInfoActivity.class);
+    	myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
+    	context.startActivity(myIntent);	    	
+    }
+
     private boolean isRouteMode() {
     	return mRouteId != null;
     }

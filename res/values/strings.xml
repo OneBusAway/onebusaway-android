@@ -7,6 +7,7 @@
     <string name="main_option_findroute">Find Route</string>
     <string name="main_option_findstop">Find Stop</string>
     <string name="main_option_viewtrips">View Trips</string>
+    <string name="main_arrival_info"><u>Show arrivals</u></string>
     
     <!--  Stop Info -->
     <string name="stop_info_title">Stop Information</string>

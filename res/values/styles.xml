@@ -35,6 +35,9 @@
     </style>
     <style name="Line2Text">
     </style>
+    <style name="LinkText">
+        <item name="android:textColor">#0000ff</item>
+    </style>
     
     <!-- StopInfo -->
     <style name="StopInfoRoute">

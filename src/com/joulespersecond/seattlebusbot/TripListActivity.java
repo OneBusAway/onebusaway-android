@@ -30,7 +30,7 @@ public class TripListActivity extends ListActivity {
 				DbHelper.KEY_HEADSIGN,
 				DbHelper.KEY_DEPARTURE,
 				DbHelper.KEY_REMINDER,
-				DbHelper.KEY_REPEAT
+				DbHelper.KEY_DAYS
 		};
 		int[] to = new int[] {
 				R.id.name,

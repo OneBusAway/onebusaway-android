@@ -30,6 +30,7 @@
     <string name="stop_info_option_showonmap">Show On Map</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_nodata">No information for this stop.</string>
+    <string name="stop_info_item_options_title">Bus options</string>
     
     <!-- Route Info  -->
     <string name="route_info_title">Route Information</string>
@@ -50,18 +51,19 @@
     <string name="stop_shortcut">Bus stop</string>
     
     <!--  Trip info -->
-    <string name="trip_info_title">Trip Information</string>
+    <string name="trip_info_title">Trip Reminder</string>
     <string name="trip_info_name">Trip name</string>
     <string name="trip_info_name_hint">Add a trip name</string>
     <string name="trip_info_route">Route %s</string>
     <string name="trip_info_depart">Departs at %s</string>
     <string name="trip_info_reminder_header">Reminder</string>
-    <string name="trip_info_reminder_repeat">Repeats every</string>
+    <string name="trip_info_reminder_repeat">Repeats</string>
     <string name="trip_info_save">Save</string>
     <string name="trip_info_cancel">Discard changes</string>
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
     <string name="trip_info_deleted">Trip deleted.</string>
+    <string name="trip_info_dismiss">Cancel</string>
     
     <!--  Trip list -->
     <string name="trip_list_title">Trips</string>

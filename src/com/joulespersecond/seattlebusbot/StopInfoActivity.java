@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -402,26 +403,60 @@ public class StopInfoActivity extends ListActivity {
     }
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-    	// Go to the Route Information Activity
-    	StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
-    	if (stop != null) {
-    		ObaArrivalInfo stopInfo = stop.info;
-    		// The TripInfo activity needs:
-    		// 1. Trip ID
-    		// 2. Route Name
-    		// 3. Stop ID
-    		// 4. Departure Time
-    		Intent myIntent = new Intent(this, TripInfoActivity.class);
-    		myIntent.putExtra(TripInfoActivity.TRIP_ID, stopInfo.getTripId());
-    		myIntent.putExtra(TripInfoActivity.ROUTE_ID, stopInfo.getRouteId());
-    		myIntent.putExtra(TripInfoActivity.ROUTE_NAME, stopInfo.getShortName());
-    		myIntent.putExtra(TripInfoActivity.STOP_ID, mStopId);
-       		myIntent.putExtra(TripInfoActivity.STOP_NAME, mStopName);
-    		myIntent.putExtra(TripInfoActivity.DEPARTURE_TIME, 
-    				stopInfo.getScheduledDepartureTime());
-    		myIntent.putExtra(TripInfoActivity.HEADSIGN, stopInfo.getHeadsign());
-    		startActivity(myIntent);
+    	final StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
+    	if (stop == null) {
+    		return;
     	}
+    	goToRoute(stop);
+    	/*
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	builder.setTitle(R.string.stop_info_item_options_title);
+    	builder.setItems(R.array.stop_item_options, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+				case 0:
+					goToTrip(stop);
+					break;
+				case 1:
+					goToRoute(stop);
+					break;
+				case 2:
+					filterByRoute(stop);
+					break;
+				}
+			}
+    	});
+    	AlertDialog dialog = builder.create();
+    	dialog.setOwnerActivity(this);
+    	dialog.show();
+    	*/
+    }
+    
+    private void goToTrip(StopInfo stop) {
+		ObaArrivalInfo stopInfo = stop.info;
+		// The TripInfo activity needs:
+		// 1. Trip ID
+		// 2. Route Name
+		// 3. Stop ID
+		// 4. Departure Time
+		Intent myIntent = new Intent(this, TripInfoActivity.class);
+		myIntent.putExtra(TripInfoActivity.TRIP_ID, stopInfo.getTripId());
+		myIntent.putExtra(TripInfoActivity.ROUTE_ID, stopInfo.getRouteId());
+		myIntent.putExtra(TripInfoActivity.ROUTE_NAME, stopInfo.getShortName());
+		myIntent.putExtra(TripInfoActivity.STOP_ID, mStopId);
+   		myIntent.putExtra(TripInfoActivity.STOP_NAME, mStopName);
+		myIntent.putExtra(TripInfoActivity.DEPARTURE_TIME, 
+				stopInfo.getScheduledDepartureTime());
+		myIntent.putExtra(TripInfoActivity.HEADSIGN, stopInfo.getHeadsign());
+		startActivity(myIntent);    	
+    }
+    private void goToRoute(StopInfo stop) {
+    	Intent myIntent = new Intent(this, RouteInfoActivity.class);
+    	myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
+    	startActivity(myIntent);
+    }
+    private void filterByRoute(StopInfo stop) {
+    	
     }
     
     // Similar to the annoying bit in MapViewActivity, the timer is run

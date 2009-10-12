@@ -26,10 +26,15 @@ public class TripsDbAdapter {
         mDbHelper.close();
     }
    
-    public static final int REPEAT_ONETIME = 0; // necessary?
-    public static final int REPEAT_DAILY = -1;
-    public static final int REPEAT_WEEKDAY = -2;
-    // Positive values are days of the week (starting at 1)
+    public static final int DAY_SUN = 0x1;
+    public static final int DAY_MON = 0x2;
+    public static final int DAY_TUE = 0x4;
+    public static final int DAY_WED	= 0x8;
+    public static final int DAY_THU = 0x10;
+    public static final int DAY_FRI = 0x20;
+    public static final int DAY_SAT = 0x40;
+    public static final int DAY_WEEKDAY = DAY_MON|DAY_TUE|DAY_WED|DAY_THU|DAY_FRI;
+    public static final int DAY_ALL = DAY_WEEKDAY|DAY_SUN|DAY_SAT;
    
 	private static final String WHERE = String.format("%s=? and %s=?", 
 			DbHelper.KEY_TRIPID,
@@ -42,7 +47,7 @@ public class TripsDbAdapter {
 			DbHelper.KEY_HEADSIGN,
 			DbHelper.KEY_NAME, 
 			DbHelper.KEY_REMINDER, 
-			DbHelper.KEY_REPEAT
+			DbHelper.KEY_DAYS
  	};
 	
 	public static final int TRIP_COL_TRIPID = 0;
@@ -52,7 +57,7 @@ public class TripsDbAdapter {
 	public static final int TRIP_COL_HEADSIGN = 4;
 	public static final int TRIP_COL_NAME = 5;
 	public static final int TRIP_COL_REMINDER = 6;
-	public static final int TRIP_COL_REPEAT = 7;	
+	public static final int TRIP_COL_DAYS = 7;	
 	
     public Cursor getTrip(String tripId, String stopId) {
         Cursor cursor =
@@ -94,7 +99,7 @@ public class TripsDbAdapter {
     		String headsign,
     		String name,
     		int reminder,
-    		int repeat) {
+    		int days) {
     	final String[] whereArgs = new String[] { tripId, stopId };
     	
     	Cursor cursor =
@@ -112,7 +117,7 @@ public class TripsDbAdapter {
     	args.put(DbHelper.KEY_DEPARTURE, convertTimeToDB(departure));
     	args.put(DbHelper.KEY_NAME, name);
     	args.put(DbHelper.KEY_REMINDER, reminder);
-    	args.put(DbHelper.KEY_REPEAT, repeat);
+    	args.put(DbHelper.KEY_DAYS, days);
 
     	if (cursor != null && cursor.getCount() > 0) {
     		// update

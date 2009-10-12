@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="stop_item_options">
+        <item>Set a reminder</item>
+        <item>Show route information</item>
+        <item>Show only this route</item>
+    </string-array>
     <string-array name="reminder_time">
         <item>No reminder</item>
         <item>1 minute</item>
@@ -12,10 +17,13 @@
         <item>45 minutes</item>
         <item>1 hour before</item>
     </string-array>
-    <string-array name="reminder_repeat">
-        <item>One-time event</item>
-        <item>Daily</item>
-        <item>Every weekday (Mon-Fri)</item>
-        <!-- <item>Weekly</item> --> 
+    <string-array name="reminder_days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
     </string-array>
 </resources>

@@ -29,13 +29,13 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String KEY_DEPARTURE = "departure";
     public static final String KEY_HEADSIGN = "headsign";
     public static final String KEY_REMINDER = "reminder";
-    public static final String KEY_REPEAT = "repeat";
+    public static final String KEY_DAYS = "days";
 	
     /**
      * Database creation sql statement
      */
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
-    private static final int DATABASE_VERSION = 10;
+    private static final int DATABASE_VERSION = 11;
     
     private static final String CREATE_STOPS = 
         "create table " +
@@ -72,7 +72,7 @@ public class DbHelper extends SQLiteOpenHelper {
     //
     // Departure := The number of minutes from midnight of the scheduled departure
     // Reminder  := The number of minutes before PredictedDeparture to notify the user.
-    // Repeat    := Value defined in TripDbAdapter
+    // Days      := Bitmask value defined in TripDbAdapter
     //
     private static final String CREATE_TRIPS = 
     	"create table " +
@@ -84,7 +84,7 @@ public class DbHelper extends SQLiteOpenHelper {
     		KEY_HEADSIGN    + " varchar not null, " +
     		KEY_NAME        + " varchar not null, " +
     		KEY_REMINDER 	+ " integer not null, " + 
-    		KEY_REPEAT 		+ " integer not null" +
+    		KEY_DAYS 		+ " integer not null" +
     		");";
     
     DbHelper(Context context) {

@@ -71,4 +71,10 @@
     <style name="RouteInfoAgency">
         <item name="android:textColor">#ffffff</item>
     </style>
+    
+    <!--  TripInfo -->
+    <style name="TripInfoOptionHead">
+        <item name="android:paddingTop">8sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

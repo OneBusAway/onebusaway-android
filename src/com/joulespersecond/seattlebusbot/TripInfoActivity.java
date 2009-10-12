@@ -1,6 +1,9 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -8,12 +11,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class TripInfoActivity extends Activity {
 	private static final String TAG = "TripInfoActivity";
+	
+	private static final int REMINDER_DAYS_DIALOG = 1;
 	
 	public static final String TRIP_ID = ".TripId";
 	public static final String ROUTE_ID = ".RouteId";
@@ -31,6 +37,7 @@ public class TripInfoActivity extends Activity {
 	private String mStopName;
 	private String mHeadsign;
 	private long mDepartTime;
+	private int mReminderDays = 0;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -67,9 +74,11 @@ public class TripInfoActivity extends Activity {
 		// TODO: If mRouteName or mStopName are not available,
 		// look them up in the routes and stops table
 		
-		// Populate the spinners: 
-		setSpinner(R.id.trip_info_reminder_time, R.array.reminder_time);
-		setSpinner(R.id.trip_info_reminder_repeats, R.array.reminder_repeat);
+	    Spinner s = (Spinner) findViewById(R.id.trip_info_reminder_time);
+	    ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
+	            this, R.array.reminder_time, android.R.layout.simple_spinner_item);
+	    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	    s.setAdapter(adapter);
 		
 		// Populate from bundle:
 		//  stop name
@@ -99,6 +108,13 @@ public class TripInfoActivity extends Activity {
 		
 		final boolean newTrip = populateFromDB();
 		
+		final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+		repeats.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				showDialog(REMINDER_DAYS_DIALOG);
+			}
+		});
+		
 		// Listen to the buttons:
 		final Button save = (Button)findViewById(R.id.trip_info_save);
 		save.setOnClickListener(new View.OnClickListener() {
@@ -109,7 +125,7 @@ public class TripInfoActivity extends Activity {
 		final Button discard = (Button)findViewById(R.id.trip_info_cancel);
 		discard.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				discardChanges();
+				finish();
 			}
 		});	
 
@@ -122,6 +138,8 @@ public class TripInfoActivity extends Activity {
 		if (newTrip) {
 			// If this is a new trip, then hide the 'delete' button
 			delete.setVisibility(View.GONE);
+			View v = findViewById(R.id.trip_info_buttons);
+			v.requestLayout();
 		}
 	}
 	@Override
@@ -138,11 +156,10 @@ public class TripInfoActivity extends Activity {
 		// Repeats
 		//
 		final Spinner reminderView = (Spinner)findViewById(R.id.trip_info_reminder_time);
-		final Spinner repeatsView  = (Spinner)findViewById(R.id.trip_info_reminder_repeats);
 		final TextView nameView = (TextView)findViewById(R.id.name);
 		
 		final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
-		int repeats = selectionToRepeat(repeatsView.getSelectedItemPosition());
+		int repeats = 0;
 		
 		mDbAdapter.addTrip(mTripId, 
 				mStopId, 
@@ -152,11 +169,8 @@ public class TripInfoActivity extends Activity {
 				nameView.getText().toString(), 
 				reminder, 
 				repeats);
-		finish();
 		
 		Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
-	}
-	private void discardChanges() {
 		finish();
 	}
 	private void deleteTrip() {
@@ -166,25 +180,18 @@ public class TripInfoActivity extends Activity {
 	private boolean populateFromDB() {
 		final TextView tripName = (TextView)findViewById(R.id.name);
 		final Spinner reminder = (Spinner)findViewById(R.id.trip_info_reminder_time);
-		final Spinner repeats = (Spinner)findViewById(R.id.trip_info_reminder_repeats);
 		
 		// Look up the trip in the database.
 		Cursor cursor = mDbAdapter.getTrip(mTripId, mStopId);
 		if (cursor == null) {
 			return true;
 		}
-		if (cursor.getCount() >= 1) {
-			// If found, then populate:
-			//   reminder_time
-			//   reminder_repeats
-			//   trip name
-				
+		if (cursor.getCount() >= 1) {			
 			final String name = cursor.getString(TripsDbAdapter.TRIP_COL_NAME);
 			final int time = cursor.getInt(TripsDbAdapter.TRIP_COL_REMINDER);
-			final int repeat = cursor.getInt(TripsDbAdapter.TRIP_COL_REPEAT);
+			mReminderDays = cursor.getInt(TripsDbAdapter.TRIP_COL_DAYS);
 			
 			reminder.setSelection(reminderToSelection(time));
-			repeats.setSelection(repeatToSelection(repeat));
 
 			if (name != null) {
 				tripName.setText(name);
@@ -194,16 +201,61 @@ public class TripInfoActivity extends Activity {
 			}
 			return false;
 		}
+		else {
+			// By default, the reminder is for 10 minutes, weekly
+			reminder.setSelection(reminderToSelection(10));
+		}
 		cursor.close(); 
 		return true;
 	}
+	
+	private final DialogInterface.OnClickListener mDialogListener = 
+		new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				if (which == DialogInterface.BUTTON_POSITIVE) {
+					// Save repeats
+				}
+				dialog.dismiss();
+			}
+	};
+	
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		Dialog dialog;
+		
+		switch (id) {
+		case REMINDER_DAYS_DIALOG:
+			// NOTE: The custom adapter/layout is to work around
+			// a bug where using setMultiChoiceItems with a light theme
+			// causes white-on-white text.
+			dialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.trip_info_reminder_repeat)
+				.setAdapter(new ArrayAdapter<String>(this,
+							R.layout.select_dialog_multichoice,
+							android.R.id.text1,
+							getResources().getStringArray(R.array.reminder_days)),
+						null)
+				.setPositiveButton(R.string.trip_info_save, mDialogListener)
+				.setNegativeButton(R.string.trip_info_dismiss, mDialogListener)
+				.create();
+			break;
+		default:
+			dialog = null;
+			break;
+		}
+		return dialog;
+	}
+	@Override
+	protected void onPrepareDialog(int id, Dialog dialog) {
+		switch (id) {
+		case REMINDER_DAYS_DIALOG:
+			AlertDialog alert = (AlertDialog)dialog;
+			ListView list = alert.getListView();
+			ArrayAdapter<String> adapter = (ArrayAdapter<String>)list.getAdapter();
+			
+			break;
+		}
 
-	private void setSpinner(int spinnerId, int arrayId) {
-	    Spinner s = (Spinner) findViewById(spinnerId);
-	    ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
-	            this, arrayId, android.R.layout.simple_spinner_item);
-	    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-	    s.setAdapter(adapter);
 	}
 	
 	// This converts what's in the database to what can be displayed in the spinner.
@@ -240,21 +292,5 @@ public class TripInfoActivity extends Activity {
 			Log.e(TAG, "Invalid selection: " + selection);
 			return 0;
 		}		
-	}
-	private static int repeatToSelection(int repeat) {
-		switch (repeat) {
-		case TripsDbAdapter.REPEAT_ONETIME:	return 0;
-		case TripsDbAdapter.REPEAT_DAILY:	return 1;
-		case TripsDbAdapter.REPEAT_WEEKDAY:	return 2;
-		}
-		return 0;
-	}
-	private static int selectionToRepeat(int selection) {
-		switch (selection) {
-		case 0:	return TripsDbAdapter.REPEAT_ONETIME;
-		case 1:	return TripsDbAdapter.REPEAT_DAILY;
-		case 2:	return TripsDbAdapter.REPEAT_WEEKDAY;
-		}
-		return TripsDbAdapter.REPEAT_ONETIME;
 	}
 }

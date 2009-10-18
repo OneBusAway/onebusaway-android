@@ -3,7 +3,7 @@
     <string-array name="stop_item_options">
         <item>Set a reminder</item>
         <item>Show route information</item>
-        <item>Show only this route</item>
+        <!-- <item>Show only this route</item> -->
     </string-array>
     <string-array name="reminder_time">
         <item>No reminder</item>

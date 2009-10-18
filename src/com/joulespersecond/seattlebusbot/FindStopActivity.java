@@ -106,8 +106,8 @@ public class FindStopActivity extends ListActivity {
     		SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
     		Cursor c = cursorAdapter.getCursor();
     		c.moveToPosition(position - l.getHeaderViewsCount());
-    		stopId = c.getString(StopsDbAdapter.FAVORITE_COL_STOPID);
-    		stopName = c.getString(StopsDbAdapter.FAVORITE_COL_NAME);
+    		stopId = c.getString(StopsDbAdapter.STOP_COL_STOPID);
+    		stopName = c.getString(StopsDbAdapter.STOP_COL_NAME);
     	}
     	else if (adapter instanceof SearchResultsListAdapter) {
     		ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
@@ -172,7 +172,7 @@ public class FindStopActivity extends ListActivity {
 		// to user level text (North/Northwest/etc..)
 		simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
 			public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-				if (columnIndex == StopsDbAdapter.FAVORITE_COL_DIRECTION) {
+				if (columnIndex == StopsDbAdapter.STOP_COL_DIRECTION) {
 					TextView direction = (TextView)view.findViewById(R.id.direction);
 					direction.setText(
 							StopInfoActivity.getStopDirectionText(cursor.getString(columnIndex)));

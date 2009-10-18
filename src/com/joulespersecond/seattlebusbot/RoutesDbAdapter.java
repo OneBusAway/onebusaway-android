@@ -41,11 +41,17 @@ public class RoutesDbAdapter {
         				null); // limit
         
         ContentValues args = new ContentValues();
-        args.put(DbHelper.KEY_SHORTNAME, shortName);
-        args.put(DbHelper.KEY_LONGNAME, longName);
        
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
+        	// Only update the values if they are valid (no nulls)
+        	if (shortName != null) {
+                args.put(DbHelper.KEY_SHORTNAME, shortName);        		
+        	}
+        	if (longName != null) {
+                args.put(DbHelper.KEY_LONGNAME, longName);        		
+        	}
+        	
         	if (markAsUsed) {
         		args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
         	}
@@ -54,6 +60,8 @@ public class RoutesDbAdapter {
         else {
         	// Insert a new entry
         	args.put(DbHelper.KEY_ROUTEID, routeId);
+            args.put(DbHelper.KEY_SHORTNAME, shortName);
+            args.put(DbHelper.KEY_LONGNAME, longName);
         	if (markAsUsed) {
             	args.put(DbHelper.KEY_USECOUNT, 1);        		
         	}
@@ -81,19 +89,41 @@ public class RoutesDbAdapter {
     	adapter.close();
     }
     
-    public static final int FAVORITE_COL_ROUTEID = 0;
-    public static final int FAVORITE_COL_SHORTNAME = 1;
-    public static final int FAVORITE_COL_LONGNAME = 2;
-    public static final int FAVORITE_COL_USECOUNT = 3;
+	private static final String WHERE = String.format("%s=?", 
+			DbHelper.KEY_ROUTEID);
+	private static final String[] COLS = new String[] { 
+			DbHelper.KEY_ROUTEID, 
+			DbHelper.KEY_SHORTNAME, 
+			DbHelper.KEY_LONGNAME, 
+			DbHelper.KEY_USECOUNT
+	 	};
+    
+    public static final int ROUTE_COL_ROUTEID = 0;
+    public static final int ROUTE_COL_SHORTNAME = 1;
+    public static final int ROUTE_COL_LONGNAME = 2;
+    public static final int ROUTE_COL_USECOUNT = 3;
+    
+    public Cursor getRoute(String routeId) {
+    	final String[] whereArgs = new String[] { routeId };
+        Cursor cursor =
+        	mDb.query(DbHelper.ROUTES_TABLE, 
+        				COLS, // rows
+        				WHERE, // selection (where)
+        				whereArgs, // selectionArgs
+        				null, // groupBy
+        				null, // having
+        				null, // order by
+        				null); // limit
+        if (cursor != null) {
+        	cursor.moveToFirst();
+        }
+        return cursor;    	
+    }
     
     public Cursor getFavoriteRoutes() {
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
-        				new String[] { 
-        					DbHelper.KEY_ROUTEID, 
-        					DbHelper.KEY_SHORTNAME, 
-        					DbHelper.KEY_LONGNAME, 
-        					DbHelper.KEY_USECOUNT }, // rows
+        				COLS, // rows
         				DbHelper.KEY_USECOUNT + " > 0", // selection (where)
         				null, // selectionArgs
         				null, // groupBy

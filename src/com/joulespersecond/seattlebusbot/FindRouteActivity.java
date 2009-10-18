@@ -101,8 +101,8 @@ public class FindRouteActivity extends ListActivity {
     		SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
     		Cursor c = cursorAdapter.getCursor();
     		c.moveToPosition(position - l.getHeaderViewsCount());
-    		routeId = c.getString(RoutesDbAdapter.FAVORITE_COL_ROUTEID);
-    		routeName = c.getString(RoutesDbAdapter.FAVORITE_COL_SHORTNAME);
+    		routeId = c.getString(RoutesDbAdapter.ROUTE_COL_ROUTEID);
+    		routeName = c.getString(RoutesDbAdapter.ROUTE_COL_SHORTNAME);
     	}
     	else if (adapter instanceof SearchResultsListAdapter) {
     		ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());

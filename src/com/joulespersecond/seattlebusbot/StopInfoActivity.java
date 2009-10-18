@@ -407,8 +407,6 @@ public class StopInfoActivity extends ListActivity {
     	if (stop == null) {
     		return;
     	}
-    	goToRoute(stop);
-    	/*
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
     	builder.setTitle(R.string.stop_info_item_options_title);
     	builder.setItems(R.array.stop_item_options, new DialogInterface.OnClickListener() {
@@ -429,7 +427,6 @@ public class StopInfoActivity extends ListActivity {
     	AlertDialog dialog = builder.create();
     	dialog.setOwnerActivity(this);
     	dialog.show();
-    	*/
     }
     
     private void goToTrip(StopInfo stop) {

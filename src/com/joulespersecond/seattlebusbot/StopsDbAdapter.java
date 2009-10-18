@@ -91,21 +91,43 @@ public class StopsDbAdapter {
     	adapter.close();
     }
     
-    public static final int FAVORITE_COL_STOPID = 0;
-    public static final int FAVORITE_COL_CODE = 1;
-    public static final int FAVORITE_COL_NAME = 2;
-    public static final int FAVORITE_COL_DIRECTION = 3;
-    public static final int FAVORITE_COL_USECOUNT = 4;
+	private static final String WHERE = String.format("%s=?", 
+			DbHelper.KEY_STOPID);
+	private static final String[] COLS = new String[] { 
+			DbHelper.KEY_STOPID, 
+			DbHelper.KEY_CODE, 
+			DbHelper.KEY_NAME, 
+			DbHelper.KEY_DIRECTION, 
+			DbHelper.KEY_USECOUNT
+ 	};
+    
+    public static final int STOP_COL_STOPID = 0;
+    public static final int STOP_COL_CODE = 1;
+    public static final int STOP_COL_NAME = 2;
+    public static final int STOP_COL_DIRECTION = 3;
+    public static final int STOP_COL_USECOUNT = 4;
+    
+    public Cursor getStop(String stopId) {
+    	final String[] whereArgs = new String[] { stopId };
+        Cursor cursor =
+        	mDb.query(DbHelper.STOPS_TABLE, 
+        				COLS, // rows
+        				WHERE, // selection (where)
+        				whereArgs, // selectionArgs
+        				null, // groupBy
+        				null, // having
+        				null, // order by
+        				null); // limit
+        if (cursor != null) {
+        	cursor.moveToFirst();
+        }
+        return cursor;    	
+    }
     
     public Cursor getFavoriteStops() {
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
-        				new String[] { 
-        					DbHelper.KEY_STOPID, 
-        					DbHelper.KEY_CODE, 
-        					DbHelper.KEY_NAME, 
-        					DbHelper.KEY_DIRECTION, 
-        					DbHelper.KEY_USECOUNT }, // rows
+        				COLS,
         				DbHelper.KEY_USECOUNT + " > 0", // selection (where)
         				null, // selectionArgs
         				null, // groupBy

@@ -203,13 +203,11 @@ public class MapViewActivity extends MapActivity {
     		startActivity(myIntent);
     		return true;
     	}
-    	/*
     	else if (id == R.id.view_trips) {
     		Intent myIntent = new Intent(this, TripListActivity.class);
     		startActivity(myIntent);
     		return true;    		
     	}
-		*/
     	return false;
     }
     @Override

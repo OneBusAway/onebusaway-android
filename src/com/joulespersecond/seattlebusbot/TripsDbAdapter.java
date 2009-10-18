@@ -26,13 +26,14 @@ public class TripsDbAdapter {
         mDbHelper.close();
     }
    
-    public static final int DAY_SUN = 0x1;
-    public static final int DAY_MON = 0x2;
-    public static final int DAY_TUE = 0x4;
-    public static final int DAY_WED	= 0x8;
-    public static final int DAY_THU = 0x10;
-    public static final int DAY_FRI = 0x20;
-    public static final int DAY_SAT = 0x40;
+
+    public static final int DAY_MON = 0x1;
+    public static final int DAY_TUE = 0x2;
+    public static final int DAY_WED	= 0x4;
+    public static final int DAY_THU = 0x8;
+    public static final int DAY_FRI = 0x10;
+    public static final int DAY_SAT = 0x20;
+    public static final int DAY_SUN = 0x40;
     public static final int DAY_WEEKDAY = DAY_MON|DAY_TUE|DAY_WED|DAY_THU|DAY_FRI;
     public static final int DAY_ALL = DAY_WEEKDAY|DAY_SUN|DAY_SAT;
    
@@ -134,6 +135,32 @@ public class TripsDbAdapter {
     		cursor.close();
     	}
 	}
+    public void deleteTrip(String tripId, String stopId) {
+    	final String[] whereArgs = new String[] { tripId, stopId };
+    	mDb.delete(DbHelper.TRIPS_TABLE, WHERE, whereArgs);
+    }
+    
+    public static boolean[] daysToArray(int days) {
+    	final boolean[] result = new boolean[] {
+        		(days & DAY_MON) == DAY_MON,
+        		(days & DAY_TUE) == DAY_TUE,
+        		(days & DAY_WED) == DAY_WED,
+        		(days & DAY_THU) == DAY_THU,    		
+        		(days & DAY_FRI) == DAY_FRI,   
+        		(days & DAY_SAT) == DAY_SAT,      
+        		(days & DAY_SUN) == DAY_SUN,   
+    	};
+    	return result;
+    }
+    public static int arrayToDays(boolean[] days) {
+    	int result = 0;
+    	assert(days.length == 7);
+    	for (int i=0; i < days.length; ++i) {
+    		final int bit = days[i] ? 1 : 0;
+    		result |= bit << i;
+    	}
+    	return result;
+    }
     
     // Helper functions to convert the DB DepartureTime value 
     public static long convertDBToTime(int minutes) {

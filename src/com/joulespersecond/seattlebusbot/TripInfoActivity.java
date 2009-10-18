@@ -3,7 +3,10 @@ package com.joulespersecond.seattlebusbot;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -11,7 +14,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +22,7 @@ public class TripInfoActivity extends Activity {
 	private static final String TAG = "TripInfoActivity";
 	
 	private static final int REMINDER_DAYS_DIALOG = 1;
+	private static final int DELETE_DIALOG = 2;
 	
 	public static final String TRIP_ID = ".TripId";
 	public static final String ROUTE_ID = ".RouteId";
@@ -36,8 +39,10 @@ public class TripInfoActivity extends Activity {
 	private String mStopId;
 	private String mStopName;
 	private String mHeadsign;
+	private String mTripName;
 	private long mDepartTime;
-	private int mReminderDays = 0;
+	private int mReminderTime; // DB Value, not selection value
+	private int mReminderDays;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -47,44 +52,106 @@ public class TripInfoActivity extends Activity {
     	final Bundle bundle = getIntent().getExtras();
     	if (bundle == null) {
     		Log.e(TAG, "Information missing from intent: no extras");
+    		finish();
     		return;
     	}
+    	if (!initFromBundle(bundle)) {
+			Log.e(TAG, "Information missing from intent");
+			finish();
+    		return;
+    	}
+
+    	boolean newTrip = !initFromDB();
+		initForm(newTrip);
+	}
+		
+	private boolean initFromBundle(Bundle bundle) {
 		// Get everything from the bundle
 		mTripId = bundle.getString(TRIP_ID);
 		mStopId = bundle.getString(STOP_ID);
+		if (mTripId == null || mStopId == null) {
+			return false;
+		}		
 		mRouteId = bundle.getString(ROUTE_ID);
 		mHeadsign = bundle.getString(HEADSIGN);
-		mDepartTime = bundle.getLong(DEPARTURE_TIME);
+		mDepartTime = bundle.getInt(DEPARTURE_TIME);
 		
 		mStopName = bundle.getString(STOP_NAME);
-		mRouteName = bundle.getString(ROUTE_NAME);
-		if (mTripId == null || 
-				mRouteId == null ||
-				mStopId == null ||
-				mHeadsign == null ||
-				mDepartTime == 0) {
-			Log.e(TAG, "Information missing from intent");
-			return;
-		}
+		mRouteName = bundle.getString(ROUTE_NAME);	
+		return true;
+	}
+	private boolean initFromDB() {
+		mDbAdapter = new TripsDbAdapter(this);
+		mDbAdapter.open();
 		
+		// Look up the trip in the database.
+		Cursor cursor = mDbAdapter.getTrip(mTripId, mStopId);
+		if (cursor == null || cursor.getCount() < 1) {
+			// Reminder defaults to 10 in the UI
+			mReminderTime = 10;
+			if (cursor != null) {
+				cursor.close();
+			}
+			return false;
+		}		
+		mTripName = cursor.getString(TripsDbAdapter.TRIP_COL_NAME);
+		mReminderTime = cursor.getInt(TripsDbAdapter.TRIP_COL_REMINDER);
+		mReminderDays = cursor.getInt(TripsDbAdapter.TRIP_COL_DAYS);
+			
+		// If some values weren't set in the bundle, assign them the 
+		// values in the db.
+		if (mRouteId == null) {
+			mRouteId = cursor.getString(TripsDbAdapter.TRIP_COL_ROUTEID);
+		}
+		if (mHeadsign == null) {
+			mHeadsign = cursor.getString(TripsDbAdapter.TRIP_COL_HEADSIGN);
+		}
+		if (mDepartTime == 0) {
+			mDepartTime = cursor.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE);
+		}
+
 		// If we have the route name, ensure that it's in the DB.
 		if (mRouteName != null) {
 			RoutesDbAdapter.addRoute(this, mRouteId, mRouteName, null, false);
 		}
-		// TODO: If mRouteName or mStopName are not available,
-		// look them up in the routes and stops table
-		
+		else {
+			RoutesDbAdapter adapter = new RoutesDbAdapter(this);
+			adapter.open();
+			Cursor route = adapter.getRoute(mRouteId);
+			if (route != null && cursor.getCount() >= 1) {
+				mRouteName = route.getString(RoutesDbAdapter.ROUTE_COL_SHORTNAME);
+			}
+			if (route != null) {
+				route.close();
+			}
+			adapter.close();
+		}
+		if (mStopName == null) {
+			StopsDbAdapter adapter = new StopsDbAdapter(this);
+			adapter.open();
+			Cursor stop = adapter.getStop(mStopId);
+			if (stop != null && cursor.getCount() >= 1) {
+				mStopName = stop.getString(StopsDbAdapter.STOP_COL_NAME);
+			}
+			if (stop != null) {
+				stop.close();
+			}
+			adapter.close();
+		}
+		cursor.close();
+		return true;
+	}
+	
+	private void initForm(boolean newTrip) {
 	    Spinner s = (Spinner) findViewById(R.id.trip_info_reminder_time);
 	    ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
 	            this, R.array.reminder_time, android.R.layout.simple_spinner_item);
 	    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 	    s.setAdapter(adapter);
 		
-		// Populate from bundle:
-		//  stop name
-		//  route name
-		//  headsign
-		//  departure time
+	    //
+		// Static (header values)
+	    //
 		final TextView stopName = (TextView)findViewById(R.id.stop_name);
 		stopName.setText(mStopName);
 		
@@ -96,19 +163,23 @@ public class TripInfoActivity extends Activity {
 		headsign.setText(mHeadsign);
 		
 		final TextView departText = (TextView)findViewById(R.id.departure_time);
-		fmt = getResources().getString(R.string.trip_info_depart);
-		departText.setText(String.format(fmt, DateUtils.formatDateTime(this, 
-				mDepartTime, 
-				DateUtils.FORMAT_SHOW_TIME|
-				DateUtils.FORMAT_NO_NOON|
-				DateUtils.FORMAT_NO_MIDNIGHT)));	
+		departText.setText(getDepartureTime(this, mDepartTime));
 		
-		mDbAdapter = new TripsDbAdapter(this);
-		mDbAdapter.open();
+		//
+		// User values
+		//
+		final TextView tripName = (TextView)findViewById(R.id.name);
+		tripName.setText(mTripName);
 		
-		final boolean newTrip = populateFromDB();
+		final Spinner reminder = (Spinner)findViewById(R.id.trip_info_reminder_time);
+		reminder.setSelection(reminderToSelection(mReminderTime));		
 		
 		final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+		repeats.setText(getRepeatText(this, mReminderDays));
+		
+		//
+		// Buttons
+		//
 		repeats.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				showDialog(REMINDER_DAYS_DIALOG);
@@ -132,14 +203,12 @@ public class TripInfoActivity extends Activity {
 		final Button delete = (Button)findViewById(R.id.trip_info_delete);
 		delete.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				deleteTrip();
+				showDialog(DELETE_DIALOG);
 			}
 		});	
 		if (newTrip) {
 			// If this is a new trip, then hide the 'delete' button
 			delete.setVisibility(View.GONE);
-			View v = findViewById(R.id.trip_info_buttons);
-			v.requestLayout();
 		}
 	}
 	@Override
@@ -148,7 +217,7 @@ public class TripInfoActivity extends Activity {
 		super.onDestroy();
 	}
 	
-	private void saveTrip() {
+	public void saveTrip() {
 		// Things that need updating:
 		// Any constant values (trip info not editable by user)
 		// Trip name
@@ -159,7 +228,6 @@ public class TripInfoActivity extends Activity {
 		final TextView nameView = (TextView)findViewById(R.id.name);
 		
 		final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
-		int repeats = 0;
 		
 		mDbAdapter.addTrip(mTripId, 
 				mStopId, 
@@ -168,75 +236,86 @@ public class TripInfoActivity extends Activity {
 				mHeadsign,
 				nameView.getText().toString(), 
 				reminder, 
-				repeats);
+				mReminderDays);
 		
 		Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
 		finish();
 	}
-	private void deleteTrip() {
-		// TODO: Popup confirmation, then toast
+	public void deleteTrip() {
+		mDbAdapter.deleteTrip(mTripId, mStopId);
 	}
 	
-	private boolean populateFromDB() {
-		final TextView tripName = (TextView)findViewById(R.id.name);
-		final Spinner reminder = (Spinner)findViewById(R.id.trip_info_reminder_time);
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    	// TODO: Save all member variables, and the current state of all selectors/edit boxes
+    	super.onSaveInstanceState(outState);
+    }
+	
+	private class DialogListener 
+		implements DialogInterface.OnClickListener, OnMultiChoiceClickListener {
+		private boolean[] mChecks;
 		
-		// Look up the trip in the database.
-		Cursor cursor = mDbAdapter.getTrip(mTripId, mStopId);
-		if (cursor == null) {
-			return true;
+		DialogListener(boolean[] checks) {
+			mChecks = checks;
 		}
-		if (cursor.getCount() >= 1) {			
-			final String name = cursor.getString(TripsDbAdapter.TRIP_COL_NAME);
-			final int time = cursor.getInt(TripsDbAdapter.TRIP_COL_REMINDER);
-			mReminderDays = cursor.getInt(TripsDbAdapter.TRIP_COL_DAYS);
-			
-			reminder.setSelection(reminderToSelection(time));
-
-			if (name != null) {
-				tripName.setText(name);
+		
+		public void onClick(DialogInterface dialog, int which) {
+			if (which == DialogInterface.BUTTON_POSITIVE) {
+				// Save repeats
+				mReminderDays = TripsDbAdapter.arrayToDays(mChecks);
+				final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+				repeats.setText(getRepeatText(TripInfoActivity.this, mReminderDays));
 			}
-			else {
-				tripName.setText("");
-			}
-			return false;
+			dialog.dismiss();			
 		}
-		else {
-			// By default, the reminder is for 10 minutes, weekly
-			reminder.setSelection(reminderToSelection(10));
+		// Multi-click
+		public void onClick(DialogInterface dialog, int which, boolean checked) {
+			mChecks[which] = checked;			
 		}
-		cursor.close(); 
-		return true;
 	}
-	
-	private final DialogInterface.OnClickListener mDialogListener = 
-		new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				if (which == DialogInterface.BUTTON_POSITIVE) {
-					// Save repeats
-				}
-				dialog.dismiss();
-			}
-	};
 	
 	@Override
 	protected Dialog onCreateDialog(int id) {
 		Dialog dialog;
+		AlertDialog.Builder builder;
 		
 		switch (id) {
 		case REMINDER_DAYS_DIALOG:
-			// NOTE: The custom adapter/layout is to work around
-			// a bug where using setMultiChoiceItems with a light theme
-			// causes white-on-white text.
-			dialog = new AlertDialog.Builder(this)
-				.setTitle(R.string.trip_info_reminder_repeat)
-				.setAdapter(new ArrayAdapter<String>(this,
-							R.layout.select_dialog_multichoice,
-							android.R.id.text1,
-							getResources().getStringArray(R.array.reminder_days)),
-						null)
-				.setPositiveButton(R.string.trip_info_save, mDialogListener)
-				.setNegativeButton(R.string.trip_info_dismiss, mDialogListener)
+			builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.trip_info_reminder_repeat);
+			final boolean[] days = TripsDbAdapter.daysToArray(mReminderDays);
+			DialogListener listener = new DialogListener(days);
+
+			MultiChoiceHelper.setMultiChoiceItems(builder,
+						this,
+						R.array.reminder_days,
+						days,
+						listener);
+
+			dialog = builder
+				.setPositiveButton(R.string.trip_info_save, listener)
+				.setNegativeButton(R.string.trip_info_dismiss, listener)
+				.create();
+			break;
+		case DELETE_DIALOG:
+			builder = new AlertDialog.Builder(this);
+			dialog = builder
+				.setMessage(R.string.trip_info_delete_trip)
+				.setTitle(R.string.trip_info_delete)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setPositiveButton(android.R.string.ok, 
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								deleteTrip();
+								finish();
+							}
+				})
+				.setNegativeButton(android.R.string.cancel,
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+				})
 				.create();
 			break;
 		default:
@@ -244,18 +323,6 @@ public class TripInfoActivity extends Activity {
 			break;
 		}
 		return dialog;
-	}
-	@Override
-	protected void onPrepareDialog(int id, Dialog dialog) {
-		switch (id) {
-		case REMINDER_DAYS_DIALOG:
-			AlertDialog alert = (AlertDialog)dialog;
-			ListView list = alert.getListView();
-			ArrayAdapter<String> adapter = (ArrayAdapter<String>)list.getAdapter();
-			
-			break;
-		}
-
 	}
 	
 	// This converts what's in the database to what can be displayed in the spinner.
@@ -292,5 +359,67 @@ public class TripInfoActivity extends Activity {
 			Log.e(TAG, "Invalid selection: " + selection);
 			return 0;
 		}		
+	}
+	
+	static String getDepartureTime(Context ctx, long departure) {
+		final String fmt = ctx.getResources().getString(R.string.trip_info_depart);
+		return String.format(fmt, DateUtils.formatDateTime(ctx, 
+				departure, 
+				DateUtils.FORMAT_SHOW_TIME|
+				DateUtils.FORMAT_NO_NOON|
+				DateUtils.FORMAT_NO_MIDNIGHT));		
+	}
+	
+	static String getRepeatText(Context ctx, int days) {
+		final Resources res = ctx.getResources();
+		
+		if ((days & TripsDbAdapter.DAY_ALL) == TripsDbAdapter.DAY_ALL) {
+			return res.getString(R.string.trip_info_repeat_everyday);
+		}
+		if (((days & TripsDbAdapter.DAY_WEEKDAY) == TripsDbAdapter.DAY_WEEKDAY) &&
+			 (days & ~TripsDbAdapter.DAY_WEEKDAY) == 0) {
+			return res.getString(R.string.trip_info_repeat_weekdays);
+		}
+		if (days == 0) {
+			return res.getString(R.string.trip_info_repeat_norepeat);
+		}
+		// Otherwise, it's not normal -- format a string 
+		final boolean[] array = TripsDbAdapter.daysToArray(days);
+		final String fmt = new String(res.getString(R.string.trip_info_repeat_every));
+		final String[] dayNames = res.getStringArray(R.array.reminder_days);
+	
+		StringBuffer buf = new StringBuffer();
+		
+		// Find the first day
+		int rangeStart = 0;
+		while (rangeStart < 7) {
+			for (; rangeStart < 7 && array[rangeStart] != true; ++rangeStart) {}
+			
+			if (rangeStart == 7) {
+				break;
+			}
+			
+			int rangeEnd = rangeStart+1;
+			for (; rangeEnd < 7 && array[rangeEnd] == true; ++rangeEnd) {}	
+
+			if (buf.length() != 0) {
+				// TODO: Move to string table
+				buf.append(", ");
+			}
+			
+			// Single day?
+			if ((rangeEnd-rangeStart) == 1) {
+				buf.append(dayNames[rangeStart]);
+			}
+			else {
+				buf.append(dayNames[rangeStart]);
+				// TODO: Move to string table
+				buf.append(" - ");
+				buf.append(dayNames[rangeEnd-1]);
+			}
+			rangeStart = rangeEnd;
+		}
+		
+		return String.format(fmt, buf.toString());
 	}
 }

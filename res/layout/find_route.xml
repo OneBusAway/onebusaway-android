@@ -8,7 +8,9 @@
         android:layout_height="wrap_content"
         android:stretchColumns="0"
         android:shrinkColumns="1">
-        <TableRow>
+        <TableRow 
+            android:gravity="center_vertical"
+            android:paddingTop="4dp">
             <EditText 
                 android:id="@+id/search_text"
                 android:layout_column="0"

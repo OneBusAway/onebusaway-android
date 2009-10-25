@@ -2,8 +2,8 @@ package com.joulespersecond.seattlebusbot;
 
 import org.json.JSONArray;
 
-public class ObaArray {
-	JSONArray mArray;
+public final class ObaArray {
+	private final JSONArray mArray;
 	
 	/**
 	 * Constructor.

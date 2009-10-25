@@ -3,8 +3,8 @@ package com.joulespersecond.seattlebusbot;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ObaResponse {
-	JSONObject mResponse;
+public final class ObaResponse {
+	private final JSONObject mResponse;
 	
 	/**
 	 * Constructor for ObaResponse

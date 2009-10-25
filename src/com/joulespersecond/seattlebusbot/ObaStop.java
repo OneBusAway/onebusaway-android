@@ -5,8 +5,8 @@ import org.json.JSONObject;
 
 import com.google.android.maps.GeoPoint;
 
-public class ObaStop {
-	JSONObject mData;
+public final class ObaStop {
+	private final JSONObject mData;
 	
 	/**
 	 * Constructor.
@@ -51,8 +51,9 @@ public class ObaStop {
 	public GeoPoint
 	getLocation() {
 		try {
-			double lat = mData.getDouble("lat");
-			double lon = mData.getDouble("lon");
+			final JSONObject data = mData;
+			double lat = data.getDouble("lat");
+			double lon = data.getDouble("lon");
 			return ObaApi.makeGeoPoint(lat, lon);
 		} catch (JSONException e) {
 			return null;

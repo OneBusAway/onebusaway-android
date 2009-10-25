@@ -2,8 +2,8 @@ package com.joulespersecond.seattlebusbot;
 
 import org.json.JSONObject;
 
-public class ObaData {
-	JSONObject mData;
+public final class ObaData {
+	private final JSONObject mData;
 	
 	/**
 	 * Constructor for ObaData

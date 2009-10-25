@@ -3,8 +3,8 @@ package com.joulespersecond.seattlebusbot;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ObaRoute {
-	JSONObject mData;
+public final class ObaRoute {
+	private final JSONObject mData;
 	
 	/**
 	 * Constructor.

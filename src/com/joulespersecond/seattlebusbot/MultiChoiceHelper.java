@@ -19,11 +19,11 @@ import android.widget.CheckBox;
 public class MultiChoiceHelper {
 	private static final String TAG = "MultiChoiceHelper";
 	
-	private static class Adapter extends ArrayAdapter<String> {
+	static class Adapter extends ArrayAdapter<String> {
 		final boolean[] mValues;
 		final OnMultiChoiceClickListener mListener;
 		
-		private class CheckListener implements View.OnClickListener {
+		class CheckListener implements View.OnClickListener {
 			final OnMultiChoiceClickListener mListener;
 			final int mPosition;
 			

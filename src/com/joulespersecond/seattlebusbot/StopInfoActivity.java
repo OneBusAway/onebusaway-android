@@ -15,7 +15,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.DateUtils;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -193,9 +192,7 @@ public class StopInfoActivity extends ListActivity {
 	convertObaArrivalInfo(ObaArray arrivalInfo) {
 		int len = arrivalInfo.length();
 		ArrayList<StopInfo> result = new ArrayList<StopInfo>(len);
-		Time nowObj = new Time();
-		nowObj.setToNow();
-		long ms = nowObj.toMillis(false);
+		final long ms = System.currentTimeMillis();
 		for (int i=0; i < len; ++i) {
 			result.add(new StopInfo(arrivalInfo.getArrivalInfo(i), ms));
 		}

@@ -119,6 +119,37 @@ public class RoutesDbAdapter {
         }
         return cursor;    	
     }
+    public String getRouteShortName(String routeId) {
+    	String result = null;
+    	final String[] whereArgs = new String[] { routeId };
+        Cursor cursor =
+        	mDb.query(DbHelper.ROUTES_TABLE, 
+        				new String[] { DbHelper.KEY_SHORTNAME }, // rows
+        				WHERE, // selection (where)
+        				whereArgs, // selectionArgs
+        				null, // groupBy
+        				null, // having
+        				null, // order by
+        				null); // limit
+        
+        if (cursor != null && cursor.getCount() >= 1) {
+        	cursor.moveToFirst();
+			result = cursor.getString(0);
+        }
+		if (cursor != null) {
+			cursor.close();
+		}
+		return result;
+    }
+    
+    // A more efficient helper when all you want is the short name of the route.
+    static public String getRouteShortName(Context context, String routeId) {
+		RoutesDbAdapter adapter = new RoutesDbAdapter(context);
+		adapter.open();
+		String result = adapter.getRouteShortName(routeId);
+		adapter.close();
+		return result;
+    }
     
     public Cursor getFavoriteRoutes() {
         Cursor cursor =
@@ -136,6 +167,8 @@ public class RoutesDbAdapter {
         return cursor;
     }
     public void clearFavorites() {
-    	mDb.execSQL("delete from " + DbHelper.ROUTES_TABLE);
+        ContentValues args = new ContentValues();
+        args.put(DbHelper.KEY_USECOUNT, 0);
+        mDb.update(DbHelper.ROUTES_TABLE, args, null, null);
     }
 }

@@ -54,7 +54,7 @@ public class TripListActivity extends ListActivity {
 					TextView text = (TextView)view;
 					text.setText(TripInfoActivity.getDepartureTime(
 							TripListActivity.this,
-							cursor.getLong(columnIndex)));
+							TripsDbAdapter.convertDBToTime(cursor.getInt(columnIndex))));
 					return true;
 				} 
 				else if (columnIndex == TripsDbAdapter.TRIP_COL_ROUTEID) {
@@ -64,16 +64,10 @@ public class TripListActivity extends ListActivity {
 					//
 					TextView text = (TextView)view;
 					final String routeId = cursor.getString(columnIndex);
-									
-					Cursor route = mRoutesDbAdapter.getRoute(routeId);
-					if (route != null && cursor.getCount() >= 1) {
-						
+					final String routeName = mRoutesDbAdapter.getRouteShortName(routeId);
+					if (routeName != null) {
 						String fmt = getResources().getString(R.string.trip_info_route);
-						text.setText(String.format(fmt, 
-								route.getString(RoutesDbAdapter.ROUTE_COL_SHORTNAME)));
-					}
-					if (route != null) {
-						route.close();
+						text.setText(String.format(fmt, routeName));
 					}
 					return true;
 				}

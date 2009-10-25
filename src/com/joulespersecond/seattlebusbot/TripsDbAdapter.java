@@ -2,6 +2,7 @@ package com.joulespersecond.seattlebusbot;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.format.Time;
@@ -134,12 +135,26 @@ public class TripsDbAdapter {
     	if (cursor != null) {
     		cursor.close();
     	}
+    	runTripService();
 	}
     public void deleteTrip(String tripId, String stopId) {
     	final String[] whereArgs = new String[] { tripId, stopId };
     	mDb.delete(DbHelper.TRIPS_TABLE, WHERE, whereArgs);
+    	runTripService();
     }
     
+    private void runTripService() {
+    	final Intent tripService = new Intent(mCtx, TripService.class);
+    	tripService.setAction(TripService.ACTION_SCHEDULE_ALL);
+    	mCtx.startService(tripService);
+    }
+    
+    /**
+     * Converts a days bitmask into a boolean[] array
+     * 
+     * @param days A DB compatible days bitmask.
+     * @return A boolean array representing the days set in the bitmask, Mon=0 to Sun=6
+     */
     public static boolean[] daysToArray(int days) {
     	final boolean[] result = new boolean[] {
         		(days & DAY_MON) == DAY_MON,
@@ -152,6 +167,12 @@ public class TripsDbAdapter {
     	};
     	return result;
     }
+    /**
+     * Converts a boolean[] array to a DB compatible days bitmask
+     * 
+     * @param A boolean array as returned by daysToArray
+     * @return A DB compatible days bitmask
+     */
     public static int arrayToDays(boolean[] days) {
     	int result = 0;
     	assert(days.length == 7);
@@ -162,6 +183,12 @@ public class TripsDbAdapter {
     	return result;
     }
     
+    /**
+     * Converts a 'minutes-to-midnight' value into a Unix time. 
+     * 
+     * @param minutes from midnight in UTC.
+     * @return A Unix time representing the time in the current day.
+     */
     // Helper functions to convert the DB DepartureTime value 
     public static long convertDBToTime(int minutes) {
     	// This converts the minutes-to-midnight to a time of the current day.
@@ -170,10 +197,34 @@ public class TripsDbAdapter {
     	t.set(0, minutes, 0, t.monthDay, t.month, t.year);
     	return t.toMillis(false);
     }
+    /**
+     * Converts a Unix time into a 'minutes-to-midnight' in UTC.
+     * 
+     * @param departureTime A Unix time.
+     * @return minutes from midnight in UTC.
+     */
     public static int convertTimeToDB(long departureTime) {
     	// This converts a time_t to minutes-to-midnight.
     	Time t = new Time();
     	t.set(departureTime);
     	return t.hour*60 + t.minute;
+    }
+    /**
+     * Converts a weekday value from a android.text.format.Time to a bit.
+     * 
+     * @param weekday The weekDay value from android.text.format.Time
+     * @return A DB compatible bit.
+     */
+    public static int getDayBit(int weekday) {
+    	switch (weekday) {
+    	case Time.MONDAY: 		return TripsDbAdapter.DAY_MON;
+    	case Time.TUESDAY:		return TripsDbAdapter.DAY_TUE;
+    	case Time.WEDNESDAY:	return TripsDbAdapter.DAY_WED;
+    	case Time.THURSDAY:		return TripsDbAdapter.DAY_THU;
+    	case Time.FRIDAY:		return TripsDbAdapter.DAY_FRI;
+    	case Time.SATURDAY:		return TripsDbAdapter.DAY_SAT;
+    	case Time.SUNDAY:		return TripsDbAdapter.DAY_SUN;
+    	}
+    	return 0;
     }
 }

@@ -123,6 +123,37 @@ public class StopsDbAdapter {
         }
         return cursor;    	
     }
+    public String getStopName(String stopId) {
+    	String result = null;
+    	final String[] whereArgs = new String[] { stopId };
+        Cursor cursor =
+        	mDb.query(DbHelper.STOPS_TABLE, 
+        				new String[] { DbHelper.KEY_NAME }, // rows
+        				WHERE, // selection (where)
+        				whereArgs, // selectionArgs
+        				null, // groupBy
+        				null, // having
+        				null, // order by
+        				null); // limit
+        
+        if (cursor != null && cursor.getCount() >= 1) {
+        	cursor.moveToFirst();
+			result = cursor.getString(0);
+        }
+		if (cursor != null) {
+			cursor.close();
+		}
+		return result;
+    }
+    
+    // A more efficient helper when all you want is the name of the stop.
+    static public String getStopName(Context context, String stopId) {
+		StopsDbAdapter adapter = new StopsDbAdapter(context);
+		adapter.open();
+		String result = adapter.getStopName(stopId);
+		adapter.close();
+		return result;
+    }
     
     public Cursor getFavoriteStops() {
         Cursor cursor =
@@ -140,6 +171,8 @@ public class StopsDbAdapter {
         return cursor;
     }
     public void clearFavorites() {
-    	mDb.execSQL("delete from " + DbHelper.STOPS_TABLE);
+        ContentValues args = new ContentValues();
+        args.put(DbHelper.KEY_USECOUNT, 0);
+        mDb.update(DbHelper.STOPS_TABLE, args, null, null);
     }
 }

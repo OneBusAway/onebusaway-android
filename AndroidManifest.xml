@@ -48,6 +48,25 @@
             </intent-filter>
         </activity>
         
+        <service android:name=".TripService">
+            <intent-filter>
+                <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />
+                <action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />
+            </intent-filter>
+        </service>
+        <receiver android:name=".AlarmReceiver">
+            <intent-filter>
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE_ALL" />
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE_TRIP" />
+                <action android:name="com.joulespersecond.seattlebusbot.action.POLL_TRIP" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".BootstrapService">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        
         <uses-library android:name="com.google.android.maps" />
     </application>
     <uses-sdk android:minSdkVersion="3" />
@@ -55,4 +74,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest> 

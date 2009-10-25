@@ -74,10 +74,14 @@ public class TripInfoActivity extends Activity {
 		}		
 		mRouteId = bundle.getString(ROUTE_ID);
 		mHeadsign = bundle.getString(HEADSIGN);
-		mDepartTime = bundle.getInt(DEPARTURE_TIME);
+		mDepartTime = bundle.getLong(DEPARTURE_TIME);
 		
 		mStopName = bundle.getString(STOP_NAME);
 		mRouteName = bundle.getString(ROUTE_NAME);	
+		// If we get this, update it in the DB.
+		if (mRouteName != null) {
+			RoutesDbAdapter.addRoute(this, mRouteId, mRouteName, null, false);
+		}
 		return true;
 	}
 	private boolean initFromDB() {
@@ -107,36 +111,16 @@ public class TripInfoActivity extends Activity {
 			mHeadsign = cursor.getString(TripsDbAdapter.TRIP_COL_HEADSIGN);
 		}
 		if (mDepartTime == 0) {
-			mDepartTime = cursor.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE);
+			mDepartTime = TripsDbAdapter.convertDBToTime(
+					cursor.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE));
 		}
 
-		// If we have the route name, ensure that it's in the DB.
-		if (mRouteName != null) {
-			RoutesDbAdapter.addRoute(this, mRouteId, mRouteName, null, false);
-		}
-		else {
-			RoutesDbAdapter adapter = new RoutesDbAdapter(this);
-			adapter.open();
-			Cursor route = adapter.getRoute(mRouteId);
-			if (route != null && cursor.getCount() >= 1) {
-				mRouteName = route.getString(RoutesDbAdapter.ROUTE_COL_SHORTNAME);
-			}
-			if (route != null) {
-				route.close();
-			}
-			adapter.close();
+		// If we don't have the route name, look it up in the DB
+		if (mRouteName == null) {
+			mRouteName = RoutesDbAdapter.getRouteShortName(this, mRouteId);
 		}
 		if (mStopName == null) {
-			StopsDbAdapter adapter = new StopsDbAdapter(this);
-			adapter.open();
-			Cursor stop = adapter.getStop(mStopId);
-			if (stop != null && cursor.getCount() >= 1) {
-				mStopName = stop.getString(StopsDbAdapter.STOP_COL_NAME);
-			}
-			if (stop != null) {
-				stop.close();
-			}
-			adapter.close();
+			mStopName = StopsDbAdapter.getStopName(this, mStopId);
 		}
 		cursor.close();
 		return true;
@@ -251,7 +235,7 @@ public class TripInfoActivity extends Activity {
     	super.onSaveInstanceState(outState);
     }
 	
-	private class DialogListener 
+	class DialogListener 
 		implements DialogInterface.OnClickListener, OnMultiChoiceClickListener {
 		private boolean[] mChecks;
 		

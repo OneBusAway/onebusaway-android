@@ -51,8 +51,14 @@ Routes that you use most will appear in this list.</string>
     <string name="search_stop_hint">Enter a stop ID</string>
     <string name="search_route_hint">Enter a route number</string>
     
+    <string name="find_context_get_stop_info">Show arrival information</string>
+    <string name="find_context_get_route_info">Show route information</string>
+    <string name="find_context_create_shortcut">Create shortcut</string>
+    <string name="find_context_showonmap">Show on map</string>
+    
     <string name="route_shortcut">Bus route</string>
     <string name="stop_shortcut">Bus stop</string>
+    <string name="route_name">Route %s</string>
     
     <!--  Trip info -->
     <string name="trip_info_title">Trip Reminder</string>
@@ -80,6 +86,8 @@ Routes that you use most will appear in this list.</string>
 
 You can create notifications for bus trips by clicking on an arriving bus for your stop.    
 </string>
+    <string name="trip_list_context_edit">Edit trip</string>
+    <string name="trip_list_context_delete">Delete trip</string>
     
     <!--  Trip notifications -->
     <string name="trip_stat">Route %s is %s away!</string>

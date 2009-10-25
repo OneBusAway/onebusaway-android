@@ -15,6 +15,7 @@ import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,12 +23,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.google.android.maps.GeoPoint;
 
@@ -45,6 +48,7 @@ public class FindStopActivity extends ListActivity {
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		
 		setContentView(R.layout.find_stop);
+		registerForContextMenu(getListView());
 		
 		Intent myIntent = getIntent();
 		if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
@@ -138,9 +142,78 @@ public class FindStopActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	if (item.getItemId() == R.id.clear_favorites) {
         	StopsDbAdapter.clearFavorites(this);
+        	ListAdapter adapter = getListView().getAdapter();
+        	if (adapter instanceof SimpleCursorAdapter) {
+        		((SimpleCursorAdapter)adapter).getCursor().requery();
+        	}
     		return true;
     	}
     	return false;
+    }
+    
+    private static final int CONTEXT_MENU_DEFAULT = 1;
+    private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
+    
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+    		ContextMenuInfo menuInfo) {
+    	super.onCreateContextMenu(menu, v, menuInfo);
+    	AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
+    	final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+    	menu.setHeaderTitle(text.getText());
+    	if (mShortcutMode) {
+    		menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
+    	}
+    	else {
+    		menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_stop_info);    		
+    	}
+    	menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
+    }
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+    	AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+    	switch (item.getItemId()) {
+    	case CONTEXT_MENU_DEFAULT:
+    		// Fake a click
+    		onListItemClick(getListView(), info.targetView, info.position, info.id);
+    		return true;
+    	case CONTEXT_MENU_SHOW_ON_MAP:
+    		showOnMap(getListView(), info.position);
+    		return true;
+    	default:
+    		return super.onContextItemSelected(item);
+    	}
+    }
+    private void showOnMap(ListView l, int position) {
+    	String stopId;
+    	double lat, lon;
+    	// Get the adapter (this may or may not be a SimpleCursorAdapter)
+    	ListAdapter adapter = l.getAdapter();
+    	if (adapter instanceof SimpleCursorAdapter) {
+    		// Get the cursor and fetch the stop ID from that.
+    		SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
+    		Cursor c = cursorAdapter.getCursor();
+    		c.moveToPosition(position - l.getHeaderViewsCount());
+    		stopId = c.getString(StopsDbAdapter.STOP_COL_STOPID);
+    		lat = c.getDouble(StopsDbAdapter.STOP_COL_LATITUDE);
+    		lon = c.getDouble(StopsDbAdapter.STOP_COL_LONGITUDE);
+    	}
+    	else if (adapter instanceof SearchResultsListAdapter) {
+    		ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
+    		stopId = stop.getId();
+    		lat = stop.getLatitude();
+    		lon = stop.getLongitude();
+    	}
+    	else {
+    		Log.e(TAG, "Unknown adapter. Giving up!");
+    		return;
+    	}
+    	Intent myIntent = new Intent(this, MapViewActivity.class);
+    	myIntent.putExtra(MapViewActivity.FOCUS_STOP_ID, stopId);
+    	myIntent.putExtra(MapViewActivity.GO_TO_LOCATION, false);
+    	myIntent.putExtra(MapViewActivity.CENTER_LAT, lat);
+    	myIntent.putExtra(MapViewActivity.CENTER_LON, lon);
+    	startActivity(myIntent);
     }
 	
 	private void fillFavorites() {

@@ -4,14 +4,18 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class TripListActivity extends ListActivity {
 	//private static final String TAG = "TripListActivity";
-	
+		
 	public TripsDbAdapter mDbAdapter;
 	public RoutesDbAdapter mRoutesDbAdapter;
 
@@ -20,6 +24,7 @@ public class TripListActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.trip_list);
+		registerForContextMenu(getListView());
 		
 		mDbAdapter = new TripsDbAdapter(this);
 		mDbAdapter.open();
@@ -96,5 +101,46 @@ public class TripListActivity extends ListActivity {
 		myIntent.putExtra(TripInfoActivity.TRIP_ID, tripId);
 		myIntent.putExtra(TripInfoActivity.STOP_ID, stopId);
 		startActivity(myIntent);
+    }
+    private static final int CONTEXT_MENU_DEFAULT = 1;
+    private static final int CONTEXT_MENU_DELETE = 2;
+    
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+    		ContextMenuInfo menuInfo) {
+    	super.onCreateContextMenu(menu, v, menuInfo);
+    	AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
+    	final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+    	menu.setHeaderTitle(text.getText());
+    	menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.trip_list_context_edit);
+    	menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.trip_list_context_delete);
+    }
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+    	AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+    	switch (item.getItemId()) {
+    	case CONTEXT_MENU_DEFAULT:
+    		// Fake a click
+    		onListItemClick(getListView(), info.targetView, info.position, info.id);
+    		return true;
+    	case CONTEXT_MENU_DELETE:
+    		deleteTrip(getListView(), info.position);
+    		return true;
+    	default:
+    		return super.onContextItemSelected(item);
+    	}
+    }
+    void deleteTrip(ListView l, int position) {
+		// Get the cursor and fetch the stop ID from that.
+		SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+		final Cursor c = cursorAdapter.getCursor();
+		c.moveToPosition(position - l.getHeaderViewsCount());
+		final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
+		final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
+		
+		// TODO: Confirmation dialog?
+		mDbAdapter.deleteTrip(tripId, stopId);
+		SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
+		adapter.getCursor().requery();
     }
 }

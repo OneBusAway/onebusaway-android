@@ -37,6 +37,8 @@ public class StopsDbAdapter {
     		String code, 
     		String name, 
     		String direction,
+    		double lat,
+    		double lon,
     		boolean markAsUsed) {
     	final String where = DbHelper.KEY_STOPID + " = '" + stopId + "'";
         Cursor cursor =
@@ -53,6 +55,8 @@ public class StopsDbAdapter {
         args.put(DbHelper.KEY_CODE, code);
         args.put(DbHelper.KEY_NAME, name);
         args.put(DbHelper.KEY_DIRECTION, direction);
+        args.put(DbHelper.KEY_LATITUDE, lat);
+        args.put(DbHelper.KEY_LONGITUDE, lon);
        
         if (cursor != null && cursor.getCount() > 0) {
         	cursor.moveToFirst();
@@ -78,10 +82,12 @@ public class StopsDbAdapter {
     	}
     }
     public static void addStop(Context ctx, String stopId, String code, 
-    		String name, String direction, boolean markAsUsed) {
+    		String name, String direction, 
+    		double lat, double lon,
+    		boolean markAsUsed) {
     	StopsDbAdapter adapter = new StopsDbAdapter(ctx);
     	adapter.open();
-    	adapter.addStop(stopId, code, name, direction, markAsUsed);
+    	adapter.addStop(stopId, code, name, direction, lat, lon, markAsUsed);
     	adapter.close();
     }
     public static void clearFavorites(Context ctx) {
@@ -98,7 +104,9 @@ public class StopsDbAdapter {
 			DbHelper.KEY_CODE, 
 			DbHelper.KEY_NAME, 
 			DbHelper.KEY_DIRECTION, 
-			DbHelper.KEY_USECOUNT
+			DbHelper.KEY_USECOUNT,
+			DbHelper.KEY_LATITUDE,
+			DbHelper.KEY_LONGITUDE
  	};
     
     public static final int STOP_COL_STOPID = 0;
@@ -106,6 +114,8 @@ public class StopsDbAdapter {
     public static final int STOP_COL_NAME = 2;
     public static final int STOP_COL_DIRECTION = 3;
     public static final int STOP_COL_USECOUNT = 4;
+    public static final int STOP_COL_LATITUDE = 5;
+    public static final int STOP_COL_LONGITUDE = 6;
     
     public Cursor getStop(String stopId) {
     	final String[] whereArgs = new String[] { stopId };

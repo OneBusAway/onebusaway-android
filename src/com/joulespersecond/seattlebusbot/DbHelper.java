@@ -23,6 +23,8 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String KEY_USECOUNT = "use_count";
     public static final String KEY_SHORTNAME = "short_name";
     public static final String KEY_LONGNAME = "long_name";
+    public static final String KEY_LATITUDE = "latitude";
+    public static final String KEY_LONGITUDE = "longitude";
     
     public static final String KEY_STOP = "stop_id";
     public static final String KEY_ROUTE = "route_id";
@@ -35,7 +37,7 @@ public class DbHelper extends SQLiteOpenHelper {
      * Database creation sql statement
      */
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 12;
     
     private static final String CREATE_STOPS = 
         "create table " +
@@ -44,7 +46,9 @@ public class DbHelper extends SQLiteOpenHelper {
             KEY_CODE 		+ " varchar not null, " +
             KEY_NAME 		+ " varchar not null, " +
             KEY_DIRECTION 	+ " char[2] not null," +
-            KEY_USECOUNT 	+ " integer not null" +
+            KEY_USECOUNT 	+ " integer not null," +
+            KEY_LATITUDE 	+ " double not null," +
+            KEY_LONGITUDE   + " double not null" +
             ");";
     private static final String CREATE_ROUTES = 
         "create table " +

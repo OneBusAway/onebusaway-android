@@ -310,7 +310,8 @@ public class StopInfoActivity extends ListActivity {
 	    		if (mUpdateDb) {
 	    			// Update the database
 	    			StopsDbAdapter.addStop(StopInfoActivity.this,
-	    					stop.getId(), code, name, direction, true);
+	    					stop.getId(), code, name, direction, 
+	    					mStopLat, mStopLon, true);
 	    		}
 	    	}
 	    	else {

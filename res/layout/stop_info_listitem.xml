@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:stretchColumns="2"
     android:shrinkColumns="1">
-    <TableRow>
+    <TableRow
+        android:gravity="center_vertical">
        <TextView
             android:layout_column="0"
             android:id="@+id/route"
@@ -16,6 +17,25 @@
             android:orientation="vertical"
             android:layout_column="1"
             android:gravity="left">
+            <LinearLayout
+                android:id="@+id/trip_info"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:src="@drawable/stat_trip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                </ImageView>
+                <TextView 
+                    android:id="@+id/trip_name"
+                    style="@style/StopInfoDestination"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                </TextView>
+            </LinearLayout>
             <TextView
                  android:id="@+id/destination"
                  style="@style/StopInfoDestination"

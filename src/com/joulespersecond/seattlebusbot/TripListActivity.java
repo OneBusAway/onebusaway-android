@@ -38,13 +38,13 @@ public class TripListActivity extends ListActivity {
 		Cursor c = mDbAdapter.getTrips();
 		startManagingCursor(c);
 		
-		String[] from = new String[] { 
+		final String[] from = { 
 				DbHelper.KEY_NAME,
 				DbHelper.KEY_HEADSIGN,
 				DbHelper.KEY_DEPARTURE,
 				DbHelper.KEY_ROUTE
 		};
-		int[] to = new int[] {
+		final int[] to = {
 				R.id.name,
 				R.id.headsign,
 				R.id.departure_time,

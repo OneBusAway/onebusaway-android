@@ -40,10 +40,11 @@ public class StopsDbAdapter {
     		double lat,
     		double lon,
     		boolean markAsUsed) {
+    	final String[] rows = { DbHelper.KEY_USECOUNT };
     	final String where = DbHelper.KEY_STOPID + " = '" + stopId + "'";
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
-        				new String[] { DbHelper.KEY_USECOUNT }, // rows
+        				rows, // rows
         				where, // selection (where)
         				null, // selectionArgs
         				null, // groupBy
@@ -99,7 +100,7 @@ public class StopsDbAdapter {
     
 	private static final String WHERE = String.format("%s=?", 
 			DbHelper.KEY_STOPID);
-	private static final String[] COLS = new String[] { 
+	private static final String[] COLS = { 
 			DbHelper.KEY_STOPID, 
 			DbHelper.KEY_CODE, 
 			DbHelper.KEY_NAME, 
@@ -118,7 +119,7 @@ public class StopsDbAdapter {
     public static final int STOP_COL_LONGITUDE = 6;
     
     public Cursor getStop(String stopId) {
-    	final String[] whereArgs = new String[] { stopId };
+    	final String[] whereArgs = { stopId };
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
         				COLS, // rows
@@ -135,10 +136,11 @@ public class StopsDbAdapter {
     }
     public String getStopName(String stopId) {
     	String result = null;
-    	final String[] whereArgs = new String[] { stopId };
+    	final String[] rows = { DbHelper.KEY_NAME };
+    	final String[] whereArgs = { stopId };
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
-        				new String[] { DbHelper.KEY_NAME }, // rows
+        				rows, // rows
         				WHERE, // selection (where)
         				whereArgs, // selectionArgs
         				null, // groupBy
@@ -165,15 +167,18 @@ public class StopsDbAdapter {
 		return result;
     }
     
+    private static final String FavoriteWhere = DbHelper.KEY_USECOUNT + " > 0";
+    private static final String FavoriteOrderBy = DbHelper.KEY_USECOUNT + " desc";
+    
     public Cursor getFavoriteStops() {
         Cursor cursor =
         	mDb.query(DbHelper.STOPS_TABLE, 
         				COLS,
-        				DbHelper.KEY_USECOUNT + " > 0", // selection (where)
+        				FavoriteWhere, // selection (where)
         				null, // selectionArgs
         				null, // groupBy
         				null, // having
-        				DbHelper.KEY_USECOUNT + " desc", // order by
+        				FavoriteOrderBy, // order by
         				"20"); // limit
         if (cursor != null) {
         	cursor.moveToFirst();

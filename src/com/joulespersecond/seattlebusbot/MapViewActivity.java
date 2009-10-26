@@ -97,9 +97,9 @@ public class MapViewActivity extends MapActivity {
 		}	
 	}
 	
-	private class GetStopsByLocationInfo {
-		int latSpan;
-		int lonSpan;
+	private final class GetStopsByLocationInfo {
+		private final int latSpan;
+		private final int lonSpan;
 		
 		public GetStopsByLocationInfo(int lat, int lon) {
 			latSpan = lat;

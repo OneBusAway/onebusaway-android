@@ -9,7 +9,10 @@ import org.json.JSONObject;
 
 import com.google.android.maps.GeoPoint;
 
-public class ObaApi {
+public final class ObaApi {
+	// Uninstantiatable
+	private ObaApi() { throw new AssertionError(); }
+	
 	public static final int OBA_OK = 200;
 	public static final int OBA_BAD_REQUEST = 400;
 	public static final int OBA_UNAUTHORIZED = 401;
@@ -143,25 +146,26 @@ public class ObaApi {
 	getRoutesByLocation(GeoPoint location,
 			int radius,
 			String query) {
-		String url = String.format("%s/routes-for-location.json?key=%s&lat=%f&lon=%f", 
+		StringBuilder url = new StringBuilder(
+				String.format("%s/routes-for-location.json?key=%s&lat=%f&lon=%f", 
 				OBA_URL, 
 				API_KEY,
 				(double)location.getLatitudeE6()/E6,
-				(double)location.getLongitudeE6()/E6);
+				(double)location.getLongitudeE6()/E6));
 		if (radius != 0) {
-			url += "&radius=";
-			url += String.valueOf(radius);
+			url.append("&radius=");
+			url.append(String.valueOf(radius));
 		}
 		if (query != null) {
-			url += "&query=";
+			url.append("&query=");
 			try {
-				url += URLEncoder.encode(query, "UTF-8");
+				url.append(URLEncoder.encode(query, "UTF-8"));
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return null; 
 			}
 		}
- 		return doRequest(url);
+ 		return doRequest(url.toString());
 	}
 	/**
 	 * Get a list of stops that are services by a given route, including 

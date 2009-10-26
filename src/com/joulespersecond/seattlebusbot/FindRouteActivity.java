@@ -217,11 +217,11 @@ public class FindRouteActivity extends ListActivity {
 		TextView empty = (TextView) findViewById(android.R.id.empty);
 		empty.setText(R.string.find_hint_nofavoriteroutes);
 		
-		String[] from = new String[] { 
+		final String[] from = { 
 				DbHelper.KEY_SHORTNAME,
 				DbHelper.KEY_LONGNAME 
 		};
-		int[] to = new int[] {
+		final int[] to = {
 				R.id.short_name,
 				R.id.long_name
 		};

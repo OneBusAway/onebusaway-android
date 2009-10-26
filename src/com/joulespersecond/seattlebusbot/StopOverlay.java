@@ -41,7 +41,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	}
 	
 	public class StopOverlayItem extends OverlayItem {
-		private ObaStop mStop;
+		private final ObaStop mStop;
 
 		public StopOverlayItem(ObaStop stop) {
 			super(stop.getLocation(), stop.getName(), "");

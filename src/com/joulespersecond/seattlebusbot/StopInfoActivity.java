@@ -11,6 +11,7 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,6 +46,9 @@ public class StopInfoActivity extends ListActivity {
 	
 	private GetArrivalInfoTask mAsyncTask;
 	private ProgressDialog mDialog;
+
+	private TripsDbAdapter mTripsDbAdapter;	
+	private TripsDbAdapter.TripsForStopSet mTripsForStop;
 	
 	public static final int getStopDirectionText(String direction) {
 		if (direction.equals("N")) {
@@ -71,118 +75,112 @@ public class StopInfoActivity extends ListActivity {
 	// The results of the ArrivalInfo ObaArray aren't sorted the way we want --
 	// so we'll process the data and return a list of preprocessed structures.
 	//
-	private class StopInfoComparator implements Comparator<StopInfo> {
+	final class StopInfoComparator implements Comparator<StopInfo> {
 		public int compare(StopInfo lhs, StopInfo rhs) {
-			return (int)(lhs.eta - rhs.eta);
+			return (int)(lhs.mEta - rhs.mEta);
 		}
 	}
-	private class StopInfo {
-		private ObaArrivalInfo info;
-		public long eta;
-		public long displayTime;
-		public String statusText;
-		public int color;
+	final class StopInfo {
+		// These are private final but can still be accessed by 
+		// subclasses since this is package-private (which is good for performance).
+		// For now this is OK, but if we wanted to be really correct
+		// we'd make this class private and provide accessors.
+		private final ObaArrivalInfo mInfo;
+		private final long mEta;
+		private final long mDisplayTime;
+		private final String mStatusText;
+		private final int mColor;
+		private final String mTripName;
 		
 		private static final int ms_in_mins = 60*1000;
 		
-		public StopInfo(ObaArrivalInfo _info, long now) {
-			info = _info;
+		public StopInfo(ObaArrivalInfo info, long now) {
+			mInfo = info;
 			// First, all times have to have to be converted to 'minutes'
 			final long nowMins = now/ms_in_mins;
 			final long scheduled = info.getScheduledArrivalTime();
 			final long predicted = info.getPredictedArrivalTime();
 			final long scheduledMins = scheduled/ms_in_mins;
 			final long predictedMins = predicted/ms_in_mins;
+			mTripName = mTripsForStop.getTripName(info.getTripId());
+			
+			final Resources res = getResources();
 			
 			if (predicted != 0) {
-				color = R.color.stop_info_ontime;
-				
-				eta = predictedMins - nowMins;
-				displayTime = predicted;
+				mEta = predictedMins - nowMins;
+				mDisplayTime = predicted;
 				final long delay = predictedMins - scheduledMins;
 				
-				if (eta >= 0) {
+				if (mEta >= 0) {
 					// Bus is arriving
 					if (delay > 0) {
 						// Arriving delayed
-						color = R.color.stop_info_delayed;
+						mColor = R.color.stop_info_delayed;
 						if (delay == 1) {
-							statusText = getResources().getString(
-									R.string.stop_info_arrive_delayed1);							
+							mStatusText = res.getString(R.string.stop_info_arrive_delayed1);							
 						}
 						else {
-							String fmt = getResources().getString(
-									R.string.stop_info_arrive_delayed);
-							statusText = String.format(fmt, delay);						
+							String fmt = res.getString(R.string.stop_info_arrive_delayed);
+							mStatusText = String.format(fmt, delay);						
 						}
 					}
 					else if (delay < 0) {
 						// Arriving early
-						color = R.color.stop_info_early;
+						mColor = R.color.stop_info_early;
 						if (delay == -1) {
-							statusText = getResources().getString(
-									R.string.stop_info_arrive_early1);							
+							mStatusText = res.getString(R.string.stop_info_arrive_early1);							
 						}
 						else {
-							String fmt = getResources().getString(
-									R.string.stop_info_arrive_early);
-							statusText = String.format(fmt, -delay);								
+							String fmt = res.getString(R.string.stop_info_arrive_early);
+							mStatusText = String.format(fmt, -delay);								
 						}
 					}
 					else {
 						// Arriving on time
-						color = R.color.stop_info_ontime;
-						statusText = getResources().getString(
-								R.string.stop_info_ontime);
+						mColor = R.color.stop_info_ontime;
+						mStatusText = res.getString(R.string.stop_info_ontime);
 					}
 				} 
 				else {
 					// Bus is departing
 					if (delay > 0) {
 						// Departing delayed
-						color = R.color.stop_info_delayed;
+						mColor = R.color.stop_info_delayed;
 						if (delay == 1) {
-							statusText = getResources().getString(
-									R.string.stop_info_depart_delayed1);							
+							mStatusText = res.getString(R.string.stop_info_depart_delayed1);							
 						}
 						else {
-							String fmt = getResources().getString(
-									R.string.stop_info_depart_delayed);
-							statusText = String.format(fmt, delay);						
+							String fmt = res.getString(R.string.stop_info_depart_delayed);
+							mStatusText = String.format(fmt, delay);						
 						}
 					} 
 					else if (delay < 0) {
 						// Departing early
-						color = R.color.stop_info_early;
+						mColor = R.color.stop_info_early;
 						if (delay == -1) {
-							statusText = getResources().getString(
-									R.string.stop_info_depart_early1);							
+							mStatusText = res.getString(R.string.stop_info_depart_early1);							
 						}
 						else {
-							String fmt = getResources().getString(
-									R.string.stop_info_depart_early);
-							statusText = String.format(fmt, -delay);						
+							String fmt = res.getString(R.string.stop_info_depart_early);
+							mStatusText = String.format(fmt, -delay);						
 						}
 					}
 					else {
 						// Departing on time
-						color = R.color.stop_info_ontime;
-						statusText = getResources().getString(
-								R.string.stop_info_ontime);
+						mColor = R.color.stop_info_ontime;
+						mStatusText = res.getString(R.string.stop_info_ontime);
 					}
 				}				
 			}
 			else {
-				color = R.color.stop_info_ontime;
+				mColor = R.color.stop_info_ontime;
 				
-				eta = scheduledMins - nowMins;
-				displayTime = scheduled;
-				if (eta > 0) {
-					statusText = getResources().getString(
-							R.string.stop_info_scheduled_arrival);
+				mEta = scheduledMins - nowMins;
+				mDisplayTime = scheduled;
+				if (mEta > 0) {
+					mStatusText = res.getString(R.string.stop_info_scheduled_arrival);
 				} else {
-					statusText = getResources().getString(
-							R.string.stop_info_scheduled_departure);					
+					mStatusText = res.getString(R.string.stop_info_scheduled_departure);					
 				}
 			}
 		}
@@ -201,7 +199,7 @@ public class StopInfoActivity extends ListActivity {
 		return result;
 	}
 	
-	private class StopInfoListAdapter extends BaseAdapter {
+	final class StopInfoListAdapter extends BaseAdapter {
 		private ArrayList<StopInfo> mInfo;
 		
 		public StopInfoListAdapter() {
@@ -246,34 +244,47 @@ public class StopInfoActivity extends ListActivity {
 			TextView time = (TextView)view.findViewById(R.id.time);
 			TextView status = (TextView)view.findViewById(R.id.status);
 			TextView etaView = (TextView)view.findViewById(R.id.eta);
-			
+
 			StopInfo stopInfo = mInfo.get(position);
-			ObaArrivalInfo arrivalInfo = stopInfo.info;
+			ObaArrivalInfo arrivalInfo = stopInfo.mInfo;
 			
 			route.setText(arrivalInfo.getShortName());
 			destination.setText(arrivalInfo.getHeadsign());
-			status.setText(stopInfo.statusText);
+			status.setText(stopInfo.mStatusText);
 
-			if (stopInfo.eta == 0) {
+			if (stopInfo.mEta == 0) {
 				etaView.setText(R.string.stop_info_eta_now);
 			}
 			else {
-				etaView.setText(String.valueOf(stopInfo.eta));
+				etaView.setText(String.valueOf(stopInfo.mEta));
 			}
 			
-			int color = getResources().getColor(stopInfo.color);
+			int color = getResources().getColor(stopInfo.mColor);
 			//status.setTextColor(color); // This just doesn't look very good.
 			etaView.setTextColor(color);
 
 			time.setText(DateUtils.formatDateTime(StopInfoActivity.this, 
-					stopInfo.displayTime, 
+					stopInfo.mDisplayTime, 
 					DateUtils.FORMAT_SHOW_TIME|
 					DateUtils.FORMAT_NO_NOON|
 					DateUtils.FORMAT_NO_MIDNIGHT));	
+			
+			if (stopInfo.mTripName != null) {
+				View tripInfo = view.findViewById(R.id.trip_info);
+				TextView tripName = (TextView)view.findViewById(R.id.trip_name);
+				tripName.setText(stopInfo.mTripName);
+				tripInfo.setVisibility(View.VISIBLE);
+			}
+			else {
+				// Explicitly set this to invisible because we might be reusing this view.
+				View tripInfo = view.findViewById(R.id.trip_info);
+				tripInfo.setVisibility(View.GONE);
+				
+			}
 		}
 	}
 	
-	private class GetArrivalInfoTask extends AsyncTask<String,Void,ObaResponse> {
+	class GetArrivalInfoTask extends AsyncTask<String,Void,ObaResponse> {
 		public GetArrivalInfoTask(boolean updateDb, boolean silent) {
 			super();
 			mSilent = silent;
@@ -344,12 +355,19 @@ public class StopInfoActivity extends ListActivity {
 		mAdapter = new StopInfoListAdapter();
 		setListAdapter(mAdapter);
 		
+		mTripsDbAdapter = new TripsDbAdapter(this);
+		mTripsDbAdapter.open();
+		
 		Bundle bundle = getIntent().getExtras();
 		mStopId = bundle.getString(STOP_ID);
+		
+    	mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
 		refresh(true, false);
 	}
 	@Override
 	public void onDestroy() {
+		mTripsForStop.close();
+		mTripsDbAdapter.close();
 		// Do this before the async task does -- it leaks the window for some reason.
 		dismissLoadingDialog();
 		if (mAsyncTask != null) {
@@ -391,6 +409,10 @@ public class StopInfoActivity extends ListActivity {
     	if (mTimer == null) {
     		mTimer = new Timer();
     	}
+    	mTripsForStop.refresh();
+    	// Always refresh once on resume
+    	refresh(false, true);
+    	
     	mTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -407,7 +429,14 @@ public class StopInfoActivity extends ListActivity {
     	}
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
     	builder.setTitle(R.string.stop_info_item_options_title);
-    	builder.setItems(R.array.stop_item_options, new DialogInterface.OnClickListener() {
+    	int options;
+    	if (stop.mTripName != null) {
+    		options = R.array.stop_item_options_edit;
+    	}
+    	else {
+    		options = R.array.stop_item_options;
+    	}
+    	builder.setItems(options, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
 				case 0:
@@ -428,7 +457,7 @@ public class StopInfoActivity extends ListActivity {
     }
     
     private void goToTrip(StopInfo stop) {
-		ObaArrivalInfo stopInfo = stop.info;
+		ObaArrivalInfo stopInfo = stop.mInfo;
 		// The TripInfo activity needs:
 		// 1. Trip ID
 		// 2. Route Name
@@ -447,7 +476,7 @@ public class StopInfoActivity extends ListActivity {
     }
     private void goToRoute(StopInfo stop) {
     	Intent myIntent = new Intent(this, RouteInfoActivity.class);
-    	myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.info.getRouteId());
+    	myIntent.putExtra(RouteInfoActivity.ROUTE_ID, stop.mInfo.getRouteId());
     	startActivity(myIntent);
     }
     private void filterByRoute(StopInfo stop) {

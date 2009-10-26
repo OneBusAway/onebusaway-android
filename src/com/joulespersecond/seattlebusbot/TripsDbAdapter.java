@@ -41,7 +41,7 @@ public class TripsDbAdapter {
 	private static final String WHERE = String.format("%s=? and %s=?", 
 			DbHelper.KEY_TRIPID,
 			DbHelper.KEY_STOP);
-	private static final String[] COLS = new String[] { 
+	private static final String[] COLS = { 
 			DbHelper.KEY_TRIPID,
 			DbHelper.KEY_STOP,
 			DbHelper.KEY_ROUTE,
@@ -62,14 +62,12 @@ public class TripsDbAdapter {
 	public static final int TRIP_COL_DAYS = 7;	
 	
     public Cursor getTrip(String tripId, String stopId) {
+    	final String[] whereArgs = { tripId, stopId };
         Cursor cursor =
         	mDb.query(DbHelper.TRIPS_TABLE, 
         				COLS,
         				WHERE, // selection (where)
-        				new String[] {
-        					tripId,
-        					stopId
-        				}, // selectionArgs
+        				whereArgs,  // selectionArgs
         				null, // groupBy
         				null, // having
         				null); // order by
@@ -93,6 +91,49 @@ public class TripsDbAdapter {
         }
         return cursor;    	
     }
+    
+    public final class TripsForStopSet {
+    	private final Cursor mCursor;
+    	
+    	TripsForStopSet(Cursor c) {
+    		mCursor = c;
+    	}
+    	public void close() {
+    		if (mCursor != null) {
+    			mCursor.close();
+    		}
+    	}
+    	public void refresh() {
+    		if (mCursor != null) {
+    			mCursor.requery();
+    		}
+    	}
+    	// Returns null is there is no trip with this ID.
+    	public String getTripName(String tripId) {
+        	if (mCursor == null || !mCursor.moveToFirst()) {
+        		return null;
+        	}
+        	do {
+        		if (tripId.equals(mCursor.getString(0))) {
+        			return mCursor.getString(1);
+        		}
+        	} while (mCursor.moveToNext());
+        	return null;    		
+    	}
+    }
+    public TripsForStopSet getTripsForStopId(String stopId) {
+    	final String[] rows = { DbHelper.KEY_TRIPID, DbHelper.KEY_NAME };
+    	final String[] whereArgs = { stopId };
+    	Cursor c =
+        	mDb.query(DbHelper.TRIPS_TABLE, 
+        				rows, // rows
+        				DbHelper.KEY_STOP + "=?", // selection (where)" +
+        				whereArgs, // selectionArgs
+        				null, // groupBy
+        				null, // having
+        				null); // order by
+    	return new TripsForStopSet(c);
+    }
 	
     public void addTrip(String tripId,
     		String stopId, 
@@ -102,11 +143,12 @@ public class TripsDbAdapter {
     		String name,
     		int reminder,
     		int days) {
-    	final String[] whereArgs = new String[] { tripId, stopId };
-    	
+    	final String[] rows = { DbHelper.KEY_TRIPID };
+    	final String[] whereArgs = { tripId, stopId };
+
     	Cursor cursor =
         	mDb.query(DbHelper.TRIPS_TABLE, 
-        				new String[] { DbHelper.KEY_TRIPID }, // rows
+        				rows, // rows
         				WHERE, // selection (where)
         				whereArgs, // selectionArgs
         				null, // groupBy
@@ -138,7 +180,7 @@ public class TripsDbAdapter {
     	runTripService();
 	}
     public void deleteTrip(String tripId, String stopId) {
-    	final String[] whereArgs = new String[] { tripId, stopId };
+    	final String[] whereArgs = { tripId, stopId };
     	mDb.delete(DbHelper.TRIPS_TABLE, WHERE, whereArgs);
     	runTripService();
     }
@@ -156,7 +198,7 @@ public class TripsDbAdapter {
      * @return A boolean array representing the days set in the bitmask, Mon=0 to Sun=6
      */
     public static boolean[] daysToArray(int days) {
-    	final boolean[] result = new boolean[] {
+    	final boolean[] result = {
         		(days & DAY_MON) == DAY_MON,
         		(days & DAY_TUE) == DAY_TUE,
         		(days & DAY_WED) == DAY_WED,

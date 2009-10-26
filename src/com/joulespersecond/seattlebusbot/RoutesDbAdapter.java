@@ -25,16 +25,20 @@ public class RoutesDbAdapter {
         mDbHelper.close();
     }
     
+    private static final String WhereRouteId = DbHelper.KEY_ROUTEID + "=?";
+    
     public void addRoute(String routeId, 
     		String shortName, 
     		String longName,
     		boolean markAsUsed) {
-    	final String where = DbHelper.KEY_ROUTEID + " = '" + routeId + "'";
+    	final String[] rows = { DbHelper.KEY_USECOUNT };
+    	final String where = DbHelper.KEY_ROUTEID + "=?";
+    	final String[] whereArgs = { routeId };
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
-        				new String[] { DbHelper.KEY_USECOUNT }, // rows
-        				where, // selection (where)
-        				null, // selectionArgs
+        				rows, // rows
+        				WhereRouteId, // selection (where)
+        				whereArgs, // selectionArgs
         				null, // groupBy
         				null, // having
         				null, // order by
@@ -55,7 +59,7 @@ public class RoutesDbAdapter {
         	if (markAsUsed) {
         		args.put(DbHelper.KEY_USECOUNT, cursor.getInt(0) + 1);
         	}
-        	mDb.update(DbHelper.ROUTES_TABLE, args, where, null);
+        	mDb.update(DbHelper.ROUTES_TABLE, args, where, whereArgs);
         }
         else {
         	// Insert a new entry
@@ -91,7 +95,7 @@ public class RoutesDbAdapter {
     
 	private static final String WHERE = String.format("%s=?", 
 			DbHelper.KEY_ROUTEID);
-	private static final String[] COLS = new String[] { 
+	private static final String[] COLS = { 
 			DbHelper.KEY_ROUTEID, 
 			DbHelper.KEY_SHORTNAME, 
 			DbHelper.KEY_LONGNAME, 
@@ -104,7 +108,7 @@ public class RoutesDbAdapter {
     public static final int ROUTE_COL_USECOUNT = 3;
     
     public Cursor getRoute(String routeId) {
-    	final String[] whereArgs = new String[] { routeId };
+    	final String[] whereArgs = { routeId };
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
         				COLS, // rows
@@ -121,10 +125,11 @@ public class RoutesDbAdapter {
     }
     public String getRouteShortName(String routeId) {
     	String result = null;
-    	final String[] whereArgs = new String[] { routeId };
+    	final String[] rows = { DbHelper.KEY_SHORTNAME };
+    	final String[] whereArgs = { routeId };
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
-        				new String[] { DbHelper.KEY_SHORTNAME }, // rows
+        				rows, // rows
         				WHERE, // selection (where)
         				whereArgs, // selectionArgs
         				null, // groupBy
@@ -151,15 +156,18 @@ public class RoutesDbAdapter {
 		return result;
     }
     
+    private static final String FavoriteWhere = DbHelper.KEY_USECOUNT + " > 0";
+    private static final String FavoriteOrderBy = DbHelper.KEY_USECOUNT + " desc";
+    
     public Cursor getFavoriteRoutes() {
         Cursor cursor =
         	mDb.query(DbHelper.ROUTES_TABLE, 
         				COLS, // rows
-        				DbHelper.KEY_USECOUNT + " > 0", // selection (where)
+        				FavoriteWhere, // selection (where)
         				null, // selectionArgs
         				null, // groupBy
         				null, // having
-        				DbHelper.KEY_USECOUNT + " desc", // order by
+        				FavoriteOrderBy, // order by
         				"20"); // limit
         if (cursor != null) {
         	cursor.moveToFirst();

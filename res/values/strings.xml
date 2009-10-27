@@ -13,7 +13,7 @@
     <string name="main_arrival_info"><u>Show arrivals</u></string>
     
     <!--  Stop Info -->
-    <string name="stop_info_title">Stop Information</string>
+    <string name="stop_info_title">SeattleBusBot</string>
     <string name="stop_info_loading">Getting stop information...</string>
     <string name="stop_info_ontime">On time</string>
     <string name="stop_info_arrive_delayed1">1 minute delay</string>
@@ -33,12 +33,12 @@
     <string name="stop_info_item_options_title">Bus options</string>
     
     <!-- Route Info  -->
-    <string name="route_info_title">Route Information</string>
+    <string name="route_info_title">SeattleBusBot</string>
     <string name="route_info_loading">Getting route information...</string>
     
     <!-- Find -->
-    <string name="find_route_title">Find Route</string>
-    <string name="find_stop_title">Find Stop</string>
+    <string name="find_route_title">SeattleBusBot</string>
+    <string name="find_stop_title">SeattleBusBot</string>
     <string name="find">Find</string>
     <string name="find_option_clearfavorites">Clear favorites</string>
     <string name="find_hint_nofavoritestops">You don\'t have any favorite stops.
@@ -61,7 +61,7 @@ Routes that you use most will appear in this list.</string>
     <string name="route_name">Route %s</string>
     
     <!--  Trip info -->
-    <string name="trip_info_title">Trip Reminder</string>
+    <string name="trip_info_title">SeattleBusBot</string>
     <string name="trip_info_name">Trip name</string>
     <string name="trip_info_name_hint">Add a trip name</string>
     <string name="trip_info_route">Route %s</string>
@@ -81,7 +81,7 @@ Routes that you use most will appear in this list.</string>
     <string name="trip_info_repeat_norepeat">One-time</string>
     
     <!--  Trip list -->
-    <string name="trip_list_title">Trips</string>
+    <string name="trip_list_title">SeattleBusBot</string>
     <string name="trip_list_notrips">You have no trips. 
 
 You can create notifications for bus trips by clicking on an arriving bus for your stop.    

@@ -75,34 +75,45 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	}
 	@Override
 	public boolean onTrackballEvent(MotionEvent event, MapView view) {
-		final float xDiff = event.getX();
-		final float yDiff = event.getY();
+		final int action = event.getAction();
 		OverlayItem next = null;
+		//Log.d(TAG, "MotionEvent: " + event);
 		
-		// Up
-		if (yDiff <= -1) {
-			next = findNext(getFocus(), true, true);
+		if (action == MotionEvent.ACTION_MOVE) {
+			final float xDiff = event.getX();
+			final float yDiff = event.getY();
+			// Up
+			if (yDiff <= -1) {
+				next = findNext(getFocus(), true, true);
+			}
+			// Down
+			else if (yDiff >= 1) {
+				next = findNext(getFocus(), true, false);
+			}
+			// Right
+			else if (xDiff >= 1) {
+				next = findNext(getFocus(), false, true);
+			}
+			// Left
+			else if (xDiff <= -1) {
+				next = findNext(getFocus(), false, false);
+			}
+			if (next != null) {
+				setFocus(next);
+				view.postInvalidate();
+			}
 		}
-		// Down
-		else if (yDiff >= 1) {
-			next = findNext(getFocus(), true, false);
-		}
-		// Right
-		else if (xDiff >= 1) {
-			next = findNext(getFocus(), false, true);
-		}
-		// Left
-		else if (xDiff <= -1) {
-			next = findNext(getFocus(), false, false);
-		}
-		if (next != null) {
-			setFocus(next);
-			view.postInvalidate();
+		else if (action == MotionEvent.ACTION_UP) {
+			final OverlayItem focus = getFocus();
+			if (focus != null) {
+				MapViewActivity.goToStop(mActivity, ((StopOverlayItem)focus).getStop());
+			}	
 		}
 		return true;
 	}
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event, MapView view) {
+		//Log.d(TAG, "KeyEvent: " + event);
 		OverlayItem next = null;
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_DPAD_UP:
@@ -116,6 +127,12 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 			break;
 		case KeyEvent.KEYCODE_DPAD_LEFT:
 			next = findNext(getFocus(), false, false);
+			break;
+		case KeyEvent.KEYCODE_DPAD_CENTER:
+			final OverlayItem focus = getFocus();
+			if (focus != null) {
+				MapViewActivity.goToStop(mActivity, ((StopOverlayItem)focus).getStop());
+			}
 			break;
 		default:
 			return false;
@@ -152,7 +169,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 			MapViewActivity.goToStop(mActivity, stop);
 		}
 		else {
-			setFocus(getItem(index));
+			setFocus(item);
 		}
 		return true;
 	}
@@ -160,6 +177,9 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 	// The find next routines find the closest item along the specified axis.
 
 	OverlayItem findNext(OverlayItem initial, boolean lat, boolean positive) {
+		if (initial == null) {
+			return null;
+		}
 		final int size = size();
 		final GeoPoint initialPoint = initial.getPoint();
 		OverlayItem min = initial;

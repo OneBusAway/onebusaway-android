@@ -292,7 +292,10 @@ public class StopInfoActivity extends ListActivity {
 		}
 		@Override
 		protected void onPreExecute() {
-			if (!mSilent) {
+			if (mSilent) {
+		        setProgressBarIndeterminateVisibility(true);
+			}
+			else {
 				showLoadingDialog();
 			}
 		}
@@ -330,10 +333,12 @@ public class StopInfoActivity extends ListActivity {
 	    		empty.setText(R.string.generic_comm_error);
 	    	}
 	    	dismissLoadingDialog();
+	        setProgressBarIndeterminateVisibility(false);
 		}
 		@Override
 		protected void onCancelled() {
 			dismissLoadingDialog();
+	        setProgressBarIndeterminateVisibility(false);
 		}
 
 		private boolean mSilent;
@@ -343,7 +348,7 @@ public class StopInfoActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+	    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.stop_info);
 		ListView listView = getListView();

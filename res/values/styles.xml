@@ -77,4 +77,10 @@
         <item name="android:paddingTop">8sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+    
+    <style name="FindSearchBox">
+        <item name="android:background">#f0f0f0</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
 </resources>

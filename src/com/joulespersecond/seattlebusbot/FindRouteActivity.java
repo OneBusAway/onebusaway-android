@@ -53,9 +53,7 @@ public class FindRouteActivity extends ListActivity {
 			mShortcutMode = true;
 		}
 		
-		if (!mShortcutMode) {
-			setTitle(R.string.find_route_title);
-		}
+		setTitle(R.string.find_route_title);
 		
 		mDbAdapter = new RoutesDbAdapter(this);
 		mDbAdapter.open();

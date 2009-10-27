@@ -55,9 +55,7 @@ public class FindStopActivity extends ListActivity {
 			mShortcutMode = true;
 		}
 		
-		if (!mShortcutMode) {
-			setTitle(R.string.find_stop_title);
-		}
+		setTitle(R.string.find_stop_title);
 		
 		mDbAdapter = new StopsDbAdapter(this);
 		mDbAdapter.open();

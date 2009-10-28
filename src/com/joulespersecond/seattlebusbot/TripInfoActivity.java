@@ -229,12 +229,6 @@ public class TripInfoActivity extends Activity {
 		mDbAdapter.deleteTrip(mTripId, mStopId);
 	}
 	
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-    	// TODO: Save all member variables, and the current state of all selectors/edit boxes
-    	super.onSaveInstanceState(outState);
-    }
-	
 	class DialogListener 
 		implements DialogInterface.OnClickListener, OnMultiChoiceClickListener {
 		private boolean[] mChecks;

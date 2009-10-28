@@ -1,6 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -43,6 +43,8 @@ public class TripService extends Service {
 		"com.joulespersecond.seattlebusbot.action.SCHEDULE_TRIP";
 	public static final String ACTION_POLL_TRIP = 
 		"com.joulespersecond.seattlebusbot.action.POLL_TRIP";
+	public static final String ACTION_CANCEL_POLL = 
+		"com.joulespersecond.seattlebusbot.action.CANCEL_POLL";
 	//
 	// Bus URI format:
 	// com.joulespersecond.seattlebusbot://trip/<tripId>/<stopId>
@@ -59,24 +61,23 @@ public class TripService extends Service {
     			.build();
     }
 	
-	private static final int LOOKAHEAD_DURATION_MS = 10*60*1000;
+    private static final long ONE_MINUTE = 60*1000;
+    private static final long ONE_HOUR = 60*ONE_MINUTE;
+	private static final long LOOKAHEAD_DURATION_MS = 5*ONE_MINUTE;
 	
 	// We don't want to stop the service when any particular call to onStart
 	// completes: we want to stop the service when *all* tasks that have
 	// been started by onStart complete.
 	// So we store the startIds here as "task IDs" and each task calls
 	// stopTask(), and when there are no more tasks, we call stopSelf().
-	private HashSet<Integer> mActiveTasks = new HashSet<Integer>();
+	private HashMap<String,TaskBase> mActiveTasks = new HashMap<String,TaskBase>();
 	
     @Override
     public void onStart(Intent intent, int startId) {  
     	final String action = intent.getAction();
+    	TaskBase newTask = null;
     	if (ACTION_SCHEDULE_ALL.equals(action)) {
-            Thread thr = new Thread(null, 
-            		new ScheduleAllTask(startId), 
-            		TAG);
-            thr.start();   
-            return;
+    		newTask = new ScheduleAllTask();
     	}
     	else if (ACTION_SCHEDULE_TRIP.equals(action)) {
     		// Decode the content URI.
@@ -84,11 +85,7 @@ public class TripService extends Service {
     		if (contentUri != null) {
 	    		List<String> path = contentUri.getPathSegments();
 	    		if (path.size() >= 2) {
-	                Thread thr = new Thread(null, 
-	                		new Schedule1Task(startId, path.get(0), path.get(1)), 
-	                		TAG);
-	                thr.start();   
-	                return;    			
+	    			newTask = new Schedule1Task(path.get(0), path.get(1));   			
 	    		}
     		}
     	}
@@ -98,71 +95,131 @@ public class TripService extends Service {
     		if (contentUri != null) {
 	    		List<String> path = contentUri.getPathSegments();
 	    		if (path.size() >= 2) {
-	                Thread thr = new Thread(null, 
-	                		new PollTask(startId, path.get(0), path.get(1)), 
-	                		TAG);
-	                thr.start();   
-	                return;    			
+	                newTask = new PollTask(path.get(0), path.get(1));   			
 	    		}
     		}
     	}
-    	Log.e(TAG, "We should not have gotten here: " + action);
-    	stopSelf();
+    	else if (ACTION_CANCEL_POLL.equals(action)) {
+    		// Decode the content URI.
+    		final Uri contentUri = intent.getData();
+    		if (contentUri != null) {
+    			final String taskId = PollTask.PREFIX+contentUri.toString();
+    			synchronized (this) {
+    				TaskBase base = mActiveTasks.get(taskId);
+    				if (base instanceof PollTask) {
+    					((PollTask)base).clearNotification();
+    				}
+    			}    			
+    		}
+    		return;
+    	}
+    	if (newTask != null) {
+    		synchronized (this) {
+    			// If there is a task with the existing ID, then don't 
+    			// start a new one.
+    			final String taskId = newTask.getTaskId();
+    			if (!mActiveTasks.containsKey(taskId)) {
+    				Thread thr = new Thread(null, newTask, TAG);
+    				thr.start();
+    			}
+    			else {
+    				Log.w(TAG, "Task already started: " + taskId);
+    			}
+    		}
+    	} 
+    	else {
+    		Log.e(TAG, "No new task -- something went wrong: " + action);
+    		synchronized (this) {
+    			if (mActiveTasks.isEmpty()) {
+    	        	Log.d(TAG, "Stopping service");
+    				stopSelf();
+    			}
+    		}
+    	}
     }
 
+    //
+    // Tasks are identified by their Task ID, which is their logical equality.
+    //
     abstract class TaskBase implements Runnable {
-    	private final Integer mStartId;
+    	private final String mTaskId;
     	private PowerManager.WakeLock mWakeLock;
     	// Keep the CPU on while we work on these tasks.
     	
-    	TaskBase(int startId) {
-    		mStartId = startId;
+    	TaskBase(String taskId) {
+    		mTaskId = taskId;
     	}
     	protected void startTask() {
     		synchronized(TripService.this) {
     			PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
     			mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
     			mWakeLock.acquire();
-    			mActiveTasks.add(mStartId);
+    			mActiveTasks.put(mTaskId, this);
     		}
     	}
     	protected void endTask() {
     		synchronized(TripService.this) {
-    			mActiveTasks.remove(mStartId);
+    			mActiveTasks.remove(mTaskId);
     			if (mActiveTasks.isEmpty()) {
-    	        	//Log.d(TAG, "Stopping service");
+    	        	Log.d(TAG, "Stopping service");
     				stopSelf();
     			}
     			mWakeLock.release();
     		}
     	}
 		public void run() {
-        	//Log.d(TAG, "Starting task");
+        	Log.d(TAG, "Starting task: " + mTaskId);
         	startTask();
         	
         	runTask();
         	
             // Done with our work...  stop the service!
-        	//Log.d(TAG, "Exiting task");
+        	Log.d(TAG, "Exiting task: " + mTaskId);
         	endTask();
 		}
 		protected void runTask() {
 			// Meant to be overridden.
 		}
+		public String getTaskId() {
+			return mTaskId;
+		}
+		
+		@Override 
+		public String toString() {
+			return String.format("{Task id=%s}", mTaskId);
+		}
+		// Everything that identifies the task *MUST* be specified in the TaskID.
+		@Override
+		public final boolean equals(Object obj) {
+			if (obj == this) {
+				return true;
+			}
+			if (!(obj instanceof TaskBase)) {
+				return false;
+			}
+			TaskBase task = (TaskBase)obj;
+			return mTaskId.equals(task.mTaskId);
+		}
+		@Override 
+		public final int hashCode() {
+			int result = 33;
+			result = 31 * result + mTaskId.hashCode();
+			return result;
+		}
     }
     
     final class Schedule1Task extends TaskBase {
+    	public static final String PREFIX = "Schedule1:";
     	private final String mTripId;
     	private final String mStopId;
     	
-    	Schedule1Task(int startId, String tripId, String stopId) {
-    		super(startId);
+    	Schedule1Task(String tripId, String stopId) {
+    		super(PREFIX+buildTripUri(tripId, stopId).toString());
     		mTripId = tripId;
     		mStopId = stopId;
     	}
 		@Override
 		protected void runTask() {
-			//Log.d(TAG, "Schedule 1 task");
         	final TripsDbAdapter adapter = new TripsDbAdapter(TripService.this);
         	adapter.open();
         	
@@ -173,12 +230,12 @@ public class TripService extends Service {
     }
     
     final class ScheduleAllTask extends TaskBase {
-		ScheduleAllTask(int startId) {
-			super(startId);
+    	public static final String PREFIX = "ScheduleAll:";
+		ScheduleAllTask() {
+    		super(PREFIX);
 		}
 		@Override
 		protected void runTask() {
-			//Log.d(TAG, "Schedule all task");
         	final TripsDbAdapter adapter = new TripsDbAdapter(TripService.this);
         	adapter.open();
         	
@@ -188,119 +245,186 @@ public class TripService extends Service {
 		}
     }
     
-    static final int reminderToIndex(int reminder) {
-		switch (reminder) {
-		case 0:		return 0;
-		case 1: 	return 1;
-		case 5:		return 2;
-		case 10:	return 3;
-		case 15:	return 4;
-		case 20:	return 5;
-		case 25:	return 6;
-		case 30:	return 7;
-		case 45:	return 8;
-		case 60:	return 9;
-		default:
-			Log.e(TAG, "Invalid reminder value in DB: " + reminder);
-			return 0;
-		}
-    }
-    
-    final String getNotifyText(Cursor c, int reminderMS) {
+    final String getNotifyText(Cursor c, long timeDiff) {
 		final String routeName = RoutesDbAdapter.getRouteShortName(this, 
 				c.getString(TripsDbAdapter.TRIP_COL_ROUTEID));
 		
 		final Resources res = getResources();
-		final String[] array = res.getStringArray(R.array.reminder_time_notify);
-		final String fmt = res.getString(R.string.trip_stat);
-		
-		return String.format(fmt, routeName, array[reminderToIndex(reminderMS/(60*1000))]);
-    }
-    
-    // This is used by the PollTask in doNotify(), but since it uses the 
-    // Context so much it's easier implemented in the service object itself.
-    final void doNotification(String tripId, String stopId, int reminderMS, Cursor c) {
-		//Log.d(TAG, "Notify for trip: " + tripId);
-		Notification notify = 
-			new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());
-		
-		Intent stopActivity = new Intent(this, StopInfoActivity.class);
-		stopActivity.putExtra(StopInfoActivity.STOP_ID, stopId);
-		PendingIntent pending = PendingIntent.getActivity(this,
-				0, stopActivity, PendingIntent.FLAG_ONE_SHOT);
-		
-		final String title = getResources().getString(R.string.app_name);
-		
-		notify.setLatestEventInfo(this, title, getNotifyText(c, reminderMS), pending);
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		nm.notify(1, notify);    	
+		if (timeDiff < ONE_MINUTE) {
+			final String fmt = res.getString(R.string.trip_stat_lessthanone);
+			return String.format(fmt, routeName);
+		}
+		else if (timeDiff < ONE_MINUTE*2) {
+			final String fmt = res.getString(R.string.trip_stat_one);
+			return String.format(fmt, routeName);			
+		}
+		else {
+			final String fmt = res.getString(R.string.trip_stat);
+			return String.format(fmt, routeName, (int)(timeDiff/ONE_MINUTE));			
+		}
     }
     
     final class PollTask extends TaskBase {
+    	public static final String PREFIX = "Poll:";
     	private final String mTripId;
     	private final String mStopId;
+    	// Notification should only be used during the task thread.
+    	private Notification mNotification = null;
+    	private PendingIntent mNotificationIntent = null;
+    	// This can be set in another thread.
+    	private volatile int mState = UNINIT;
     	
-    	PollTask(int startId, String tripId, String stopId) {
-    		super(startId);
+    	PollTask(String tripId, String stopId) {
+    		super(PREFIX+buildTripUri(tripId, stopId).toString());
     		mTripId = tripId;
     		mStopId = stopId;
     	}
     	
     	// These are states for the doPoll loop.
-		private static final int NOT_FOUND = 0;
-		private static final int FOUND = 1;
-		private static final int NOTIFIED = 2;
+    	private static final int UNINIT = 0;
+		private static final int NOT_FOUND = 1;
+		private static final int FOUND = 2;
+		private static final int NOTIFIED = 3;
+		private static final int CLEARED = 4;
     	
-    	final void doPoll(Cursor c) {
+		synchronized void clearNotification() {
+			Log.d(TAG, "Clearing notification: " + mTripId);
+			mState = CLEARED;
+		}
+		
+		private static final int NOTIFY_ID = 1;
+		
+	    final void doNotification(long timeDiff, Cursor c) {
+			final Context ctx = TripService.this;
+	    	
+			Log.d(TAG, "Notify for trip: " + mTripId);
+			if (mNotification == null) {
+				mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());	
+				mNotification.defaults |= Notification.DEFAULT_SOUND|
+					Notification.DEFAULT_LIGHTS|
+					Notification.DEFAULT_VIBRATE;
+				
+				Intent deleteIntent = new Intent(ctx, TripService.class);
+				deleteIntent.setAction(ACTION_CANCEL_POLL);
+				deleteIntent.setData(buildTripUri(mTripId, mStopId));
+				mNotification.deleteIntent = PendingIntent.getService(ctx,
+						0, deleteIntent, PendingIntent.FLAG_ONE_SHOT);
+				
+				Intent stopActivity = new Intent(ctx, StopInfoActivity.class);
+				stopActivity.putExtra(StopInfoActivity.STOP_ID, mStopId);
+				mNotificationIntent = PendingIntent.getActivity(ctx,
+						0, stopActivity, PendingIntent.FLAG_ONE_SHOT);
+			}
+			else {
+				// All other updates are silent.
+				mNotification.defaults = 0;
+			}
+		
+			final String title = getResources().getString(R.string.app_name);
+			
+			mNotification.setLatestEventInfo(ctx, title, 
+					getNotifyText(c, timeDiff), mNotificationIntent);
+			NotificationManager nm = 
+				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			nm.notify(NOTIFY_ID, mNotification);   
+	    }
+	    final void cancelNotification() {
+	    	if (mNotification != null) {
+				Log.d(TAG, "Cancel notification: " + mTripId);
+				NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+				nm.cancel(NOTIFY_ID); 
+				mNotification = null;
+	    	}
+	    }
+		
+		// This schedules the trip service to schedule the next 
+		// trip in this series.
+		final void scheduleNext(TripsDbAdapter adapter, Cursor c) {
+			final int days = c.getInt(TripsDbAdapter.TRIP_COL_DAYS);
+			if (days == 0) {
+				// This was a one-shot timer. Delete it.
+				adapter.deleteTrip(mTripId, mStopId);
+			}
+			else {	
+		    	final Intent tripService = new Intent(TripService.this, TripService.class);
+		    	tripService.setAction(TripService.ACTION_SCHEDULE_TRIP);
+		    	tripService.setData(buildTripUri(mTripId, mStopId));
+		    	TripService.this.startService(tripService);
+			}
+		}
+		
+    	final boolean doPoll(Cursor c) {
     		final String tripId = mTripId;
     		final String stopId = mStopId;
-    		long now = System.currentTimeMillis();
-    		final int reminderMS = c.getInt(TripsDbAdapter.TRIP_COL_REMINDER)*60*1000;
-    		final int departMS = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE)*60*1000;
+    		// Add one so we notify at least that many minutes before the reminder time --
+    		// it's better to be half a minute early than half a minute late.
+    		final long reminderMS = (1+c.getInt(TripsDbAdapter.TRIP_COL_REMINDER))*ONE_MINUTE;
+    		final long departMS = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE)*ONE_MINUTE;
     		
-    		int state = NOT_FOUND;
+    		mState = NOT_FOUND;
 	
-    		while (state != NOTIFIED) {
-        		//Log.d(TAG, tripId + ": get arrivals/departures");
+    		while (mState != CLEARED) {
+        		Log.d(TAG, tripId + ": get arrivals/departures");
     			ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
     			
-        		now = System.currentTimeMillis();
+        		final long now = System.currentTimeMillis();
     			
     			if (response.getCode() == ObaApi.OBA_OK) {
-    				// Find the trip.
     				final ObaArray arrivals = response.getData().getArrivalsAndDepartures();
     				final int length = arrivals.length();
     				for (int i=0; i < length; ++i) {
     					ObaArrivalInfo info = arrivals.getArrivalInfo(i);
     					if (tripId.equals(info.getTripId())) {
-    		        		//Log.d(TAG, tripId + ": found trip");
-    						state = FOUND;
-    						// We found the trip. We notify when the reminder time
-    						// when calculated with the *predicted* arrival time
-    						// is past now.
-    						long time = info.getPredictedArrivalTime();
-    						if (time == 0) {
-    							time = info.getScheduledArrivalTime();
-    						}
-    						if ((time-reminderMS) < now) {
-    							doNotification(tripId, stopId, reminderMS, c);
-    							state = NOTIFIED;
-    							break;
+    						synchronized (this) {
+	    		        		if (mState == NOT_FOUND) {
+		    		        		Log.d(TAG, tripId + ": found trip");
+	    		        			mState = FOUND;
+	    		        		}
+	    						// We found the trip. We notify when the reminder time
+	    						// when calculated with the *predicted* arrival time
+	    						// is past now.
+	    						long time = info.getPredictedArrivalTime();
+	    						if (time == 0) {
+	    							time = info.getScheduledArrivalTime();
+	    						}
+	    						// State model:
+	    						// FOUND:
+	    						//		((time-reminderMS) < now) -> doNotification(), NOTIFIED
+	    						//		(time < now) -> CLEARED
+	    						//
+	    						// NOTIFIED:
+	    						//		(time < now) -> CLEARED
+	    						//
+	    						// CLEARED:
+	    						//		Nothing.
+	    						// 		
+	    						if (mState == FOUND) {
+		    						if ((time-reminderMS) < now) {
+		    							doNotification(time-now, c);
+		    							mState = NOTIFIED;
+		    						}
+		    						else if (time < now) {
+		    							// Bus has left.
+		    							mState = CLEARED;
+		    						}
+	    						} 
+	    						else if (mState == NOTIFIED) {
+	    							if (time < now) {
+	    								// Bus has left. Cancel the notification.
+	    								cancelNotification();
+	    								mState = CLEARED;
+	    							}
+	    							else {
+	    								doNotification(time-now, c);	
+	    							}
+	    						}
     						}
     					}
     				}
-    				// If we get here, either:
-    				// 1. The trip ID wasn't found in the array, or
-    				// 2. We haven't yet crossed the reminder time.
-    				// In either case, we keep going.
-    			}
-    			else {
-    				// If we get here, the server returned an error.
-    				// Keep moving.
     			}
     			// If we haven't found the trip, then give up after
     			// 10 minutes past the scheduled departure time.
-    			if (state == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
+    			if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
     				// Give up.
     				Log.d(TAG, tripId + ": giving up");
     				break;
@@ -310,19 +434,19 @@ public class TripService extends Service {
 				} catch (InterruptedException e) {
 					// Okay...
 				}
-    		}    		
+    		}   
+    		return mState == CLEARED;
     	}
     	
     	@Override
-		protected void runTask() {
-    		//Log.d(TAG, "Poll task: " + mTripId + "/" + mStopId);
-    		
+		protected void runTask() {    		
         	final TripsDbAdapter adapter = new TripsDbAdapter(TripService.this);
         	adapter.open();
         	
         	Cursor c = adapter.getTrip(mTripId, mStopId);
         	if (c != null && c.getCount() > 0) {
         		doPoll(c);
+        		scheduleNext(adapter, c);
         	}
         	else {
         		Log.e(TAG, "No such trip");
@@ -331,7 +455,6 @@ public class TripService extends Service {
         		c.close();
         	}
         	adapter.close();
-    		// Do poll
 		}	
     }
     
@@ -351,16 +474,24 @@ public class TripService extends Service {
     	}
     }
     
+	// When we schedule a poll, and we rely on a couple of things to 
+	// keep things from going awry:
+	// 1. Scheduling an alarm with the same intent and trigger time will
+	// replace the old event with the new;
+	// 2. If a task is started with the same taskID (which is determined
+	// by what's in the intent) then it won't be started again.
+    // 3. Also, we never schedule a poll that's an hour in the past, since
+    // we expect the bus has left by then.
     static void Schedule1(Context context, Cursor c, Time tNow, long now) {
 		final int departureMins = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE);
-		final int reminderMS = c.getInt(TripsDbAdapter.TRIP_COL_REMINDER)*60*1000;
+		final long reminderMS = c.getInt(TripsDbAdapter.TRIP_COL_REMINDER)*ONE_MINUTE;
+		if (reminderMS == 0) {
+			return;
+		}
 		final int days = c.getInt(TripsDbAdapter.TRIP_COL_DAYS);  
+		long remindTime = 0;
 		if (days == 0) {
-			final long remindTime = TripsDbAdapter.convertDBToTime(departureMins) - reminderMS;
-			if (remindTime > now) {
-				final long triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
-				SchedulePoll(context, c, triggerTime);
-			}
+			remindTime = TripsDbAdapter.convertDBToTime(departureMins) - reminderMS;
 		}
 		else {
 			final int currentWeekDay = tNow.weekDay;
@@ -371,29 +502,32 @@ public class TripService extends Service {
 					Time tmp = new Time();
 					tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
 					tmp.normalize(false);
-					final long remindTime = tmp.toMillis(false) - reminderMS;
-					if (remindTime > now) {
-						final long triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
-						SchedulePoll(context, c, triggerTime);
-					}
+					remindTime = tmp.toMillis(false) - reminderMS;
 				}
 			}
+			if (remindTime == 0) {
+				// Not found?
+				return;
+			}
 		}
-    }
-    static void SchedulePoll(Context context, Cursor c, long trigger) {
+		final long triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
+		if ((now-triggerTime) >= ONE_HOUR) {
+			return;
+		}
     	final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
     	final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
     	
     	final Uri uri = buildTripUri(tripId, stopId);
+		Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + triggerTime);
 
     	Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
     	PendingIntent alarmIntent = 
     		PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
     	
     	AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-    	alarm.set(AlarmManager.RTC_WAKEUP, trigger, alarmIntent);
+    	alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);		
     }
-    
+
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return mBinder;

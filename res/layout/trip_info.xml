@@ -1,120 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-     android:orientation="vertical"
-     android:padding="4dp"     
-     android:layout_width="fill_parent" 
-     android:layout_height="fill_parent">
-     
-     <LinearLayout 
-        style="@style/HeaderItem"
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="16dp">   
-	    <TextView  
-	        android:id="@+id/stop_name" 
-	        style="@style/HeaderText"
-	        android:layout_width="fill_parent" 
-	        android:layout_height="wrap_content">
-	    </TextView>
-	    <LinearLayout
-	        android:gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:layout_width="fill_parent" 
-            android:layout_height="wrap_content">
-	        <TextView 
-	            style="@style/Header2Text"
-	            android:text="@string/trip_info_route" 
-	            android:id="@+id/route_name" 
-	            android:layout_width="wrap_content" 
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+	<LinearLayout
+	     android:orientation="vertical"
+	     android:padding="4dp"     
+	     android:layout_width="fill_parent" 
+	     android:layout_height="wrap_content">
+	     
+	     <LinearLayout 
+	        style="@style/HeaderItem"
+	        android:orientation="vertical"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:paddingBottom="16dp">   
+	        <TextView  
+	            android:id="@+id/stop_name" 
+	            style="@style/HeaderText"
+	            android:layout_width="fill_parent" 
 	            android:layout_height="wrap_content">
 	        </TextView>
-	        <TextView
-	            style="@style/Header2Text" 
-	            android:text=" - "
-	            android:layout_width="wrap_content" 
+	        <LinearLayout
+	            android:gravity="center_horizontal"
+	            android:orientation="horizontal"
+	            android:layout_width="fill_parent" 
 	            android:layout_height="wrap_content">
-	        </TextView> 
+	            <TextView 
+	                style="@style/Header2Text"
+	                android:text="@string/trip_info_route" 
+	                android:id="@+id/route_name" 
+	                android:layout_width="wrap_content" 
+	                android:layout_height="wrap_content">
+	            </TextView>
+	            <TextView
+	                style="@style/Header2Text" 
+	                android:text=" - "
+	                android:layout_width="wrap_content" 
+	                android:layout_height="wrap_content">
+	            </TextView> 
+	            <TextView 
+	                style="@style/Header2Text"
+	                android:text="Headsign"
+	                android:id="@+id/headsign"
+	                android:layout_width="wrap_content" 
+	                android:layout_height="wrap_content">
+	            </TextView>
+	        </LinearLayout>
 	        <TextView 
 	            style="@style/Header2Text"
-	            android:text="Headsign"
-	            android:id="@+id/headsign"
-	            android:layout_width="wrap_content" 
+	            android:text="@string/trip_info_depart" 
+	            android:id="@+id/departure_time" 
+	            android:layout_width="fill_parent" 
 	            android:layout_height="wrap_content">
 	        </TextView>
 	    </LinearLayout>
+	          
 	    <TextView 
-	        style="@style/Header2Text"
-	        android:text="@string/trip_info_depart" 
-	        android:id="@+id/departure_time" 
+	        style="@style/TripInfoOptionHead"
+	        android:text="@string/trip_info_name" 
 	        android:layout_width="fill_parent" 
 	        android:layout_height="wrap_content">
 	    </TextView>
-    </LinearLayout>
-          
-    <TextView 
-        style="@style/TripInfoOptionHead"
-        android:text="@string/trip_info_name" 
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-    <EditText 
-        android:hint="@string/trip_info_name_hint" 
-        android:id="@+id/name" 
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </EditText>
-
-    <TextView 
-        style="@style/TripInfoOptionHead"
-        android:text="@string/trip_info_reminder_header" 
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-    <Spinner 
-        android:id="@+id/trip_info_reminder_time" 
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </Spinner>
-    
-    <TextView
-        style="@style/TripInfoOptionHead" 
-        android:text="@string/trip_info_reminder_repeat" 
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </TextView>
-    <Button 
-        android:text="Days"
-        android:id="@+id/trip_info_reminder_days" 
-        android:ellipsize="end"
-        android:layout_width="fill_parent" 
-        android:layout_height="wrap_content">
-    </Button>
-
-    <LinearLayout
-        android:id="@+id/trip_info_buttons"
-        android:paddingTop="16sp"
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center">
-        <Button 
-             android:text="@string/trip_info_save" 
-             android:id="@+id/trip_info_save" 
-             android:layout_width="100sp"
-             android:layout_height="wrap_content">
-        </Button>
-        <Button 
-            android:text="@string/trip_info_cancel" 
-            android:id="@+id/trip_info_cancel" 
-            android:layout_width="100sp"
-            android:layout_height="wrap_content">
-        </Button>
-        <Button
-            android:text="@string/trip_info_delete" 
-            android:id="@+id/trip_info_delete" 
-            android:layout_width="100sp"
-            android:layout_height="wrap_content">
-        </Button>
-     </LinearLayout>
-</LinearLayout>
+	    <EditText 
+	        android:hint="@string/trip_info_name_hint" 
+	        android:id="@+id/name" 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content">
+	    </EditText>
+	
+	    <TextView 
+	        style="@style/TripInfoOptionHead"
+	        android:text="@string/trip_info_reminder_header" 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content">
+	    </TextView>
+	    <Spinner 
+	        android:id="@+id/trip_info_reminder_time" 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content">
+	    </Spinner>
+	    
+	    <TextView
+	        style="@style/TripInfoOptionHead" 
+	        android:text="@string/trip_info_reminder_repeat" 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content">
+	    </TextView>
+	    <Button 
+	        android:text="Days"
+	        android:id="@+id/trip_info_reminder_days" 
+	        android:ellipsize="end"
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content">
+	    </Button>
+	
+	    <LinearLayout
+	        android:id="@+id/trip_info_buttons"
+	        android:paddingTop="16sp"
+	        android:orientation="horizontal"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:gravity="center">
+	        <Button 
+	             android:text="@string/trip_info_save" 
+	             android:id="@+id/trip_info_save" 
+	             android:layout_width="100sp"
+	             android:layout_height="wrap_content">
+	        </Button>
+	        <Button 
+	            android:text="@string/trip_info_cancel" 
+	            android:id="@+id/trip_info_cancel" 
+	            android:layout_width="100sp"
+	            android:layout_height="wrap_content">
+	        </Button>
+	        <Button
+	            android:text="@string/trip_info_delete" 
+	            android:id="@+id/trip_info_delete" 
+	            android:layout_width="100sp"
+	            android:layout_height="wrap_content">
+	        </Button>
+	     </LinearLayout>
+	</LinearLayout>
+</ScrollView>

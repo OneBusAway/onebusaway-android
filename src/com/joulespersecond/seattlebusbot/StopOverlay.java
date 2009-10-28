@@ -153,7 +153,13 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 			}
 		}
 	}
-	
+	String getFocusedId() {
+		final OverlayItem focus = getFocus();
+		if (focus != null) {
+			return ((StopOverlayItem)focus).getStop().getId();
+		}
+		return null;
+	}
 	/*
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event, MapView view) {

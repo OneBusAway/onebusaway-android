@@ -34,12 +34,10 @@ import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 public class MapViewActivity extends MapActivity {
 	private static final String TAG = "MapViewActivity";
 	
-	public static final String GO_TO_LOCATION = ".GoToLocation";
 	public static final String FOCUS_STOP_ID = ".FocusStopId";
 	public static final String CENTER_LAT = ".CenterLat";
 	public static final String CENTER_LON = ".CenterLon";
-	public static final String UPDATE_STOPS_ON_MOVE = ".UpdateStopsOnMove";
-	// Switches into Route mode -- .UpdateStopsOnMove is by default 'false'
+	// Switches to 'route mode' -- stops aren't updated on move
 	public static final String ROUTE_ID = ".RouteId";	
 	// If this is specified, it is a JSON string that corresponds to a ObaResponse
 	public static final String STOP_DATA = ".StopData";
@@ -49,8 +47,6 @@ public class MapViewActivity extends MapActivity {
 	public StopOverlay mStopOverlay;
 	private String mRouteId;
 	private String mFocusStopId;
-	// This will cause the StopOverlay to refresh with the center moves
-	private boolean mUpdateStopsOnMove = false;
 	
 	// There's a major hole in the MapView in that there's apparently 
 	// no way of getting an event when the user pans the view.
@@ -145,40 +141,49 @@ public class MapViewActivity extends MapActivity {
     	TextView arrival = (TextView)findViewById(R.id.show_arrival_info);
     	arrival.setOnClickListener(mOnShowArrivals);
     	
+    	String stopData = null;
     	Bundle bundle = getIntent().getExtras();
+    	double centerLat = 0.0;
+    	double centerLon = 0.0;
+    	boolean setZoom = true;
+    	boolean goToLocation = true;
     	if (bundle != null) {
     		mRouteId = bundle.getString(ROUTE_ID);
-    		boolean routeMode = isRouteMode();
-    		String stopData = bundle.getString(STOP_DATA);
-    		
+    		stopData = bundle.getString(STOP_DATA);
     		mFocusStopId = bundle.getString(FOCUS_STOP_ID);
-    		mUpdateStopsOnMove = bundle.getBoolean(UPDATE_STOPS_ON_MOVE, !routeMode);
-    	
-    		double centerLat = bundle.getDouble(CENTER_LAT);
-    		double centerLon = bundle.getDouble(CENTER_LON);
-    	
-    		if (centerLat != 0.0 && centerLon != 0.0) {
-    			GeoPoint point = ObaApi.makeGeoPoint(centerLat, centerLon);
-    			MapController mapCtrl = mMapView.getController();
-    			mapCtrl.setCenter(point);
-    			mapCtrl.setZoom(18);
-    			mMapCenter = point; 
-    			if (!routeMode) {
-    				getStopsByLocation(mMapCenter);
-    			}
-    		}
-    		else if (bundle.getBoolean(GO_TO_LOCATION, !routeMode)) {
-    			setMyLocation();
-    		}
-    		if (routeMode) {
-    			getStopsForRoute(stopData);
+    		centerLat = bundle.getDouble(CENTER_LAT);
+    		centerLon = bundle.getDouble(CENTER_LON);
+    	}
+    	// These will override anything that's in the intent.
+    	if (savedInstanceState != null) {
+    		mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
+    		if (savedInstanceState.containsKey(CENTER_LAT)) {
+    			centerLat = savedInstanceState.getDouble(CENTER_LAT);
+    			centerLon = savedInstanceState.getDouble(CENTER_LON);
+    			setZoom = false;
     		}
     	}
-    	else {
-    		// No extras means just default behavior
-    		mUpdateStopsOnMove = true;
-    		setMyLocation();
-    	}
+    	final boolean routeMode = isRouteMode();
+    	
+		if (centerLat != 0.0 && centerLon != 0.0) {
+			GeoPoint point = ObaApi.makeGeoPoint(centerLat, centerLon);
+			MapController mapCtrl = mMapView.getController();
+			mapCtrl.setCenter(point);
+			if (setZoom) {
+				mapCtrl.setZoom(18);
+			}
+			mMapCenter = point; 
+			if (!routeMode) {
+				getStopsByLocation(mMapCenter);
+			}
+			goToLocation = false;
+		}
+		if (!routeMode && goToLocation) {
+			setMyLocation();			
+		}
+		if (routeMode) {
+			getStopsForRoute(stopData);			
+		}
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -221,15 +226,28 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onResume() {
     	mLocationOverlay.enableMyLocation();
-    	if (mUpdateStopsOnMove) {
+    	if (!isRouteMode()) {
     		watchMapCenter();
     	} 
     	super.onResume();
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-    	// TODO: Remember what we were doing. The MapView automatically remembers the position
-    	// of the map, so we just need to remember the state of our overlays.
+    	// Save the center of the map so we automatically 
+    	// get the stops around it when we restart.
+    	GeoPoint center = mMapCenter = mMapView.getMapCenter();
+    	if (center != null) {
+    		outState.putDouble(CENTER_LAT, center.getLatitudeE6()/ObaApi.E6);
+    		outState.putDouble(CENTER_LON, center.getLongitudeE6()/ObaApi.E6);
+    	}
+    	
+    	StopOverlay overlay = mStopOverlay;
+    	if (overlay != null) {
+    		String id = overlay.getFocusedId();
+    		if (id != null) {
+    			outState.putString(FOCUS_STOP_ID, id); 
+    		}
+    	}
     	super.onSaveInstanceState(outState);
     }
     @Override
@@ -278,15 +296,19 @@ public class MapViewActivity extends MapActivity {
     };
     final Runnable mGetStopsFromCenter = new Runnable() {
     	public void run() {
-    		getStopsByLocation(mMapCenter);
+    		if (!isRouteMode()) {
+    			getStopsByLocation(mMapCenter);
+    		}
     	}
     };
     private void setMyLocation(GeoPoint point) {
 		MapController mapCtrl = mMapView.getController();
+		mMapCenter = point;
 		mapCtrl.animateTo(point);
 		mapCtrl.setZoom(16);
-		mMapCenter = point;
-		getStopsByLocation(point);   	
+		if (!isRouteMode()) {
+			getStopsByLocation(point);   	
+		}
     }
     private void getStopsByLocation(GeoPoint point) {
 		GetStopsByLocationInfo info = new GetStopsByLocationInfo(

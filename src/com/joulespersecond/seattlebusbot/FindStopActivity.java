@@ -208,7 +208,6 @@ public class FindStopActivity extends ListActivity {
     	}
     	Intent myIntent = new Intent(this, MapViewActivity.class);
     	myIntent.putExtra(MapViewActivity.FOCUS_STOP_ID, stopId);
-    	myIntent.putExtra(MapViewActivity.GO_TO_LOCATION, false);
     	myIntent.putExtra(MapViewActivity.CENTER_LAT, lat);
     	myIntent.putExtra(MapViewActivity.CENTER_LON, lon);
     	startActivity(myIntent);

@@ -9,7 +9,7 @@
     <string name="main_option_mylocation">My Location</string>
     <string name="main_option_findroute">Find Route</string>
     <string name="main_option_findstop">Find Stop</string>
-    <string name="main_option_viewtrips">View Trips</string>
+    <string name="main_option_viewtrips">View Reminders</string>
     <string name="main_arrival_info"><u>Show arrivals</u></string>
     
     <!--  Stop Info -->
@@ -62,11 +62,11 @@ Routes that you use most will appear in this list.</string>
     
     <!--  Trip info -->
     <string name="trip_info_title">SeattleBusBot</string>
-    <string name="trip_info_name">Trip name</string>
-    <string name="trip_info_name_hint">Add a trip name</string>
+    <string name="trip_info_name">Reminder name</string>
+    <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
     <string name="trip_info_depart">Departs at %s</string>
-    <string name="trip_info_reminder_header">Reminder</string>
+    <string name="trip_info_reminder_header">Reminder Time</string>
     <string name="trip_info_reminder_repeat">Repeats</string>
     <string name="trip_info_save">Save</string>
     <string name="trip_info_cancel">Cancel</string>
@@ -90,7 +90,9 @@ You can create notifications for bus trips by clicking on an arriving bus for yo
     <string name="trip_list_context_delete">Delete trip</string>
     
     <!--  Trip notifications -->
-    <string name="trip_stat">Route %s is %s away!</string>
+    <string name="trip_stat_lessthanone">Route %s is less than a minute away!</string>
+    <string name="trip_stat_one">Route %s is 1 minute away!</string>
+    <string name="trip_stat">Route %s is %d minutes away!</string>
     
     <!-- General strings -->
     <string name="direction_n">Northbound</string>

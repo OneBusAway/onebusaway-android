@@ -23,7 +23,7 @@ public final class ObaApi {
 	// NOTE: This could be provided by Settings to use different versions of the server.
 	private static final String OBA_URL = "http://api.onebusaway.org/api/where";
 	
-	private static final double E6 = 1000*1000;
+	public static final double E6 = 1000*1000;
 	
 	private static final ObaResponse
 	doRequest(String urlStr) {

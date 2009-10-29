@@ -55,7 +55,16 @@ public class TripListActivity extends ListActivity {
 		
 		simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
 			public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-				if (columnIndex == TripsDbAdapter.TRIP_COL_DEPARTURE) {
+				if (columnIndex == TripsDbAdapter.TRIP_COL_NAME) {
+					TextView text = (TextView)view;
+					String name = cursor.getString(columnIndex);
+					if (name.length() == 0) {
+						name = getResources().getString(R.string.trip_info_noname);
+					}
+					text.setText(name);
+					return true;
+				}
+				else if (columnIndex == TripsDbAdapter.TRIP_COL_DEPARTURE) {
 					TextView text = (TextView)view;
 					text.setText(TripInfoActivity.getDepartureTime(
 							TripListActivity.this,

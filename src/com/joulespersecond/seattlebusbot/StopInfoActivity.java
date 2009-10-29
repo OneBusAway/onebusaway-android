@@ -258,7 +258,7 @@ public class StopInfoActivity extends ListActivity {
 			else {
 				etaView.setText(String.valueOf(stopInfo.mEta));
 			}
-			
+
 			int color = getResources().getColor(stopInfo.mColor);
 			//status.setTextColor(color); // This just doesn't look very good.
 			etaView.setTextColor(color);
@@ -268,11 +268,15 @@ public class StopInfoActivity extends ListActivity {
 					DateUtils.FORMAT_SHOW_TIME|
 					DateUtils.FORMAT_NO_NOON|
 					DateUtils.FORMAT_NO_MIDNIGHT));	
-			
+
 			if (stopInfo.mTripName != null) {
 				View tripInfo = view.findViewById(R.id.trip_info);
-				TextView tripName = (TextView)view.findViewById(R.id.trip_name);
-				tripName.setText(stopInfo.mTripName);
+				TextView tripNameView = (TextView)view.findViewById(R.id.trip_name);
+				String tripName = stopInfo.mTripName;
+				if (tripName.length() == 0) {
+					tripName = getResources().getString(R.string.trip_info_noname);
+				}
+				tripNameView.setText(tripName);
 				tripInfo.setVisibility(View.VISIBLE);
 			}
 			else {

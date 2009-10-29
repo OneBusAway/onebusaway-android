@@ -79,6 +79,7 @@ Routes that you use most will appear in this list.</string>
     <string name="trip_info_repeat_everyday">Everyday</string>
     <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>
     <string name="trip_info_repeat_norepeat">One-time</string>
+    <string name="trip_info_noname">(no name)</string>
     
     <!--  Trip list -->
     <string name="trip_list_title">SeattleBusBot</string>

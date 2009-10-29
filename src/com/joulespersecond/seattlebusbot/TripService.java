@@ -131,7 +131,7 @@ public class TripService extends Service {
     		Log.e(TAG, "No new task -- something went wrong: " + action);
     		synchronized (this) {
     			if (mActiveTasks.isEmpty()) {
-    	        	Log.d(TAG, "Stopping service");
+    	        	//Log.d(TAG, "Stopping service");
     				stopSelf();
     			}
     		}
@@ -161,20 +161,20 @@ public class TripService extends Service {
     		synchronized(TripService.this) {
     			mActiveTasks.remove(mTaskId);
     			if (mActiveTasks.isEmpty()) {
-    	        	Log.d(TAG, "Stopping service");
+    	        	//Log.d(TAG, "Stopping service");
     				stopSelf();
     			}
     			mWakeLock.release();
     		}
     	}
 		public void run() {
-        	Log.d(TAG, "Starting task: " + mTaskId);
+        	//Log.d(TAG, "Starting task: " + mTaskId);
         	startTask();
         	
         	runTask();
         	
             // Done with our work...  stop the service!
-        	Log.d(TAG, "Exiting task: " + mTaskId);
+        	//Log.d(TAG, "Exiting task: " + mTaskId);
         	endTask();
 		}
 		protected void runTask() {
@@ -288,7 +288,7 @@ public class TripService extends Service {
 		private static final int CLEARED = 4;
     	
 		synchronized void clearNotification() {
-			Log.d(TAG, "Clearing notification: " + getTaskId());
+			//Log.d(TAG, "Clearing notification: " + getTaskId());
 			mState = CLEARED;
 		}
 		
@@ -297,7 +297,7 @@ public class TripService extends Service {
 	    final void doNotification(long timeDiff, Cursor c) {
 			final Context ctx = TripService.this;
 	    	
-			Log.d(TAG, "Notify for trip: " + getTaskId());
+			//Log.d(TAG, "Notify for trip: " + getTaskId());
 			if (mNotification == null) {
 				mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());	
 				mNotification.defaults |= Notification.DEFAULT_SOUND|
@@ -330,7 +330,7 @@ public class TripService extends Service {
 	    }
 	    final void cancelNotification() {
 	    	if (mNotification != null) {
-				Log.d(TAG, "Cancel notification: " + getTaskId());
+				//Log.d(TAG, "Cancel notification: " + getTaskId());
 				NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 				nm.cancel(NOTIFY_ID); 
 				mNotification = null;
@@ -364,7 +364,7 @@ public class TripService extends Service {
     		mState = NOT_FOUND;
 	
     		while (mState != CLEARED) {
-        		Log.d(TAG, "Get arrivals/departures: " + getTaskId());
+        		//Log.d(TAG, "Get arrivals/departures: " + getTaskId());
     			ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
     			
         		final long now = System.currentTimeMillis();
@@ -377,7 +377,7 @@ public class TripService extends Service {
     					if (tripId.equals(info.getTripId())) {
     						synchronized (this) {
 	    		        		if (mState == NOT_FOUND) {
-		    		        		Log.d(TAG, "Found trip: " + getTaskId());
+		    		        		//Log.d(TAG, "Found trip: " + getTaskId());
 	    		        			mState = FOUND;
 	    		        		}
 	    						// We found the trip. We notify when the reminder time
@@ -428,7 +428,7 @@ public class TripService extends Service {
     			// 10 minutes past the scheduled departure time.
     			if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
     				// Give up.
-    				Log.d(TAG, "Giving up: " + getTaskId());
+    				//Log.d(TAG, "Giving up: " + getTaskId());
     				break;
     			}
     			try {
@@ -520,10 +520,11 @@ public class TripService extends Service {
     	final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
     	
     	final Uri uri = buildTripUri(tripId, stopId);
+    	/*
     	Time tmp = new Time();
     	tmp.set(triggerTime);
 		Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
-
+		*/
     	Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
     	PendingIntent alarmIntent = 
     		PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);

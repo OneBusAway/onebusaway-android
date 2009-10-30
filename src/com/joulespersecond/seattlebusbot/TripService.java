@@ -505,6 +505,7 @@ public class TripService extends Service {
 					tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
 					tmp.normalize(false);
 					remindTime = tmp.toMillis(false) - reminderMS;
+					break;
 				}
 			}
 			if (remindTime == 0) {

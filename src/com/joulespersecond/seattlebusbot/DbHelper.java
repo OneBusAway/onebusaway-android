@@ -6,14 +6,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 public class DbHelper extends SQLiteOpenHelper {
-	public static final String TAG = "DbHelper";
-	
+    public static final String TAG = "DbHelper";
+    
     public static final String STOPS_TABLE = "stops";
     public static final String ROUTES_TABLE = "routes";
     public static final String TRIPS_TABLE = "trips";
-	// We will cache a bunch of useful data so we don't have to constantly
-	// look it up OTA -- in particular, data that we display to the user
-	// in the Favorites lists.
+    // We will cache a bunch of useful data so we don't have to constantly
+    // look it up OTA -- in particular, data that we display to the user
+    // in the Favorites lists.
     public static final String KEY_STOPID = "_id";
     public static final String KEY_ROUTEID = "_id";
     public static final String KEY_TRIPID = "_id";
@@ -32,7 +32,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String KEY_HEADSIGN = "headsign";
     public static final String KEY_REMINDER = "reminder";
     public static final String KEY_DAYS = "days";
-	
+    
     /**
      * Database creation sql statement
      */
@@ -41,23 +41,23 @@ public class DbHelper extends SQLiteOpenHelper {
     
     private static final String CREATE_STOPS = 
         "create table " +
-        	STOPS_TABLE    	+ " (" + 
-        	KEY_STOPID 		+ " varchar primary key, " + 
-            KEY_CODE 		+ " varchar not null, " +
-            KEY_NAME 		+ " varchar not null, " +
-            KEY_DIRECTION 	+ " char[2] not null," +
-            KEY_USECOUNT 	+ " integer not null," +
-            KEY_LATITUDE 	+ " double not null," +
-            KEY_LONGITUDE   + " double not null" +
+            STOPS_TABLE      + " (" + 
+            KEY_STOPID       + " varchar primary key, " + 
+            KEY_CODE         + " varchar not null, " +
+            KEY_NAME         + " varchar not null, " +
+            KEY_DIRECTION    + " char[2] not null," +
+            KEY_USECOUNT     + " integer not null," +
+            KEY_LATITUDE     + " double not null," +
+            KEY_LONGITUDE    + " double not null" +
             ");";
     private static final String CREATE_ROUTES = 
         "create table " +
-    		ROUTES_TABLE 	+ " (" + 
-    		KEY_ROUTEID 	+ " varchar primary key, " + 
-    		KEY_SHORTNAME 	+ " varchar not null, " +
-    		KEY_LONGNAME 	+ " varchar, " +
-    		KEY_USECOUNT 	+ " integer not null" +
-    		");";  
+            ROUTES_TABLE     + " (" + 
+            KEY_ROUTEID      + " varchar primary key, " + 
+            KEY_SHORTNAME    + " varchar not null, " +
+            KEY_LONGNAME     + " varchar, " +
+            KEY_USECOUNT     + " integer not null" +
+            ");";  
 
     //
     // Note, in our case "trips" does not mean the same as what GTFS
@@ -79,17 +79,17 @@ public class DbHelper extends SQLiteOpenHelper {
     // Days      := Bitmask value defined in TripDbAdapter
     //
     private static final String CREATE_TRIPS = 
-    	"create table " +
-    		TRIPS_TABLE 	+ " (" +
-    		KEY_TRIPID		+ " varchar not null, " +
-    		KEY_STOP 		+ " varchar not null, " +
-    		KEY_ROUTE       + " varchar not null, " +
-    		KEY_DEPARTURE   + " integer not null, " + 
-    		KEY_HEADSIGN    + " varchar not null, " +
-    		KEY_NAME        + " varchar not null, " +
-    		KEY_REMINDER 	+ " integer not null, " + 
-    		KEY_DAYS 		+ " integer not null" +
-    		");";
+        "create table " +
+            TRIPS_TABLE     + " (" +
+            KEY_TRIPID      + " varchar not null, " +
+            KEY_STOP        + " varchar not null, " +
+            KEY_ROUTE       + " varchar not null, " +
+            KEY_DEPARTURE   + " integer not null, " + 
+            KEY_HEADSIGN    + " varchar not null, " +
+            KEY_NAME        + " varchar not null, " +
+            KEY_REMINDER    + " integer not null, " + 
+            KEY_DAYS        + " integer not null" +
+            ");";
     
     DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

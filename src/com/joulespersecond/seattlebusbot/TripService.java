@@ -2,6 +2,12 @@ package com.joulespersecond.seattlebusbot;
 
 import java.util.HashMap;
 import java.util.List;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaArrivalInfo;
+import com.joulespersecond.oba.ObaResponse;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;

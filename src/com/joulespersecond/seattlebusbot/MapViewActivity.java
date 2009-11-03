@@ -29,6 +29,10 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
@@ -69,7 +73,7 @@ public class MapViewActivity extends MapActivity {
                 setStopOverlay(result.getData().getStops());
             }
             setProgressBarIndeterminateVisibility(false); 
-        }        
+        }
     }
     
     private class GetStopsForRouteTask extends GetStopsForRouteTaskBase {

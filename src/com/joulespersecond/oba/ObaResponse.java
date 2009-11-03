@@ -1,7 +1,9 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.os.Bundle;
 
 public final class ObaResponse {
     private final JSONObject mResponse;
@@ -14,6 +16,9 @@ public final class ObaResponse {
     public ObaResponse(JSONObject obj) {
         mResponse = obj;
     }
+    public ObaResponse(Bundle bundle) {
+        mResponse = JSONHelp.toObject(bundle);
+    }
     public ObaResponse(String error) {
         mResponse = new JSONObject();
         try {
@@ -23,24 +28,23 @@ public final class ObaResponse {
             e.printStackTrace();
         }
     }
-    public String
-    getVersion() {
+    public String getVersion() {
         return mResponse.optString("version", "");
     }
-    public int 
-    getCode() {
+    public int getCode() {
         return mResponse.optInt("code", 0);
     }
-    public String
-    getText() {
+    public String getText() {
         return mResponse.optString("text", "FAIL");
     }
-    public ObaData 
-    getData() {
+    public ObaData getData() {
         return new ObaData(ObaApi.getChildObj(mResponse, "data"));
     }
-    public String
-    toString() {
+    @Override
+    public String toString() {
         return mResponse.toString();
+    }
+    public Bundle toBundle() {
+        return JSONHelp.toBundle(mResponse);
     }
 }

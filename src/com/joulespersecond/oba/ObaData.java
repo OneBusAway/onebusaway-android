@@ -1,6 +1,8 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import org.json.JSONObject;
+
+import android.os.Bundle;
 
 public final class ObaData {
     private final JSONObject mData;
@@ -14,12 +16,19 @@ public final class ObaData {
         mData = obj;
     }
     /**
+     * Constructor for ObaData
+     * 
+     * @param bundle The bundle to convert to an ObaData.
+     */
+    public ObaData(Bundle bundle) {
+        mData = JSONHelp.toObject(bundle);
+    }
+    /**
      * Retrieves the list of stops, if they exist.
      * 
      * @return The list of stops, or an empty array.
      */
-    public ObaArray 
-    getStops() {
+    public ObaArray getStops() {
         return new ObaArray(ObaApi.getChildArray(mData, "stops"));
     }
     /** 
@@ -27,8 +36,7 @@ public final class ObaData {
      * 
      * @return The list of routes, or an empty array.
      */
-    public ObaArray
-    getRoutes() {
+    public ObaArray getRoutes() {
         return new ObaArray(ObaApi.getChildArray(mData, "routes"));
     }
     /**
@@ -36,8 +44,7 @@ public final class ObaData {
      * 
      * @return The list of stops, or an empty object.
      */
-    public ObaStop 
-    getStop() {
+    public ObaStop getStop() {
         return new ObaStop(ObaApi.getChildObj(mData, "stop"));
     }
     /**
@@ -45,8 +52,7 @@ public final class ObaData {
      * 
      * @return The list of nearby stops, or an empty array.
      */
-    public ObaArray
-    getNearbyStops() {
+    public ObaArray getNearbyStops() {
         return new ObaArray(ObaApi.getChildArray(mData, "nearbyStops"));
     }
     
@@ -55,8 +61,7 @@ public final class ObaData {
      * 
      * @return This object as a route.
      */
-    public ObaRoute
-    getThisRoute() {
+    public ObaRoute getThisRoute() {
         return new ObaRoute(mData);
     }
      
@@ -70,8 +75,19 @@ public final class ObaData {
         return new ObaArray(ObaApi.getChildArray(mData, "arrivalsAndDepartures"));
     }
     /*
-    public ObaPolylinesArray
-    getPolylines() {
+    public final ObaPolylinesArray  getPolylines() {
     }
     */
+    
+    @Override
+    public String toString() {
+        return mData.toString();
+    }
+    
+    /**
+     * Returns a bundle that represents this object.
+     */
+    public Bundle toBundle() {
+        return JSONHelp.toBundle(mData);
+    }
 }

@@ -10,6 +10,8 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaStop;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     //private static final String TAG = "StopOverlay";

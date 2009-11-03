@@ -6,6 +6,13 @@ import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaArrivalInfo;
+import com.joulespersecond.oba.ObaData;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaStop;
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;

@@ -2,12 +2,19 @@ package com.joulespersecond.seattlebusbot;
 
 import org.json.JSONArray;
 
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
+import com.joulespersecond.oba.ObaStop;
+
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,12 +26,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class RouteInfoActivity extends ListActivity {
-    //private static final String TAG = "RouteInfoActivity";
+    private static final String TAG = "RouteInfoActivity";
     public static final String ROUTE_ID = ".RouteId";
-
+    public static final String ROUTE_INFO = ".RouteInfo";
+    public static final String ROUTE_STOPS = ".RouteStops";
+    
     private RouteInfoListAdapter mAdapter;
     private View mListHeader;
     private String mRouteId;
+    private ObaResponse mRouteInfo;
+    private ObaResponse mStopsForRoute;
+    // TODO: We can now store this as a Bundle, which will be much more efficient.
     // This is saved for the "Show On Map" option -- 
     // As a string since converting the data from an ObaResponse
     // back to a string is expensive.
@@ -33,7 +45,7 @@ public class RouteInfoActivity extends ListActivity {
     private GetRouteInfoTask mAsyncTask;
     private ProgressDialog mDialog;
     
-    private class RouteInfoListAdapter extends BaseAdapter {
+    private final class RouteInfoListAdapter extends BaseAdapter {
         private ObaArray mStops;
         
         public RouteInfoListAdapter() {
@@ -79,7 +91,7 @@ public class RouteInfoActivity extends ListActivity {
 
     }
     
-    private class GetRouteInfoTaskReturn {
+    private static class GetRouteInfoTaskReturn {
         public ObaResponse routeInfo;
         public ObaResponse stopsForRoute;
         public String stopsForRouteString;
@@ -104,37 +116,10 @@ public class RouteInfoActivity extends ListActivity {
         }
         @Override
         protected void onPostExecute(GetRouteInfoTaskReturn result) {
-            ObaResponse routeInfo = result.routeInfo;
-            ObaResponse stops = result.stopsForRoute;
+            mRouteInfo = result.routeInfo;
+            mStopsForRoute = result.stopsForRoute;
             mStopsResponse = result.stopsForRouteString;
-            
-            TextView empty = (TextView)findViewById(android.R.id.empty);
-            
-            if (routeInfo.getCode() == ObaApi.OBA_OK) {
-                ObaRoute route = routeInfo.getData().getThisRoute();
-                TextView shortNameText = (TextView)mListHeader.findViewById(R.id.short_name);
-                TextView longNameText = (TextView)mListHeader.findViewById(R.id.long_name);
-                TextView agencyText = (TextView)mListHeader.findViewById(R.id.agency);
-            
-                String shortName = route.getShortName();
-                String longName = route.getLongName();
-                
-                shortNameText.setText(shortName);
-                longNameText.setText(longName);
-                agencyText.setText(route.getAgencyName());
-                
-                RoutesDbAdapter.addRoute(RouteInfoActivity.this, 
-                        route.getId(), shortName, longName, true);
-            }
-            else {
-                empty.setText(R.string.generic_comm_error);
-            }
-            if (stops.getCode() == ObaApi.OBA_OK) {
-                mAdapter.setData(stops);                
-            } 
-            else {
-                empty.setText(R.string.generic_comm_error);
-            }
+            setData(true);
             dismissLoadingDialog();
         }
         @Override
@@ -147,19 +132,30 @@ public class RouteInfoActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        Log.d(TAG, "RouteInfoActivity.onCreate");
+        
         setContentView(R.layout.route_info);
         ListView listView = getListView();
         LayoutInflater inflater = getLayoutInflater();
         mListHeader = inflater.inflate(R.layout.route_info_header, null);
         listView.addHeaderView(mListHeader);
         
-        mAdapter = new RouteInfoListAdapter();
-        setListAdapter(mAdapter);
-        
         Bundle bundle = getIntent().getExtras();
         mRouteId = bundle.getString(ROUTE_ID);
-        mAsyncTask = new GetRouteInfoTask();
-        mAsyncTask.execute(mRouteId);
+        
+        mAdapter = new RouteInfoListAdapter();
+        setListAdapter(mAdapter);
+
+        /*
+        if (savedInstanceState != null) {
+            mRouteInfo = new ObaResponse(savedInstanceState.getBundle(ROUTE_INFO));
+            mStopsForRoute = new ObaResponse(savedInstanceState.getBundle(ROUTE_STOPS));
+            setData(false);
+        }
+        else */{
+            mAsyncTask = new GetRouteInfoTask();
+            mAsyncTask.execute(mRouteId);
+        }
     }
     @Override
     public void onDestroy() {
@@ -169,6 +165,13 @@ public class RouteInfoActivity extends ListActivity {
         mAsyncTask.cancel(true);
         super.onDestroy();
     }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //outState.putParcelable(ROUTE_INFO, mRouteInfo.toBundle());
+        //outState.putParcelable(ROUTE_STOPS, mStopsForRoute.toBundle());
+        super.onSaveInstanceState(outState);
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -218,5 +221,40 @@ public class RouteInfoActivity extends ListActivity {
             mDialog.dismiss();
             mDialog = null;
         }       
+    }
+    
+    
+    private void setData(boolean addToDb) {
+        TextView empty = (TextView)findViewById(android.R.id.empty);
+        
+        if (mRouteInfo.getCode() == ObaApi.OBA_OK) {
+            setHeaderInfo(mRouteInfo, addToDb);
+        }
+        else {
+            empty.setText(R.string.generic_comm_error);
+        }
+        if (mStopsForRoute.getCode() == ObaApi.OBA_OK) {
+            mAdapter.setData(mStopsForRoute);                
+        } 
+        else {
+            empty.setText(R.string.generic_comm_error);
+        }
+    }
+    private void setHeaderInfo(ObaResponse routeInfo, boolean addToDb) {  
+        ObaRoute route = routeInfo.getData().getThisRoute();
+        TextView shortNameText = (TextView)mListHeader.findViewById(R.id.short_name);
+        TextView longNameText = (TextView)mListHeader.findViewById(R.id.long_name);
+        TextView agencyText = (TextView)mListHeader.findViewById(R.id.agency);
+    
+        String shortName = route.getShortName();
+        String longName = route.getLongName();
+        
+        shortNameText.setText(shortName);
+        longNameText.setText(longName);
+        agencyText.setText(route.getAgencyName());
+        
+        if (addToDb) {
+            RoutesDbAdapter.addRoute(this, route.getId(), shortName, longName, true);       
+        }
     }
 }

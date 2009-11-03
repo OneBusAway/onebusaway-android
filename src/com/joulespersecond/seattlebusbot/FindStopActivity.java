@@ -33,6 +33,10 @@ import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.google.android.maps.GeoPoint;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaStop;
 
 public class FindStopActivity extends ListActivity {
     private static final String TAG = "FindStopActivity";

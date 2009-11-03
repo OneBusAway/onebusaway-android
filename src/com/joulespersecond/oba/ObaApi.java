@@ -1,4 +1,4 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import java.io.*;
 import java.net.*;
@@ -25,8 +25,7 @@ public final class ObaApi {
     
     public static final double E6 = 1000*1000;
     
-    private static final ObaResponse
-    doRequest(String urlStr) {
+    private static ObaResponse doRequest(String urlStr) {
         ObaResponse response = null;
         try {
             URL url = new URL(urlStr);
@@ -65,8 +64,7 @@ public final class ObaApi {
      * @param id The stop ID. 
      * @return A response object.
      */
-    public static final ObaResponse 
-    getStopById(String id) {
+    public static ObaResponse getStopById(String id) {
         // We can do a simple format since we're not expecting the id needs escaping.
         return doRequest(
                 String.format("%s/stop/%s.json?key=%s", OBA_URL, id, API_KEY));
@@ -77,8 +75,7 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
-    public static final ObaResponse
-    getRouteById(String id) {
+    public static ObaResponse getRouteById(String id) {
         return doRequest(
                 String.format("%s/route/%s.json?key=%s", OBA_URL, id, API_KEY));
     }
@@ -94,8 +91,7 @@ public final class ObaApi {
      * @param maxCount Optional maximum number of stop entries to return.
      * @return A response object.
      */
-    public static final ObaResponse
-    getStopsByLocation(GeoPoint location, 
+    public static ObaResponse getStopsByLocation(GeoPoint location, 
             int radius, 
             int latSpan,
             int lonSpan,
@@ -142,8 +138,7 @@ public final class ObaApi {
      * @param query The optional route name to search for.
      * @return A response object.
      */
-    public static final ObaResponse
-    getRoutesByLocation(GeoPoint location,
+    public static ObaResponse getRoutesByLocation(GeoPoint location,
             int radius,
             String query) {
         StringBuilder url = new StringBuilder(
@@ -175,8 +170,7 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
-    public static final ObaResponse
-    getStopsForRoute(String id) {
+    public static ObaResponse getStopsForRoute(String id) {
         return doRequest(
                 String.format("%s/stops-for-route/%s.json?key=%s", OBA_URL, id, API_KEY));
     }
@@ -188,8 +182,7 @@ public final class ObaApi {
      * @param id The stop ID.
      * @return true if successful, false otherwise.
      */
-    public static final ObaResponse 
-    getArrivalsDeparturesForStop(String id) {
+    public static ObaResponse getArrivalsDeparturesForStop(String id) {
         return doRequest(
                 String.format("%s/arrivals-and-departures-for-stop/%s.json?key=%s", OBA_URL, id, API_KEY));
     }
@@ -202,8 +195,7 @@ public final class ObaApi {
      * @param key The associated key.
      * @return The JSON object associated with the key, or an empty object.
      */
-    public static final JSONObject 
-    getChildObj(JSONObject obj, String key) {
+    static JSONObject getChildObj(JSONObject obj, String key) {
         try {
             return obj.getJSONObject(key);
         } catch (JSONException e) {
@@ -218,8 +210,7 @@ public final class ObaApi {
      * @param index The index.
      * @return The JSON object associated with the index, or an empty object.
      */
-    public static final JSONObject 
-    getChildObj(JSONArray array, int index) {
+    static JSONObject getChildObj(JSONArray array, int index) {
         try {
             return array.getJSONObject(index);
         } catch (JSONException e) {
@@ -234,8 +225,7 @@ public final class ObaApi {
      * @param key The associated key.
      * @return The JSON array associated with the key, or an empty array.
      */
-    public static final JSONArray
-    getChildArray(JSONObject obj, String key) {
+    static JSONArray getChildArray(JSONObject obj, String key) {
         try {
             return obj.getJSONArray(key);
         } catch (JSONException e) {
@@ -243,8 +233,13 @@ public final class ObaApi {
         }
     }
     
-    public static final GeoPoint
-    makeGeoPoint(double lat, double lon) {
+    /**
+     * Converts a latitude/longitude to a GeoPoint.
+     * @param lat The latitude.
+     * @param lon The longitude.
+     * @return A GeoPoint representing this latitude/longitude.
+     */
+    public static final GeoPoint makeGeoPoint(double lat, double lon) {
         return new GeoPoint((int)(lat*E6), (int)(lon*E6));
     }
 }

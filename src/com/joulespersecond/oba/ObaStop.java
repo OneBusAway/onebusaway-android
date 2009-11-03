@@ -1,7 +1,9 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.os.Bundle;
 
 import com.google.android.maps.GeoPoint;
 
@@ -17,12 +19,18 @@ public final class ObaStop {
         mData = obj;
     }
     /**
+     * Constructor.
+     * @param bundle The bundle to convert to an ObaStop.
+     */
+    public ObaStop(Bundle bundle) {
+        mData = JSONHelp.toObject(bundle);
+    }
+    /**
      * Returns the stop ID.
      * 
      * @return The stop ID.
      */
-    public String
-    getId() {
+    public String getId() {
         return mData.optString("id");
     }
     /**
@@ -30,8 +38,7 @@ public final class ObaStop {
      * 
      * @return The passenger-facing stop ID.
      */
-    public String
-    getCode() {
+    public String getCode() {
         return mData.optString("code");
     }
     /**
@@ -39,8 +46,7 @@ public final class ObaStop {
      * 
      * @return The passenger-facing name for the stop.
      */
-    public String
-    getName() {
+    public String getName() {
         return mData.optString("name");
     }
     /**
@@ -48,8 +54,7 @@ public final class ObaStop {
      * 
      * @return The location of the stop, or null if it can't be converted to a GeoPoint.
      */
-    public GeoPoint
-    getLocation() {
+    public GeoPoint getLocation() {
         try {
             final JSONObject data = mData;
             double lat = data.getDouble("lat");
@@ -64,8 +69,7 @@ public final class ObaStop {
      * 
      * @return The latitude of the stop, or 0 if it doesn't exist.
      */
-    public double
-    getLatitude() {
+    public double getLatitude() {
         return mData.optDouble("lat");
     }
     /**
@@ -73,8 +77,7 @@ public final class ObaStop {
      * 
      * @return The longitude of the stop, or 0 if it doesn't exist.
      */
-    public double 
-    getLongitude() {
+    public double getLongitude() {
         return mData.optDouble("lon");
     }
     
@@ -83,8 +86,7 @@ public final class ObaStop {
      * 
      * @return The direction of the stop.
      */
-    public String
-    getDirection() {
+    public String getDirection() {
         return mData.optString("direction");
     }
     /**
@@ -92,8 +94,20 @@ public final class ObaStop {
      * 
      * @return The routes serving this stop.
      */
-    public ObaArray 
-    getRoutes() {
+    public ObaArray getRoutes() {
         return new ObaArray(ObaApi.getChildArray(mData, "routes"));
+    }
+    
+    @Override
+    public String toString() {
+        return mData.toString();
+    }
+    
+    /**
+     * Converts this object to a bundle.
+     * @return The bundle representing this object.
+     */
+    public Bundle toBundle() {
+        return JSONHelp.toBundle(mData);
     }
 }

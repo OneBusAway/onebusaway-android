@@ -1,5 +1,10 @@
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
+
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;

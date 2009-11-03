@@ -1,6 +1,8 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import org.json.JSONObject;
+
+import android.os.Bundle;
 
 public final class ObaArrivalInfo {
     private final JSONObject mData;
@@ -14,51 +16,53 @@ public final class ObaArrivalInfo {
         mData = obj;
     }
     /**
+     * Constructor.
+     * 
+     * @param bundle The bundle to convert to an ObaArrivalInfo.
+     */
+    public ObaArrivalInfo(Bundle bundle) {
+        mData = JSONHelp.toObject(bundle);
+    }
+    /**
      * Returns the ID of the route.
      * @return The ID of the route.
      */
-    public final String 
-    getRouteId() {
+    public String getRouteId() {
         return mData.optString("routeId");
     }
     /**
      * Returns the short name of the route.
      * @return The short name of the route.
      */
-    public final String
-    getShortName() {
+    public String getShortName() {
         return mData.optString("routeShortName");
     }
     /**
      * Returns the trip ID of the route.
      * @return The trip ID of the route.
      */
-    public final String 
-    getTripId() {
+    public String getTripId() {
         return mData.optString("tripId");
     }
     /**
      * Returns the trip headsign.
      * @return The trip headsign.
      */
-    public final String
-    getHeadsign() {
+    public String getHeadsign() {
         return mData.optString("tripHeadsign");
     }
     /**
      * Returns the stop ID.
      * @return The stop ID.
      */
-    public final String
-    getStopId() {
+    public String getStopId() {
         return mData.optString("stopId");
     }
     /**
      * Returns the scheduled arrival time in milliseconds past the epoch.
      * @return The scheduled arrival time.
      */
-    public final long
-    getScheduledArrivalTime() {
+    public long getScheduledArrivalTime() {
         return mData.optLong("scheduledArrivalTime");
     }
     /**
@@ -66,16 +70,14 @@ public final class ObaArrivalInfo {
      * or 0 if no prediction data is available.
      * @return The predicted arrival time, or 0.
      */
-    public final long
-    getPredictedArrivalTime() {
+    public long getPredictedArrivalTime() {
         return mData.optLong("predictedArrivalTime");
     }
     /** 
      * Returns the scheduled departure time in milliseconds past the epoch..
      * @return The scheduled departure time.
      */
-    public final long
-    getScheduledDepartureTime() {
+    public long getScheduledDepartureTime() {
         return mData.optLong("scheduledDepartureTime");
     }
     /**
@@ -83,8 +85,7 @@ public final class ObaArrivalInfo {
      * or 0 if no prediction data is available.
      * @return The predicted arrival time, or 0.
      */
-    public final long
-    getPredictedDepartureTime() {
+    public long getPredictedDepartureTime() {
         return mData.optLong("predictedDepartureTime");
     }
     
@@ -92,8 +93,20 @@ public final class ObaArrivalInfo {
      * Returns the status of the route.
      * @return The status of the route.
      */
-    public final String
-    getStatus() {
+    public String getStatus() {
         return mData.optString("status");
+    }
+    
+    @Override 
+    public String toString() {
+        return mData.toString();
+    }
+    
+    /**
+     * Returns this object as a bundle.
+     * @return The bundle that represents this object.
+     */
+    public Bundle toBundle() {
+        return JSONHelp.toBundle(mData);
     }
 }

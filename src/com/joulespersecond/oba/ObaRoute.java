@@ -1,7 +1,9 @@
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.oba;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.os.Bundle;
 
 public final class ObaRoute {
     private final JSONObject mData;
@@ -15,12 +17,19 @@ public final class ObaRoute {
         mData = obj;
     }
     /**
+     * Constructor.
+     * 
+     * @param bundle The bundle to convert this an ObaRoute.
+     */
+    public ObaRoute(Bundle bundle) {
+        mData = JSONHelp.toObject(bundle);
+    }
+    /**
      * Returns the route ID.
      * 
      * @return The route ID.
      */
-    public String
-    getId() {
+    public String getId() {
         return mData.optString("id");
     }
     /**
@@ -28,8 +37,7 @@ public final class ObaRoute {
      * 
      * @return The short name of the route.
      */
-    public String
-    getShortName() {
+    public String getShortName() {
         return mData.optString("shortName");
     }
     /**
@@ -37,8 +45,7 @@ public final class ObaRoute {
      * 
      * @return The long name of the route.
      */
-    public String
-    getLongName() {
+    public String getLongName() {
         return mData.optString("longName");
     }
     
@@ -47,8 +54,7 @@ public final class ObaRoute {
      * 
      * @return The name of the agency running this route.
      */
-    public String
-    getAgencyName() {
+    public String getAgencyName() {
         try {
             JSONObject agency = mData.getJSONObject("agency");
             return agency.getString("name");
@@ -61,13 +67,24 @@ public final class ObaRoute {
      * 
      * @return The ID of the agency running this route.
      */
-    public String
-    getAgencyId() {
+    public String getAgencyId() {
         try {
             JSONObject agency = mData.getJSONObject("agency");
             return agency.getString("id");
         } catch (JSONException e) {
             return "";
         }        
+    }
+    @Override
+    public String toString() {
+        return mData.toString();
+    }
+    
+    /**
+     * Converts this object to a Bundle.
+     * @return A bundle that represents this object.
+     */
+    public Bundle toBundle() {
+        return JSONHelp.toBundle(mData);
     }
 }

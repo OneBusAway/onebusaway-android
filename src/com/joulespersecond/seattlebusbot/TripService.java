@@ -333,6 +333,7 @@ public class TripService extends Service {
                 Log.d(TAG, "Cancel notification: " + getTaskId());
                 NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                 nm.cancel(NOTIFY_ID); 
+                mState = CLEARED;
                 mNotification = null;
             }
         }
@@ -410,14 +411,15 @@ public class TripService extends Service {
                                     }
                                 } 
                                 else if (mState == NOTIFIED) {
-                                    if (time < now) {
+                                    final long timeDiff = time-now;
+                                    if (timeDiff <= 0) {
                                         // Bus has left. Cancel the notification.
                                         cancelNotification();
                                         mState = CLEARED;
                                         break;
                                     }
                                     else {
-                                        doNotification(time-now, c);    
+                                        doNotification(timeDiff, c);    
                                     }
                                 }
                             }

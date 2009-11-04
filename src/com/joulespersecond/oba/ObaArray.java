@@ -1,5 +1,8 @@
 package com.joulespersecond.oba;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 
 import android.os.Bundle;
@@ -58,6 +61,42 @@ public final class ObaArray {
      */
     public ObaArrivalInfo getArrivalInfo(int index) {
         return new ObaArrivalInfo(ObaApi.getChildObj(mArray, index));
+    }
+    
+    /**
+     * Returns a stop grouping object for the specified index.
+     * 
+     * @param index The child index.
+     * @return The stop grouping object, or an empty object if it isn't an stop grouping.
+     */
+    public ObaStopGrouping getStopGrouping(int index) {
+        return new ObaStopGrouping(ObaApi.getChildObj(mArray, index));
+    }
+    
+    /** 
+     * Returns a stop group object for the specified index.
+     * 
+     * @param index The child index.
+     * @return The stop group object, or an empty object if it isn't a stop group.
+     */
+    public ObaStopGroup getStopGroup(int index) {
+        return new ObaStopGroup(ObaApi.getChildObj(mArray, index));
+    }
+    
+    
+    /**
+     * Returns a map from stop ID to ObaStop objects for all the stops in this array.
+     * 
+     * @return A map where the key is a stop ID, and the value is an ObaStop object.
+     */
+    public Map<String,ObaStop> getStopMap() {
+        final int len = mArray.length();
+        HashMap<String,ObaStop> result = new HashMap<String,ObaStop>(len);
+        for (int i=0; i < len; ++i) {
+            ObaStop stop = getStop(i);
+            result.put(stop.getId(), stop);
+        }
+        return result;
     }
     
     @Override

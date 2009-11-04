@@ -74,6 +74,16 @@ public final class ObaData {
     getArrivalsAndDepartures() {
         return new ObaArray(ObaApi.getChildArray(mData, "arrivalsAndDepartures"));
     }
+    
+    /**
+     * Retrieves the list of stop groupings.
+     * 
+     * @return The list of stop groupings, or an empty array.
+     */
+    public ObaArray
+    getStopGroupings() {
+        return new ObaArray(ObaApi.getChildArray(mData, "stopGroupings"));
+    }
     /*
     public final ObaPolylinesArray  getPolylines() {
     }

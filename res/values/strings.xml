@@ -34,7 +34,7 @@
     
     <!-- Route Info  -->
     <string name="route_info_title">SeattleBusBot</string>
-    <string name="route_info_loading">Getting route information...</string>
+    <string name="route_info_loading">Loading...</string>
     
     <!-- Find -->
     <string name="find_route_title">SeattleBusBot</string>
@@ -91,6 +91,7 @@ You can create notifications for bus trips by clicking on an arriving bus for yo
     <string name="trip_list_context_delete">Delete trip</string>
     
     <!--  Trip notifications -->
+    <string name="trip_stat_gone">Route %s has departed.</string>
     <string name="trip_stat_lessthanone">Route %s is less than a minute away!</string>
     <string name="trip_stat_one">Route %s is 1 minute away!</string>
     <string name="trip_stat">Route %s is %d minutes away!</string>

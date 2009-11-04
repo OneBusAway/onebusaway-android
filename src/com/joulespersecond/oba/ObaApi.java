@@ -7,6 +7,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.util.Log;
+
 import com.google.android.maps.GeoPoint;
 
 public final class ObaApi {
@@ -26,6 +28,7 @@ public final class ObaApi {
     public static final double E6 = 1000*1000;
     
     private static ObaResponse doRequest(String urlStr) {
+        Log.d("ObaApi", "Request: "  + urlStr);
         ObaResponse response = null;
         try {
             URL url = new URL(urlStr);

@@ -2,13 +2,70 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
          android:orientation="vertical"
          android:layout_width="fill_parent" 
-         android:layout_height="fill_parent">
-    <ListView android:id="@id/android:list"
+         android:layout_height="fill_parent">         
+	<LinearLayout
+	    style="@style/HeaderGroup"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content">
+	    <TableLayout 
+	        style="@style/HeaderItem"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical">
+	        <TableRow>
+	            <TextView
+	                android:id="@+id/short_name"
+	                style="@style/RouteInfoShortName"
+	                android:layout_width="fill_parent" 
+	                android:layout_height="wrap_content"
+	                android:layout_column="0"
+	                android:singleLine="false">
+	            </TextView>
+	            <LinearLayout
+	                android:orientation="vertical"
+	                android:layout_column="1">
+	                <TextView
+	                    android:id="@+id/long_name"
+	                    style="@style/RouteInfoLongName"
+	                    android:layout_width="fill_parent" 
+	                    android:layout_height="wrap_content">
+	                </TextView>
+	                <TextView
+	                    android:id="@+id/agency"
+	                    style="@style/RouteInfoAgency"
+	                    android:layout_width="fill_parent" 
+	                    android:layout_height="wrap_content">
+	                </TextView>
+	            </LinearLayout>
+	        </TableRow>
+	    </TableLayout>   
+	</LinearLayout>
+            
+    <ExpandableListView android:id="@id/android:list"
         style="@style/HeaderList"
         android:layout_width="fill_parent" 
-        android:layout_height="fill_parent" />
+        android:layout_height="wrap_content" />
  
+    <LinearLayout 
+        android:id="@+id/loading"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"
+        android:visibility="gone">
+        <ProgressBar android:id="@+android:id/progress_small"
+            style="@style/LoadingProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" 
+            android:paddingLeft="5dp" /> 
+        <TextView
+            android:text="@string/route_info_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/LoadingText" />
+    </LinearLayout>
+
     <TextView android:id="@id/android:empty"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 </LinearLayout>

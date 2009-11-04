@@ -256,7 +256,11 @@ public class TripService extends Service {
                 c.getString(TripsDbAdapter.TRIP_COL_ROUTEID));
         
         final Resources res = getResources();
-        if (timeDiff < ONE_MINUTE) {
+        if (timeDiff <= 0) {
+            final String fmt = res.getString(R.string.trip_stat_gone);
+            return String.format(fmt, routeName);
+        }
+        else if (timeDiff < ONE_MINUTE) {
             final String fmt = res.getString(R.string.trip_stat_lessthanone);
             return String.format(fmt, routeName);
         }
@@ -278,7 +282,7 @@ public class TripService extends Service {
         private Notification mNotification = null;
         private PendingIntent mNotificationIntent = null;
         // This can be set in another thread.
-        private volatile int mState = UNINIT;
+        private int mState = UNINIT;
         
         PollTask(String tripId, String stopId) {
             super(PREFIX+buildTripUri(tripId, stopId).toString());
@@ -290,21 +294,23 @@ public class TripService extends Service {
         private static final int UNINIT = 0;
         private static final int NOT_FOUND = 1;
         private static final int FOUND = 2;
-        private static final int NOTIFIED = 3;
-        private static final int CLEARED = 4;
+        private static final int DONE = 3;
         
         synchronized void clearNotification() {
             Log.d(TAG, "Clearing notification: " + getTaskId());
-            mState = CLEARED;
+            mNotification = null;
+            mState = DONE;
         }
         
         private static final int NOTIFY_ID = 1;
         
+        // This is only every called within the synchronized block of 
+        // checkArrivals, so it doesn't have to be synchronized itself.
         final void doNotification(long timeDiff, Cursor c) {
             final Context ctx = TripService.this;
             
-            Log.d(TAG, "Notify for trip: " + getTaskId());
             if (mNotification == null) {
+                Log.d(TAG, "Creating notification for trip: " + getTaskId());
                 mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());    
                 mNotification.defaults |= Notification.DEFAULT_SOUND|
                     Notification.DEFAULT_LIGHTS|
@@ -322,7 +328,7 @@ public class TripService extends Service {
                         0, stopActivity, PendingIntent.FLAG_ONE_SHOT);
             }
             else {
-                // All other updates are silent.
+                Log.d(TAG, "Updating notification for trip: " + getTaskId());
                 mNotification.defaults = 0;
             }
         
@@ -332,15 +338,95 @@ public class TripService extends Service {
                     getNotifyText(c, timeDiff), mNotificationIntent);
             NotificationManager nm = 
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            nm.notify(NOTIFY_ID, mNotification);   
+            nm.notify(NOTIFY_ID, mNotification);  
         }
-        final void cancelNotification() {
-            if (mNotification != null) {
-                Log.d(TAG, "Cancel notification: " + getTaskId());
-                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                nm.cancel(NOTIFY_ID); 
-                mState = CLEARED;
-                mNotification = null;
+
+        // This returns 'true' if we need to break out of the poll loop.
+        final boolean checkArrivals(ObaResponse response, 
+                Cursor c, long reminderMS, long now) {
+            final String tripId = mTripId;
+            final ObaArray arrivals = response.getData().getArrivalsAndDepartures();
+            final int length = arrivals.length();
+            for (int i=0; i < length; ++i) {
+                ObaArrivalInfo info = arrivals.getArrivalInfo(i);
+                if (tripId.equals(info.getTripId())) {
+                    if (mState == NOT_FOUND) {
+                        Log.d(TAG, "Found trip: " + getTaskId());
+                        mState = FOUND;
+                    }
+                    // We found the trip. We notify when the reminder time
+                    // when calculated with the *predicted* arrival time
+                    // is past now.
+                    long depart = info.getPredictedArrivalTime();
+                    if (depart == 0) {
+                        depart = info.getScheduledArrivalTime();
+                    }
+
+                    // This is the difference in time between now 
+                    // and when when the bus leaves.
+                    final long timeDiff = depart-now;
+                    if (timeDiff <= 0) {
+                        // Bus has left. Do one last notification and bail.
+                        // Note: only notify if we have already notified.
+                        if (mNotification != null) {
+                            doNotification(timeDiff, c);
+                        }
+                        mState = DONE;
+                        return true;
+                    }
+                    else if (timeDiff <= reminderMS) {
+                        // Within the reminder time. Do the first notification
+                        // or continue to notify, but remain in the loop.
+                        doNotification(timeDiff, c);
+                    }
+                    break;
+                }
+            }
+            return false;
+        }
+        
+        final void doPoll(Cursor c) {
+            final String stopId = mStopId;
+                   
+            // Add one so we notify at least that many minutes before the reminder time --
+            // it's better to be half a minute early than half a minute late.
+            final long reminderMS = (1+c.getInt(TripsDbAdapter.TRIP_COL_REMINDER))*ONE_MINUTE;
+            final long departMS = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE)*ONE_MINUTE;
+            
+            // This is OK, since we don't expect anything other than this thread 
+            // to be accessing this before we have notified someone.
+            mState = NOT_FOUND;
+
+            while (mState != DONE) {
+                Log.d(TAG, "Get arrivals/departures: " + getTaskId());
+                ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
+                synchronized (this) {
+                    // First check to see if we were marked as DONE while 
+                    // getArrivalsDeparturesForStop was running
+                    if (mState == DONE) {
+                        break;
+                    }
+                    final long now = System.currentTimeMillis();
+                    
+                    if (response.getCode() == ObaApi.OBA_OK) {
+                        if (checkArrivals(response, c, reminderMS, now)) {
+                            break;
+                        }
+                    }
+                    // If we haven't found the trip, then give up after
+                    // 10 minutes past the scheduled departure time.
+                    if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
+                        // Give up.
+                        Log.d(TAG, "Giving up: " + getTaskId());
+                        mState = DONE;
+                        break;
+                    }
+                }
+                try {
+                    Thread.sleep(30*1000);
+                } catch (InterruptedException e) {
+                    // Okay...
+                }
             }
         }
         
@@ -353,99 +439,20 @@ public class TripService extends Service {
                 adapter.deleteTrip(mTripId, mStopId);
             }
             else {    
-                final Intent tripService = new Intent(TripService.this, TripService.class);
-                tripService.setAction(TripService.ACTION_SCHEDULE_TRIP);
-                tripService.setData(buildTripUri(mTripId, mStopId));
-                TripService.this.startService(tripService);
+                TripService ctx = TripService.this;
+                Intent myIntent = new Intent(ACTION_POLL_TRIP, 
+                        buildTripUri(mTripId, mStopId), 
+                        ctx, 
+                        AlarmReceiver.class);
+                
+                PendingIntent alarmIntent = 
+                    PendingIntent.getBroadcast(ctx, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
+                
+                AlarmManager alarm = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+                
+                long triggerTime = System.currentTimeMillis() + 60*ONE_MINUTE;
+                alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent); 
             }
-        }
-        
-        final boolean doPoll(Cursor c) {
-            final String tripId = mTripId;
-            final String stopId = mStopId;
-            // Add one so we notify at least that many minutes before the reminder time --
-            // it's better to be half a minute early than half a minute late.
-            final long reminderMS = (1+c.getInt(TripsDbAdapter.TRIP_COL_REMINDER))*ONE_MINUTE;
-            final long departMS = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE)*ONE_MINUTE;
-            
-            mState = NOT_FOUND;
-    
-            while (mState != CLEARED) {
-                Log.d(TAG, "Get arrivals/departures: " + getTaskId());
-                ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
-                
-                final long now = System.currentTimeMillis();
-                
-                if (response.getCode() == ObaApi.OBA_OK) {
-                    final ObaArray arrivals = response.getData().getArrivalsAndDepartures();
-                    final int length = arrivals.length();
-                    for (int i=0; i < length; ++i) {
-                        ObaArrivalInfo info = arrivals.getArrivalInfo(i);
-                        if (tripId.equals(info.getTripId())) {
-                            synchronized (this) {
-                                if (mState == NOT_FOUND) {
-                                    Log.d(TAG, "Found trip: " + getTaskId());
-                                    mState = FOUND;
-                                }
-                                // We found the trip. We notify when the reminder time
-                                // when calculated with the *predicted* arrival time
-                                // is past now.
-                                long time = info.getPredictedArrivalTime();
-                                if (time == 0) {
-                                    time = info.getScheduledArrivalTime();
-                                }
-                                // State model:
-                                // FOUND:
-                                //        ((time-reminderMS) < now) -> doNotification(), NOTIFIED
-                                //        (time < now) -> CLEARED
-                                //
-                                // NOTIFIED:
-                                //        (time < now) -> CLEARED
-                                //
-                                // CLEARED:
-                                //        Nothing.
-                                //         
-                                if (mState == FOUND) {
-                                    if ((time-reminderMS) < now) {
-                                        doNotification(time-now, c);
-                                        mState = NOTIFIED;
-                                    }
-                                    else if (time < now) {
-                                        // Bus has left.
-                                        mState = CLEARED;
-                                        break;
-                                    }
-                                } 
-                                else if (mState == NOTIFIED) {
-                                    final long timeDiff = time-now;
-                                    if (timeDiff <= 0) {
-                                        // Bus has left. Cancel the notification.
-                                        cancelNotification();
-                                        mState = CLEARED;
-                                        break;
-                                    }
-                                    else {
-                                        doNotification(timeDiff, c);    
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                // If we haven't found the trip, then give up after
-                // 10 minutes past the scheduled departure time.
-                if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
-                    // Give up.
-                    Log.d(TAG, "Giving up: " + getTaskId());
-                    break;
-                }
-                try {
-                    Thread.sleep(30*1000);
-                } catch (InterruptedException e) {
-                    // Okay...
-                }
-            }   
-            return mState == CLEARED;
         }
         
         @Override

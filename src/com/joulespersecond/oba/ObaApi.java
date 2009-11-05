@@ -1,17 +1,21 @@
 package com.joulespersecond.oba;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-
 import com.google.android.maps.GeoPoint;
 
 public final class ObaApi {
+    //private static final String TAG = "ObaApi";
     // Uninstantiatable
     private ObaApi() { throw new AssertionError(); }
     
@@ -28,34 +32,38 @@ public final class ObaApi {
     public static final double E6 = 1000*1000;
     
     private static ObaResponse doRequest(String urlStr) {
-        Log.d("ObaApi", "Request: "  + urlStr);
+        //Log.d("ObaApi", "Request: "  + urlStr);
         ObaResponse response = null;
         try {
             URL url = new URL(urlStr);
             URLConnection conn = url.openConnection();
+            //long start = System.currentTimeMillis();
             conn.connect();
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(conn.getInputStream()),
                     8*1024);
+            //long end = System.currentTimeMillis();
+            //Log.d(TAG, "Request: " + (end-start));
             
-            StringBuffer data;
+            //start = System.currentTimeMillis();
+            StringBuilder data;
             int len = conn.getContentLength();
             if (len == -1) {
-                data = new StringBuffer(); // default size
+                data = new StringBuilder(); // default size
             }
             else {
-                data = new StringBuffer(len);
+                data = new StringBuilder(len);
             }
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 data.append(inputLine);
             }
-            response = new ObaResponse(new JSONObject(data.toString()));
+            //end = System.currentTimeMillis();
+            //Log.d(TAG, "Read: " + (end-start));
+            response = ObaResponse.createFromString(data);
 
         } catch (IOException e) {
-            response = new ObaResponse("Unable to connect: " + e.toString());
-        } catch (JSONException e) {
-            response = new ObaResponse("Invalid response");
+            response = ObaResponse.createFromError("Unable to connect: " + e.toString());
         }
         return response;
     }

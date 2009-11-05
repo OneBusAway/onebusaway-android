@@ -12,7 +12,7 @@ public final class ObaStopGrouping {
      * 
      * @param obj The encapsulated object.
      */
-    public ObaStopGrouping(JSONObject obj) {
+    ObaStopGrouping(JSONObject obj) {
         mData = obj;
     }
     

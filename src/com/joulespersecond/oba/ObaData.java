@@ -12,7 +12,7 @@ public final class ObaData {
      * 
      * @param The JSON object representing the response.
      */
-    public ObaData(JSONObject obj) {
+    ObaData(JSONObject obj) {
         mData = obj;
     }
     /**
@@ -20,7 +20,7 @@ public final class ObaData {
      * 
      * @param bundle The bundle to convert to an ObaData.
      */
-    public ObaData(Bundle bundle) {
+    ObaData(Bundle bundle) {
         mData = JSONHelp.toObject(bundle);
     }
     /**

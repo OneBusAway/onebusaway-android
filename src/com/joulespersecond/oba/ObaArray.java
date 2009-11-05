@@ -15,7 +15,7 @@ public final class ObaArray {
      * 
      * @param The encapsulated array.
      */
-    public ObaArray(JSONArray obj) {
+    ObaArray(JSONArray obj) {
         mArray = obj;
     }
     /**
@@ -23,7 +23,7 @@ public final class ObaArray {
      * 
      * @param bundle A bundle to be converted to an ObaArray.
      */
-    public ObaArray(Bundle bundle) {
+    ObaArray(Bundle bundle) {
         mArray = JSONHelp.toArray(bundle);
     }
     /**

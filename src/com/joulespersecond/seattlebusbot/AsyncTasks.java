@@ -1,12 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.joulespersecond.oba.ObaResponse;
 
@@ -18,10 +13,15 @@ import com.joulespersecond.oba.ObaResponse;
  *
  */
 final class AsyncTasks {
-    private static final String TAG = "AsyncTasks";
+    //private static final String TAG = "AsyncTasks";
     // Uninstantiatable
     private AsyncTasks() { throw new AssertionError(); }
 
+    public interface Progress {
+        void showLoading();
+        void hideLoading();
+    }
+    
     /**
      * Base class for AsyncTask that convert types to ObaResponses
      * Handles the basic task of showing the indeterminate progress bar
@@ -41,19 +41,19 @@ final class AsyncTasks {
      */
     public static abstract class
     Base<T,Result> extends AsyncTask<T,Void,Result> {
-        protected final Activity mActivity;
+        protected final Progress mProgress;
         
-        public Base(Activity activity) {
-            mActivity = activity;
+        public Base(Progress progress) {
+            mProgress = progress;
         }
         @Override
         protected void onPreExecute() {
-            mActivity.setProgressBarIndeterminateVisibility(true);
+            mProgress.showLoading();
         }
         @Override
         protected void onPostExecute(Result result) {
             doResult(result);
-            mActivity.setProgressBarIndeterminateVisibility(false); 
+            mProgress.hideLoading();
         }
         protected abstract void doResult(Result result);
     }
@@ -61,30 +61,24 @@ final class AsyncTasks {
 
     public static abstract class 
     ToResponseBase<T> extends Base<T,ObaResponse> {
-        public ToResponseBase(Activity activity) {
-            super(activity);
+        public ToResponseBase(Progress progress) {
+            super(progress);
         }
     }    
     
     /**
-     * This is the base class for converting a JSON string to an ObaResponse.
+     * This is the base class for converting a string to an ObaResponse.
      * Subclasses are expected to override doResult.
      * 
      * @author paulw
      */
-    public static abstract class JSONToResponse extends ToResponseBase<String> {
-        public JSONToResponse(Activity activity) {
-            super(activity);
+    public static abstract class StringToResponse extends ToResponseBase<String> {
+        public StringToResponse(Progress progress) {
+            super(progress);
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
-            try {
-                return new ObaResponse(new JSONObject(params[0]));
-            } catch (JSONException e) {
-                Log.e(TAG, "Expected JSON data, got something else entirely: " + params[0]);
-                e.printStackTrace();
-                return new ObaResponse("JSON error");
-            }
+            return ObaResponse.createFromString(params[0]);
         }
     }
     
@@ -95,12 +89,12 @@ final class AsyncTasks {
      * @author paulw
      */
     public static abstract class BundleToResponse extends ToResponseBase<Bundle> {
-        public BundleToResponse(Activity activity) {
-            super(activity);
+        public BundleToResponse(Progress progress) {
+            super(progress);
         }
         @Override
         protected ObaResponse doInBackground(Bundle... params) {
-            return new ObaResponse(params[0]);
+            return ObaResponse.createFromBundle(params[0]);
         }
     }
 }

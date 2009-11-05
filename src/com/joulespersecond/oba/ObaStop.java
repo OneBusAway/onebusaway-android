@@ -15,14 +15,14 @@ public final class ObaStop {
      * 
      * @param obj The encapsulated object.
      */
-    public ObaStop(JSONObject obj) {
+    ObaStop(JSONObject obj) {
         mData = obj;
     }
     /**
      * Constructor.
      * @param bundle The bundle to convert to an ObaStop.
      */
-    public ObaStop(Bundle bundle) {
+    ObaStop(Bundle bundle) {
         mData = JSONHelp.toObject(bundle);
     }
     /**

@@ -4,15 +4,11 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -36,7 +32,7 @@ import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
-    private static final String TAG = "MapViewActivity";
+    //private static final String TAG = "MapViewActivity";
     
     public static final String FOCUS_STOP_ID = ".FocusStopId";
     public static final String CENTER_LAT = ".CenterLat";
@@ -62,6 +58,14 @@ public class MapViewActivity extends MapActivity {
     private boolean mMapCenterWaitFlag = false;
     private static final int CenterPollPeriod = 2000;
     
+    public static final void start(Context context, String focusId, double lat, double lon) {
+        Intent myIntent = new Intent(context, MapViewActivity.class);
+        myIntent.putExtra(FOCUS_STOP_ID, focusId);
+        myIntent.putExtra(CENTER_LAT, lat);
+        myIntent.putExtra(CENTER_LON, lon);
+        context.startActivity(myIntent);
+    }
+    
     private abstract class GetStopsForRouteTaskBase extends AsyncTask<String,Void,ObaResponse> {
         @Override
         protected void onPreExecute() {
@@ -86,14 +90,7 @@ public class MapViewActivity extends MapActivity {
     private class GetStopsForRouteTask2 extends GetStopsForRouteTaskBase {
         @Override
         protected ObaResponse doInBackground(String... params) {
-            try {
-                return new ObaResponse(new JSONObject(params[0]));
-            } catch (JSONException e) {
-                Log.e(TAG, "Expected JSON data, got something else entirely: " + params[0]);
-                // I guess we don't have stop data...
-                e.printStackTrace();
-                return new ObaResponse("JSON error");
-            }
+            return ObaResponse.createFromString(params[0]);
         }    
     }
     

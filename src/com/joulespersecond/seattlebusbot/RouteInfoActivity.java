@@ -35,16 +35,20 @@ public class RouteInfoActivity extends ExpandableListActivity {
     private static final String STOPS_FOR_ROUTE = ".StopsForRoute";
     
     private String mRouteId;
-    private GetRouteInfoTask mRouteInfoTask;
-    private GetStopsForRouteTask mStopsForRouteTask;
-    private GetStopsForRouteBundleTask mStopsForRouteBundleTask;
-    private Bundle mRouteInfoResponse;
-    private Bundle mStopsForRouteResponse;
+    private AsyncTask<String,?,?> mRouteInfoTask;
+    private AsyncTask<String,?,?> mStopsForRouteTask;
+    private String mRouteInfoResponse;
+    private String mStopsForRouteResponse;
+    
+    public static void start(Context context, String routeId) {
+        Intent myIntent = new Intent(context, RouteInfoActivity.class);
+        myIntent.putExtra(ROUTE_ID, routeId);
+        context.startActivity(myIntent);
+    }
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
  
         setContentView(R.layout.route_info);
       
@@ -62,36 +66,27 @@ public class RouteInfoActivity extends ExpandableListActivity {
                     null,
                     new int[] {}
                 ));
-        // We are not being restored.
-        if (savedInstanceState == null) {
-            mRouteInfoTask = new GetRouteInfoTask();
-            mRouteInfoTask.execute(mRouteId);            
+        
+        if (savedInstanceState != null) {
+            mRouteInfoResponse = savedInstanceState.getString(ROUTE_INFO);
+            mStopsForRouteResponse = savedInstanceState.getString(STOPS_FOR_ROUTE);
         }
+        getRouteInfo();
     }
     @Override 
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBundle(ROUTE_INFO, mRouteInfoResponse);
-        outState.putBundle(STOPS_FOR_ROUTE, mStopsForRouteResponse);
+        outState.putString(ROUTE_INFO, mRouteInfoResponse);
+        outState.putString(STOPS_FOR_ROUTE, mStopsForRouteResponse);
     }
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        Bundle routeInfo = savedInstanceState.getBundle(ROUTE_INFO);
-        if (routeInfo != null) {
-            mRouteInfoResponse = routeInfo;
-            setHeader(new ObaResponse(routeInfo), false);
+        if (savedInstanceState != null) {
+            mRouteInfoResponse = savedInstanceState.getString(ROUTE_INFO);
+            mStopsForRouteResponse = savedInstanceState.getString(STOPS_FOR_ROUTE);
         }
-        else {
-            mRouteInfoTask = new GetRouteInfoTask();
-            mRouteInfoTask.execute(mRouteId);
-        }
- 
-        Bundle response = savedInstanceState.getBundle(STOPS_FOR_ROUTE);
-        if (response != null) {
-            mStopsForRouteBundleTask = new GetStopsForRouteBundleTask();
-            mStopsForRouteBundleTask.execute(response);
-        }
+        getRouteInfo();
     }
     @Override
     public void onDestroy() {
@@ -100,9 +95,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
         if (mStopsForRouteTask != null) {
             mStopsForRouteTask.cancel(true);
-        }
-        if (mStopsForRouteBundleTask != null) {
-            mStopsForRouteBundleTask.cancel(true);
         }
         super.onDestroy();
     }
@@ -117,7 +109,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         if (item.getItemId() == R.id.show_on_map) {
             Intent myIntent = new Intent(this, MapViewActivity.class);
             myIntent.putExtra(MapViewActivity.ROUTE_ID, mRouteId);
-            myIntent.putExtra(MapViewActivity.STOP_DATA, mStopsForRouteResponse);
+            myIntent.putExtra(MapViewActivity.STOP_DATA, mStopsForRouteResponse.toString());
             startActivity(myIntent);
             return true;
         }
@@ -135,49 +127,15 @@ public class RouteInfoActivity extends ExpandableListActivity {
         return true;
     }  
     
-    //
-    // Async tasks
-    //
-    final class GetRouteInfoTask extends AsyncTasks.ToResponseBase<String> {
-        GetRouteInfoTask() {
-            super(RouteInfoActivity.this);
-        }
-        
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showLoading();
-        }
-        @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getRouteById(params[0]);
-        }
-        @Override
-        protected void doResult(ObaResponse result) {
-            mRouteInfoResponse = result.toBundle();
-            setHeader(result, true); 
-            getStopsForRoute();
-        }
-    }
     // This is the return value for GetStopsForRouteTask.
     //
     private final static class StopsForRouteInfo {
         private final ObaResponse mResponse;
-        private final Bundle mResponseBundle;
         private final ArrayList<HashMap<String,String>> mStopGroups;
         private final ArrayList<ArrayList<HashMap<String,String>>> mStops;
         
-        public StopsForRouteInfo(Context cxt, Bundle bundle) {
-            mResponseBundle = bundle;
-            mResponse = new ObaResponse(bundle);
-            mStopGroups = new ArrayList<HashMap<String,String>>();
-            mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
-            initMaps(cxt);
-        }
-        
         public StopsForRouteInfo(Context cxt, ObaResponse response) {
             mResponse = response;
-            mResponseBundle = mResponse.toBundle();
             mStopGroups = new ArrayList<HashMap<String,String>>();
             mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
             initMaps(cxt);
@@ -255,8 +213,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 }
             }
         }
-        public Bundle getResponseBundle() {
-            return mResponseBundle;
+        public ObaResponse getResponse() {
+            return mResponse;
         }
         public ArrayList<HashMap<String,String>> getStopGroups() {
             return mStopGroups;
@@ -266,43 +224,111 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
     }
     
-    abstract class GetStopsForRouteBase<T>
-            extends AsyncTask<T,Void,StopsForRouteInfo> {
-        @Override
-        protected void onPreExecute() {
-            showLoading();
+    //
+    // Asynchronicity
+    //
+    private final AsyncTasks.Progress mProgress = new AsyncTasks.Progress() {
+        public void showLoading() {
+            View v = findViewById(R.id.loading);
+            v.setVisibility(View.VISIBLE);         
+        }
+        public void hideLoading() {  
+        }
+    };
+    private final AsyncTasks.Progress mProgress2 = new AsyncTasks.Progress() {
+        public void showLoading() {   
+        }
+        public void hideLoading() {
+            View v = findViewById(R.id.loading);
+            v.setVisibility(View.GONE);       
+        }
+    };
+    private final class GetRouteInfoString extends AsyncTasks.StringToResponse {
+        GetRouteInfoString() {
+            super(RouteInfoActivity.this.mProgress);
         }
         @Override
-        protected void onPostExecute(StopsForRouteInfo result) {
-            hideLoading();
+        protected void doResult(ObaResponse result) {
+            mRouteInfoResponse = result.toString();
+            setHeader(result, true); 
+            getStopsForRoute(); 
+        }
+    }
+    private final class GetRouteInfoNet extends AsyncTasks.ToResponseBase<String> {
+        public GetRouteInfoNet() {
+            super(RouteInfoActivity.this.mProgress);
+        }
+        @Override
+        protected ObaResponse doInBackground(String... params) {
+            return ObaApi.getRouteById(params[0]);
+        }
+        @Override
+        protected void doResult(ObaResponse result) {
+            mRouteInfoResponse = result.toString();
+            setHeader(result, true); 
+            getStopsForRoute(); 
         }        
     }
-    
-    // This task retrieves the stop for route from the network.
-    final class GetStopsForRouteTask extends GetStopsForRouteBase<String> {
+    private final class GetStopsForRouteString extends AsyncTasks.Base<String,StopsForRouteInfo> {
+        GetStopsForRouteString() {
+            super(RouteInfoActivity.this.mProgress2);
+        }
+        @Override
+        protected StopsForRouteInfo doInBackground(String... params) {
+            return new StopsForRouteInfo(
+                    RouteInfoActivity.this, ObaResponse.createFromString(params[0]));
+        } 
+        @Override
+        protected void doResult(StopsForRouteInfo result) {
+            setStopsForRoute(result);
+        }
+    }
+    private final class GetStopsForRouteNet extends AsyncTasks.Base<String,StopsForRouteInfo> {
+        GetStopsForRouteNet() {
+            super(RouteInfoActivity.this.mProgress2);
+        }
         @Override
         protected StopsForRouteInfo doInBackground(String... params) {
             return new StopsForRouteInfo(
                     RouteInfoActivity.this, ObaApi.getStopsForRoute(params[0]));
-        }
+        } 
         @Override
-        protected void onPostExecute(StopsForRouteInfo result) {
-            super.onPostExecute(result);
+        protected void doResult(StopsForRouteInfo result) {
             setStopsForRoute(result);
         }
-        
     }
-    // This task unpacks a bundle.
-    final class GetStopsForRouteBundleTask extends GetStopsForRouteBase<Bundle> {
-        @Override
-        protected StopsForRouteInfo doInBackground(Bundle... params) {
-            return new StopsForRouteInfo(
-                    RouteInfoActivity.this, params[0]);
+    
+    
+    void getRouteInfo() {
+        if (mRouteInfoTask != null &&
+                mRouteInfoTask.getStatus() != AsyncTask.Status.FINISHED) {
+            return;
         }
-        @Override
-        protected void onPostExecute(StopsForRouteInfo result) {
-            super.onPostExecute(result);
-            setStopsForRoute(result);
+        if (mRouteInfoResponse != null) {
+            // Convert this to an ObaResponse
+            mRouteInfoTask = new GetRouteInfoString();
+            mRouteInfoTask.execute(mRouteInfoResponse);
+        }
+        else {
+            // Get the data from the net.
+            mRouteInfoTask = new GetRouteInfoNet();
+            mRouteInfoTask.execute(mRouteId);
+        }
+    }
+    void getStopsForRoute() {
+        if (mStopsForRouteTask != null &&
+                mStopsForRouteTask.getStatus() != AsyncTask.Status.FINISHED) {
+            return;
+        }
+        if (mStopsForRouteResponse != null) {
+            // Convert this to an ObaResponse
+            mStopsForRouteTask = new GetStopsForRouteString();
+            mStopsForRouteTask.execute(mStopsForRouteResponse);
+        }
+        else {
+            // Get the data from the net
+            mStopsForRouteTask = new GetStopsForRouteNet();
+            mStopsForRouteTask.execute(mRouteId);
         }
     }
     
@@ -333,13 +359,9 @@ public class RouteInfoActivity extends ExpandableListActivity {
         else {
             empty.setText(R.string.generic_comm_error);
         }
-    }
-    void getStopsForRoute() {
-        mStopsForRouteTask = new GetStopsForRouteTask();
-        mStopsForRouteTask.execute(mRouteId);
-    }
+    }    
     void setStopsForRoute(StopsForRouteInfo result) {
-        mStopsForRouteResponse = result.getResponseBundle();
+        mStopsForRouteResponse = result.getResponse().toString();
         setListAdapter(new SimpleExpandableListAdapter(
                 this,
                 result.getStopGroups(),
@@ -352,13 +374,4 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 new int[] { R.id.name, R.id.direction, R.id.stop_id }
             ));
     }
-    void showLoading() {
-        View v = findViewById(R.id.loading);
-        v.setVisibility(View.VISIBLE);         
-    }
-    void hideLoading() {
-        View v = findViewById(R.id.loading);
-        v.setVisibility(View.GONE);       
-    }
-
 }

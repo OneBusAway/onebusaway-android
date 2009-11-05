@@ -4,10 +4,53 @@
          android:layout_width="fill_parent" 
          android:layout_height="fill_parent">
  
+	 <LinearLayout
+	    style="@style/HeaderGroup"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content">
+	    <LinearLayout
+	        style="@style/HeaderItem"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical">
+	        <TextView
+	            android:id="@+id/name"
+	            style="@style/HeaderText"
+	            android:layout_width="fill_parent" 
+	            android:layout_height="wrap_content">
+	        </TextView>
+	        <TextView
+	            android:id="@+id/direction"
+	            style="@style/Header2Text"
+	            android:layout_width="fill_parent" 
+	            android:layout_height="wrap_content">
+	        </TextView>
+	    </LinearLayout>
+	</LinearLayout>
+ 
     <ListView android:id="@id/android:list"
         style="@style/HeaderList"
         android:layout_width="fill_parent" 
         android:layout_height="fill_parent" />
+ 
+    <LinearLayout 
+        android:id="@+id/loading"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"
+        android:visibility="gone">
+        <ProgressBar android:id="@+android:id/progress_small"
+            style="@style/LoadingProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" 
+            android:paddingLeft="5dp" /> 
+        <TextView
+            android:text="@string/route_info_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/LoadingText" />
+    </LinearLayout> 
  
     <TextView android:id="@id/android:empty"
         android:layout_width="wrap_content"

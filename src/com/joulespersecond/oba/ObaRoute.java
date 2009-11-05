@@ -13,7 +13,7 @@ public final class ObaRoute {
      * 
      * @param obj The encapsulated object.
      */
-    public ObaRoute(JSONObject obj) {
+    ObaRoute(JSONObject obj) {
         mData = obj;
     }
     /**
@@ -21,7 +21,7 @@ public final class ObaRoute {
      * 
      * @param bundle The bundle to convert this an ObaRoute.
      */
-    public ObaRoute(Bundle bundle) {
+    ObaRoute(Bundle bundle) {
         mData = JSONHelp.toObject(bundle);
     }
     /**

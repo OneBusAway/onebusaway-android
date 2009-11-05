@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -43,6 +44,21 @@ public class TripInfoActivity extends Activity {
     private long mDepartTime;
     private int mReminderTime; // DB Value, not selection value
     private int mReminderDays;
+    
+    public static void start(Context context, 
+            String tripId, String stopId,
+            String routeId, String routeName, String stopName,
+            long departureTime, String headsign) {
+        Intent myIntent = new Intent(context, TripInfoActivity.class);
+        myIntent.putExtra(TRIP_ID, tripId);
+        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.putExtra(ROUTE_ID, routeId);
+        myIntent.putExtra(ROUTE_NAME, routeName);
+        myIntent.putExtra(STOP_NAME, stopName);
+        myIntent.putExtra(DEPARTURE_TIME, departureTime);
+        myIntent.putExtra(HEADSIGN, headsign);
+        context.startActivity(myIntent);  
+    }
     
     @Override
     public void onCreate(Bundle savedInstanceState) {

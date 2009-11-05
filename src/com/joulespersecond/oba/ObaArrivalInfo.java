@@ -12,7 +12,7 @@ public final class ObaArrivalInfo {
      * 
      * @param obj The encapsulated object.
      */
-    public ObaArrivalInfo(JSONObject obj) {
+    ObaArrivalInfo(JSONObject obj) {
         mData = obj;
     }
     /**
@@ -20,7 +20,7 @@ public final class ObaArrivalInfo {
      * 
      * @param bundle The bundle to convert to an ObaArrivalInfo.
      */
-    public ObaArrivalInfo(Bundle bundle) {
+    ObaArrivalInfo(Bundle bundle) {
         mData = JSONHelp.toObject(bundle);
     }
     /**

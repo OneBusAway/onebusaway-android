@@ -17,7 +17,7 @@ public final class ObaStopGroup {
      * 
      * @param obj The encapsulated object.
      */
-    public ObaStopGroup(JSONObject obj) {
+    ObaStopGroup(JSONObject obj) {
         mData = obj;
     }
     

@@ -440,7 +440,7 @@ public class TripService extends Service {
             }
             else {    
                 TripService ctx = TripService.this;
-                Intent myIntent = new Intent(ACTION_POLL_TRIP, 
+                Intent myIntent = new Intent(ACTION_SCHEDULE_TRIP, 
                         buildTripUri(mTripId, mStopId), 
                         ctx, 
                         AlarmReceiver.class);

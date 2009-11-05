@@ -97,4 +97,14 @@ final class AsyncTasks {
             return ObaResponse.createFromBundle(params[0]);
         }
     }
+    
+    /**
+     * This is a helper to tell whether or not a task is finished.
+     * It is acceptable to pass null to this, in which case it returns false.
+     * @param task The task to check.
+     * @return Whether or not this task is currently running
+     */
+    public static boolean isRunning(AsyncTask<?,?,?> task) {
+        return (task != null && task.getStatus() != AsyncTask.Status.FINISHED);
+    }
 }

@@ -44,11 +44,13 @@ public class StopInfoActivity extends ListActivity {
     private static final String STOP_INFO = ".StopInfo";
     
     private String mStopId;
-    private ObaResponse mResponse;
+    private String mStopName;
+    private double mStopLat;
+    private double mStopLon;
     private Timer mTimer;
+    private String mResponse;
     
-    private GetArrivalInfoTask mAsyncTask;
-    private GetArrivalInfoBundleTask mAsyncBundleTask;
+    private AsyncTask<String,?,?> mAsyncTask;
 
     private TripsDbAdapter mTripsDbAdapter;    
     private TripsDbAdapter.TripsForStopSet mTripsForStop;
@@ -97,8 +99,12 @@ public class StopInfoActivity extends ListActivity {
         mStopId = bundle.getString(STOP_ID);
         
         mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
-        if (savedInstanceState == null) {
-            refresh(true, false);
+        if (savedInstanceState != null) {
+            mResponse = savedInstanceState.getString(STOP_INFO);
+            getStopInfo(false, false, false);
+        }
+        else {
+            getStopInfo(false, false, true);
         }
     }
     @Override
@@ -108,27 +114,17 @@ public class StopInfoActivity extends ListActivity {
         if (mAsyncTask != null) {
             mAsyncTask.cancel(true);
         }
-        if (mAsyncBundleTask != null) {
-            mAsyncBundleTask.cancel(true);
-        }
         super.onDestroy();
     }
     @Override 
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(STOP_INFO, mResponse.toString());
+        outState.putString(STOP_INFO, mResponse);
     }
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        String stopInfo = savedInstanceState.getString(STOP_INFO);
-        if (stopInfo != null) {
-            mAsyncBundleTask = new GetArrivalInfoBundleTask();
-            mAsyncBundleTask.execute(stopInfo);
-        }
-        else {
-            refresh(false, false);
-        }
+        mResponse = savedInstanceState.getString(STOP_INFO);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -142,15 +138,14 @@ public class StopInfoActivity extends ListActivity {
             if (mResponse == null) {
                 return false;
             }
-            ObaStop stop = mResponse.getData().getStop();
             MapViewActivity.start(this, 
                     mStopId, 
-                    stop.getLatitude(), 
-                    stop.getLongitude());
+                    mStopLat, 
+                    mStopLon);
             return true;
         }
         else if (item.getItemId() == R.id.refresh) {
-            refresh(false, true);
+            getStopInfo(true, true, false);
             return true;
         }
         return false;
@@ -168,7 +163,7 @@ public class StopInfoActivity extends ListActivity {
         }
         mTripsForStop.refresh();
         // Always refresh once on resume
-        refresh(false, true);
+        getStopInfo(true, true, false);
         
         mTimer.schedule(new TimerTask() {
             @Override
@@ -480,7 +475,7 @@ public class StopInfoActivity extends ListActivity {
                 mStopId, 
                 stopInfo.getRouteId(),
                 stopInfo.getShortName(),
-                mResponse.getData().getStop().getName(),
+                mStopName,
                 stopInfo.getScheduledDepartureTime(),
                 stopInfo.getHeadsign());        
     }
@@ -498,26 +493,87 @@ public class StopInfoActivity extends ListActivity {
     private final Handler mRefreshHandler = new Handler();
     private final Runnable mRefresh = new Runnable() {
         public void run() {
-            refresh(false, true);
+            getStopInfo(true, true, false);
         }
     };
-    private void refresh(boolean updateDb, boolean silent) {
-        if (mStopId != null) {
-            // Don't do anything if the bundle task is executing
-            if (mAsyncBundleTask != null &&
-                    mAsyncBundleTask.getStatus() != AsyncTask.Status.FINISHED) {
-                return;
-            }
-            if (mAsyncTask == null || 
-                    (mAsyncTask.getStatus() == AsyncTask.Status.FINISHED)) {
-                mAsyncTask = new GetArrivalInfoTask(updateDb, silent);
-                mAsyncTask.execute(mStopId);
-            }
+    
+    //
+    // Async tasks for various things.
+    //
+    private final AsyncTasks.Progress mLoadingProgress = new AsyncTasks.Progress() {
+        public void showLoading() {
+            View v = findViewById(R.id.loading);
+            v.setVisibility(View.VISIBLE);         
+        }
+        public void hideLoading() {
+            View v = findViewById(R.id.loading);
+            v.setVisibility(View.GONE);       
+        }
+    };
+    private final AsyncTasks.Progress mTitleProgress = new AsyncTasks.Progress() {
+        public void showLoading() {
+            setProgressBarIndeterminateVisibility(true);       
+        }
+        public void hideLoading() {
+            setProgressBarIndeterminateVisibility(false);       
+        }
+    };
+    private abstract class GetStopInfoBase extends AsyncTasks.StringToResponse {
+        private final boolean mAddToDb;
+        GetStopInfoBase(AsyncTasks.Progress progress, boolean addToDb) {
+            super(progress);
+            mAddToDb = addToDb;
+        }
+        @Override
+        protected void doResult(ObaResponse result) {
+            setResponse(result, mAddToDb);
+        }
+    }
+    private final class GetStopInfoString extends GetStopInfoBase {
+        GetStopInfoString(AsyncTasks.Progress progress, boolean addToDb) {
+            super(progress, addToDb);
+        }
+        @Override
+        protected ObaResponse doInBackground(String... params) {
+            return ObaResponse.createFromString(params[0]);
+        }        
+    }
+    private final class GetStopInfoNet extends GetStopInfoBase {
+        GetStopInfoNet(AsyncTasks.Progress progress, boolean addToDb) {
+            super(progress, addToDb);
+        }
+        @Override
+        protected ObaResponse doInBackground(String... params) {
+            return ObaApi.getArrivalsDeparturesForStop(params[0]);
+        }
+    }
+    
+    private void getStopInfo(boolean forceRefresh, 
+                            boolean titleProgress,
+                            boolean addToDb) {
+        if (mStopId == null) {
+            return;
+        }
+        if (AsyncTasks.isRunning(mAsyncTask)) {
+            return;
+        }
+        // To determine 
+        AsyncTasks.Progress progress = titleProgress ? mTitleProgress : mLoadingProgress;
+        
+        if (mResponse != null && !forceRefresh) {
+            // Convert this to a string.
+            mAsyncTask = new GetStopInfoString(progress, addToDb);
+            mAsyncTask.execute(mResponse);
+        }
+        else {
+            // Get it from the Net
+            mAsyncTask = new GetStopInfoNet(progress, addToDb);
+            mAsyncTask.execute(mStopId);
         }
     }
     
     void setResponse(ObaResponse response, boolean addToDb) {
-        mResponse = response;
+        mResponse = response.toString();
         setHeader(response, addToDb);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(response);
@@ -531,8 +587,9 @@ public class StopInfoActivity extends ListActivity {
             String code = stop.getCode();
             String name = stop.getName();
             String direction = stop.getDirection();
-            double lat = stop.getLatitude();
-            double lon = stop.getLongitude();
+            mStopName = name;
+            mStopLat = stop.getLatitude();
+            mStopLon = stop.getLongitude();
 
             TextView nameText = (TextView)findViewById(R.id.name);
             nameText.setText(name);
@@ -543,7 +600,7 @@ public class StopInfoActivity extends ListActivity {
                 // Update the database
                 StopsDbAdapter.addStop(StopInfoActivity.this,
                         stop.getId(), code, name, direction, 
-                        lat, lon, true);
+                        mStopLat, mStopLon, true);
             }
         }
         else {

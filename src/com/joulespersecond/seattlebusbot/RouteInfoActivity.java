@@ -300,8 +300,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     
     
     void getRouteInfo() {
-        if (mRouteInfoTask != null &&
-                mRouteInfoTask.getStatus() != AsyncTask.Status.FINISHED) {
+        if (AsyncTasks.isRunning(mRouteInfoTask)) {
             return;
         }
         if (mRouteInfoResponse != null) {
@@ -316,8 +315,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
     }
     void getStopsForRoute() {
-        if (mStopsForRouteTask != null &&
-                mStopsForRouteTask.getStatus() != AsyncTask.Status.FINISHED) {
+        if (AsyncTasks.isRunning(mStopsForRouteTask)) {
             return;
         }
         if (mStopsForRouteResponse != null) {

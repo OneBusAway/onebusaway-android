@@ -3,7 +3,7 @@ package com.joulespersecond.oba;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONArray;
+import com.joulespersecond.json.JSONArray;
 
 import android.os.Bundle;
 
@@ -24,7 +24,7 @@ public final class ObaArray {
      * @param bundle A bundle to be converted to an ObaArray.
      */
     ObaArray(Bundle bundle) {
-        mArray = JSONHelp.toArray(bundle);
+        mArray = new JSONArray(bundle);
     }
     /**
      * Returns the length of the array.
@@ -110,6 +110,6 @@ public final class ObaArray {
      * @return This array converted to a Bundle
      */
     public Bundle toBundle() {
-        return JSONHelp.toBundle(mArray);
+        return mArray.toBundle();
     }
 }

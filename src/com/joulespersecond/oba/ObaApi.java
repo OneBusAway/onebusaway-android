@@ -1,18 +1,15 @@
 package com.joulespersecond.oba;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.google.android.maps.GeoPoint;
+import com.joulespersecond.json.JSONArray;
+import com.joulespersecond.json.JSONObject;
 
 public final class ObaApi {
     //private static final String TAG = "ObaApi";
@@ -33,39 +30,15 @@ public final class ObaApi {
     
     private static ObaResponse doRequest(String urlStr) {
         //Log.d("ObaApi", "Request: "  + urlStr);
-        ObaResponse response = null;
         try {
-            URL url = new URL(urlStr);
-            URLConnection conn = url.openConnection();
-            //long start = System.currentTimeMillis();
-            conn.connect();
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream()),
-                    8*1024);
-            //long end = System.currentTimeMillis();
-            //Log.d(TAG, "Request: " + (end-start));
-            
-            //start = System.currentTimeMillis();
-            StringBuilder data;
-            int len = conn.getContentLength();
-            if (len == -1) {
-                data = new StringBuilder(); // default size
-            }
-            else {
-                data = new StringBuilder(len);
-            }
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                data.append(inputLine);
-            }
-            //end = System.currentTimeMillis();
-            //Log.d(TAG, "Read: " + (end-start));
-            response = ObaResponse.createFromString(data);
-
+            return ObaResponse.createFromURL(new URL(urlStr));
         } catch (IOException e) {
-            response = ObaResponse.createFromError("Unable to connect: " + e.toString());
+            e.printStackTrace();
+            return ObaResponse.createFromError(e.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return ObaResponse.createFromError(e.toString());
         }
-        return response;
     }
 
     

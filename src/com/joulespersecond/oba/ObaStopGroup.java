@@ -3,9 +3,10 @@ package com.joulespersecond.oba;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
+
+import com.joulespersecond.json.JSONArray;
+import com.joulespersecond.json.JSONObject;
 
 public final class ObaStopGroup {
     private final JSONObject mData;

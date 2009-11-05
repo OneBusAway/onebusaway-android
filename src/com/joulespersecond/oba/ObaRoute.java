@@ -1,7 +1,8 @@
 package com.joulespersecond.oba;
 
 import org.json.JSONException;
-import org.json.JSONObject;
+
+import com.joulespersecond.json.JSONObject;
 
 import android.os.Bundle;
 
@@ -22,7 +23,7 @@ public final class ObaRoute {
      * @param bundle The bundle to convert this an ObaRoute.
      */
     ObaRoute(Bundle bundle) {
-        mData = JSONHelp.toObject(bundle);
+        mData = new JSONObject(bundle);
     }
     /**
      * Returns the route ID.
@@ -85,6 +86,6 @@ public final class ObaRoute {
      * @return A bundle that represents this object.
      */
     public Bundle toBundle() {
-        return JSONHelp.toBundle(mData);
+        return mData.toBundle();
     }
 }

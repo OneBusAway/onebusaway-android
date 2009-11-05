@@ -1,10 +1,17 @@
 package com.joulespersecond.oba;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.os.Bundle;
 import android.util.Log;
+
+import com.joulespersecond.json.JSONObject;
 
 public final class ObaResponse {
     private static final String TAG = "ObaResponse";
@@ -20,36 +27,61 @@ public final class ObaResponse {
      * 
      * @param The JSON object representing the response.
      */
+    ObaResponse(JSONObject obj) {
+        mResponse = obj;
+        long start = System.currentTimeMillis();
+        mResponseString = obj.toString();
+        long end = System.currentTimeMillis();
+        Log.d(TAG, "toString: " + (end-start));
+    }
     private ObaResponse(Bundle bundle) {
-        mResponse = JSONHelp.toObject(bundle);  
+        mResponse = new JSONObject(bundle);  
         mResponseString = mResponse.toString();
     }
     private ObaResponse(String json) throws JSONException {
-        //long start = System.currentTimeMillis();
         mResponse = new JSONObject(json);
         // Defensive copy
         mResponseString = new String(json);
-        //long end = System.currentTimeMillis();
-        //Log.d(TAG, "ObaResponse(String): " + (end-start));
-    }
-    private ObaResponse(StringBuilder builder) throws JSONException {
-        //long start = System.currentTimeMillis();
-        mResponseString = builder.toString();
-        mResponse = new JSONObject(mResponseString);
-        //long end = System.currentTimeMillis();
-        //Log.d(TAG, "ObaResponse(StringBuilder): " + (end-start));
     }
     private ObaResponse(String error, boolean unused) {
-        mResponse = new JSONObject();
+        JSONObject obj;
         try {
-            mResponse.put("text", error);
-            mResponse.put("code", 0);
+            obj = new JSONObject(
+                    String.format("{text: \"%s\", code:0}",
+                            org.json.JSONObject.quote(error)));
         } catch (JSONException e) {
-            e.printStackTrace();
-            Log.e(TAG, "Unable to create JSON Object: " + e.getMessage());
-        } 
+            obj = new JSONObject();
+        }
+        mResponse = obj;
         mResponseString = mResponse.toString();
     }
+    private ObaResponse(URL url) throws JSONException, IOException {
+        URLConnection conn = url.openConnection();
+        long start = System.currentTimeMillis();
+        conn.connect();
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(conn.getInputStream()),
+                8*1024);
+        long end = System.currentTimeMillis();
+        Log.d(TAG, "Request: " + (end-start));
+        
+        start = System.currentTimeMillis();
+        StringBuilder data;
+        int len = conn.getContentLength();
+        if (len == -1) {
+            data = new StringBuilder(); // default size
+        }
+        else {
+            data = new StringBuilder(len);
+        }
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            data.append(inputLine);
+        }
+        mResponseString = data.toString();
+        mResponse = new JSONObject(mResponseString);
+    }
+    
     static public ObaResponse createFromBundle(Bundle bundle) {
         return new ObaResponse(bundle);
     }
@@ -61,18 +93,14 @@ public final class ObaResponse {
             return new ObaResponse("Parse error: " + e.getMessage(), true);
         }
     }
-    // Not intended for public use.
-    static ObaResponse createFromString(StringBuilder str)  {
-        try {
-            return new ObaResponse(str);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new ObaResponse("Parse error: " + e.getMessage(), true);
-        }
-    }
     static public ObaResponse createFromError(String error) {
         return new ObaResponse(error, true);
     }
+    static public ObaResponse createFromURL(URL url) throws JSONException, IOException {
+        return new ObaResponse(url);
+    }
+    
+    
     public String getVersion() {
         return mResponse.optString("version", "");
     }
@@ -90,6 +118,6 @@ public final class ObaResponse {
         return mResponseString;
     }
     public Bundle toBundle() {
-        return JSONHelp.toBundle(mResponse);
+        return mResponse.toBundle();
     }
 }

@@ -1,6 +1,6 @@
 package com.joulespersecond.oba;
 
-import org.json.JSONObject;
+import com.joulespersecond.json.JSONObject;
 
 import android.os.Bundle;
 
@@ -21,7 +21,7 @@ public final class ObaData {
      * @param bundle The bundle to convert to an ObaData.
      */
     ObaData(Bundle bundle) {
-        mData = JSONHelp.toObject(bundle);
+        mData = new JSONObject(bundle);
     }
     /**
      * Retrieves the list of stops, if they exist.
@@ -98,6 +98,6 @@ public final class ObaData {
      * Returns a bundle that represents this object.
      */
     public Bundle toBundle() {
-        return JSONHelp.toBundle(mData);
+        return mData.toBundle();
     }
 }

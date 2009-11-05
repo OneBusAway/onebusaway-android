@@ -1,22 +1,14 @@
-package com.joulespersecond.oba;
-
-import java.util.Iterator;
-import java.util.Set;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+package com.joulespersecond.json;
 
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * This class provides some helpful methods to convert JSONObjects to Android bundles and back.
  * @author paulw
  */
 final class JSONHelp {
-    private static final String TAG = "JSONHelp";
-    private static final String JSON_ARRAY_KEY = ".JSONArray";
+    //private static final String TAG = "JSONHelp";
+    //private static final String JSON_ARRAY_KEY = ".JSONArray";
     // Uninstantiatable
     private JSONHelp() { throw new AssertionError(); }
     
@@ -27,6 +19,7 @@ final class JSONHelp {
      */
     static final Bundle toBundle(JSONObject obj) {
         Bundle result = new Bundle();
+        /*
         @SuppressWarnings("unchecked") Iterator<String> i = obj.keys();
         while (i.hasNext()) {
             final String key = i.next();
@@ -36,6 +29,7 @@ final class JSONHelp {
                 Log.e(TAG, "Unable to get key: " + key);
             }
         }
+        */
         return result;
     }
   
@@ -44,7 +38,8 @@ final class JSONHelp {
      * @param array The JSONArray to convert.
      * @return An Android bundle that represents the JSONArray.
      */
-    static final Bundle toBundle(JSONArray array) {
+    /*
+    static final Bundle toBundle(JsonNode array) {
         Bundle result = new Bundle();
         result.putBoolean(JSON_ARRAY_KEY, true);
         final int len = array.length();
@@ -57,6 +52,7 @@ final class JSONHelp {
         }
         return result;
     }
+    */
     /**
      * Converts an Android bundle to a JSONObject.
      * The bundle must have been produced by objectToBundle.
@@ -65,6 +61,7 @@ final class JSONHelp {
      * @return The converted JSONObject.
      */
     static final JSONObject toObject(Bundle bundle) {
+        /*
         JSONObject result = new JSONObject();
         final Set<String> keys = bundle.keySet();
         Iterator<String> i = keys.iterator();
@@ -77,6 +74,8 @@ final class JSONHelp {
             }
         }
         return result;
+        */
+        return null;
     }
     /**
      * Converts an Android bundle to a JSONArray.
@@ -86,6 +85,7 @@ final class JSONHelp {
      * @return The converted JSONArray.
      */
     static final JSONArray toArray(Bundle bundle) {
+        /*
         JSONArray result = new JSONArray();
         if (!bundle.containsKey(JSON_ARRAY_KEY)) {
             Log.e(TAG, "Bundle doesn't look like a JSONArray bundle");
@@ -108,8 +108,11 @@ final class JSONHelp {
             }
         }
         return result;
+        */
+        return null;
     }
     
+    /*
     private static final void convertItem(Bundle bundle, String key, Object obj) {
         // Possible types are:
         //     JSONObject
@@ -202,4 +205,5 @@ final class JSONHelp {
                     key, obj.getClass().getName()));
         }       
     }
+    */
 }

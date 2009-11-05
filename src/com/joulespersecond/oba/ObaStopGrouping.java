@@ -1,6 +1,6 @@
 package com.joulespersecond.oba;
 
-import org.json.JSONObject;
+import com.joulespersecond.json.JSONObject;
 
 public final class ObaStopGrouping {
     private final JSONObject mData;

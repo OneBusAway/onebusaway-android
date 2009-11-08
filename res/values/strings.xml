@@ -41,12 +41,12 @@
     <string name="find_stop_title">SeattleBusBot</string>
     <string name="find">Find</string>
     <string name="find_option_clearfavorites">Clear favorites</string>
-    <string name="find_hint_nofavoritestops">You don\'t have any favorite stops.
-     
-Stops that you use most will appear in this list.</string>
-    <string name="find_hint_nofavoriteroutes">You don\'t have any favorite routes. 
-    
-Routes that you use most will appear in this list.</string>
+    <string name="find_hint_nofavoritestops">You don\'t have any favorite stops.\n\n
+Stops that you use most will automatically appear here.\n\n
+You can also find a stop by using the map, or by entering its five-digit stop ID in the search box.</string>
+    <string name="find_hint_nofavoriteroutes">You don\'t have any favorite routes.\n\n
+Routes that you use most will automatically appear here.\n\n
+You can also find a route by entering its route number in the search box.</string>
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop ID</string>
     <string name="search_route_hint">Enter a route number</string>
@@ -83,10 +83,7 @@ Routes that you use most will appear in this list.</string>
     
     <!--  Trip list -->
     <string name="trip_list_title">SeattleBusBot</string>
-    <string name="trip_list_notrips">You have no trips. 
-
-You can create notifications for bus trips by clicking on an arriving bus for your stop.    
-</string>
+    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by clicking on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>
     

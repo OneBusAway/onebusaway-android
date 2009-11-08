@@ -43,6 +43,10 @@
     <style name="LoadingText">
         <item name="android:textSize">18sp</item>
     </style>
+    <style name="ListHintText">
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">18sp</item>
+    </style>
     
     <!-- StopInfo -->
     <style name="StopInfoRoute">

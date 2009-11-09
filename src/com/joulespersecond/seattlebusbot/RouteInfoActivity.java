@@ -29,8 +29,7 @@ import com.joulespersecond.oba.ObaStopGroup;
 import com.joulespersecond.oba.ObaStopGrouping;
 
 public class RouteInfoActivity extends ExpandableListActivity {
-    public static final String ROUTE_ID = ".RouteId";
-    
+    private static final String ROUTE_ID = ".RouteId";
     private static final String ROUTE_INFO = ".RouteInfo";
     private static final String STOPS_FOR_ROUTE = ".StopsForRoute";
     
@@ -41,9 +40,12 @@ public class RouteInfoActivity extends ExpandableListActivity {
     private String mStopsForRouteResponse;
     
     public static void start(Context context, String routeId) {
+        context.startActivity(makeIntent(context, routeId));
+    }
+    public static Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, RouteInfoActivity.class);
         myIntent.putExtra(ROUTE_ID, routeId);
-        context.startActivity(myIntent);
+        return myIntent;        
     }
     
     @Override
@@ -121,9 +123,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             int groupPosition, int childPosition, long id) {
         final TextView text = (TextView)v.findViewById(R.id.stop_id);
         final String stopId = (String)text.getText(); 
-        Intent myIntent = new Intent(this, StopInfoActivity.class);
-        myIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
-        startActivity(myIntent);
+        StopInfoActivity.start(this, stopId);
         return true;
     }  
     

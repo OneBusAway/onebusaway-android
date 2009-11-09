@@ -100,6 +100,7 @@ public class FindStopActivity extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String stopId;
         String stopName;
+        String stopDir;
         // Get the adapter (this may or may not be a SimpleCursorAdapter)
         ListAdapter adapter = l.getAdapter();
         if (adapter instanceof SimpleCursorAdapter) {
@@ -109,11 +110,13 @@ public class FindStopActivity extends ListActivity {
             c.moveToPosition(position - l.getHeaderViewsCount());
             stopId = c.getString(StopsDbAdapter.STOP_COL_STOPID);
             stopName = c.getString(StopsDbAdapter.STOP_COL_NAME);
+            stopDir = c.getString(StopsDbAdapter.STOP_COL_DIRECTION);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
             stopId = stop.getId();
             stopName = stop.getName();
+            stopDir = stop.getDirection();
         }
         else {
             Log.e(TAG, "Unknown adapter. Giving up!");
@@ -121,12 +124,10 @@ public class FindStopActivity extends ListActivity {
         }
 
         if (mShortcutMode) {
-            makeShortcut(stopId, stopName);
+            makeShortcut(stopId, stopName, stopDir);
         }
         else {
-            Intent myIntent = new Intent(this, StopInfoActivity.class);
-            myIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
-            startActivity(myIntent);            
+            StopInfoActivity.start(this, stopId, stopName, stopDir);          
         }
     }
     @Override
@@ -253,14 +254,11 @@ public class FindStopActivity extends ListActivity {
         setListAdapter(simpleAdapter);
     }
     
-    private void makeShortcut(String stopId, String stopName) {
-        Intent shortcutIntent = new Intent(Intent.ACTION_MAIN);
-        shortcutIntent.setClass(this, StopInfoActivity.class);
-        shortcutIntent.putExtra(StopInfoActivity.STOP_ID, stopId);
-        
+    private void makeShortcut(String stopId, String stopName, String direction) {
         // Set up the container intent
         Intent intent = new Intent();
-        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, 
+                StopInfoActivity.makeIntent(this, stopId, stopName, direction));
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, stopName);
         Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
                 this,  R.drawable.icon);

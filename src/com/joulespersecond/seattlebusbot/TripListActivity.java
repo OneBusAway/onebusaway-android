@@ -1,7 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.ListActivity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -99,20 +98,14 @@ public class TripListActivity extends ListActivity {
     
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
-        final Cursor c = cursorAdapter.getCursor();
-        c.moveToPosition(position - l.getHeaderViewsCount());
-        final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
-        final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
+        String[] ids = getIds(l, position);
 
-        Intent myIntent = new Intent(this, TripInfoActivity.class);
-        myIntent.putExtra(TripInfoActivity.TRIP_ID, tripId);
-        myIntent.putExtra(TripInfoActivity.STOP_ID, stopId);
-        startActivity(myIntent);
+        TripInfoActivity.start(this, ids[0], ids[1]);
     }
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_DELETE = 2;
+    private static final int CONTEXT_MENU_SHOWSTOP = 3;
+    private static final int CONTEXT_MENU_SHOWROUTE = 4;
     
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -123,6 +116,8 @@ public class TripListActivity extends ListActivity {
         menu.setHeaderTitle(text.getText());
         menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.trip_list_context_edit);
         menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.trip_list_context_delete);
+        menu.add(0, CONTEXT_MENU_SHOWSTOP, 0, R.string.trip_list_context_showstop);
+        menu.add(0, CONTEXT_MENU_SHOWROUTE, 0, R.string.trip_list_context_showroute);
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -135,21 +130,42 @@ public class TripListActivity extends ListActivity {
         case CONTEXT_MENU_DELETE:
             deleteTrip(getListView(), info.position);
             return true;
+        case CONTEXT_MENU_SHOWSTOP:
+            goToStop(getListView(), info.position);
+            return true;
+        case CONTEXT_MENU_SHOWROUTE:
+            goToRoute(getListView(), info.position);
+            return true;
         default:
             return super.onContextItemSelected(item);
         }
     }
-    void deleteTrip(ListView l, int position) {
+    private void deleteTrip(ListView l, int position) {
+        String[] ids = getIds(l, position);
+        
+        // TODO: Confirmation dialog?
+        mDbAdapter.deleteTrip(ids[0], ids[1]);
+        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
+        adapter.getCursor().requery();
+    }
+    private void goToStop(ListView l, int position) {
+        String[] ids = getIds(l, position);
+        StopInfoActivity.start(this, ids[1]);        
+    }
+    private void goToRoute(ListView l, int position) {
+        String[] ids = getIds(l, position);
+        RouteInfoActivity.start(this, ids[2]);        
+    }
+    private String[] getIds(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
         final Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
-        final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
-        final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
-        
-        // TODO: Confirmation dialog?
-        mDbAdapter.deleteTrip(tripId, stopId);
-        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
-        adapter.getCursor().requery();
+        final String[] result = new String[] { 
+                c.getString(TripsDbAdapter.TRIP_COL_TRIPID),
+                c.getString(TripsDbAdapter.TRIP_COL_STOPID),
+                c.getString(TripsDbAdapter.TRIP_COL_ROUTEID)
+        };
+        return result;
     }
 }

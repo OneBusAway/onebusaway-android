@@ -467,13 +467,11 @@ public class MapViewActivity extends MapActivity {
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }
-    
-    public static void goToStop(Context context, ObaStop stop) {
-        Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.putExtra(StopInfoActivity.STOP_ID, stop.getId());
-        context.startActivity(myIntent);            
-    }
 
+    static void goToStop(Context context, ObaStop stop) {
+        StopInfoActivity.start(context, stop);
+    }
+    
     private boolean isRouteMode() {
         return mRouteId != null;
     }

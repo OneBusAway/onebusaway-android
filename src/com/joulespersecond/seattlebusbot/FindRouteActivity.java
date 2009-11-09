@@ -120,9 +120,7 @@ public class FindRouteActivity extends ListActivity {
             makeShortcut(routeId, routeName);
         }
         else {
-            Intent myIntent = new Intent(this, RouteInfoActivity.class);
-            myIntent.putExtra(RouteInfoActivity.ROUTE_ID, routeId);
-            startActivity(myIntent);            
+            RouteInfoActivity.start(this, routeId);        
         }
     }
     @Override
@@ -229,13 +227,10 @@ public class FindRouteActivity extends ListActivity {
     }
     
     private void makeShortcut(String routeId, String routeName) {
-        Intent shortcutIntent = new Intent(Intent.ACTION_MAIN);
-        shortcutIntent.setClass(this, RouteInfoActivity.class);
-        shortcutIntent.putExtra(RouteInfoActivity.ROUTE_ID, routeId);
-        
         // Set up the container intent
         Intent intent = new Intent();
-        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, 
+            RouteInfoActivity.makeIntent(this, routeId));
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, routeName);
         Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
                 this,  R.drawable.icon);

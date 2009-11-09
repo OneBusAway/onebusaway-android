@@ -12,6 +12,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -25,13 +28,13 @@ public class TripInfoActivity extends Activity {
     private static final int REMINDER_DAYS_DIALOG = 1;
     private static final int DELETE_DIALOG = 2;
     
-    public static final String TRIP_ID = ".TripId";
-    public static final String ROUTE_ID = ".RouteId";
-    public static final String ROUTE_NAME = ".RouteName"; 
-    public static final String STOP_ID = ".StopId";
-    public static final String STOP_NAME = ".StopName";
-    public static final String HEADSIGN = ".Headsign";
-    public static final String DEPARTURE_TIME = ".Depart";
+    private static final String TRIP_ID = ".TripId";
+    private static final String ROUTE_ID = ".RouteId";
+    private static final String ROUTE_NAME = ".RouteName"; 
+    private static final String STOP_ID = ".StopId";
+    private static final String STOP_NAME = ".StopName";
+    private static final String HEADSIGN = ".Headsign";
+    private static final String DEPARTURE_TIME = ".Depart";
     
     private TripsDbAdapter mDbAdapter;
     private String mTripId;
@@ -45,6 +48,12 @@ public class TripInfoActivity extends Activity {
     private int mReminderTime; // DB Value, not selection value
     private int mReminderDays;
     
+    public static void start(Context context, String tripId, String stopId) {
+        Intent myIntent = new Intent(context, TripInfoActivity.class);
+        myIntent.putExtra(TRIP_ID, tripId);
+        myIntent.putExtra(STOP_ID, stopId);  
+        context.startActivity(myIntent); 
+    }
     public static void start(Context context, 
             String tripId, String stopId,
             String routeId, String routeName, String stopName,
@@ -215,6 +224,24 @@ public class TripInfoActivity extends Activity {
     protected void onDestroy() {
         mDbAdapter.close();
         super.onDestroy();
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.trip_info_options, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.show_route) {
+            RouteInfoActivity.start(this, mRouteId);
+            return true;
+        }
+        else if (item.getItemId() == R.id.show_stop) {
+            StopInfoActivity.start(this, mStopId, mStopName);
+            return true;
+        }
+        return false;
     }
     
     public void saveTrip() {

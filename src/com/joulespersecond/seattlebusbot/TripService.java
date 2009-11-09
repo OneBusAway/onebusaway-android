@@ -322,10 +322,9 @@ public class TripService extends Service {
                 mNotification.deleteIntent = PendingIntent.getService(ctx,
                         0, deleteIntent, PendingIntent.FLAG_ONE_SHOT);
                 
-                Intent stopActivity = new Intent(ctx, StopInfoActivity.class);
-                stopActivity.putExtra(StopInfoActivity.STOP_ID, mStopId);
                 mNotificationIntent = PendingIntent.getActivity(ctx,
-                        0, stopActivity, PendingIntent.FLAG_ONE_SHOT);
+                        0, StopInfoActivity.makeIntent(ctx, mStopId), 
+                        PendingIntent.FLAG_ONE_SHOT);
             }
             else {
                 Log.d(TAG, "Updating notification for trip: " + getTaskId());

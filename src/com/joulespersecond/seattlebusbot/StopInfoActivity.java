@@ -39,8 +39,9 @@ public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60*1000;
 
-    public static final String STOP_ID = ".StopId";
-    
+    private static final String STOP_ID = ".StopId";
+    private static final String STOP_NAME = ".StopName";
+    private static final String STOP_DIRECTION = ".StopDir";
     private static final String STOP_INFO = ".StopInfo";
     
     private String mStopId;
@@ -79,9 +80,47 @@ public class StopInfoActivity extends ListActivity {
     }
 
     public static void start(Context context, String stopId) {
+        context.startActivity(makeIntent(context, stopId));
+    }
+    public static void start(Context context, String stopId, String stopName) {
+        context.startActivity(makeIntent(context, stopId, stopName));
+    }
+    public static void start(Context context, 
+                        String stopId, 
+                        String stopName,
+                        String stopDir) {
+        context.startActivity(makeIntent(context, stopId, stopName, stopDir));
+    }
+    public static void start(Context context, ObaStop stop) {
+        context.startActivity(makeIntent(context, stop));
+    }
+    public static Intent makeIntent(Context context, String stopId) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
         myIntent.putExtra(STOP_ID, stopId);
-        context.startActivity(myIntent);
+        return myIntent;       
+    }
+    public static Intent makeIntent(Context context, String stopId, String stopName) {
+        Intent myIntent = new Intent(context, StopInfoActivity.class);
+        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.putExtra(STOP_NAME, stopName);
+        return myIntent;       
+    }
+    public static Intent makeIntent(Context context,
+                        String stopId, 
+                        String stopName,
+                        String stopDir) {
+        Intent myIntent = new Intent(context, StopInfoActivity.class);
+        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.putExtra(STOP_NAME, stopName);
+        myIntent.putExtra(STOP_DIRECTION, stopDir);
+        return myIntent;       
+    }
+    public static Intent makeIntent(Context context, ObaStop stop) {
+        Intent myIntent = new Intent(context, StopInfoActivity.class);
+        myIntent.putExtra(STOP_ID, stop.getId());
+        myIntent.putExtra(STOP_NAME, stop.getName());
+        myIntent.putExtra(STOP_DIRECTION, stop.getDirection());
+        return myIntent;
     }
     
     @Override
@@ -97,6 +136,7 @@ public class StopInfoActivity extends ListActivity {
         
         Bundle bundle = getIntent().getExtras();
         mStopId = bundle.getString(STOP_ID);
+        setHeader(bundle);
         
         mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
         if (savedInstanceState != null) {
@@ -575,6 +615,9 @@ public class StopInfoActivity extends ListActivity {
         hideLoading();
         setProgressBarIndeterminateVisibility(false);        
     }
+    private void setHeader(Bundle bundle) {
+        setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
+    }
     
     void setHeader(ObaResponse response, boolean addToDb) {
         if (response.getCode() == ObaApi.OBA_OK) {
@@ -586,10 +629,7 @@ public class StopInfoActivity extends ListActivity {
             mStopLat = stop.getLatitude();
             mStopLon = stop.getLongitude();
 
-            TextView nameText = (TextView)findViewById(R.id.name);
-            nameText.setText(name);
-            TextView directionText = (TextView)findViewById(R.id.direction);
-            directionText.setText(getStopDirectionText(direction));
+            setHeader(name, direction);
                
             if (addToDb) {
                 // Update the database
@@ -601,7 +641,17 @@ public class StopInfoActivity extends ListActivity {
         else {
             TextView empty = (TextView)findViewById(android.R.id.empty);
             empty.setText(R.string.generic_comm_error);
-        }        
+        } 
+    }
+    private void setHeader(String name, String direction) {
+        if (name != null) {
+            TextView nameText = (TextView)findViewById(R.id.name);
+            nameText.setText(name);
+        }
+        if (direction != null) {
+            TextView directionText = (TextView)findViewById(R.id.direction);
+            directionText.setText(getStopDirectionText(direction));  
+        }
     }
 
     void showLoading() {

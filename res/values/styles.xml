@@ -37,6 +37,10 @@
     <style name="LinkText">
         <item name="android:textColor">#0000ff</item>
     </style>
+    <style name="ListHintText">
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">18sp</item>
+    </style>
     
     <!-- StopInfo -->
     <style name="StopInfoRoute">

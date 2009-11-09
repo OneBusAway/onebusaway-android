@@ -10,6 +10,7 @@
     <string name="main_option_findroute">Find Route</string>
     <string name="main_option_findstop">Find Stop</string>
     <string name="main_option_viewtrips">View Reminders</string>
+    <string name="main_option_help">Help</string>
     <string name="main_arrival_info"><u>Show arrivals</u></string>
     
     <!--  Stop Info -->

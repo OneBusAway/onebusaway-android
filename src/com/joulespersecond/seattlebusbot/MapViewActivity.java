@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +34,8 @@ import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
 	private static final String TAG = "MapViewActivity";
+	
+    private static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.html";	
 	
 	public static final String FOCUS_STOP_ID = ".FocusStopId";
 	public static final String CENTER_LAT = ".CenterLat";
@@ -213,6 +216,11 @@ public class MapViewActivity extends MapActivity {
     		startActivity(myIntent);
     		return true;    		
     	}
+        else if (id == R.id.help) {
+            Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(HELP_URL));
+            startActivity(myIntent);
+            return true;            
+        }
     	return false;
     }
     @Override

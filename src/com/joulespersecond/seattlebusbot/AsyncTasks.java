@@ -1,5 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
+import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -20,6 +21,9 @@ final class AsyncTasks {
     public interface Progress {
         void showLoading();
         void hideLoading();
+    }
+    public interface Handler<Result> {
+        void handleResult(Result result);
     }
     
     /**
@@ -44,6 +48,7 @@ final class AsyncTasks {
         protected final Progress mProgress;
         
         public Base(Progress progress) {
+            assert(progress != null);
             mProgress = progress;
         }
         @Override
@@ -53,6 +58,10 @@ final class AsyncTasks {
         @Override
         protected void onPostExecute(Result result) {
             doResult(result);
+            mProgress.hideLoading();
+        }
+        @Override
+        protected void onCancelled() {
             mProgress.hideLoading();
         }
         protected abstract void doResult(Result result);
@@ -95,6 +104,24 @@ final class AsyncTasks {
         @Override
         protected ObaResponse doInBackground(Bundle... params) {
             return ObaResponse.createFromBundle(params[0]);
+        }
+    }
+    
+    /**
+     * This is a helper that set the IndeterminateVisibility 
+     * on an activity.
+     */
+    public static final class ProgressIndeterminateVisibility implements Progress {
+        final Activity mActivity;
+        
+        ProgressIndeterminateVisibility(Activity activity) {
+            mActivity = activity;
+        }
+        public void showLoading() {
+            mActivity.setProgressBarIndeterminateVisibility(true);       
+        }
+        public void hideLoading() {
+            mActivity.setProgressBarIndeterminateVisibility(false);       
         }
     }
     

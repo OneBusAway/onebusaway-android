@@ -15,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.GridView;
 import android.widget.TextView;
 
 import com.google.android.maps.GeoPoint;
@@ -29,6 +30,7 @@ import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
@@ -144,6 +146,12 @@ public class MapViewActivity extends MapActivity {
         // Initialize the links
         TextView arrival = (TextView)findViewById(R.id.show_arrival_info);
         arrival.setOnClickListener(mOnShowArrivals);
+        TextView showRoutes = (TextView)findViewById(R.id.show_routes);
+        showRoutes.setOnClickListener(mOnShowRoutes);
+        // If you click on the popup but not on a link, nothing happens
+        // (if this weren't there, the popup would be dismissed)
+        View popup = findViewById(R.id.map_popup);
+        popup.setOnClickListener(mPopupClick);
         
         String stopData = null;
         Bundle bundle = getIntent().getExtras();
@@ -349,30 +357,52 @@ public class MapViewActivity extends MapActivity {
         }
     }
     
+    private class RouteArrayAdapter extends Adapters.BaseRouteArrayAdapter {       
+        public RouteArrayAdapter(ObaArray routes) {
+            super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
+        }
+        @Override
+        protected void setData(View view, int position) {
+            TextView shortName = (TextView)view.findViewById(R.id.short_name);
+
+            ObaRoute route = mArray.getRoute(position);
+            shortName.setText(route.getShortName());
+        }
+    }    
+    
+    void populateRoutes(ObaStop stop, boolean force) {
+        GridView grid = (GridView)findViewById(R.id.route_list);
+        if (grid.getVisibility() != View.GONE || force) {
+            grid.setAdapter(new RouteArrayAdapter(stop.getRoutes()));
+        }
+    }
+    
     final Handler mStopChangedHandler = new Handler();
     final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-        @SuppressWarnings("unchecked")
-        public void onFocusChanged(ItemizedOverlay overlay,
+        public void onFocusChanged(@SuppressWarnings("unchecked") ItemizedOverlay overlay,
                 final OverlayItem newFocus) {
-             mStopChangedHandler.post(new Runnable() {
-                public void run() {
-                    final View popup = findViewById(R.id.map_popup);
-                    if (newFocus == null) {
-                        popup.setVisibility(View.GONE);
-                        return;
-                    }
+             mStopChangedHandler.post(new Runnable() { 
+                 public void run() {
+                     final View popup = findViewById(R.id.map_popup);
+                     if (newFocus == null) {
+                         popup.setVisibility(View.GONE);
+                         return;
+                     }
                     
-                    final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
-                    final ObaStop stop = item.getStop();
+                     final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
+                     final ObaStop stop = item.getStop();
                     
-                    final TextView name = (TextView)popup.findViewById(R.id.stop_name);
-                    name.setText(stop.getName());
+                     final TextView name = (TextView)popup.findViewById(R.id.stop_name);
+                     name.setText(stop.getName());
                     
-                    final TextView direction = (TextView)popup.findViewById(R.id.direction);
-                    direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
+                     final TextView direction = (TextView)popup.findViewById(R.id.direction);
+                     direction.setText(
+                             StopInfoActivity.getStopDirectionText(stop.getDirection()));
 
-                    // Right now the popup is always at the top of the screen.
-                    popup.setVisibility(View.VISIBLE);
+                     populateRoutes(stop, false);
+                    
+                     // Right now the popup is always at the top of the screen.
+                     popup.setVisibility(View.VISIBLE);
                 }    
              });
         }
@@ -383,6 +413,29 @@ public class MapViewActivity extends MapActivity {
             if (item != null) {
                 goToStop(MapViewActivity.this, item.getStop());
             }
+        }
+    };
+    final View.OnClickListener mOnShowRoutes = new View.OnClickListener() {
+        public void onClick(View v) {
+            GridView grid = (GridView)findViewById(R.id.route_list);
+            TextView text = (TextView)v;
+            if (grid.getVisibility() != View.GONE) {
+                // Hide this 
+                grid.setVisibility(View.GONE);
+                // Change link text
+                text.setText(R.string.main_show_routes);
+            } else {
+                final StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();   
+                // TODO: Animate at some point...
+                populateRoutes(item.getStop(), true);
+                grid.setVisibility(View.VISIBLE);
+                text.setText(R.string.main_hide_routes);
+            }
+        }
+    };
+    final View.OnClickListener mPopupClick = new View.OnClickListener() {
+        public void onClick(View v) {  
+            // Eat the click so the Map doesn't get it.
         }
     };
     

@@ -9,22 +9,18 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -34,7 +30,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaStop;
 
@@ -276,51 +271,29 @@ public class FindStopActivity extends ListActivity {
         finish();
     }
     
-    private class SearchResultsListAdapter extends BaseAdapter {
-        private ObaArray mStops;
-        
+    private final class SearchResultsListAdapter extends Adapters.BaseStopArrayAdapter {       
         public SearchResultsListAdapter(ObaResponse response) {
-            mStops = response.getData().getStops();
+            super(FindStopActivity.this,
+                    response.getData().getStops(),
+                    R.layout.find_stop_listitem);
         }
-        public int getCount() {
-            return mStops.length();
-        }
-        public Object getItem(int position) {
-            return mStops.getStop(position);
-        }
-        public long getItemId(int position) {
-            return position;
-        }
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewGroup newView;
-            if (convertView == null) {
-                LayoutInflater inflater = getLayoutInflater();
-                newView = (ViewGroup)inflater.inflate(R.layout.find_stop_listitem, null);
-            }
-            else {
-                newView = (ViewGroup)convertView;
-            }
-            setData(newView, position);
-            return newView;
-        }
-        public boolean hasStableIds() {
-            return false;
-        }
-        
-        private void setData(ViewGroup view, int position) {
+        @Override
+        protected void setData(View view, int position) {
             TextView route = (TextView)view.findViewById(R.id.name);
             TextView direction = (TextView)view.findViewById(R.id.direction);
 
-            ObaStop stop = mStops.getStop(position);
+            ObaStop stop = mArray.getStop(position);
             route.setText(stop.getName());
             direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
         }
     }
     
-    private class FindStopTask extends AsyncTask<String,Void,ObaResponse> {
-        @Override
-        protected void onPreExecute() {
-            setProgressBarIndeterminateVisibility(true);
+    private final AsyncTasks.Progress mTitleProgress 
+        = new AsyncTasks.ProgressIndeterminateVisibility(this);
+    
+    private class FindStopTask extends AsyncTasks.StringToResponse {
+        public FindStopTask() {
+            super(mTitleProgress);
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
@@ -329,7 +302,7 @@ public class FindStopActivity extends ListActivity {
                     getLocation(FindStopActivity.this), 0, 0, 0, stopId, 0);
         }
         @Override
-        protected void onPostExecute(ObaResponse result) {
+        protected void doResult(ObaResponse result) {
             TextView empty = (TextView) findViewById(android.R.id.empty);
             if (result.getCode() == ObaApi.OBA_OK) {
                 empty.setText(R.string.find_hint_noresults);
@@ -338,10 +311,6 @@ public class FindStopActivity extends ListActivity {
             else {
                 empty.setText(R.string.generic_comm_error);
             }
-            setProgressBarIndeterminateVisibility(false);
-        }
-        @Override
-        protected void onCancelled() {    
             setProgressBarIndeterminateVisibility(false);
         }
     }

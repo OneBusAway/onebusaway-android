@@ -510,14 +510,9 @@ public class StopInfoActivity extends ListActivity {
             v.setVisibility(View.GONE);       
         }
     };
-    private final AsyncTasks.Progress mTitleProgress = new AsyncTasks.Progress() {
-        public void showLoading() {
-            setProgressBarIndeterminateVisibility(true);       
-        }
-        public void hideLoading() {
-            setProgressBarIndeterminateVisibility(false);       
-        }
-    };
+    private final AsyncTasks.Progress mTitleProgress 
+        = new AsyncTasks.ProgressIndeterminateVisibility(this);
+    
     private abstract class GetStopInfoBase extends AsyncTasks.StringToResponse {
         private final boolean mAddToDb;
         GetStopInfoBase(AsyncTasks.Progress progress, boolean addToDb) {

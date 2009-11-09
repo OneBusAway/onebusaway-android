@@ -40,8 +40,7 @@ public final class ObaResponse {
     }
     private ObaResponse(String json) throws JSONException {
         mResponse = new JSONObject(json);
-        // Defensive copy
-        mResponseString = new String(json);
+        mResponseString = json;
     }
     private ObaResponse(String error, boolean unused) {
         JSONObject obj;

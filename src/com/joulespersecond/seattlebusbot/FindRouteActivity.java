@@ -1,35 +1,30 @@
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
-
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
 
 //
 // There is an unfortunate amount of code in this class that is very 
@@ -251,50 +246,29 @@ public class FindRouteActivity extends ListActivity {
         finish();        
     }
     
-    private class SearchResultsListAdapter extends BaseAdapter {
-        private ObaArray mRoutes;
-        
+    private final class SearchResultsListAdapter extends Adapters.BaseRouteArrayAdapter {
         public SearchResultsListAdapter(ObaResponse response) {
-            mRoutes = response.getData().getRoutes();
+            super(FindRouteActivity.this, 
+                    response.getData().getRoutes(), 
+                    R.layout.find_route_listitem);
         }
-        public int getCount() {
-            return mRoutes.length();
-        }
-        public Object getItem(int position) {
-            return mRoutes.getRoute(position);
-        }
-        public long getItemId(int position) {
-            return position;
-        }
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewGroup newView;
-            if (convertView == null) {
-                LayoutInflater inflater = getLayoutInflater();
-                newView = (ViewGroup)inflater.inflate(R.layout.find_route_listitem, null);
-            }
-            else {
-                newView = (ViewGroup)convertView;
-            }
-            setData(newView, position);
-            return newView;
-        }
-        public boolean hasStableIds() {
-            return false;
-        }
-        private void setData(ViewGroup view, int position) {
+        @Override
+        protected void setData(View view, int position) {
             TextView shortName = (TextView)view.findViewById(R.id.short_name);
             TextView longName = (TextView)view.findViewById(R.id.long_name);
 
-            ObaRoute route = mRoutes.getRoute(position);
+            ObaRoute route = mArray.getRoute(position);
             shortName.setText(route.getShortName());
             longName.setText(route.getLongName());
         }
     }
 
-    private class FindRouteTask extends AsyncTask<String,Void,ObaResponse> {
-        @Override
-        protected void onPreExecute() {
-            showSearching();
+    private final AsyncTasks.Progress mTitleProgress 
+        = new AsyncTasks.ProgressIndeterminateVisibility(this);
+
+    private class FindRouteTask extends AsyncTasks.StringToResponse {
+        public FindRouteTask() {
+            super(mTitleProgress);
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
@@ -303,7 +277,7 @@ public class FindRouteActivity extends ListActivity {
                     FindStopActivity.getLocation(FindRouteActivity.this), 0, routeId);
         }
         @Override
-        protected void onPostExecute(ObaResponse result) {
+        protected void doResult(ObaResponse result) {
             TextView empty = (TextView) findViewById(android.R.id.empty);
             if (result.getCode() == ObaApi.OBA_OK) {
                 empty.setText(R.string.find_hint_noresults);
@@ -312,11 +286,6 @@ public class FindRouteActivity extends ListActivity {
             else {
                 empty.setText(R.string.generic_comm_error);
             }
-            hideSearching();
-        }
-        @Override
-        protected void onCancelled() {    
-            hideSearching();
         }
     }
     
@@ -331,12 +300,5 @@ public class FindRouteActivity extends ListActivity {
         }
         mAsyncTask = new FindRouteTask();
         mAsyncTask.execute(text.toString());        
-    }
-    
-    private void showSearching() {
-        setProgressBarIndeterminateVisibility(true);
-    }
-    private void hideSearching() {
-        setProgressBarIndeterminateVisibility(false);
     }
 }

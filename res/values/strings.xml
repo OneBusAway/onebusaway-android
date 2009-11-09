@@ -12,6 +12,8 @@
     <string name="main_option_viewtrips">View Reminders</string>
     <string name="main_option_help">Help</string>
     <string name="main_arrival_info"><u>Show arrivals</u></string>
+    <string name="main_show_routes"><u>Show routes</u></string>
+    <string name="main_hide_routes"><u>Hide routes</u></string>
     
     <!--  Stop Info -->
     <string name="stop_info_title">SeattleBusBot</string>

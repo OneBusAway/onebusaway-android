@@ -22,7 +22,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
         <LinearLayout 
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
             <TextView android:id="@+id/stop_name"
@@ -41,8 +41,24 @@
                     style="@style/LinkText"
                     android:text="@string/main_arrival_info"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content" 
+                    android:paddingRight="5dp" />
+                <TextView
+                    android:id="@+id/show_routes"
+                    style="@style/LinkText"
+                    android:text="@string/main_show_routes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />      
             </LinearLayout>    
+            <GridView  
+                android:id="@+id/route_list"
+                android:visibility="gone"
+                android:layout_width="fill_parent" 
+                android:layout_height="wrap_content"
+                android:numColumns="auto_fit"
+                android:columnWidth="30sp"
+                android:verticalSpacing="1dp"
+                android:horizontalSpacing="3dp" />
         </LinearLayout>
     </RelativeLayout>
 </RelativeLayout>

@@ -47,7 +47,9 @@ public class MultiChoiceHelper {
                 OnMultiChoiceClickListener listener) {
             super(context, resource, textViewResourceId, objects);
             assert(objects.length == values.length);
-            mValues = values;
+            final int len = values.length;
+            mValues = new boolean[len];
+            System.arraycopy(values, 0, mValues, 0, len);
             mListener = listener;
         }
         @Override
@@ -71,7 +73,7 @@ public class MultiChoiceHelper {
             AlertDialog.Builder builder,
             Context context,
             int itemsId,
-            boolean checkedItems[],
+            boolean[] checkedItems,
             DialogInterface.OnMultiChoiceClickListener listener) {
     
         return builder.setAdapter(new Adapter(context,
@@ -82,4 +84,18 @@ public class MultiChoiceHelper {
                 listener),
             null);
     }
+    public static final AlertDialog.Builder setMultiChoiceItems(
+            AlertDialog.Builder builder,
+            Context context,
+            String[] items,
+            boolean[] checkedItems,
+            DialogInterface.OnMultiChoiceClickListener listener) {
+        return builder.setAdapter(new Adapter(context,
+                R.layout.select_dialog_multichoice,
+                android.R.id.text1,
+                items,
+                checkedItems,
+                listener),
+            null);
+    }    
 }

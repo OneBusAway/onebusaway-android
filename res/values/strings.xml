@@ -32,8 +32,13 @@
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_option_showonmap">Show On Map</string>
     <string name="stop_info_option_refresh">Refresh</string>
+    <string name="stop_info_option_filter">Filter Routes</string>
+    <string name="stop_info_option_showall">Show All Routes</string>
     <string name="stop_info_nodata">No information for this stop.</string>
     <string name="stop_info_item_options_title">Bus options</string>
+    <string name="stop_info_filter_title">Show only these routes</string>
+    <string name="stop_info_save">Save</string>
+    <string name="stop_info_cancel">Cancel</string>
     
     <!-- Route Info  -->
     <string name="route_info_title">SeattleBusBot</string>

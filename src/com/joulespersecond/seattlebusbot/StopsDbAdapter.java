@@ -1,5 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
+import java.util.ArrayList;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -96,7 +98,7 @@ public class StopsDbAdapter {
         adapter.open();
         adapter.clearFavorites();
         adapter.close();
-    }
+    }    
     
     private static final String WHERE = String.format("%s=?", 
             DbHelper.KEY_STOPID);
@@ -156,6 +158,54 @@ public class StopsDbAdapter {
             cursor.close();
         }
         return result;
+    }
+    /**
+     * Returns an array of routes that should filter this route.
+     * 
+     * @param stopId The stop ID to query.
+     * @return A list of route IDs to filter.
+     */
+    private static final String FILTER_WHERE = String.format("%s=?", 
+            DbHelper.KEY_STOP);
+    public ArrayList<String> getStopRouteFilter(String stopId) {
+        final String[] rows = { DbHelper.KEY_ROUTE };
+        final String[] whereArgs = { stopId };
+        Cursor cursor = 
+            mDb.query(DbHelper.STOP_ROUTES_FILTER_TABLE,
+                        rows,
+                        FILTER_WHERE,
+                        whereArgs,
+                        null, // groupBy
+                        null, // having
+                        null, // order by
+                        null);  // limit
+        
+        ArrayList<String> result = new ArrayList<String>();
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                result.add(cursor.getString(0));     
+            } while (cursor.moveToNext());
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        return result;
+    }
+    public void setStopRouteFilter(String stopId, ArrayList<String> routeIds) {
+        // First, delete any existing rows for this stop.
+        // Then, insert all of these rows.
+        // Should we put this in a transaction? We could,
+        // but it's not terribly important.
+        final String[] whereArgs = { stopId };
+        mDb.delete(DbHelper.STOP_ROUTES_FILTER_TABLE, FILTER_WHERE, whereArgs);
+        
+        ContentValues args = new ContentValues();
+        args.put(DbHelper.KEY_STOP, stopId);
+        final int len = routeIds.size();
+        for (int i=0; i < len; ++i) {
+            args.put(DbHelper.KEY_ROUTE, routeIds.get(i));
+            mDb.insert(DbHelper.STOP_ROUTES_FILTER_TABLE, null, args);
+        } 
     }
     
     // A more efficient helper when all you want is the name of the stop.

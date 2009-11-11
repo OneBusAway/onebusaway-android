@@ -50,6 +50,10 @@ public class MapViewActivity extends MapActivity {
 	public StopOverlay mStopOverlay;
 	private String mRouteId;
 	private String mFocusStopId;
+	private AsyncTask<Object,Void,ObaResponse> mGetStopsByLocationTask;
+	private AsyncTask<String,Void,ObaResponse> mGetStopsForRouteTask;
+	// A bit of a hack, but we can fix it better in 1.1.
+	private volatile boolean mForceRestartLocationTask;
 	
 	// There's a major hole in the MapView in that there's apparently 
 	// no way of getting an event when the user pans the view.
@@ -58,7 +62,6 @@ public class MapViewActivity extends MapActivity {
 	// and then request new stops.
 	private Timer mTimer;
 	private GeoPoint mMapCenter;
-	private boolean mMapCenterWaitFlag = false;
 	private static final int CenterPollPeriod = 2000;
 	
 	private abstract class GetStopsForRouteTaskBase extends AsyncTask<String,Void,ObaResponse> {
@@ -122,7 +125,7 @@ public class MapViewActivity extends MapActivity {
 	    	if (result.getCode() == ObaApi.OBA_OK) {
 	    		setStopOverlay(result.getData().getStops());
 	    	}
-	        setProgressBarIndeterminateVisibility(false); 
+	    	setProgressBarIndeterminateVisibility(false); 
 		}
 	}
 	
@@ -224,6 +227,16 @@ public class MapViewActivity extends MapActivity {
     	return false;
     }
     @Override
+    public void onDestroy() {
+        if (mGetStopsByLocationTask != null) {
+            mGetStopsByLocationTask.cancel(true);
+        }
+        if (mGetStopsForRouteTask != null) {
+            mGetStopsForRouteTask.cancel(true);
+        }
+        super.onDestroy();
+    }
+    @Override
     public void onPause() {
     	mLocationOverlay.disableMyLocation();
     	if (mTimer != null) {
@@ -267,26 +280,15 @@ public class MapViewActivity extends MapActivity {
     	mTimer = new Timer();
     	mTimer.schedule(new TimerTask() {
     		@Override
-    		public void run() {
-    			// If the map center has moved:
-    			//		If the wait flag is set:
-    			//			Set the new center
-    			//			Request new stops
-    			//			Clear the wait flag
-    			//		Else:
-    			//			Set the wait flag
-    			//			
-    			GeoPoint newCenter = mMapView.getMapCenter();
-    			if (!newCenter.equals(mMapCenter)) {
-    				if (mMapCenterWaitFlag) {
-    					mMapCenter = newCenter;
-    					mMapCenterWaitFlag = false;
-    					// This is run in another thread, so post back to the UI thread.
-    					mGetStopsHandler.post(mGetStopsFromCenter);
-    				} else {
-    					mMapCenterWaitFlag = true;
-    				}
-    			}
+    		public void run() {		
+                final boolean restart = mForceRestartLocationTask;
+                
+                GeoPoint newCenter = mMapView.getMapCenter();
+                if (restart || !newCenter.equals(mMapCenter)) {
+                    mMapCenter = newCenter;
+                    // This is run in another thread, so post back to the UI thread.
+                    mGetStopsHandler.post(mGetStopsFromCenter);
+                }
     		}
     	}, CenterPollPeriod, CenterPollPeriod);
     }
@@ -318,19 +320,37 @@ public class MapViewActivity extends MapActivity {
 			getStopsByLocation(point);   	
 		}
     }
+    private static boolean isRunning(AsyncTask<?,?,?> task) {
+        return (task != null && task.getStatus() != AsyncTask.Status.FINISHED);
+    }
+    
     private void getStopsByLocation(GeoPoint point) {
+        //Log.d(TAG, "getStopsByLocation");
+        if (isRunning(mGetStopsByLocationTask)) {
+            //Log.d(TAG, "Set force restart");
+            mForceRestartLocationTask = true;
+            return;
+        }
+        //Log.d(TAG, "Starting async task");
+        mForceRestartLocationTask = false;
 		GetStopsByLocationInfo info = new GetStopsByLocationInfo(
 				mMapView.getLatitudeSpan(),
 				mMapView.getLongitudeSpan());
-		new GetStopsByLocationTask().execute(point, info);       	
+		mGetStopsByLocationTask = new GetStopsByLocationTask();
+		mGetStopsByLocationTask.execute(point, info);       	
     }
     private void getStopsForRoute(String stopData) {
+        if (isRunning(mGetStopsForRouteTask)) {
+            return;
+        }
     	if (stopData != null) {
-    		new GetStopsForRouteTask2().execute(stopData);
+    	    mGetStopsForRouteTask = new GetStopsForRouteTask2();
+    		mGetStopsForRouteTask.execute(stopData);
     	}
     	else {
     		assert(mRouteId != null);
-    		new GetStopsForRouteTask().execute(mRouteId);
+    		mGetStopsForRouteTask = new GetStopsForRouteTask();
+    		mGetStopsForRouteTask.execute(mRouteId);
     	}
     }
     

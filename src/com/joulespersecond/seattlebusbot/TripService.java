@@ -70,6 +70,8 @@ public class TripService extends Service {
     private static final long ONE_MINUTE = 60*1000;
     private static final long ONE_HOUR = 60*ONE_MINUTE;
     private static final long LOOKAHEAD_DURATION_MS = 5*ONE_MINUTE;
+    // This is the amount in the past which will not consider reminders.
+    private static final long SCHEDULE_BUFFER_TIME = ONE_HOUR;
     
     // We don't want to stop the service when any particular call to onStart
     // completes: we want to stop the service when *all* tasks that have
@@ -449,7 +451,7 @@ public class TripService extends Service {
                 
                 AlarmManager alarm = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
                 
-                long triggerTime = System.currentTimeMillis() + 60*ONE_MINUTE;
+                long triggerTime = System.currentTimeMillis() + SCHEDULE_BUFFER_TIME + 2*ONE_MINUTE;
                 alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent); 
             }
         }
@@ -506,6 +508,7 @@ public class TripService extends Service {
         }
         final int days = c.getInt(TripsDbAdapter.TRIP_COL_DAYS);  
         long remindTime = 0;
+        long triggerTime = 0;
         if (days == 0) {
             remindTime = TripsDbAdapter.convertDBToTime(departureMins) - reminderMS;
         }
@@ -519,17 +522,18 @@ public class TripService extends Service {
                     tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
                     tmp.normalize(false);
                     remindTime = tmp.toMillis(false) - reminderMS;
-                    break;
+                    triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
+                    // Ignore anything that has a trigger time more than 
+                    // one hour in the past.
+                    if ((now-triggerTime) < ONE_HOUR) {
+                        break;
+                    }
                 }
             }
             if (remindTime == 0) {
                 // Not found?
                 return;
             }
-        }
-        final long triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
-        if ((now-triggerTime) >= ONE_HOUR) {
-            return;
         }
         final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
         final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);

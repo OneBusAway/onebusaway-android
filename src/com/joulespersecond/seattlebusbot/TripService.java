@@ -309,9 +309,20 @@ public class TripService extends Service {
             if (mNotification == null) {
                 //Log.d(TAG, "Creating notification for trip: " + getTaskId());
                 mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());    
-                mNotification.defaults |= Notification.DEFAULT_SOUND|
-                    Notification.DEFAULT_LIGHTS|
-                    Notification.DEFAULT_VIBRATE;
+                mNotification.defaults = Notification.DEFAULT_SOUND;
+                mNotification.flags = Notification.FLAG_ONLY_ALERT_ONCE|
+                                    Notification.FLAG_SHOW_LIGHTS;
+                mNotification.ledOnMS = 1000;
+                mNotification.ledOffMS = 1000;
+                mNotification.ledARGB = 0xFF00FF00;
+                mNotification.vibrate = new long[] { 
+                        0,    // on
+                        1000, // off
+                        1000, // on
+                        1000, // off 
+                        1000, // on
+                        1000, // off
+                        };
                 
                 Intent deleteIntent = new Intent(ctx, TripService.class);
                 deleteIntent.setAction(ACTION_CANCEL_POLL);
@@ -323,10 +334,6 @@ public class TripService extends Service {
                 stopActivity.putExtra(StopInfoActivity.STOP_ID, mStopId);
                 mNotificationIntent = PendingIntent.getActivity(ctx,
                         0, stopActivity, PendingIntent.FLAG_ONE_SHOT);
-            }
-            else {
-                //Log.d(TAG, "Updating notification for trip: " + getTaskId());
-                mNotification.defaults = 0;
             }
         
             final String title = getResources().getString(R.string.app_name);

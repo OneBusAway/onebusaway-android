@@ -64,15 +64,17 @@ public class TripService extends Service {
 	
     private static final long ONE_MINUTE = 60*1000;
     private static final long ONE_HOUR = 60*ONE_MINUTE;
-	private static final long LOOKAHEAD_DURATION_MS = 5*ONE_MINUTE;
-	
-	// We don't want to stop the service when any particular call to onStart
-	// completes: we want to stop the service when *all* tasks that have
-	// been started by onStart complete.
-	// So we store the startIds here as "task IDs" and each task calls
-	// stopTask(), and when there are no more tasks, we call stopSelf().
-	private HashMap<String,TaskBase> mActiveTasks = new HashMap<String,TaskBase>();
-	
+    private static final long LOOKAHEAD_DURATION_MS = 5*ONE_MINUTE;
+    // This is the amount in the past which will not consider reminders.
+    private static final long SCHEDULE_BUFFER_TIME = ONE_HOUR;
+    
+    // We don't want to stop the service when any particular call to onStart
+    // completes: we want to stop the service when *all* tasks that have
+    // been started by onStart complete.
+    // So we store the startIds here as "task IDs" and each task calls
+    // stopTask(), and when there are no more tasks, we call stopSelf().
+    private HashMap<String,TaskBase> mActiveTasks = new HashMap<String,TaskBase>();
+
     @Override
     public void onStart(Intent intent, int startId) {  
     	final String action = intent.getAction();
@@ -445,7 +447,7 @@ public class TripService extends Service {
                 
                 AlarmManager alarm = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
                 
-                long triggerTime = System.currentTimeMillis() + 60*ONE_MINUTE;
+                long triggerTime = System.currentTimeMillis() + SCHEDULE_BUFFER_TIME + 2*ONE_MINUTE;
                 alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent); 
             }
         }
@@ -495,53 +497,55 @@ public class TripService extends Service {
     // 3. Also, we never schedule a poll that's an hour in the past, since
     // we expect the bus has left by then.
     static void Schedule1(Context context, Cursor c, Time tNow, long now) {
-		final int departureMins = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE);
-		final long reminderMS = c.getInt(TripsDbAdapter.TRIP_COL_REMINDER)*ONE_MINUTE;
-		if (reminderMS == 0) {
-			return;
-		}
-		final int days = c.getInt(TripsDbAdapter.TRIP_COL_DAYS);  
-		long remindTime = 0;
-		if (days == 0) {
-			remindTime = TripsDbAdapter.convertDBToTime(departureMins) - reminderMS;
-		}
-		else {
-			final int currentWeekDay = tNow.weekDay;
-			for (int i=0; i < 7; ++i) {
-				final int day = (currentWeekDay+i)%7;
-				final int bit = TripsDbAdapter.getDayBit(day);
-				if ((days & bit) == bit) {
-					Time tmp = new Time();
-					tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
-					tmp.normalize(false);
-					remindTime = tmp.toMillis(false) - reminderMS;
-					break;
-				}
-			}
-			if (remindTime == 0) {
-				// Not found?
-				return;
-			}
-		}
-		final long triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
-		if ((now-triggerTime) >= ONE_HOUR) {
-			return;
-		}
-    	final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
-    	final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
-    	
-    	final Uri uri = buildTripUri(tripId, stopId);
-    	/*
-    	Time tmp = new Time();
-    	tmp.set(triggerTime);
-		Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
-		*/
-    	Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
-    	PendingIntent alarmIntent = 
-    		PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
-    	
-    	AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-    	alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);		
+        final int departureMins = c.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE);
+        final long reminderMS = c.getInt(TripsDbAdapter.TRIP_COL_REMINDER)*ONE_MINUTE;
+        if (reminderMS == 0) {
+            return;
+        }
+        final int days = c.getInt(TripsDbAdapter.TRIP_COL_DAYS);  
+        long remindTime = 0;
+        long triggerTime = 0;
+        if (days == 0) {
+            remindTime = TripsDbAdapter.convertDBToTime(departureMins) - reminderMS;
+        }
+        else {
+            final int currentWeekDay = tNow.weekDay;
+            for (int i=0; i < 7; ++i) {
+                final int day = (currentWeekDay+i)%7;
+                final int bit = TripsDbAdapter.getDayBit(day);
+                if ((days & bit) == bit) {
+                    Time tmp = new Time();
+                    tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
+                    tmp.normalize(false);
+                    remindTime = tmp.toMillis(false) - reminderMS;
+                    triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
+                    // Ignore anything that has a trigger time more than 
+                    // one hour in the past.
+                    if ((now-triggerTime) < ONE_HOUR) {
+                        break;
+                    }
+                }
+            }
+            if (remindTime == 0) {
+                // Not found?
+                return;
+            }
+        }
+        final String tripId = c.getString(TripsDbAdapter.TRIP_COL_TRIPID);
+        final String stopId = c.getString(TripsDbAdapter.TRIP_COL_STOPID);
+        
+        final Uri uri = buildTripUri(tripId, stopId);
+        /*
+        Time tmp = new Time();
+        tmp.set(triggerTime);
+        Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
+        */
+        Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
+        PendingIntent alarmIntent = 
+            PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
+        
+        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);        
     }
 
 	@Override

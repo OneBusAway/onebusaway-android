@@ -10,6 +10,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Spannable;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,7 +41,7 @@ import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 public class MapViewActivity extends MapActivity {
     private static final String TAG = "MapViewActivity";
     
-    private static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.html";
+    private static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.1.html";
     
     public static final String FOCUS_STOP_ID = ".FocusStopId";
     public static final String CENTER_LAT = ".CenterLat";
@@ -152,10 +155,9 @@ public class MapViewActivity extends MapActivity {
         mapOverlays.add(mLocationOverlay);
         
         // Initialize the links
-        TextView arrival = (TextView)findViewById(R.id.show_arrival_info);
-        arrival.setOnClickListener(mOnShowArrivals);
-        TextView showRoutes = (TextView)findViewById(R.id.show_routes);
-        showRoutes.setOnClickListener(mOnShowRoutes);
+        setClickable(R.id.show_arrival_info, mOnShowArrivals);
+        setClickable(R.id.show_routes, mOnShowRoutes);        
+        
         // If you click on the popup but not on a link, nothing happens
         // (if this weren't there, the popup would be dismissed)
         View popup = findViewById(R.id.map_popup);
@@ -429,7 +431,7 @@ public class MapViewActivity extends MapActivity {
              });
         }
     };
-    final View.OnClickListener mOnShowArrivals = new View.OnClickListener() {
+    final ClickableSpan mOnShowArrivals = new ClickableSpan() {
         public void onClick(View v) {
             StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
             if (item != null) {
@@ -437,7 +439,7 @@ public class MapViewActivity extends MapActivity {
             }
         }
     };
-    final View.OnClickListener mOnShowRoutes = new View.OnClickListener() {
+    final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
             GridView grid = (GridView)findViewById(R.id.route_list);
             TextView text = (TextView)v;
@@ -453,6 +455,9 @@ public class MapViewActivity extends MapActivity {
                 grid.setVisibility(View.VISIBLE);
                 text.setText(R.string.main_hide_routes);
             }
+            // When the text changes, we need to reset its clickable status
+            Spannable span = (Spannable)text.getText();
+            span.setSpan(this, 0, span.length(), 0);
         }
     };
     final View.OnClickListener mPopupClick = new View.OnClickListener() {
@@ -488,6 +493,12 @@ public class MapViewActivity extends MapActivity {
         }
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
+    }
+    private void setClickable(int id, ClickableSpan span) {
+        TextView v = (TextView)findViewById(id);
+        Spannable text = (Spannable)v.getText();
+        text.setSpan(span, 0, text.length(), 0);
+        v.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     static void goToStop(Context context, ObaStop stop) {

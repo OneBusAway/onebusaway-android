@@ -38,19 +38,19 @@
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/show_arrival_info"
-                    style="@style/LinkText"
                     android:text="@string/main_arrival_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" 
                     android:paddingRight="5dp"
-                    android:focusable="true" />
+                    android:bufferType="spannable"
+                    android:linksClickable="true" />
                 <TextView
                     android:id="@+id/show_routes"
-                    style="@style/LinkText"
                     android:text="@string/main_show_routes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" 
-                    android:focusable="true" />      
+                    android:bufferType="spannable"
+                    android:linksClickable="true" />      
             </LinearLayout>    
             <GridView  
                 android:id="@+id/route_list"

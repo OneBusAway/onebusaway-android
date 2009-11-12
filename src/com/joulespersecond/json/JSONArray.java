@@ -1,30 +1,33 @@
 package com.joulespersecond.json;
 
-import org.codehaus.jackson.JsonNode;
 import org.json.JSONException;
-
 
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 public class JSONArray {
     private static final String TAG = "JSONArray";
-    private final JsonNode mNode;
+    private final JsonArray mArray;
     
     public JSONArray() {
-        mNode = JSONObject.getObjectMapper().createArrayNode();
+        mArray = new JsonArray();
     }
     public JSONArray(Bundle bundle) {
         Log.e(TAG, "Bundle not implemented yet!");
-        mNode = JSONObject.getObjectMapper().createArrayNode();       
+        mArray = null;
+        assert(false);    
     }
     
-    JSONArray(JsonNode node) {
-        mNode = node;
+    JSONArray(JsonArray array) {
+        mArray = array;
     }
     
     public int length() {
-        return mNode.size();
+        return mArray.size();
     }
     
     
@@ -32,9 +35,14 @@ public class JSONArray {
     // Strings
     //
     public String getString(int index) throws JSONException {
-        JsonNode child = mNode.get(index);
-        if ((child != null) && child.isTextual()) {
-            return child.getTextValue();
+        JsonElement child = mArray.get(index);
+        if ((child != null) && child.isJsonPrimitive()) {
+            try {
+                return child.getAsString();
+            }
+            catch (ClassCastException e) {
+                throw new JSONException("Invalid string index: " + index);                
+            }
         }
         else {
             throw new JSONException("Invalid string index: " + index);
@@ -45,9 +53,9 @@ public class JSONArray {
     // Objects
     //
     public JSONObject getJSONObject(int index) throws JSONException {
-        JsonNode child = mNode.get(index);
-        if ((child != null) && child.isObject()) {
-            return new JSONObject(child); 
+        JsonElement child = mArray.get(index);
+        if ((child != null) && child.isJsonObject()) {
+            return new JSONObject((JsonObject)child); 
         }
         else {
             throw new JSONException("Invalid object index: " + index);
@@ -56,9 +64,10 @@ public class JSONArray {
     
     @Override
     public String toString() {
-        return mNode.toString();
+        return mArray.toString();
     }
     public Bundle toBundle() {
+        assert(false);
         return new Bundle();
     }
 }

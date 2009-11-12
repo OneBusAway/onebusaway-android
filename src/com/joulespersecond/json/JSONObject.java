@@ -1,49 +1,79 @@
 package com.joulespersecond.json;
 
-import java.io.IOException;
+import java.io.Reader;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+
 /**
- * This class maps a Jackson JsonNode to look a bit what we use from org.json.JSONObject.
+ * This class maps a Gson JsonObject to look a bit what we use from org.json.JSONObject.
  * @author paulw
  *
  */
 public class JSONObject {
-    private static final ObjectMapper mObjectMapper = new ObjectMapper();
-
-    static JsonFactory getJsonFactory() {
-        return mObjectMapper.getJsonFactory();
+    private static class GsonHolder {
+        static final Gson gsonObj = new Gson();
+        static final JsonParser parser = new JsonParser();
     }
-    static ObjectMapper getObjectMapper() {
-        return mObjectMapper;
+
+    static Gson getGson() {
+        return GsonHolder.gsonObj;
+    }
+    static JsonParser getParser() {
+        return GsonHolder.parser;
     }
     
     private static final String TAG = "JSONObject";
-    private final JsonNode mNode;
+    private final JsonObject mObj;
        
     public JSONObject() {
-        mNode = mObjectMapper.createObjectNode();
+        mObj = new JsonObject();
     }
     public JSONObject(String str) throws JSONException {
-        long start = System.currentTimeMillis();
-        mNode = stringToNode(str);
-        long end = System.currentTimeMillis();
-        Log.d(TAG, "JSONObject(str): " + (end-start));
+        try {
+            JsonElement elem = getParser().parse(str);
+            if (elem.isJsonObject()) {
+                mObj = (JsonObject)elem;
+            }
+            else {
+                throw new JSONException("Not an object: " + str);
+            }
+        }
+        catch (JsonParseException e) {
+            throw new JSONException("Parser error: " + e);
+        }
+    }
+    public JSONObject(Reader reader) throws JSONException {
+        try {
+            JsonElement elem = getParser().parse(reader);
+            if (elem.isJsonObject()) {
+                mObj = (JsonObject)elem;
+            }
+            else {
+                throw new JSONException("Unable to parse");
+            }
+        }
+        catch (JsonParseException e) {
+            throw new JSONException("Unable to parse");
+        }        
     }
     public JSONObject(Bundle bundle) {
         Log.e(TAG, "Bundle not implemented!");
-        mNode = mObjectMapper.createObjectNode();
+        assert(false);
+        mObj = null;
     }
-    JSONObject(JsonNode node) {
-        mNode = node;
+    JSONObject(JsonObject obj) {
+        mObj = obj;
     }
     
     // One thing we do differently than org.json is that we don't
@@ -57,9 +87,9 @@ public class JSONObject {
         return optBoolean(key, false);
     }
     public boolean optBoolean(String key, boolean defaultValue) {
-        JsonNode child = mNode.get(key);
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
         if ((child != null) && child.isBoolean()) {
-            return child.getBooleanValue();
+            return child.getAsBoolean();
         }
         return defaultValue;        
     }
@@ -68,9 +98,9 @@ public class JSONObject {
     // Strings
     //
     public String getString(String key) throws JSONException {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isTextual()) {
-            return child.getTextValue(); 
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
+        if ((child != null) && child.isString()) {
+            return child.getAsString(); 
         }
         else {
             throw new JSONException("No such string child: " + key);
@@ -80,9 +110,9 @@ public class JSONObject {
         return optString(key, "");
     }
     public String optString(String key, String defaultValue) {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isTextual()) {
-            return child.getTextValue();
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
+        if ((child != null) && child.isString()) {
+            return child.getAsString();
         }
         return defaultValue;
     }
@@ -90,9 +120,15 @@ public class JSONObject {
     // Int
     //
     public int optInt(String key, int defaultValue) {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isInt()) {
-            return child.getIntValue();
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
+        if ((child != null) && child.isNumber()) {
+            // This can still throw a ClassCastException
+            try {
+                return child.getAsInt();
+            }
+            catch (ClassCastException e) {
+                return defaultValue;
+            }
         }
         return defaultValue;
     }
@@ -104,9 +140,14 @@ public class JSONObject {
         return optLong(key, 0);
     }
     public long optLong(String key, int defaultValue) {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isLong()) {
-            return child.getLongValue();
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
+        if ((child != null) && child.isNumber()) {
+            try {
+                return child.getAsLong();
+            }
+            catch (ClassCastException e) {
+                return defaultValue;
+            }
         }
         return defaultValue;        
     }
@@ -115,9 +156,14 @@ public class JSONObject {
     // Double
     //
     public double getDouble(String key) throws JSONException {
-        JsonNode child = mNode.get(key);
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
         if ((child != null) && child.isNumber()) {
-            return child.getNumberValue().doubleValue(); 
+            try {
+                return child.getAsDouble();
+            }
+            catch (ClassCastException e) {
+                throw new JSONException("No such double child: " + key);
+            }
         }
         else {
             throw new JSONException("No such double child: " + key);
@@ -127,9 +173,14 @@ public class JSONObject {
         return optDouble(key, 0);
     }
     public double optDouble(String key, double defaultValue) {
-        JsonNode child = mNode.get(key);
+        JsonPrimitive child = mObj.getAsJsonPrimitive(key);
         if ((child != null) && child.isNumber()) {
-            return child.getNumberValue().doubleValue();
+            try {
+                return child.getAsDouble();
+            }
+            catch (ClassCastException e) {
+                return defaultValue;
+            }
         }
         return defaultValue;         
     }
@@ -138,8 +189,8 @@ public class JSONObject {
     // Object
     //
     public JSONObject getJSONObject(String key) throws JSONException {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isObject()) {
+        JsonObject child = mObj.getAsJsonObject(key);
+        if (child != null) {
             return new JSONObject(child); 
         }
         else {
@@ -151,31 +202,22 @@ public class JSONObject {
     // Array
     //
     public JSONArray getJSONArray(String key) throws JSONException {
-        JsonNode child = mNode.get(key);
-        if ((child != null) && child.isArray()) {
+        JsonArray child = mObj.getAsJsonArray(key);
+        if (child != null) {
             return new JSONArray(child);
         }
         else {
             throw new JSONException("No such array child: " + key);
         }
     }
-    
-    
-    static JsonNode stringToNode(String str) throws JSONException {
-        try {
-            return mObjectMapper.readValue(str, JsonNode.class);
-        } catch (JsonParseException e) {
-            throw new JSONException(e.toString());
-        } catch (IOException e) {
-            throw new JSONException(e.toString());
-        } 
-    }
+
     
     @Override
     public String toString() {
-        return mNode.toString();
+        return mObj.toString();
     }
     public Bundle toBundle() {
+        assert(false);
         return new Bundle();
     }
 }

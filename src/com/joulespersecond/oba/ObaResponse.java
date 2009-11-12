@@ -9,12 +9,11 @@ import java.net.URLConnection;
 import org.json.JSONException;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import com.joulespersecond.json.JSONObject;
 
 public final class ObaResponse {
-    private static final String TAG = "ObaResponse";
+    //private static final String TAG = "ObaResponse";
     
     private final JSONObject mResponse;
     // We need to convert this to a string quickly in order for
@@ -29,10 +28,7 @@ public final class ObaResponse {
      */
     ObaResponse(JSONObject obj) {
         mResponse = obj;
-        long start = System.currentTimeMillis();
         mResponseString = obj.toString();
-        long end = System.currentTimeMillis();
-        Log.d(TAG, "toString: " + (end-start));
     }
     private ObaResponse(Bundle bundle) {
         mResponse = new JSONObject(bundle);  
@@ -56,15 +52,11 @@ public final class ObaResponse {
     }
     private ObaResponse(URL url) throws JSONException, IOException {
         URLConnection conn = url.openConnection();
-        long start = System.currentTimeMillis();
         conn.connect();
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(conn.getInputStream()),
                 8*1024);
-        long end = System.currentTimeMillis();
-        Log.d(TAG, "Request: " + (end-start));
         
-        start = System.currentTimeMillis();
         StringBuilder data;
         int len = conn.getContentLength();
         if (len == -1) {

@@ -21,7 +21,8 @@
             <Button
                 android:id="@+id/search"
                 android:layout_column="1"
-                android:text="@string/find"/>
+                android:text="@string/find"
+                android:onClick="onSearch" />
         </TableRow>
     </TableLayout>         
               

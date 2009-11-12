@@ -14,7 +14,7 @@ import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaStop;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
-    //private static final String TAG = "StopOverlay";
+    private static final String TAG = "StopOverlay";
     
     private ObaArray mStops;
     private Activity mActivity;
@@ -37,7 +37,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         } else if (direction.equals("NE")) {
             return R.drawable.stop_ne_state;                             
         } else {
-            Log.v("TransitBotStopOverlay", "Unknown direction: " + direction);
+            Log.e(TAG, "Unknown direction: " + direction);
             return R.drawable.stop_n_state;
         }        
     }

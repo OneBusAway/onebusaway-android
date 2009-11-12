@@ -15,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -75,15 +74,7 @@ public class FindRouteActivity extends ListActivity {
                     int count) {                
             }
         });
-        // If the user clicks the button (and there's text), the do the search
-        Button button = (Button)findViewById(R.id.search);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                TextView textView = (TextView)findViewById(R.id.search_text);
-                doSearch(textView.getText());            
-            }
-        });
-        
+
         fillFavorites();
     }
     @Override
@@ -140,6 +131,10 @@ public class FindRouteActivity extends ListActivity {
             return true;
         }
         return false;
+    }
+    public final void onSearch(View v) {
+        TextView textView = (TextView)findViewById(R.id.search_text);
+        doSearch(textView.getText());             
     }
     
     private static final int CONTEXT_MENU_DEFAULT = 1;

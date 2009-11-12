@@ -12,7 +12,10 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
+import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
+import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -39,6 +42,8 @@ public class FindStopActivity extends ListActivity {
     private boolean mShortcutMode = false;
     
     private FindStopTask mAsyncTask;
+    // This is a bit expensive, so only do it if we need to.
+    private boolean mRedoNoFavoritesText = true;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +60,10 @@ public class FindStopActivity extends ListActivity {
         
         setTitle(R.string.find_stop_title);
         
+        TextView empty = (TextView)findViewById(android.R.id.empty);
+        empty.setMovementMethod(LinkMovementMethod.getInstance());
+        setNoFavoriteText();
+        
         mDbAdapter = new StopsDbAdapter(this);
         mDbAdapter.open();
         
@@ -65,6 +74,7 @@ public class FindStopActivity extends ListActivity {
                     doSearch(s);
                 }
                 else if (s.length() == 0) {
+                    mRedoNoFavoritesText = true;
                     fillFavorites();
                 }
             }
@@ -218,9 +228,7 @@ public class FindStopActivity extends ListActivity {
         Cursor c = mDbAdapter.getFavoriteStops();
         startManagingCursor(c);
         
-        // Make sure the "empty" text is correct.
-        TextView empty = (TextView) findViewById(android.R.id.empty);
-        empty.setText(R.string.find_hint_nofavoritestops);
+        setNoFavoriteText();    
         
         String[] from = new String[] { 
                 DbHelper.KEY_NAME,
@@ -303,6 +311,7 @@ public class FindStopActivity extends ListActivity {
             }
             else {
                 empty.setText(R.string.generic_comm_error);
+                mRedoNoFavoritesText = true;
             }
             setProgressBarIndeterminateVisibility(false);
         }
@@ -318,6 +327,25 @@ public class FindStopActivity extends ListActivity {
         }
         mAsyncTask = new FindStopTask();
         mAsyncTask.execute(text.toString());
+    }
+    
+    private static final String URL_STOPID = MapViewActivity.HELP_URL + "#finding_stop_ids";
+    
+    private void setNoFavoriteText() {
+        if (!mRedoNoFavoritesText) {
+            return;
+        }
+        final CharSequence first = getText(R.string.find_hint_nofavoritestops);
+        final int firstLen = first.length();
+        final CharSequence second = getText(R.string.find_hint_nofavoritestops_link);
+        
+        SpannableStringBuilder builder = new SpannableStringBuilder(first);
+        builder.append(second);
+        builder.setSpan(new URLSpan(URL_STOPID), firstLen, firstLen+second.length(), 0);
+       
+        TextView empty = (TextView) findViewById(android.R.id.empty);
+        empty.setText(builder, TextView.BufferType.SPANNABLE);
+        mRedoNoFavoritesText = false;
     }
     
     // We need to provide the API for a location used to disambiguate

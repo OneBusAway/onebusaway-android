@@ -3,11 +3,6 @@ package com.joulespersecond.seattlebusbot;
 import java.util.HashMap;
 import java.util.List;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
-import com.joulespersecond.oba.ObaResponse;
-
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -15,7 +10,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
@@ -25,6 +19,11 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.text.format.Time;
 import android.util.Log;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaArrivalInfo;
+import com.joulespersecond.oba.ObaResponse;
 
 // Required operations:
 // 
@@ -257,22 +256,17 @@ public class TripService extends Service {
         final String routeName = RoutesDbAdapter.getRouteShortName(this, 
                 c.getString(TripsDbAdapter.TRIP_COL_ROUTEID));
         
-        final Resources res = getResources();
         if (timeDiff <= 0) {
-            final String fmt = res.getString(R.string.trip_stat_gone);
-            return String.format(fmt, routeName);
+            return getString(R.string.trip_stat_gone, routeName);
         }
         else if (timeDiff < ONE_MINUTE) {
-            final String fmt = res.getString(R.string.trip_stat_lessthanone);
-            return String.format(fmt, routeName);
+            return getString(R.string.trip_stat_lessthanone, routeName);
         }
         else if (timeDiff < ONE_MINUTE*2) {
-            final String fmt = res.getString(R.string.trip_stat_one);
-            return String.format(fmt, routeName);            
+            return getString(R.string.trip_stat_one, routeName);            
         }
         else {
-            final String fmt = res.getString(R.string.trip_stat);
-            return String.format(fmt, routeName, (int)(timeDiff/ONE_MINUTE));            
+            return getString(R.string.trip_stat, routeName, (int)(timeDiff/ONE_MINUTE));            
         }
     }
     
@@ -340,7 +334,7 @@ public class TripService extends Service {
                         PendingIntent.FLAG_ONE_SHOT);
             }
         
-            final String title = getResources().getString(R.string.app_name);
+            final String title = getString(R.string.app_name);
             
             mNotification.setLatestEventInfo(ctx, title, 
                     getNotifyText(c, timeDiff), mNotificationIntent);

@@ -55,8 +55,7 @@ public class MapViewActivity extends MapActivity {
     private String mFocusStopId;
     private AsyncTask<Object,Void,ObaResponse> mGetStopsByLocationTask;
     private AsyncTask<String,Void,ObaResponse> mGetStopsForRouteTask;
-    // A bit of a hack, but we can fix it better in 1.1.
-    private boolean mForceRestartLocationTask;
+    private volatile boolean mForceRestartLocationTask;
     
     // There's a major hole in the MapView in that there's apparently 
     // no way of getting an event when the user pans the view.
@@ -75,32 +74,39 @@ public class MapViewActivity extends MapActivity {
         context.startActivity(myIntent);
     }
     
-    private abstract class GetStopsForRouteTaskBase extends AsyncTask<String,Void,ObaResponse> {
-        @Override
-        protected void onPreExecute() {
-            setProgressBarIndeterminateVisibility(true);
-        }
-        @Override
-        protected void onPostExecute(ObaResponse result) {
-            if (result.getCode() == ObaApi.OBA_OK) {
-                setStopOverlay(result.getData().getStops());
+    private final AsyncTasks.Handler<ObaResponse> mAsyncTaskHandler 
+        = new AsyncTasks.Handler<ObaResponse>() {
+            public void handleResult(ObaResponse result) {
+                if (result.getCode() == ObaApi.OBA_OK) {
+                    setStopOverlay(result.getData().getStops());
+                }
             }
-            setProgressBarIndeterminateVisibility(false); 
-        }
-    }
+    };
+    private final AsyncTasks.ProgressIndeterminateVisibility mAsyncProgress 
+        = new AsyncTasks.ProgressIndeterminateVisibility(this);
     
-    private class GetStopsForRouteTask extends GetStopsForRouteTaskBase {
+    private class GetStopsForRouteTask extends AsyncTasks.StringToResponse {
+        GetStopsForRouteTask() {
+            super(mAsyncProgress, mAsyncTaskHandler);
+        }
         @Override
         protected ObaResponse doInBackground(String... params) {
             return ObaApi.getStopsForRoute(params[0]);
-        }    
+        }
+        @Override
+        protected void doResult(ObaResponse result) { }   
     }
     
-    private class GetStopsForRouteTask2 extends GetStopsForRouteTaskBase {
+    private class GetStopsForRouteTask2 extends AsyncTasks.StringToResponse {
+        GetStopsForRouteTask2() {
+            super(mAsyncProgress, mAsyncTaskHandler);
+        }
         @Override
         protected ObaResponse doInBackground(String... params) {
             return ObaResponse.createFromString(params[0]);
-        }    
+        }
+        @Override
+        protected void doResult(ObaResponse result) { }  
     }
     
     private final class GetStopsByLocationInfo {
@@ -113,10 +119,9 @@ public class MapViewActivity extends MapActivity {
         }
     }
     
-    private class GetStopsByLocationTask extends AsyncTask<Object,Void,ObaResponse> {
-        @Override
-        protected void onPreExecute() {
-            setProgressBarIndeterminateVisibility(true);
+    private class GetStopsByLocationTask extends AsyncTasks.ToResponseBase<Object> {
+        GetStopsByLocationTask() {
+            super(mAsyncProgress);
         }
         @Override
         protected ObaResponse doInBackground(Object... params) {
@@ -125,11 +130,10 @@ public class MapViewActivity extends MapActivity {
             return ObaApi.getStopsByLocation(point, 0, info.latSpan, info.lonSpan, null, 0);
         }
         @Override
-        protected void onPostExecute(ObaResponse result) {
+        protected void doResult(ObaResponse result) {
             if (result.getCode() == ObaApi.OBA_OK) {
                 setStopOverlay(result.getData().getStops());
             }
-            setProgressBarIndeterminateVisibility(false);
         }
     }
     
@@ -330,13 +334,10 @@ public class MapViewActivity extends MapActivity {
             getStopsByLocation(point);       
         }
     }
-    private static boolean isRunning(AsyncTask<?,?,?> task) {
-        return (task != null && task.getStatus() != AsyncTask.Status.FINISHED);
-    }
     
     private void getStopsByLocation(GeoPoint point) {
         Log.d(TAG, "getStopsByLocation");
-        if (isRunning(mGetStopsByLocationTask)) {
+        if (AsyncTasks.isRunning(mGetStopsByLocationTask)) {
             Log.d(TAG, "Set force restart");
             mForceRestartLocationTask = true;
             return;
@@ -350,12 +351,12 @@ public class MapViewActivity extends MapActivity {
         mGetStopsByLocationTask.execute(point, info);             
     }
     private void getStopsForRoute(String stopData) {
-        if (isRunning(mGetStopsForRouteTask)) {
+        if (AsyncTasks.isRunning(mGetStopsForRouteTask)) {
             return;
         }
         if (stopData != null) {
             mGetStopsForRouteTask = new GetStopsForRouteTask2();
-            mGetStopsForRouteTask.execute(stopData);
+            mGetStopsForRouteTask.execute(new String(stopData));
         }
         else {
             assert(mRouteId != null);

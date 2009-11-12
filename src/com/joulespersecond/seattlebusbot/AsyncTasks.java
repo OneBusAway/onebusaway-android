@@ -46,10 +46,17 @@ final class AsyncTasks {
     public static abstract class
     Base<T,Result> extends AsyncTask<T,Void,Result> {
         protected final Progress mProgress;
+        protected final Handler<Result> mHandler;
         
         public Base(Progress progress) {
             assert(progress != null);
             mProgress = progress;
+            mHandler = null;
+        }
+        public Base(Progress progress, Handler<Result> handler) {
+            assert(progress != null);
+            mProgress = progress;
+            mHandler = handler;
         }
         @Override
         protected void onPreExecute() {
@@ -57,7 +64,12 @@ final class AsyncTasks {
         }
         @Override
         protected void onPostExecute(Result result) {
-            doResult(result);
+            if (mHandler != null) {
+                mHandler.handleResult(result);
+            }
+            else {
+                doResult(result);
+            }
             mProgress.hideLoading();
         }
         @Override
@@ -73,6 +85,9 @@ final class AsyncTasks {
         public ToResponseBase(Progress progress) {
             super(progress);
         }
+        public ToResponseBase(Progress progress, Handler<ObaResponse> handler) {
+            super(progress, handler);
+        }
     }    
     
     /**
@@ -84,6 +99,9 @@ final class AsyncTasks {
     public static abstract class StringToResponse extends ToResponseBase<String> {
         public StringToResponse(Progress progress) {
             super(progress);
+        }
+        public StringToResponse(Progress progress, Handler<ObaResponse> handler) {
+            super(progress, handler);
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
@@ -100,6 +118,9 @@ final class AsyncTasks {
     public static abstract class BundleToResponse extends ToResponseBase<Bundle> {
         public BundleToResponse(Progress progress) {
             super(progress);
+        }
+        public BundleToResponse(Progress progress, Handler<ObaResponse> handler) {
+            super(progress, handler);
         }
         @Override
         protected ObaResponse doInBackground(Bundle... params) {

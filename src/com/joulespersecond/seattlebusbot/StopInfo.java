@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import android.content.Context;
-import android.content.res.Resources;
 
 import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaArrivalInfo;
@@ -58,8 +57,6 @@ final class StopInfo {
         final long scheduledMins = scheduled/ms_in_mins;
         final long predictedMins = predicted/ms_in_mins;
         
-        final Resources res = context.getResources();
-        
         if (predicted != 0) {
             mEta = predictedMins - nowMins;
             mDisplayTime = predicted;
@@ -71,28 +68,26 @@ final class StopInfo {
                     // Arriving delayed
                     mColor = R.color.stop_info_delayed;
                     if (delay == 1) {
-                        mStatusText = res.getString(R.string.stop_info_arrive_delayed1);                            
+                        mStatusText = context.getString(R.string.stop_info_arrive_delayed1);                            
                     }
                     else {
-                        String fmt = res.getString(R.string.stop_info_arrive_delayed);
-                        mStatusText = String.format(fmt, delay);                        
+                        mStatusText = context.getString(R.string.stop_info_arrive_delayed, delay);                    
                     }
                 }
                 else if (delay < 0) {
                     // Arriving early
                     mColor = R.color.stop_info_early;
                     if (delay == -1) {
-                        mStatusText = res.getString(R.string.stop_info_arrive_early1);                            
+                        mStatusText = context.getString(R.string.stop_info_arrive_early1);                            
                     }
                     else {
-                        String fmt = res.getString(R.string.stop_info_arrive_early);
-                        mStatusText = String.format(fmt, -delay);                                
+                        mStatusText = context.getString(R.string.stop_info_arrive_early, -delay);                       
                     }
                 }
                 else {
                     // Arriving on time
                     mColor = R.color.stop_info_ontime;
-                    mStatusText = res.getString(R.string.stop_info_ontime);
+                    mStatusText = context.getString(R.string.stop_info_ontime);
                 }
             } 
             else {
@@ -101,28 +96,26 @@ final class StopInfo {
                     // Departing delayed
                     mColor = R.color.stop_info_delayed;
                     if (delay == 1) {
-                        mStatusText = res.getString(R.string.stop_info_depart_delayed1);                            
+                        mStatusText = context.getString(R.string.stop_info_depart_delayed1);                            
                     }
                     else {
-                        String fmt = res.getString(R.string.stop_info_depart_delayed);
-                        mStatusText = String.format(fmt, delay);                        
+                        mStatusText = context.getString(R.string.stop_info_depart_delayed, delay);                        
                     }
                 } 
                 else if (delay < 0) {
                     // Departing early
                     mColor = R.color.stop_info_early;
                     if (delay == -1) {
-                        mStatusText = res.getString(R.string.stop_info_depart_early1);                            
+                        mStatusText = context.getString(R.string.stop_info_depart_early1);                            
                     }
                     else {
-                        String fmt = res.getString(R.string.stop_info_depart_early);
-                        mStatusText = String.format(fmt, -delay);                        
+                        mStatusText = context.getString(R.string.stop_info_depart_early, -delay);                        
                     }
                 }
                 else {
                     // Departing on time
                     mColor = R.color.stop_info_ontime;
-                    mStatusText = res.getString(R.string.stop_info_ontime);
+                    mStatusText = context.getString(R.string.stop_info_ontime);
                 }
             }                
         }
@@ -132,9 +125,9 @@ final class StopInfo {
             mEta = scheduledMins - nowMins;
             mDisplayTime = scheduled;
             if (mEta > 0) {
-                mStatusText = res.getString(R.string.stop_info_scheduled_arrival);
+                mStatusText = context.getString(R.string.stop_info_scheduled_arrival);
             } else {
-                mStatusText = res.getString(R.string.stop_info_scheduled_departure);                    
+                mStatusText = context.getString(R.string.stop_info_scheduled_departure);                    
             }
         }
     }

@@ -47,10 +47,10 @@ public class StopInfoActivity extends ListActivity {
     private static final String STOP_INFO = ".StopInfo";
     
     private ObaResponse mResponse;
+    private String mResponseString;
     private ObaStop mStop;
     private String mStopId;
     private Timer mTimer;
-    private String mResponseString;
     private StopsDbAdapter mStopsDbAdapter;
     private ArrayList<String> mRoutesFilter;
     
@@ -148,11 +148,15 @@ public class StopInfoActivity extends ListActivity {
 
         mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
         if (savedInstanceState != null) {
-            mResponseString = savedInstanceState.getString(STOP_INFO);
-            getStopInfo(false, false, false);
+            String str = savedInstanceState.getString(STOP_INFO);
+            if (str != null) {
+                // Make a copy and keep it around.
+                mResponseString = new String(str);
+            }
+            getStopInfo(mResponseString, false, false);
         }
         else {
-            getStopInfo(false, false, true);
+            getStopInfo(null, false, true);
         }
     }
     @Override
@@ -169,11 +173,6 @@ public class StopInfoActivity extends ListActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(STOP_INFO, mResponseString);
-    }
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        mResponseString = savedInstanceState.getString(STOP_INFO);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -194,7 +193,7 @@ public class StopInfoActivity extends ListActivity {
             return true;
         }
         else if (id == R.id.refresh) {
-            getStopInfo(true, true, false);
+            getStopInfo(null, true, false);
             return true;
         }
         else if (id == R.id.filter) {
@@ -222,7 +221,7 @@ public class StopInfoActivity extends ListActivity {
         }
         mTripsForStop.refresh();
         // Always refresh once on resume
-        getStopInfo(true, true, false);
+        getStopInfo(null, true, false);
         
         mTimer.schedule(new TimerTask() {
             @Override
@@ -310,10 +309,16 @@ public class StopInfoActivity extends ListActivity {
             if (which == DialogInterface.BUTTON_POSITIVE) {
                 ArrayList<String> filter = new ArrayList<String>();
                 final int len = mChecks.length;
+                int checks = 0;
                 for (int i=0; i < len; ++i) {
                     if (mChecks[i]) {
                         filter.add(mRouteIds.get(i));
+                        ++checks;
                     }
+                }
+                // If they are *all* checked, pretend like none were
+                if (checks == len) {
+                    filter.clear();
                 }
                 setRoutesFilter(filter);
             }
@@ -389,6 +394,7 @@ public class StopInfoActivity extends ListActivity {
         
         public void setData(ObaArray arrivals) {
             mInfo = StopInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
+            setFilterHeader();
             notifyDataSetChanged();
         }
         private void setData(ViewGroup view, int position) {
@@ -429,7 +435,7 @@ public class StopInfoActivity extends ListActivity {
                 View tripInfo = view.findViewById(R.id.trip_info);
                 TextView tripNameView = (TextView)view.findViewById(R.id.trip_name);
                 if (tripName.length() == 0) {
-                    tripName = getResources().getString(R.string.trip_info_noname);
+                    tripName = getString(R.string.trip_info_noname);
                 }
                 tripNameView.setText(tripName);
                 tripInfo.setVisibility(View.VISIBLE);
@@ -471,7 +477,7 @@ public class StopInfoActivity extends ListActivity {
     private final Handler mRefreshHandler = new Handler();
     private final Runnable mRefresh = new Runnable() {
         public void run() {
-            getStopInfo(true, true, false);
+            getStopInfo(null, true, false);
         }
     };
     
@@ -527,7 +533,7 @@ public class StopInfoActivity extends ListActivity {
         }
     }
     
-    private void getStopInfo(boolean forceRefresh, 
+    private void getStopInfo(String response, 
                             boolean titleProgress,
                             boolean addToDb) {
         if (mStopId == null) {
@@ -539,10 +545,11 @@ public class StopInfoActivity extends ListActivity {
         // To determine 
         AsyncTasks.Progress progress = titleProgress ? mTitleProgress : mLoadingProgress;
         
-        if (mResponseString != null && !forceRefresh) {
+        if (response != null) {
             // Convert this to a string.
             mAsyncTask = new GetStopInfoString(progress, addToDb);
-            mAsyncTask.execute(mResponseString);
+            // For some reason we need to make a copy of this string.
+            mAsyncTask.execute(response);
         }
         else {
             // Get it from the Net
@@ -591,6 +598,21 @@ public class StopInfoActivity extends ListActivity {
         if (direction != null) {
             TextView directionText = (TextView)findViewById(R.id.direction);
             directionText.setText(getStopDirectionText(direction));  
+        }
+    }
+    void setFilterHeader() {
+        TextView v = (TextView)findViewById(R.id.filter);
+        final int filtered = (mRoutesFilter != null) ? mRoutesFilter.size() : 0;
+        if (filtered > 0) {
+            // How many routes?
+            final int num = mRoutesFilter.size();
+            final int total = mStop.getRoutes().length();
+            v.setText(getString(R.string.stop_info_filter_header, num, total));
+            // Show the filter text
+            v.setVisibility(View.VISIBLE);
+        }
+        else {
+            v.setVisibility(View.GONE);
         }
     }
 }

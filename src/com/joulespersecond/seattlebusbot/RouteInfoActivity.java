@@ -8,7 +8,6 @@ import java.util.Map;
 import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -82,15 +81,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
         outState.putString(STOPS_FOR_ROUTE, mStopsForRouteResponse);
     }
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        if (savedInstanceState != null) {
-            mRouteInfoResponse = savedInstanceState.getString(ROUTE_INFO);
-            mStopsForRouteResponse = savedInstanceState.getString(STOPS_FOR_ROUTE);
-        }
-        getRouteInfo();
-    }
-    @Override
     public void onDestroy() {
         if (mRouteInfoTask != null) {
             mRouteInfoTask.cancel(true);
@@ -142,7 +132,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
             
         private void initMaps(Context cxt) {
-            Resources res = cxt.getResources();
             // Convert to weird array type. From the documentation of
             // SimpleExpandableListAdapter:
             // StopGroupings: A List of Maps. Each entry in the List corresponds 
@@ -193,7 +182,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
                                     new HashMap<String,String>(2);
                             if (stop != null) {
                                 groupStopMap.put("name", stop.getName());
-                                String dir = res.getString(
+                                String dir = cxt.getString(
                                         StopInfoActivity.getStopDirectionText(
                                                 stop.getDirection()));
                                 groupStopMap.put("direction", dir);
@@ -306,7 +295,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         if (mRouteInfoResponse != null) {
             // Convert this to an ObaResponse
             mRouteInfoTask = new GetRouteInfoString();
-            mRouteInfoTask.execute(mRouteInfoResponse);
+            mRouteInfoTask.execute(new String(mRouteInfoResponse));
         }
         else {
             // Get the data from the net.
@@ -321,7 +310,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         if (mStopsForRouteResponse != null) {
             // Convert this to an ObaResponse
             mStopsForRouteTask = new GetStopsForRouteString();
-            mStopsForRouteTask.execute(mStopsForRouteResponse);
+            mStopsForRouteTask.execute(new String(mStopsForRouteResponse));
         }
         else {
             // Get the data from the net

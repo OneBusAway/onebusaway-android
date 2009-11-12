@@ -37,6 +37,7 @@
     <string name="stop_info_nodata">No information for this stop.</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
+    <string name="stop_info_filter_header">(%d of %d routes shown)</string>
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
     

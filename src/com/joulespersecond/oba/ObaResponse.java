@@ -106,7 +106,8 @@ public final class ObaResponse {
     }
     @Override
     public String toString() {
-        return mResponseString;
+        // Just to be absolutely certain, don't return our string.
+        return new String(mResponseString);
     }
     public Bundle toBundle() {
         return mResponse.toBundle();

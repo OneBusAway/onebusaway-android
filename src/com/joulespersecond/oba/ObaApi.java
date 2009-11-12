@@ -7,12 +7,14 @@ import java.net.URLEncoder;
 
 import org.json.JSONException;
 
+import android.util.Log;
+
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.json.JSONArray;
 import com.joulespersecond.json.JSONObject;
 
 public final class ObaApi {
-    //private static final String TAG = "ObaApi";
+    private static final String TAG = "ObaApi";
     // Uninstantiatable
     private ObaApi() { throw new AssertionError(); }
     
@@ -29,7 +31,7 @@ public final class ObaApi {
     public static final double E6 = 1000*1000;
     
     private static ObaResponse doRequest(String urlStr) {
-        //Log.d("ObaApi", "Request: "  + urlStr);
+        Log.d(TAG, "Request: "  + urlStr);
         try {
             return ObaResponse.createFromURL(new URL(urlStr));
         } catch (IOException e) {

@@ -165,8 +165,7 @@ public class TripInfoActivity extends Activity {
         stopName.setText(mStopName);
         
         final TextView routeName = (TextView)findViewById(R.id.route_name);
-        String fmt = getResources().getString(R.string.trip_info_route);
-        routeName.setText(String.format(fmt, mRouteName));
+        routeName.setText(getString(R.string.trip_info_route,  mRouteName));
             
         final TextView headsign = (TextView)findViewById(R.id.headsign);
         headsign.setText(mHeadsign);
@@ -371,12 +370,12 @@ public class TripInfoActivity extends Activity {
     }
     
     static String getDepartureTime(Context ctx, long departure) {
-        final String fmt = ctx.getResources().getString(R.string.trip_info_depart);
-        return String.format(fmt, DateUtils.formatDateTime(ctx, 
-                departure, 
-                DateUtils.FORMAT_SHOW_TIME|
-                DateUtils.FORMAT_NO_NOON|
-                DateUtils.FORMAT_NO_MIDNIGHT));        
+        return ctx.getString(R.string.trip_info_depart,
+                DateUtils.formatDateTime(ctx, 
+                    departure, 
+                    DateUtils.FORMAT_SHOW_TIME|
+                    DateUtils.FORMAT_NO_NOON|
+                    DateUtils.FORMAT_NO_MIDNIGHT));        
     }
     
     static String getRepeatText(Context ctx, int days) {
@@ -394,7 +393,6 @@ public class TripInfoActivity extends Activity {
         }
         // Otherwise, it's not normal -- format a string 
         final boolean[] array = TripsDbAdapter.daysToArray(days);
-        final String fmt = new String(res.getString(R.string.trip_info_repeat_every));
         final String[] dayNames = res.getStringArray(R.array.reminder_days);
     
         StringBuffer buf = new StringBuffer();
@@ -429,6 +427,6 @@ public class TripInfoActivity extends Activity {
             rangeStart = rangeEnd;
         }
         
-        return String.format(fmt, buf.toString());
+        return res.getString(R.string.trip_info_repeat_every, buf.toString());
     }
 }

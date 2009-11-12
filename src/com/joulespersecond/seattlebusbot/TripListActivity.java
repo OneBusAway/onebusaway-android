@@ -58,7 +58,7 @@ public class TripListActivity extends ListActivity {
                     TextView text = (TextView)view;
                     String name = cursor.getString(columnIndex);
                     if (name.length() == 0) {
-                        name = getResources().getString(R.string.trip_info_noname);
+                        name = getString(R.string.trip_info_noname);
                     }
                     text.setText(name);
                     return true;
@@ -79,8 +79,7 @@ public class TripListActivity extends ListActivity {
                     final String routeId = cursor.getString(columnIndex);
                     final String routeName = mRoutesDbAdapter.getRouteShortName(routeId);
                     if (routeName != null) {
-                        String fmt = getResources().getString(R.string.trip_info_route);
-                        text.setText(String.format(fmt, routeName));
+                        text.setText(getString(R.string.trip_info_route, routeName));
                     }
                     return true;
                 }

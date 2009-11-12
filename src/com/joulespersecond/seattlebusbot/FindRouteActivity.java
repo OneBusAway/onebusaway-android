@@ -146,8 +146,7 @@ public class FindRouteActivity extends ListActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
         final TextView text = (TextView)info.targetView.findViewById(R.id.short_name);
-        final String fmt = getResources().getString(R.string.route_name);
-        menu.setHeaderTitle(String.format(fmt, text.getText()));
+        menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (mShortcutMode) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
         }

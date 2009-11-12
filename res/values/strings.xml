@@ -34,7 +34,7 @@
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter Routes</string>
     <string name="stop_info_option_showall">Show All Routes</string>
-    <string name="stop_info_nodata">No information for this stop.</string>
+    <string name="stop_info_nodata">There are no upcoming arrivals at this stop.</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
     <string name="stop_info_filter_header">(%d of %d routes shown)</string>

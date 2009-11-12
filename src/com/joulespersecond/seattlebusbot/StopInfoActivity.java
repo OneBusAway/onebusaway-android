@@ -567,6 +567,12 @@ public class StopInfoActivity extends ListActivity {
         setHeader(mStop, addToDb);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(data.getArrivalsAndDepartures());
+        
+        // Ensure there is some hint text in case there is no error 
+        // but the data is empty.
+        TextView empty = (TextView)findViewById(android.R.id.empty);
+        empty.setText(R.string.stop_info_nodata);
+        
         mLoadingProgress.hideLoading();
         setProgressBarIndeterminateVisibility(false);        
     }

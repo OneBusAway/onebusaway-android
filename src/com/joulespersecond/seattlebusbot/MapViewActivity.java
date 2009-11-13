@@ -139,7 +139,7 @@ public class MapViewActivity extends MapActivity {
         mMapView.setBuiltInZoomControls(true);
         mMapCenter = mMapView.getMapCenter();
         // Add the MyLocation Overlay
-        mLocationOverlay = new MyLocationOverlay(this, mMapView);
+        mLocationOverlay = new MyFixedLocationOverlay(this, mMapView);
     	List<Overlay> mapOverlays = mMapView.getOverlays();
     	mapOverlays.add(mLocationOverlay);
     	

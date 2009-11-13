@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Themes -->
-    <style name="BusBotTheme" parent="@android:style/Theme.Light">
+    <style name="Theme.BusBot" parent="@android:style/Theme.Light">
+    </style>
+    <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
+        <item name="android:windowBackground">@null</item>
     </style>
     
     <!--  Styles -->

@@ -44,10 +44,8 @@ public class StopInfoActivity extends ListActivity {
     private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
     private static final String STOP_DIRECTION = ".StopDir";
-    private static final String STOP_INFO = ".StopInfo";
     
     private ObaResponse mResponse;
-    private String mResponseString;
     private ObaStop mStop;
     private String mStopId;
     private Timer mTimer;
@@ -145,18 +143,14 @@ public class StopInfoActivity extends ListActivity {
         setHeader(bundle);
      
         mRoutesFilter = mStopsDbAdapter.getStopRouteFilter(mStopId);
-
         mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
-        if (savedInstanceState != null) {
-            String str = savedInstanceState.getString(STOP_INFO);
-            if (str != null) {
-                // Make a copy and keep it around.
-                mResponseString = new String(str);
-            }
-            getStopInfo(mResponseString, false, false);
+        
+        Object response = getLastNonConfigurationInstance();
+        if (response != null) {
+            setResponse((ObaResponse)response, false);
         }
         else {
-            getStopInfo(null, false, true);
+            getStopInfo(false);
         }
     }
     @Override
@@ -170,9 +164,8 @@ public class StopInfoActivity extends ListActivity {
         super.onDestroy();
     }
     @Override 
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putString(STOP_INFO, mResponseString);
+    public Object onRetainNonConfigurationInstance() {
+        return mResponse;
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -193,7 +186,7 @@ public class StopInfoActivity extends ListActivity {
             return true;
         }
         else if (id == R.id.refresh) {
-            getStopInfo(null, true, false);
+            getStopInfo(true);
             return true;
         }
         else if (id == R.id.filter) {
@@ -221,7 +214,7 @@ public class StopInfoActivity extends ListActivity {
         }
         mTripsForStop.refresh();
         // Always refresh once on resume
-        getStopInfo(null, true, false);
+        getStopInfo(true);
         
         mTimer.schedule(new TimerTask() {
             @Override
@@ -477,7 +470,7 @@ public class StopInfoActivity extends ListActivity {
     private final Handler mRefreshHandler = new Handler();
     private final Runnable mRefresh = new Runnable() {
         public void run() {
-            getStopInfo(null, true, false);
+            getStopInfo(true);
         }
     };
     
@@ -497,11 +490,16 @@ public class StopInfoActivity extends ListActivity {
     private final AsyncTasks.Progress mTitleProgress 
         = new AsyncTasks.ProgressIndeterminateVisibility(this);
     
-    private abstract class GetStopInfoBase extends AsyncTasks.StringToResponse {
+    private final class GetStopInfo extends AsyncTasks.StringToResponse {
         private final boolean mAddToDb;
-        GetStopInfoBase(AsyncTasks.Progress progress, boolean addToDb) {
+        
+        GetStopInfo(AsyncTasks.Progress progress, boolean addToDb) {
             super(progress);
             mAddToDb = addToDb;
+        }
+        @Override
+        protected ObaResponse doInBackground(String... params) {
+            return ObaApi.getArrivalsDeparturesForStop(params[0]);
         }
         @Override
         protected void doResult(ObaResponse result) {
@@ -514,28 +512,8 @@ public class StopInfoActivity extends ListActivity {
             } 
         }
     }
-    private final class GetStopInfoString extends GetStopInfoBase {
-        GetStopInfoString(AsyncTasks.Progress progress, boolean addToDb) {
-            super(progress, addToDb);
-        }
-        @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaResponse.createFromString(params[0]);
-        }        
-    }
-    private final class GetStopInfoNet extends GetStopInfoBase {
-        GetStopInfoNet(AsyncTasks.Progress progress, boolean addToDb) {
-            super(progress, addToDb);
-        }
-        @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getArrivalsDeparturesForStop(params[0]);
-        }
-    }
     
-    private void getStopInfo(String response, 
-                            boolean titleProgress,
-                            boolean addToDb) {
+    private void getStopInfo(boolean refresh) {
         if (mStopId == null) {
             return;
         }
@@ -543,25 +521,15 @@ public class StopInfoActivity extends ListActivity {
             return;
         }
         // To determine 
-        AsyncTasks.Progress progress = titleProgress ? mTitleProgress : mLoadingProgress;
+        AsyncTasks.Progress progress = refresh ? mTitleProgress : mLoadingProgress;
         
-        if (response != null) {
-            // Convert this to a string.
-            mAsyncTask = new GetStopInfoString(progress, addToDb);
-            // For some reason we need to make a copy of this string.
-            mAsyncTask.execute(response);
-        }
-        else {
-            // Get it from the Net
-            mAsyncTask = new GetStopInfoNet(progress, addToDb);
-            mAsyncTask.execute(mStopId);
-        }
+        // Get it from the Net
+        mAsyncTask = new GetStopInfo(progress, !refresh).execute(mStopId);
     }
     
     void setResponse(ObaResponse response, boolean addToDb) {
         assert(response != null);
         mResponse = response;
-        mResponseString = response.toString();
         ObaData data = response.getData();
         mStop = data.getStop();       
         setHeader(mStop, addToDb);

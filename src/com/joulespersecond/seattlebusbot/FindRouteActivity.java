@@ -189,9 +189,7 @@ public class FindRouteActivity extends ListActivity {
             Log.e(TAG, "Unknown adapter. Giving up!");
             return;
         }
-        Intent myIntent = new Intent(this, MapViewActivity.class);
-        myIntent.putExtra(MapViewActivity.ROUTE_ID, routeId);
-        startActivity(myIntent);
+        MapViewActivity.start(this, routeId);
     }
     
     private void fillFavorites() {

@@ -2,8 +2,6 @@ package com.joulespersecond.oba;
 
 import org.json.JSONException;
 
-import android.os.Bundle;
-
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.json.JSONObject;
 
@@ -17,13 +15,6 @@ public final class ObaStop {
      */
     ObaStop(JSONObject obj) {
         mData = obj;
-    }
-    /**
-     * Constructor.
-     * @param bundle The bundle to convert to an ObaStop.
-     */
-    ObaStop(Bundle bundle) {
-        mData = new JSONObject(bundle);
     }
     /**
      * Returns the stop ID.
@@ -101,13 +92,5 @@ public final class ObaStop {
     @Override
     public String toString() {
         return mData.toString();
-    }
-    
-    /**
-     * Converts this object to a bundle.
-     * @return The bundle representing this object.
-     */
-    public Bundle toBundle() {
-        return mData.toBundle();
     }
 }

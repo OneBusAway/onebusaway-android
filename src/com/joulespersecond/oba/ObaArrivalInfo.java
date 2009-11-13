@@ -2,8 +2,6 @@ package com.joulespersecond.oba;
 
 import com.joulespersecond.json.JSONObject;
 
-import android.os.Bundle;
-
 public final class ObaArrivalInfo {
     private final JSONObject mData;
     
@@ -14,14 +12,6 @@ public final class ObaArrivalInfo {
      */
     ObaArrivalInfo(JSONObject obj) {
         mData = obj;
-    }
-    /**
-     * Constructor.
-     * 
-     * @param bundle The bundle to convert to an ObaArrivalInfo.
-     */
-    ObaArrivalInfo(Bundle bundle) {
-        mData = new JSONObject(bundle);
     }
     /**
      * Returns the ID of the route.
@@ -100,13 +90,5 @@ public final class ObaArrivalInfo {
     @Override 
     public String toString() {
         return mData.toString();
-    }
-    
-    /**
-     * Returns this object as a bundle.
-     * @return The bundle that represents this object.
-     */
-    public Bundle toBundle() {
-        return mData.toBundle();
     }
 }

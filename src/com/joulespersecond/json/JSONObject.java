@@ -4,9 +4,6 @@ import java.io.Reader;
 
 import org.json.JSONException;
 
-import android.os.Bundle;
-import android.util.Log;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -21,6 +18,8 @@ import com.google.gson.JsonPrimitive;
  *
  */
 public class JSONObject {
+    //private static final String TAG = "JSONObject";
+    
     private static class GsonHolder {
         static final Gson gsonObj = new Gson();
         static final JsonParser parser = new JsonParser();
@@ -33,7 +32,6 @@ public class JSONObject {
         return GsonHolder.parser;
     }
     
-    private static final String TAG = "JSONObject";
     private final JsonObject mObj;
        
     public JSONObject() {
@@ -66,11 +64,6 @@ public class JSONObject {
         catch (JsonParseException e) {
             throw new JSONException("Unable to parse");
         }        
-    }
-    public JSONObject(Bundle bundle) {
-        Log.e(TAG, "Bundle not implemented!");
-        assert(false);
-        mObj = null;
     }
     JSONObject(JsonObject obj) {
         mObj = obj;
@@ -218,9 +211,5 @@ public class JSONObject {
     @Override
     public String toString() {
         return mObj.toString();
-    }
-    public Bundle toBundle() {
-        assert(false);
-        return new Bundle();
     }
 }

@@ -8,18 +8,12 @@ import java.net.URLConnection;
 
 import org.json.JSONException;
 
-import android.os.Bundle;
-
 import com.joulespersecond.json.JSONObject;
 
 public final class ObaResponse {
     //private static final String TAG = "ObaResponse";
     
     private final JSONObject mResponse;
-    // We need to convert this to a string quickly in order for
-    // consumers to bundle this quickly in onSaveInstanceState.
-    // Unfortunately JSONObject.toString() is *really* slow.
-    private final String mResponseString;
     
     /**
      * Constructor for ObaResponse
@@ -28,15 +22,9 @@ public final class ObaResponse {
      */
     ObaResponse(JSONObject obj) {
         mResponse = obj;
-        mResponseString = obj.toString();
-    }
-    private ObaResponse(Bundle bundle) {
-        mResponse = new JSONObject(bundle);  
-        mResponseString = mResponse.toString();
     }
     private ObaResponse(String json) throws JSONException {
         mResponse = new JSONObject(json);
-        mResponseString = json;
     }
     private ObaResponse(String error, boolean unused) {
         JSONObject obj;
@@ -48,7 +36,6 @@ public final class ObaResponse {
             obj = new JSONObject();
         }
         mResponse = obj;
-        mResponseString = mResponse.toString();
     }
     private ObaResponse(URL url) throws JSONException, IOException {
         URLConnection conn = url.openConnection();
@@ -56,25 +43,7 @@ public final class ObaResponse {
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(conn.getInputStream()),
                 8*1024);
-        
-        StringBuilder data;
-        int len = conn.getContentLength();
-        if (len == -1) {
-            data = new StringBuilder(); // default size
-        }
-        else {
-            data = new StringBuilder(len);
-        }
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            data.append(inputLine);
-        }
-        mResponseString = data.toString();
-        mResponse = new JSONObject(mResponseString);
-    }
-    
-    static public ObaResponse createFromBundle(Bundle bundle) {
-        return new ObaResponse(bundle);
+        mResponse = new JSONObject(in);
     }
     static public ObaResponse createFromString(String str)  {
         try {
@@ -106,10 +75,6 @@ public final class ObaResponse {
     }
     @Override
     public String toString() {
-        // Just to be absolutely certain, don't return our string.
-        return new String(mResponseString);
-    }
-    public Bundle toBundle() {
-        return mResponse.toBundle();
+        return mResponse.toString();
     }
 }

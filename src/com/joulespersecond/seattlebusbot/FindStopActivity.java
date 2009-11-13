@@ -211,11 +211,7 @@ public class FindStopActivity extends ListActivity {
             Log.e(TAG, "Unknown adapter. Giving up!");
             return;
         }
-        Intent myIntent = new Intent(this, MapViewActivity.class);
-        myIntent.putExtra(MapViewActivity.FOCUS_STOP_ID, stopId);
-        myIntent.putExtra(MapViewActivity.CENTER_LAT, lat);
-        myIntent.putExtra(MapViewActivity.CENTER_LON, lon);
-        startActivity(myIntent);
+        MapViewActivity.start(this, stopId, lat, lon);
     }
     
     private void fillFavorites() {

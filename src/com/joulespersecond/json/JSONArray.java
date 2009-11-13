@@ -2,24 +2,16 @@ package com.joulespersecond.json;
 
 import org.json.JSONException;
 
-import android.os.Bundle;
-import android.util.Log;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class JSONArray {
-    private static final String TAG = "JSONArray";
+    //private static final String TAG = "JSONArray";
     private final JsonArray mArray;
     
     public JSONArray() {
         mArray = new JsonArray();
-    }
-    public JSONArray(Bundle bundle) {
-        Log.e(TAG, "Bundle not implemented yet!");
-        mArray = null;
-        assert(false);    
     }
     
     JSONArray(JsonArray array) {
@@ -65,9 +57,5 @@ public class JSONArray {
     @Override
     public String toString() {
         return mArray.toString();
-    }
-    public Bundle toBundle() {
-        assert(false);
-        return new Bundle();
     }
 }

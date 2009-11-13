@@ -2,7 +2,6 @@ package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.os.Bundle;
 
 import com.joulespersecond.oba.ObaResponse;
 
@@ -106,25 +105,6 @@ final class AsyncTasks {
         @Override
         protected ObaResponse doInBackground(String... params) {
             return ObaResponse.createFromString(params[0]);
-        }
-    }
-    
-    /**
-     * This is the base class for converting Bundles to ObaResponses.
-     * Subclasses are expected to override doResult.
-     * 
-     * @author paulw
-     */
-    public static abstract class BundleToResponse extends ToResponseBase<Bundle> {
-        public BundleToResponse(Progress progress) {
-            super(progress);
-        }
-        public BundleToResponse(Progress progress, Handler<ObaResponse> handler) {
-            super(progress, handler);
-        }
-        @Override
-        protected ObaResponse doInBackground(Bundle... params) {
-            return ObaResponse.createFromBundle(params[0]);
         }
     }
     

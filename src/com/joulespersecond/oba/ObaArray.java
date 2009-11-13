@@ -5,8 +5,6 @@ import java.util.Map;
 
 import com.joulespersecond.json.JSONArray;
 
-import android.os.Bundle;
-
 public final class ObaArray {
     private final JSONArray mArray;
     
@@ -17,14 +15,6 @@ public final class ObaArray {
      */
     ObaArray(JSONArray obj) {
         mArray = obj;
-    }
-    /**
-     * Constructor.
-     * 
-     * @param bundle A bundle to be converted to an ObaArray.
-     */
-    ObaArray(Bundle bundle) {
-        mArray = new JSONArray(bundle);
     }
     /**
      * Returns the length of the array.
@@ -111,14 +101,5 @@ public final class ObaArray {
     @Override
     public String toString() {
         return mArray.toString();
-    }
-    
-    /**
-     * Converts this array to a Bundle.
-     * 
-     * @return This array converted to a Bundle
-     */
-    public Bundle toBundle() {
-        return mArray.toBundle();
     }
 }

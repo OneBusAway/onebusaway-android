@@ -4,8 +4,6 @@ import org.json.JSONException;
 
 import com.joulespersecond.json.JSONObject;
 
-import android.os.Bundle;
-
 public final class ObaRoute {
     private final JSONObject mData;
     
@@ -16,14 +14,6 @@ public final class ObaRoute {
      */
     ObaRoute(JSONObject obj) {
         mData = obj;
-    }
-    /**
-     * Constructor.
-     * 
-     * @param bundle The bundle to convert this an ObaRoute.
-     */
-    ObaRoute(Bundle bundle) {
-        mData = new JSONObject(bundle);
     }
     /**
      * Returns the route ID.
@@ -79,13 +69,5 @@ public final class ObaRoute {
     @Override
     public String toString() {
         return mData.toString();
-    }
-    
-    /**
-     * Converts this object to a Bundle.
-     * @return A bundle that represents this object.
-     */
-    public Bundle toBundle() {
-        return mData.toBundle();
     }
 }

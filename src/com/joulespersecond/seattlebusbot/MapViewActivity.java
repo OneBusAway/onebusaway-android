@@ -43,13 +43,11 @@ public class MapViewActivity extends MapActivity {
     
     public static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.1.html";
     
-    public static final String FOCUS_STOP_ID = ".FocusStopId";
-    public static final String CENTER_LAT = ".CenterLat";
-    public static final String CENTER_LON = ".CenterLon";
+    private static final String FOCUS_STOP_ID = ".FocusStopId";
+    private static final String CENTER_LAT = ".CenterLat";
+    private static final String CENTER_LON = ".CenterLon";
     // Switches to 'route mode' -- stops aren't updated on move
-    public static final String ROUTE_ID = ".RouteId";    
-    // If this is specified, it is a JSON string that corresponds to a ObaResponse
-    public static final String STOP_DATA = ".StopData";
+    private static final String ROUTE_ID = ".RouteId";    
     
     public MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
@@ -59,6 +57,7 @@ public class MapViewActivity extends MapActivity {
     private AsyncTask<Object,Void,ObaResponse> mGetStopsByLocationTask;
     private AsyncTask<String,Void,ObaResponse> mGetStopsForRouteTask;
     private volatile boolean mForceRestartLocationTask;
+    private ObaResponse mStopsResponse;
     
     // There's a major hole in the MapView in that there's apparently 
     // no way of getting an event when the user pans the view.
@@ -66,9 +65,17 @@ public class MapViewActivity extends MapActivity {
     // When we see the map center change, we'll wait for a second or so
     // and then request new stops.
     private Timer mTimer;
-    private GeoPoint mMapCenter;
-    private static final int CenterPollPeriod = 2000;
+    private static final int CENTER_POLL_PERIOD = 2000;
     
+    /**
+     * Starts the MapActivity with a particular stop focused with the
+     * center of the map at a particular point. 
+     * 
+     * @param context The context of the activity.
+     * @param focusId The stop to focus.
+     * @param lat The latitude of the map center.
+     * @param lon The longitude of the map center.
+     */
     public static final void start(Context context, String focusId, double lat, double lon) {
         Intent myIntent = new Intent(context, MapViewActivity.class);
         myIntent.putExtra(FOCUS_STOP_ID, focusId);
@@ -76,13 +83,25 @@ public class MapViewActivity extends MapActivity {
         myIntent.putExtra(CENTER_LON, lon);
         context.startActivity(myIntent);
     }
+    /**
+     * Starts the MapActivity in "RouteMode", which shows stops along a route,
+     * and does not get new stops when the user pans the map.
+     * 
+     * @param context The context of the activity.
+     * @param routeId The route to show.
+     * @param stopData If this is non-null, this is string representation of 
+     *          the ObaResponse to use as the stops for the route.
+     */
+    public static final void start(Context context, String routeId) {
+        Intent myIntent = new Intent(context, MapViewActivity.class);
+        myIntent.putExtra(ROUTE_ID, routeId);
+        context.startActivity(myIntent);        
+    }
     
     private final AsyncTasks.Handler<ObaResponse> mAsyncTaskHandler 
         = new AsyncTasks.Handler<ObaResponse>() {
             public void handleResult(ObaResponse result) {
-                if (result.getCode() == ObaApi.OBA_OK) {
-                    setStopOverlay(result.getData().getStops());
-                }
+                setStopOverlay(result);
             }
     };
     private final AsyncTasks.ProgressIndeterminateVisibility mAsyncProgress 
@@ -100,28 +119,6 @@ public class MapViewActivity extends MapActivity {
         protected void doResult(ObaResponse result) { }   
     }
     
-    private class GetStopsForRouteTask2 extends AsyncTasks.StringToResponse {
-        GetStopsForRouteTask2() {
-            super(mAsyncProgress, mAsyncTaskHandler);
-        }
-        @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaResponse.createFromString(params[0]);
-        }
-        @Override
-        protected void doResult(ObaResponse result) { }  
-    }
-    
-    private final class GetStopsByLocationInfo {
-        private final int latSpan;
-        private final int lonSpan;
-        
-        public GetStopsByLocationInfo(int lat, int lon) {
-            latSpan = lat;
-            lonSpan = lon;
-        }
-    }
-    
     private class GetStopsByLocationTask extends AsyncTasks.ToResponseBase<Object> {
         GetStopsByLocationTask() {
             super(mAsyncProgress);
@@ -129,14 +126,13 @@ public class MapViewActivity extends MapActivity {
         @Override
         protected ObaResponse doInBackground(Object... params) {
             GeoPoint point = (GeoPoint)params[0];
-            GetStopsByLocationInfo info = (GetStopsByLocationInfo)params[1];
-            return ObaApi.getStopsByLocation(point, 0, info.latSpan, info.lonSpan, null, 0);
+            Integer latSpan = (Integer)params[1];
+            Integer lonSpan = (Integer)params[2];
+            return ObaApi.getStopsByLocation(point, 0, latSpan, lonSpan, null, 0);
         }
         @Override
         protected void doResult(ObaResponse result) {
-            if (result.getCode() == ObaApi.OBA_OK) {
-                setStopOverlay(result.getData().getStops());
-            }
+            setStopOverlay(result);
         }
     }
     
@@ -148,7 +144,6 @@ public class MapViewActivity extends MapActivity {
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
         mMapView.setBuiltInZoomControls(true);
-        mMapCenter = mMapView.getMapCenter();
         // Add the MyLocation Overlay
         mLocationOverlay = new MyLocationOverlay(this, mMapView);
         List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -163,48 +158,48 @@ public class MapViewActivity extends MapActivity {
         View popup = findViewById(R.id.map_popup);
         popup.setOnClickListener(mPopupClick);
         
-        String stopData = null;
         Bundle bundle = getIntent().getExtras();
         double centerLat = 0.0;
         double centerLon = 0.0;
-        boolean setZoom = true;
-        boolean goToLocation = true;
         if (bundle != null) {
             mRouteId = bundle.getString(ROUTE_ID);
-            stopData = bundle.getString(STOP_DATA);
             mFocusStopId = bundle.getString(FOCUS_STOP_ID);
             centerLat = bundle.getDouble(CENTER_LAT);
             centerLon = bundle.getDouble(CENTER_LON);
         }
-        // These will override anything that's in the intent.
         if (savedInstanceState != null) {
-            mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
-            if (savedInstanceState.containsKey(CENTER_LAT)) {
-                centerLat = savedInstanceState.getDouble(CENTER_LAT);
-                centerLon = savedInstanceState.getDouble(CENTER_LON);
-                setZoom = false;
+            String focusedId = savedInstanceState.getString(FOCUS_STOP_ID);
+            if (focusedId != null) {
+                mFocusStopId = focusedId;
             }
         }
         final boolean routeMode = isRouteMode();
         
-        if (centerLat != 0.0 && centerLon != 0.0) {
+        final Object config = getLastNonConfigurationInstance();
+        if (config != null) {
+            final Object[] result = (Object[])config;
+            mFocusStopId = (String)result[1];
+            assert(result[0] != null);
+            setStopOverlay((ObaResponse)result[0]);
+        }
+        else if (routeMode) {
+            // Initial instance -- route mode.
+            getStopsForRoute();
+        }
+        else if (centerLat != 0.0 && centerLon != 0.0) {
+            // Initial instance -- "show stop mode"
+            // (initially moved to focused stop, but update the stops
+            //  if the user pans the map)
             GeoPoint point = ObaApi.makeGeoPoint(centerLat, centerLon);
             MapController mapCtrl = mMapView.getController();
             mapCtrl.setCenter(point);
-            if (setZoom) {
-                mapCtrl.setZoom(18);
-            }
-            mMapCenter = point; 
-            if (!routeMode) {
-                getStopsByLocation(mMapCenter);
-            }
-            goToLocation = false;
+            mapCtrl.setZoom(18);
+            getStopsByLocation(point);
         }
-        if (!routeMode && goToLocation) {
-            setMyLocation();            
-        }
-        if (routeMode) {
-            getStopsForRoute(stopData);            
+        else {
+            // Regular "default" start -- leave the center
+            // as it, and go to the user's location.
+            setMyLocation();
         }
     }
     @Override
@@ -270,22 +265,20 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        // Save the center of the map so we automatically 
-        // get the stops around it when we restart.
-        GeoPoint center = mMapCenter = mMapView.getMapCenter();
-        if (center != null) {
-            outState.putDouble(CENTER_LAT, center.getLatitudeE6()/ObaApi.E6);
-            outState.putDouble(CENTER_LON, center.getLongitudeE6()/ObaApi.E6);
+        // The only thing we really need to save it the focused stop ID.
+        String focusedStopId = getFocusedStopId();
+        if (focusedStopId != null) {
+            outState.putString(FOCUS_STOP_ID, focusedStopId);
         }
-        
-        StopOverlay overlay = mStopOverlay;
-        if (overlay != null) {
-            String id = overlay.getFocusedId();
-            if (id != null) {
-                outState.putString(FOCUS_STOP_ID, id); 
-            }
+    }
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        if (mStopsResponse != null) {
+            return new Object[] { mStopsResponse, getFocusedStopId() };
         }
-        super.onSaveInstanceState(outState);
+        else {
+            return null;
+        }
     }
     @Override
     protected boolean isRouteDisplayed() {
@@ -295,6 +288,8 @@ public class MapViewActivity extends MapActivity {
     private void watchMapCenter() {
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
+            private GeoPoint mMapCenter = mMapView.getMapCenter();
+            
             @Override
             public void run() {
                 final boolean restart = mForceRestartLocationTask;
@@ -306,7 +301,7 @@ public class MapViewActivity extends MapActivity {
                     mGetStopsHandler.post(mGetStopsFromCenter);
                 }
             }
-        }, CenterPollPeriod, CenterPollPeriod);
+        }, CENTER_POLL_PERIOD, CENTER_POLL_PERIOD);
     }
     
     // This is a bit annoying: runOnFirstFix() calls its runnable either
@@ -323,13 +318,12 @@ public class MapViewActivity extends MapActivity {
     final Runnable mGetStopsFromCenter = new Runnable() {
         public void run() {
             if (!isRouteMode()) {
-                getStopsByLocation(mMapCenter);
+                getStopsByLocation(mMapView.getMapCenter());
             }
         }
     };
     private void setMyLocation(GeoPoint point) {
         MapController mapCtrl = mMapView.getController();
-        mMapCenter = point;
         mapCtrl.animateTo(point);
         mapCtrl.setZoom(16);
         if (!isRouteMode()) {
@@ -346,25 +340,17 @@ public class MapViewActivity extends MapActivity {
         }
         Log.d(TAG, "Starting async task");
         mForceRestartLocationTask = false;
-        GetStopsByLocationInfo info = new GetStopsByLocationInfo(
-                mMapView.getLatitudeSpan(),
-                mMapView.getLongitudeSpan());
         mGetStopsByLocationTask = new GetStopsByLocationTask();
-        mGetStopsByLocationTask.execute(point, info);             
+        mGetStopsByLocationTask.execute(point, 
+                new Integer(mMapView.getLatitudeSpan()),
+                new Integer(mMapView.getLongitudeSpan()));             
     }
-    private void getStopsForRoute(String stopData) {
+    private void getStopsForRoute() {
         if (AsyncTasks.isRunning(mGetStopsForRouteTask)) {
             return;
         }
-        if (stopData != null) {
-            mGetStopsForRouteTask = new GetStopsForRouteTask2();
-            mGetStopsForRouteTask.execute(new String(stopData));
-        }
-        else {
-            assert(mRouteId != null);
-            mGetStopsForRouteTask = new GetStopsForRouteTask();
-            mGetStopsForRouteTask.execute(mRouteId);
-        }
+        assert(mRouteId != null);
+        mGetStopsForRouteTask = new GetStopsForRouteTask().execute(mRouteId);
     }
     
     private void setMyLocation() {
@@ -466,7 +452,14 @@ public class MapViewActivity extends MapActivity {
         }
     };
     
-    private void setStopOverlay(ObaArray stops) {
+    private void setStopOverlay(ObaResponse response) {
+        mStopsResponse = response;
+        
+        if (response.getCode() != ObaApi.OBA_OK) {
+            return;
+        }
+        final ObaArray stops = response.getData().getStops();
+        
         List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.
         final View popup = findViewById(R.id.map_popup);
@@ -494,6 +487,13 @@ public class MapViewActivity extends MapActivity {
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }
+    private String getFocusedStopId() {
+        if (mStopOverlay != null) {
+            return mStopOverlay.getFocusedId();
+        }
+        return null;
+    }
+    
     private void setClickable(int id, ClickableSpan span) {
         TextView v = (TextView)findViewById(id);
         Spannable text = (Spannable)v.getText();

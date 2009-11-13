@@ -84,10 +84,16 @@ public final class ObaData {
     getStopGroupings() {
         return new ObaArray(ObaApi.getChildArray(mData, "stopGroupings"));
     }
-    /*
-    public final ObaPolylinesArray  getPolylines() {
+    
+    /**
+     * Retrieves the list of polylines.
+     * 
+     * @return The list of polylines, or an empty array.
+     */
+    public ObaArray
+    getPolylines() {
+        return new ObaArray(ObaApi.getChildArray(mData, "polylines"));
     }
-    */
     
     @Override
     public String toString() {

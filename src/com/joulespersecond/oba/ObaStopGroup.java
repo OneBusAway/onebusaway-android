@@ -69,4 +69,13 @@ public final class ObaStopGroup {
             return new ArrayList<String>();
         }
     }
+    
+    /**
+     * Returns the array of polylines.
+     * 
+     * @return The array of polylines, or an empty array.
+     */
+    public ObaArray getPolylines() {
+        return new ObaArray(ObaApi.getChildArray(mData,  "polylines"));
+    }
 }

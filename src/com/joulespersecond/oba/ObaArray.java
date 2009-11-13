@@ -83,6 +83,15 @@ public final class ObaArray {
         return new ObaStopGroup(ObaApi.getChildObj(mArray, index));
     }
     
+    /**
+     * Returns a polyline object for the specified index.
+     * 
+     * @param index The child index.
+     * @return The polyline group object, or an empty object if it isn't a polyline.
+     */
+    public ObaPolyline getPolyline(int index) {
+        return new ObaPolyline(ObaApi.getChildObj(mArray, index));
+    }
     
     /**
      * Returns a map from stop ID to ObaStop objects for all the stops in this array.

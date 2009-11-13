@@ -119,6 +119,9 @@ public class JSONObject {
     //
     // Int
     //
+    public int optInt(String key) {
+        return optInt(key, 0);
+    }
     public int optInt(String key, int defaultValue) {
         JsonPrimitive child = mObj.getAsJsonPrimitive(key);
         if ((child != null) && child.isNumber()) {

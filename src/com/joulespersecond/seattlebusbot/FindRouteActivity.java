@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -37,6 +38,7 @@ public class FindRouteActivity extends ListActivity {
     private RoutesDbAdapter mDbAdapter;
     private boolean mShortcutMode = false;
     
+    private ObaResponse mResponse;
     private FindRouteTask mAsyncTask;
     
     @Override
@@ -56,6 +58,40 @@ public class FindRouteActivity extends ListActivity {
         
         mDbAdapter = new RoutesDbAdapter(this);
         mDbAdapter.open();
+
+        Object obj = getLastNonConfigurationInstance();
+        if (obj != null) {
+            Object[] config = (Object[])obj;
+            TextView textView = (TextView)findViewById(R.id.search_text);
+            textView.setText((Editable)config[0]);
+            setResponse((ObaResponse)config[1]);
+        }
+        else {
+            fillFavorites();
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        mDbAdapter.close();
+        if (mAsyncTask != null) {
+            mAsyncTask.cancel(true);
+        }
+        super.onDestroy();
+    }
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        if (mResponse != null) {
+            EditText text = (EditText)findViewById(R.id.search_text);
+            return new Object[] { text.getText(), mResponse };
+        }
+        else {
+            return null;
+        }
+    }
+    @Override
+    protected void onResume() {
+        // This is deferred to onResume because we want it after
+        // onRestoreInstanceState.
         
         TextView textView = (TextView)findViewById(R.id.search_text);
         textView.addTextChangedListener(new TextWatcher() {
@@ -74,13 +110,7 @@ public class FindRouteActivity extends ListActivity {
                     int count) {                
             }
         });
-
-        fillFavorites();
-    }
-    @Override
-    protected void onDestroy() {
-        mDbAdapter.close();
-        super.onDestroy();
+        super.onResume();
     }
     
     @Override
@@ -216,6 +246,7 @@ public class FindRouteActivity extends ListActivity {
         SimpleCursorAdapter simpleAdapter = 
             new SimpleCursorAdapter(this, R.layout.find_route_listitem, c, from, to);
         setListAdapter(simpleAdapter);
+        mResponse = null;
     }
     
     private void makeShortcut(String routeId, String routeName) {
@@ -265,17 +296,21 @@ public class FindRouteActivity extends ListActivity {
         }
         @Override
         protected void doResult(ObaResponse result) {
-            TextView empty = (TextView) findViewById(android.R.id.empty);
-            if (result.getCode() == ObaApi.OBA_OK) {
-                empty.setText(R.string.find_hint_noresults);
-                setListAdapter(new SearchResultsListAdapter(result));
-            }
-            else {
-                empty.setText(R.string.generic_comm_error);
-            }
+            setResponse(result);
         }
     }
     
+    private void setResponse(ObaResponse response) {
+        mResponse = response;
+        TextView empty = (TextView) findViewById(android.R.id.empty);
+        if (response.getCode() == ObaApi.OBA_OK) {
+            empty.setText(R.string.find_hint_noresults);
+            setListAdapter(new SearchResultsListAdapter(response));
+        }
+        else {
+            empty.setText(R.string.generic_comm_error);
+        }        
+    }
     
     private void doSearch(CharSequence text) {
         if (text.length() == 0) {

@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
@@ -41,6 +42,7 @@ public class FindStopActivity extends ListActivity {
     private StopsDbAdapter mDbAdapter;
     private boolean mShortcutMode = false;
     
+    private ObaResponse mResponse;
     private FindStopTask mAsyncTask;
     // This is a bit expensive, so only do it if we need to.
     private boolean mRedoNoFavoritesText = true;
@@ -66,10 +68,44 @@ public class FindStopActivity extends ListActivity {
         
         mDbAdapter = new StopsDbAdapter(this);
         mDbAdapter.open();
+                
+        Object obj = getLastNonConfigurationInstance();
+        if (obj != null) {
+            Object[] config = (Object[])obj;
+            TextView textView = (TextView)findViewById(R.id.search_text);
+            textView.setText((Editable)config[0]);
+            setResponse((ObaResponse)config[1]);
+        }
+        else {
+            fillFavorites();
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        mDbAdapter.close();
+        if (mAsyncTask != null) {
+            mAsyncTask.cancel(true);
+        }
+        super.onDestroy();
+    }
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        if (mResponse != null) {
+            EditText text = (EditText)findViewById(R.id.search_text);
+            return new Object[] { text.getText(), mResponse };
+        }
+        else {
+            return null;
+        }
+    }
+    @Override
+    protected void onResume() {
+        // This is deferred to onResume because we want it after
+        // onRestoreInstanceState.
         
         TextView textView = (TextView)findViewById(R.id.search_text);
         textView.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {    
+            public void afterTextChanged(Editable s) {
                 if (s.length() >= 5) {
                     doSearch(s);
                 }
@@ -79,22 +115,13 @@ public class FindStopActivity extends ListActivity {
                 }
             }
             public void beforeTextChanged(CharSequence s, int start, int count,
-                    int after) {            
+                    int after) {      
             }
             public void onTextChanged(CharSequence s, int start, int before,
                     int count) {                
             }
-        });
-        
-        fillFavorites();
-    }
-    @Override
-    protected void onDestroy() {
-        mDbAdapter.close();
-        if (mAsyncTask != null) {
-            mAsyncTask.cancel(true);
-        }
-        super.onDestroy();
+        });  
+        super.onResume();
     }
     
     @Override
@@ -251,6 +278,7 @@ public class FindStopActivity extends ListActivity {
             }
         });
         setListAdapter(simpleAdapter);
+        mResponse = null;
     }
     
     private void makeShortcut(String stopId, String stopName, String direction) {
@@ -300,17 +328,21 @@ public class FindStopActivity extends ListActivity {
         }
         @Override
         protected void doResult(ObaResponse result) {
-            TextView empty = (TextView) findViewById(android.R.id.empty);
-            if (result.getCode() == ObaApi.OBA_OK) {
-                empty.setText(R.string.find_hint_noresults);
-                setListAdapter(new SearchResultsListAdapter(result));
-            }
-            else {
-                empty.setText(R.string.generic_comm_error);
-                mRedoNoFavoritesText = true;
-            }
-            setProgressBarIndeterminateVisibility(false);
+            setResponse(result);
         }
+    }
+    
+    private void setResponse(ObaResponse response) {
+        mResponse = response;
+        TextView empty = (TextView) findViewById(android.R.id.empty);
+        if (response.getCode() == ObaApi.OBA_OK) {
+            empty.setText(R.string.find_hint_noresults);
+            setListAdapter(new SearchResultsListAdapter(response));
+        }
+        else {
+            empty.setText(R.string.generic_comm_error);
+            mRedoNoFavoritesText = true;
+        }        
     }
     
     private void doSearch(CharSequence text) {

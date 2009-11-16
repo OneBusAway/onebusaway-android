@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.android.maps.GeoPoint;
-import com.joulespersecond.json.JSONObject;
 
 public final class ObaPolyline {
-    private final JSONObject mData;
+    private final String points;
+    private final int length;
+    private final String levels;
     
     /**
      * Constructor.
-     * 
-     * @param obj The encapsulated object.
      */
-    ObaPolyline(JSONObject obj) {
-        mData = obj;
+    ObaPolyline() {
+        points = "";
+        length = 0;
+        levels = "";
     }
     
     /**
@@ -24,7 +25,7 @@ public final class ObaPolyline {
      * @return The number of points in the line.
      */
     public int getLength() {
-        return mData.optInt("length");
+        return length;
     }
     
     /**
@@ -33,7 +34,7 @@ public final class ObaPolyline {
      * @return The levels to display this line, or the empty string.
      */
     public String getLevels() {
-        return mData.optString("levels");
+        return levels;
     }
     
     /**
@@ -42,8 +43,7 @@ public final class ObaPolyline {
      * @return The list of points in this line.
      */
     public List<GeoPoint> getPoints() {
-        return decodeLine(mData.optString("points"),
-                          mData.optInt("length"));
+        return decodeLine(points, length);
     }
     
     /** 
@@ -52,7 +52,7 @@ public final class ObaPolyline {
      * @return The string encoding of the points in this line.
      */
     public String getRawPoints() {
-        return mData.optString("points");
+        return points;
     }
     
     /**

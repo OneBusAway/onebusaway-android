@@ -272,7 +272,7 @@ public class StopInfoActivity extends ListActivity {
         private boolean[] mChecks;
         
         DialogListener(ObaStop stop, ArrayList<String> filter) {
-            final ObaArray routes = stop.getRoutes();
+            final ObaArray<ObaRoute> routes = stop.getRoutes();
             final int len = routes.length();
             
             mRouteIds = new ArrayList<String>(len);
@@ -282,7 +282,7 @@ public class StopInfoActivity extends ListActivity {
             // Go through all the stops, add them to the Ids and Names
             // For each stop, if it is in the enabled list, mark it as checked.
             for (int i=0; i < len; ++i) {
-                final ObaRoute route = routes.getRoute(i);
+                final ObaRoute route = routes.get(i);
                 final String id = route.getId();
                 mRouteIds.add(i, id);
                 mRouteNames[i] = route.getShortName();
@@ -385,7 +385,7 @@ public class StopInfoActivity extends ListActivity {
             return false;
         }
         
-        public void setData(ObaArray arrivals) {
+        public void setData(ObaArray<ObaArrivalInfo> arrivals) {
             mInfo = StopInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
             setFilterHeader();
             notifyDataSetChanged();

@@ -5,13 +5,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import org.json.JSONException;
-
 import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
-import com.joulespersecond.json.JSONArray;
-import com.joulespersecond.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public final class ObaApi {
     private static final String TAG = "ObaApi";
@@ -30,14 +28,35 @@ public final class ObaApi {
     
     public static final double E6 = 1000*1000;
     
+    private static class GsonHolder {
+        @SuppressWarnings("unchecked")
+        static final Gson gsonObj = new GsonBuilder()
+            .registerTypeAdapter(ObaArray.class, new ObaArray.Deserializer())
+            
+            .registerTypeAdapter(ObaAgency.class, 
+                    new JsonHelp.CachingDeserializer<ObaAgency>(
+                            new ObaAgency.Deserialize(), "id"))
+                            
+            .registerTypeAdapter(ObaRoute.class,
+                    new JsonHelp.CachingDeserializer<ObaRoute>(
+                            new ObaRoute.Deserialize(), "id"))
+                            
+            .registerTypeAdapter(ObaStop.class,
+                    new JsonHelp.CachingDeserializer<ObaStop>(
+                            new ObaStop.Deserialize(), "id"))
+                            
+            .create();
+    }
+
+    static Gson getGson() {
+        return GsonHolder.gsonObj;
+    }
+    
     private static ObaResponse doRequest(String urlStr) {
         Log.d(TAG, "Request: "  + urlStr);
         try {
             return ObaResponse.createFromURL(new URL(urlStr));
         } catch (IOException e) {
-            e.printStackTrace();
-            return ObaResponse.createFromError(e.toString());
-        } catch (JSONException e) {
             e.printStackTrace();
             return ObaResponse.createFromError(e.toString());
         }
@@ -171,52 +190,6 @@ public final class ObaApi {
     public static ObaResponse getArrivalsDeparturesForStop(String id) {
         return doRequest(
                 String.format("%s/arrivals-and-departures-for-stop/%s.json?key=%s", OBA_URL, id, API_KEY));
-    }
-    
-    /**
-     * Returns the child object as a JSONObject if it exists and is an object,
-     * otherwise returns an empty object.
-     * 
-     * @param obj The JSON parent object.
-     * @param key The associated key.
-     * @return The JSON object associated with the key, or an empty object.
-     */
-    static JSONObject getChildObj(JSONObject obj, String key) {
-        try {
-            return obj.getJSONObject(key);
-        } catch (JSONException e) {
-            return new JSONObject();
-        }
-    }
-    /**
-     * Returns the object at the specified index if it exists and is an object,
-     * otherwise returns an empty object.
-     * 
-     * @param array The JSON parent array.
-     * @param index The index.
-     * @return The JSON object associated with the index, or an empty object.
-     */
-    static JSONObject getChildObj(JSONArray array, int index) {
-        try {
-            return array.getJSONObject(index);
-        } catch (JSONException e) {
-            return new JSONObject();
-        }
-    }
-    /**
-     * Returns the child object as a JSONArray if it exists and is an array,
-     * otherwise returns an empty array.
-     * 
-     * @param obj The JSON parent object.
-     * @param key The associated key.
-     * @return The JSON array associated with the key, or an empty array.
-     */
-    static JSONArray getChildArray(JSONObject obj, String key) {
-        try {
-            return obj.getJSONArray(key);
-        } catch (JSONException e) {
-            return new JSONArray();
-        }
     }
     
     /**

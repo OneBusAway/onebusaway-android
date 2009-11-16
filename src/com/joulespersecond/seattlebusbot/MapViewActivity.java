@@ -367,15 +367,15 @@ public class MapViewActivity extends MapActivity {
         }
     }
     
-    private class RouteArrayAdapter extends Adapters.BaseRouteArrayAdapter {       
-        public RouteArrayAdapter(ObaArray routes) {
+    private class RouteArrayAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {       
+        public RouteArrayAdapter(ObaArray<ObaRoute> routes) {
             super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
         }
         @Override
         protected void setData(View view, int position) {
             TextView shortName = (TextView)view.findViewById(R.id.short_name);
 
-            ObaRoute route = mArray.getRoute(position);
+            ObaRoute route = mArray.get(position);
             shortName.setText(route.getShortName());
         }
     }    
@@ -458,7 +458,7 @@ public class MapViewActivity extends MapActivity {
         if (response.getCode() != ObaApi.OBA_OK) {
             return;
         }
-        final ObaArray stops = response.getData().getStops();
+        final ObaArray<ObaStop> stops = response.getData().getStops();
         
         List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.

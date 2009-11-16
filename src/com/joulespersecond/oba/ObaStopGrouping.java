@@ -1,19 +1,20 @@
 package com.joulespersecond.oba;
 
-import com.joulespersecond.json.JSONObject;
 
 public final class ObaStopGrouping {
-    private final JSONObject mData;
-
     public final String TYPE_DIRECTION = "direction";
+    
+    private final boolean ordered;
+    private final String type;
+    private final ObaArray<ObaStopGroup> stopGroups;
     
     /**
      * Constructor.
-     * 
-     * @param obj The encapsulated object.
      */
-    ObaStopGrouping(JSONObject obj) {
-        mData = obj;
+    ObaStopGrouping() {
+        ordered = false;
+        type = "";
+        stopGroups = null;
     }
     
     /**
@@ -21,7 +22,15 @@ public final class ObaStopGrouping {
      * @return A boolean indicating whether this grouping is ordered.
      */
     public boolean getOrdered() {
-        return mData.optBoolean("ordered");
+        return ordered;
+    }
+    
+    /**
+     * Returns the type of ordering.
+     * @return The type of ordering.
+     */
+    public String getType() {
+        return type;
     }
     
     /**
@@ -29,7 +38,12 @@ public final class ObaStopGrouping {
      * 
      * @return The list of stop groups.
      */
-    public ObaArray getStopGroups() {
-        return new ObaArray(ObaApi.getChildArray(mData, "stopGroups"));
+    public ObaArray<ObaStopGroup> getStopGroups() {
+        return (stopGroups != null) ? stopGroups : new ObaArray<ObaStopGroup>();
+    }
+    
+    @Override
+    public String toString() {
+        return ObaApi.getGson().toJson(this);
     }
 }

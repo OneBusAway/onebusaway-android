@@ -133,6 +133,16 @@ public class RouteInfoActivity extends ExpandableListActivity {
             mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
             initMaps(cxt);
         }
+        
+        private static Map<String,ObaStop> getStopMap(ObaArray<ObaStop> stops) {
+            final int len = stops.length();
+            HashMap<String,ObaStop> result = new HashMap<String,ObaStop>(len);
+            for (int i=0; i < len; ++i) {
+                ObaStop stop = stops.get(i);
+                result.put(stop.getId(), stop);
+            }
+            return result;
+        }
             
         private void initMaps(Context cxt) {
             // Convert to weird array type. From the documentation of
@@ -154,19 +164,19 @@ public class RouteInfoActivity extends ExpandableListActivity {
             // and should include all the entries specified in "childFrom"
             if (mResponse.getCode() == ObaApi.OBA_OK) {
                 final ObaData data = mResponse.getData();
-                final ObaArray stops = data.getStops();
-                final Map<String,ObaStop> stopMap = stops.getStopMap();
-                final ObaArray groupings = data.getStopGroupings();
+                final ObaArray<ObaStop> stops = data.getStops();
+                final Map<String,ObaStop> stopMap = getStopMap(stops);
+                final ObaArray<ObaStopGrouping> groupings = data.getStopGroupings();
                 final int groupingsLen = groupings.length();
                 
                 for (int groupingIndex = 0; groupingIndex < groupingsLen; ++groupingIndex) {
-                    final ObaStopGrouping grouping = groupings.getStopGrouping(groupingIndex);
-                    final ObaArray groups = grouping.getStopGroups();
+                    final ObaStopGrouping grouping = groupings.get(groupingIndex);
+                    final ObaArray<ObaStopGroup> groups = grouping.getStopGroups();
                     final int groupsLen = groups.length();
                     
                     for (int i=0; i < groupsLen; ++i) {
                         final HashMap<String,String> groupMap = new HashMap<String,String>(1);
-                        final ObaStopGroup group = groups.getStopGroup(i);
+                        final ObaStopGroup group = groups.get(i);
                         // We can initialize the stop grouping values.
                         groupMap.put("name", group.getName());
                         // Add this to the groupings map
@@ -271,7 +281,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         TextView empty = (TextView)findViewById(android.R.id.empty);
         
         if (routeInfo.getCode() == ObaApi.OBA_OK) {
-            ObaRoute route = routeInfo.getData().getThisRoute();
+            ObaRoute route = routeInfo.getData().getAsRoute();
             TextView shortNameText = (TextView)findViewById(R.id.short_name);
             TextView longNameText = (TextView)findViewById(R.id.long_name);
             TextView agencyText = (TextView)findViewById(R.id.agency);

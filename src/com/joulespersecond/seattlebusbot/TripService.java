@@ -347,10 +347,11 @@ public class TripService extends Service {
         final boolean checkArrivals(ObaResponse response, 
                 Cursor c, long reminderMS, long now) {
             final String tripId = mTripId;
-            final ObaArray arrivals = response.getData().getArrivalsAndDepartures();
+            final ObaArray<ObaArrivalInfo> arrivals 
+                    = response.getData().getArrivalsAndDepartures();
             final int length = arrivals.length();
             for (int i=0; i < length; ++i) {
-                ObaArrivalInfo info = arrivals.getArrivalInfo(i);
+                ObaArrivalInfo info = arrivals.get(i);
                 if (tripId.equals(info.getTripId())) {
                     if (mState == NOT_FOUND) {
                         Log.d(TAG, "Found trip: " + getTaskId());

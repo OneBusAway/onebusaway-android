@@ -296,7 +296,7 @@ public class FindStopActivity extends ListActivity {
         finish();
     }
     
-    private final class SearchResultsListAdapter extends Adapters.BaseStopArrayAdapter {       
+    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaStop> {       
         public SearchResultsListAdapter(ObaResponse response) {
             super(FindStopActivity.this,
                     response.getData().getStops(),
@@ -307,7 +307,7 @@ public class FindStopActivity extends ListActivity {
             TextView route = (TextView)view.findViewById(R.id.name);
             TextView direction = (TextView)view.findViewById(R.id.direction);
 
-            ObaStop stop = mArray.getStop(position);
+            ObaStop stop = mArray.get(position);
             route.setText(stop.getName());
             direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
         }

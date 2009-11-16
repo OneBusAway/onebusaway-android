@@ -264,7 +264,7 @@ public class FindRouteActivity extends ListActivity {
         finish();        
     }
     
-    private final class SearchResultsListAdapter extends Adapters.BaseRouteArrayAdapter {
+    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {
         public SearchResultsListAdapter(ObaResponse response) {
             super(FindRouteActivity.this, 
                     response.getData().getRoutes(), 
@@ -275,7 +275,7 @@ public class FindRouteActivity extends ListActivity {
             TextView shortName = (TextView)view.findViewById(R.id.short_name);
             TextView longName = (TextView)view.findViewById(R.id.long_name);
 
-            ObaRoute route = mArray.getRoute(position);
+            ObaRoute route = mArray.get(position);
             shortName.setText(route.getShortName());
             longName.setText(route.getLongName());
         }

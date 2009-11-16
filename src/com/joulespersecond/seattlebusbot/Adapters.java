@@ -9,12 +9,12 @@ import android.widget.BaseAdapter;
 import com.joulespersecond.oba.ObaArray;
 
 class Adapters {
-    public abstract static class BaseArrayAdapter extends BaseAdapter {
+    public abstract static class BaseArrayAdapter<E> extends BaseAdapter {
         private final Context mContext;
-        protected final ObaArray mArray;
+        protected final ObaArray<E> mArray;
         private final int mLayout;
         
-        public BaseArrayAdapter(Context context, ObaArray array, int layout) {
+        public BaseArrayAdapter(Context context, ObaArray<E> array, int layout) {
             mContext = context;
             mArray = array;
             mLayout = layout;
@@ -24,6 +24,9 @@ class Adapters {
         }
         public long getItemId(int position) {
             return position;
+        }
+        public Object getItem(int position) {
+            return mArray.get(position);
         }
         public View getView(int position, View convertView, ViewGroup parent) {
             View newView;
@@ -42,21 +45,5 @@ class Adapters {
             return false;
         }
         abstract protected void setData(View view, int position);
-    }
-    public static abstract class BaseRouteArrayAdapter extends BaseArrayAdapter {
-        public BaseRouteArrayAdapter(Context context, ObaArray array, int layout) {
-            super(context, array, layout);
-        }
-        public Object getItem(int position) {
-            return mArray.getRoute(position);
-        }
-    }
-    public static abstract class BaseStopArrayAdapter extends BaseArrayAdapter {
-        public BaseStopArrayAdapter(Context context, ObaArray array, int layout) {
-            super(context, array, layout);
-        }
-        public Object getItem(int position) {
-            return mArray.getStop(position);
-        }
     }
 }

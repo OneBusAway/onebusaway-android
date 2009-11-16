@@ -1,20 +1,53 @@
 package com.joulespersecond.oba;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 
-import com.joulespersecond.json.JSONArray;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
-public final class ObaArray {
-    private final JSONArray mArray;
+public final class ObaArray<E> {
+    static class Deserializer<E> implements JsonDeserializer<ObaArray<E>> {
+        public ObaArray<E> deserialize(JsonElement elem, Type type,
+                JsonDeserializationContext context) throws JsonParseException {
+            try {
+                Type[] typeParameters = ((ParameterizedType)type).getActualTypeArguments();
+                final Type subtype = typeParameters[0];
+                JsonArray array = elem.getAsJsonArray();
+                final int size = array.size();
+                ArrayList<E> result = new ArrayList<E>(size);
+                for (int i=0; i < size; ++i) {
+                    JsonElement child = array.get(i);
+                    E e = context.deserialize(child, subtype);
+                    result.add(e);
+                }
+                return new ObaArray<E>(result);
+            }
+            catch (ClassCastException e) {
+                return new ObaArray<E>();
+            }
+            catch (IllegalStateException e) {
+                return new ObaArray<E>();
+            } 
+        } 
+    }
+    
+    private final ArrayList<E> mArray;
     
     /**
      * Constructor.
      * 
      * @param The encapsulated array.
      */
-    ObaArray(JSONArray obj) {
-        mArray = obj;
+    ObaArray() {
+        mArray = new ArrayList<E>();
+    }
+    ObaArray(ArrayList<E> array) {
+        mArray = array;
     }
     /**
      * Returns the length of the array.
@@ -22,80 +55,17 @@ public final class ObaArray {
      * @return The length of the array.
      */
     public int length() {
-        return mArray.length();
+        return mArray.size();
     }
     /**
-     * Returns a stop object for the specified index.
+     * Returns the object for the specified index.
      * 
      * @param index The child index.
-     * @return The stop object, or an empty object if it isn't a stop.
-     */
-    public ObaStop getStop(int index) {
-        return new ObaStop(ObaApi.getChildObj(mArray, index));
-    }
-    /**
-     * Returns a route object for the specified index.
+     * @return The child object.
      * 
-     * @param index The child index.
-     * @return The route object, or an empty object if it isn't a route.
      */
-    public ObaRoute getRoute(int index) {
-        return new ObaRoute(ObaApi.getChildObj(mArray, index));
-    }
-    
-    /**
-     * Returns an arrival object for the specified index.
-     * 
-     * @param index The child index.
-     * @return The arrival object, or an empty object if it isn't an arrival info.
-     */
-    public ObaArrivalInfo getArrivalInfo(int index) {
-        return new ObaArrivalInfo(ObaApi.getChildObj(mArray, index));
-    }
-    
-    /**
-     * Returns a stop grouping object for the specified index.
-     * 
-     * @param index The child index.
-     * @return The stop grouping object, or an empty object if it isn't an stop grouping.
-     */
-    public ObaStopGrouping getStopGrouping(int index) {
-        return new ObaStopGrouping(ObaApi.getChildObj(mArray, index));
-    }
-    
-    /** 
-     * Returns a stop group object for the specified index.
-     * 
-     * @param index The child index.
-     * @return The stop group object, or an empty object if it isn't a stop group.
-     */
-    public ObaStopGroup getStopGroup(int index) {
-        return new ObaStopGroup(ObaApi.getChildObj(mArray, index));
-    }
-    
-    /**
-     * Returns a polyline object for the specified index.
-     * 
-     * @param index The child index.
-     * @return The polyline group object, or an empty object if it isn't a polyline.
-     */
-    public ObaPolyline getPolyline(int index) {
-        return new ObaPolyline(ObaApi.getChildObj(mArray, index));
-    }
-    
-    /**
-     * Returns a map from stop ID to ObaStop objects for all the stops in this array.
-     * 
-     * @return A map where the key is a stop ID, and the value is an ObaStop object.
-     */
-    public Map<String,ObaStop> getStopMap() {
-        final int len = mArray.length();
-        HashMap<String,ObaStop> result = new HashMap<String,ObaStop>(len);
-        for (int i=0; i < len; ++i) {
-            ObaStop stop = getStop(i);
-            result.put(stop.getId(), stop);
-        }
-        return result;
+    public E get(int index) {
+        return mArray.get(index);
     }
     
     @Override

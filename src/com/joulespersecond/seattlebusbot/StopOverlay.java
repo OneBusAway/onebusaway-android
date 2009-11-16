@@ -16,7 +16,7 @@ import com.joulespersecond.oba.ObaStop;
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     private static final String TAG = "StopOverlay";
     
-    private ObaArray mStops;
+    private ObaArray<ObaStop> mStops;
     private Activity mActivity;
     
     private static final int getResourceIdForDirection(String direction) {
@@ -54,7 +54,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         }
     }
     
-    public StopOverlay(ObaArray stops, 
+    public StopOverlay(ObaArray<ObaStop> stops, 
             Activity activity) {
         super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_n)));
         mStops = stops;
@@ -64,7 +64,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     @Override
     protected OverlayItem 
     createItem(int i) {
-        final ObaStop stop = mStops.getStop(i);
+        final ObaStop stop = mStops.get(i);
         final OverlayItem item = new StopOverlayItem(stop);
         int res = getResourceIdForDirection(stop.getDirection());
         final Drawable marker = mActivity.getResources().getDrawable(res);
@@ -173,7 +173,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     protected boolean onTap(int index) {
         final OverlayItem item = getItem(index);
         if (item.equals(getFocus())) {
-            ObaStop stop = mStops.getStop(index);
+            ObaStop stop = mStops.get(index);
             MapViewActivity.goToStop(mActivity, stop);
         }
         else {

@@ -3,23 +3,35 @@ package com.joulespersecond.oba;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONException;
-
-import com.joulespersecond.json.JSONArray;
-import com.joulespersecond.json.JSONObject;
-
 public final class ObaStopGroup {
-    private final JSONObject mData;
-
-    public final String TYPE_DIRECTION = "direction";
+    private static final class StopGroupName {
+        private final String type;
+        private final List<String> names;
+        
+        private StopGroupName() {
+            type = "";
+            names = null;
+        }
+        String getType() {
+            return type;
+        }
+        List<String> getNames() {
+            return (names != null) ? names : new ArrayList<String>();
+        }
+    }
+    private final List<String> stopIds;
+    private final ObaArray<ObaPolyline> polylines;
+    private final StopGroupName name;
+   
+    public static final String TYPE_DESTINATION = "destination";
     
     /**
      * Constructor.
-     * 
-     * @param obj The encapsulated object.
      */
-    ObaStopGroup(JSONObject obj) {
-        mData = obj;
+    ObaStopGroup() {
+        stopIds = null;
+        polylines = null;
+        name = null;
     }
     
     /**
@@ -28,7 +40,7 @@ public final class ObaStopGroup {
      * @return One of the TYPE_* string constants.
      */
     public String getType() {
-        return mData.optString("type");
+        return (name != null) ? name.getType() : "";
     }
     
     /**
@@ -37,17 +49,14 @@ public final class ObaStopGroup {
      * @return The name of this grouping, or the empty string.
      */
     public String getName() {
-        try {
-            final JSONObject name = mData.getJSONObject("name");
-            final JSONArray names = name.getJSONArray("names");
-            if (names.length() > 0) {
-                return names.getString(0);
-            }
+        if (name == null) {
             return "";
         }
-        catch (JSONException e) {
-            return "";
+        List<String> names = name.getNames();
+        if (names.size() > 0) {
+            return names.get(0);
         }
+        return "";
     }
     
     /**
@@ -56,18 +65,7 @@ public final class ObaStopGroup {
      * @return The stop IDs for this grouping.
      */
     public List<String> getStopIds() {
-        try {
-            final JSONArray ids = mData.getJSONArray("stopIds");
-            final int len = ids.length();
-            List<String> result = new ArrayList<String>(len);
-            for (int i=0; i < len; ++i) {
-                result.add(ids.getString(i));
-            }
-            return result;
-        }
-        catch (JSONException e) {
-            return new ArrayList<String>();
-        }
+        return stopIds;
     }
     
     /**
@@ -75,7 +73,12 @@ public final class ObaStopGroup {
      * 
      * @return The array of polylines, or an empty array.
      */
-    public ObaArray getPolylines() {
-        return new ObaArray(ObaApi.getChildArray(mData,  "polylines"));
+    public ObaArray<ObaPolyline> getPolylines() {
+        return polylines;
+    }
+    
+    @Override
+    public String toString() {
+        return ObaApi.getGson().toJson(this);
     }
 }

@@ -17,21 +17,23 @@ final class StopInfo {
     }
 
     public static final ArrayList<StopInfo>
-    convertObaArrivalInfo(Context context, ObaArray arrivalInfo, ArrayList<String> filter) {
+    convertObaArrivalInfo(Context context, 
+              ObaArray<ObaArrivalInfo> arrivalInfo, 
+              ArrayList<String> filter) {
         final int len = arrivalInfo.length();
         ArrayList<StopInfo> result = new ArrayList<StopInfo>(len);
         final long ms = System.currentTimeMillis();
         if (filter != null && filter.size() > 0) {
             for (int i=0; i < len; ++i) {
-                ObaArrivalInfo arrival = arrivalInfo.getArrivalInfo(i);
+                ObaArrivalInfo arrival = arrivalInfo.get(i);
                 if (filter.contains(arrival.getRouteId())) {
-                    result.add(new StopInfo(context, arrivalInfo.getArrivalInfo(i), ms));
+                    result.add(new StopInfo(context, arrival, ms));
                 }
             }            
         }
         else {
             for (int i=0; i < len; ++i) {
-                result.add(new StopInfo(context, arrivalInfo.getArrivalInfo(i), ms));
+                result.add(new StopInfo(context, arrivalInfo.get(i), ms));
             }
         }
         

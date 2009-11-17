@@ -58,6 +58,8 @@ public class MapViewActivity extends MapActivity {
     private AsyncTask<String,Void,ObaResponse> mGetStopsForRouteTask;
     private volatile boolean mForceRestartLocationTask;
     private ObaResponse mStopsResponse;
+    // This is the map zoom level at which we requested this response.
+    private int mStopsResponseZoomLevel = 0;
     
     // There's a major hole in the MapView in that there's apparently 
     // no way of getting an event when the user pans the view.
@@ -260,7 +262,7 @@ public class MapViewActivity extends MapActivity {
     public void onResume() {
         mLocationOverlay.enableMyLocation();
         if (!isRouteMode()) {
-            watchMapCenter();
+            watchMap();
         } 
         super.onResume();
     }
@@ -290,18 +292,45 @@ public class MapViewActivity extends MapActivity {
         return false;
     }
     
-    private void watchMapCenter() {
+    private void watchMap() {
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             private GeoPoint mMapCenter = mMapView.getMapCenter();
             
             @Override
             public void run() {
-                final boolean restart = mForceRestartLocationTask;
-                
+                boolean start = mForceRestartLocationTask;
                 GeoPoint newCenter = mMapView.getMapCenter();
-                if (restart || !newCenter.equals(mMapCenter)) {
+                int newZoom = mMapView.getZoomLevel();
+                if (!newCenter.equals(mMapCenter)) {
+                    Log.d(TAG, "Center changed");
                     mMapCenter = newCenter;
+                    start = true;
+                }
+                final ObaResponse response = mStopsResponse;
+                final int responseZoom = mStopsResponseZoomLevel;
+                //Log.d(TAG, "ResponseZoom: " + responseZoom);
+                
+                // Zoom is a bit more tricky -- we want to get new stops
+                // when zooming in *only* if the last search had 
+                // "limit exceeded".
+                // As an additional optimization, don't get new stops
+                // if our last request already had enough stops for 
+                // the new zoom level.
+                if (response != null) {
+                    if ((newZoom > responseZoom) && 
+                            response.getData().getLimitExceeded()) {
+                        Log.d(TAG, "Getting new stops from zooming in");
+                        start = true;                        
+                    }
+                    else if (newZoom < responseZoom) {
+                        Log.d(TAG, "Zooming out past last zoom level");
+                        // Zooming out -- always get stops
+                        start = true;
+                    }
+                }
+                           
+                if (start) {
                     // This is run in another thread, so post back to the UI thread.
                     mGetStopsHandler.post(mGetStopsFromCenter);
                 }
@@ -345,6 +374,7 @@ public class MapViewActivity extends MapActivity {
         }
         Log.d(TAG, "Starting async task");
         mForceRestartLocationTask = false;
+        mStopsResponseZoomLevel = mMapView.getZoomLevel();
         mGetStopsByLocationTask = new GetStopsByLocationTask();
         mGetStopsByLocationTask.execute(point, 
                 new Integer(mMapView.getLatitudeSpan()),

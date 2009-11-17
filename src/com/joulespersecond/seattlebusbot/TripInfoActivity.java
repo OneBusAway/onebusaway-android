@@ -35,6 +35,10 @@ public class TripInfoActivity extends Activity {
     private static final String STOP_NAME = ".StopName";
     private static final String HEADSIGN = ".Headsign";
     private static final String DEPARTURE_TIME = ".Depart";
+    // Save/restore values
+    private static final String TRIP_NAME = ".TripName";
+    private static final String REMINDER_TIME = ".ReminderTime";
+    private static final String REMINDER_DAYS = ".ReminderDays";
     
     private TripsDbAdapter mDbAdapter;
     private String mTripId;
@@ -173,17 +177,7 @@ public class TripInfoActivity extends Activity {
         final TextView departText = (TextView)findViewById(R.id.departure_time);
         departText.setText(getDepartureTime(this, mDepartTime));
         
-        //
-        // User values
-        //
-        final TextView tripName = (TextView)findViewById(R.id.name);
-        tripName.setText(mTripName);
-        
-        final Spinner reminder = (Spinner)findViewById(R.id.trip_info_reminder_time);
-        reminder.setSelection(reminderToSelection(mReminderTime));        
-        
-        final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
-        repeats.setText(getRepeatText(this, mReminderDays));
+        setUserValues();
           
         if (newTrip) {
             // If this is a new trip, then hide the 'delete' button
@@ -191,10 +185,41 @@ public class TripInfoActivity extends Activity {
             delete.setVisibility(View.GONE);
         }
     }
+    private void setUserValues() {
+        final TextView tripName = (TextView)findViewById(R.id.name);
+        tripName.setText(mTripName);
+        
+        final Spinner reminder = (Spinner)findViewById(R.id.trip_info_reminder_time);
+        reminder.setSelection(reminderToSelection(mReminderTime));        
+        
+        final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+        repeats.setText(getRepeatText(this, mReminderDays));        
+    }
     @Override
     protected void onDestroy() {
         mDbAdapter.close();
         super.onDestroy();
+    }
+    @Override 
+    protected void onSaveInstanceState(Bundle outState) {
+        final Spinner reminderView = (Spinner)findViewById(R.id.trip_info_reminder_time);
+        final TextView nameView = (TextView)findViewById(R.id.name);
+        
+        final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());        
+        outState.putString(TRIP_NAME, nameView.getText().toString());
+        outState.putInt(REMINDER_TIME, reminder);
+        outState.putInt(REMINDER_DAYS, mReminderDays);
+    }
+    @Override 
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        String name = savedInstanceState.getString(TRIP_NAME);
+        if (name != null) {
+            mTripName = name;   
+        }
+        
+        mReminderTime = savedInstanceState.getInt(REMINDER_TIME, mReminderTime);
+        mReminderDays = savedInstanceState.getInt(REMINDER_DAYS, mReminderDays);
+        setUserValues();      
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

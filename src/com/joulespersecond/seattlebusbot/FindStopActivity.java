@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -79,6 +80,15 @@ public class FindStopActivity extends ListActivity {
         else {
             fillFavorites();
         }
+        
+        // If the user clicks the button (and there's text), the do the search
+        Button button = (Button)findViewById(R.id.search);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                TextView textView = (TextView)findViewById(R.id.search_text);
+                doSearch(textView.getText());            
+            }
+        });
     }
     @Override
     protected void onDestroy() {
@@ -176,10 +186,13 @@ public class FindStopActivity extends ListActivity {
         }
         return false;
     }
+    // 1.6 only
+    /*
     public final void onSearch(View v) {
         TextView textView = (TextView)findViewById(R.id.search_text);
         doSearch(textView.getText());         
     }
+    */
     
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;

@@ -96,8 +96,7 @@
 	            android:id="@+id/trip_info_reminder_days" 
 	            android:ellipsize="end"
 	            android:layout_width="fill_parent" 
-	            android:layout_height="wrap_content"
-	            android:onClick="onRepeatClick">
+	            android:layout_height="wrap_content">
 	        </Button>
 	    
 	        <LinearLayout
@@ -111,22 +110,19 @@
 	                 android:text="@string/trip_info_save" 
 	                 android:id="@+id/trip_info_save" 
 	                 android:layout_width="100sp"
-	                 android:layout_height="wrap_content"
-	                 android:onClick="onSaveClick">
+	                 android:layout_height="wrap_content">
 	            </Button>
 	            <Button 
 	                android:text="@string/trip_info_cancel" 
 	                android:id="@+id/trip_info_cancel" 
 	                android:layout_width="100sp"
-	                android:layout_height="wrap_content"
-	                android:onClick="onCancelClick">
+	                android:layout_height="wrap_content">
 	            </Button>
 	            <Button
 	                android:text="@string/trip_info_delete" 
 	                android:id="@+id/trip_info_delete" 
 	                android:layout_width="100sp"
-	                android:layout_height="wrap_content"
-	                android:onClick="onDeleteClick">
+	                android:layout_height="wrap_content">
 	            </Button>
 	         </LinearLayout>
 	    </LinearLayout>

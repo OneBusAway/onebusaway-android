@@ -178,10 +178,40 @@ public class TripInfoActivity extends Activity {
         departText.setText(getDepartureTime(this, mDepartTime));
         
         setUserValues();
+        
+        //
+        // Buttons
+        //
+        final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+        repeats.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showDialog(REMINDER_DAYS_DIALOG);
+            }
+        });
+        
+        // Listen to the buttons:
+        final Button save = (Button)findViewById(R.id.trip_info_save);
+        save.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                saveTrip();
+            }
+        });
+        final Button discard = (Button)findViewById(R.id.trip_info_cancel);
+        discard.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                finish();
+            }
+        });    
+
+        final Button delete = (Button)findViewById(R.id.trip_info_delete);
+        delete.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showDialog(DELETE_DIALOG);
+            }
+        });           
           
         if (newTrip) {
-            // If this is a new trip, then hide the 'delete' button
-            final Button delete = (Button)findViewById(R.id.trip_info_delete);            
+            // If this is a new trip, then hide the 'delete' button           
             delete.setVisibility(View.GONE);
         }
     }
@@ -240,8 +270,9 @@ public class TripInfoActivity extends Activity {
         return false;
     }
     //
-    // Buttons
+    // Buttons (1.6 only)
     //
+    /*
     public final void onRepeatClick(View v) {
         showDialog(REMINDER_DAYS_DIALOG);
     }
@@ -254,7 +285,7 @@ public class TripInfoActivity extends Activity {
     public final void onDeleteClick(View v) {
         showDialog(DELETE_DIALOG);
     }
-
+    */
     
     public void saveTrip() {
         // Things that need updating:

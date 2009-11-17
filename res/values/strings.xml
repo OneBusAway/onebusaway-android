@@ -44,6 +44,8 @@
     <!-- Route Info  -->
     <string name="route_info_title">SeattleBusBot</string>
     <string name="route_info_loading">Loading...</string>
+    <string name="route_info_context_get_stop_info">Show arrival information</string>
+    <string name="route_info_context_showonmap">Show on map</string>
     
     <!-- Find -->
     <string name="find_route_title">SeattleBusBot</string>

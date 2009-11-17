@@ -10,10 +10,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
@@ -51,6 +53,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         super.onCreate(savedInstanceState);
  
         setContentView(R.layout.route_info);
+        registerForContextMenu(getExpandableListView());
       
         Bundle bundle = getIntent().getExtras();
         mRouteId = bundle.getString(ROUTE_ID);
@@ -115,23 +118,78 @@ public class RouteInfoActivity extends ExpandableListActivity {
     public boolean onChildClick(ExpandableListView parent, View v, 
             int groupPosition, int childPosition, long id) {
         final TextView text = (TextView)v.findViewById(R.id.stop_id);
-        final String stopId = (String)text.getText(); 
-        StopInfoActivity.start(this, stopId);
+        final String stopId = (String)text.getText();
+        ObaStop stop = mStopsForRoute.getStopMap().get(stopId);
+        if (stop != null) {
+            StopInfoActivity.start(this, stopId, stop.getName(), stop.getDirection());
+        }
+        else {
+            StopInfoActivity.start(this, stopId);            
+        }
         return true;
     }  
+    private static final int CONTEXT_MENU_DEFAULT = 1;
+    private static final int CONTEXT_MENU_SHOWONMAP = 2;
+    
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+            ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        ExpandableListView.ExpandableListContextMenuInfo info = 
+            (ExpandableListView.ExpandableListContextMenuInfo)menuInfo;
+        if (ExpandableListView.getPackedPositionType(info.packedPosition) 
+                != ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+            return;
+        }
+        final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+        menu.setHeaderTitle(text.getText());
+        menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.route_info_context_get_stop_info);
+        menu.add(0, CONTEXT_MENU_SHOWONMAP, 0, R.string.route_info_context_showonmap);
+    }
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        ExpandableListView.ExpandableListContextMenuInfo info = 
+            (ExpandableListView.ExpandableListContextMenuInfo)item.getMenuInfo();
+        final long packed = info.packedPosition;
+        switch (item.getItemId()) {
+        case CONTEXT_MENU_DEFAULT:
+            return onChildClick(getExpandableListView(), info.targetView,
+                        ExpandableListView.getPackedPositionGroup(packed),
+                        ExpandableListView.getPackedPositionChild(packed),
+                        info.id);
+        case CONTEXT_MENU_SHOWONMAP:
+            showOnMap(info.targetView);
+            return true;
+        default:
+            return super.onContextItemSelected(item);
+        }
+    }
+    
+    private void showOnMap(View v) {
+        final TextView text = (TextView)v.findViewById(R.id.stop_id);
+        final String stopId = (String)text.getText();
+        // we need to find this route in the response because
+        // we need to know it's lat/lon
+        ObaStop stop = mStopsForRoute.getStopMap().get(stopId);
+        if (stop == null) {
+            return;
+        }
+        MapViewActivity.start(this, stopId, stop.getLatitude(), stop.getLongitude());
+    }
+    
     
     // This is the return value for GetStopsForRouteTask.
     //
     private final static class StopsForRouteInfo {
-        private final ObaResponse mResponse;
         private final ArrayList<HashMap<String,String>> mStopGroups;
         private final ArrayList<ArrayList<HashMap<String,String>>> mStops;
+        private final HashMap<String,ObaStop> mStopMap;
         
         public StopsForRouteInfo(Context cxt, ObaResponse response) {
-            mResponse = response;
             mStopGroups = new ArrayList<HashMap<String,String>>();
             mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
-            initMaps(cxt);
+            mStopMap = new HashMap<String,ObaStop>();
+            initMaps(cxt, response);
         }
         
         private static Map<String,ObaStop> getStopMap(ObaArray<ObaStop> stops) {
@@ -144,7 +202,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             return result;
         }
             
-        private void initMaps(Context cxt) {
+        private void initMaps(Context cxt, ObaResponse response) {
             // Convert to weird array type. From the documentation of
             // SimpleExpandableListAdapter:
             // StopGroupings: A List of Maps. Each entry in the List corresponds 
@@ -162,8 +220,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
             // and the Map corresponds to the data for a child (index by values 
             // in the childFrom array). The Map contains the data for each child, 
             // and should include all the entries specified in "childFrom"
-            if (mResponse.getCode() == ObaApi.OBA_OK) {
-                final ObaData data = mResponse.getData();
+            if (response.getCode() == ObaApi.OBA_OK) {
+                final ObaData data = response.getData();
                 final ObaArray<ObaStop> stops = data.getStops();
                 final Map<String,ObaStop> stopMap = getStopMap(stops);
                 final ObaArray<ObaStopGrouping> groupings = data.getStopGroupings();
@@ -200,6 +258,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
                                                 stop.getDirection()));
                                 groupStopMap.put("direction", dir);
                                 groupStopMap.put("id", stopId);
+                                mStopMap.put(stopId, stop);
                             }
                             else {
                                 groupStopMap.put("name", "");
@@ -220,6 +279,9 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
         public ArrayList<ArrayList<HashMap<String,String>>> getStops() {
             return mStops;
+        }
+        public HashMap<String,ObaStop> getStopMap() {
+            return mStopMap;
         }
     }
     

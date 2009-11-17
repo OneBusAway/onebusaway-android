@@ -4,5 +4,5 @@
           android:icon="@drawable/ic_menu_trip" />
     <item android:id="@+id/show_stop"
           android:title="@string/trip_info_option_showstop" 
-          android:icon="@drawable/ic_menu_trip" />
+          android:icon="@drawable/ic_menu_stop" />
 </menu>

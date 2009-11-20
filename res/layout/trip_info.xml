@@ -109,19 +109,22 @@
 	            <Button 
 	                 android:text="@string/trip_info_save" 
 	                 android:id="@+id/trip_info_save" 
-	                 android:layout_width="100sp"
+	                 android:layout_width="0dp"
+	                 android:layout_weight="1"
 	                 android:layout_height="wrap_content">
 	            </Button>
 	            <Button 
 	                android:text="@string/trip_info_cancel" 
 	                android:id="@+id/trip_info_cancel" 
-	                android:layout_width="100sp"
+	                android:layout_weight="1"
+	                android:layout_width="0dp"
 	                android:layout_height="wrap_content">
 	            </Button>
 	            <Button
 	                android:text="@string/trip_info_delete" 
-	                android:id="@+id/trip_info_delete" 
-	                android:layout_width="100sp"
+	                android:id="@+id/trip_info_delete"
+	                android:layout_weight="1"
+	                android:layout_width="0dp"
 	                android:layout_height="wrap_content">
 	            </Button>
 	         </LinearLayout>

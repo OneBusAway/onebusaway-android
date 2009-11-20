@@ -6,7 +6,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -24,8 +23,7 @@ import android.widget.Toast;
 
 public class TripInfoActivity extends Activity {
     private static final String TAG = "TripInfoActivity";
-    
-    private static final int REMINDER_DAYS_DIALOG = 1;
+
     private static final int DELETE_DIALOG = 2;
     
     private static final String TRIP_ID = ".TripId";
@@ -185,7 +183,7 @@ public class TripInfoActivity extends Activity {
         final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
         repeats.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                showDialog(REMINDER_DAYS_DIALOG);
+                showReminderDaysDialog();
             }
         });
         
@@ -315,27 +313,40 @@ public class TripInfoActivity extends Activity {
         mDbAdapter.deleteTrip(mTripId, mStopId);
     }
     
-    class DialogListener 
-        implements DialogInterface.OnClickListener, OnMultiChoiceClickListener {
-        private boolean[] mChecks;
+    private static final int REMINDER_DAYS_DIALOG = 1;
+    
+    void showReminderDaysDialog() {
+        final boolean[] checks = TripsDbAdapter.daysToArray(mReminderDays);
         
-        DialogListener(boolean[] checks) {
-            mChecks = checks;
-        }
-        
-        public void onClick(DialogInterface dialog, int which) {
-            if (which == DialogInterface.BUTTON_POSITIVE) {
-                // Save repeats
-                mReminderDays = TripsDbAdapter.arrayToDays(mChecks);
-                final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
-                repeats.setText(getRepeatText(TripInfoActivity.this, mReminderDays));
+        new MultiChoiceActivity.Builder(this)
+            .setTitle(R.string.trip_info_reminder_repeat)
+            .setItems(R.array.reminder_days, checks)
+            .setPositiveButton(R.string.trip_info_save)
+            .setNegativeButton(R.string.trip_info_dismiss)
+            .startForResult(REMINDER_DAYS_DIALOG);         
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+        case REMINDER_DAYS_DIALOG:
+            if (resultCode == Activity.RESULT_OK) {
+                setReminderDaysFromIntent(data);
             }
-            dialog.dismiss();            
+            break;
+        default:
+            super.onActivityResult(requestCode, resultCode, data);
         }
-        // Multi-click
-        public void onClick(DialogInterface dialog, int which, boolean checked) {
-            mChecks[which] = checked;            
+    }
+    
+    private void setReminderDaysFromIntent(Intent data) {
+        final boolean checks[] = 
+            data.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
+        if (checks == null) {
+            return;
         }
+        mReminderDays = TripsDbAdapter.arrayToDays(checks);
+        final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
+        repeats.setText(getRepeatText(TripInfoActivity.this, mReminderDays));
     }
     
     @Override
@@ -344,23 +355,6 @@ public class TripInfoActivity extends Activity {
         AlertDialog.Builder builder;
         
         switch (id) {
-        case REMINDER_DAYS_DIALOG:
-            builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.trip_info_reminder_repeat);
-            final boolean[] days = TripsDbAdapter.daysToArray(mReminderDays);
-            DialogListener listener = new DialogListener(days);
-
-            MultiChoiceHelper.setMultiChoiceItems(builder,
-                        this,
-                        R.array.reminder_days,
-                        days,
-                        listener);
-
-            dialog = builder
-                .setPositiveButton(R.string.trip_info_save, listener)
-                .setNegativeButton(R.string.trip_info_dismiss, listener)
-                .create();
-            break;
         case DELETE_DIALOG:
             builder = new AlertDialog.Builder(this);
             dialog = builder

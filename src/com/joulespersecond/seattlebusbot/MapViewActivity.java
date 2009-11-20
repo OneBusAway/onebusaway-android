@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Spannable;
-import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.Menu;
@@ -152,8 +151,8 @@ public class MapViewActivity extends MapActivity {
         mapOverlays.add(mLocationOverlay);
         
         // Initialize the links
-        setClickable(R.id.show_arrival_info, mOnShowArrivals);
-        setClickable(R.id.show_routes, mOnShowRoutes);        
+        UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
+        UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);        
         
         // If you click on the popup but not on a link, nothing happens
         // (if this weren't there, the popup would be dismissed)
@@ -442,7 +441,7 @@ public class MapViewActivity extends MapActivity {
                     
                      final TextView direction = (TextView)popup.findViewById(R.id.direction);
                      direction.setText(
-                             StopInfoActivity.getStopDirectionText(stop.getDirection()));
+                             UIHelp.getStopDirectionText(stop.getDirection()));
 
                      populateRoutes(stop, false);
                     
@@ -545,13 +544,6 @@ public class MapViewActivity extends MapActivity {
             return mStopOverlay.getFocusedId();
         }
         return null;
-    }
-    
-    private void setClickable(int id, ClickableSpan span) {
-        TextView v = (TextView)findViewById(id);
-        Spannable text = (Spannable)v.getText();
-        text.setSpan(span, 0, text.length(), 0);
-        v.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     static void goToStop(Context context, ObaStop stop) {

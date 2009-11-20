@@ -2,9 +2,6 @@
     <item android:id="@+id/filter"
           android:title="@string/stop_info_option_filter" 
           android:icon="@drawable/ic_menu_trip" />
-    <item android:id="@+id/show_all"
-          android:title="@string/stop_info_option_showall" 
-          android:icon="@drawable/ic_menu_trip" />
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap" 
           android:icon="@drawable/android:ic_menu_mapmode" />

@@ -14,7 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.DateUtils;
-import android.util.Log;
+import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,7 +35,7 @@ import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
 
 public class StopInfoActivity extends ListActivity {
-    private static final String TAG = "StopInfoActivity";
+    //private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60*1000;
     
     private static final String STOP_ID = ".StopId";
@@ -53,29 +53,6 @@ public class StopInfoActivity extends ListActivity {
 
     private TripsDbAdapter mTripsDbAdapter;    
     private TripsDbAdapter.TripsForStopSet mTripsForStop;
-    
-    public static final int getStopDirectionText(String direction) {
-        if (direction.equals("N")) {
-            return R.string.direction_n;
-        } else if (direction.equals("NW")) {
-            return R.string.direction_nw;                    
-        } else if (direction.equals("W")) {
-            return R.string.direction_w;                    
-        } else if (direction.equals("SW")) {
-            return R.string.direction_sw;    
-        } else if (direction.equals("S")) {
-            return R.string.direction_s;    
-        } else if (direction.equals("SE")) {
-            return R.string.direction_se;    
-        } else if (direction.equals("E")) {
-            return R.string.direction_e;    
-        } else if (direction.equals("NE")) {
-            return R.string.direction_ne;                             
-        } else {
-            Log.v(TAG, "Unknown direction: " + direction);
-            return R.string.direction_n;
-        }    
-    }
 
     public static void start(Context context, String stopId) {
         context.startActivity(makeIntent(context, stopId));
@@ -138,6 +115,7 @@ public class StopInfoActivity extends ListActivity {
         Bundle bundle = getIntent().getExtras();
         mStopId = bundle.getString(STOP_ID);
         setHeader(bundle);
+        UIHelp.setChildClickable(this, R.id.show_all, mShowAllClick);
      
         mRoutesFilter = mStopsDbAdapter.getStopRouteFilter(mStopId);
         mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
@@ -189,11 +167,6 @@ public class StopInfoActivity extends ListActivity {
         else if (id == R.id.filter) {
             if (mResponse != null) {
                 showRoutesFilterDialog();
-            }
-        }
-        else if (id == R.id.show_all) {
-            if (mResponse != null) {
-                setRoutesFilter(new ArrayList<String>());
             }
         }
         return false;
@@ -544,22 +517,28 @@ public class StopInfoActivity extends ListActivity {
         }
         if (direction != null) {
             TextView directionText = (TextView)findViewById(R.id.direction);
-            directionText.setText(getStopDirectionText(direction));  
+            directionText.setText(UIHelp.getStopDirectionText(direction));  
         }
     }
     void setFilterHeader() {
+        View group = findViewById(R.id.filter_group);
         TextView v = (TextView)findViewById(R.id.filter);
-        final int filtered = (mRoutesFilter != null) ? mRoutesFilter.size() : 0;
-        if (filtered > 0) {
-            // How many routes?
-            final int num = mRoutesFilter.size();
+        final int num = (mRoutesFilter != null) ? mRoutesFilter.size() : 0;
+        if (num > 0) {
             final int total = mStop.getRoutes().length();
             v.setText(getString(R.string.stop_info_filter_header, num, total));
             // Show the filter text
-            v.setVisibility(View.VISIBLE);
+            group.setVisibility(View.VISIBLE);
         }
         else {
-            v.setVisibility(View.GONE);
+            group.setVisibility(View.GONE);
         }
     }
+    private final ClickableSpan mShowAllClick = new ClickableSpan() {
+        public void onClick(View v) {
+            if (mResponse != null) {
+                setRoutesFilter(new ArrayList<String>());
+            }
+        }
+    };
 }

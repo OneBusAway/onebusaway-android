@@ -284,7 +284,7 @@ public class FindStopActivity extends ListActivity {
                 if (columnIndex == StopsDbAdapter.STOP_COL_DIRECTION) {
                     TextView direction = (TextView)view.findViewById(R.id.direction);
                     direction.setText(
-                            StopInfoActivity.getStopDirectionText(cursor.getString(columnIndex)));
+                            UIHelp.getStopDirectionText(cursor.getString(columnIndex)));
                     return true;
                 } 
                 return false;
@@ -322,7 +322,7 @@ public class FindStopActivity extends ListActivity {
 
             ObaStop stop = mArray.get(position);
             route.setText(stop.getName());
-            direction.setText(StopInfoActivity.getStopDirectionText(stop.getDirection()));
+            direction.setText(UIHelp.getStopDirectionText(stop.getDirection()));
         }
     }
     

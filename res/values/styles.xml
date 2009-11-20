@@ -8,9 +8,6 @@
     </style>
     
     <!--  Styles -->
-    <style name="HeaderGroup">
-        <item name="android:orientation">vertical</item>
-    </style>
     <style name="HeaderItem">
         <item name="android:background">@drawable/header_bg</item>
         <item name="android:padding">4dp</item>

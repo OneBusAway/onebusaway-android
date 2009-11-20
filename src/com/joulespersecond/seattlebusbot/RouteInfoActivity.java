@@ -254,7 +254,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
                             if (stop != null) {
                                 groupStopMap.put("name", stop.getName());
                                 String dir = cxt.getString(
-                                        StopInfoActivity.getStopDirectionText(
+                                        UIHelp.getStopDirectionText(
                                                 stop.getDirection()));
                                 groupStopMap.put("direction", dir);
                                 groupStopMap.put("id", stopId);

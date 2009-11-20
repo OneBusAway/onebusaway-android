@@ -4,36 +4,47 @@
          android:layout_width="fill_parent" 
          android:layout_height="fill_parent">
  
-	 <LinearLayout
-	    style="@style/HeaderGroup"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content">
-	    <LinearLayout
-	        style="@style/HeaderItem"
-	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content"
-	        android:orientation="vertical">
-	        <TextView
-	            android:id="@+id/name"
-	            style="@style/HeaderText"
-	            android:layout_width="fill_parent" 
-	            android:layout_height="wrap_content">
-	        </TextView>
-	        <TextView
-	            android:id="@+id/direction"
-	            style="@style/Header2Text"
-	            android:layout_width="fill_parent" 
-	            android:layout_height="wrap_content">
-	        </TextView>
+    <LinearLayout
+        style="@style/HeaderItem"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/name"
+            style="@style/HeaderText"
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content">
+        </TextView>
+        <TextView
+            android:id="@+id/direction"
+            style="@style/Header2Text"
+            android:layout_width="fill_parent" 
+            android:layout_height="wrap_content">
+        </TextView>
+        <LinearLayout
+            android:id="@+id/filter_group"
+            style="@style/Header2Text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 	        <TextView
 	            android:id="@+id/filter"
 	            style="@style/Header2Text"
-	            android:layout_width="fill_parent"
-	            android:layout_height="wrap_content"
-	            android:visibility="gone">
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content">
 	        </TextView>
-	    </LinearLayout>
-	</LinearLayout>
+	        <TextView
+	            android:id="@+id/show_all"
+	            android:text="@string/stop_info_filter_showall"
+	            style="@style/Header2Text"
+	            android:paddingLeft="5dip"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:bufferType="spannable"
+                android:linksClickable="true" >
+	        </TextView>
+        </LinearLayout>
+    </LinearLayout>
  
     <ListView android:id="@id/android:list"
         style="@style/HeaderList"
@@ -53,7 +64,7 @@
             android:layout_height="wrap_content" 
             android:paddingLeft="5dp" /> 
         <TextView
-            android:text="@string/route_info_loading"
+            android:text="@string/stop_info_loading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/LoadingText" />

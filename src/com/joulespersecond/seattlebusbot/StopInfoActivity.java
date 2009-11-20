@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -38,8 +37,6 @@ import com.joulespersecond.oba.ObaStop;
 public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60*1000;
-
-    private static final int FILTER_ROUTES_DIALOG = 1;
     
     private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
@@ -191,7 +188,7 @@ public class StopInfoActivity extends ListActivity {
         }
         else if (id == R.id.filter) {
             if (mResponse != null) {
-                showDialog(FILTER_ROUTES_DIALOG);
+                showRoutesFilterDialog();
             }
         }
         else if (id == R.id.show_all) {
@@ -264,91 +261,67 @@ public class StopInfoActivity extends ListActivity {
         dialog.show();
     }
     
-    private class DialogListener 
-        implements DialogInterface.OnClickListener, OnMultiChoiceClickListener {
-        // It's easiest just to store this here.
-        private final ArrayList<String> mRouteIds;
-        private final String[] mRouteNames;
-        private boolean[] mChecks;
-        
-        DialogListener(ObaStop stop, ArrayList<String> filter) {
-            final ObaArray<ObaRoute> routes = stop.getRoutes();
-            final int len = routes.length();
-            
-            mRouteIds = new ArrayList<String>(len);
-            mRouteNames = new String[len];
-            mChecks = new boolean[len];
-            
-            // Go through all the stops, add them to the Ids and Names
-            // For each stop, if it is in the enabled list, mark it as checked.
-            for (int i=0; i < len; ++i) {
-                final ObaRoute route = routes.get(i);
-                final String id = route.getId();
-                mRouteIds.add(i, id);
-                mRouteNames[i] = route.getShortName();
-                if (filter.contains(id)) {
-                    mChecks[i] = true;
-                }
-            }
-        }
-        public String[] getItems() {
-            return mRouteNames;
-        }
-        public boolean[] getChecks() {
-            return mChecks;
-        }
-        
-        public void onClick(DialogInterface dialog, int which) {
-            if (which == DialogInterface.BUTTON_POSITIVE) {
-                ArrayList<String> filter = new ArrayList<String>();
-                final int len = mChecks.length;
-                int checks = 0;
-                for (int i=0; i < len; ++i) {
-                    if (mChecks[i]) {
-                        filter.add(mRouteIds.get(i));
-                        ++checks;
-                    }
-                }
-                // If they are *all* checked, pretend like none were
-                if (checks == len) {
-                    filter.clear();
-                }
-                setRoutesFilter(filter);
-            }
-            dialog.dismiss();            
-        }
-        // Multi-click
-        public void onClick(DialogInterface dialog, int which, boolean checked) {
-            mChecks[which] = checked;            
-        }
-    }
+    private static final int FILTER_DIALOG_RESULT = 1;
     
+    private void showRoutesFilterDialog() {  
+        final ObaArray<ObaRoute> routes = mStop.getRoutes();
+        final int len = routes.length();
+        final ArrayList<String> filter = mRoutesFilter;
+        
+        //mRouteIds = new ArrayList<String>(len);
+        String[] items = new String[len];
+        boolean[] checks = new boolean[len];
+        
+        // Go through all the stops, add them to the Ids and Names
+        // For each stop, if it is in the enabled list, mark it as checked.
+        for (int i=0; i < len; ++i) {
+            final ObaRoute route = routes.get(i);
+            //final String id = route.getId();
+            //mRouteIds.add(i, id);
+            items[i] = route.getShortName();
+            if (filter.contains(route.getId())) {
+                checks[i] = true;
+            }
+        } 
+        new MultiChoiceActivity.Builder(this)
+            .setTitle(R.string.stop_info_filter_title)
+            .setItems(items, checks)
+            .setPositiveButton(R.string.stop_info_save)
+            .setNegativeButton(R.string.stop_info_cancel)
+            .startForResult(FILTER_DIALOG_RESULT); 
+    }
     @Override
-    protected Dialog onCreateDialog(int id) {
-        AlertDialog dialog;
-        AlertDialog.Builder builder;
-        switch (id) {
-        case FILTER_ROUTES_DIALOG:
-            builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.stop_info_filter_title);
-            DialogListener listener = new DialogListener(mStop, mRoutesFilter);
-
-            MultiChoiceHelper.setMultiChoiceItems(builder,
-                        this,
-                        listener.getItems(),
-                        listener.getChecks(),
-                        listener);
-
-            dialog = builder
-                .setPositiveButton(R.string.stop_info_save, listener)
-                .setNegativeButton(R.string.stop_info_cancel, listener)
-                .create();
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+        case FILTER_DIALOG_RESULT:
+            if (resultCode == Activity.RESULT_OK) {
+                setRoutesFilterFromIntent(data);
+            }
             break;
         default:
-            dialog = null;
-            break;
+            super.onActivityResult(requestCode, resultCode, data);
         }
-        return dialog;
+    }
+    private void setRoutesFilterFromIntent(Intent intent) { 
+        final boolean[] checks = 
+            intent.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
+        if (checks == null) {
+            return;
+        }
+        
+        final int len = checks.length;
+        final ArrayList<String> newFilter = new ArrayList<String>(len);
+        
+        final ObaArray<ObaRoute> routes = mStop.getRoutes();
+        assert(routes.length() == len);
+        
+        for (int i=0; i < len; ++i) {
+            final ObaRoute route = routes.get(i);
+            if (checks[i]) {
+                newFilter.add(route.getId());
+            }
+        }
+        setRoutesFilter(newFilter);
     }
     
     final class StopInfoListAdapter extends BaseAdapter {

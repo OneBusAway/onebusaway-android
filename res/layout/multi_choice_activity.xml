@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* //device/apps/common/res/layout/alert_dialog.xml
+**
+** Copyright 2006, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+	 <LinearLayout
+	     android:layout_width="fill_parent"
+	     android:layout_height="wrap_content"
+	     android:layout_weight="0"
+	     android:orientation="horizontal"
+	     android:gravity="center_vertical"
+	     android:layout_marginTop="6dp"
+	     android:layout_marginBottom="9dp"
+	     android:layout_marginLeft="10dp"
+	     android:layout_marginRight="10dp">
+	     <ImageView android:id="@+id/icon"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:layout_gravity="top"
+	         android:paddingTop="6dp"
+	         android:paddingRight="10dp"
+	         android:src="@drawable/ic_dialog_menu_generic" />
+	     <TextView android:id="@+id/alertTitle" 
+	         style="?android:attr/textAppearanceMedium"
+	         android:layout_width="fill_parent" 
+	         android:layout_height="wrap_content" />
+	 </LinearLayout>
+	 
+     <ListView android:id="@id/android:list"
+           style="@style/DialogList"
+           android:layout_width="fill_parent" 
+           android:layout_height="wrap_content" 
+           android:layout_weight="1" /> 
+        
+    <LinearLayout
+        style="@style/DialogButtons"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:minHeight="54dp"
+        android:orientation="vertical">     
+        <LinearLayout 
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <Button android:id="@+id/android:button1"
+                android:layout_width="0dip"
+                android:layout_gravity="left"
+                android:layout_weight="1"
+                android:maxLines="2"
+                android:layout_height="wrap_content" />
+            <Button android:id="@+id/android:button2"
+                android:layout_width="0dip"
+                android:layout_gravity="right"
+                android:layout_weight="1"
+                android:maxLines="2"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+     </LinearLayout>
+</LinearLayout>

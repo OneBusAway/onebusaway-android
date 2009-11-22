@@ -8,8 +8,9 @@ public final class ObaData {
     // So we have to pretty much store everything.
     //
     private final ObaStop stop;
-    private final ObaArray<ObaRoute> routes;
+    private final ObaRoute route;
     private final ObaArray<ObaStop> stops;
+    private final ObaArray<ObaRoute> routes;
     private final ObaArray<ObaStop> nearbyStops;
     private final ObaArray<ObaArrivalInfo> arrivalsAndDepartures;
     private final ObaArray<ObaStopGrouping> stopGroupings;
@@ -19,6 +20,7 @@ public final class ObaData {
     // These are because for the Stop by ID and Route by ID requests, 
     // the information for <route> and <stop> are merged into the 
     // <data> element.
+    // TODO: Once the API change has been rolled out, remove all of this.
     private final String id;
     // Route specific
     private final String longName;
@@ -36,8 +38,9 @@ public final class ObaData {
      */
     ObaData() {
         stop = null;
-        routes = null;
+        route = null;
         stops = null;
+        routes = null;
         nearbyStops = null;
         arrivalsAndDepartures = null;
         stopGroupings = null;
@@ -73,10 +76,18 @@ public final class ObaData {
     /**
      * Retrieves the Stop for this response.
      * 
-     * @return The list of stops, or an empty object.
+     * @return The child stop object, or an empty object.
      */
     public ObaStop getStop() {
         return (stop != null) ? stop : new ObaStop();
+    }
+    /**
+     * Retrieves the Route for this response.
+     * 
+     * @return The child route object, or an empty object.
+     */
+    public ObaRoute getRoute() {
+        return (route != null) ? route : new ObaRoute();
     }
     
     /**
@@ -94,7 +105,8 @@ public final class ObaData {
      * @return This object as a route.
      */
     public ObaRoute getAsRoute() {
-        return new ObaRoute(id, shortName, longName, agency);
+        // TODO: Remove this method after the API change has been rolled out.
+        return (route != null) ? route : new ObaRoute(id, shortName, longName, agency);
     }
     
     /**
@@ -103,7 +115,8 @@ public final class ObaData {
      * @return This object as a stop.
      */
     public ObaStop getAsStop() {
-        return new ObaStop(id, lat, lon, direction, name, code, routes);
+        // TODO: Remove this method after the API change has been rolled out.
+        return (stop != null) ? stop : new ObaStop(id, lat, lon, direction, name, code, routes);
     }
      
     /**

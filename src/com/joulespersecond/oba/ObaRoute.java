@@ -22,6 +22,14 @@ public final class ObaRoute {
             return new ObaRoute(id, shortName, longName, agency);
         } 
     }
+   static String getAlternateRouteName(String id, String name) {
+       if (id.equals("1_599")) {
+           return "Link";
+       }
+       else {
+           return name;
+       }
+    }
     
     private final String id;
     private final String shortName;
@@ -39,7 +47,7 @@ public final class ObaRoute {
     }
     ObaRoute(String _id, String _short, String _long, ObaAgency _agency) {
         id = _id;
-        shortName = _short;
+        shortName = getAlternateRouteName(_id, _short);
         longName = _long;
         agency = _agency;
     }

@@ -41,7 +41,7 @@ public final class ObaArrivalInfo {
      * @return The short name of the route.
      */
     public String getShortName() {
-        return routeShortName;
+        return ObaRoute.getAlternateRouteName(routeId, routeShortName);
     }
     /**
      * Returns the trip ID of the route.

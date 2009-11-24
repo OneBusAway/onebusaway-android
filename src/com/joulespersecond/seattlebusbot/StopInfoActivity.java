@@ -46,6 +46,7 @@ public class StopInfoActivity extends ListActivity {
     private ObaStop mStop;
     private String mStopId;
     private Timer mTimer;
+    private long mResponseTime = 0;
     private StopsDbAdapter mStopsDbAdapter;
     private ArrayList<String> mRoutesFilter;
     
@@ -183,8 +184,10 @@ public class StopInfoActivity extends ListActivity {
             mTimer = new Timer();
         }
         mTripsForStop.refresh();
-        // Always refresh once on resume
-        getStopInfo(true);
+        // If our timer would have gone off, then refresh.
+        if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
+            getStopInfo(true);            
+        }
         
         mTimer.schedule(new TimerTask() {
             @Override
@@ -294,6 +297,13 @@ public class StopInfoActivity extends ListActivity {
                 newFilter.add(route.getId());
             }
         }
+        // If the size of the filter is the number of routes 
+        // (i.e., the user selected every checkbox) act then
+        // don't select any.
+        if (newFilter.size() == len) {
+            newFilter.clear();
+        }
+        
         setRoutesFilter(newFilter);
     }
     
@@ -476,6 +486,7 @@ public class StopInfoActivity extends ListActivity {
     void setResponse(ObaResponse response, boolean addToDb) {
         assert(response != null);
         mResponse = response;
+        mResponseTime = System.currentTimeMillis();
         ObaData data = response.getData();
         mStop = data.getStop();       
         setHeader(mStop, addToDb);

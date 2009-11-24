@@ -48,8 +48,17 @@
         <item name="android:paddingTop">18sp</item>
     </style>
     <!--  "Dialog" styles -->
+    <style name="DialogFrame">
+    </style>
+    <style name="DialogHead">
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:layout_marginBottom">9dp</item>
+        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:layout_marginRight">10dp</item>
+    </style>
     <style name="DialogList">
         <item name="android:background">@color/android:background_light</item>
+        <item name="android:cacheColorHint">#00000000</item>
     </style>
     <style name="DialogItem">
         <item name="android:textColor">@color/android:primary_text_light</item>

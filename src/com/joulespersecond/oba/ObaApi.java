@@ -5,14 +5,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import android.util.Log;
-
 import com.google.android.maps.GeoPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public final class ObaApi {
-    private static final String TAG = "ObaApi";
+    //private static final String TAG = "ObaApi";
     // Uninstantiatable
     private ObaApi() { throw new AssertionError(); }
     
@@ -53,7 +51,7 @@ public final class ObaApi {
     }
     
     private static ObaResponse doRequest(String urlStr) {
-        Log.d(TAG, "Request: "  + urlStr);
+        //Log.d(TAG, "Request: "  + urlStr);
         try {
             return ObaResponse.createFromURL(new URL(urlStr));
         } catch (IOException e) {

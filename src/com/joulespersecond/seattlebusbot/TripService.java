@@ -138,7 +138,7 @@ public class TripService extends Service {
             Log.e(TAG, "No new task -- something went wrong: " + action);
             synchronized (this) {
                 if (mActiveTasks.isEmpty()) {
-                    Log.d(TAG, "Stopping service");
+                    //Log.d(TAG, "Stopping service");
                     stopSelf();
                 }
             }
@@ -168,20 +168,20 @@ public class TripService extends Service {
             synchronized(TripService.this) {
                 mActiveTasks.remove(mTaskId);
                 if (mActiveTasks.isEmpty()) {
-                    Log.d(TAG, "Stopping service");
+                    //Log.d(TAG, "Stopping service");
                     stopSelf();
                 }
                 mWakeLock.release();
             }
         }
         public void run() {
-            Log.d(TAG, "Starting task: " + mTaskId);
+            //Log.d(TAG, "Starting task: " + mTaskId);
             startTask();
             
             runTask();
             
             // Done with our work...  stop the service!
-            Log.d(TAG, "Exiting task: " + mTaskId);
+            //Log.d(TAG, "Exiting task: " + mTaskId);
             endTask();
         }
         protected void runTask() {
@@ -293,7 +293,7 @@ public class TripService extends Service {
         private static final int DONE = 3;
         
         synchronized void clearNotification() {
-            Log.d(TAG, "Clearing notification: " + getTaskId());
+            //Log.d(TAG, "Clearing notification: " + getTaskId());
             mNotification = null;
             mState = DONE;
         }
@@ -306,7 +306,7 @@ public class TripService extends Service {
             final Context ctx = TripService.this;
             
             if (mNotification == null) {
-                Log.d(TAG, "Creating notification for trip: " + getTaskId());
+                //Log.d(TAG, "Creating notification for trip: " + getTaskId());
                 mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());    
                 mNotification.defaults = Notification.DEFAULT_SOUND;
                 mNotification.flags = Notification.FLAG_ONLY_ALERT_ONCE|
@@ -354,7 +354,7 @@ public class TripService extends Service {
                 ObaArrivalInfo info = arrivals.get(i);
                 if (tripId.equals(info.getTripId())) {
                     if (mState == NOT_FOUND) {
-                        Log.d(TAG, "Found trip: " + getTaskId());
+                        //Log.d(TAG, "Found trip: " + getTaskId());
                         mState = FOUND;
                     }
                     // We found the trip. We notify when the reminder time
@@ -401,7 +401,7 @@ public class TripService extends Service {
             mState = NOT_FOUND;
 
             while (mState != DONE) {
-                Log.d(TAG, "Get arrivals/departures: " + getTaskId());
+                //Log.d(TAG, "Get arrivals/departures: " + getTaskId());
                 ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
                 synchronized (this) {
                     // First check to see if we were marked as DONE while 
@@ -420,7 +420,7 @@ public class TripService extends Service {
                     // 10 minutes past the scheduled departure time.
                     if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
                         // Give up.
-                        Log.d(TAG, "Giving up: " + getTaskId());
+                        //Log.d(TAG, "Giving up: " + getTaskId());
                         mState = DONE;
                         break;
                     }
@@ -543,7 +543,7 @@ public class TripService extends Service {
         final Uri uri = buildTripUri(tripId, stopId);
         Time tmp = new Time();
         tmp.set(triggerTime);
-        Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
+        //Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
 
         Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
         PendingIntent alarmIntent = 

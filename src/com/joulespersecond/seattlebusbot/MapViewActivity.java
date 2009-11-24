@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Spannable;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,7 +37,7 @@ import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
-    private static final String TAG = "MapViewActivity";
+    //private static final String TAG = "MapViewActivity";
     
     public static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.1.html";
     
@@ -302,7 +301,7 @@ public class MapViewActivity extends MapActivity {
                 GeoPoint newCenter = mMapView.getMapCenter();
                 int newZoom = mMapView.getZoomLevel();
                 if (!newCenter.equals(mMapCenter)) {
-                    Log.d(TAG, "Center changed");
+                    //Log.d(TAG, "Center changed");
                     mMapCenter = newCenter;
                     start = true;
                 }
@@ -319,11 +318,11 @@ public class MapViewActivity extends MapActivity {
                 if (response != null) {
                     if ((newZoom > responseZoom) && 
                             response.getData().getLimitExceeded()) {
-                        Log.d(TAG, "Getting new stops from zooming in");
+                        //Log.d(TAG, "Getting new stops from zooming in");
                         start = true;                        
                     }
                     else if (newZoom < responseZoom) {
-                        Log.d(TAG, "Zooming out past last zoom level");
+                        //Log.d(TAG, "Zooming out past last zoom level");
                         // Zooming out -- always get stops
                         start = true;
                     }
@@ -365,13 +364,13 @@ public class MapViewActivity extends MapActivity {
     }
     
     private void getStopsByLocation(GeoPoint point) {
-        Log.d(TAG, "getStopsByLocation");
+        //Log.d(TAG, "getStopsByLocation");
         if (AsyncTasks.isRunning(mGetStopsByLocationTask)) {
-            Log.d(TAG, "Set force restart");
+            //Log.d(TAG, "Set force restart");
             mForceRestartLocationTask = true;
             return;
         }
-        Log.d(TAG, "Starting async task");
+        //Log.d(TAG, "Starting async task");
         mForceRestartLocationTask = false;
         mStopsResponseZoomLevel = mMapView.getZoomLevel();
         mGetStopsByLocationTask = new GetStopsByLocationTask();

@@ -13,12 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-import android.util.Log;
-
 import com.google.gson.JsonParseException;
 
 public final class ObaResponse {
-    private static final String TAG = "ObaResponse";
+    //private static final String TAG = "ObaResponse";
     public static final String VERSION = "1.0";
 
     private final String version;
@@ -84,10 +82,11 @@ public final class ObaResponse {
                 }
             }
         }
+        /*
         long end = System.nanoTime();
         Log.d(TAG, "Connect: " + (end-start)/1e6);
         start = end;
-        
+        */
         Reader reader;
         if (useGzip) {
             reader = new BufferedReader(
@@ -99,8 +98,8 @@ public final class ObaResponse {
         } 
         try {
             ObaResponse r = ObaApi.getGson().fromJson(reader, ObaResponse.class);
-            end = System.nanoTime();
-            Log.d(TAG, "Parse: " + (end-start)/1e6);
+            //end = System.nanoTime();
+            //Log.d(TAG, "Parse: " + (end-start)/1e6);
             return r;
         }
         catch (JsonParseException e) {

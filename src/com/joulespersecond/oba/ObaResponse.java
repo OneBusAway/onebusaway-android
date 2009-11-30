@@ -55,7 +55,7 @@ public final class ObaResponse {
         return new ObaResponse(VERSION, 0, error);
     }
     static public ObaResponse createFromURL(URL url) throws IOException {
-        long start = System.nanoTime();
+        //long start = System.nanoTime();
         boolean useGzip = false;
         URLConnection conn = url.openConnection();
         conn.setRequestProperty("Accept-Encoding", "gzip");

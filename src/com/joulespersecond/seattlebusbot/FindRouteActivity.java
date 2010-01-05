@@ -124,7 +124,7 @@ public class FindRouteActivity extends FindActivity {
 
             ObaRoute route = mArray.get(position);
             shortName.setText(route.getShortName());
-            longName.setText(route.getLongName());
+            longName.setText(route.getLongNameOrDescription());
         }
     }
 

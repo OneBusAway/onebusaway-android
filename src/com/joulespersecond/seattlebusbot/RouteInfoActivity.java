@@ -349,7 +349,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             TextView agencyText = (TextView)findViewById(R.id.agency);
         
             String shortName = route.getShortName();
-            String longName = route.getLongName();
+            String longName = route.getLongNameOrDescription();
             
             shortNameText.setText(shortName);
             longNameText.setText(longName);

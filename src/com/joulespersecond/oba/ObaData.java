@@ -25,6 +25,7 @@ public final class ObaData {
     // Route specific
     private final String longName;
     private final String shortName;
+    private final String description;
     private final ObaAgency agency;
     // Stop specific
     private final double lat;
@@ -49,6 +50,7 @@ public final class ObaData {
         id = "";
         longName = "";
         shortName = "";
+        description = "";
         agency = null;
         lat = 0;
         lon = 0;
@@ -106,7 +108,7 @@ public final class ObaData {
      */
     public ObaRoute getAsRoute() {
         // TODO: Remove this method after the API change has been rolled out.
-        return (route != null) ? route : new ObaRoute(id, shortName, longName, agency);
+        return (route != null) ? route : new ObaRoute(id, shortName, longName, description, agency);
     }
     
     /**

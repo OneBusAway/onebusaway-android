@@ -59,12 +59,12 @@ public final class ObaStop {
                 double _lat, double _lon, 
                 String _dir, String _name,
                 String _code, ObaArray<ObaRoute> _routes) {
-        id = _id;
+        id = _id != null ? _id : "";
         lat = _lat;
         lon = _lon;
-        direction = _dir;
-        name = _name;
-        code = _code;
+        direction = _dir != null ? _dir : "";
+        name = _name != null ? _name : "";
+        code = _code != null ? _code : "";
         routes = _routes;
     }
     /**

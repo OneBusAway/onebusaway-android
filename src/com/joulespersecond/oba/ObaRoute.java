@@ -17,9 +17,11 @@ public final class ObaRoute {
                 JsonHelp.deserializeChild(obj, "shortName", String.class, context);
             final String longName = 
                 JsonHelp.deserializeChild(obj, "longName", String.class, context);
+            final String description = 
+                JsonHelp.deserializeChild(obj, "description", String.class, context);
             final ObaAgency agency = 
                 JsonHelp.deserializeChild(obj, "agency", ObaAgency.class, context);
-            return new ObaRoute(id, shortName, longName, agency);
+            return new ObaRoute(id, shortName, longName, description, agency);
         } 
     }
    static String getAlternateRouteName(String id, String name) {
@@ -34,6 +36,7 @@ public final class ObaRoute {
     private final String id;
     private final String shortName;
     private final String longName;
+    private final String description;
     private final ObaAgency agency;
     
     /**
@@ -43,12 +46,14 @@ public final class ObaRoute {
         id = "";
         shortName = "";
         longName = "";
+        description = "";
         agency = null;
     }
-    ObaRoute(String _id, String _short, String _long, ObaAgency _agency) {
-        id = _id;
-        shortName = getAlternateRouteName(_id, _short);
-        longName = _long;
+    ObaRoute(String _id, String _short, String _long, String _description, ObaAgency _agency) {
+        id = _id != null ? _id : "";
+        shortName = getAlternateRouteName(id, _short);
+        longName = _long != null ? _long : "";
+        description = _description != null ? _description : "";
         agency = _agency;
     }
     /**
@@ -74,6 +79,24 @@ public final class ObaRoute {
      */
     public String getLongName() {
         return longName;
+    }
+    /**
+     * Returns the description of the route.
+     * 
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /**
+     * Returns the long name if it exists, otherwise it returns the description.
+     * @return
+     */
+    public String getLongNameOrDescription() {
+        if (longName != null && longName.length() > 0) {
+            return longName;
+        }
+        return description;
     }
     
     /**

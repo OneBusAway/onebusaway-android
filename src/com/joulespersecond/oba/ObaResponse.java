@@ -45,7 +45,12 @@ public final class ObaResponse {
     }
     static public ObaResponse createFromString(String str)  {
         try {
-            return ObaApi.getGson().fromJson(str, ObaResponse.class);
+            ObaResponse r = ObaApi.getGson().fromJson(str, ObaResponse.class);
+            if (r != null) {
+                return r;
+            }
+            // We must never ever return null, always an error object.
+            return createFromError("null gson response");
         }
         catch (JsonParseException e) {
             return createFromError(e.toString());
@@ -100,7 +105,11 @@ public final class ObaResponse {
             ObaResponse r = ObaApi.getGson().fromJson(reader, ObaResponse.class);
             //end = System.nanoTime();
             //Log.d(TAG, "Parse: " + (end-start)/1e6);
-            return r;
+            if (r != null) {
+                return r;
+            }
+            // Gson may return null, but we must never.
+            return createFromError("null gson response");
         }
         catch (JsonParseException e) {
             return createFromError(e.toString());

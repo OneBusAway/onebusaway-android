@@ -642,13 +642,16 @@ public class MapViewActivity extends MapActivity {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
         
-        // If we've just installed, we actually don't want to show it.
-        // Just update to the current version.
-        if ((oldVer > 0) && (oldVer < newVer)) {
-            showDialog(WHATSNEW_DIALOG);            
-        }
-       
         if (oldVer != newVer) {
+            // If we've just installed, we actually don't want to show it.
+            // Just update to the current version.
+            // Also, "bootstrap" the What's New for people upgrading *to* version 7, 
+            // the first version with "What's New?" dialog.
+            if ((oldVer > 0) &&
+                    ((newVer == 7) || (oldVer < newVer))) {
+                showDialog(WHATSNEW_DIALOG);            
+            }
+       
             SharedPreferences.Editor edit = settings.edit();
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
             edit.commit();

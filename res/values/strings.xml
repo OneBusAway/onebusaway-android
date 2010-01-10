@@ -22,6 +22,10 @@
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
+    <string name="main_help_title">Help</string>
+    <string name="main_help_whatsnew_title">What\'s New?</string>
+    <string name="main_help_whatsnew">Sound Transit support!\n\nUpdated Help, including\nNews &amp; Alerts via Twitter!\n\nDelete individual favorites!</string>
+    <string name="main_help_close">Close</string>
     
     <!--  Stop Info -->
     <string name="stop_info_title">SeattleBusBot</string>

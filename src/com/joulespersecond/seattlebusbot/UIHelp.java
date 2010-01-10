@@ -3,9 +3,6 @@ package com.joulespersecond.seattlebusbot;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.android.maps.GeoPoint;
-import com.joulespersecond.oba.ObaApi;
-
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
@@ -16,8 +13,13 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.google.android.maps.GeoPoint;
+import com.joulespersecond.oba.ObaApi;
+
 final class UIHelp {
     private static final String TAG = "UIHelp";
+    
+    public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
     
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
         TextView v = (TextView)parent.findViewById(id);

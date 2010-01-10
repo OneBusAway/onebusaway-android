@@ -50,6 +50,26 @@ final class UIHelp {
             return R.string.direction_n;
         }    
     }
+    public static final int getRouteErrorString(int code) {
+        switch (code) {
+        case ObaApi.OBA_INTERNAL_ERROR:
+            return R.string.internal_error;
+        case ObaApi.OBA_NOT_FOUND:
+            return R.string.route_not_found_error;
+        default:
+            return R.string.generic_comm_error;
+        }
+    }
+    public static final int getStopErrorString(int code) {
+        switch (code) {
+        case ObaApi.OBA_INTERNAL_ERROR:
+            return R.string.internal_error;
+        case ObaApi.OBA_NOT_FOUND:
+            return R.string.stop_not_found_error;
+        default:
+            return R.string.generic_comm_error;
+        }
+    }
     
     public static final GeoPoint DEFAULT_SEARCH_CENTER = 
         ObaApi.makeGeoPoint(47.612181, -122.22908);

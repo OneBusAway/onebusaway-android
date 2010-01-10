@@ -360,7 +360,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             }
         }
         else {
-            empty.setText(R.string.generic_comm_error);
+            empty.setText(UIHelp.getRouteErrorString(routeInfo.getCode()));
         }
     }    
     private void setStopsForRoute(StopsForRouteInfo result) {

@@ -464,7 +464,7 @@ public class StopInfoActivity extends ListActivity {
             }
             else {
                 TextView empty = (TextView)findViewById(android.R.id.empty);
-                empty.setText(R.string.generic_comm_error);
+                empty.setText(UIHelp.getStopErrorString(result.getCode()));
             } 
         }
     }

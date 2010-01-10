@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="main_help_options">
+        <item>User Guide</item>
+        <item>Twitter Feed</item>
+        <item>What\'s New?</item>
+        <!--  <item>Send Feedback</item> -->
+    </string-array>
     <string-array name="stop_item_options">
         <item>Set a reminder</item>
         <item>Show route information</item>

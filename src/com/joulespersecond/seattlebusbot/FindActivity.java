@@ -133,10 +133,7 @@ abstract class FindActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_favorites) {
             clearFavorites();
-            ListAdapter adapter = getListView().getAdapter();
-            if (adapter instanceof SimpleCursorAdapter) {
-                ((SimpleCursorAdapter)adapter).getCursor().requery();
-            }
+            requery();
             return true;
         }
         return false;
@@ -156,6 +153,13 @@ abstract class FindActivity extends ListActivity {
             mSearchTimer.cancel();
             mSearchTimer = null;
         }
+    }
+    
+    protected void requery() {
+        ListAdapter adapter = getListView().getAdapter();
+        if (adapter instanceof SimpleCursorAdapter) {
+            ((SimpleCursorAdapter)adapter).getCursor().requery();
+        }        
     }
     
     /**

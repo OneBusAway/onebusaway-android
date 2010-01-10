@@ -24,6 +24,11 @@ public class FindStopActivity extends FindActivity {
     
     private StopsDbAdapter mDbAdapter;
     
+    private boolean isSearching() {
+        ListAdapter adapter = getListView().getAdapter();
+        return adapter instanceof SearchResultsListAdapter;
+    }
+    
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String stopId;
@@ -62,6 +67,7 @@ public class FindStopActivity extends FindActivity {
     
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
+    private static final int CONTEXT_MENU_DELETE = 3;
     
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -77,6 +83,9 @@ public class FindStopActivity extends FindActivity {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_stop_info);            
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
+        if (!isSearching()) {
+            menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.find_context_remove_favorite);
+        }
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -88,6 +97,10 @@ public class FindStopActivity extends FindActivity {
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
             showOnMap(getListView(), info.position);
+            return true;
+        case CONTEXT_MENU_DELETE:
+            mDbAdapter.removeFavorite(getId(getListView(), info.position));
+            requery();
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -120,6 +133,25 @@ public class FindStopActivity extends FindActivity {
         MapViewActivity.start(this, stopId, lat, lon);
     }    
 
+    private String getId(ListView l, int position) {
+        ListAdapter adapter = l.getAdapter();
+        if (adapter instanceof SimpleCursorAdapter) {
+            // Get the cursor and fetch the stop ID from that.
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
+            Cursor c = cursorAdapter.getCursor();
+            c.moveToPosition(position - l.getHeaderViewsCount());
+            return c.getString(StopsDbAdapter.STOP_COL_STOPID);
+        }
+        else if (adapter instanceof SearchResultsListAdapter) {
+            ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
+            return stop.getId();
+        }
+        else {
+            Log.e(TAG, "Unknown adapter. Giving up!");
+            return "";
+        }        
+    }
+    
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaStop> {       
         public SearchResultsListAdapter(ObaResponse response) {
             super(FindStopActivity.this,
@@ -154,7 +186,7 @@ public class FindStopActivity extends FindActivity {
     
     @Override
     protected void clearFavorites() {
-        StopsDbAdapter.clearFavorites(this);
+        mDbAdapter.clearFavorites();
     }
     @Override
     protected void openDB() {

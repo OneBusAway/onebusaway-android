@@ -4,8 +4,15 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -40,6 +47,7 @@ public class MapViewActivity extends MapActivity {
     //private static final String TAG = "MapViewActivity";
     
     public static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.1.html";
+    public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
     
     private static final String FOCUS_STOP_ID = ".FocusStopId";
     private static final String CENTER_LAT = ".CenterLat";
@@ -66,6 +74,9 @@ public class MapViewActivity extends MapActivity {
     // and then request new stops.
     private Timer mTimer;
     private static final int CENTER_POLL_PERIOD = 2000;
+    
+    private static final int HELP_DIALOG = 1;
+    private static final int WHATSNEW_DIALOG = 2;
     
     /**
      * Starts the MapActivity with a particular stop focused with the
@@ -202,6 +213,8 @@ public class MapViewActivity extends MapActivity {
             // as it, and go to the user's location.
             setMyLocation();
         }
+        
+        autoShowWhatsNew();
     }
     @Override
     public void onDestroy() {
@@ -242,8 +255,7 @@ public class MapViewActivity extends MapActivity {
             return true;            
         }
         else if (id == R.id.help) {
-            Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(HELP_URL));
-            startActivity(myIntent);
+            showDialog(HELP_DIALOG);
             return true;            
         }
         return false;
@@ -288,6 +300,17 @@ public class MapViewActivity extends MapActivity {
     @Override
     protected boolean isRouteDisplayed() {
         return false;
+    }
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+        case HELP_DIALOG:
+            return createHelpDialog();
+            
+        case WHATSNEW_DIALOG:
+            return createWhatsNewDialog();
+        }
+        return null;
     }
     
     private void watchMap() {
@@ -547,6 +570,88 @@ public class MapViewActivity extends MapActivity {
 
     static void goToStop(Context context, ObaStop stop) {
         StopInfoActivity.start(context, stop);
+    }
+    
+    private Dialog createHelpDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_help_title);
+        builder.setItems(R.array.main_help_options, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                case 0:
+                    Intent help = new Intent(Intent.ACTION_VIEW, Uri.parse(HELP_URL));
+                    startActivity(help); 
+                    break;
+                case 1:
+                    Intent twitter = new Intent(Intent.ACTION_VIEW, Uri.parse(TWITTER_URL));
+                    startActivity(twitter); 
+                    break;
+                case 2:
+                    showDialog(WHATSNEW_DIALOG);
+                    break;
+                case 3:
+                    // Go to email page with some info about the device.
+                    break;
+                }
+            }
+        });
+        return builder.create();
+    }
+    private Dialog createWhatsNewDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_help_whatsnew_title);
+        builder.setIcon(R.drawable.icon);
+        builder.setMessage(R.string.main_help_whatsnew);
+        builder.setNeutralButton(R.string.main_help_close, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dismissDialog(WHATSNEW_DIALOG);
+            }
+        });
+        return builder.create();
+        /*
+        // If we get here, we need to show the dialog.
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.whats_new);
+        // OK dismisses
+        Button button = (Button)dialog.findViewById(android.R.id.closeButton);
+        button.setOnClickListener(new View.OnClickListener() {        
+            public void onClick(View v) {
+                dismissDialog(WHATSNEW_DIALOG);
+            }
+        });
+        return dialog;
+        */
+    }
+    
+    private static final String WHATS_NEW_VER = "whatsNewVer";
+    
+    private void autoShowWhatsNew() {
+        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0); 
+
+        // Get the current app version.
+        PackageManager pm = getPackageManager();
+        PackageInfo appInfo = null;
+        try {
+            appInfo = pm.getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        
+        final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
+        final int newVer = appInfo.versionCode;
+        
+        // If we've just installed, we actually don't want to show it.
+        // Just update to the current version.
+        if ((oldVer > 0) && (oldVer < newVer)) {
+            showDialog(WHATSNEW_DIALOG);            
+        }
+       
+        if (oldVer != newVer) {
+            SharedPreferences.Editor edit = settings.edit();
+            edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
+            edit.commit();
+        }
     }
     
     private boolean isRouteMode() {

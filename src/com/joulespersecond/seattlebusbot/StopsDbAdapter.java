@@ -235,6 +235,11 @@ public class StopsDbAdapter {
         }
         return cursor;
     }
+    public void removeFavorite(String stopID) {
+        ContentValues args = new ContentValues();
+        args.put(DbHelper.KEY_USECOUNT, 0);
+        mDb.update(DbHelper.STOPS_TABLE, args, WHERE, new String[] { stopID });        
+    }
     public void clearFavorites() {
         ContentValues args = new ContentValues();
         args.put(DbHelper.KEY_USECOUNT, 0);

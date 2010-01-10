@@ -4,6 +4,9 @@
     
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
+    <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
+    <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
+    <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -22,6 +25,10 @@
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
+    <string name="main_help_title">Help</string>
+    <string name="main_help_whatsnew_title">What\'s New?</string>
+    <string name="main_help_whatsnew">Sound Transit support!\n\nUpdated Help, including\nNews &amp; Alerts via Twitter!\n\nDelete individual favorites!</string>
+    <string name="main_help_close">Close</string>
     
     <!--  Stop Info -->
     <string name="stop_info_title">SeattleBusBot</string>
@@ -75,6 +82,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="find_context_get_route_info">Show route information</string>
     <string name="find_context_create_shortcut">Create shortcut</string>
     <string name="find_context_showonmap">Show on map</string>
+    <string name="find_context_remove_favorite">Remove this favorite</string>
     
     <string name="route_shortcut">Bus route</string>
     <string name="stop_shortcut">Bus stop</string>

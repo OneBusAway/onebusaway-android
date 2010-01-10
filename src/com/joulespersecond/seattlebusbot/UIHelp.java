@@ -3,9 +3,6 @@ package com.joulespersecond.seattlebusbot;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.android.maps.GeoPoint;
-import com.joulespersecond.oba.ObaApi;
-
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
@@ -16,8 +13,13 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.google.android.maps.GeoPoint;
+import com.joulespersecond.oba.ObaApi;
+
 final class UIHelp {
     private static final String TAG = "UIHelp";
+    
+    public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
     
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
         TextView v = (TextView)parent.findViewById(id);
@@ -47,6 +49,26 @@ final class UIHelp {
             Log.v(TAG, "Unknown direction: " + direction);
             return R.string.direction_n;
         }    
+    }
+    public static final int getRouteErrorString(int code) {
+        switch (code) {
+        case ObaApi.OBA_INTERNAL_ERROR:
+            return R.string.internal_error;
+        case ObaApi.OBA_NOT_FOUND:
+            return R.string.route_not_found_error;
+        default:
+            return R.string.generic_comm_error;
+        }
+    }
+    public static final int getStopErrorString(int code) {
+        switch (code) {
+        case ObaApi.OBA_INTERNAL_ERROR:
+            return R.string.internal_error;
+        case ObaApi.OBA_NOT_FOUND:
+            return R.string.stop_not_found_error;
+        default:
+            return R.string.generic_comm_error;
+        }
     }
     
     public static final GeoPoint DEFAULT_SEARCH_CENTER = 

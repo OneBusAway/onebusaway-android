@@ -208,6 +208,26 @@ public class StopsDbAdapter {
         } 
     }
     
+    static public int getStopCount(Context context) {
+        StopsDbAdapter adapter = new StopsDbAdapter(context);
+        adapter.open();
+        int result = adapter.getStopCount();
+        adapter.close();
+        return result;
+    }
+    public int getStopCount() {
+        Cursor c = mDb.rawQuery("select count(*) from " + DbHelper.STOPS_TABLE, null);
+        int result = 0;
+        if (c != null) {
+            if (c.getCount() > 0) {
+                c.moveToFirst();
+                result = c.getInt(0);
+            }
+            c.close();
+        }
+        return result;
+    }
+    
     // A more efficient helper when all you want is the name of the stop.
     static public String getStopName(Context context, String stopId) {
         StopsDbAdapter adapter = new StopsDbAdapter(context);

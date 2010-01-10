@@ -643,13 +643,19 @@ public class MapViewActivity extends MapActivity {
         final int newVer = appInfo.versionCode;
         
         if (oldVer != newVer) {
-            // If we've just installed, we actually don't want to show it.
-            // Just update to the current version.
-            // Also, "bootstrap" the What's New for people upgrading *to* version 7, 
-            // the first version with "What's New?" dialog.
-            if ((oldVer > 0) &&
-                    ((newVer == 7) || (oldVer < newVer))) {
-                showDialog(WHATSNEW_DIALOG);            
+            // It's impossible to tell the difference from people updating
+            // from an older version without a What's New dialog and people
+            // with fresh installs just by the settings alone.
+            // So we'll do a heuristic and just check to see if they have 
+            // visited any stops -- in most cases that will mean they have 
+            // just installed.
+            if (oldVer == 0 && newVer == 7) {
+                if (StopsDbAdapter.getStopCount(this) != 0) {
+                    showDialog(WHATSNEW_DIALOG);
+                }
+            }
+            else if ((oldVer > 0) && (oldVer < newVer)) {
+                showDialog(WHATSNEW_DIALOG);
             }
        
             SharedPreferences.Editor edit = settings.edit();

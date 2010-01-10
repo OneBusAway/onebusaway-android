@@ -79,6 +79,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="find_context_get_route_info">Show route information</string>
     <string name="find_context_create_shortcut">Create shortcut</string>
     <string name="find_context_showonmap">Show on map</string>
+    <string name="find_context_remove_favorite">Remove this favorite</string>
     
     <string name="route_shortcut">Bus route</string>
     <string name="stop_shortcut">Bus stop</string>

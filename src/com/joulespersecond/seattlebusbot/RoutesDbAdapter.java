@@ -174,6 +174,11 @@ public class RoutesDbAdapter {
         }
         return cursor;
     }
+    public void removeFavorite(String routeID) {
+        ContentValues args = new ContentValues();
+        args.put(DbHelper.KEY_USECOUNT, 0);
+        mDb.update(DbHelper.ROUTES_TABLE, args, WHERE, new String[] { routeID });        
+    }
     public void clearFavorites() {
         ContentValues args = new ContentValues();
         args.put(DbHelper.KEY_USECOUNT, 0);

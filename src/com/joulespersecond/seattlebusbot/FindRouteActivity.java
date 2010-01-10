@@ -23,6 +23,11 @@ public class FindRouteActivity extends FindActivity {
     
     private RoutesDbAdapter mDbAdapter;
     
+    private boolean isSearching() {
+        ListAdapter adapter = getListView().getAdapter();
+        return adapter instanceof SearchResultsListAdapter;
+    }
+    
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String routeId;
@@ -58,6 +63,7 @@ public class FindRouteActivity extends FindActivity {
     
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
+    private static final int CONTEXT_MENU_DELETE = 3;
     
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -73,6 +79,9 @@ public class FindRouteActivity extends FindActivity {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_route_info);            
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
+        if (!isSearching()) {
+            menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.find_context_remove_favorite);
+        }
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -84,6 +93,10 @@ public class FindRouteActivity extends FindActivity {
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
             showOnMap(getListView(), info.position);
+            return true;
+        case CONTEXT_MENU_DELETE:
+            mDbAdapter.removeFavorite(getId(getListView(), info.position));
+            requery();
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -109,6 +122,25 @@ public class FindRouteActivity extends FindActivity {
             return;
         }
         MapViewActivity.start(this, routeId);
+    }
+    
+    private String getId(ListView l, int position) {
+        ListAdapter adapter = l.getAdapter();
+        if (adapter instanceof SimpleCursorAdapter) {
+            // Get the cursor and fetch the stop ID from that.
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
+            Cursor c = cursorAdapter.getCursor();
+            c.moveToPosition(position - l.getHeaderViewsCount());
+            return c.getString(RoutesDbAdapter.ROUTE_COL_ROUTEID);
+        }
+        else if (adapter instanceof SearchResultsListAdapter) {
+            ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
+            return route.getId();
+        }
+        else {
+            Log.e(TAG, "Unknown adapter. Giving up!");
+            return "";
+        }        
     }
     
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {
@@ -143,7 +175,7 @@ public class FindRouteActivity extends FindActivity {
     
     @Override
     protected void clearFavorites() {
-        RoutesDbAdapter.clearFavorites(this);
+        mDbAdapter.clearFavorites();
     }
     @Override
     protected void openDB() {

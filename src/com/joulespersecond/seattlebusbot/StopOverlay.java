@@ -38,7 +38,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
             return R.drawable.stop_ne_state;                             
         } else {
             Log.e(TAG, "Unknown direction: " + direction);
-            return R.drawable.stop_n_state;
+            return R.drawable.stop_u_state;
         }        
     }
     

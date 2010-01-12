@@ -462,10 +462,10 @@ public class MapViewActivity extends MapActivity {
                      final TextView name = (TextView)popup.findViewById(R.id.stop_name);
                      name.setText(stop.getName());
                     
-                     final TextView direction = (TextView)popup.findViewById(R.id.direction);
-                     direction.setText(
-                             UIHelp.getStopDirectionText(stop.getDirection()));
-
+                     UIHelp.setStopDirection(popup.findViewById(R.id.direction), 
+                             stop.getDirection(),
+                             false);
+                     
                      populateRoutes(stop, false);
                     
                      // Right now the popup is always at the top of the screen.

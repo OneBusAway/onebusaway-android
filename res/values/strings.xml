@@ -15,6 +15,7 @@
     <string name="direction_sw">Southwest bound</string>
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
+    <string name="direction_none"></string>
     
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>

@@ -161,11 +161,12 @@ public class FindStopActivity extends FindActivity {
         @Override
         protected void setData(View view, int position) {
             TextView route = (TextView)view.findViewById(R.id.name);
-            TextView direction = (TextView)view.findViewById(R.id.direction);
 
             ObaStop stop = mArray.get(position);
             route.setText(stop.getName());
-            direction.setText(UIHelp.getStopDirectionText(stop.getDirection()));
+            UIHelp.setStopDirection(view.findViewById(R.id.direction), 
+                    stop.getDirection(),
+                    true);
         }
     }
     
@@ -220,9 +221,9 @@ public class FindStopActivity extends FindActivity {
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                 if (columnIndex == StopsDbAdapter.STOP_COL_DIRECTION) {
-                    TextView direction = (TextView)view.findViewById(R.id.direction);
-                    direction.setText(
-                            UIHelp.getStopDirectionText(cursor.getString(columnIndex)));
+                    UIHelp.setStopDirection(view.findViewById(R.id.direction), 
+                            cursor.getString(columnIndex),
+                            true);
                     return true;
                 } 
                 return false;

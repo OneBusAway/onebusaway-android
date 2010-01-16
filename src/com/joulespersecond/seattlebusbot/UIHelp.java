@@ -10,14 +10,14 @@ import android.location.LocationManager;
 import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 
 final class UIHelp {
-    private static final String TAG = "UIHelp";
+    //private static final String TAG = "UIHelp";
     
     public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
     
@@ -46,10 +46,22 @@ final class UIHelp {
         } else if (direction.equals("NE")) {
             return R.string.direction_ne;                             
         } else {
-            Log.v(TAG, "Unknown direction: " + direction);
-            return R.string.direction_n;
+            return R.string.direction_none;
         }    
     }
+    // Shows or hides the view, depending on whether or not the direction is available.
+    public static final void setStopDirection(View v, String direction, boolean show) {
+        final TextView text = (TextView)v;
+        final int directionText = UIHelp.getStopDirectionText(direction);
+        if ((directionText != R.string.direction_none) || show) {
+            text.setText(directionText);
+            text.setVisibility(View.VISIBLE);
+        }
+        else {
+            text.setVisibility(View.GONE);
+        }
+    }
+    
     public static final int getRouteErrorString(int code) {
         switch (code) {
         case ObaApi.OBA_INTERNAL_ERROR:

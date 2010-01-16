@@ -527,8 +527,7 @@ public class StopInfoActivity extends ListActivity {
             nameText.setText(name);
         }
         if (direction != null) {
-            TextView directionText = (TextView)findViewById(R.id.direction);
-            directionText.setText(UIHelp.getStopDirectionText(direction));  
+            UIHelp.setStopDirection(findViewById(R.id.direction), direction, false);  
         }
     }
     void setFilterHeader() {

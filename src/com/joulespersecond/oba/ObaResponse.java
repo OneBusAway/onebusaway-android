@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -61,12 +61,19 @@ public final class ObaResponse {
     static public ObaResponse createFromError(String error) {
         return new ObaResponse(VERSION, 0, error);
     }
+    static public ObaResponse createFromError(String error, int code) {
+        return new ObaResponse(VERSION, code, error);
+    }
     static public ObaResponse createFromURL(URL url) throws IOException {
         long start = System.nanoTime();
         boolean useGzip = false;
-        URLConnection conn = url.openConnection();
+        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setRequestProperty("Accept-Encoding", "gzip");
         conn.connect();
+        final int code = conn.getResponseCode();
+        if (code != HttpURLConnection.HTTP_OK) {
+            return createFromError("Server returned an error", code);
+        }
         InputStream in = conn.getInputStream();
         
         final Map<String,List<String>> headers = conn.getHeaderFields();

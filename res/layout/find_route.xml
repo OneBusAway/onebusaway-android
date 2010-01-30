@@ -16,7 +16,7 @@
                 android:id="@+id/search_text"
                 android:layout_column="0"
                 android:hint="@string/search_route_hint"
-                android:numeric="integer" 
+                android:inputType="text"
                 android:singleLine="true" />
             <Button
                 android:id="@+id/search"

@@ -184,9 +184,17 @@ abstract class FindActivity extends ListActivity {
     protected final void setResponse(ObaResponse response) {
         mResponse = response;
         TextView empty = (TextView) findViewById(android.R.id.empty);
-        if (response.getCode() == ObaApi.OBA_OK) {
+        final int code = response.getCode();
+        if (code == ObaApi.OBA_OK) {
             empty.setText(R.string.find_hint_noresults);
             setResultsAdapter(response);
+        }
+        else if (code != 0) {
+            // If we get anything other than a '0' error, that means
+            // the server actually returned something to us, 
+            // (even if it was an error) so we shouldn't show 
+            // a 'communication' error. Just fake no results.
+            empty.setText(R.string.find_hint_noresults);
         }
         else {
             empty.setText(R.string.generic_comm_error);

@@ -222,13 +222,14 @@ public class FindRouteActivity extends FindActivity {
                 UIHelp.getLocation(FindRouteActivity.this), 0, routeId);
         // If there is no results from the user-centered query,
         // open a wider next in some "default" Seattle/Bellevue location
-        if (response.getCode() != ObaApi.OBA_OK) {
-            return response;
+        Log.d(TAG, "Server returns: " + response.getCode());
+        if (response.getCode() == ObaApi.OBA_OK) {
+            ObaArray<ObaRoute> routes = response.getData().getRoutes();
+            if (routes.length() != 0) {
+                return response;
+            }
         }
-        ObaArray<ObaRoute> routes = response.getData().getRoutes();
-        if (routes.length() != 0) {
-            return response;
-        }
+
         return ObaApi.getRoutesByLocation(this, UIHelp.DEFAULT_SEARCH_CENTER,
                 UIHelp.DEFAULT_SEARCH_RADIUS,
                 routeId); 

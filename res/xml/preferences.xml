@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="preferences_root">
+    <EditTextPreference android:summary="@string/preferences_oba_api_servername_summary"
+        android:defaultValue="@string/preferences_oba_api_servername_default" android:title="@string/preferences_oba_api_servername_title"
+        android:key="preferences_oba_api_servername" />
+</PreferenceScreen> 

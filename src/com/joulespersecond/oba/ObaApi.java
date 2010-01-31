@@ -5,6 +5,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
@@ -24,7 +27,7 @@ public final class ObaApi {
     
     private static final String API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
     // NOTE: This could be provided by Settings to use different versions of the server.
-    private static final String OBA_URL = "http://api.onebusaway.org/api/where";
+    //private static final String OBA_URL = "http://api.onebusaway.org/api/where";
     
     public static final double E6 = 1000*1000;
     
@@ -61,6 +64,12 @@ public final class ObaApi {
             return ObaResponse.createFromError(e.toString());
         }
     }
+    
+    private static String getUrl(Context context) {
+      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+      String serverName = preferences.getString("preferences_oba_api_servername", "api.onebusaway.org");
+      return "http://" + serverName+ "/api/where";
+    }
 
     
     /**
@@ -69,10 +78,11 @@ public final class ObaApi {
      * @param id The stop ID. 
      * @return A response object.
      */
-    public static ObaResponse getStopById(String id) {
+    public static ObaResponse getStopById(Context context, String id) {
+        
         // We can do a simple format since we're not expecting the id needs escaping.
         return doRequest(
-                String.format("%s/stop/%s.json?key=%s", OBA_URL, id, API_KEY));
+                String.format("%s/stop/%s.json?key=%s", getUrl(context), id, API_KEY));
     }
     /**
      * Retrieves a route by its full ID.
@@ -80,9 +90,9 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
-    public static ObaResponse getRouteById(String id) {
+    public static ObaResponse getRouteById(Context context, String id) {
         return doRequest(
-                String.format("%s/route/%s.json?key=%s", OBA_URL, id, API_KEY));
+                String.format("%s/route/%s.json?key=%s", getUrl(context), id, API_KEY));
     }
     /**
      * Search for stops by a location in a specified radius, 
@@ -96,14 +106,14 @@ public final class ObaApi {
      * @param maxCount Optional maximum number of stop entries to return.
      * @return A response object.
      */
-    public static ObaResponse getStopsByLocation(GeoPoint location, 
+    public static ObaResponse getStopsByLocation(Context context, GeoPoint location, 
             int radius, 
             int latSpan,
             int lonSpan,
             String query,
             int maxCount) {
         String url = String.format("%s/stops-for-location.json?key=%s&lat=%f&lon=%f", 
-                OBA_URL, 
+                getUrl(context), 
                 API_KEY,
                 (double)location.getLatitudeE6()/E6,
                 (double)location.getLongitudeE6()/E6);
@@ -143,12 +153,12 @@ public final class ObaApi {
      * @param query The optional route name to search for.
      * @return A response object.
      */
-    public static ObaResponse getRoutesByLocation(GeoPoint location,
+    public static ObaResponse getRoutesByLocation(Context context, GeoPoint location,
             int radius,
             String query) {
         StringBuilder url = new StringBuilder(
                 String.format("%s/routes-for-location.json?key=%s&lat=%f&lon=%f", 
-                OBA_URL, 
+                getUrl(context), 
                 API_KEY,
                 (double)location.getLatitudeE6()/E6,
                 (double)location.getLongitudeE6()/E6));
@@ -175,9 +185,9 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
-    public static ObaResponse getStopsForRoute(String id) {
+    public static ObaResponse getStopsForRoute(Context context, String id) {
         return doRequest(
-                String.format("%s/stops-for-route/%s.json?key=%s", OBA_URL, id, API_KEY));
+                String.format("%s/stops-for-route/%s.json?key=%s", getUrl(context), id, API_KEY));
     }
     /**
      * Get current arrivals and departures for routes serving the specified stop.
@@ -187,9 +197,9 @@ public final class ObaApi {
      * @param id The stop ID.
      * @return true if successful, false otherwise.
      */
-    public static ObaResponse getArrivalsDeparturesForStop(String id) {
+    public static ObaResponse getArrivalsDeparturesForStop(Context context, String id) {
         return doRequest(
-                String.format("%s/arrivals-and-departures-for-stop/%s.json?key=%s", OBA_URL, id, API_KEY));
+                String.format("%s/arrivals-and-departures-for-stop/%s.json?key=%s", getUrl(context), id, API_KEY));
     }
     
     /**

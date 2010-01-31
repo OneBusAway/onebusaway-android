@@ -310,7 +310,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getRouteById(params[0]);
+            return ObaApi.getRouteById(RouteInfoActivity.this, params[0]);
         }
         @Override
         protected void doResult(ObaResponse result) {
@@ -325,7 +325,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
         @Override
         protected StopsForRouteInfo doInBackground(String... params) {
             return new StopsForRouteInfo(
-                    RouteInfoActivity.this, ObaApi.getStopsForRoute(params[0]));
+                    RouteInfoActivity.this, 
+                    ObaApi.getStopsForRoute(RouteInfoActivity.this, params[0]));
         } 
         @Override
         protected void doResult(StopsForRouteInfo result) {

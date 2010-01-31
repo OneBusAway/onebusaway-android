@@ -218,7 +218,7 @@ public class FindRouteActivity extends FindActivity {
 
     @Override
     protected ObaResponse doFindInBackground(String routeId) {
-        ObaResponse response = ObaApi.getRoutesByLocation(
+        ObaResponse response = ObaApi.getRoutesByLocation(this,
                 UIHelp.getLocation(FindRouteActivity.this), 0, routeId);
         // If there is no results from the user-centered query,
         // open a wider next in some "default" Seattle/Bellevue location
@@ -229,7 +229,7 @@ public class FindRouteActivity extends FindActivity {
         if (routes.length() != 0) {
             return response;
         }
-        return ObaApi.getRoutesByLocation(UIHelp.DEFAULT_SEARCH_CENTER,
+        return ObaApi.getRoutesByLocation(this, UIHelp.DEFAULT_SEARCH_CENTER,
                 UIHelp.DEFAULT_SEARCH_RADIUS,
                 routeId); 
     }

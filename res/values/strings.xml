@@ -29,7 +29,7 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Pierce Transit support!\n\nUpdated Help, including\nNews &amp; Alerts via Twitter!</string>
+    <string name="main_help_whatsnew">Bug fixes!\nNews &amp; Alerts via Twitter!</string>
     <string name="main_help_close">Close</string>
     
     <!--  Stop Info -->

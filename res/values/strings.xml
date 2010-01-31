@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    
     <string name="app_name">SeattleBusBot</string>
     
     <!-- Generic -->
@@ -77,7 +78,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="find_hint_nofavoritestops_link">What\'s a stop number?</string>
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop number</string>
-    <string name="search_route_hint">Enter a route number</string>
+    <string name="search_route_hint">Enter a route name/number</string>
     
     <string name="find_context_get_stop_info">Show arrival information</string>
     <string name="find_context_get_route_info">Show route information</string>
@@ -125,4 +126,10 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="trip_stat_lessthanone">Route %s is less than a minute away!</string>
     <string name="trip_stat_one">Route %s is 1 minute away!</string>
     <string name="trip_stat">Route %s is %d minutes away!</string>
+    
+    <!-- Application Preferences -->
+    <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
+    <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
+    <string name="preferences_oba_api_servername_default">api.onebusaway.org</string>
+    
 </resources>

@@ -402,7 +402,8 @@ public class TripService extends Service {
 
             while (mState != DONE) {
                 //Log.d(TAG, "Get arrivals/departures: " + getTaskId());
-                ObaResponse response = ObaApi.getArrivalsDeparturesForStop(stopId);
+                ObaResponse response = 
+                        ObaApi.getArrivalsDeparturesForStop(TripService.this, stopId);
                 synchronized (this) {
                     // First check to see if we were marked as DONE while 
                     // getArrivalsDeparturesForStop was running

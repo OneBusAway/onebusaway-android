@@ -455,7 +455,7 @@ public class StopInfoActivity extends ListActivity {
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getArrivalsDeparturesForStop(params[0]);
+            return ObaApi.getArrivalsDeparturesForStop(StopInfoActivity.this, params[0]);
         }
         @Override
         protected void doResult(ObaResponse result) {

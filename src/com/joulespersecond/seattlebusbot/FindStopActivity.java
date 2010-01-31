@@ -252,6 +252,6 @@ public class FindStopActivity extends FindActivity {
 
     @Override
     protected ObaResponse doFindInBackground(String param) {
-        return ObaApi.getStopsByLocation(UIHelp.getLocation(this), 0, 0, 0, param, 0);
+        return ObaApi.getStopsByLocation(this, UIHelp.getLocation(this), 0, 0, 0, param, 0);
     }
 }

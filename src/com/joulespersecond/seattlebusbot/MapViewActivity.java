@@ -124,7 +124,7 @@ public class MapViewActivity extends MapActivity {
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getStopsForRoute(params[0]);
+            return ObaApi.getStopsForRoute(MapViewActivity.this, params[0]);
         }
         @Override
         protected void doResult(ObaResponse result) { }   
@@ -139,7 +139,7 @@ public class MapViewActivity extends MapActivity {
             GeoPoint point = (GeoPoint)params[0];
             Integer latSpan = (Integer)params[1];
             Integer lonSpan = (Integer)params[2];
-            return ObaApi.getStopsByLocation(point, 0, latSpan, lonSpan, null, 0);
+            return ObaApi.getStopsByLocation(MapViewActivity.this, point, 0, latSpan, lonSpan, null, 0);
         }
         @Override
         protected void doResult(ObaResponse result) {
@@ -590,7 +590,8 @@ public class MapViewActivity extends MapActivity {
                     showDialog(WHATSNEW_DIALOG);
                     break;
                 case 3:
-                    // Go to email page with some info about the device.
+                    Intent preferences = new Intent(MapViewActivity.this, EditPreferencesActivity.class);
+                    startActivity(preferences);
                     break;
                 }
             }

@@ -50,6 +50,7 @@
         <activity android:name=".MultiChoiceActivity"
                   android:theme="@android:style/Theme.Dialog">
         </activity>
+        <activity android:name=".EditPreferencesActivity"/>
         
         <service android:name=".TripService">
             <intent-filter>

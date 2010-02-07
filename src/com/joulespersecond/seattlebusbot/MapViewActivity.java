@@ -47,8 +47,8 @@ import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 public class MapViewActivity extends MapActivity {
     private static final String TAG = "MapViewActivity";
     
-    public static final String HELP_URL = "http://www.joulespersecond.com/seattlebusbot/userguide-v1.1.html";
-    public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
+    public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway/userguide-v1.1.html";
+    public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
     
     private static final String FOCUS_STOP_ID = ".FocusStopId";
     private static final String CENTER_LAT = ".CenterLat";

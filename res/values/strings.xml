@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
-    <string name="app_name">SeattleBusBot</string>
+    <string name="app_name">OneBusAway</string>
     
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
@@ -33,7 +33,7 @@
     <string name="main_help_close">Close</string>
     
     <!--  Stop Info -->
-    <string name="stop_info_title">SeattleBusBot</string>
+    <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_loading">Loading...</string>
     <string name="stop_info_ontime">On time</string>
     <string name="stop_info_arrive_delayed1">1 minute delay</string>
@@ -59,14 +59,14 @@
     <string name="stop_info_cancel">Cancel</string>
     
     <!-- Route Info  -->
-    <string name="route_info_title">SeattleBusBot</string>
+    <string name="route_info_title">OneBusAway</string>
     <string name="route_info_loading">Loading...</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
     
     <!-- Find -->
-    <string name="find_route_title">SeattleBusBot</string>
-    <string name="find_stop_title">SeattleBusBot</string>
+    <string name="find_route_title">OneBusAway</string>
+    <string name="find_stop_title">OneBusAway</string>
     <string name="find">Find</string>
     <string name="find_option_clearfavorites">Clear favorites</string>
     <string name="find_hint_nofavoritestops">You don\'t have any favorite stops.\n\n
@@ -91,7 +91,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="route_name">Route %s</string>
     
     <!--  Trip info -->
-    <string name="trip_info_title">SeattleBusBot</string>
+    <string name="trip_info_title">OneBusAway</string>
     <string name="trip_info_name">Reminder name</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
@@ -114,7 +114,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="trip_info_option_showstop">Show stop</string>
     
     <!--  Trip list -->
-    <string name="trip_list_title">SeattleBusBot</string>
+    <string name="trip_list_title">OneBusAway</string>
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by clicking on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>

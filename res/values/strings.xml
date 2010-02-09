@@ -115,7 +115,7 @@ You can also find a route by entering its route number in the search box.</strin
     
     <!--  Trip list -->
     <string name="trip_list_title">OneBusAway</string>
-    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by clicking on an arriving bus at your stop.</string>
+    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>
     <string name="trip_list_context_showstop">Show stop</string>

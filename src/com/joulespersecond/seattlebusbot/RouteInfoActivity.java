@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.ExpandableListActivity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -28,6 +29,7 @@ import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.oba.ObaStopGroup;
 import com.joulespersecond.oba.ObaStopGrouping;
+import com.joulespersecond.oba.provider.ObaContract;
 
 public class RouteInfoActivity extends ExpandableListActivity {
     private static final String ROUTE_ID = ".RouteId";
@@ -357,7 +359,10 @@ public class RouteInfoActivity extends ExpandableListActivity {
             agencyText.setText(route.getAgencyName());
             
             if (addToDb) {
-                RoutesDbAdapter.addRoute(this, route.getId(), shortName, longName, true);     
+                ContentValues values = new ContentValues();
+                values.put(ObaContract.Routes.SHORTNAME, shortName);
+                values.put(ObaContract.Routes.LONGNAME, longName);
+                ObaContract.Routes.insertOrUpdate(this, route.getId(), values, true);  
             }
         }
         else {

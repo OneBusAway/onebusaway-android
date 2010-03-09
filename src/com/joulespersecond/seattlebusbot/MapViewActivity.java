@@ -42,6 +42,7 @@ import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 public class MapViewActivity extends MapActivity {
@@ -651,8 +652,11 @@ public class MapViewActivity extends MapActivity {
             // visited any stops -- in most cases that will mean they have 
             // just installed.
             if (oldVer == 0 && newVer == 7) {
-                if (StopsDbAdapter.getStopCount(this) != 0) {
-                    showDialog(WHATSNEW_DIALOG);
+                Integer count = UIHelp.intForQuery(this,
+                        ObaContract.Stops.CONTENT_URI,
+                        ObaContract.Stops._COUNT);
+                if (count != null && count != 0) {
+                    showDialog(WHATSNEW_DIALOG);                    
                 }
             }
             else if ((oldVer > 0) && (oldVer < newVer)) {

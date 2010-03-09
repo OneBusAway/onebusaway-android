@@ -53,8 +53,6 @@ abstract class FindActivity extends ListActivity {
         TextView empty = (TextView)findViewById(android.R.id.empty);
         empty.setMovementMethod(LinkMovementMethod.getInstance());
         setNoFavoriteText();
-        
-        openDB();
                 
         Object obj = getLastNonConfigurationInstance();
         if (obj != null) {
@@ -78,7 +76,6 @@ abstract class FindActivity extends ListActivity {
     }
     @Override
     protected void onDestroy() {
-        closeDB();
         cancelDelayedSearch();
         cancelSearch();
         super.onDestroy();
@@ -283,15 +280,6 @@ abstract class FindActivity extends ListActivity {
      * This is called to set the no favorite text in the R.id.empty view.
      */
     abstract protected void setNoFavoriteText();
-    
-    /**
-     * Called when the DB should be opened.
-     */
-    abstract protected void openDB();
-    /**
-     * Called when the DB should be closed.
-     */
-    abstract protected void closeDB();
     
     /**
      * Called when the AsyncTask has produced a non-empty response

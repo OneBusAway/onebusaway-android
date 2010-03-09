@@ -1,5 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.text.SpannableStringBuilder;
@@ -18,11 +20,23 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
 
 public class FindStopActivity extends FindActivity {
     private static final String TAG = "FindStopActivity";
     
-    private StopsDbAdapter mDbAdapter;
+    private static final String[] PROJECTION = {
+        ObaContract.Stops._ID,
+        ObaContract.Stops.NAME,
+        ObaContract.Stops.DIRECTION,
+        ObaContract.Stops.LATITUDE,
+        ObaContract.Stops.LONGITUDE
+    };
+    private static final int COL_ID = 0;
+    private static final int COL_NAME = 1;
+    private static final int COL_DIRECTION = 2;
+    private static final int COL_LATITUDE = 3;
+    private static final int COL_LONGITUDE = 4;
     
     private boolean isSearching() {
         ListAdapter adapter = getListView().getAdapter();
@@ -41,9 +55,9 @@ public class FindStopActivity extends FindActivity {
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            stopId = c.getString(StopsDbAdapter.STOP_COL_STOPID);
-            stopName = c.getString(StopsDbAdapter.STOP_COL_NAME);
-            stopDir = c.getString(StopsDbAdapter.STOP_COL_DIRECTION);
+            stopId = c.getString(COL_ID);
+            stopName = c.getString(COL_NAME);
+            stopDir = c.getString(COL_DIRECTION);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
@@ -99,7 +113,7 @@ public class FindStopActivity extends FindActivity {
             showOnMap(getListView(), info.position);
             return true;
         case CONTEXT_MENU_DELETE:
-            mDbAdapter.removeFavorite(getId(getListView(), info.position));
+            removeFavorite(getId(getListView(), info.position));
             requery();
             return true;
         default:
@@ -116,9 +130,9 @@ public class FindStopActivity extends FindActivity {
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            stopId = c.getString(StopsDbAdapter.STOP_COL_STOPID);
-            lat = c.getDouble(StopsDbAdapter.STOP_COL_LATITUDE);
-            lon = c.getDouble(StopsDbAdapter.STOP_COL_LONGITUDE);
+            stopId = c.getString(COL_ID);
+            lat = c.getDouble(COL_LATITUDE);
+            lon = c.getDouble(COL_LONGITUDE);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
@@ -140,7 +154,7 @@ public class FindStopActivity extends FindActivity {
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            return c.getString(StopsDbAdapter.STOP_COL_STOPID);
+            return c.getString(COL_ID);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
@@ -187,27 +201,34 @@ public class FindStopActivity extends FindActivity {
     
     @Override
     protected void clearFavorites() {
-        mDbAdapter.clearFavorites();
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Stops.USE_COUNT, 0);
+        cr.update(ObaContract.Stops.CONTENT_URI, values, null, null);
     }
-    @Override
-    protected void openDB() {
-        mDbAdapter = new StopsDbAdapter(this);
-        mDbAdapter.open();
-        
-    }
-    @Override
-    protected void closeDB() {
-        mDbAdapter.close();        
+    private void removeFavorite(String id) {
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Stops.USE_COUNT, 0);
+        cr.update(ObaContract.Stops.CONTENT_URI, values, 
+                ObaContract.Stops._ID+"=?", new String[] { id });        
     }
 
     @Override
     protected void fillFavorites() {
-        Cursor c = mDbAdapter.getFavoriteStops();
+        ContentResolver cr = getContentResolver();
+        // TODO: No limit???
+        Cursor c = cr.query(ObaContract.Stops.CONTENT_URI, 
+                PROJECTION, 
+                ObaContract.Stops.USE_COUNT + " >0", 
+                null, 
+                ObaContract.Stops.USE_COUNT + " desc");
+        
         startManagingCursor(c);   
         
         String[] from = new String[] { 
-                DbHelper.KEY_NAME,
-                DbHelper.KEY_DIRECTION 
+                ObaContract.Stops.NAME,
+                ObaContract.Stops.DIRECTION 
         };
         int[] to = new int[] {
                 R.id.name,
@@ -220,7 +241,7 @@ public class FindStopActivity extends FindActivity {
         // to user level text (North/Northwest/etc..)
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                if (columnIndex == StopsDbAdapter.STOP_COL_DIRECTION) {
+                if (columnIndex == COL_DIRECTION) {
                     UIHelp.setStopDirection(view.findViewById(R.id.direction), 
                             cursor.getString(columnIndex),
                             true);

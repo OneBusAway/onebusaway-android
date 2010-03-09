@@ -7,9 +7,13 @@ import java.util.TimerTask;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ContentQueryMap;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +37,7 @@ import com.joulespersecond.oba.ObaData;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
 
 public class StopInfoActivity extends ListActivity {
     //private static final String TAG = "StopInfoActivity";
@@ -47,13 +52,11 @@ public class StopInfoActivity extends ListActivity {
     private String mStopId;
     private Timer mTimer;
     private long mResponseTime = 0;
-    private StopsDbAdapter mStopsDbAdapter;
     private ArrayList<String> mRoutesFilter;
     
     private AsyncTask<String,?,?> mAsyncTask;
-
-    private TripsDbAdapter mTripsDbAdapter;    
-    private TripsDbAdapter.TripsForStopSet mTripsForStop;
+   
+    private ContentQueryMap mTripsForStop;
 
     public static void start(Context context, String stopId) {
         context.startActivity(makeIntent(context, stopId));
@@ -107,19 +110,13 @@ public class StopInfoActivity extends ListActivity {
         setContentView(R.layout.stop_info);
         setListAdapter(new StopInfoListAdapter());
         
-        mStopsDbAdapter = new StopsDbAdapter(this);
-        mStopsDbAdapter.open();
-        
-        mTripsDbAdapter = new TripsDbAdapter(this);
-        mTripsDbAdapter.open();
-        
         Bundle bundle = getIntent().getExtras();
         mStopId = bundle.getString(STOP_ID);
         setHeader(bundle);
         UIHelp.setChildClickable(this, R.id.show_all, mShowAllClick);
      
-        mRoutesFilter = mStopsDbAdapter.getStopRouteFilter(mStopId);
-        mTripsForStop = mTripsDbAdapter.getTripsForStopId(mStopId);
+        mRoutesFilter = ObaContract.StopRouteFilters.get(this, mStopId);
+        mTripsForStop = getTripsForStop();
         
         Object response = getLastNonConfigurationInstance();
         if (response != null) {
@@ -132,8 +129,6 @@ public class StopInfoActivity extends ListActivity {
     @Override
     public void onDestroy() {
         mTripsForStop.close();
-        mStopsDbAdapter.close();
-        mTripsDbAdapter.close();
         if (mAsyncTask != null) {
             mAsyncTask.cancel(true);
         }
@@ -183,7 +178,7 @@ public class StopInfoActivity extends ListActivity {
         if (mTimer == null) {
             mTimer = new Timer();
         }
-        mTripsForStop.refresh();
+        mTripsForStop.requery();
         // If our timer would have gone off, then refresh.
         if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
             getStopInfo(true);            
@@ -378,9 +373,10 @@ public class StopInfoActivity extends ListActivity {
                     DateUtils.FORMAT_NO_NOON|
                     DateUtils.FORMAT_NO_MIDNIGHT));    
 
-            String tripName = mTripsForStop.getTripName(arrivalInfo.getTripId());
-            
-            if (tripName != null) {
+            ContentValues values = mTripsForStop.getValues(arrivalInfo.getTripId());
+            if (values != null) {
+                String tripName = values.getAsString(ObaContract.Trips.NAME);
+                
                 View tripInfo = view.findViewById(R.id.trip_info);
                 TextView tripNameView = (TextView)view.findViewById(R.id.trip_name);
                 if (tripName.length() == 0) {
@@ -414,7 +410,7 @@ public class StopInfoActivity extends ListActivity {
     }
     private void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
-        mStopsDbAdapter.setStopRouteFilter(mStopId, mRoutesFilter);
+        ObaContract.StopRouteFilters.set(this, mStopId, mRoutesFilter);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(mResponse.getData().getArrivalsAndDepartures());
     }
@@ -513,12 +509,16 @@ public class StopInfoActivity extends ListActivity {
         double lon = stop.getLongitude();
 
         setHeader(name, direction);
-           
+
         if (addToDb) {
             // Update the database
-            mStopsDbAdapter.addStop(
-                    stop.getId(), code, name, direction, 
-                    lat, lon, true);
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Stops.CODE, code);
+            values.put(ObaContract.Stops.NAME, name);
+            values.put(ObaContract.Stops.DIRECTION, direction);
+            values.put(ObaContract.Stops.LATITUDE, lat);
+            values.put(ObaContract.Stops.LONGITUDE, lon);
+            ObaContract.Stops.insertOrUpdate(this, stop.getId(), values, true);
         }
     }
     private void setHeader(String name, String direction) {
@@ -551,4 +551,19 @@ public class StopInfoActivity extends ListActivity {
             }
         }
     };
+    
+    private static final String[] TRIPS_PROJECTION = {
+        ObaContract.Trips._ID,
+        ObaContract.Trips.NAME
+    };
+    private ContentQueryMap getTripsForStop() {
+        ContentResolver cr = getContentResolver();
+        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI,
+                TRIPS_PROJECTION,
+                ObaContract.Trips.STOP_ID+"=?",
+                new String[] { mStopId },
+                null);
+        // TODO: Eventually add a handler for notifications
+        return new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
+    }
 }

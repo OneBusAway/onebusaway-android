@@ -53,6 +53,10 @@
         </activity>
         <activity android:name=".EditPreferencesActivity"/>
         
+        <provider 
+            android:name="com.joulespersecond.oba.provider.ObaProvider"
+            android:authorities="com.joulespersecond.oba"/>
+        
         <service android:name=".TripService">
             <intent-filter>
                 <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />

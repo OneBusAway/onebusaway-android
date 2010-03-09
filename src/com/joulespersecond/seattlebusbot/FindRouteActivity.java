@@ -1,5 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.util.Log;
@@ -17,11 +19,19 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
+import com.joulespersecond.oba.provider.ObaContract;
 
 public class FindRouteActivity extends FindActivity {
     private static final String TAG = "FindRouteActivity";
     
-    private RoutesDbAdapter mDbAdapter;
+    private static final String[] PROJECTION = {
+        ObaContract.Routes._ID,
+        ObaContract.Routes.SHORTNAME,
+        ObaContract.Routes.LONGNAME
+    };
+    private static final int COL_ID = 0;
+    private static final int COL_SHORTNAME = 1;
+    //private static final int COL_LONGNAME = 2;
     
     private boolean isSearching() {
         ListAdapter adapter = getListView().getAdapter();
@@ -39,8 +49,8 @@ public class FindRouteActivity extends FindActivity {
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            routeId = c.getString(RoutesDbAdapter.ROUTE_COL_ROUTEID);
-            routeName = c.getString(RoutesDbAdapter.ROUTE_COL_SHORTNAME);
+            routeId = c.getString(COL_ID);
+            routeName = c.getString(COL_SHORTNAME);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
@@ -92,36 +102,15 @@ public class FindRouteActivity extends FindActivity {
             onListItemClick(getListView(), info.targetView, info.position, info.id);
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
-            showOnMap(getListView(), info.position);
+            MapViewActivity.start(this, getId(getListView(), info.position));
             return true;
         case CONTEXT_MENU_DELETE:
-            mDbAdapter.removeFavorite(getId(getListView(), info.position));
+            removeFavorite(getId(getListView(), info.position));
             requery();
             return true;
         default:
             return super.onContextItemSelected(item);
         }
-    }
-    private void showOnMap(ListView l, int position) {
-        String routeId;
-        // Get the adapter (this may or may not be a SimpleCursorAdapter)
-        ListAdapter adapter = l.getAdapter();
-        if (adapter instanceof SimpleCursorAdapter) {
-            // Get the cursor and fetch the stop ID from that.
-            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
-            Cursor c = cursorAdapter.getCursor();
-            c.moveToPosition(position - l.getHeaderViewsCount());
-            routeId = c.getString(RoutesDbAdapter.ROUTE_COL_ROUTEID);
-        }
-        else if (adapter instanceof SearchResultsListAdapter) {
-            ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
-            routeId = route.getId();
-        }
-        else {
-            Log.e(TAG, "Unknown adapter. Giving up!");
-            return;
-        }
-        MapViewActivity.start(this, routeId);
     }
     
     private String getId(ListView l, int position) {
@@ -131,7 +120,7 @@ public class FindRouteActivity extends FindActivity {
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)adapter;
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            return c.getString(RoutesDbAdapter.ROUTE_COL_ROUTEID);
+            return c.getString(COL_ID);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
@@ -175,27 +164,34 @@ public class FindRouteActivity extends FindActivity {
     
     @Override
     protected void clearFavorites() {
-        mDbAdapter.clearFavorites();
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Routes.USE_COUNT, 0);
+        cr.update(ObaContract.Routes.CONTENT_URI, values, null, null);
     }
-    @Override
-    protected void openDB() {
-        mDbAdapter = new RoutesDbAdapter(this);
-        mDbAdapter.open();
-        
+    private void removeFavorite(String id) {
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Routes.USE_COUNT, 0);
+        cr.update(ObaContract.Routes.CONTENT_URI, values, 
+                ObaContract.Routes._ID+"=?", new String[] { id });        
     }
-    @Override
-    protected void closeDB() {
-        mDbAdapter.close();        
-    }
-
+    
     @Override
     protected void fillFavorites() {
-        Cursor c = mDbAdapter.getFavoriteRoutes();
+        ContentResolver cr = getContentResolver();
+        // TODO: No limit???
+        Cursor c = cr.query(ObaContract.Routes.CONTENT_URI, 
+                PROJECTION, 
+                ObaContract.Routes.USE_COUNT + " >0", 
+                null, 
+                ObaContract.Routes.USE_COUNT + " desc");
+        
         startManagingCursor(c);
         
         final String[] from = { 
-                DbHelper.KEY_SHORTNAME,
-                DbHelper.KEY_LONGNAME 
+                ObaContract.Routes.SHORTNAME,
+                ObaContract.Routes.LONGNAME 
         };
         final int[] to = {
                 R.id.short_name,

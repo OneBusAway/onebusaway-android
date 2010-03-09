@@ -3,11 +3,14 @@ package com.joulespersecond.seattlebusbot;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -20,6 +23,8 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.joulespersecond.oba.provider.ObaContract;
 
 public class TripInfoActivity extends Activity {
     private static final String TAG = "TripInfoActivity";
@@ -38,7 +43,22 @@ public class TripInfoActivity extends Activity {
     private static final String REMINDER_TIME = ".ReminderTime";
     private static final String REMINDER_DAYS = ".ReminderDays";
     
-    private TripsDbAdapter mDbAdapter;
+    private static final String[] PROJECTION = {
+        ObaContract.Trips.NAME,
+        ObaContract.Trips.REMINDER,
+        ObaContract.Trips.DAYS,
+        ObaContract.Trips.ROUTE_ID,
+        ObaContract.Trips.HEADSIGN,
+        ObaContract.Trips.DEPARTURE
+    };
+    private static final int COL_NAME = 0;
+    private static final int COL_REMINDER = 1;
+    private static final int COL_DAYS = 2;
+    private static final int COL_ROUTE_ID = 3;
+    private static final int COL_HEADSIGN = 4;
+    private static final int COL_DEPARTURE = 5;
+    
+    private Uri mTripUri;
     private String mTripId;
     private String mRouteId;
     private String mRouteName;
@@ -98,7 +118,8 @@ public class TripInfoActivity extends Activity {
         mStopId = bundle.getString(STOP_ID);
         if (mTripId == null || mStopId == null) {
             return false;
-        }        
+        }
+        mTripUri = ObaContract.Trips.buildUri(mTripId, mStopId);
         mRouteId = bundle.getString(ROUTE_ID);
         mHeadsign = bundle.getString(HEADSIGN);
         mDepartTime = bundle.getLong(DEPARTURE_TIME);
@@ -107,16 +128,16 @@ public class TripInfoActivity extends Activity {
         mRouteName = bundle.getString(ROUTE_NAME);    
         // If we get this, update it in the DB.
         if (mRouteName != null) {
-            RoutesDbAdapter.addRoute(this, mRouteId, mRouteName, null, false);
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Routes.SHORTNAME, mRouteName);
+            ObaContract.Routes.insertOrUpdate(this, mRouteId, values, false);
         }
         return true;
     }
     private boolean initFromDB() {
-        mDbAdapter = new TripsDbAdapter(this);
-        mDbAdapter.open();
-        
         // Look up the trip in the database.
-        Cursor cursor = mDbAdapter.getTrip(mTripId, mStopId);
+        ContentResolver cr = getContentResolver();
+        Cursor cursor = cr.query(mTripUri, PROJECTION, null, null, null);
         if (cursor == null || cursor.getCount() < 1) {
             // Reminder defaults to 10 in the UI
             mReminderTime = 10;
@@ -124,30 +145,33 @@ public class TripInfoActivity extends Activity {
                 cursor.close();
             }
             return false;
-        }        
-        mTripName = cursor.getString(TripsDbAdapter.TRIP_COL_NAME);
-        mReminderTime = cursor.getInt(TripsDbAdapter.TRIP_COL_REMINDER);
-        mReminderDays = cursor.getInt(TripsDbAdapter.TRIP_COL_DAYS);
+        }
+        cursor.moveToFirst();
+        mTripName = cursor.getString(COL_NAME);
+        mReminderTime = cursor.getInt(COL_REMINDER);
+        mReminderDays = cursor.getInt(COL_DAYS);
             
         // If some values weren't set in the bundle, assign them the 
         // values in the db.
         if (mRouteId == null) {
-            mRouteId = cursor.getString(TripsDbAdapter.TRIP_COL_ROUTEID);
+            mRouteId = cursor.getString(COL_ROUTE_ID);
         }
         if (mHeadsign == null) {
-            mHeadsign = cursor.getString(TripsDbAdapter.TRIP_COL_HEADSIGN);
+            mHeadsign = cursor.getString(COL_HEADSIGN);
         }
         if (mDepartTime == 0) {
-            mDepartTime = TripsDbAdapter.convertDBToTime(
-                    cursor.getInt(TripsDbAdapter.TRIP_COL_DEPARTURE));
+            mDepartTime = ObaContract.Trips.convertDBToTime(
+                    cursor.getInt(COL_DEPARTURE));
         }
 
         // If we don't have the route name, look it up in the DB
         if (mRouteName == null) {
-            mRouteName = RoutesDbAdapter.getRouteShortName(this, mRouteId);
+            mRouteName = TripService.getRouteShortName(this, mRouteId);
         }
         if (mStopName == null) {
-            mStopName = StopsDbAdapter.getStopName(this, mStopId);
+            mStopName = UIHelp.stringForQuery(this,
+                    Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId),
+                    ObaContract.Stops.NAME);
         }
         cursor.close();
         return true;
@@ -223,11 +247,6 @@ public class TripInfoActivity extends Activity {
         final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
         repeats.setText(getRepeatText(this, mReminderDays));        
     }
-    @Override
-    protected void onDestroy() {
-        mDbAdapter.close();
-        super.onDestroy();
-    }
     @Override 
     protected void onSaveInstanceState(Bundle outState) {
         final Spinner reminderView = (Spinner)findViewById(R.id.trip_info_reminder_time);
@@ -297,26 +316,47 @@ public class TripInfoActivity extends Activity {
         
         final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
         
-        mDbAdapter.addTrip(mTripId, 
-                mStopId, 
-                mRouteId,
-                mDepartTime,
-                mHeadsign,
-                nameView.getText().toString(), 
-                reminder, 
-                mReminderDays);
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Trips.ROUTE_ID, mRouteId);
+        values.put(ObaContract.Trips.DEPARTURE, 
+                ObaContract.Trips.convertTimeToDB(mDepartTime));
+        values.put(ObaContract.Trips.HEADSIGN, mHeadsign);
+        values.put(ObaContract.Trips.NAME, nameView.getText().toString());
+        values.put(ObaContract.Trips.REMINDER, reminder);
+        values.put(ObaContract.Trips.DAYS, mReminderDays);
+        
+        // Insert or update?
+        ContentResolver cr = getContentResolver();
+        Cursor c = cr.query(mTripUri, 
+                new String[] { ObaContract.Trips._ID }, 
+                null, null, null);
+        if (c != null && c.getCount() > 0) {
+            // Update
+            cr.update(mTripUri, values, null, null);
+        }
+        else {
+            values.put(ObaContract.Trips._ID, mTripId);
+            values.put(ObaContract.Trips.STOP_ID, mStopId);
+            cr.insert(ObaContract.Trips.CONTENT_URI, values);
+        }
+        if (c != null) {
+            c.close();
+        }
+        TripService.scheduleAll(this);
         
         Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
         finish();
     }
-    public void deleteTrip() {
-        mDbAdapter.deleteTrip(mTripId, mStopId);
+    private void deleteTrip() {
+        ContentResolver cr = getContentResolver();
+        cr.delete(mTripUri, null, null);
+        TripService.scheduleAll(this);
     }
-    
+
     private static final int REMINDER_DAYS_DIALOG = 1;
     
     void showReminderDaysDialog() {
-        final boolean[] checks = TripsDbAdapter.daysToArray(mReminderDays);
+        final boolean[] checks = ObaContract.Trips.daysToArray(mReminderDays);
         
         new MultiChoiceActivity.Builder(this)
             .setTitle(R.string.trip_info_reminder_repeat)
@@ -344,7 +384,7 @@ public class TripInfoActivity extends Activity {
         if (checks == null) {
             return;
         }
-        mReminderDays = TripsDbAdapter.arrayToDays(checks);
+        mReminderDays = ObaContract.Trips.arrayToDays(checks);
         final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
         repeats.setText(getRepeatText(TripInfoActivity.this, mReminderDays));
     }
@@ -431,18 +471,18 @@ public class TripInfoActivity extends Activity {
     static String getRepeatText(Context ctx, int days) {
         final Resources res = ctx.getResources();
         
-        if ((days & TripsDbAdapter.DAY_ALL) == TripsDbAdapter.DAY_ALL) {
+        if ((days & ObaContract.Trips.DAY_ALL) == ObaContract.Trips.DAY_ALL) {
             return res.getString(R.string.trip_info_repeat_everyday);
         }
-        if (((days & TripsDbAdapter.DAY_WEEKDAY) == TripsDbAdapter.DAY_WEEKDAY) &&
-             (days & ~TripsDbAdapter.DAY_WEEKDAY) == 0) {
+        if (((days & ObaContract.Trips.DAY_WEEKDAY) == ObaContract.Trips.DAY_WEEKDAY) &&
+             (days & ~ObaContract.Trips.DAY_WEEKDAY) == 0) {
             return res.getString(R.string.trip_info_repeat_weekdays);
         }
         if (days == 0) {
             return res.getString(R.string.trip_info_repeat_norepeat);
         }
         // Otherwise, it's not normal -- format a string 
-        final boolean[] array = TripsDbAdapter.daysToArray(days);
+        final boolean[] array = ObaContract.Trips.daysToArray(days);
         final String[] dayNames = res.getStringArray(R.array.reminder_days);
     
         StringBuffer buf = new StringBuffer();

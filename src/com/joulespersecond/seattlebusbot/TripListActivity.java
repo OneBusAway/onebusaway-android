@@ -1,6 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -12,11 +13,25 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
+import com.joulespersecond.oba.provider.ObaContract;
+
 public class TripListActivity extends ListActivity {
     //private static final String TAG = "TripListActivity";
-        
-    public TripsDbAdapter mDbAdapter;
-    public RoutesDbAdapter mRoutesDbAdapter;
+    
+    private static final String[] PROJECTION = {
+        ObaContract.Trips._ID,
+        ObaContract.Trips.NAME,
+        ObaContract.Trips.HEADSIGN,
+        ObaContract.Trips.DEPARTURE,
+        ObaContract.Trips.ROUTE_ID,
+        ObaContract.Trips.STOP_ID
+    };
+    private static final int COL_ID = 0;
+    private static final int COL_NAME = 1;
+    //private static final int COL_HEADSIGN = 2;
+    private static final int COL_DEPARTURE = 3;
+    private static final int COL_ROUTE_ID = 4;
+    private static final int COL_STOP_ID = 5;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -25,23 +40,20 @@ public class TripListActivity extends ListActivity {
         setContentView(R.layout.trip_list);
         registerForContextMenu(getListView());
         
-        mDbAdapter = new TripsDbAdapter(this);
-        mDbAdapter.open();
-        mRoutesDbAdapter = new RoutesDbAdapter(this);
-        mRoutesDbAdapter.open();
-        
         fillTrips();
     }
     
     private void fillTrips() {
-        Cursor c = mDbAdapter.getTrips();
+        ContentResolver cr = getContentResolver();
+        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI, 
+                PROJECTION, null, null, ObaContract.Trips.NAME + " asc");
         startManagingCursor(c);
         
         final String[] from = { 
-                DbHelper.KEY_NAME,
-                DbHelper.KEY_HEADSIGN,
-                DbHelper.KEY_DEPARTURE,
-                DbHelper.KEY_ROUTE
+                ObaContract.Trips.NAME,
+                ObaContract.Trips.HEADSIGN,
+                ObaContract.Trips.DEPARTURE,
+                ObaContract.Trips.ROUTE_ID
         };
         final int[] to = {
                 R.id.name,
@@ -54,7 +66,7 @@ public class TripListActivity extends ListActivity {
         
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                if (columnIndex == TripsDbAdapter.TRIP_COL_NAME) {
+                if (columnIndex == COL_NAME) {
                     TextView text = (TextView)view;
                     String name = cursor.getString(columnIndex);
                     if (name.length() == 0) {
@@ -63,21 +75,22 @@ public class TripListActivity extends ListActivity {
                     text.setText(name);
                     return true;
                 }
-                else if (columnIndex == TripsDbAdapter.TRIP_COL_DEPARTURE) {
+                else if (columnIndex == COL_DEPARTURE) {
                     TextView text = (TextView)view;
                     text.setText(TripInfoActivity.getDepartureTime(
                             TripListActivity.this,
-                            TripsDbAdapter.convertDBToTime(cursor.getInt(columnIndex))));
+                            ObaContract.Trips.convertDBToTime(cursor.getInt(columnIndex))));
                     return true;
                 } 
-                else if (columnIndex == TripsDbAdapter.TRIP_COL_ROUTEID) {
+                else if (columnIndex == COL_ROUTE_ID) {
                     // 
                     // Translate the Route ID into the Route Name by looking
                     // it up in the Routes table.
                     //
                     TextView text = (TextView)view;
                     final String routeId = cursor.getString(columnIndex);
-                    final String routeName = mRoutesDbAdapter.getRouteShortName(routeId);
+                    final String routeName = 
+                        TripService.getRouteShortName(TripListActivity.this, routeId);
                     if (routeName != null) {
                         text.setText(getString(R.string.trip_info_route, routeName));
                     }
@@ -90,8 +103,6 @@ public class TripListActivity extends ListActivity {
     }
     @Override
     protected void onDestroy() {
-        mDbAdapter.close();
-        mRoutesDbAdapter.close();
         super.onDestroy();
     }
     
@@ -143,7 +154,10 @@ public class TripListActivity extends ListActivity {
         String[] ids = getIds(l, position);
         
         // TODO: Confirmation dialog?
-        mDbAdapter.deleteTrip(ids[0], ids[1]);
+        ContentResolver cr = getContentResolver();
+        cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
+        TripService.scheduleAll(this);
+        
         SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
         adapter.getCursor().requery();
     }
@@ -161,9 +175,9 @@ public class TripListActivity extends ListActivity {
         final Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
         final String[] result = new String[] { 
-                c.getString(TripsDbAdapter.TRIP_COL_TRIPID),
-                c.getString(TripsDbAdapter.TRIP_COL_STOPID),
-                c.getString(TripsDbAdapter.TRIP_COL_ROUTEID)
+                c.getString(COL_ID),
+                c.getString(COL_STOP_ID),
+                c.getString(COL_ROUTE_ID)
         };
         return result;
     }

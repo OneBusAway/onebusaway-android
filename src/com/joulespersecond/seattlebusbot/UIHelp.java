@@ -4,9 +4,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
@@ -112,5 +115,44 @@ final class UIHelp {
             // ll=47.620975,-122.347355
             return ObaApi.makeGeoPoint(47.620975, -122.347355);
         }
+    }
+    
+    /**
+     * Returns the first string for the query URI.
+     * @param context
+     * @param uri
+     * @param column
+     * @return
+     */
+    public static String stringForQuery(Context context, Uri uri, String column) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(uri, new String[] { column }, null, null, null);
+        if (c != null) {
+            try {
+                if (c.moveToFirst()) {
+                    return c.getString(0);
+                }
+            }
+            finally {
+                c.close();
+            }
+        }
+        return "";
+    }
+    
+    public static Integer intForQuery(Context context, Uri uri, String column) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(uri, new String[] { column }, null, null, null);
+        if (c != null) {
+            try {
+                if (c.moveToFirst()) {
+                    return c.getInt(0);
+                }
+            }
+            finally {
+                c.close();
+            }
+        }
+        return null;
     }
 }

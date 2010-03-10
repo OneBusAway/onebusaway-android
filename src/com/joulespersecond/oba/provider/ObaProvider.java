@@ -1,5 +1,6 @@
 package com.joulespersecond.oba.provider;
 
+import java.util.HashMap;
 import java.util.List;
 
 import android.content.ContentProvider;
@@ -96,7 +97,11 @@ public class ObaProvider extends ContentProvider {
     private static final int TRIPS_ID   = 6;
     private static final int STOP_ROUTE_FILTERS = 7;
     
-    private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    private static final UriMatcher sUriMatcher;
+    private static final HashMap<String,String> sStopsProjectionMap;
+    private static final HashMap<String,String> sRoutesProjectionMap;
+    private static final HashMap<String,String> sTripsProjectionMap;
+    
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
     private DatabaseUtils.InsertHelper mRoutesInserter;
@@ -104,6 +109,7 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mFilterInserter;
 
     static {
+        sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Stops.PATH, STOPS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Stops.PATH + "/*", STOPS_ID);  
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Routes.PATH, ROUTES);
@@ -111,6 +117,34 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Trips.PATH, TRIPS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Trips.PATH + "/*/*", TRIPS_ID); 
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopRouteFilters.PATH, STOP_ROUTE_FILTERS); 
+        
+        sStopsProjectionMap = new HashMap<String,String>();
+        sStopsProjectionMap.put(ObaContract.Stops._ID,      ObaContract.Stops._ID);
+        sStopsProjectionMap.put(ObaContract.Stops.CODE,     ObaContract.Stops.CODE);
+        sStopsProjectionMap.put(ObaContract.Stops.NAME,     ObaContract.Stops.NAME);
+        sStopsProjectionMap.put(ObaContract.Stops.DIRECTION,ObaContract.Stops.DIRECTION);
+        sStopsProjectionMap.put(ObaContract.Stops.USE_COUNT,ObaContract.Stops.USE_COUNT);
+        sStopsProjectionMap.put(ObaContract.Stops.LATITUDE, ObaContract.Stops.LATITUDE);
+        sStopsProjectionMap.put(ObaContract.Stops.LONGITUDE,ObaContract.Stops.LONGITUDE);
+        sStopsProjectionMap.put(ObaContract.Stops._COUNT, "count(*)");
+        
+        sRoutesProjectionMap = new HashMap<String,String>();
+        sRoutesProjectionMap.put(ObaContract.Routes._ID,        ObaContract.Routes._ID);
+        sRoutesProjectionMap.put(ObaContract.Routes.SHORTNAME,  ObaContract.Routes.SHORTNAME);
+        sRoutesProjectionMap.put(ObaContract.Routes.LONGNAME,   ObaContract.Routes.LONGNAME);
+        sRoutesProjectionMap.put(ObaContract.Routes.USE_COUNT,  ObaContract.Routes.USE_COUNT);
+        sRoutesProjectionMap.put(ObaContract.Routes._COUNT,     "count(*)");
+        
+        sTripsProjectionMap = new HashMap<String,String>();
+        sTripsProjectionMap.put(ObaContract.Trips._ID,      ObaContract.Trips._ID);
+        sTripsProjectionMap.put(ObaContract.Trips.STOP_ID,  ObaContract.Trips.STOP_ID);
+        sTripsProjectionMap.put(ObaContract.Trips.ROUTE_ID, ObaContract.Trips.ROUTE_ID);
+        sTripsProjectionMap.put(ObaContract.Trips.DEPARTURE,ObaContract.Trips.DEPARTURE);
+        sTripsProjectionMap.put(ObaContract.Trips.HEADSIGN, ObaContract.Trips.HEADSIGN);
+        sTripsProjectionMap.put(ObaContract.Trips.NAME,     ObaContract.Trips.NAME);
+        sTripsProjectionMap.put(ObaContract.Trips.REMINDER, ObaContract.Trips.REMINDER);
+        sTripsProjectionMap.put(ObaContract.Trips.DAYS,     ObaContract.Trips.DAYS);
+        sTripsProjectionMap.put(ObaContract.Trips._COUNT,   "count(*)");
     }
     
     private SQLiteDatabase mDb; 
@@ -269,10 +303,12 @@ public class ObaProvider extends ContentProvider {
         switch (match) {
         case STOPS:
             qb.setTables(ObaContract.Stops.PATH);
+            qb.setProjectionMap(sStopsProjectionMap);
             return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
             
         case STOPS_ID:
             qb.setTables(ObaContract.Stops.PATH);
+            qb.setProjectionMap(sStopsProjectionMap);
             qb.appendWhere(ObaContract.Stops._ID);
             qb.appendWhere("=");
             qb.appendWhereEscapeString(uri.getLastPathSegment());
@@ -280,10 +316,12 @@ public class ObaProvider extends ContentProvider {
             
         case ROUTES:
             qb.setTables(ObaContract.Routes.PATH);
+            qb.setProjectionMap(sRoutesProjectionMap);
             return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);            
             
         case ROUTES_ID:
             qb.setTables(ObaContract.Routes.PATH);
+            qb.setProjectionMap(sRoutesProjectionMap);
             qb.appendWhere(ObaContract.Routes._ID);
             qb.appendWhere("=");
             qb.appendWhereEscapeString(uri.getLastPathSegment());
@@ -291,10 +329,12 @@ public class ObaProvider extends ContentProvider {
             
         case TRIPS:
             qb.setTables(ObaContract.Trips.PATH);
+            qb.setProjectionMap(sTripsProjectionMap);
             return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);                 
             
         case TRIPS_ID:
             qb.setTables(ObaContract.Trips.PATH);
+            qb.setProjectionMap(sTripsProjectionMap);
             qb.appendWhere(tripWhere(uri));
             return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
 

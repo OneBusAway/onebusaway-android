@@ -1,5 +1,7 @@
 package com.joulespersecond.seattlebusbot;
 
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -72,8 +74,7 @@ public class TripInfoActivity extends Activity {
     
     public static void start(Context context, String tripId, String stopId) {
         Intent myIntent = new Intent(context, TripInfoActivity.class);
-        myIntent.putExtra(TRIP_ID, tripId);
-        myIntent.putExtra(STOP_ID, stopId);  
+        myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId)); 
         context.startActivity(myIntent); 
     }
     public static void start(Context context, 
@@ -81,8 +82,7 @@ public class TripInfoActivity extends Activity {
             String routeId, String routeName, String stopName,
             long departureTime, String headsign) {
         Intent myIntent = new Intent(context, TripInfoActivity.class);
-        myIntent.putExtra(TRIP_ID, tripId);
-        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId));
         myIntent.putExtra(ROUTE_ID, routeId);
         myIntent.putExtra(ROUTE_NAME, routeName);
         myIntent.putExtra(STOP_NAME, stopName);
@@ -96,13 +96,7 @@ public class TripInfoActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.trip_info);
 
-        final Bundle bundle = getIntent().getExtras();
-        if (bundle == null) {
-            Log.e(TAG, "Information missing from intent: no extras");
-            finish();
-            return;
-        }
-        if (!initFromBundle(bundle)) {
+        if (!initFromIntent(getIntent())) {
             Log.e(TAG, "Information missing from intent");
             finish();
             return;
@@ -112,25 +106,37 @@ public class TripInfoActivity extends Activity {
         initForm(newTrip);
     }
         
-    private boolean initFromBundle(Bundle bundle) {
-        // Get everything from the bundle
-        mTripId = bundle.getString(TRIP_ID);
-        mStopId = bundle.getString(STOP_ID);
+    private boolean initFromIntent(Intent intent) {
+        final Bundle bundle = intent.getExtras();
+        final Uri data = intent.getData();
+        if (data != null) {
+            List<String> segments = data.getPathSegments();
+            mTripId = segments.get(1);
+            mStopId = segments.get(2);
+            mTripUri = data;
+        }
+        else if (bundle != null) {
+            // Backward compatibility
+            mTripId = bundle.getString(TRIP_ID);
+            mStopId = bundle.getString(STOP_ID);
+            mTripUri = ObaContract.Trips.buildUri(mTripId, mStopId);
+        }
         if (mTripId == null || mStopId == null) {
             return false;
         }
-        mTripUri = ObaContract.Trips.buildUri(mTripId, mStopId);
-        mRouteId = bundle.getString(ROUTE_ID);
-        mHeadsign = bundle.getString(HEADSIGN);
-        mDepartTime = bundle.getLong(DEPARTURE_TIME);
-        
-        mStopName = bundle.getString(STOP_NAME);
-        mRouteName = bundle.getString(ROUTE_NAME);    
-        // If we get this, update it in the DB.
-        if (mRouteName != null) {
-            ContentValues values = new ContentValues();
-            values.put(ObaContract.Routes.SHORTNAME, mRouteName);
-            ObaContract.Routes.insertOrUpdate(this, mRouteId, values, false);
+        if (bundle != null) {
+            mRouteId = bundle.getString(ROUTE_ID);
+            mHeadsign = bundle.getString(HEADSIGN);
+            mDepartTime = bundle.getLong(DEPARTURE_TIME);
+            
+            mStopName = bundle.getString(STOP_NAME);
+            mRouteName = bundle.getString(ROUTE_NAME);    
+            // If we get this, update it in the DB.
+            if (mRouteName != null) {
+                ContentValues values = new ContentValues();
+                values.put(ObaContract.Routes.SHORTNAME, mRouteName);
+                ObaContract.Routes.insertOrUpdate(this, mRouteId, values, false);
+            }
         }
         return true;
     }

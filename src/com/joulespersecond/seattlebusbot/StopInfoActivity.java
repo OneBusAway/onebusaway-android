@@ -14,11 +14,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -40,7 +42,7 @@ import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 
 public class StopInfoActivity extends ListActivity {
-    //private static final String TAG = "StopInfoActivity";
+    private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60*1000;
     
     private static final String STOP_ID = ".StopId";
@@ -75,12 +77,12 @@ public class StopInfoActivity extends ListActivity {
     }
     public static Intent makeIntent(Context context, String stopId) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         return myIntent;       
     }
     public static Intent makeIntent(Context context, String stopId, String stopName) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
         return myIntent;       
     }
@@ -89,14 +91,14 @@ public class StopInfoActivity extends ListActivity {
                         String stopName,
                         String stopDir) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.putExtra(STOP_ID, stopId);
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
         myIntent.putExtra(STOP_DIRECTION, stopDir);
         return myIntent;       
     }
     public static Intent makeIntent(Context context, ObaStop stop) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.putExtra(STOP_ID, stop.getId());
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
         myIntent.putExtra(STOP_NAME, stop.getName());
         myIntent.putExtra(STOP_DIRECTION, stop.getDirection());
         return myIntent;
@@ -110,8 +112,21 @@ public class StopInfoActivity extends ListActivity {
         setContentView(R.layout.stop_info);
         setListAdapter(new StopInfoListAdapter());
         
-        Bundle bundle = getIntent().getExtras();
-        mStopId = bundle.getString(STOP_ID);
+        final Intent intent = getIntent();
+        final Bundle bundle = intent.getExtras();
+        final Uri data = intent.getData();
+        if (data != null) {
+            mStopId = data.getLastPathSegment();
+        }
+        else if (bundle != null) {
+            // This is for backward compatibility
+            mStopId = bundle.getString(STOP_ID);
+        }
+        else {
+            Log.e(TAG, "No stop ID!");
+            finish();
+            return;
+        }
         setHeader(bundle);
         UIHelp.setChildClickable(this, R.id.show_all, mShowAllClick);
      

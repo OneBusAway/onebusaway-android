@@ -9,8 +9,10 @@ import android.app.ExpandableListActivity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,6 +34,7 @@ import com.joulespersecond.oba.ObaStopGrouping;
 import com.joulespersecond.oba.provider.ObaContract;
 
 public class RouteInfoActivity extends ExpandableListActivity {
+    private static final String TAG = "RouteInfoActivity";
     private static final String ROUTE_ID = ".RouteId";
     
     private String mRouteId;
@@ -46,7 +49,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     }
     public static Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, RouteInfoActivity.class);
-        myIntent.putExtra(ROUTE_ID, routeId);
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId));
         return myIntent;        
     }
     
@@ -57,8 +60,21 @@ public class RouteInfoActivity extends ExpandableListActivity {
         setContentView(R.layout.route_info);
         registerForContextMenu(getExpandableListView());
       
-        Bundle bundle = getIntent().getExtras();
-        mRouteId = bundle.getString(ROUTE_ID);
+        final Intent intent = getIntent();
+        final Bundle bundle = intent.getExtras();
+        final Uri data = intent.getData();
+        if (data != null) {
+            mRouteId = data.getLastPathSegment();
+        }
+        else if (bundle != null) {
+            // This is for backward compatibility
+            mRouteId = bundle.getString(ROUTE_ID);
+        }
+        else {
+            Log.e(TAG, "No route ID!");
+            finish();
+            return;
+        }
                 
         setListAdapter(new SimpleExpandableListAdapter(
                     this,

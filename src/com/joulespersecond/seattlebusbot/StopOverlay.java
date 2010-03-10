@@ -2,7 +2,6 @@ package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -14,31 +13,30 @@ import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaStop;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
-    private static final String TAG = "StopOverlay";
+    //private static final String TAG = "StopOverlay";
     
-    private ObaArray<ObaStop> mStops;
-    private Activity mActivity;
+    private final ObaArray<ObaStop> mStops;
+    private final Activity mActivity;
     
     private static final int getResourceIdForDirection(String direction) {
         if (direction.equals("N")) {
-            return R.drawable.stop_n_state;
+            return R.drawable.stop_n;
         } else if (direction.equals("NW")) {
-            return R.drawable.stop_nw_state;                    
+            return R.drawable.stop_nw;                    
         } else if (direction.equals("W")) {
-            return R.drawable.stop_w_state;                    
+            return R.drawable.stop_w;                    
         } else if (direction.equals("SW")) {
-            return R.drawable.stop_sw_state;    
+            return R.drawable.stop_sw;    
         } else if (direction.equals("S")) {
-            return R.drawable.stop_s_state;    
+            return R.drawable.stop_s;    
         } else if (direction.equals("SE")) {
-            return R.drawable.stop_se_state;    
+            return R.drawable.stop_se;    
         } else if (direction.equals("E")) {
-            return R.drawable.stop_e_state;    
+            return R.drawable.stop_e;    
         } else if (direction.equals("NE")) {
-            return R.drawable.stop_ne_state;                             
+            return R.drawable.stop_ne;                             
         } else {
-            Log.e(TAG, "Unknown direction: " + direction);
-            return R.drawable.stop_u_state;
+            return R.drawable.stop_u;
         }        
     }
     
@@ -56,7 +54,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     
     public StopOverlay(ObaArray<ObaStop> stops, 
             Activity activity) {
-        super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_n)));
+        super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_u)));
         mStops = stops;
         mActivity = activity;
         populate();

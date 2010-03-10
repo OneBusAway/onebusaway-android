@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/pin_state" />
+    <item android:drawable="@drawable/stop_type_bus" />
+</layer-list>

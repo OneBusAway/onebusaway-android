@@ -4,13 +4,17 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.test.AndroidTestCase;
+import android.test.ProviderTestCase2;
 
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.provider.ObaProvider;
 
-public class ProviderTest extends AndroidTestCase {
+public class ProviderTest extends ProviderTestCase2<ObaProvider> {
+    public ProviderTest() {
+		super(ObaProvider.class, ObaContract.AUTHORITY);
+	}
 
-    protected void setUp() throws Exception {
+	protected void setUp() throws Exception {
         super.setUp();
     }
 
@@ -19,7 +23,7 @@ public class ProviderTest extends AndroidTestCase {
     }
 
     public void testStops() {
-        ContentResolver cr = getContext().getContentResolver();
+        ContentResolver cr = getMockContentResolver();
         //
         // Create
         //
@@ -44,8 +48,9 @@ public class ProviderTest extends AndroidTestCase {
                 new String[] { ObaContract.Stops._ID, ObaContract.Stops.DIRECTION },
                 null, null, null);
         assertNotNull(c);
-        assertTrue(c.getCount() >= 1);
-        //assertEquals(c.getString(0), stopId);
+        assertTrue(c.getCount() == 1);
+        c.moveToNext();
+        assertEquals(c.getString(0), stopId);
         c.close();
 
         // Test counting
@@ -55,7 +60,7 @@ public class ProviderTest extends AndroidTestCase {
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
         c.moveToNext();
-        assertTrue(c.getInt(0) >= 1);
+        assertTrue(c.getInt(0) == 1);
         // Get the one that we care about
         c = cr.query(uri, new String[] { ObaContract.Stops.CODE }, null, null, null);
         assertNotNull(c);

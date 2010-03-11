@@ -1,0 +1,116 @@
+package com.joulespersecond.seattlebusbot;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.util.Log;
+
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.Projection;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaPolyline;
+
+public class RouteOverlay extends Overlay {
+    private static final String TAG = "RouteOverlay";
+
+    public static final class Line {
+        private final List<GeoPoint> mPoints;
+        private final Paint mPaint;
+
+        public Line(int color, List<GeoPoint> points) {
+            mPoints = points;
+            mPaint = new Paint();
+            mPaint.setColor(color);
+            mPaint.setStrokeWidth(5);
+        }
+        public List<GeoPoint> getPoints() {
+            return mPoints;
+        }
+        public Paint getPaint() {
+            return mPaint;
+        }
+    }
+
+    private ArrayList<Line> mLines = new ArrayList<Line>();
+
+    public RouteOverlay() {
+    }
+
+    public void addLine(int color, List<GeoPoint> points) {
+        mLines.add(new Line(color, points));
+        // TODO: Invalidate
+    }
+    public void addLine(int color, ObaPolyline line) {
+        List<GeoPoint> points = line.getPoints();
+        mLines.add(new Line(color, points));
+        // TODO: Invalidate
+    }
+    public void addLines(int color, ObaArray<ObaPolyline> lines) {
+        final int len = lines.length();
+        for (int i=0; i < len; ++i) {
+            addLine(color, lines.get(i));
+        }
+    }
+    public void setLines(int color, ObaArray<ObaPolyline> lines) {
+        mLines.clear();
+        addLines(color, lines);
+    }
+
+    public void clearLines() {
+        mLines.clear();
+    }
+
+    @Override
+    public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+        if (shadow) {
+            super.draw(canvas, mapView, shadow);
+            return;
+        }
+        final Projection projection = mapView.getProjection();
+        Point pt = new Point();
+
+        // Convert points to coords and then call drawLines()
+        // TODO: This is probably too slow to do within draw() --
+        // spawn off another thread to generate the path?
+        final int len = mLines.size();
+        for (int i=0; i < len; ++i) {
+            final Line line = mLines.get(i);
+            final List<GeoPoint> geoPoints = line.getPoints();
+            final int numPts = geoPoints.size();
+
+            // drawLines() draws lines as:
+            //		(x0,y0) -> (x1,y1)
+            //		(x2,y2) -> (x3,y3)
+            // The polyline encodes lines as:
+            //		(x0,y0) -> (x1,y1)
+            //		(x1,y1)	-> (x2,y2)
+            // So we need to double each point after the first.
+            float points[] = new float[numPts*3];
+
+            projection.toPixels(geoPoints.get(0), pt);
+            points[0] = pt.x;
+            points[1] = pt.y;
+
+            int j=1;
+            for (; j < (numPts-1); ++j) {
+                projection.toPixels(geoPoints.get(j), pt);
+                points[j*2]   = pt.x;
+                points[j*2+1] = pt.y;
+                points[j*2+2] = pt.x;
+                points[j*2+3] = pt.y;
+            }
+            projection.toPixels(geoPoints.get(j), pt);
+            points[j*2]   = pt.x;
+            points[j*2+1] = pt.y;
+            Log.d(TAG, "Points: " + points);
+            assert((j*2+2) == points.length);
+
+            canvas.drawLines(points, line.getPaint());
+        }
+    }
+}

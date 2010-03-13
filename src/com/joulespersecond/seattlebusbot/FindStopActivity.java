@@ -24,7 +24,7 @@ import com.joulespersecond.oba.provider.ObaContract;
 
 public class FindStopActivity extends FindActivity {
     private static final String TAG = "FindStopActivity";
-    
+
     private static final String[] PROJECTION = {
         ObaContract.Stops._ID,
         ObaContract.Stops.NAME,
@@ -37,12 +37,12 @@ public class FindStopActivity extends FindActivity {
     private static final int COL_DIRECTION = 2;
     private static final int COL_LATITUDE = 3;
     private static final int COL_LONGITUDE = 4;
-    
+
     private boolean isSearching() {
         ListAdapter adapter = getListView().getAdapter();
         return adapter instanceof SearchResultsListAdapter;
     }
-    
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String stopId;
@@ -75,14 +75,14 @@ public class FindStopActivity extends FindActivity {
             makeShortcut(stopName, intent);
         }
         else {
-            StopInfoActivity.start(this, stopId, stopName, stopDir);          
+            StopInfoActivity.start(this, stopId, stopName, stopDir);
         }
     }
-    
+
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
     private static final int CONTEXT_MENU_DELETE = 3;
-    
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
@@ -94,7 +94,7 @@ public class FindStopActivity extends FindActivity {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
         }
         else {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_stop_info);            
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_stop_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
         if (!isSearching()) {
@@ -145,7 +145,7 @@ public class FindStopActivity extends FindActivity {
             return;
         }
         MapViewActivity.start(this, stopId, lat, lon);
-    }    
+    }
 
     private String getId(ListView l, int position) {
         ListAdapter adapter = l.getAdapter();
@@ -163,10 +163,10 @@ public class FindStopActivity extends FindActivity {
         else {
             Log.e(TAG, "Unknown adapter. Giving up!");
             return "";
-        }        
+        }
     }
-    
-    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaStop> {       
+
+    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaStop> {
         public SearchResultsListAdapter(ObaResponse response) {
             super(FindStopActivity.this,
                     response.getData().getStops(),
@@ -178,12 +178,12 @@ public class FindStopActivity extends FindActivity {
 
             ObaStop stop = mArray.get(position);
             route.setText(stop.getName());
-            UIHelp.setStopDirection(view.findViewById(R.id.direction), 
+            UIHelp.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),
                     true);
         }
     }
-    
+
     private static final String URL_STOPID = MapViewActivity.HELP_URL + "#finding_stop_ids";
 
     @Override
@@ -198,7 +198,7 @@ public class FindStopActivity extends FindActivity {
     protected int getMinSearchLength() {
         return 5;
     }
-    
+
     @Override
     protected void clearFavorites() {
         ContentResolver cr = getContentResolver();
@@ -210,63 +210,63 @@ public class FindStopActivity extends FindActivity {
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         values.put(ObaContract.Stops.USE_COUNT, 0);
-        cr.update(ObaContract.Stops.CONTENT_URI, values, 
-                ObaContract.Stops._ID+"=?", new String[] { id });        
+        cr.update(ObaContract.Stops.CONTENT_URI, values,
+                ObaContract.Stops._ID+"=?", new String[] { id });
     }
 
     @Override
     protected void fillFavorites() {
         ContentResolver cr = getContentResolver();
         // TODO: No limit???
-        Cursor c = cr.query(ObaContract.Stops.CONTENT_URI, 
-                PROJECTION, 
-                ObaContract.Stops.USE_COUNT + " >0", 
-                null, 
+        Cursor c = cr.query(ObaContract.Stops.CONTENT_URI,
+                PROJECTION,
+                ObaContract.Stops.USE_COUNT + " >0",
+                null,
                 ObaContract.Stops.USE_COUNT + " desc");
-        
-        startManagingCursor(c);   
-        
-        String[] from = new String[] { 
+
+        startManagingCursor(c);
+
+        String[] from = new String[] {
                 ObaContract.Stops.NAME,
-                ObaContract.Stops.DIRECTION 
+                ObaContract.Stops.DIRECTION
         };
         int[] to = new int[] {
-                R.id.name,
+                R.id.stop_name,
                 R.id.direction
         };
-        SimpleCursorAdapter simpleAdapter = 
+        SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.find_stop_listitem, c, from, to);
-        
+
         // We need to convert the direction text (N/NW/E/etc)
         // to user level text (North/Northwest/etc..)
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                 if (columnIndex == COL_DIRECTION) {
-                    UIHelp.setStopDirection(view.findViewById(R.id.direction), 
+                    UIHelp.setStopDirection(view.findViewById(R.id.direction),
                             cursor.getString(columnIndex),
                             true);
                     return true;
-                } 
+                }
                 return false;
             }
         });
-        setListAdapter(simpleAdapter);      
+        setListAdapter(simpleAdapter);
     }
 
     @Override
     protected void setResultsAdapter(ObaResponse response) {
-        setListAdapter(new SearchResultsListAdapter(response));  
+        setListAdapter(new SearchResultsListAdapter(response));
     }
     @Override
     protected void setNoFavoriteText() {
         final CharSequence first = getText(R.string.find_hint_nofavoritestops);
         final int firstLen = first.length();
         final CharSequence second = getText(R.string.find_hint_nofavoritestops_link);
-        
+
         SpannableStringBuilder builder = new SpannableStringBuilder(first);
         builder.append(second);
         builder.setSpan(new URLSpan(URL_STOPID), firstLen, firstLen+second.length(), 0);
-       
+
         TextView empty = (TextView) findViewById(android.R.id.empty);
         empty.setText(builder, TextView.BufferType.SPANNABLE);
     }

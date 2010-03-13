@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -29,6 +30,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -44,21 +47,33 @@ import com.joulespersecond.oba.provider.ObaContract;
 public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60*1000;
-    
+
     private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
     private static final String STOP_DIRECTION = ".StopDir";
-    
+
     private ObaResponse mResponse;
     private ObaStop mStop;
     private String mStopId;
+    private String mStopName;
+    private Uri mStopUri;
     private Timer mTimer;
     private long mResponseTime = 0;
     private ArrayList<String> mRoutesFilter;
-    
+
+    // Cached UI items
+    private View mNameContainerView;
+    private View mEditNameContainerView;
+    private TextView mNameView;
+    private EditText mEditNameView;
+    private ImageView mFavoriteView;
+
     private AsyncTask<String,?,?> mAsyncTask;
-   
+
     private ContentQueryMap mTripsForStop;
+
+    private boolean mFavorite = false;
+    private String mStopUserName;
 
     public static void start(Context context, String stopId) {
         context.startActivity(makeIntent(context, stopId));
@@ -66,8 +81,8 @@ public class StopInfoActivity extends ListActivity {
     public static void start(Context context, String stopId, String stopName) {
         context.startActivity(makeIntent(context, stopId, stopName));
     }
-    public static void start(Context context, 
-                        String stopId, 
+    public static void start(Context context,
+                        String stopId,
                         String stopName,
                         String stopDir) {
         context.startActivity(makeIntent(context, stopId, stopName, stopDir));
@@ -78,23 +93,23 @@ public class StopInfoActivity extends ListActivity {
     public static Intent makeIntent(Context context, String stopId) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
         myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
-        return myIntent;       
+        return myIntent;
     }
     public static Intent makeIntent(Context context, String stopId, String stopName) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
         myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
-        return myIntent;       
+        return myIntent;
     }
     public static Intent makeIntent(Context context,
-                        String stopId, 
+                        String stopId,
                         String stopName,
                         String stopDir) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
         myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
         myIntent.putExtra(STOP_DIRECTION, stopDir);
-        return myIntent;       
+        return myIntent;
     }
     public static Intent makeIntent(Context context, ObaStop stop) {
         Intent myIntent = new Intent(context, StopInfoActivity.class);
@@ -103,7 +118,7 @@ public class StopInfoActivity extends ListActivity {
         myIntent.putExtra(STOP_DIRECTION, stop.getDirection());
         return myIntent;
     }
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,7 +126,7 @@ public class StopInfoActivity extends ListActivity {
 
         setContentView(R.layout.stop_info);
         setListAdapter(new StopInfoListAdapter());
-        
+
         final Intent intent = getIntent();
         final Bundle bundle = intent.getExtras();
         final Uri data = intent.getData();
@@ -127,12 +142,25 @@ public class StopInfoActivity extends ListActivity {
             finish();
             return;
         }
+
+        mNameContainerView = findViewById(R.id.name_container);
+        mEditNameContainerView = findViewById(R.id.edit_name_container);
+        mNameView = (TextView)findViewById(R.id.stop_name);
+        mEditNameView = (EditText)findViewById(R.id.edit_name);
+        mFavoriteView = (ImageView)findViewById(R.id.stop_favorite);
+
+        // This is useful to have around
+        mStopUri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId);
+
+        getUserInfo();
+
+        initHeader();
         setHeader(bundle);
         UIHelp.setChildClickable(this, R.id.show_all, mShowAllClick);
-     
+
         mRoutesFilter = ObaContract.StopRouteFilters.get(this, mStopId);
         mTripsForStop = getTripsForStop();
-        
+
         Object response = getLastNonConfigurationInstance();
         if (response != null) {
             setResponse((ObaResponse)response, false);
@@ -149,7 +177,7 @@ public class StopInfoActivity extends ListActivity {
         }
         super.onDestroy();
     }
-    @Override 
+    @Override
     public Object onRetainNonConfigurationInstance() {
         return mResponse;
     }
@@ -160,13 +188,21 @@ public class StopInfoActivity extends ListActivity {
         return true;
     }
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.toggle_favorite)
+            .setTitle(mFavorite ?
+                    R.string.stop_info_option_removestar :
+                    R.string.stop_info_option_addstar);
+        return true;
+    }
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
             if (mResponse != null) {
-                MapViewActivity.start(this, 
-                        mStopId, 
-                        mStop.getLatitude(), 
+                MapViewActivity.start(this,
+                        mStopId,
+                        mStop.getLatitude(),
                         mStop.getLongitude());
             }
             return true;
@@ -179,6 +215,12 @@ public class StopInfoActivity extends ListActivity {
             if (mResponse != null) {
                 showRoutesFilterDialog();
             }
+        }
+        else if (id == R.id.edit_name) {
+            beginNameEdit();
+        }
+        else if (id == R.id.toggle_favorite) {
+            toggleFavorite();
         }
         return false;
     }
@@ -196,14 +238,14 @@ public class StopInfoActivity extends ListActivity {
         mTripsForStop.requery();
         // If our timer would have gone off, then refresh.
         if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
-            getStopInfo(true);            
+            getStopInfo(true);
         }
-        
+
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mRefreshHandler.post(mRefresh);            
-            }         
+                mRefreshHandler.post(mRefresh);
+            }
         }, RefreshPeriod, RefreshPeriod);
         super.onResume();
     }
@@ -246,18 +288,18 @@ public class StopInfoActivity extends ListActivity {
         dialog.setOwnerActivity(this);
         dialog.show();
     }
-    
+
     private static final int FILTER_DIALOG_RESULT = 1;
-    
-    private void showRoutesFilterDialog() {  
+
+    private void showRoutesFilterDialog() {
         final ObaArray<ObaRoute> routes = mStop.getRoutes();
         final int len = routes.length();
         final ArrayList<String> filter = mRoutesFilter;
-        
+
         //mRouteIds = new ArrayList<String>(len);
         String[] items = new String[len];
         boolean[] checks = new boolean[len];
-        
+
         // Go through all the stops, add them to the Ids and Names
         // For each stop, if it is in the enabled list, mark it as checked.
         for (int i=0; i < len; ++i) {
@@ -268,13 +310,13 @@ public class StopInfoActivity extends ListActivity {
             if (filter.contains(route.getId())) {
                 checks[i] = true;
             }
-        } 
+        }
         new MultiChoiceActivity.Builder(this)
             .setTitle(R.string.stop_info_filter_title)
             .setItems(items, checks)
             .setPositiveButton(R.string.stop_info_save)
             .setNegativeButton(R.string.stop_info_cancel)
-            .startForResult(FILTER_DIALOG_RESULT); 
+            .startForResult(FILTER_DIALOG_RESULT);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -288,38 +330,38 @@ public class StopInfoActivity extends ListActivity {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-    private void setRoutesFilterFromIntent(Intent intent) { 
-        final boolean[] checks = 
+    private void setRoutesFilterFromIntent(Intent intent) {
+        final boolean[] checks =
             intent.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
         if (checks == null) {
             return;
         }
-        
+
         final int len = checks.length;
         final ArrayList<String> newFilter = new ArrayList<String>(len);
-        
+
         final ObaArray<ObaRoute> routes = mStop.getRoutes();
         assert(routes.length() == len);
-        
+
         for (int i=0; i < len; ++i) {
             final ObaRoute route = routes.get(i);
             if (checks[i]) {
                 newFilter.add(route.getId());
             }
         }
-        // If the size of the filter is the number of routes 
+        // If the size of the filter is the number of routes
         // (i.e., the user selected every checkbox) act then
         // don't select any.
         if (newFilter.size() == len) {
             newFilter.clear();
         }
-        
+
         setRoutesFilter(newFilter);
     }
-    
+
     final class StopInfoListAdapter extends BaseAdapter {
         private ArrayList<StopInfo> mInfo;
-        
+
         public StopInfoListAdapter() {
             mInfo = new ArrayList<StopInfo>();
         }
@@ -350,7 +392,7 @@ public class StopInfoActivity extends ListActivity {
         public boolean hasStableIds() {
             return false;
         }
-        
+
         public void setData(ObaArray<ObaArrivalInfo> arrivals) {
             mInfo = StopInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
             setFilterHeader();
@@ -365,7 +407,7 @@ public class StopInfoActivity extends ListActivity {
 
             final StopInfo stopInfo = mInfo.get(position);
             final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
-            
+
             route.setText(arrivalInfo.getShortName());
             destination.setText(arrivalInfo.getHeadsign());
             status.setText(stopInfo.getStatusText());
@@ -382,16 +424,16 @@ public class StopInfoActivity extends ListActivity {
             //status.setTextColor(color); // This just doesn't look very good.
             etaView.setTextColor(color);
 
-            time.setText(DateUtils.formatDateTime(StopInfoActivity.this, 
-                    stopInfo.getDisplayTime(), 
+            time.setText(DateUtils.formatDateTime(StopInfoActivity.this,
+                    stopInfo.getDisplayTime(),
                     DateUtils.FORMAT_SHOW_TIME|
                     DateUtils.FORMAT_NO_NOON|
-                    DateUtils.FORMAT_NO_MIDNIGHT));    
+                    DateUtils.FORMAT_NO_MIDNIGHT));
 
             ContentValues values = mTripsForStop.getValues(arrivalInfo.getTripId());
             if (values != null) {
                 String tripName = values.getAsString(ObaContract.Trips.NAME);
-                
+
                 View tripInfo = view.findViewById(R.id.trip_info);
                 TextView tripNameView = (TextView)view.findViewById(R.id.trip_name);
                 if (tripName.length() == 0) {
@@ -404,21 +446,21 @@ public class StopInfoActivity extends ListActivity {
                 // Explicitly set this to invisible because we might be reusing this view.
                 View tripInfo = view.findViewById(R.id.trip_info);
                 tripInfo.setVisibility(View.GONE);
-                
+
             }
         }
     }
-    
+
     private void goToTrip(StopInfo stop) {
         ObaArrivalInfo stopInfo = stop.getInfo();
         TripInfoActivity.start(this,
                 stopInfo.getTripId(),
-                mStopId, 
+                mStopId,
                 stopInfo.getRouteId(),
                 stopInfo.getShortName(),
                 mStop.getName(),
                 stopInfo.getScheduledDepartureTime(),
-                stopInfo.getHeadsign());        
+                stopInfo.getHeadsign());
     }
     private void goToRoute(StopInfo stop) {
         RouteInfoActivity.start(this, stop.getInfo().getRouteId());
@@ -429,9 +471,9 @@ public class StopInfoActivity extends ListActivity {
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(mResponse.getData().getArrivalsAndDepartures());
     }
-    
+
     // Similar to the annoying bit in MapViewActivity, the timer is run
-    // in a separate task, so we need to post back to the main thread 
+    // in a separate task, so we need to post back to the main thread
     // to run our AsyncTask. We can't do everything in the timer thread
     // because the progressBar has to be modified in the UI (main) thread.
     private final Handler mRefreshHandler = new Handler();
@@ -440,26 +482,26 @@ public class StopInfoActivity extends ListActivity {
             getStopInfo(true);
         }
     };
-    
+
     //
     // Async tasks for various things.
     //
     private final AsyncTasks.Progress mLoadingProgress = new AsyncTasks.Progress() {
         public void showLoading() {
             View v = findViewById(R.id.loading);
-            v.setVisibility(View.VISIBLE);         
+            v.setVisibility(View.VISIBLE);
         }
         public void hideLoading() {
             View v = findViewById(R.id.loading);
-            v.setVisibility(View.GONE);       
+            v.setVisibility(View.GONE);
         }
     };
-    private final AsyncTasks.Progress mTitleProgress 
+    private final AsyncTasks.Progress mTitleProgress
         = new AsyncTasks.ProgressIndeterminateVisibility(this);
-    
+
     private final class GetStopInfo extends AsyncTasks.StringToResponse {
         private final boolean mAddToDb;
-        
+
         GetStopInfo(AsyncTasks.Progress progress, boolean addToDb) {
             super(progress);
             mAddToDb = addToDb;
@@ -476,10 +518,10 @@ public class StopInfoActivity extends ListActivity {
             else {
                 TextView empty = (TextView)findViewById(android.R.id.empty);
                 empty.setText(UIHelp.getStopErrorString(result.getCode()));
-            } 
+            }
         }
     }
-    
+
     private void getStopInfo(boolean refresh) {
         if (mStopId == null) {
             return;
@@ -487,35 +529,35 @@ public class StopInfoActivity extends ListActivity {
         if (AsyncTasks.isRunning(mAsyncTask)) {
             return;
         }
-        // To determine 
+        // To determine
         AsyncTasks.Progress progress = refresh ? mTitleProgress : mLoadingProgress;
-        
+
         // Get it from the Net
         mAsyncTask = new GetStopInfo(progress, !refresh).execute(mStopId);
     }
-    
+
     void setResponse(ObaResponse response, boolean addToDb) {
         assert(response != null);
         mResponse = response;
         mResponseTime = System.currentTimeMillis();
         ObaData data = response.getData();
-        mStop = data.getStop();       
+        mStop = data.getStop();
         setHeader(mStop, addToDb);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(data.getArrivalsAndDepartures());
-        
-        // Ensure there is some hint text in case there is no error 
+
+        // Ensure there is some hint text in case there is no error
         // but the data is empty.
         TextView empty = (TextView)findViewById(android.R.id.empty);
         empty.setText(R.string.stop_info_nodata);
-        
+
         mLoadingProgress.hideLoading();
-        setProgressBarIndeterminateVisibility(false);        
+        setProgressBarIndeterminateVisibility(false);
     }
     private void setHeader(Bundle bundle) {
         setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
     }
-    
+
     void setHeader(ObaStop stop, boolean addToDb) {
         String code = stop.getCode();
         String name = stop.getName();
@@ -537,12 +579,16 @@ public class StopInfoActivity extends ListActivity {
         }
     }
     private void setHeader(String name, String direction) {
-        if (name != null) {
-            TextView nameText = (TextView)findViewById(R.id.name);
-            nameText.setText(name);
+        mStopName = name;
+
+        if (!TextUtils.isEmpty(mStopUserName)) {
+            mNameView.setText(mStopUserName);
+        }
+        else if (name != null) {
+            mNameView.setText(name);
         }
         if (direction != null) {
-            UIHelp.setStopDirection(findViewById(R.id.direction), direction, false);  
+            UIHelp.setStopDirection(findViewById(R.id.direction), direction, false);
         }
     }
     void setFilterHeader() {
@@ -566,7 +612,99 @@ public class StopInfoActivity extends ListActivity {
             }
         }
     };
-    
+
+    private void initHeader() {
+        mFavoriteView.setImageResource(mFavorite ?
+                android.R.drawable.star_on :
+                android.R.drawable.star_off);
+
+        mFavoriteView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleFavorite();
+            }
+        });
+
+        mNameView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                beginNameEdit();
+            }
+        });
+        // Implement the "Save" and "Clear" buttons
+        View save = findViewById(R.id.edit_name_save);
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setUserStopName(mEditNameView.getText().toString());
+                endNameEdit();
+            }
+        });
+        // "Cancel"
+        View cancel = findViewById(R.id.edit_name_cancel);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                endNameEdit();
+            }
+        });
+
+        View clear = findViewById(R.id.edit_name_revert);
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setUserStopName(null);
+                endNameEdit();
+            }
+        });
+    }
+    private void beginNameEdit() {
+        // If we can click on this, then we're definitely not
+        // editable, so we should go into edit mode.
+        mEditNameView.setText(mNameView.getText());
+        mNameContainerView.setVisibility(View.GONE);
+        mEditNameContainerView.setVisibility(View.VISIBLE);
+        mEditNameView.requestFocus();
+        // TODO: Ensure the soft keyboard is up
+    }
+    private void endNameEdit() {
+        mNameContainerView.setVisibility(View.VISIBLE);
+        mEditNameContainerView.setVisibility(View.GONE);
+        // TODO: Close the soft keyboard
+    }
+    private void setUserStopName(String name) {
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        if (TextUtils.isEmpty(name)) {
+            mNameView.setText(mStopName);
+            values.putNull(ObaContract.Stops.USER_NAME);
+            mStopUserName = null;
+        }
+        else {
+            values.put(ObaContract.Stops.USER_NAME, name);
+            mNameView.setText(name);
+            mStopUserName = name;
+        }
+        cr.update(mStopUri, values, null, null);
+    }
+    private void toggleFavorite() {
+        final ImageView favoriteView = (ImageView)findViewById(R.id.stop_favorite);
+        int newRes;
+        if (mFavorite) {
+            // Turn it off
+            newRes = android.R.drawable.star_off;
+        }
+        else {
+            // Turn it on
+            newRes = android.R.drawable.star_on;
+        }
+        if (ObaContract.Stops.markAsFavorite(
+                StopInfoActivity.this, mStopUri, !mFavorite)) {
+            mFavorite = !mFavorite;
+            favoriteView.setImageResource(newRes);
+        }
+    }
+
     private static final String[] TRIPS_PROJECTION = {
         ObaContract.Trips._ID,
         ObaContract.Trips.NAME
@@ -580,5 +718,26 @@ public class StopInfoActivity extends ListActivity {
                 null);
         // TODO: Eventually add a handler for notifications
         return new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
+    }
+
+    private static final String[] USER_PROJECTION = {
+        ObaContract.Stops.FAVORITE,
+        ObaContract.Stops.USER_NAME
+    };
+
+    private void getUserInfo() {
+        ContentResolver cr = getContentResolver();
+        Cursor c = cr.query(mStopUri, USER_PROJECTION, null, null, null);
+        if (c != null) {
+            try {
+                if (c.moveToNext()) {
+                    mFavorite = (c.getInt(0) == 1);
+                    mStopUserName = c.getString(1);
+                }
+            }
+            finally {
+                c.close();
+            }
+        }
     }
 }

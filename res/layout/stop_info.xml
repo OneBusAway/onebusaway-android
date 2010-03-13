@@ -1,24 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
          android:orientation="vertical"
-         android:layout_width="fill_parent" 
+         android:layout_width="fill_parent"
          android:layout_height="fill_parent">
- 
+
     <LinearLayout
         style="@style/HeaderItem"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-        <TextView
-            android:id="@+id/name"
-            style="@style/HeaderText"
-            android:layout_width="fill_parent" 
-            android:layout_height="wrap_content">
-        </TextView>
+      <LinearLayout
+          android:id="@+id/name_container"
+          android:orientation="horizontal"
+          android:gravity="center_horizontal"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content">
+           <ImageView
+             android:id="@+id/stop_favorite"
+             android:src="@drawable/android:star_off"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center_vertical"
+             android:focusable="true"/>
+          <TextView
+              android:id="@+id/stop_name"
+              style="@style/HeaderText"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="center_vertical"
+              android:focusable="true"/>
+
+       </LinearLayout>
+       <LinearLayout
+            android:id="@+id/edit_name_container"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+          <!--  NOTE: I'm sure there's a way to have a textview
+              switch between displaying itself as an edittext
+              and a regular text, but this method will be
+              guaranteed to work across any release -->
+          <EditText
+              android:id="@+id/edit_name"
+              style="@style/HeaderTextNoCenter"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:inputType="text"/>
+              <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dip"
+                android:paddingRight="10dip"
+                android:gravity="center">
+                <Button
+                    android:id="@+id/edit_name_save"
+                    android:text="@string/stop_info_save"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
+                 <Button
+                    android:id="@+id/edit_name_cancel"
+                    android:text="@string/stop_info_cancel"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
+                 <Button
+                    android:id="@+id/edit_name_revert"
+                    android:text="@string/stop_info_clear"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
+            </LinearLayout>
+       </LinearLayout>
+
         <TextView
             android:id="@+id/direction"
             style="@style/Header2Text"
-            android:layout_width="fill_parent" 
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content">
         </TextView>
         <LinearLayout
@@ -27,31 +87,31 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:visibility="gone">
-	        <TextView
-	            android:id="@+id/filter"
-	            style="@style/Header2Text"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content">
-	        </TextView>
-	        <TextView
-	            android:id="@+id/show_all"
-	            android:text="@string/stop_info_filter_showall"
-	            style="@style/Header2Text"
-	            android:paddingLeft="5dip"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:bufferType="spannable"
+          <TextView
+              android:id="@+id/filter"
+              style="@style/Header2Text"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+          </TextView>
+          <TextView
+              android:id="@+id/show_all"
+              android:text="@string/stop_info_filter_showall"
+              style="@style/Header2Text"
+              android:paddingLeft="5dip"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:bufferType="spannable"
                 android:linksClickable="true" >
-	        </TextView>
+          </TextView>
         </LinearLayout>
     </LinearLayout>
- 
+
     <ListView android:id="@id/android:list"
         style="@style/HeaderList"
-        android:layout_width="fill_parent" 
+        android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
- 
-    <LinearLayout 
+
+    <LinearLayout
         android:id="@+id/loading"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
@@ -61,15 +121,15 @@
         <ProgressBar android:id="@+android:id/progress_small"
             style="@style/LoadingProgress"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" 
-            android:paddingLeft="5dp" /> 
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp" />
         <TextView
             android:text="@string/stop_info_loading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/LoadingText" />
-    </LinearLayout> 
- 
+    </LinearLayout>
+
     <TextView android:id="@id/android:empty"
         style="@style/ListHintText"
         android:layout_width="fill_parent"

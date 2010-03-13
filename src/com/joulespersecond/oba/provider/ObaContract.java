@@ -12,9 +12,9 @@ import android.text.format.Time;
 
 /**
  * The contract between clients and the ObaProvider.
- * 
+ *
  * This really needs to be documented better.
- * 
+ *
  * @author paulw
  *
  */
@@ -23,71 +23,71 @@ public final class ObaContract {
     public static final String AUTHORITY = "com.joulespersecond.oba";
     /** The base URI for the Oba provider */
     public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
-    
+
     protected interface StopsColumns {
         /**
          * The code for the stop, e.g. 001_123
          * <P>Type: TEXT</P>
          */
         public static final String CODE = "code";
-        
+
         /**
          * The user specified name of the stop, e.g. "13th Ave E & John St"
          * <P>Type: TEXT</P>
          */
         public static final String NAME = "name";
-        
+
         /**
          * The stop direction, one of: N, NE, NW, E, SE, SW, S, W or null
          * <P>Type: TEXT</P>
          */
         public static final String DIRECTION = "direction";
-        
+
         /**
          * The latitude of the stop location.
          * <P>Type: DOUBLE</P>
          */
         public static final String LATITUDE = "latitude";
-        
+
         /**
          * The longitude of the stop location.
          * <P>Type: DOUBLE</P>
          */
         public static final String LONGITUDE = "longitude";
     }
-    
+
     protected interface RoutesColumns {
         /**
          * The short name of the route, e.g. "10"
          * <P>Type: TEXT</P>
          */
         public static final String SHORTNAME = "short_name";
-        
+
         /**
          * The long name of the route, e.g "Downtown to U-District"
          * <P>Type: TEXT</P>
          */
         public static final String LONGNAME = "long_name";
     }
-    
+
     protected interface StopRouteKeyColumns {
         /**
          * The referenced Stop ID. This may or may not represent a key in the Stops table.
          * <P>Type: TEXT</P>
          */
         public static final String STOP_ID = "stop_id";
-        
+
         /**
          * The referenced Route ID. This may or may not represent a key in the Routes table.
          * <P>Type: TEXT</P>
          */
         public static final String ROUTE_ID = "route_id";
     }
-    
+
     protected interface StopRouteFilterColumns extends StopRouteKeyColumns {
         // No additional columns
     }
-    
+
     protected interface TripsColumns extends StopRouteKeyColumns {
         /**
          * The scheduled departure time for the trip in milliseconds.
@@ -100,56 +100,74 @@ public final class ObaContract {
          * <P>Type: TEXT</P>
          */
         public static final String HEADSIGN = "headsign";
-        
+
         /**
          * The user specified name of the trip.
          * <P>Type: TEXT</P>
          */
         public static final String NAME = "name";
-        
+
         /**
          * The number of minutes before the arrival to notify the user
          * <P>Type: INTEGER</P>
          */
         public static final String REMINDER = "reminder";
-        
+
         /**
          * A bitmask representing the days the reminder should be used.
          * <P>Type: INTEGER</P>
          */
         public static final String DAYS = "days";
     }
-   
+
     protected interface UserColumns {
         /**
          * The number of times this resource has been accessed by the user.
          * <P>Type: INTEGER</P>
          */
         public static final String USE_COUNT = "use_count";
+
+        /**
+         * The user specified name given to this resource.
+         * <P>Type: TEXT</P>
+         */
+        public static final String USER_NAME = "user_name";
+
+        /**
+         * The last time the user accessed the resource.
+         * <P>Type: INTEGER</P>
+         */
+        public static final String ACCESS_TIME = "access_time";
+
+        /**
+         * Whether or not the resource is marked as a favorite (starred)
+         * <P>Type: INTEGER (1 or 0)</P>
+         */
+        public static final String FAVORITE = "favorite";
     }
-    
+
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
         // Cannot be instantiated
         private Stops() {}
-        
+
         /** The URI path portion for this table */
         public static final String PATH = "stops";
         /** The content:// style URI for this table */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
-        
-        public static final String CONTENT_TYPE = 
+
+        public static final String CONTENT_TYPE =
             "vnd.android.cursor.item/com.joulespersecond.oba.stop";
-        public static final String CONTENT_DIR_TYPE = 
+        public static final String CONTENT_DIR_TYPE =
             "vnd.android.dir/com.joulespersecond.oba.stop";
-        
+
         public static Uri insertOrUpdate(Context context,
-                String id, 
-                ContentValues values, 
+                String id,
+                ContentValues values,
                 boolean markAsUsed) {
             ContentResolver cr = context.getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
-            Cursor c = cr.query(uri, 
-                    new String[] { USE_COUNT }, 
+            Cursor c = cr.query(uri,
+                    new String[] { USE_COUNT },
                     null, null, null);
             Uri result;
             if (c != null && c.getCount() > 0) {
@@ -178,30 +196,36 @@ public final class ObaContract {
             }
             return result;
         }
+        public static boolean markAsFavorite(Context context, Uri uri, boolean favorite) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Stops.FAVORITE, favorite ? 1 : 0);
+            return cr.update(uri, values, null, null) > 0;
+        }
     }
-    
+
     public static class Routes implements BaseColumns, RoutesColumns, UserColumns {
         // Cannot be instantiated
         private Routes() {}
-        
+
         /** The URI path portion for this table */
         public static final String PATH = "routes";
         /** The content:// style URI for this table */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
-        
-        public static final String CONTENT_TYPE = 
+
+        public static final String CONTENT_TYPE =
             "vnd.android.cursor.item/com.joulespersecond.oba.route";
-        public static final String CONTENT_DIR_TYPE = 
+        public static final String CONTENT_DIR_TYPE =
             "vnd.android.dir/com.joulespersecond.oba.route";
-        
+
         public static Uri insertOrUpdate(Context context,
-                String id, 
-                ContentValues values, 
+                String id,
+                ContentValues values,
                 boolean markAsUsed) {
             ContentResolver cr = context.getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
-            Cursor c = cr.query(uri, 
-                    new String[] { USE_COUNT }, 
+            Cursor c = cr.query(uri,
+                    new String[] { USE_COUNT },
                     null, null, null);
             Uri result;
             if (c != null && c.getCount() > 0) {
@@ -231,19 +255,19 @@ public final class ObaContract {
             return result;
         }
     }
-    
+
     public static class StopRouteFilters implements StopRouteFilterColumns {
-        // Cannot be instantiated 
+        // Cannot be instantiated
         private StopRouteFilters() {}
-        
+
         /** The URI path portion for this table */
         public static final String PATH = "stop_routes_filter";
         /** The content:// style URI for this table */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
-        
-        public static final String CONTENT_DIR_TYPE = 
+
+        public static final String CONTENT_DIR_TYPE =
             "vnd.android.dir/com.joulespersecond.oba.stoproutefilter";
-        
+
         private static final String FILTER_WHERE = STOP_ID+"=?";
         /**
          * Gets the filter for the specified Stop ID.
@@ -255,7 +279,7 @@ public final class ObaContract {
             final String[] selection = { ROUTE_ID };
             final String[] selectionArgs = { stopId };
             ContentResolver cr = context.getContentResolver();
-            Cursor c = cr.query(CONTENT_URI, 
+            Cursor c = cr.query(CONTENT_URI,
                     selection,
                     FILTER_WHERE,
                     selectionArgs,
@@ -273,10 +297,10 @@ public final class ObaContract {
             }
             return result;
         }
-        
+
         /**
          * Sets the filter for the particular stop ID.
-         * 
+         *
          * @param context The context.
          * @param stopId The stop ID.
          * @param filter An array of route IDs to filter.
@@ -289,7 +313,7 @@ public final class ObaContract {
             final String[] selectionArgs = { stopId };
             ContentResolver cr = context.getContentResolver();
             cr.delete(CONTENT_URI, FILTER_WHERE, selectionArgs);
-            
+
             ContentValues args = new ContentValues();
             args.put(STOP_ID, stopId);
             final int len = filter.size();
@@ -299,26 +323,26 @@ public final class ObaContract {
             }
         }
     }
-    
-    
-    
+
+
+
     public static class Trips implements BaseColumns, StopRouteKeyColumns, TripsColumns {
         // Cannot be instantiated
         private Trips() {}
-        
+
         /** The URI path portion for this table */
         public static final String PATH = "trips";
-        /** 
-         * The content:// style URI for this table 
+        /**
+         * The content:// style URI for this table
          * URI is of the form content://<authority>/trips/<tripId>/<stopId>
          */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
-        
-        public static final String CONTENT_TYPE = 
+
+        public static final String CONTENT_TYPE =
             "vnd.android.cursor.item/com.joulespersecond.oba.trip";
-        public static final String CONTENT_DIR_TYPE = 
+        public static final String CONTENT_DIR_TYPE =
             "vnd.android.dir/com.joulespersecond.oba.trip";
-        
+
         public static final int DAY_MON = 0x1;
         public static final int DAY_TUE = 0x2;
         public static final int DAY_WED = 0x4;
@@ -328,7 +352,7 @@ public final class ObaContract {
         public static final int DAY_SUN = 0x40;
         public static final int DAY_WEEKDAY = DAY_MON|DAY_TUE|DAY_WED|DAY_THU|DAY_FRI;
         public static final int DAY_ALL = DAY_WEEKDAY|DAY_SUN|DAY_SAT;
-        
+
         public static final Uri buildUri(String tripId, String stopId) {
             return CONTENT_URI
                 .buildUpon()
@@ -336,10 +360,10 @@ public final class ObaContract {
                 .appendPath(stopId)
                 .build();
         }
-        
+
         /**
          * Converts a days bitmask into a boolean[] array
-         * 
+         *
          * @param days A DB compatible days bitmask.
          * @return A boolean array representing the days set in the bitmask, Mon=0 to Sun=6
          */
@@ -348,16 +372,16 @@ public final class ObaContract {
                     (days & ObaContract.Trips.DAY_MON) == ObaContract.Trips.DAY_MON,
                     (days & ObaContract.Trips.DAY_TUE) == ObaContract.Trips.DAY_TUE,
                     (days & ObaContract.Trips.DAY_WED) == ObaContract.Trips.DAY_WED,
-                    (days & ObaContract.Trips.DAY_THU) == ObaContract.Trips.DAY_THU,            
-                    (days & ObaContract.Trips.DAY_FRI) == ObaContract.Trips.DAY_FRI,   
-                    (days & ObaContract.Trips.DAY_SAT) == ObaContract.Trips.DAY_SAT,      
-                    (days & ObaContract.Trips.DAY_SUN) == ObaContract.Trips.DAY_SUN,   
+                    (days & ObaContract.Trips.DAY_THU) == ObaContract.Trips.DAY_THU,
+                    (days & ObaContract.Trips.DAY_FRI) == ObaContract.Trips.DAY_FRI,
+                    (days & ObaContract.Trips.DAY_SAT) == ObaContract.Trips.DAY_SAT,
+                    (days & ObaContract.Trips.DAY_SUN) == ObaContract.Trips.DAY_SUN,
             };
             return result;
         }
         /**
          * Converts a boolean[] array to a DB compatible days bitmask
-         * 
+         *
          * @param A boolean array as returned by daysToArray
          * @return A DB compatible days bitmask
          */
@@ -370,14 +394,14 @@ public final class ObaContract {
             }
             return result;
         }
-        
+
         /**
-         * Converts a 'minutes-to-midnight' value into a Unix time. 
-         * 
+         * Converts a 'minutes-to-midnight' value into a Unix time.
+         *
          * @param minutes from midnight in UTC.
          * @return A Unix time representing the time in the current day.
          */
-        // Helper functions to convert the DB DepartureTime value 
+        // Helper functions to convert the DB DepartureTime value
         public static long convertDBToTime(int minutes) {
             // This converts the minutes-to-midnight to a time of the current day.
             Time t = new Time();
@@ -387,7 +411,7 @@ public final class ObaContract {
         }
         /**
          * Converts a Unix time into a 'minutes-to-midnight' in UTC.
-         * 
+         *
          * @param departureTime A Unix time.
          * @return minutes from midnight in UTC.
          */
@@ -399,7 +423,7 @@ public final class ObaContract {
         }
         /**
          * Converts a weekday value from a android.text.format.Time to a bit.
-         * 
+         *
          * @param weekday The weekDay value from android.text.format.Time
          * @return A DB compatible bit.
          */

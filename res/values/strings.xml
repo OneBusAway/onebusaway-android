@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
+
     <string name="app_name">OneBusAway</string>
-    
+
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
     <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
@@ -17,7 +17,7 @@
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
-    
+
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>
     <string name="main_option_findroute">Find Route</string>
@@ -31,7 +31,7 @@
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">Sound Transit support!\n\nUpdated Help, including\nNews &amp; Alerts via Twitter!\n\nDelete individual favorites!</string>
     <string name="main_help_close">Close</string>
-    
+
     <!--  Stop Info -->
     <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_loading">Loading...</string>
@@ -50,6 +50,9 @@
     <string name="stop_info_option_showonmap">Show On Map</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter Routes</string>
+    <string name="stop_info_option_editname">Edit Name</string>
+    <string name="stop_info_option_addstar">Add Star</string>
+    <string name="stop_info_option_removestar">Remove Star</string>
     <string name="stop_info_nodata">There are no upcoming arrivals at this stop.</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
@@ -57,13 +60,14 @@
     <string name="stop_info_filter_showall">(show all)</string>
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
-    
+    <string name="stop_info_clear">Clear</string>
+
     <!-- Route Info  -->
     <string name="route_info_title">OneBusAway</string>
     <string name="route_info_loading">Loading...</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
-    
+
     <!-- Find -->
     <string name="find_route_title">OneBusAway</string>
     <string name="find_stop_title">OneBusAway</string>
@@ -79,17 +83,17 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
-    
+
     <string name="find_context_get_stop_info">Show arrival information</string>
     <string name="find_context_get_route_info">Show route information</string>
     <string name="find_context_create_shortcut">Create shortcut</string>
     <string name="find_context_showonmap">Show on map</string>
     <string name="find_context_remove_favorite">Remove this favorite</string>
-    
+
     <string name="route_shortcut">Bus route</string>
     <string name="stop_shortcut">Bus stop</string>
     <string name="route_name">Route %s</string>
-    
+
     <!--  Trip info -->
     <string name="trip_info_title">OneBusAway</string>
     <string name="trip_info_name">Reminder name</string>
@@ -112,7 +116,7 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="trip_info_noname">(no name)</string>
     <string name="trip_info_option_showroute">Show route</string>
     <string name="trip_info_option_showstop">Show stop</string>
-    
+
     <!--  Trip list -->
     <string name="trip_list_title">OneBusAway</string>
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
@@ -120,16 +124,16 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="trip_list_context_delete">Delete trip</string>
     <string name="trip_list_context_showstop">Show stop</string>
     <string name="trip_list_context_showroute">Show route</string>
-    
+
     <!--  Trip notifications -->
     <string name="trip_stat_gone">Route %s has departed.</string>
     <string name="trip_stat_lessthanone">Route %s is less than a minute away!</string>
     <string name="trip_stat_one">Route %s is 1 minute away!</string>
     <string name="trip_stat">Route %s is %d minutes away!</string>
-    
+
     <!-- Application Preferences -->
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
     <string name="preferences_oba_api_servername_default">api.onebusaway.org</string>
-    
+
 </resources>

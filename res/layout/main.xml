@@ -21,17 +21,15 @@
         android:background="@drawable/map_popup_border"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
-        <LinearLayout 
+        <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <TextView android:id="@+id/stop_name"
-                style="@style/Line1Text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />     
+            <include layout="@layout/stop_item" />
+
             <TextView android:id="@+id/direction"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />  
+                android:layout_height="wrap_content" />
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -40,7 +38,7 @@
                     android:id="@+id/show_arrival_info"
                     android:text="@string/main_arrival_info"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" 
+                    android:layout_height="wrap_content"
                     android:paddingRight="5dp"
                     android:bufferType="spannable"
                     android:linksClickable="true" />
@@ -48,14 +46,14 @@
                     android:id="@+id/show_routes"
                     android:text="@string/main_show_routes"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" 
+                    android:layout_height="wrap_content"
                     android:bufferType="spannable"
-                    android:linksClickable="true" />      
-            </LinearLayout>    
-            <GridView  
+                    android:linksClickable="true" />
+            </LinearLayout>
+            <GridView
                 android:id="@+id/route_list"
                 android:visibility="gone"
-                android:layout_width="fill_parent" 
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:numColumns="auto_fit"
                 android:columnWidth="30sp"

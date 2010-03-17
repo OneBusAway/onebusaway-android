@@ -60,6 +60,7 @@ public class MapViewActivity extends MapActivity {
     MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
     StopOverlay mStopOverlay;
+    UIHelp.StopUserInfoMap mStopUserMap;
     //private RouteOverlay mRouteOverlay;
     private String mRouteId;
     private String mFocusStopId;
@@ -162,6 +163,8 @@ public class MapViewActivity extends MapActivity {
         mLocationOverlay = new MyFixedLocationOverlay(this, mMapView);
         List<Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.add(mLocationOverlay);
+
+        mStopUserMap = new UIHelp.StopUserInfoMap(this);
 
         // Initialize the links
         UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
@@ -273,6 +276,9 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public void onResume() {
+        // TODO: Need to update the Popup with the change in stop info
+        // (In the case then the currently focused stop becomes a favorite
+        // or the name changes)
         mLocationOverlay.enableMyLocation();
         if (!isRouteMode()) {
             watchMap();
@@ -461,9 +467,8 @@ public class MapViewActivity extends MapActivity {
                      final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
                      final ObaStop stop = item.getStop();
 
-                     final TextView name = (TextView)popup.findViewById(R.id.stop_name);
-                     name.setText(stop.getName());
-
+                     // Is this a favorite?
+                     mStopUserMap.setView(popup, stop.getId(), stop.getName());
                      UIHelp.setStopDirection(popup.findViewById(R.id.direction),
                              stop.getDirection(),
                              false);

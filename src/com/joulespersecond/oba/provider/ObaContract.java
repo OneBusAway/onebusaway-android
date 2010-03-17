@@ -144,6 +144,12 @@ public final class ObaContract {
          * <P>Type: INTEGER (1 or 0)</P>
          */
         public static final String FAVORITE = "favorite";
+
+        /**
+         * This returns the user specified name, or the default name.
+         * <P>Type: TEXT</P>
+         */
+        public static final String UI_NAME = "ui_name";
     }
 
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {

@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.style.URLSpan;
 import android.util.Log;
@@ -27,16 +28,22 @@ public class FindStopActivity extends FindActivity {
 
     private static final String[] PROJECTION = {
         ObaContract.Stops._ID,
-        ObaContract.Stops.NAME,
+        ObaContract.Stops.UI_NAME,
         ObaContract.Stops.DIRECTION,
         ObaContract.Stops.LATITUDE,
-        ObaContract.Stops.LONGITUDE
+        ObaContract.Stops.LONGITUDE,
+        ObaContract.Stops.UI_NAME,
+        ObaContract.Stops.FAVORITE
     };
     private static final int COL_ID = 0;
     private static final int COL_NAME = 1;
     private static final int COL_DIRECTION = 2;
     private static final int COL_LATITUDE = 3;
     private static final int COL_LONGITUDE = 4;
+    private static final int COL_UI_NAME = 5;
+    private static final int COL_FAVORITE = 6;
+
+    private UIHelp.StopUserInfoMap mStopUserMap;
 
     private boolean isSearching() {
         ListAdapter adapter = getListView().getAdapter();
@@ -44,10 +51,17 @@ public class FindStopActivity extends FindActivity {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        mStopUserMap = new UIHelp.StopUserInfoMap(this);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String stopId;
         String stopName;
         String stopDir;
+        String shortcutName;
         // Get the adapter (this may or may not be a SimpleCursorAdapter)
         ListAdapter adapter = l.getAdapter();
         if (adapter instanceof SimpleCursorAdapter) {
@@ -58,12 +72,14 @@ public class FindStopActivity extends FindActivity {
             stopId = c.getString(COL_ID);
             stopName = c.getString(COL_NAME);
             stopDir = c.getString(COL_DIRECTION);
+            shortcutName = c.getString(COL_UI_NAME);
         }
         else if (adapter instanceof SearchResultsListAdapter) {
             ObaStop stop = (ObaStop)adapter.getItem(position - l.getHeaderViewsCount());
             stopId = stop.getId();
             stopName = stop.getName();
             stopDir = stop.getDirection();
+            shortcutName = stopName;
         }
         else {
             Log.e(TAG, "Unknown adapter. Giving up!");
@@ -72,7 +88,7 @@ public class FindStopActivity extends FindActivity {
 
         if (isShortcutMode()) {
             Intent intent = StopInfoActivity.makeIntent(this, stopId, stopName, stopDir);
-            makeShortcut(stopName, intent);
+            makeShortcut(shortcutName, intent);
         }
         else {
             StopInfoActivity.start(this, stopId, stopName, stopDir);
@@ -88,7 +104,7 @@ public class FindStopActivity extends FindActivity {
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+        final TextView text = (TextView)info.targetView.findViewById(R.id.stop_name);
         menu.setHeaderTitle(text.getText());
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
@@ -174,10 +190,8 @@ public class FindStopActivity extends FindActivity {
         }
         @Override
         protected void setData(View view, int position) {
-            TextView route = (TextView)view.findViewById(R.id.name);
-
             ObaStop stop = mArray.get(position);
-            route.setText(stop.getName());
+            mStopUserMap.setView(view, stop.getId(), stop.getName());
             UIHelp.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),
                     true);
@@ -227,12 +241,14 @@ public class FindStopActivity extends FindActivity {
         startManagingCursor(c);
 
         String[] from = new String[] {
-                ObaContract.Stops.NAME,
-                ObaContract.Stops.DIRECTION
+                ObaContract.Stops.UI_NAME,
+                ObaContract.Stops.DIRECTION,
+                ObaContract.Stops.FAVORITE
         };
         int[] to = new int[] {
                 R.id.stop_name,
-                R.id.direction
+                R.id.direction,
+                R.id.stop_favorite
         };
         SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.find_stop_listitem, c, from, to);
@@ -241,7 +257,13 @@ public class FindStopActivity extends FindActivity {
         // to user level text (North/Northwest/etc..)
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                if (columnIndex == COL_DIRECTION) {
+                if (columnIndex == COL_FAVORITE) {
+                    View favorite = view.findViewById(R.id.stop_favorite);
+                    favorite.setVisibility(
+                            cursor.getInt(columnIndex) == 1 ? View.VISIBLE : View.GONE);
+                    return true;
+                }
+                else if (columnIndex == COL_DIRECTION) {
                     UIHelp.setStopDirection(view.findViewById(R.id.direction),
                             cursor.getString(columnIndex),
                             true);

@@ -154,6 +154,11 @@ public class ObaProvider extends ContentProvider {
         sStopsProjectionMap.put(ObaContract.Stops.ACCESS_TIME,ObaContract.Stops.ACCESS_TIME);
         sStopsProjectionMap.put(ObaContract.Stops.FAVORITE, ObaContract.Stops.FAVORITE);
         sStopsProjectionMap.put(ObaContract.Stops._COUNT, "count(*)");
+        sStopsProjectionMap.put(ObaContract.Stops.UI_NAME,
+                "CASE WHEN " + ObaContract.Stops.USER_NAME + " IS NOT NULL THEN "+
+                    ObaContract.Stops.USER_NAME + " ELSE " +
+                    ObaContract.Stops.NAME + " END AS " +
+                    ObaContract.Stops.UI_NAME);
 
         sRoutesProjectionMap = new HashMap<String,String>();
         sRoutesProjectionMap.put(ObaContract.Routes._ID,        ObaContract.Routes._ID);

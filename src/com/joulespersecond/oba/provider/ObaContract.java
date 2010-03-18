@@ -182,6 +182,7 @@ public final class ObaContract {
                     c.moveToFirst();
                     int count = c.getInt(0);
                     values.put(USE_COUNT, count+1);
+                    values.put(ACCESS_TIME, System.currentTimeMillis());
                 }
                 cr.update(uri, values, null, null);
                 result = uri;
@@ -190,6 +191,7 @@ public final class ObaContract {
                 // Insert
                 if (markAsUsed) {
                     values.put(USE_COUNT, 1);
+                    values.put(ACCESS_TIME, System.currentTimeMillis());
                 }
                 else {
                     values.put(USE_COUNT, 0);
@@ -240,6 +242,7 @@ public final class ObaContract {
                     c.moveToFirst();
                     int count = c.getInt(0);
                     values.put(USE_COUNT, count+1);
+                    values.put(ACCESS_TIME, System.currentTimeMillis());
                 }
                 cr.update(uri, values, null, null);
                 result = uri;
@@ -248,6 +251,7 @@ public final class ObaContract {
                 // Insert
                 if (markAsUsed) {
                     values.put(USE_COUNT, 1);
+                    values.put(ACCESS_TIME, System.currentTimeMillis());
                 }
                 else {
                     values.put(USE_COUNT, 0);

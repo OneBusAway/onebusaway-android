@@ -68,6 +68,15 @@
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
 
+    <!-- My stops/routes -->
+    <string name="my_recent_title">Recent</string>
+    <string name="my_starred_title">Starred</string>
+    <string name="my_search_title">Search</string>
+    <string name="my_no_recent_stops">You have no recent stops. Get some now.</string>
+    <string name="my_no_starred_stops">You have no starred stops. Get some now.</string>
+    <string name="my_no_recent_routes">You have no recent routes. Get some now.</string>
+    <string name="my_no_starred_routes">You have no starred routes. Get some now.</string>
+
     <!-- Find -->
     <string name="find_route_title">OneBusAway</string>
     <string name="find_stop_title">OneBusAway</string>
@@ -90,8 +99,8 @@ You can also find a route by entering its route number in the search box.</strin
     <string name="find_context_showonmap">Show on map</string>
     <string name="find_context_remove_favorite">Remove this favorite</string>
 
-    <string name="route_shortcut">Bus route</string>
-    <string name="stop_shortcut">Bus stop</string>
+    <string name="route_shortcut">OneBusAway Route</string>
+    <string name="stop_shortcut">OneBusAway Stop</string>
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->

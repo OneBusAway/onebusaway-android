@@ -8,10 +8,12 @@ import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Parcelable;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -104,6 +106,22 @@ final class UIHelp {
                 favoriteView.setVisibility(View.GONE);
             }
         }
+    }
+
+    /**
+     * Default implementation for creating a shortcut when in shortcut mode.
+     * @param name The name of the shortcut.
+     * @param destIntent The destination intent.
+     */
+    public static final Intent makeShortcut(Context context, String name, Intent destIntent) {
+        // Set up the container intent
+        Intent intent = new Intent();
+        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
+        intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
+        Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
+                context,  R.drawable.icon);
+        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
+        return intent;
     }
 
     public static final int getRouteErrorString(int code) {

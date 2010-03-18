@@ -1,39 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
          android:orientation="vertical"
-         android:layout_width="fill_parent" 
+         android:layout_width="fill_parent"
          android:layout_height="fill_parent">
-    <TableLayout
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:stretchColumns="0"
-        android:shrinkColumns="1"
         style="@style/FindSearchBox">
-        <TableRow 
-            android:gravity="center_vertical"
-            android:paddingTop="4dp">
-            <EditText 
+            <EditText
                 android:id="@+id/search_text"
-                android:layout_column="0"
+                android:layout_width="0dip"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:hint="@string/search_stop_hint"
                 android:inputType="number"
-                android:singleLine="true"  />  
+                android:singleLine="true"  />
             <Button
                 android:id="@+id/search"
-                android:layout_column="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="@string/find" />
-        </TableRow>
-    </TableLayout>         
-              
+    </LinearLayout>
+
     <ListView android:id="@id/android:list"
-               android:layout_width="fill_parent" 
+               android:layout_width="fill_parent"
                android:layout_height="fill_parent" />
- 
+
     <TextView android:id="@id/android:empty"
         style="@style/ListHintText"
         android:bufferType="spannable"
         android:linksClickable="true"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" 
-        android:text="@string/find_hint_nofavoritestops" />
+        android:layout_height="wrap_content" />
 </LinearLayout>

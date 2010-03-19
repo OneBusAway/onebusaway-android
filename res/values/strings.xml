@@ -17,6 +17,7 @@
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
+    <string name="loading">Loading...</string>
 
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>
@@ -34,7 +35,6 @@
 
     <!--  Stop Info -->
     <string name="stop_info_title">OneBusAway</string>
-    <string name="stop_info_loading">Loading...</string>
     <string name="stop_info_ontime">On time</string>
     <string name="stop_info_arrive_delayed1">1 minute delay</string>
     <string name="stop_info_arrive_delayed">%d minute delay</string>
@@ -64,7 +64,6 @@
 
     <!-- Route Info  -->
     <string name="route_info_title">OneBusAway</string>
-    <string name="route_info_loading">Loading...</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
 

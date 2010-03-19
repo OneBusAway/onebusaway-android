@@ -5,6 +5,7 @@ import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,8 +13,11 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,6 +31,8 @@ abstract class MySearchActivity extends ListActivity {
     private ObaResponse mResponse;
     private FindTask mAsyncTask;
     private Timer mSearchTimer;
+    private EditText mSearchText;
+    protected TextView mEmptyText;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
 
@@ -43,15 +49,16 @@ abstract class MySearchActivity extends ListActivity {
             mShortcutMode = true;
         }
 
-        TextView empty = (TextView)findViewById(android.R.id.empty);
-        empty.setMovementMethod(LinkMovementMethod.getInstance());
+        mSearchText = (EditText)findViewById(R.id.search_text);
+        mSearchText.setHint(getEditBoxHintText());
+        mEmptyText = (TextView)findViewById(android.R.id.empty);
+        mEmptyText.setMovementMethod(LinkMovementMethod.getInstance());
         setHintText();
 
         Object obj = getLastNonConfigurationInstance();
         if (obj != null) {
             Object[] config = (Object[])obj;
-            TextView textView = (TextView)findViewById(R.id.search_text);
-            textView.setText((Editable)config[0]);
+            mSearchText.setText((Editable)config[0]);
             setResponse((ObaResponse)config[1]);
         }
 
@@ -59,9 +66,19 @@ abstract class MySearchActivity extends ListActivity {
         Button button = (Button)findViewById(R.id.search);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                TextView textView = (TextView)findViewById(R.id.search_text);
-                doSearch(textView.getText());
+                doSearchFromText();
             }
+        });
+        mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    doSearchFromText();
+                    return true;
+                }
+                return false;
+            }
+
         });
     }
     @Override
@@ -73,8 +90,7 @@ abstract class MySearchActivity extends ListActivity {
     @Override
     public Object onRetainNonConfigurationInstance() {
         if (mResponse != null) {
-            EditText text = (EditText)findViewById(R.id.search_text);
-            return new Object[] { text.getText(), mResponse };
+            return new Object[] { mSearchText.getText(), mResponse };
         }
         else {
             return null;
@@ -85,8 +101,7 @@ abstract class MySearchActivity extends ListActivity {
         // This is deferred to onResume because we want it after
         // onRestoreInstanceState.
 
-        TextView textView = (TextView)findViewById(R.id.search_text);
-        textView.addTextChangedListener(new TextWatcher() {
+        mSearchText.addTextChangedListener(new TextWatcher() {
             private final int mMinSearch = getMinSearchLength();
 
             public void afterTextChanged(Editable s) {
@@ -97,6 +112,7 @@ abstract class MySearchActivity extends ListActivity {
                     cancelDelayedSearch();
                     cancelSearch();
                     setHintText();
+                    setListAdapter(null);
                     mResponse = null;
                 }
             }
@@ -124,6 +140,12 @@ abstract class MySearchActivity extends ListActivity {
             mSearchTimer.cancel();
             mSearchTimer = null;
         }
+    }
+    private void doSearchFromText() {
+        doSearch(mSearchText.getText());
+        InputMethodManager imm =
+            (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mSearchText.getWindowToken(), 0);
     }
 
     /**
@@ -154,10 +176,9 @@ abstract class MySearchActivity extends ListActivity {
 
     protected final void setResponse(ObaResponse response) {
         mResponse = response;
-        TextView empty = (TextView) findViewById(android.R.id.empty);
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
-            empty.setText(R.string.find_hint_noresults);
+            mEmptyText.setText(R.string.find_hint_noresults);
             setResultsAdapter(response);
         }
         else if (code != 0) {
@@ -165,10 +186,10 @@ abstract class MySearchActivity extends ListActivity {
             // the server actually returned something to us,
             // (even if it was an error) so we shouldn't show
             // a 'communication' error. Just fake no results.
-            empty.setText(R.string.find_hint_noresults);
+            mEmptyText.setText(R.string.find_hint_noresults);
         }
         else {
-            empty.setText(R.string.generic_comm_error);
+            mEmptyText.setText(R.string.generic_comm_error);
         }
     }
 
@@ -218,12 +239,20 @@ abstract class MySearchActivity extends ListActivity {
     }
     final Handler mSearchHandler = new Handler();
 
-    protected final AsyncTasks.Progress mTitleProgress
-        = new AsyncTasks.ProgressIndeterminateVisibility(this);
+    private final AsyncTasks.Progress mLoadingProgress = new AsyncTasks.Progress() {
+        public void showLoading() {
+            View v = findViewById(R.id.progress_small);
+            v.setVisibility(View.VISIBLE);
+        }
+        public void hideLoading() {
+            View v = findViewById(R.id.progress_small);
+            v.setVisibility(View.GONE);
+        }
+    };
 
     protected class FindTask extends AsyncTasks.StringToResponse {
         public FindTask() {
-            super(mTitleProgress);
+            super(mLoadingProgress);
         }
         @Override
         protected ObaResponse doInBackground(String... params) {
@@ -239,6 +268,10 @@ abstract class MySearchActivity extends ListActivity {
      * @return The resource ID of the activity layout.
      */
     abstract protected int getLayoutId();
+    /**
+     * @return The hint text for the search box.
+     */
+    abstract protected int getEditBoxHintText();
 
     /**
      * @return The minimum number of characters that need to be in the find

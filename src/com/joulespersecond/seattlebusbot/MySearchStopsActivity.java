@@ -109,6 +109,10 @@ public class MySearchStopsActivity extends MySearchActivity {
         return R.layout.my_search_stop_list;
     }
     @Override
+    protected int getEditBoxHintText() {
+        return R.string.search_stop_hint;
+    }
+    @Override
     protected int getMinSearchLength() {
         return 5;
     }
@@ -126,8 +130,7 @@ public class MySearchStopsActivity extends MySearchActivity {
         builder.append(second);
         builder.setSpan(new URLSpan(URL_STOPID), firstLen, firstLen+second.length(), 0);
 
-        TextView empty = (TextView) findViewById(android.R.id.empty);
-        empty.setText(builder, TextView.BufferType.SPANNABLE);
+        mEmptyText.setText(builder, TextView.BufferType.SPANNABLE);
     }
 
     @Override

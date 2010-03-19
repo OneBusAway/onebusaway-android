@@ -98,6 +98,10 @@ public class MySearchRoutesActivity extends MySearchActivity {
         return R.layout.my_search_route_list;
     }
     @Override
+    protected int getEditBoxHintText() {
+        return R.string.search_route_hint;
+    }
+    @Override
     protected int getMinSearchLength() {
         return 1;
     }
@@ -107,8 +111,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
     }
     @Override
     protected void setHintText() {
-        TextView empty = (TextView) findViewById(android.R.id.empty);
-        empty.setText(R.string.find_hint_nofavoriteroutes);
+        mEmptyText.setText(R.string.find_hint_nofavoriteroutes);
     }
 
     @Override

@@ -1,17 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/my_location"
-          android:title="@string/main_option_mylocation" 
+          android:title="@string/main_option_mylocation"
           android:icon="@drawable/android:ic_menu_mylocation" />
     <item android:id="@+id/view_trips"
-          android:title="@string/main_option_viewtrips" 
-          android:icon="@drawable/ic_menu_trip" />
+          android:title="@string/main_option_viewtrips"
+          android:icon="@drawable/ic_menu_notifications" />
     <item android:id="@+id/find_route"
-          android:title="@string/main_option_findroute" 
-          android:icon="@drawable/android:ic_menu_search" />
+          android:title="@string/main_option_findroute"
+          android:icon="@drawable/ic_menu_trip" />
     <item android:id="@+id/find_stop"
-          android:title="@string/main_option_findstop" 
-          android:icon="@drawable/android:ic_menu_search" />
+          android:title="@string/main_option_findstop"
+          android:icon="@drawable/ic_menu_stop" />
     <item android:id="@+id/help"
-          android:title="@string/main_option_help" 
+          android:title="@string/main_option_help"
           android:icon="@drawable/android:ic_menu_help" />
 </menu>

@@ -47,12 +47,12 @@ public class MySearchRoutesActivity extends MySearchActivity {
         final TextView text = (TextView)info.targetView.findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (isShortcutMode()) {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
         }
         else {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_route_info);
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_route_info);
         }
-        menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
+        menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {

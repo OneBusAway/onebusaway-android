@@ -3,6 +3,7 @@ package com.joulespersecond.seattlebusbot;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -131,19 +132,24 @@ abstract class MySearchActivity extends ListActivity {
      * @param destIntent The destination intent.
      */
     protected final void makeShortcut(String name, Intent destIntent) {
-        /*
-        // Set up the container intent
-        Intent intent = new Intent();
-        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
-        Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
-                this,  R.drawable.icon);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
+        final Intent shortcut = UIHelp.makeShortcut(this, name, destIntent);
 
-        // Now, return the result to the launcher
-        setResult(RESULT_OK, intent);
-        finish();
-                */
+        if (isChild()) {
+            // Is there a way to do this more generically?
+            final Activity parent = getParent();
+            if (parent instanceof MyStopsActivity) {
+                MyStopsActivity myStops = (MyStopsActivity)parent;
+                myStops.returnShortcut(shortcut);
+            }
+            else if (parent instanceof MyRoutesActivity) {
+                MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
+                myRoutes.returnShortcut(shortcut);
+            }
+        }
+        else {
+            setResult(RESULT_OK, shortcut);
+            finish();
+        }
     }
 
     protected final void setResponse(ObaResponse response) {

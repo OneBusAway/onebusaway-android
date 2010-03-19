@@ -70,7 +70,6 @@ abstract class MyStopListActivity extends MyBaseListActivity {
 
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
-    //private static final int CONTEXT_MENU_DELETE = 3;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -80,17 +79,12 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         final TextView text = (TextView)info.targetView.findViewById(R.id.stop_name);
         menu.setHeaderTitle(text.getText());
         if (mShortcutMode) {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_create_shortcut);
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
         }
         else {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.find_context_get_stop_info);
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_stop_info);
         }
-        menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.find_context_showonmap);
-        /*
-        if (!isSearching()) {
-            menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.find_context_remove_favorite);
-        }
-        */
+        menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -103,12 +97,6 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         case CONTEXT_MENU_SHOW_ON_MAP:
             showOnMap(getListView(), info.position);
             return true;
-        /*
-        case CONTEXT_MENU_DELETE:
-            removeFavorite(getId(getListView(), info.position));
-            requery();
-            return true;
-        */
         default:
             return super.onContextItemSelected(item);
         }
@@ -125,32 +113,13 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         MapViewActivity.start(this, stopId, lat, lon);
     }
 
-    /*
-    private String getId(ListView l, int position) {
+    protected String getId(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
         Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
         return c.getString(COL_ID);
     }
-    */
-
-    /*
-    @Override
-    protected void clearFavorites() {
-        ContentResolver cr = getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.Stops.USE_COUNT, 0);
-        cr.update(ObaContract.Stops.CONTENT_URI, values, null, null);
-    }
-    private void removeFavorite(String id) {
-        ContentResolver cr = getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.Stops.USE_COUNT, 0);
-        cr.update(ObaContract.Stops.CONTENT_URI, values,
-                ObaContract.Stops._ID+"=?", new String[] { id });
-    }
-    */
 
     protected void initList(Cursor c) {
         startManagingCursor(c);

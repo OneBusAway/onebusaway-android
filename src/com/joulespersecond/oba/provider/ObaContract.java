@@ -210,6 +210,13 @@ public final class ObaContract {
             values.put(ObaContract.Stops.FAVORITE, favorite ? 1 : 0);
             return cr.update(uri, values, null, null) > 0;
         }
+        public static boolean markAsUnused(Context context, Uri uri) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Stops.USE_COUNT, 0);
+            values.putNull(ObaContract.Stops.ACCESS_TIME);
+            return cr.update(uri, values, null, null) > 0;
+        }
     }
 
     public static class Routes implements BaseColumns, RoutesColumns, UserColumns {
@@ -263,6 +270,13 @@ public final class ObaContract {
                 c.close();
             }
             return result;
+        }
+        public static boolean markAsUnused(Context context, Uri uri) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Routes.USE_COUNT, 0);
+            values.putNull(ObaContract.Routes.ACCESS_TIME);
+            return cr.update(uri, values, null, null) > 0;
         }
     }
 

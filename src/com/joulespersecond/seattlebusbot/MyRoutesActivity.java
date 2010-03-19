@@ -37,21 +37,4 @@ public class MyRoutesActivity extends TabActivity {
         setResult(RESULT_OK, intent);
         finish();
     }
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.find_options, menu);
-        return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.clear_favorites) {
-            clearFavorites();
-            requery();
-            return true;
-        }
-        return false;
-    }
-     */
 }

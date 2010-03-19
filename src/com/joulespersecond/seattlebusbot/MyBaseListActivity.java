@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Window;
+import android.widget.SimpleCursorAdapter;
 
 abstract class MyBaseListActivity extends ListActivity {
     protected boolean mShortcutMode;
@@ -24,7 +25,10 @@ abstract class MyBaseListActivity extends ListActivity {
 
         initList(getCursor());
     }
-
+    protected void requery() {
+        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListAdapter();
+        adapter.getCursor().requery();
+    }
 
     /**
      * Initializes the list with a cursor

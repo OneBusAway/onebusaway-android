@@ -5,7 +5,8 @@
          android:layout_height="fill_parent">
     <LinearLayout
          android:layout_width="fill_parent"
-         android:layout_height="wrap_content">
+         android:layout_height="wrap_content"
+         style="@style/FindSearchBox">
             <EditText
                 android:id="@+id/search_text"
                 android:layout_width="0dip"

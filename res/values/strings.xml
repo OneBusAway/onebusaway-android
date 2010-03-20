@@ -61,6 +61,7 @@
     <string name="stop_info_save">Save</string>
     <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
+    <string name="stop_info_old_data">Data updated %s</string>
 
     <!-- Route Info  -->
     <string name="route_info_title">OneBusAway</string>

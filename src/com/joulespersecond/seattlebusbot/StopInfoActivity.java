@@ -29,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -67,6 +68,8 @@ public class StopInfoActivity extends ListActivity {
     private TextView mNameView;
     private EditText mEditNameView;
     private ImageView mFavoriteView;
+    private TextView mEmptyText;
+    private View mResponseError;
 
     private AsyncTask<String,?,?> mAsyncTask;
 
@@ -148,6 +151,8 @@ public class StopInfoActivity extends ListActivity {
         mNameView = (TextView)findViewById(R.id.stop_name);
         mEditNameView = (EditText)findViewById(R.id.edit_name);
         mFavoriteView = (ImageView)findViewById(R.id.stop_favorite);
+        mEmptyText = (TextView)findViewById(android.R.id.empty);
+        mResponseError = findViewById(R.id.response_error);
 
         // This is useful to have around
         mStopUri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId);
@@ -226,6 +231,7 @@ public class StopInfoActivity extends ListActivity {
     }
     @Override
     public void onPause() {
+    	mTripsForStop.setKeepUpdated(false);
         mTimer.cancel();
         mTimer = null;
         super.onPause();
@@ -235,7 +241,10 @@ public class StopInfoActivity extends ListActivity {
         if (mTimer == null) {
             mTimer = new Timer();
         }
-        mTripsForStop.requery();
+    	mTripsForStop.setKeepUpdated(true);
+    	mTripsForStop.requery();
+    	((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+
         // If our timer would have gone off, then refresh.
         if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
             getStopInfo(true);
@@ -515,9 +524,11 @@ public class StopInfoActivity extends ListActivity {
             if (result.getCode() == ObaApi.OBA_OK) {
                 setResponse(result, mAddToDb);
             }
+            else if (mResponse != null) {
+            	setRefreshError();
+            }
             else {
-                TextView empty = (TextView)findViewById(android.R.id.empty);
-                empty.setText(UIHelp.getStopErrorString(result.getCode()));
+                mEmptyText.setText(UIHelp.getStopErrorString(result.getCode()));
             }
         }
     }
@@ -546,14 +557,34 @@ public class StopInfoActivity extends ListActivity {
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
         adapter.setData(data.getArrivalsAndDepartures());
 
+        mResponseError.setVisibility(View.GONE);
+
         // Ensure there is some hint text in case there is no error
         // but the data is empty.
-        TextView empty = (TextView)findViewById(android.R.id.empty);
-        empty.setText(R.string.stop_info_nodata);
+        mEmptyText.setText(R.string.stop_info_nodata);
 
         mLoadingProgress.hideLoading();
         setProgressBarIndeterminateVisibility(false);
     }
+    void setRefreshError() {
+    	TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
+    	CharSequence relativeTime =
+    		DateUtils.getRelativeTimeSpanString(mResponseTime,
+    				System.currentTimeMillis(),
+    				DateUtils.MINUTE_IN_MILLIS,
+    				0);
+    	errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
+
+    	mResponseError.setVisibility(View.VISIBLE);
+        mEmptyText.setText(R.string.stop_info_nodata);
+
+    	// Just refresh the data with the current response.
+    	((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+
+    	mLoadingProgress.hideLoading();
+    	setProgressBarIndeterminateVisibility(false);
+    }
+
     private void setHeader(Bundle bundle) {
         setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
     }
@@ -670,7 +701,9 @@ public class StopInfoActivity extends ListActivity {
     private void endNameEdit() {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
-        // TODO: Close the soft keyboard
+        InputMethodManager imm =
+            (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
     }
     private void setUserStopName(String name) {
         ContentResolver cr = getContentResolver();
@@ -710,13 +743,11 @@ public class StopInfoActivity extends ListActivity {
         ObaContract.Trips.NAME
     };
     private ContentQueryMap getTripsForStop() {
-        ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI,
+        Cursor c = managedQuery(ObaContract.Trips.CONTENT_URI,
                 TRIPS_PROJECTION,
                 ObaContract.Trips.STOP_ID+"=?",
                 new String[] { mStopId },
                 null);
-        // TODO: Eventually add a handler for notifications
         return new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
     }
 

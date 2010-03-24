@@ -8,8 +8,8 @@
 				 <corners android:radius="2dp" />
 				</shape>
     		</item>
-    		<item android:drawable="@drawable/android:star_off" />
+    		<item android:drawable="@drawable/star_off" />
     	</layer-list>
     </item>
-    <item android:drawable="@drawable/android:star_off" />
+    <item android:drawable="@drawable/star_off" />
 </selector>

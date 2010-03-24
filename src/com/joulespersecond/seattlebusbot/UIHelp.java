@@ -88,6 +88,13 @@ final class UIHelp {
                         null, null);
             mMap = new ContentQueryMap(c, ObaContract.Stops._ID, true, null);
         }
+        public void close() {
+        	mMap.close();
+        }
+
+        public void requery() {
+        	mMap.requery();
+        }
 
         public void setView(View stopRoot, String stopId, String stopName) {
             TextView nameView = (TextView)stopRoot.findViewById(R.id.stop_name);

@@ -224,6 +224,7 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public void onDestroy() {
+    	mStopUserMap.close();
         if (mGetStopsByLocationTask != null) {
             mGetStopsByLocationTask.cancel(true);
         }
@@ -276,9 +277,8 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public void onResume() {
-        // TODO: Need to update the Popup with the change in stop info
-        // (In the case then the currently focused stop becomes a favorite
-        // or the name changes)
+    	mStopUserMap.requery();
+    	updateStopOverlayName();
         mLocationOverlay.enableMyLocation();
         if (!isRouteMode()) {
             watchMap();
@@ -505,6 +505,20 @@ public class MapViewActivity extends MapActivity {
             // Eat the click so the Map doesn't get it.
         }
     };
+    private void updateStopOverlayName() {
+    	if (mStopOverlay == null) {
+    		return;
+    	}
+        final View popup = findViewById(R.id.map_popup);
+        final StopOverlay.StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
+        if (item == null) {
+        	return;
+        }
+        final ObaStop stop = item.getStop();
+
+        // Is this a favorite?
+        mStopUserMap.setView(popup, stop.getId(), stop.getName());
+    }
 
     private boolean areRoutesShown() {
         return findViewById(R.id.route_list).getVisibility() != View.GONE;

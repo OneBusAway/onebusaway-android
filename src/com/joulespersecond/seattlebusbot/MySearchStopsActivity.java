@@ -26,6 +26,11 @@ public class MySearchStopsActivity extends MySearchActivity {
         mStopUserMap = new UIHelp.StopUserInfoMap(this);
         super.onCreate(savedInstanceState);
     }
+    @Override
+    public void onDestroy() {
+    	mStopUserMap.close();
+    	super.onDestroy();
+    }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {

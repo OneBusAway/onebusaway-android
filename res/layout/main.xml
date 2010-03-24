@@ -17,8 +17,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:padding="7dp"
-        android:background="@drawable/map_popup_border"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/map_popup"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
         <LinearLayout

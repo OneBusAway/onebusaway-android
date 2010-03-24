@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<color name="focus">#ff8e00</color>
+	<color name="tab_widget_bg">#ff202020</color>
     <color name="stop_info_ontime">#00ff00</color>
     <color name="stop_info_delayed">#0000ff</color>
     <color name="stop_info_early">#ff0000</color>

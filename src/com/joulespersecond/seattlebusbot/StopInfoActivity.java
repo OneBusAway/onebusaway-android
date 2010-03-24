@@ -646,8 +646,8 @@ public class StopInfoActivity extends ListActivity {
 
     private void initHeader() {
         mFavoriteView.setImageResource(mFavorite ?
-                android.R.drawable.star_on :
-                android.R.drawable.star_off);
+                R.drawable.focus_star_on :
+                R.drawable.focus_star_off);
 
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -725,11 +725,11 @@ public class StopInfoActivity extends ListActivity {
         int newRes;
         if (mFavorite) {
             // Turn it off
-            newRes = android.R.drawable.star_off;
+            newRes = R.drawable.focus_star_off;
         }
         else {
             // Turn it on
-            newRes = android.R.drawable.star_on;
+            newRes = R.drawable.focus_star_on;
         }
         if (ObaContract.Stops.markAsFavorite(
                 StopInfoActivity.this, mStopUri, !mFavorite)) {

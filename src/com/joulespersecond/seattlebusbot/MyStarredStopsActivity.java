@@ -42,7 +42,6 @@ public class MyStarredStopsActivity extends MyStopListActivity {
             final String id = getId(getListView(), info.position);
             final Uri uri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id);
             ObaContract.Stops.markAsFavorite(this, uri, false);
-            requery();
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -59,7 +58,6 @@ public class MyStarredStopsActivity extends MyStopListActivity {
         if (item.getItemId() == R.id.clear_starred) {
             // TODO: We should probably have a confirmation..
             ObaContract.Stops.markAsFavorite(this, ObaContract.Stops.CONTENT_URI, false);
-            requery();
             return true;
         }
         return false;

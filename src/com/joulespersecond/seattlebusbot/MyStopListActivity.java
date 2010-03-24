@@ -3,6 +3,7 @@ package com.joulespersecond.seattlebusbot;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -157,5 +158,9 @@ abstract class MyStopListActivity extends MyBaseListActivity {
             }
         });
         setListAdapter(simpleAdapter);
+    }
+
+    Uri getObserverUri() {
+    	return ObaContract.Stops.CONTENT_URI;
     }
 }

@@ -45,7 +45,6 @@ public class MyRecentStopsActivity extends MyStopListActivity {
             ObaContract.Stops.markAsUnused(this,
                     Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI,
                             getId(getListView(), info.position)));
-            requery();
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -61,7 +60,6 @@ public class MyRecentStopsActivity extends MyStopListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
             ObaContract.Stops.markAsUnused(this, ObaContract.Stops.CONTENT_URI);
-            requery();
             return true;
         }
         return false;

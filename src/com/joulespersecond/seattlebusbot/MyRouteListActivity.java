@@ -3,6 +3,7 @@ package com.joulespersecond.seattlebusbot;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -118,5 +119,9 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.route_list_item, c, from, to);
         setListAdapter(simpleAdapter);
+    }
+
+    Uri getObserverUri() {
+    	return ObaContract.Routes.CONTENT_URI;
     }
 }

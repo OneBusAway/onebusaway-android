@@ -45,7 +45,6 @@ public class MyRecentRoutesActivity extends MyRouteListActivity {
             ObaContract.Routes.markAsUnused(this,
                     Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
                             getId(getListView(), info.position)));
-            requery();
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -61,7 +60,6 @@ public class MyRecentRoutesActivity extends MyRouteListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
             ObaContract.Routes.markAsUnused(this, ObaContract.Routes.CONTENT_URI);
-            requery();
             return true;
         }
         return false;

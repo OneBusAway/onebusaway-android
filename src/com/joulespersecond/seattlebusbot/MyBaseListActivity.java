@@ -1,14 +1,34 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.ListActivity;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Window;
 import android.widget.SimpleCursorAdapter;
 
 abstract class MyBaseListActivity extends ListActivity {
+    private final Handler mHandler = new Handler();
+    private class MyObserver extends ContentObserver {
+		public MyObserver() {
+			super(mHandler);
+		}
+		@Override
+		public boolean deliverSelfNotifications() {
+			return false;
+		}
+		public void onChange(boolean selfChange) {
+	        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListAdapter();
+	        adapter.getCursor().requery();
+		}
+    }
+
     protected boolean mShortcutMode;
+    private MyObserver mObserver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -24,10 +44,20 @@ abstract class MyBaseListActivity extends ListActivity {
         }
 
         initList(getCursor());
+        Uri uri = getObserverUri();
+        if (uri != null) {
+        	ContentResolver cr = getContentResolver();
+        	mObserver = new MyObserver();
+        	cr.registerContentObserver(uri, true, mObserver);
+        }
     }
-    protected void requery() {
-        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListAdapter();
-        adapter.getCursor().requery();
+    @Override
+    public void onDestroy() {
+    	if (mObserver != null) {
+    		ContentResolver cr = getContentResolver();
+    		cr.unregisterContentObserver(mObserver);
+    	}
+    	super.onDestroy();
     }
 
     /**
@@ -42,4 +72,8 @@ abstract class MyBaseListActivity extends ListActivity {
      * @return The layout ID of the activity.
      */
     abstract int getLayoutId();
+    /**
+     * @return The Uri to observe for changes
+     */
+    abstract Uri getObserverUri();
 }

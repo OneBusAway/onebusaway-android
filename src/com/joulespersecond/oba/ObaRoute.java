@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.oba;
 
 import java.lang.reflect.Type;
@@ -9,20 +24,20 @@ import com.google.gson.JsonObject;
 
 public final class ObaRoute {
     static class Deserialize implements JsonHelp.Deserialize<ObaRoute> {
-        public ObaRoute doDeserialize(JsonObject obj, 
+        public ObaRoute doDeserialize(JsonObject obj,
                                 String id,
                                 Type type,
-                                JsonDeserializationContext context) {  
-            final String shortName = 
+                                JsonDeserializationContext context) {
+            final String shortName =
                 JsonHelp.deserializeChild(obj, "shortName", String.class, context);
-            final String longName = 
+            final String longName =
                 JsonHelp.deserializeChild(obj, "longName", String.class, context);
-            final String description = 
+            final String description =
                 JsonHelp.deserializeChild(obj, "description", String.class, context);
-            final ObaAgency agency = 
+            final ObaAgency agency =
                 JsonHelp.deserializeChild(obj, "agency", ObaAgency.class, context);
             return new ObaRoute(id, shortName, longName, description, agency);
-        } 
+        }
     }
    static String getAlternateRouteName(String id, String name) {
        if (id.equals("1_599")) {
@@ -32,13 +47,13 @@ public final class ObaRoute {
            return name;
        }
     }
-    
+
     private final String id;
     private final String shortName;
     private final String longName;
     private final String description;
     private final ObaAgency agency;
-    
+
     /**
      * Constructor.
      */
@@ -58,7 +73,7 @@ public final class ObaRoute {
     }
     /**
      * Returns the route ID.
-     * 
+     *
      * @return The route ID.
      */
     public String getId() {
@@ -66,7 +81,7 @@ public final class ObaRoute {
     }
     /**
      * Returns the short name of the route (ex. "10", "30").
-     * 
+     *
      * @return The short name of the route.
      */
     public String getShortName() {
@@ -74,7 +89,7 @@ public final class ObaRoute {
     }
     /**
      * Returns the long name of the route (ex. "Sandpoint/QueenAnne")
-     * 
+     *
      * @return The long name of the route.
      */
     public String getLongName() {
@@ -82,12 +97,12 @@ public final class ObaRoute {
     }
     /**
      * Returns the description of the route.
-     * 
+     *
      */
     public String getDescription() {
         return description;
     }
-    
+
     /**
      * Returns the long name if it exists, otherwise it returns the description.
      * @return
@@ -98,10 +113,10 @@ public final class ObaRoute {
         }
         return description;
     }
-    
+
     /**
      * Returns the name of the agency running this route.
-     * 
+     *
      * @return The name of the agency running this route.
      */
     public String getAgencyName() {
@@ -109,13 +124,13 @@ public final class ObaRoute {
     }
     /**
      * Returns the ID of the agency running this route.
-     * 
+     *
      * @return The ID of the agency running this route.
      */
     public String getAgencyId() {
-        return (agency != null) ? agency.getId() : "";      
+        return (agency != null) ? agency.getId() : "";
     }
-    
+
     /**
      * Returns the agency object running this route.
      * @return The agency object running this route, or an empty object.

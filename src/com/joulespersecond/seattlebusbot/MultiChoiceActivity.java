@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import java.util.ArrayList;
@@ -21,11 +36,11 @@ public final class MultiChoiceActivity extends ListActivity {
     public  static final String CHECKED_ITEMS = ".CheckedItems";
     private static final String POSITIVE_BUTTON = ".PositiveButton";
     private static final String NEGATIVE_BUTTON = ".NegativeButton";
-    
+
     public static final class Builder {
         private final Activity mActivity;
         private final Intent mIntent;
-        
+
         public Builder(Activity activity) {
             mActivity = activity;
             mIntent = new Intent(mActivity, MultiChoiceActivity.class);
@@ -37,7 +52,7 @@ public final class MultiChoiceActivity extends ListActivity {
         public void startForResult(int requestCode) {
             mActivity.startActivityForResult(mIntent, requestCode);
         }
-        
+
         public Builder setItems(
                 int itemsId,
                 boolean[] checkedItems) {
@@ -65,20 +80,20 @@ public final class MultiChoiceActivity extends ListActivity {
             return this;
         }
     }
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
+
         setContentView(R.layout.multi_choice_activity);
-        
+
         int positiveButton = android.R.string.ok;
         int negativeButton = android.R.string.cancel;
         int title = R.string.app_name;
         String[] items = null;
         boolean[] checked = null;
-        
+
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             title = extras.getInt(TITLE, title);
@@ -90,33 +105,33 @@ public final class MultiChoiceActivity extends ListActivity {
         if (savedInstanceState != null) {
             checked = savedInstanceState.getBooleanArray(CHECKED_ITEMS);
         }
-        
+
         TextView titleView = (TextView)findViewById(R.id.alertTitle);
         titleView.setText(title);
-        
+
         Button button1 = (Button)findViewById(android.R.id.button1);
         button1.setText(positiveButton);
         button1.setOnClickListener(mButton1);
-        
+
         Button button2 = (Button)findViewById(android.R.id.button2);
         button2.setText(negativeButton);
         button2.setOnClickListener(mButton2);
-        
+
         if (items != null) {
             ListAdapter adapter = new ListAdapter(items, checked);
             setListAdapter(adapter);
-        }                
+        }
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBooleanArray(CHECKED_ITEMS, getChecks());
     }
-    
+
     private final class ListAdapter extends BaseAdapter {
         final class Entry implements View.OnClickListener {
             private final String mText;
             private boolean mCheck;
-            
+
             Entry(String text, boolean check) {
                 mText = text;
                 mCheck = check;
@@ -129,11 +144,11 @@ public final class MultiChoiceActivity extends ListActivity {
             }
             public void onClick(View v) {
                 CheckBox check = (CheckBox)v;
-                mCheck = check.isChecked();              
+                mCheck = check.isChecked();
             }
         }
         ArrayList<Entry> mItems;
-        
+
         public ListAdapter(String[] text, boolean[] checks) {
             assert(checks != null);
             assert(text.length == checks.length);
@@ -181,23 +196,23 @@ public final class MultiChoiceActivity extends ListActivity {
             Intent result = new Intent();
             result.putExtra(CHECKED_ITEMS, getChecks());
             setResult(Activity.RESULT_OK, result);
-            finish();        
+            finish();
         }
-        
+
     };
     private final View.OnClickListener mButton2 = new View.OnClickListener() {
         public void onClick(View v) {
             setResult(Activity.RESULT_CANCELED);
-            finish();            
+            finish();
         }
-        
+
     };
 
     private boolean[] getChecks() {
         ListAdapter adapter = (ListAdapter)getListView().getAdapter();
         final int len = adapter.getCount();
         boolean[] checks = new boolean[len];
-        
+
         for (int i=0; i < len; ++i) {
             ListAdapter.Entry entry = (ListAdapter.Entry)adapter.getItem(i);
             checks[i] = entry.isChecked();

@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
@@ -8,7 +23,7 @@ import com.joulespersecond.oba.ObaResponse;
 /**
  * This provides a bunch of helper base classes that provide much
  * of the boilerplate functionality of our AsyncTask classes.
- * 
+ *
  * @author paulw
  *
  */
@@ -24,20 +39,20 @@ final class AsyncTasks {
     public interface Handler<Result> {
         void handleResult(Result result);
     }
-    
+
     /**
      * Base class for AsyncTask that convert types to ObaResponses
      * Handles the basic task of showing the indeterminate progress bar
      * (a piece of UI logic that makes this unfit for the Oba package,
      * but very useful for us).
-     * 
+     *
      * Subclasses of this class are expected to implement doResult and
-     * in certain cases doInBackground. 
-     * 
+     * in certain cases doInBackground.
+     *
      * In general, subclasses won't need to override onPreExecute and
      * onPostExecute, but if they do they are expected to call the
      * superclass methods.
-     * 
+     *
      * @author paulw
      *
      * @param <T> The Input type for AsyncTask.
@@ -46,7 +61,7 @@ final class AsyncTasks {
     Base<T,Result> extends AsyncTask<T,Void,Result> {
         protected final Progress mProgress;
         protected final Handler<Result> mHandler;
-        
+
         public Base(Progress progress) {
             assert(progress != null);
             mProgress = progress;
@@ -77,9 +92,9 @@ final class AsyncTasks {
         }
         protected abstract void doResult(Result result);
     }
-    
 
-    public static abstract class 
+
+    public static abstract class
     ToResponseBase<T> extends Base<T,ObaResponse> {
         public ToResponseBase(Progress progress) {
             super(progress);
@@ -87,12 +102,12 @@ final class AsyncTasks {
         public ToResponseBase(Progress progress, Handler<ObaResponse> handler) {
             super(progress, handler);
         }
-    }    
-    
+    }
+
     /**
      * This is the base class for converting a string to an ObaResponse.
      * Subclasses are expected to override doResult.
-     * 
+     *
      * @author paulw
      */
     public static abstract class StringToResponse extends ToResponseBase<String> {
@@ -107,25 +122,25 @@ final class AsyncTasks {
             return ObaResponse.createFromString(params[0]);
         }
     }
-    
+
     /**
-     * This is a helper that set the IndeterminateVisibility 
+     * This is a helper that set the IndeterminateVisibility
      * on an activity.
      */
     public static final class ProgressIndeterminateVisibility implements Progress {
         final Activity mActivity;
-        
+
         ProgressIndeterminateVisibility(Activity activity) {
             mActivity = activity;
         }
         public void showLoading() {
-            mActivity.setProgressBarIndeterminateVisibility(true);       
+            mActivity.setProgressBarIndeterminateVisibility(true);
         }
         public void hideLoading() {
-            mActivity.setProgressBarIndeterminateVisibility(false);       
+            mActivity.setProgressBarIndeterminateVisibility(false);
         }
     }
-    
+
     /**
      * This is a helper to tell whether or not a task is finished.
      * It is acceptable to pass null to this, in which case it returns false.

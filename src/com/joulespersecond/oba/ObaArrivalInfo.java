@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.oba;
 
 public final class ObaArrivalInfo {
@@ -11,10 +26,10 @@ public final class ObaArrivalInfo {
     private final long predictedDepartureTime;
     private final long scheduledDepartureTime;
     private final String status;
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param obj The encapsulated object.
      */
     ObaArrivalInfo() {
@@ -72,14 +87,14 @@ public final class ObaArrivalInfo {
         return scheduledArrivalTime;
     }
     /**
-     * Returns the predicted arrival time in milliseconds past the epoch, 
+     * Returns the predicted arrival time in milliseconds past the epoch,
      * or 0 if no prediction data is available.
      * @return The predicted arrival time, or 0.
      */
     public long getPredictedArrivalTime() {
         return predictedArrivalTime;
     }
-    /** 
+    /**
      * Returns the scheduled departure time in milliseconds past the epoch..
      * @return The scheduled departure time.
      */
@@ -87,14 +102,14 @@ public final class ObaArrivalInfo {
         return scheduledDepartureTime;
     }
     /**
-     * Returns the predicted departure time in milliseconds past the epoch, 
+     * Returns the predicted departure time in milliseconds past the epoch,
      * or 0 if no prediction data is available.
      * @return The predicted arrival time, or 0.
      */
     public long getPredictedDepartureTime() {
         return predictedDepartureTime;
     }
-    
+
     /**
      * Returns the status of the route.
      * @return The status of the route.
@@ -102,8 +117,8 @@ public final class ObaArrivalInfo {
     public String getStatus() {
         return status;
     }
-    
-    @Override 
+
+    @Override
     public String toString() {
         return ObaApi.getGson().toJson(this);
     }

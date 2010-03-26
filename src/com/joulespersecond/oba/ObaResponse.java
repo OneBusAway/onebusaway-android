@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.oba;
 
 import java.io.BufferedReader;
@@ -25,7 +40,7 @@ public final class ObaResponse {
     private final int code;
     private final String text;
     private final ObaData data;
-    
+
     /**
      * Constructor from Deserializer
      */
@@ -35,7 +50,7 @@ public final class ObaResponse {
         text = "Uninit";
         data = null;
     }
-    
+
     /**
      * Constructor for ObaResponse
      */
@@ -75,7 +90,7 @@ public final class ObaResponse {
             return createFromError("Server returned an error", code);
         }
         InputStream in = conn.getInputStream();
-        
+
         final Map<String,List<String>> headers = conn.getHeaderFields();
         // This is a map, but we can't assume the key we're looking for
         // is in normal casing. So it's really not a good map, is it?
@@ -89,7 +104,7 @@ public final class ObaResponse {
                         useGzip = true;
                         break;
                     }
-                } 
+                }
                 // Break out of outer loop.
                 if (useGzip) {
                     break;
@@ -99,7 +114,7 @@ public final class ObaResponse {
         long end = System.nanoTime();
         Log.d(TAG, "Connect: " + (end-start)/1e6);
         start = end;
-        
+
         Reader reader;
         if (useGzip) {
             reader = new BufferedReader(
@@ -107,8 +122,8 @@ public final class ObaResponse {
         }
         else {
             reader = new BufferedReader(
-                    new InputStreamReader(in), 8*1024);            
-        } 
+                    new InputStreamReader(in), 8*1024);
+        }
         try {
             ObaResponse r = ObaApi.getGson().fromJson(reader, ObaResponse.class);
             end = System.nanoTime();
@@ -123,7 +138,7 @@ public final class ObaResponse {
             return createFromError(e.toString());
         }
     }
-    
+
     public String getVersion() {
         return version;
     }

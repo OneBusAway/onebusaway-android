@@ -113,5 +113,7 @@
         <item name="android:background">@drawable/header_bg</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingLeft">4dip</item>
+        <item name="android:paddingRight">4dip</item>
     </style>
 </resources>

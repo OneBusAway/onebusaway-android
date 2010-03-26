@@ -53,6 +53,8 @@ public class StopInfoActivity extends ListActivity {
     private static final String STOP_NAME = ".StopName";
     private static final String STOP_DIRECTION = ".StopDir";
 
+    private static final String CURRENT_EDIT = ".CurrentEdit";
+
     private ObaResponse mResponse;
     private ObaStop mStop;
     private String mStopId;
@@ -69,7 +71,10 @@ public class StopInfoActivity extends ListActivity {
     private EditText mEditNameView;
     private ImageView mFavoriteView;
     private TextView mEmptyText;
+    private View mDirectionView;
+    private View mFilterGroup;
     private View mResponseError;
+    private boolean mInNameEdit;
 
     private AsyncTask<String,?,?> mAsyncTask;
 
@@ -153,6 +158,8 @@ public class StopInfoActivity extends ListActivity {
         mFavoriteView = (ImageView)findViewById(R.id.stop_favorite);
         mEmptyText = (TextView)findViewById(android.R.id.empty);
         mResponseError = findViewById(R.id.response_error);
+        mDirectionView = findViewById(R.id.direction);
+        mFilterGroup = findViewById(R.id.filter_group);
 
         // This is useful to have around
         mStopUri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId);
@@ -173,6 +180,13 @@ public class StopInfoActivity extends ListActivity {
         else {
             getStopInfo(false);
         }
+
+        if (savedInstanceState != null) {
+        	final String lastEdit = savedInstanceState.getString(CURRENT_EDIT);
+        	if (lastEdit != null) {
+        		beginNameEdit(lastEdit);
+        	}
+        }
     }
     @Override
     public void onDestroy() {
@@ -184,7 +198,13 @@ public class StopInfoActivity extends ListActivity {
     }
     @Override
     public Object onRetainNonConfigurationInstance() {
-        return mResponse;
+    	return mResponse;
+    }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    	if (mInNameEdit) {
+    		outState.putString(CURRENT_EDIT, mEditNameView.getText().toString());
+    	}
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -222,7 +242,7 @@ public class StopInfoActivity extends ListActivity {
             }
         }
         else if (id == R.id.edit_name) {
-            beginNameEdit();
+            beginNameEdit(null);
         }
         else if (id == R.id.toggle_favorite) {
             toggleFavorite();
@@ -619,21 +639,20 @@ public class StopInfoActivity extends ListActivity {
             mNameView.setText(name);
         }
         if (direction != null) {
-            UIHelp.setStopDirection(findViewById(R.id.direction), direction, false);
+            UIHelp.setStopDirection(mDirectionView, direction, false);
         }
     }
     void setFilterHeader() {
-        View group = findViewById(R.id.filter_group);
         TextView v = (TextView)findViewById(R.id.filter);
         final int num = (mRoutesFilter != null) ? mRoutesFilter.size() : 0;
         if (num > 0) {
             final int total = mStop.getRoutes().length();
             v.setText(getString(R.string.stop_info_filter_header, num, total));
-            // Show the filter text
-            group.setVisibility(View.VISIBLE);
+            // Show the filter text (except when in name edit mode)
+            mFilterGroup.setVisibility(mInNameEdit ? View.GONE : View.VISIBLE);
         }
         else {
-            group.setVisibility(View.GONE);
+            mFilterGroup.setVisibility(View.GONE);
         }
     }
     private final ClickableSpan mShowAllClick = new ClickableSpan() {
@@ -659,7 +678,7 @@ public class StopInfoActivity extends ListActivity {
         mNameView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                beginNameEdit();
+                beginNameEdit(null);
             }
         });
         // Implement the "Save" and "Clear" buttons
@@ -689,18 +708,24 @@ public class StopInfoActivity extends ListActivity {
             }
         });
     }
-    private void beginNameEdit() {
+    private void beginNameEdit(String initial) {
         // If we can click on this, then we're definitely not
         // editable, so we should go into edit mode.
-        mEditNameView.setText(mNameView.getText());
+        mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
+        mDirectionView.setVisibility(View.GONE);
+        mFilterGroup.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
         mEditNameView.requestFocus();
+        mInNameEdit = true;
         // TODO: Ensure the soft keyboard is up
     }
     private void endNameEdit() {
+    	mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
+        mDirectionView.setVisibility(View.VISIBLE);
+        setFilterHeader();
         InputMethodManager imm =
             (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);

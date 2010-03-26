@@ -224,7 +224,7 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public void onDestroy() {
-    	mStopUserMap.close();
+        mStopUserMap.close();
         if (mGetStopsByLocationTask != null) {
             mGetStopsByLocationTask.cancel(true);
         }
@@ -277,8 +277,8 @@ public class MapViewActivity extends MapActivity {
     }
     @Override
     public void onResume() {
-    	mStopUserMap.requery();
-    	updateStopOverlayName();
+        mStopUserMap.requery();
+        updateStopOverlayName();
         mLocationOverlay.enableMyLocation();
         if (!isRouteMode()) {
             watchMap();
@@ -506,13 +506,13 @@ public class MapViewActivity extends MapActivity {
         }
     };
     private void updateStopOverlayName() {
-    	if (mStopOverlay == null) {
-    		return;
-    	}
+        if (mStopOverlay == null) {
+            return;
+        }
         final View popup = findViewById(R.id.map_popup);
         final StopOverlay.StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
         if (item == null) {
-        	return;
+            return;
         }
         final ObaStop stop = item.getStop();
 

@@ -28,8 +28,8 @@ public class MySearchStopsActivity extends MySearchActivity {
     }
     @Override
     public void onDestroy() {
-    	mStopUserMap.close();
-    	super.onDestroy();
+        mStopUserMap.close();
+        super.onDestroy();
     }
 
     @Override

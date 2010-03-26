@@ -14,17 +14,17 @@ import android.widget.SimpleCursorAdapter;
 abstract class MyBaseListActivity extends ListActivity {
     private final Handler mHandler = new Handler();
     private class MyObserver extends ContentObserver {
-		public MyObserver() {
-			super(mHandler);
-		}
-		@Override
-		public boolean deliverSelfNotifications() {
-			return false;
-		}
-		public void onChange(boolean selfChange) {
-	        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListAdapter();
-	        adapter.getCursor().requery();
-		}
+        public MyObserver() {
+            super(mHandler);
+        }
+        @Override
+        public boolean deliverSelfNotifications() {
+            return false;
+        }
+        public void onChange(boolean selfChange) {
+            SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListAdapter();
+            adapter.getCursor().requery();
+        }
     }
 
     protected boolean mShortcutMode;
@@ -46,18 +46,18 @@ abstract class MyBaseListActivity extends ListActivity {
         initList(getCursor());
         Uri uri = getObserverUri();
         if (uri != null) {
-        	ContentResolver cr = getContentResolver();
-        	mObserver = new MyObserver();
-        	cr.registerContentObserver(uri, true, mObserver);
+            ContentResolver cr = getContentResolver();
+            mObserver = new MyObserver();
+            cr.registerContentObserver(uri, true, mObserver);
         }
     }
     @Override
     public void onDestroy() {
-    	if (mObserver != null) {
-    		ContentResolver cr = getContentResolver();
-    		cr.unregisterContentObserver(mObserver);
-    	}
-    	super.onDestroy();
+        if (mObserver != null) {
+            ContentResolver cr = getContentResolver();
+            cr.unregisterContentObserver(mObserver);
+        }
+        super.onDestroy();
     }
 
     /**

@@ -122,6 +122,6 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
     }
 
     Uri getObserverUri() {
-    	return ObaContract.Routes.CONTENT_URI;
+        return ObaContract.Routes.CONTENT_URI;
     }
 }

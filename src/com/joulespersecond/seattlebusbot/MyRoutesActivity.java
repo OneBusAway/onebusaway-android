@@ -17,7 +17,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
         final TabHost tabHost = getTabHost();
         tabHost.addTab(tabHost.newTabSpec("recent")
                 .setIndicator(res.getString(R.string.my_recent_title),
-                			  res.getDrawable(R.drawable.ic_tab_recent))
+                              res.getDrawable(R.drawable.ic_tab_recent))
                 .setContent(new Intent(this, MyRecentRoutesActivity.class)
                                     .setAction(action)));
         /*
@@ -28,7 +28,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
         */
         tabHost.addTab(tabHost.newTabSpec("search")
                 .setIndicator(res.getString(R.string.my_search_title),
-          			          res.getDrawable(R.drawable.ic_tab_search))
+                                res.getDrawable(R.drawable.ic_tab_search))
                 .setContent(new Intent(this, MySearchRoutesActivity.class)
                                     .setAction(action)));
 
@@ -36,9 +36,9 @@ public class MyRoutesActivity extends MyTabActivityBase {
         restoreDefaultTab();
     }
 
-	@Override
-	protected String getLastTabPref() {
-		return "MyRoutesActivity.LastTab";
-	}
+    @Override
+    protected String getLastTabPref() {
+        return "MyRoutesActivity.LastTab";
+    }
 
 }

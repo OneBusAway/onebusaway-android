@@ -17,7 +17,7 @@ import com.joulespersecond.oba.provider.ObaContract;
 
 public class TripListActivity extends ListActivity {
     //private static final String TAG = "TripListActivity";
-    
+
     private static final String[] PROJECTION = {
         ObaContract.Trips._ID,
         ObaContract.Trips.NAME,
@@ -36,20 +36,20 @@ public class TripListActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         setContentView(R.layout.trip_list);
         registerForContextMenu(getListView());
-        
+
         fillTrips();
     }
-    
+
     private void fillTrips() {
         ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI, 
+        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI,
                 PROJECTION, null, null, ObaContract.Trips.NAME + " asc");
         startManagingCursor(c);
-        
-        final String[] from = { 
+
+        final String[] from = {
                 ObaContract.Trips.NAME,
                 ObaContract.Trips.HEADSIGN,
                 ObaContract.Trips.DEPARTURE,
@@ -61,9 +61,9 @@ public class TripListActivity extends ListActivity {
                 R.id.departure_time,
                 R.id.route_name
         };
-        SimpleCursorAdapter simpleAdapter = 
+        SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.trip_list_listitem, c, from, to);
-        
+
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                 if (columnIndex == COL_NAME) {
@@ -81,15 +81,15 @@ public class TripListActivity extends ListActivity {
                             TripListActivity.this,
                             ObaContract.Trips.convertDBToTime(cursor.getInt(columnIndex))));
                     return true;
-                } 
+                }
                 else if (columnIndex == COL_ROUTE_ID) {
-                    // 
+                    //
                     // Translate the Route ID into the Route Name by looking
                     // it up in the Routes table.
                     //
                     TextView text = (TextView)view;
                     final String routeId = cursor.getString(columnIndex);
-                    final String routeName = 
+                    final String routeName =
                         TripService.getRouteShortName(TripListActivity.this, routeId);
                     if (routeName != null) {
                         text.setText(getString(R.string.trip_info_route, routeName));
@@ -105,7 +105,7 @@ public class TripListActivity extends ListActivity {
     protected void onDestroy() {
         super.onDestroy();
     }
-    
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String[] ids = getIds(l, position);
@@ -116,7 +116,7 @@ public class TripListActivity extends ListActivity {
     private static final int CONTEXT_MENU_DELETE = 2;
     private static final int CONTEXT_MENU_SHOWSTOP = 3;
     private static final int CONTEXT_MENU_SHOWROUTE = 4;
-    
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
@@ -152,29 +152,29 @@ public class TripListActivity extends ListActivity {
     }
     private void deleteTrip(ListView l, int position) {
         String[] ids = getIds(l, position);
-        
+
         // TODO: Confirmation dialog?
         ContentResolver cr = getContentResolver();
         cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
         TripService.scheduleAll(this);
-        
+
         SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
         adapter.getCursor().requery();
     }
     private void goToStop(ListView l, int position) {
         String[] ids = getIds(l, position);
-        StopInfoActivity.start(this, ids[1]);        
+        StopInfoActivity.start(this, ids[1]);
     }
     private void goToRoute(ListView l, int position) {
         String[] ids = getIds(l, position);
-        RouteInfoActivity.start(this, ids[2]);        
+        RouteInfoActivity.start(this, ids[2]);
     }
     private String[] getIds(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
         final Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
-        final String[] result = new String[] { 
+        final String[] result = new String[] {
                 c.getString(COL_ID),
                 c.getString(COL_STOP_ID),
                 c.getString(COL_ROUTE_ID)

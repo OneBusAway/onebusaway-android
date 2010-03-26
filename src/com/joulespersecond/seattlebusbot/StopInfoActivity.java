@@ -182,10 +182,10 @@ public class StopInfoActivity extends ListActivity {
         }
 
         if (savedInstanceState != null) {
-        	final String lastEdit = savedInstanceState.getString(CURRENT_EDIT);
-        	if (lastEdit != null) {
-        		beginNameEdit(lastEdit);
-        	}
+            final String lastEdit = savedInstanceState.getString(CURRENT_EDIT);
+            if (lastEdit != null) {
+                beginNameEdit(lastEdit);
+            }
         }
     }
     @Override
@@ -198,13 +198,13 @@ public class StopInfoActivity extends ListActivity {
     }
     @Override
     public Object onRetainNonConfigurationInstance() {
-    	return mResponse;
+        return mResponse;
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-    	if (mInNameEdit) {
-    		outState.putString(CURRENT_EDIT, mEditNameView.getText().toString());
-    	}
+        if (mInNameEdit) {
+            outState.putString(CURRENT_EDIT, mEditNameView.getText().toString());
+        }
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -251,7 +251,7 @@ public class StopInfoActivity extends ListActivity {
     }
     @Override
     public void onPause() {
-    	mTripsForStop.setKeepUpdated(false);
+        mTripsForStop.setKeepUpdated(false);
         mTimer.cancel();
         mTimer = null;
         super.onPause();
@@ -261,9 +261,9 @@ public class StopInfoActivity extends ListActivity {
         if (mTimer == null) {
             mTimer = new Timer();
         }
-    	mTripsForStop.setKeepUpdated(true);
-    	mTripsForStop.requery();
-    	((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+        mTripsForStop.setKeepUpdated(true);
+        mTripsForStop.requery();
+        ((BaseAdapter)getListAdapter()).notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
         if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
@@ -545,7 +545,7 @@ public class StopInfoActivity extends ListActivity {
                 setResponse(result, mAddToDb);
             }
             else if (mResponse != null) {
-            	setRefreshError();
+                setRefreshError();
             }
             else {
                 mEmptyText.setText(UIHelp.getStopErrorString(result.getCode()));
@@ -587,22 +587,22 @@ public class StopInfoActivity extends ListActivity {
         setProgressBarIndeterminateVisibility(false);
     }
     void setRefreshError() {
-    	TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
-    	CharSequence relativeTime =
-    		DateUtils.getRelativeTimeSpanString(mResponseTime,
-    				System.currentTimeMillis(),
-    				DateUtils.MINUTE_IN_MILLIS,
-    				0);
-    	errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
+        TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
+        CharSequence relativeTime =
+            DateUtils.getRelativeTimeSpanString(mResponseTime,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    0);
+        errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
 
-    	mResponseError.setVisibility(View.VISIBLE);
+        mResponseError.setVisibility(View.VISIBLE);
         mEmptyText.setText(R.string.stop_info_nodata);
 
-    	// Just refresh the data with the current response.
-    	((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+        // Just refresh the data with the current response.
+        ((BaseAdapter)getListAdapter()).notifyDataSetChanged();
 
-    	mLoadingProgress.hideLoading();
-    	setProgressBarIndeterminateVisibility(false);
+        mLoadingProgress.hideLoading();
+        setProgressBarIndeterminateVisibility(false);
     }
 
     private void setHeader(Bundle bundle) {
@@ -721,7 +721,7 @@ public class StopInfoActivity extends ListActivity {
         // TODO: Ensure the soft keyboard is up
     }
     private void endNameEdit() {
-    	mInNameEdit = false;
+        mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mDirectionView.setVisibility(View.VISIBLE);

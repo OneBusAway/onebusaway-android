@@ -72,14 +72,14 @@ final class StopInfo {
                     // Arriving delayed
                     mColor = R.color.stop_info_delayed;
                     mStatusText = res.getQuantityString(R.plurals.stop_info_arrive_delayed,
-                    							(int)delay, delay);
+                                                (int)delay, delay);
                 }
                 else if (delay < 0) {
                     // Arriving early
                     mColor = R.color.stop_info_early;
                     delay = -delay;
                     mStatusText = res.getQuantityString(R.plurals.stop_info_arrive_early,
-                    							(int)delay, delay);
+                                                (int)delay, delay);
                 }
                 else {
                     // Arriving on time
@@ -93,14 +93,14 @@ final class StopInfo {
                     // Departing delayed
                     mColor = R.color.stop_info_delayed;
                     mStatusText = res.getQuantityString(R.plurals.stop_info_depart_delayed,
-                    							(int)delay, delay);
+                                                (int)delay, delay);
                 }
                 else if (delay < 0) {
                     // Departing early
                     mColor = R.color.stop_info_early;
                     delay = -delay;
                     mStatusText = res.getQuantityString(R.plurals.stop_info_depart_early,
-                    							(int)delay, delay);
+                                                (int)delay, delay);
                 }
                 else {
                     // Departing on time

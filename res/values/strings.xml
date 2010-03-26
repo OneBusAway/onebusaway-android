@@ -37,20 +37,20 @@
     <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
-    	<item quantity="one">1 minute delay</item>
-    	<item quantity="other"><xliff:g id="count">%d</xliff:g> minutes delay</item>
+      <item quantity="one">1 minute delay</item>
+      <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes delay</item>
     </plurals>
     <plurals name="stop_info_arrive_early">
-    	<item quantity="one">1 minute early</item>
-    	<item quantity="other"><xliff:g id="count">%d</xliff:g> minutes early</item>
+      <item quantity="one">1 minute early</item>
+      <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes early</item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
-    	<item quantity="one">Departed 1 minute late</item>
-    	<item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes late</item>
+      <item quantity="one">Departed 1 minute late</item>
+      <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes late</item>
     </plurals>
     <plurals name="stop_info_depart_early">
-    	<item quantity="one">Departed 1 minute early</item>
-    	<item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes early</item>
+      <item quantity="one">Departed 1 minute early</item>
+      <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes early</item>
     </plurals>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>

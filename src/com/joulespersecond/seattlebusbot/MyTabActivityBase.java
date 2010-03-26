@@ -23,7 +23,7 @@ abstract class MyTabActivityBase extends TabActivity {
         // This doesn't change any of the font sizes or colors, since those are fine for me.
         //
         getTabHost().getTabWidget().setBackgroundColor(
-        		getResources().getColor(R.color.tab_widget_bg));
+                getResources().getColor(R.color.tab_widget_bg));
     }
     @Override
     public void onDestroy() {
@@ -31,14 +31,14 @@ abstract class MyTabActivityBase extends TabActivity {
         settings.putString(getLastTabPref(), getTabHost().getCurrentTabTag());
         settings.commit();
 
-    	super.onDestroy();
+        super.onDestroy();
     }
 
     protected void restoreDefaultTab() {
         SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
         final String def = settings.getString(getLastTabPref(), null);
         if (def != null) {
-        	getTabHost().setCurrentTabByTag(def);
+            getTabHost().setCurrentTabByTag(def);
         }
     }
 
@@ -47,5 +47,5 @@ abstract class MyTabActivityBase extends TabActivity {
         finish();
     }
 
-	protected abstract String getLastTabPref();
+    protected abstract String getLastTabPref();
 }

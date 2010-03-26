@@ -1,8 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/show_route"
-          android:title="@string/trip_info_option_showroute" 
+          android:title="@string/trip_info_option_showroute"
           android:icon="@drawable/ic_menu_trip" />
     <item android:id="@+id/show_stop"
-          android:title="@string/trip_info_option_showstop" 
+          android:title="@string/trip_info_option_showstop"
           android:icon="@drawable/ic_menu_stop" />
 </menu>

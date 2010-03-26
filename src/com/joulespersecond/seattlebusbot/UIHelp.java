@@ -89,11 +89,11 @@ final class UIHelp {
             mMap = new ContentQueryMap(c, ObaContract.Stops._ID, true, null);
         }
         public void close() {
-        	mMap.close();
+            mMap.close();
         }
 
         public void requery() {
-        	mMap.requery();
+            mMap.requery();
         }
 
         public void setView(View stopRoot, String stopId, String stopName) {

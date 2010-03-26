@@ -4,34 +4,34 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
-    <TextView 
+    <TextView
         android:id="@+id/name"
         style="@style/Line1Text"
-        android:layout_width="fill_parent" 
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content">
     </TextView>
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent" 
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content">
-        <TextView 
+        <TextView
             style="@style/Line2Text"
-            android:text="@string/trip_info_route" 
-            android:id="@+id/route_name" 
-            android:layout_width="wrap_content" 
+            android:text="@string/trip_info_route"
+            android:id="@+id/route_name"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         </TextView>
         <TextView
-            style="@style/Line2Text" 
+            style="@style/Line2Text"
             android:text=" - "
-            android:layout_width="wrap_content" 
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-        </TextView> 
-        <TextView 
+        </TextView>
+        <TextView
             style="@style/Line2Text"
             android:text="Headsign"
             android:id="@+id/headsign"
-            android:layout_width="wrap_content" 
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         </TextView>
     </LinearLayout>
@@ -39,7 +39,7 @@
     <TextView
         android:id="@+id/departure_time"
         style="@style/Line2Text"
-        android:layout_width="fill_parent" 
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content">
-    </TextView> 
+    </TextView>
 </LinearLayout>

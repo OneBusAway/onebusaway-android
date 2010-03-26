@@ -106,22 +106,22 @@
           </TextView>
         </LinearLayout>
         <LinearLayout
-        	android:id="@+id/response_error"
-        	style="@style/Header2Text"
-        	android:layout_width="fill_parent"
-        	android:layout_height="wrap_content"
-        	android:visibility="gone">
-        	<ImageView
-        		android:src="@drawable/stop_info_error"
-        		android:layout_width="wrap_content"
-        		android:layout_height="wrap_content"
-        		android:layout_marginRight="4dip"/>
-        	<TextView
-        		android:text="1 minute ago"
-	        	android:id="@+id/response_error_text"
-	            style="@style/Header2Text"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"/>
+          android:id="@+id/response_error"
+          style="@style/Header2Text"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:visibility="gone">
+          <ImageView
+            android:src="@drawable/stop_info_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dip"/>
+          <TextView
+            android:text="1 minute ago"
+            android:id="@+id/response_error_text"
+              style="@style/Header2Text"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"/>
         </LinearLayout>
 
     </LinearLayout>

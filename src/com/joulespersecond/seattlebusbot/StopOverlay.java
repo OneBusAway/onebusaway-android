@@ -14,32 +14,32 @@ import com.joulespersecond.oba.ObaStop;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     //private static final String TAG = "StopOverlay";
-    
+
     private final ObaArray<ObaStop> mStops;
     private final Activity mActivity;
-    
+
     private static final int getResourceIdForDirection(String direction) {
         if (direction.equals("N")) {
             return R.drawable.stop_n;
         } else if (direction.equals("NW")) {
-            return R.drawable.stop_nw;                    
+            return R.drawable.stop_nw;
         } else if (direction.equals("W")) {
-            return R.drawable.stop_w;                    
+            return R.drawable.stop_w;
         } else if (direction.equals("SW")) {
-            return R.drawable.stop_sw;    
+            return R.drawable.stop_sw;
         } else if (direction.equals("S")) {
-            return R.drawable.stop_s;    
+            return R.drawable.stop_s;
         } else if (direction.equals("SE")) {
-            return R.drawable.stop_se;    
+            return R.drawable.stop_se;
         } else if (direction.equals("E")) {
-            return R.drawable.stop_e;    
+            return R.drawable.stop_e;
         } else if (direction.equals("NE")) {
-            return R.drawable.stop_ne;                             
+            return R.drawable.stop_ne;
         } else {
             return R.drawable.stop_u;
-        }        
+        }
     }
-    
+
     public class StopOverlayItem extends OverlayItem {
         private final ObaStop mStop;
 
@@ -51,8 +51,8 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
             return mStop;
         }
     }
-    
-    public StopOverlay(ObaArray<ObaStop> stops, 
+
+    public StopOverlay(ObaArray<ObaStop> stops,
             Activity activity) {
         super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_u)));
         mStops = stops;
@@ -60,7 +60,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         populate();
     }
     @Override
-    protected OverlayItem 
+    protected OverlayItem
     createItem(int i) {
         final ObaStop stop = mStops.get(i);
         final OverlayItem item = new StopOverlayItem(stop);
@@ -78,7 +78,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         final int action = event.getAction();
         OverlayItem next = null;
         //Log.d(TAG, "MotionEvent: " + event);
-        
+
         if (action == MotionEvent.ACTION_MOVE) {
             final float xDiff = event.getX();
             final float yDiff = event.getY();
@@ -107,7 +107,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
             final OverlayItem focus = getFocus();
             if (focus != null) {
                 MapViewActivity.goToStop(mActivity, ((StopOverlayItem)focus).getStop());
-            }    
+            }
         }
         return true;
     }
@@ -179,7 +179,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         }
         return true;
     }
-    
+
     // The find next routines find the closest item along the specified axis.
 
     OverlayItem findNext(OverlayItem initial, boolean lat, boolean positive) {
@@ -190,13 +190,13 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         final GeoPoint initialPoint = initial.getPoint();
         OverlayItem min = initial;
         int minDist = Integer.MAX_VALUE;
-        
+
         for (int i=0; i < size; ++i) {
             OverlayItem item = getItem(i);
             GeoPoint point = item.getPoint();
             final int distX = point.getLongitudeE6() - initialPoint.getLongitudeE6();
-            final int distY = point.getLatitudeE6()  - initialPoint.getLatitudeE6(); 
-            
+            final int distY = point.getLatitudeE6()  - initialPoint.getLatitudeE6();
+
             // We have to eliminate anything that's going in the wrong direction,
             // or doesn't change in the correct axis (including the initial point)
             if (lat) {
@@ -217,7 +217,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
                     if (distX <= 0) {
                         continue;
                     }
-                } 
+                }
                 // Distance must be negative
                 else if (distX >= 0) {
                     continue;
@@ -225,12 +225,12 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
             }
 
             final int distSq = distX*distX + distY*distY;
-        
+
             if (distSq < minDist) {
                 min = item;
                 minDist = distSq;
             }
-        }        
+        }
         return min;
     }
 }

@@ -18,24 +18,24 @@ public class MyStopsActivity extends MyTabActivityBase {
         final TabHost tabHost = getTabHost();
         tabHost.addTab(tabHost.newTabSpec("recent")
                 .setIndicator(res.getString(R.string.my_recent_title),
-                			  res.getDrawable(R.drawable.ic_tab_recent))
+                              res.getDrawable(R.drawable.ic_tab_recent))
                 .setContent(new Intent(this, MyRecentStopsActivity.class)
                                     .setAction(action)));
         tabHost.addTab(tabHost.newTabSpec("starred")
                 .setIndicator(res.getString(R.string.my_starred_title),
-                			  res.getDrawable(R.drawable.ic_tab_starred))
+                              res.getDrawable(R.drawable.ic_tab_starred))
                 .setContent(new Intent(this, MyStarredStopsActivity.class)
                                     .setAction(action)));
         tabHost.addTab(tabHost.newTabSpec("search")
                 .setIndicator(res.getString(R.string.my_search_title),
-                			  res.getDrawable(R.drawable.ic_tab_search))
+                              res.getDrawable(R.drawable.ic_tab_search))
                 .setContent(new Intent(this, MySearchStopsActivity.class)
                                     .setAction(action)));
 
         restoreDefaultTab();
     }
-	@Override
-	protected String getLastTabPref() {
-		return "MyStopsActivity.LastTab";
-	}
+    @Override
+    protected String getLastTabPref() {
+        return "MyStopsActivity.LastTab";
+    }
 }

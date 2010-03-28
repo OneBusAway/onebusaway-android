@@ -15,34 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.Spannable;
-import android.text.style.ClickableSpan;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.Window;
-import android.widget.GridView;
-import android.widget.TextView;
-
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
@@ -59,6 +31,37 @@ import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
+
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.Spannable;
+import android.text.style.ClickableSpan;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
+import android.widget.GridView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MapViewActivity extends MapActivity {
     private static final String TAG = "MapViewActivity";
@@ -667,6 +670,9 @@ public class MapViewActivity extends MapActivity {
                     showDialog(WHATSNEW_DIALOG);
                     break;
                 case 3:
+                    goToBugReport();
+                    break;
+                case 4:
                     Intent preferences = new Intent(MapViewActivity.this, EditPreferencesActivity.class);
                     startActivity(preferences);
                     break;
@@ -741,6 +747,39 @@ public class MapViewActivity extends MapActivity {
             SharedPreferences.Editor edit = settings.edit();
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
             edit.commit();
+        }
+    }
+
+    private void goToBugReport() {
+        PackageManager pm = getPackageManager();
+        PackageInfo appInfo = null;
+        try {
+            appInfo = pm.getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        // appInfo.versionName
+        // Build.MODEL
+        // Build.VERSION.RELEASE
+        // Build.VERSION.SDK
+        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
+        final String body = getString(R.string.bug_report_body,
+                 appInfo.versionName,
+                 Build.MODEL,
+                 Build.VERSION.RELEASE,
+                 Build.VERSION.SDK); // TODO: Change to SDK_INT when we switch to 1.6
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                    new String[] { getString(R.string.bug_report_dest) });
+        send.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            startActivity(Intent.createChooser(send, getString(R.string.bug_report_subject)));
+        }
+        catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.bug_report_error, Toast.LENGTH_LONG).show();
         }
     }
 

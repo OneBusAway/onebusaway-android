@@ -165,6 +165,12 @@
     <string name="trip_stat_one">Route %s is 1 minute away!</string>
     <string name="trip_stat">Route %s is %d minutes away!</string>
 
+    <!--  Bug report -->
+    <string name="bug_report_dest">paul@joulespersecond.com</string>
+    <string name="bug_report_subject">OneBusAway: Bug Report</string>
+    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %s\nPhone: %s\nOS Version: %s\nSDK Version: %s\n</string>
+    <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
+
     <!-- Application Preferences -->
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>

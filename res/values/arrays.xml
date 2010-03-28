@@ -18,7 +18,7 @@
         <item>User Guide</item>
         <item>Twitter Feed</item>
         <item>What\'s New?</item>
-        <!--  <item>Send Feedback</item> -->
+        <item>I found a bug!</item>
         <item>Preferences</item>
     </string-array>
     <string-array name="stop_item_options">

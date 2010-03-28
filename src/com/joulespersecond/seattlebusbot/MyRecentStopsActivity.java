@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+
 import android.database.Cursor;
 import android.net.Uri;
 import android.view.ContextMenu;
@@ -25,19 +27,13 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
 public class MyRecentStopsActivity extends MyStopListActivity {
     @Override
     Cursor getCursor() {
-        // TODO: No limit???
-        return managedQuery(ObaContract.Stops.CONTENT_URI,
+        return recentQuery(ObaContract.Stops.CONTENT_URI,
                 PROJECTION,
-                ObaContract.Stops.ACCESS_TIME + " IS NOT NULL OR " +
-                ObaContract.Stops.USE_COUNT + " >0",
-                null,
-                ObaContract.Stops.ACCESS_TIME + " desc, " +
-                ObaContract.Stops.USE_COUNT + " desc");
+                ObaContract.Stops.ACCESS_TIME,
+                ObaContract.Stops.USE_COUNT);
     }
     @Override
     int getLayoutId() {

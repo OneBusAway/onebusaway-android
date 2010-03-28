@@ -348,13 +348,16 @@ public class ObaProvider extends ContentProvider {
             Uri uri, String[] projection, String selection,
             String[] selectionArgs, String sortOrder) {
         final int match = sUriMatcher.match(uri);
+        final String limit = uri.getQueryParameter("limit");
+
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 
         switch (match) {
         case STOPS:
             qb.setTables(ObaContract.Stops.PATH);
             qb.setProjectionMap(sStopsProjectionMap);
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case STOPS_ID:
             qb.setTables(ObaContract.Stops.PATH);
@@ -362,12 +365,14 @@ public class ObaProvider extends ContentProvider {
             qb.appendWhere(ObaContract.Stops._ID);
             qb.appendWhere("=");
             qb.appendWhereEscapeString(uri.getLastPathSegment());
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case ROUTES:
             qb.setTables(ObaContract.Routes.PATH);
             qb.setProjectionMap(sRoutesProjectionMap);
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case ROUTES_ID:
             qb.setTables(ObaContract.Routes.PATH);
@@ -375,22 +380,26 @@ public class ObaProvider extends ContentProvider {
             qb.appendWhere(ObaContract.Routes._ID);
             qb.appendWhere("=");
             qb.appendWhereEscapeString(uri.getLastPathSegment());
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case TRIPS:
             qb.setTables(ObaContract.Trips.PATH);
             qb.setProjectionMap(sTripsProjectionMap);
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case TRIPS_ID:
             qb.setTables(ObaContract.Trips.PATH);
             qb.setProjectionMap(sTripsProjectionMap);
             qb.appendWhere(tripWhere(uri));
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         case STOP_ROUTE_FILTERS:
             qb.setTables(ObaContract.StopRouteFilters.PATH);
-            return qb.query(mDb, projection, selection, selectionArgs, null, null, sortOrder);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
 
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);

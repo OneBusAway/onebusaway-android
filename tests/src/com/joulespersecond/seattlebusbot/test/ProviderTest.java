@@ -76,12 +76,14 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertEquals(c.getCount(), 1);
         c.moveToNext();
         assertTrue(c.getInt(0) == 1);
+        c.close();
         // Get the one that we care about
         c = cr.query(uri, new String[] { ObaContract.Stops.CODE }, null, null, null);
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
         c.moveToNext();
         assertEquals(c.getString(0), "11060");
+        c.close();
 
         //
         // Update
@@ -98,11 +100,49 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertEquals(result, 1);
         result = cr.delete(uri, null, null);
         assertEquals(result, 0);
+    }
 
+    public void testLimit() {
+        ContentResolver cr = getMockContentResolver();
         //
-        // TODO: We need to test Where clauses.
+        // Create
         //
+        final String stopId = "1_11060-TEST";
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.Stops._ID, stopId);
+        values.put(ObaContract.Stops.CODE, "11060");
+        values.put(ObaContract.Stops.NAME, "Broadway & E Denny Way");
+        values.put(ObaContract.Stops.DIRECTION, "S");
+        values.put(ObaContract.Stops.USE_COUNT, 0);
+        values.put(ObaContract.Stops.LATITUDE, 47.617676);
+        values.put(ObaContract.Stops.LONGITUDE, -122.314523);
 
+        Uri uri = cr.insert(ObaContract.Stops.CONTENT_URI, values);
+        assertNotNull(uri);
+
+        final String stopId2 = "1_1010101";
+        values.put(ObaContract.Stops._ID, stopId2);
+        uri = cr.insert(ObaContract.Stops.CONTENT_URI, values);
+        assertNotNull(uri);
+
+        Cursor c = cr.query(ObaContract.Stops.CONTENT_URI,
+                new String[] { ObaContract.Stops._COUNT },
+                null, null, null);
+        assertNotNull(c);
+        assertEquals(c.getCount(), 1);
+        c.moveToNext();
+        assertTrue(c.getInt(0) == 2);
+        c.close();
+
+        c = cr.query(ObaContract.Stops.CONTENT_URI
+                        .buildUpon()
+                        .appendQueryParameter("limit", "1")
+                        .build(),
+                new String[] { ObaContract.Stops._ID },
+                null, null, null);
+        assertNotNull(c);
+        assertEquals(c.getCount(), 1);
+        c.close();
     }
 
 }

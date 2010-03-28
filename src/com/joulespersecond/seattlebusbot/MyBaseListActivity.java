@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.format.DateUtils;
 import android.view.Window;
 import android.widget.SimpleCursorAdapter;
 
@@ -73,6 +74,26 @@ abstract class MyBaseListActivity extends ListActivity {
             cr.unregisterContentObserver(mObserver);
         }
         super.onDestroy();
+    }
+
+    protected Cursor recentQuery(final Uri uri,
+                final String[] projection,
+                final String accessTime,
+                final String useCount) {
+        // "Recently" means seven days in the past
+        final long last = System.currentTimeMillis() - 7*DateUtils.DAY_IN_MILLIS;
+        return managedQuery(uri
+                        .buildUpon()
+                        .appendQueryParameter("limit", "20")
+                        .build(),
+                projection,
+                "(" +
+                    accessTime + " IS NOT NULL AND " +
+                    accessTime + " > " + last +
+                ") OR (" + useCount + " > 0)",
+                null,
+                accessTime + " desc, " +
+                useCount + " desc");
     }
 
     /**

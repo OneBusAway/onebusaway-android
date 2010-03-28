@@ -33,8 +33,6 @@ import com.joulespersecond.oba.provider.ObaContract;
 abstract class MyRouteListActivity extends MyBaseListActivity {
     //private static final String TAG = "MyRouteListActivity";
 
-    protected boolean mShortcutMode;
-
     protected static final String[] PROJECTION = {
         ObaContract.Routes._ID,
         ObaContract.Routes.SHORTNAME,

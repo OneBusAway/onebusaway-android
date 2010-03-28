@@ -175,7 +175,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         setListAdapter(simpleAdapter);
     }
 
-    Uri getObserverUri() {
+    protected Uri getObserverUri() {
         return ObaContract.Stops.CONTENT_URI;
     }
 }

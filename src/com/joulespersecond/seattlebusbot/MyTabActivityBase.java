@@ -18,17 +18,30 @@ package com.joulespersecond.seattlebusbot;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 
 abstract class MyTabActivityBase extends TabActivity {
+    public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
+
+    protected boolean mShortcutMode;
+    private String mDefaultTab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final String action = getIntent().getAction();
-        if (!Intent.ACTION_CREATE_SHORTCUT.equals(action)) {
+        final Intent intent = getIntent();
+        final String action = intent.getAction();
+        mShortcutMode = Intent.ACTION_CREATE_SHORTCUT.equals(action);
+        if (!mShortcutMode) {
             setTitle(R.string.app_name);
+        }
+
+        // Determine what tab we're supposed to show by default
+        final Uri data = intent.getData();
+        if (data != null) {
+            mDefaultTab = getDefaultTabFromUri(data);
         }
 
         // A hack inspired mostly by:
@@ -42,16 +55,25 @@ abstract class MyTabActivityBase extends TabActivity {
     }
     @Override
     public void onDestroy() {
-        SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
-        settings.putString(getLastTabPref(), getTabHost().getCurrentTabTag());
-        settings.commit();
+        // If there was a tab in the intent, don't save it
+        if (mDefaultTab == null) {
+            SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
+            settings.putString(getLastTabPref(), getTabHost().getCurrentTabTag());
+            settings.commit();
+        }
 
         super.onDestroy();
     }
 
     protected void restoreDefaultTab() {
-        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
-        final String def = settings.getString(getLastTabPref(), null);
+        final String def;
+        if (mDefaultTab != null) {
+            def = mDefaultTab;
+        }
+        else {
+            SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
+            def = settings.getString(getLastTabPref(), null);
+        }
         if (def != null) {
             getTabHost().setCurrentTabByTag(def);
         }
@@ -60,6 +82,21 @@ abstract class MyTabActivityBase extends TabActivity {
     void returnShortcut(Intent intent) {
         setResult(RESULT_OK, intent);
         finish();
+    }
+
+    //
+    // Helpers for constructing/parsing the default tab URL.
+    //
+    private static final String TAB_SCHEME = "tab";
+
+    public static final Uri getDefaultTabUri(String tab) {
+        return Uri.fromParts(TAB_SCHEME, tab, null);
+    }
+    public static String getDefaultTabFromUri(Uri uri) {
+        if (TAB_SCHEME.equals(uri.getScheme())) {
+            return uri.getSchemeSpecificPart();
+        }
+        return null;
     }
 
     protected abstract String getLastTabPref();

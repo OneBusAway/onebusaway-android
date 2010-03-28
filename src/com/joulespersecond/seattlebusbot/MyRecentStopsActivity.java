@@ -17,6 +17,7 @@ package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.provider.ObaContract;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.view.ContextMenu;
@@ -28,15 +29,17 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MyRecentStopsActivity extends MyStopListActivity {
+    public static final String TAB_NAME = "recent";
+
     @Override
-    Cursor getCursor() {
+    protected Cursor getCursor() {
         return recentQuery(ObaContract.Stops.CONTENT_URI,
                 PROJECTION,
                 ObaContract.Stops.ACCESS_TIME,
                 ObaContract.Stops.USE_COUNT);
     }
     @Override
-    int getLayoutId() {
+    protected int getLayoutId() {
         return R.layout.my_recent_stop_list;
     }
 
@@ -74,5 +77,12 @@ public class MyRecentStopsActivity extends MyStopListActivity {
             return true;
         }
         return false;
+    }
+    @Override
+    protected Intent getShortcutIntent() {
+        return UIHelp.makeShortcut(this,
+                    getString(R.string.recent_stops_shortcut),
+                    new Intent(this, MyStopsActivity.class)
+                        .setData(MyTabActivityBase.getDefaultTabUri(TAB_NAME)));
     }
 }

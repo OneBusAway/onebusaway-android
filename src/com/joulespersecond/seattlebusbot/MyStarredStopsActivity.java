@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.view.ContextMenu;
@@ -28,8 +29,10 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.joulespersecond.oba.provider.ObaContract;
 
 public class MyStarredStopsActivity extends MyStopListActivity {
+    public static final String TAB_NAME = "starred";
+
     @Override
-    Cursor getCursor() {
+    protected Cursor getCursor() {
         return managedQuery(ObaContract.Stops.CONTENT_URI,
                 PROJECTION,
                 ObaContract.Stops.FAVORITE + "=1",
@@ -37,7 +40,7 @@ public class MyStarredStopsActivity extends MyStopListActivity {
                 ObaContract.Stops.USE_COUNT + " desc");
     }
     @Override
-    int getLayoutId() {
+    protected int getLayoutId() {
         return R.layout.my_starred_stop_list;
     }
 
@@ -76,5 +79,12 @@ public class MyStarredStopsActivity extends MyStopListActivity {
             return true;
         }
         return false;
+    }
+    @Override
+    protected Intent getShortcutIntent() {
+        return UIHelp.makeShortcut(this,
+                    getString(R.string.starred_stops_shortcut),
+                    new Intent(this, MyStopsActivity.class)
+                        .setData(MyTabActivityBase.getDefaultTabUri(TAB_NAME)));
     }
 }

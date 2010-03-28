@@ -27,25 +27,23 @@ public class MyStopsActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final String action = getIntent().getAction();
         final Resources res = getResources();
-
         final TabHost tabHost = getTabHost();
-        tabHost.addTab(tabHost.newTabSpec("recent")
+        tabHost.addTab(tabHost.newTabSpec(MyRecentStopsActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_recent_title),
                               res.getDrawable(R.drawable.ic_tab_recent))
                 .setContent(new Intent(this, MyRecentStopsActivity.class)
-                                    .setAction(action)));
-        tabHost.addTab(tabHost.newTabSpec("starred")
+                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
+        tabHost.addTab(tabHost.newTabSpec(MyStarredStopsActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_starred_title),
                               res.getDrawable(R.drawable.ic_tab_starred))
                 .setContent(new Intent(this, MyStarredStopsActivity.class)
-                                    .setAction(action)));
-        tabHost.addTab(tabHost.newTabSpec("search")
+                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
+        tabHost.addTab(tabHost.newTabSpec(MySearchStopsActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_search_title),
                               res.getDrawable(R.drawable.ic_tab_search))
                 .setContent(new Intent(this, MySearchStopsActivity.class)
-                                    .setAction(action)));
+                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
 
         restoreDefaultTab();
     }

@@ -56,8 +56,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".MyRecentStopsActivity" />
-        <activity android:name=".MyStarredStopsActivity" />
+        <activity android:name=".MyRecentStopsActivity"
+                  android:label="@string/recent_stops_shortcut">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MyStarredStopsActivity"
+                  android:label="@string/starred_stops_shortcut">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".MySearchStopsActivity" />
 
         <activity android:name=".MyRoutesActivity"
@@ -67,7 +79,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".MyRecentRoutesActivity" />
+        <activity android:name=".MyRecentRoutesActivity"
+                  android:label="@string/recent_routes_shortcut">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".MyStarredRoutesActivity" />
         <activity android:name=".MySearchRoutesActivity" />
 

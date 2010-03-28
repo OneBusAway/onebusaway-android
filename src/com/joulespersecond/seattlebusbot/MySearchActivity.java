@@ -59,10 +59,7 @@ abstract class MySearchActivity extends ListActivity {
         setContentView(getLayoutId());
         registerForContextMenu(getListView());
 
-        Intent myIntent = getIntent();
-        if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
-            mShortcutMode = true;
-        }
+        mShortcutMode = getIntent().getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
 
         mSearchText = (EditText)findViewById(R.id.search_text);
         mSearchText.setHint(getEditBoxHintText());

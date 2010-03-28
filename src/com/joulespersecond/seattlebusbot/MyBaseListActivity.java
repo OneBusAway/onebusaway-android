@@ -51,13 +51,17 @@ abstract class MyBaseListActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
+        Intent myIntent = getIntent();
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
+            setResult(RESULT_OK, getShortcutIntent());
+            finish();
+            return;
+        }
+
         setContentView(getLayoutId());
         registerForContextMenu(getListView());
 
-        Intent myIntent = getIntent();
-        if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
-            mShortcutMode = true;
-        }
+        mShortcutMode = myIntent.getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
 
         initList(getCursor());
         Uri uri = getObserverUri();
@@ -99,17 +103,21 @@ abstract class MyBaseListActivity extends ListActivity {
     /**
      * Initializes the list with a cursor
      */
-    abstract void initList(Cursor c);
+    abstract protected void initList(Cursor c);
     /**
      * @return The cursor of the data to be managed.
      */
-    abstract Cursor getCursor();
+    abstract protected Cursor getCursor();
     /**
      * @return The layout ID of the activity.
      */
-    abstract int getLayoutId();
+    abstract protected int getLayoutId();
     /**
      * @return The Uri to observe for changes
      */
-    abstract Uri getObserverUri();
+    abstract protected Uri getObserverUri();
+    /**
+     * @return The default Tab Uri
+     */
+    abstract protected Intent getShortcutIntent();
 }

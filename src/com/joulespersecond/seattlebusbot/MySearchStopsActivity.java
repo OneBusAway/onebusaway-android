@@ -34,6 +34,8 @@ import com.joulespersecond.oba.ObaStop;
 public class MySearchStopsActivity extends MySearchActivity {
     //private static final String TAG = "MySearchStopsActivity";
 
+    public static final String TAB_NAME = "search";
+
     private UIHelp.StopUserInfoMap mStopUserMap;
 
     @Override

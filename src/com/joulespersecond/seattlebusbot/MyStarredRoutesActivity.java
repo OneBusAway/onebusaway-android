@@ -15,13 +15,16 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import android.database.Cursor;
-
 import com.joulespersecond.oba.provider.ObaContract;
 
+import android.content.Intent;
+import android.database.Cursor;
+
 public class MyStarredRoutesActivity extends MyRouteListActivity {
+    public static final String TAB_NAME = "starred";
+
     @Override
-    Cursor getCursor() {
+    protected Cursor getCursor() {
         return managedQuery(ObaContract.Routes.CONTENT_URI,
                 PROJECTION,
                 ObaContract.Routes.FAVORITE + "=1",
@@ -29,8 +32,16 @@ public class MyStarredRoutesActivity extends MyRouteListActivity {
                 ObaContract.Routes.USE_COUNT + " desc");
     }
     @Override
-    int getLayoutId() {
+    protected int getLayoutId() {
         return R.layout.my_starred_route_list;
     }
     // TODO: Allow deleting from this list via the context menu.
+
+    @Override
+    protected Intent getShortcutIntent() {
+        return UIHelp.makeShortcut(this,
+                    getString(R.string.starred_routes_shortcut),
+                    new Intent(this, MyRoutesActivity.class)
+                        .setData(MyTabActivityBase.getDefaultTabUri(TAB_NAME)));
+    }
 }

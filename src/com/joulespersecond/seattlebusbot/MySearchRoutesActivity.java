@@ -34,6 +34,8 @@ import com.joulespersecond.oba.ObaRoute;
 public class MySearchRoutesActivity extends MySearchActivity {
     private static final String TAG = "MySearchRoutesActivity";
 
+    public static final String TAB_NAME = "search";
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         // Get the adapter (this may or may not be a SimpleCursorAdapter)

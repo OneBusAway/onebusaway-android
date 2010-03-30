@@ -565,6 +565,7 @@ public class StopInfoActivity extends ListActivity {
             else {
                 mEmptyText.setText(UIHelp.getStopErrorString(result.getCode()));
             }
+            mAsyncTask = null;
         }
     }
 

@@ -15,16 +15,18 @@
  */
 package com.joulespersecond.oba;
 
-import java.lang.reflect.Type;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
+import java.lang.reflect.Type;
+import java.util.concurrent.ConcurrentHashMap;
+
 final class JsonHelp {
+    //private static final String TAG = "JsonHelp";
+
     // Random Json helpers
     static <T> T deserializeChild(JsonObject obj, String name,
                      Type typeOfT, JsonDeserializationContext context) {
@@ -63,8 +65,10 @@ final class JsonHelp {
                 String id = JsonHelp.deserializeChild(obj, mId, String.class, context);
                 E e = mCache.get(id);
                 if (e != null) {
+                    //Log.d(TAG, "cache hit: " + id);
                     return e;
                 }
+                //Log.d(TAG, "cache miss: " + id);
                 E e2 = mDeserialize.doDeserialize(obj, id, type, context);
                 mCache.put(id, e2);
                 return e2;
@@ -76,6 +80,8 @@ final class JsonHelp {
                 throw new JsonParseException("Error while deserializing", e);
             }
         }
-
+        public void clear() {
+            mCache.clear();
+        }
     }
 }

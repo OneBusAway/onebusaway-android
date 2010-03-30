@@ -197,6 +197,13 @@ public class RouteInfoActivity extends ExpandableListActivity {
             return super.onContextItemSelected(item);
         }
     }
+    @Override
+    public void onLowMemory() {
+        //Log.d(TAG, "******** LOW MEMORY ******** ");
+        super.onLowMemory();
+        mRouteInfo = null;
+        mStopsForRoute = null;
+    }
 
     private void showOnMap(View v) {
         final TextView text = (TextView)v.findViewById(R.id.stop_id);
@@ -399,6 +406,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         else {
             empty.setText(UIHelp.getRouteErrorString(routeInfo.getCode()));
         }
+        mRouteInfoTask = null;
     }
     private void setStopsForRoute(StopsForRouteInfo result) {
         mStopsForRoute = result;
@@ -413,5 +421,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 new String[] { "name", "direction", "id" },
                 new int[] { R.id.name, R.id.direction, R.id.stop_id }
             ));
+        mStopsForRouteTask = null;
     }
 }

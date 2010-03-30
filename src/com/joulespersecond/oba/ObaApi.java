@@ -15,19 +15,19 @@
  */
 package com.joulespersecond.oba;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLEncoder;
+import com.google.android.maps.GeoPoint;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.google.android.maps.GeoPoint;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
 
 public final class ObaApi {
     private static final String TAG = "ObaApi";
@@ -47,23 +47,29 @@ public final class ObaApi {
     public static final double E6 = 1000*1000;
 
     private static class GsonHolder {
+        static final JsonHelp.CachingDeserializer<ObaAgency> mAgencyDeserializer =
+            new JsonHelp.CachingDeserializer<ObaAgency>(
+                    new ObaAgency.Deserialize(), "id");
+        static final JsonHelp.CachingDeserializer<ObaRoute> mRouteDeserializer =
+            new JsonHelp.CachingDeserializer<ObaRoute>(
+                    new ObaRoute.Deserialize(), "id");
+        static final JsonHelp.CachingDeserializer<ObaStop> mStopDeserializer =
+            new JsonHelp.CachingDeserializer<ObaStop>(
+                    new ObaStop.Deserialize(), "id");
+
         @SuppressWarnings("unchecked")
         static final Gson gsonObj = new GsonBuilder()
             .registerTypeAdapter(ObaArray.class, new ObaArray.Deserializer())
-
-            .registerTypeAdapter(ObaAgency.class,
-                    new JsonHelp.CachingDeserializer<ObaAgency>(
-                            new ObaAgency.Deserialize(), "id"))
-
-            .registerTypeAdapter(ObaRoute.class,
-                    new JsonHelp.CachingDeserializer<ObaRoute>(
-                            new ObaRoute.Deserialize(), "id"))
-
-            .registerTypeAdapter(ObaStop.class,
-                    new JsonHelp.CachingDeserializer<ObaStop>(
-                            new ObaStop.Deserialize(), "id"))
-
+            .registerTypeAdapter(ObaAgency.class, mAgencyDeserializer)
+            .registerTypeAdapter(ObaRoute.class, mRouteDeserializer)
+            .registerTypeAdapter(ObaStop.class, mStopDeserializer)
             .create();
+
+        static final void clearCache() {
+            mAgencyDeserializer.clear();
+            mRouteDeserializer.clear();
+            mStopDeserializer.clear();
+        }
     }
 
     static Gson getGson() {
@@ -225,5 +231,12 @@ public final class ObaApi {
      */
     public static final GeoPoint makeGeoPoint(double lat, double lon) {
         return new GeoPoint((int)(lat*E6), (int)(lon*E6));
+    }
+
+    /**
+     * Clears the object cache for low memory situations.
+     */
+    public static final void clearCache() {
+        GsonHolder.clearCache();
     }
 }

@@ -32,7 +32,7 @@ import android.net.Uri;
 public class ObaProvider extends ContentProvider {
     private class OpenHelper extends SQLiteOpenHelper {
         private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
-        private static final int DATABASE_VERSION = 14;
+        private static final int DATABASE_VERSION = 15;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -82,6 +82,12 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                     "alter table " + ObaContract.Routes.PATH +
                         " add column " + ObaContract.Routes.FAVORITE);
+                ++oldVersion;
+            }
+            if (oldVersion == 14) {
+                db.execSQL(
+                        "alter table " + ObaContract.Routes.PATH +
+                            " add column " + ObaContract.Routes.URL);
                 ++oldVersion;
             }
         }
@@ -183,6 +189,7 @@ public class ObaProvider extends ContentProvider {
         sRoutesProjectionMap.put(ObaContract.Routes.USER_NAME,	ObaContract.Routes.USER_NAME);
         sRoutesProjectionMap.put(ObaContract.Routes.ACCESS_TIME,ObaContract.Routes.ACCESS_TIME);
         sRoutesProjectionMap.put(ObaContract.Routes.FAVORITE, 	ObaContract.Routes.FAVORITE);
+        sRoutesProjectionMap.put(ObaContract.Routes.URL,        ObaContract.Routes.URL);
         sRoutesProjectionMap.put(ObaContract.Routes._COUNT,     "count(*)");
 
         sTripsProjectionMap = new HashMap<String,String>();

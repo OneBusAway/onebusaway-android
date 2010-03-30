@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -28,19 +30,19 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
 abstract class MyRouteListActivity extends MyBaseListActivity {
     //private static final String TAG = "MyRouteListActivity";
 
     protected static final String[] PROJECTION = {
         ObaContract.Routes._ID,
         ObaContract.Routes.SHORTNAME,
-        ObaContract.Routes.LONGNAME
+        ObaContract.Routes.LONGNAME,
+        ObaContract.Routes.URL
     };
     private static final int COL_ID = 0;
     private static final int COL_SHORTNAME = 1;
     //private static final int COL_LONGNAME = 2;
+    private static final int COL_URL = 3;
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -77,6 +79,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
 
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
+    private static final int CONTEXT_MENU_SHOW_URL = 3;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -92,6 +95,10 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_route_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
+        final String url = getUrl(getListView(), info.position);
+        if (url != null) {
+            menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
+        }
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -104,6 +111,9 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         case CONTEXT_MENU_SHOW_ON_MAP:
             MapViewActivity.start(this, getId(getListView(), info.position));
             return true;
+        case CONTEXT_MENU_SHOW_URL:
+            UIHelp.goToUrl(this, getUrl(getListView(), info.position));
+            return true;
         default:
             return super.onContextItemSelected(item);
         }
@@ -115,6 +125,13 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
         return c.getString(COL_ID);
+    }
+    protected String getUrl(ListView l, int position) {
+        // Get the cursor and fetch the stop ID from that.
+        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+        Cursor c = cursorAdapter.getCursor();
+        c.moveToPosition(position - l.getHeaderViewsCount());
+        return c.getString(COL_URL);
     }
 
     @Override

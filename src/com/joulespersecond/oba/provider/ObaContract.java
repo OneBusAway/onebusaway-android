@@ -83,6 +83,12 @@ public final class ObaContract {
          * <P>Type: TEXT</P>
          */
         public static final String LONGNAME = "long_name";
+
+        /**
+         * Returns the URL of the route schedule.
+         * <P>Type: TEXT</P>
+         */
+        public static final String URL = "url";
     }
 
     protected interface StopRouteKeyColumns {

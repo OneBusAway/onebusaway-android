@@ -42,7 +42,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -684,12 +683,10 @@ public class MapViewActivity extends MapActivity {
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                 case 0:
-                    Intent help = new Intent(Intent.ACTION_VIEW, Uri.parse(HELP_URL));
-                    startActivity(help);
+                    UIHelp.goToUrl(MapViewActivity.this, HELP_URL);
                     break;
                 case 1:
-                    Intent twitter = new Intent(Intent.ACTION_VIEW, Uri.parse(TWITTER_URL));
-                    startActivity(twitter);
+                    UIHelp.goToUrl(MapViewActivity.this, TWITTER_URL);
                     break;
                 case 2:
                     showDialog(WHATSNEW_DIALOG);

@@ -25,8 +25,20 @@
         <item>Set a reminder</item>
         <item>Show route information</item>
         <item>Show only this route</item>
+        <item>Show route schedule</item>
     </string-array>
     <string-array name="stop_item_options_edit">
+        <item>Edit this reminder</item>
+        <item>Show route information</item>
+        <item>Show only this route</item>
+        <item>Show route schedule</item>
+    </string-array>
+    <string-array name="stop_item_options_noschedule">
+        <item>Set a reminder</item>
+        <item>Show route information</item>
+        <item>Show only this route</item>
+    </string-array>
+    <string-array name="stop_item_options_edit_noschedule">
         <item>Edit this reminder</item>
         <item>Show route information</item>
         <item>Show only this route</item>

@@ -301,15 +301,27 @@ public class StopInfoActivity extends ListActivity {
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.stop_info_item_options_title);
+
+        final ObaRoute route = stop.getRoute(mResponse);
+        final String url = route != null ? route.getUrl() : null;
+        final boolean hasUrl = !TextUtils.isEmpty(url);
         // Check to see if the trip name is visible.
         // (we don't have any other state, so this is good enough)
         int options;
         View tripView = v.findViewById(R.id.trip_info);
         if (tripView.getVisibility() != View.GONE) {
-            options = R.array.stop_item_options_edit;
+            if (hasUrl) {
+                options = R.array.stop_item_options_edit;
+            }
+            else {
+                options = R.array.stop_item_options_edit_noschedule;
+            }
+        }
+        else if (hasUrl) {
+            options = R.array.stop_item_options;
         }
         else {
-            options = R.array.stop_item_options;
+            options = R.array.stop_item_options_noschedule;
         }
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -324,6 +336,9 @@ public class StopInfoActivity extends ListActivity {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(stop.getInfo().getRouteId());
                     setRoutesFilter(routes);
+                    break;
+                case 3:
+                    UIHelp.goToUrl(StopInfoActivity.this, url);
                     break;
                 }
             }

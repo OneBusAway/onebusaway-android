@@ -55,6 +55,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
     private static final int CONTEXT_MENU_DEFAULT = 1;
     private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
+    private static final int CONTEXT_MENU_SHOW_URL = 3;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -70,6 +71,10 @@ public class MySearchRoutesActivity extends MySearchActivity {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_route_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
+        final String url = getUrl(getListView(), info.position);
+        if (url != null) {
+            menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
+        }
     }
     @Override
     public boolean onContextItemSelected(MenuItem item) {
@@ -82,6 +87,9 @@ public class MySearchRoutesActivity extends MySearchActivity {
         case CONTEXT_MENU_SHOW_ON_MAP:
             MapViewActivity.start(this, getId(getListView(), info.position));
             return true;
+        case CONTEXT_MENU_SHOW_URL:
+            UIHelp.goToUrl(this, getUrl(getListView(), info.position));
+            return true;
         default:
             return super.onContextItemSelected(item);
         }
@@ -91,6 +99,11 @@ public class MySearchRoutesActivity extends MySearchActivity {
         ListAdapter adapter = l.getAdapter();
         ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
         return route.getId();
+    }
+    private String getUrl(ListView l, int position) {
+        ListAdapter adapter = l.getAdapter();
+        ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
+        return route.getUrl();
     }
 
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {

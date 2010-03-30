@@ -15,10 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.Iterator;
-import java.util.List;
+import com.google.android.maps.GeoPoint;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.provider.ObaContract;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -35,10 +37,10 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.maps.GeoPoint;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.provider.ObaContract;
+import java.util.Iterator;
+import java.util.List;
 
 final class UIHelp {
     //private static final String TAG = "UIHelp";
@@ -145,6 +147,19 @@ final class UIHelp {
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
         return intent;
     }
+
+    public static void goToUrl(Context context, String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        try {
+            context.startActivity(intent);
+        }
+        catch (ActivityNotFoundException e) {
+            Toast.makeText(context,
+                    context.getString(R.string.browser_error),
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     public static final int getRouteErrorString(int code) {
         switch (code) {

@@ -34,9 +34,11 @@ public final class ObaRoute {
                 JsonHelp.deserializeChild(obj, "longName", String.class, context);
             final String description =
                 JsonHelp.deserializeChild(obj, "description", String.class, context);
+            final String url =
+                JsonHelp.deserializeChild(obj, "url", String.class, context);
             final ObaAgency agency =
                 JsonHelp.deserializeChild(obj, "agency", ObaAgency.class, context);
-            return new ObaRoute(id, shortName, longName, description, agency);
+            return new ObaRoute(id, shortName, longName, description, url, agency);
         }
     }
    static String getAlternateRouteName(String id, String name) {
@@ -52,6 +54,7 @@ public final class ObaRoute {
     private final String shortName;
     private final String longName;
     private final String description;
+    private final String url;
     private final ObaAgency agency;
 
     /**
@@ -62,13 +65,20 @@ public final class ObaRoute {
         shortName = "";
         longName = "";
         description = "";
+        url = "";
         agency = null;
     }
-    ObaRoute(String _id, String _short, String _long, String _description, ObaAgency _agency) {
+    ObaRoute(String _id,
+            String _short,
+            String _long,
+            String _description,
+            String _url,
+            ObaAgency _agency) {
         id = _id != null ? _id : "";
         shortName = getAlternateRouteName(id, _short);
         longName = _long != null ? _long : "";
         description = _description != null ? _description : "";
+        url = _url != null ? _url : "";
         agency = _agency;
     }
     /**
@@ -101,6 +111,14 @@ public final class ObaRoute {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Returns the Url to the route schedule.
+     * @return The url to the route schedule.
+     */
+    public String getUrl() {
+        return url;
     }
 
     /**

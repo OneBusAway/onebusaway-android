@@ -15,15 +15,17 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaArrivalInfo;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
 
 import android.content.Context;
 import android.content.res.Resources;
 
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 final class StopInfo {
     final static class StopInfoComparator implements Comparator<StopInfo> {
@@ -150,5 +152,17 @@ final class StopInfo {
     }
     final int getColor() {
         return mColor;
+    }
+    final ObaRoute getRoute(ObaResponse response) {
+        final String routeId = mInfo.getRouteId();
+        ObaArray<ObaRoute> routes = response.getData().getStop().getRoutes();
+        final int len = routes.length();
+        for (int i=0; i < len; ++i) {
+            ObaRoute route = routes.get(i);
+            if (route.getId().equals(routeId)) {
+                return route;
+            }
+        }
+        return null;
     }
 }

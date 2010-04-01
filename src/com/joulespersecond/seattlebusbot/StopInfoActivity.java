@@ -37,6 +37,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -44,6 +45,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -301,15 +303,27 @@ public class StopInfoActivity extends ListActivity {
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.stop_info_item_options_title);
+
+        final ObaRoute route = stop.getRoute(mResponse);
+        final String url = route != null ? route.getUrl() : null;
+        final boolean hasUrl = !TextUtils.isEmpty(url);
         // Check to see if the trip name is visible.
         // (we don't have any other state, so this is good enough)
         int options;
         View tripView = v.findViewById(R.id.trip_info);
         if (tripView.getVisibility() != View.GONE) {
-            options = R.array.stop_item_options_edit;
+            if (hasUrl) {
+                options = R.array.stop_item_options_edit;
+            }
+            else {
+                options = R.array.stop_item_options_edit_noschedule;
+            }
+        }
+        else if (hasUrl) {
+            options = R.array.stop_item_options;
         }
         else {
-            options = R.array.stop_item_options;
+            options = R.array.stop_item_options_noschedule;
         }
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -324,6 +338,9 @@ public class StopInfoActivity extends ListActivity {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(stop.getInfo().getRouteId());
                     setRoutesFilter(routes);
+                    break;
+                case 3:
+                    UIHelp.goToUrl(StopInfoActivity.this, url);
                     break;
                 }
             }
@@ -565,6 +582,7 @@ public class StopInfoActivity extends ListActivity {
             else {
                 mEmptyText.setText(UIHelp.getStopErrorString(result.getCode()));
             }
+            mAsyncTask = null;
         }
     }
 
@@ -654,7 +672,14 @@ public class StopInfoActivity extends ListActivity {
             mNameView.setText(name);
         }
         if (direction != null) {
-            UIHelp.setStopDirection(mDirectionView, direction, false);
+            final int directionText = UIHelp.getStopDirectionText(direction);
+            ((TextView)mDirectionView).setText(directionText);
+            if (directionText != R.string.direction_none && !mInNameEdit) {
+                mDirectionView.setVisibility(View.VISIBLE);
+            }
+            else {
+                mDirectionView.setVisibility(View.GONE);
+            }
         }
     }
     void setFilterHeader() {
@@ -703,6 +728,17 @@ public class StopInfoActivity extends ListActivity {
             public void onClick(View v) {
                 setUserStopName(mEditNameView.getText().toString());
                 endNameEdit();
+            }
+        });
+        mEditNameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    setUserStopName(mEditNameView.getText().toString());
+                    endNameEdit();
+                    return true;
+                }
+                return false;
             }
         });
         // "Cancel"

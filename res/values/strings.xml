@@ -32,6 +32,7 @@
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
     <string name="loading">Loading...</string>
+    <string name="browser_error">Unable to launch browser.</string>
 
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>
@@ -89,6 +90,7 @@
     <string name="route_info_title">OneBusAway</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
+    <string name="route_info_goto_url">View schedule</string>
 
     <!-- My stops/routes -->
     <string name="my_recent_title">Recent</string>
@@ -110,9 +112,9 @@
     <string name="my_context_showonmap">Show on map</string>
     <string name="my_context_remove_recent">Remove from recent</string>
     <string name="my_context_remove_star">Remove star</string>
+    <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Find -->
-    <string name="find">Find</string>
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\n</string>
     <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in the search box.</string>
     <string name="find_hint_nofavoritestops_link">What\'s a stop number?</string>
@@ -168,7 +170,7 @@
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>
     <string name="bug_report_subject">OneBusAway: Bug Report</string>
-    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %s\nPhone: %s\nOS Version: %s\nSDK Version: %s\n</string>
+    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %s\nModel: %s\nOS Version: %s\nSDK Version: %s\n</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->

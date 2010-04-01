@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -139,9 +140,23 @@ public class RouteInfoActivity extends ExpandableListActivity {
         return true;
     }
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean hasUrl = false;
+        if (mRouteInfo != null) {
+            hasUrl = !TextUtils.isEmpty(mRouteInfo.getData().getAsRoute().getUrl());
+        }
+        menu.findItem(R.id.goto_url).setEnabled(hasUrl).setVisible(hasUrl);
+        return true;
+    }
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.show_on_map) {
+        final int id = item.getItemId();
+        if (id == R.id.show_on_map) {
             MapViewActivity.start(this, mRouteId);
+            return true;
+        }
+        else if (id == R.id.goto_url) {
+            UIHelp.goToUrl(this, mRouteInfo.getData().getAsRoute().getUrl());
             return true;
         }
         return false;
@@ -196,6 +211,13 @@ public class RouteInfoActivity extends ExpandableListActivity {
         default:
             return super.onContextItemSelected(item);
         }
+    }
+    @Override
+    public void onLowMemory() {
+        //Log.d(TAG, "******** LOW MEMORY ******** ");
+        super.onLowMemory();
+        mRouteInfo = null;
+        mStopsForRoute = null;
     }
 
     private void showOnMap(View v) {
@@ -384,6 +406,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
 
             String shortName = route.getShortName();
             String longName = route.getLongNameOrDescription();
+            String url = route.getUrl();
 
             shortNameText.setText(shortName);
             longNameText.setText(longName);
@@ -393,12 +416,14 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 ContentValues values = new ContentValues();
                 values.put(ObaContract.Routes.SHORTNAME, shortName);
                 values.put(ObaContract.Routes.LONGNAME, longName);
+                values.put(ObaContract.Routes.URL, url);
                 ObaContract.Routes.insertOrUpdate(this, route.getId(), values, true);
             }
         }
         else {
             empty.setText(UIHelp.getRouteErrorString(routeInfo.getCode()));
         }
+        mRouteInfoTask = null;
     }
     private void setStopsForRoute(StopsForRouteInfo result) {
         mStopsForRoute = result;
@@ -413,5 +438,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 new String[] { "name", "direction", "id" },
                 new int[] { R.id.name, R.id.direction, R.id.stop_id }
             ));
+        mStopsForRouteTask = null;
     }
 }

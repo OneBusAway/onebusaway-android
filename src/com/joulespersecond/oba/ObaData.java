@@ -41,6 +41,7 @@ public final class ObaData {
     private final String longName;
     private final String shortName;
     private final String description;
+    private final String url;
     private final ObaAgency agency;
     // Stop specific
     private final double lat;
@@ -66,6 +67,7 @@ public final class ObaData {
         longName = "";
         shortName = "";
         description = "";
+        url = "";
         agency = null;
         lat = 0;
         lon = 0;
@@ -123,7 +125,12 @@ public final class ObaData {
      */
     public ObaRoute getAsRoute() {
         // TODO: Remove this method after the API change has been rolled out.
-        return (route != null) ? route : new ObaRoute(id, shortName, longName, description, agency);
+        if (route != null) {
+            return route;
+        }
+        else {
+            return new ObaRoute(id, shortName, longName, description, url, agency);
+        }
     }
 
     /**
@@ -133,7 +140,12 @@ public final class ObaData {
      */
     public ObaStop getAsStop() {
         // TODO: Remove this method after the API change has been rolled out.
-        return (stop != null) ? stop : new ObaStop(id, lat, lon, direction, name, code, routes);
+        if (stop != null) {
+            return stop;
+        }
+        else {
+            return new ObaStop(id, lat, lon, direction, name, code, routes);
+        }
     }
 
     /**

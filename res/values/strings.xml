@@ -171,7 +171,7 @@
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>
     <string name="bug_report_subject">OneBusAway: Bug Report</string>
-    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %s\nPhone: %s\nOS Version: %s\nSDK Version: %s\n</string>
+    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %s\nModel: %s\nOS Version: %s\nSDK Version: %s\n</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->

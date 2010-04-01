@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.gson.JsonParseException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,12 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-import android.util.Log;
-
-import com.google.gson.JsonParseException;
-
 public final class ObaResponse {
-    private static final String TAG = "ObaResponse";
+    //private static final String TAG = "ObaResponse";
     public static final String VERSION = "1.0";
 
     private final String version;
@@ -80,7 +78,7 @@ public final class ObaResponse {
         return new ObaResponse(VERSION, code, error);
     }
     static public ObaResponse createFromURL(URL url) throws IOException {
-        long start = System.nanoTime();
+        //long start = System.nanoTime();
         boolean useGzip = false;
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setRequestProperty("Accept-Encoding", "gzip");
@@ -111,9 +109,9 @@ public final class ObaResponse {
                 }
             }
         }
-        long end = System.nanoTime();
-        Log.d(TAG, "Connect: " + (end-start)/1e6);
-        start = end;
+        //long end = System.nanoTime();
+        //Log.d(TAG, "Connect: " + (end-start)/1e6);
+        //start = end;
 
         Reader reader;
         if (useGzip) {
@@ -126,8 +124,8 @@ public final class ObaResponse {
         }
         try {
             ObaResponse r = ObaApi.getGson().fromJson(reader, ObaResponse.class);
-            end = System.nanoTime();
-            Log.d(TAG, "Parse: " + (end-start)/1e6);
+            //end = System.nanoTime();
+            //Log.d(TAG, "Parse: " + (end-start)/1e6);
             if (r != null) {
                 return r;
             }

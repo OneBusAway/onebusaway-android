@@ -73,6 +73,7 @@ public class MapViewActivity extends MapActivity {
     private static final String CENTER_LON = ".CenterLon";
     // Switches to 'route mode' -- stops aren't updated on move
     private static final String ROUTE_ID = ".RouteId";
+    private static final String SHOW_ROUTES = ".ShowRoutes";
 
     MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
@@ -82,6 +83,7 @@ public class MapViewActivity extends MapActivity {
     private String mRouteId;
     private String mFocusStopId;
     private GeoPoint mInitialCenter;
+    private boolean mShowRoutes;
     private AsyncTask<Object,Void,ObaResponse> mGetStopsByLocationTask;
     private AsyncTask<String,Void,ObaResponse> mGetStopsForRouteTask;
     private volatile boolean mForceRestartLocationTask;
@@ -207,6 +209,7 @@ public class MapViewActivity extends MapActivity {
             if (focusedId != null) {
                 mFocusStopId = focusedId;
             }
+            mShowRoutes = savedInstanceState.getBoolean(SHOW_ROUTES);
         }
 
         final Object config = getLastNonConfigurationInstance();
@@ -217,7 +220,6 @@ public class MapViewActivity extends MapActivity {
             }
             assert(result[0] != null);
             mStopsResponse = (ObaResponse)result[0];
-            // TODO: Show routes!
         }
 
         autoShowWhatsNew();
@@ -282,6 +284,9 @@ public class MapViewActivity extends MapActivity {
 
         if (mStopsResponse != null) {
             setOverlays(mStopsResponse);
+            if (mStopOverlay != null) {
+                showRoutes(null, mShowRoutes);
+            }
         }
         else if (isRouteMode()) {
             getStopsForRoute();
@@ -333,14 +338,14 @@ public class MapViewActivity extends MapActivity {
         if (focusedStopId != null) {
             outState.putString(FOCUS_STOP_ID, focusedStopId);
         }
+        outState.putBoolean(SHOW_ROUTES, mShowRoutes);
     }
     @Override
     public Object onRetainNonConfigurationInstance() {
         if (mStopsResponse != null) {
             return new Object[] {
                     mStopsResponse,
-                    mFocusStopId,
-                    areRoutesShown()
+                    mFocusStopId
             };
         }
         else {
@@ -374,7 +379,6 @@ public class MapViewActivity extends MapActivity {
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             private GeoPoint mMapCenter = mMapView.getMapCenter();
-
             @Override
             public void run() {
                 boolean start = mForceRestartLocationTask;
@@ -514,6 +518,13 @@ public class MapViewActivity extends MapActivity {
                 final OverlayItem newFocus) {
              mStopChangedHandler.post(new Runnable() {
                  public void run() {
+                     // There are times when this can be fired after we've already destroyed
+                     // ourselves (so mStopUserMap == null).
+                     // If that happens, just ignore it (later we could potentially remove the
+                     // runnable from the handler)
+                     if (mStopUserMap == null) {
+                         return;
+                     }
                      final View popup = findViewById(R.id.map_popup);
                      if (newFocus == null) {
                          popup.setVisibility(View.GONE);
@@ -524,7 +535,6 @@ public class MapViewActivity extends MapActivity {
                      final ObaStop stop = item.getStop();
 
                      // Is this a favorite?
-                     assert(mStopUserMap != null);
                      mStopUserMap.setView(popup, stop.getId(), stop.getName());
                      UIHelp.setStopDirection(popup.findViewById(R.id.direction),
                              stop.getDirection(),
@@ -548,13 +558,7 @@ public class MapViewActivity extends MapActivity {
     };
     private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
-            GridView grid = (GridView)findViewById(R.id.route_list);
-            if (grid.getVisibility() != View.GONE) {
-                showRoutes(grid, (TextView)v, false);
-            }
-            else {
-                showRoutes(grid, (TextView)v, true);
-            }
+            showRoutes((TextView)v, !mShowRoutes);
         }
     };
     private final View.OnClickListener mPopupClick = new View.OnClickListener() {
@@ -563,13 +567,8 @@ public class MapViewActivity extends MapActivity {
         }
     };
 
-    private boolean areRoutesShown() {
-        return findViewById(R.id.route_list).getVisibility() != View.GONE;
-    }
-    private void showRoutes(GridView grid, TextView text, boolean show) {
-        if (grid == null) {
-            grid = (GridView)findViewById(R.id.route_list);
-        }
+    private void showRoutes(TextView text, boolean show) {
+        final GridView grid = (GridView)findViewById(R.id.route_list);
         if (text == null) {
             text = (TextView)findViewById(R.id.show_routes);
         }
@@ -586,6 +585,7 @@ public class MapViewActivity extends MapActivity {
             grid.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);
         }
+        mShowRoutes = show;
         // When the text changes, we need to reset its clickable status
         Spannable span = (Spannable)text.getText();
         span.setSpan(mOnShowRoutes, 0, span.length(), 0);

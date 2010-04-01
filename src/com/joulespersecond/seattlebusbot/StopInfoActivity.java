@@ -37,6 +37,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -44,6 +45,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -719,6 +721,17 @@ public class StopInfoActivity extends ListActivity {
             public void onClick(View v) {
                 setUserStopName(mEditNameView.getText().toString());
                 endNameEdit();
+            }
+        });
+        mEditNameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    setUserStopName(mEditNameView.getText().toString());
+                    endNameEdit();
+                    return true;
+                }
+                return false;
             }
         });
         // "Cancel"

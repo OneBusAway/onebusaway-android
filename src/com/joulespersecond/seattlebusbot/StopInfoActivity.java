@@ -672,7 +672,14 @@ public class StopInfoActivity extends ListActivity {
             mNameView.setText(name);
         }
         if (direction != null) {
-            UIHelp.setStopDirection(mDirectionView, direction, false);
+            final int directionText = UIHelp.getStopDirectionText(direction);
+            ((TextView)mDirectionView).setText(directionText);
+            if (directionText != R.string.direction_none && !mInNameEdit) {
+                mDirectionView.setVisibility(View.VISIBLE);
+            }
+            else {
+                mDirectionView.setVisibility(View.GONE);
+            }
         }
     }
     void setFilterHeader() {

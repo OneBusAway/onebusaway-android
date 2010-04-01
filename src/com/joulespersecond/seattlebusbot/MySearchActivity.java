@@ -15,8 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaResponse;
 
 import android.app.Activity;
 import android.app.ListActivity;
@@ -33,12 +33,11 @@ import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaResponse;
+import java.util.Timer;
+import java.util.TimerTask;
 
 abstract class MySearchActivity extends ListActivity {
     protected boolean mShortcutMode = false;
@@ -48,6 +47,8 @@ abstract class MySearchActivity extends ListActivity {
     private Timer mSearchTimer;
     private EditText mSearchText;
     protected TextView mEmptyText;
+    private View mSearchButton;
+    private View mProgressBar;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
 
@@ -65,6 +66,8 @@ abstract class MySearchActivity extends ListActivity {
         mSearchText.setHint(getEditBoxHintText());
         mEmptyText = (TextView)findViewById(android.R.id.empty);
         mEmptyText.setMovementMethod(LinkMovementMethod.getInstance());
+        mSearchButton = findViewById(R.id.search);
+        mProgressBar = findViewById(R.id.progress_small);
         setHintText();
 
         Object obj = getLastNonConfigurationInstance();
@@ -75,7 +78,7 @@ abstract class MySearchActivity extends ListActivity {
         }
 
         // If the user clicks the button (and there's text), the do the search
-        Button button = (Button)findViewById(R.id.search);
+        View button = findViewById(R.id.search);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 doSearchFromText();
@@ -253,12 +256,12 @@ abstract class MySearchActivity extends ListActivity {
 
     private final AsyncTasks.Progress mLoadingProgress = new AsyncTasks.Progress() {
         public void showLoading() {
-            View v = findViewById(R.id.progress_small);
-            v.setVisibility(View.VISIBLE);
+            mSearchButton.setVisibility(View.GONE);
+            mProgressBar.setVisibility(View.VISIBLE);
         }
         public void hideLoading() {
-            View v = findViewById(R.id.progress_small);
-            v.setVisibility(View.GONE);
+            mSearchButton.setVisibility(View.VISIBLE);
+            mProgressBar.setVisibility(View.GONE);
         }
     };
 

@@ -115,7 +115,6 @@
     <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Find -->
-    <string name="find">Find</string>
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\n</string>
     <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in the search box.</string>
     <string name="find_hint_nofavoritestops_link">What\'s a stop number?</string>

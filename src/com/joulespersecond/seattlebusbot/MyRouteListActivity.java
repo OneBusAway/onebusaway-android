@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -96,7 +97,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
         final String url = getUrl(getListView(), info.position);
-        if (url != null) {
+        if (!TextUtils.isEmpty(url)) {
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
         }
     }

@@ -97,7 +97,7 @@
     <string name="my_starred_title">Starred</string>
     <string name="my_search_title">Search</string>
     <string name="my_no_recent_stops">You have no recent stops.</string>
-    <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on the arrivals page.</string>
+    <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on the arrivals screen.</string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <string name="my_no_starred_routes">You have no starred routes.</string>
 

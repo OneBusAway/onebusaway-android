@@ -103,6 +103,7 @@ public class StopsController {
             if (canFulfillRequest(mInfo)) {
                 mCurrentResponse = result;
                 mListener.onRequestFulfilled(result);
+                mTask = null;
             }
             else {
                 // Most a message back to ourselves in order

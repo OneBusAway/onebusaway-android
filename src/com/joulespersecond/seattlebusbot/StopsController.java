@@ -162,7 +162,7 @@ public class StopsController {
         mTask.execute();
     }
 
-    RequestInfo getCurrentResponse() {
+    RequestInfo getCurrentRequest() {
         return mCurrentRequest;
     }
     void cancel() {
@@ -170,6 +170,8 @@ public class StopsController {
         if (mTask != null) {
             mTask.cancel(true);
             mTask = null;
+            // Canceling invalidates the previous request.
+            mCurrentRequest = null;
         }
     }
 

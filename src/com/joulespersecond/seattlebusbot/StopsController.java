@@ -146,7 +146,7 @@ public class StopsController {
 
     void setCurrentRequest(RequestInfo info) {
         assert(info != null);
-        if (!canFulfillRequest(info)) {
+        if (!canFulfillRequest(info) || (mCurrentResponse == null)) {
             mCurrentRequest = info;
             // Start the task if it isn't running.
             // If it is running, wait for it to complete and it

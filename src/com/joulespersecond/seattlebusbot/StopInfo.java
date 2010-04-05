@@ -127,7 +127,7 @@ final class StopInfo {
             }
         }
         else {
-            mColor = R.color.stop_info_ontime;
+            mColor = R.color.stop_info_scheduled;
 
             mEta = scheduledMins - nowMins;
             mDisplayTime = scheduled;

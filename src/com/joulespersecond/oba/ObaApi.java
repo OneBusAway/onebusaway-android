@@ -65,6 +65,7 @@ public final class ObaApi {
             .registerTypeAdapter(ObaResponse.class, new ObaResponse.Deserializer())
             .registerTypeAdapter(ObaData2.class, new ObaData2.Deserializer())
             .registerTypeAdapter(ObaEntry.class, new ObaEntry.Deserializer())
+            .registerTypeAdapter(ObaReferences.class, new ObaReferences.Deserializer())
             .registerTypeAdapter(ObaAgency.class, mAgencyDeserializer)
             .registerTypeAdapter(ObaRoute.class, mRouteDeserializer)
             .registerTypeAdapter(ObaStop.class, mStopDeserializer)

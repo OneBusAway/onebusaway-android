@@ -16,21 +16,19 @@
 package com.joulespersecond.oba.test;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaData;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
-import com.joulespersecond.oba.ObaStop;
 
-public class StopByIdTest extends ObaTestCase {
+public class RouteByIdTest extends ObaTestCase {
     public void testV1() {
         ObaApi.setVersion(ObaApi.VERSION1);
-        doTest1(ObaApi.getStopById(getContext(), "1_29261"));
+        doTest1(ObaApi.getRouteById(getContext(), "1_43"));
     }
 
     public void testV2() {
         ObaApi.setVersion(ObaApi.VERSION2);
-        doTest1(ObaApi.getStopById(getContext(), "1_29261"));
+        doTest1(ObaApi.getRouteById(getContext(), "1_43"));
     }
 
     private void doTest1(ObaResponse response) {
@@ -38,19 +36,8 @@ public class StopByIdTest extends ObaTestCase {
 
         ObaData data = response.getData();
         assertNotNull(data);
-        ObaStop stop = data.getAsStop();
-        assertNotNull(stop);
-        assertEquals(stop.getId(), "1_29261");
-        assertEquals(stop.getDirection(), "W");
-
-        ObaArray<ObaRoute> routes = stop.getRoutes();
-        assertNotNull(routes);
-        assertTrue(routes.length() > 2);
-        // TODO: Much of this is dependent on the *order* in which objects are returned,
-        // in addition to the transit data itself, both of which are not guaranteed.
-        // We should something better like write a function assertSet()
-        ObaTestCase.checkRoute(routes.get(0), "1_8",  "8",  "1", "Metro Transit");
-        ObaTestCase.checkRoute(routes.get(1), "1_10", "10", "1", "Metro Transit");
-        ObaTestCase.checkRoute(routes.get(2), "1_43", "43", "1", "Metro Transit");
+        ObaRoute route = data.getAsRoute();
+        checkRoute(route, "1_43", "43", "1", "Metro Transit");
+        assertEquals(route.getUrl(), "http://metro.kingcounty.gov/tops/bus/schedules/s043_0_.html");
     }
 }

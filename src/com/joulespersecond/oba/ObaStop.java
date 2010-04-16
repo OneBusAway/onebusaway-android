@@ -27,6 +27,9 @@ public final class ObaStop {
     public static final ObaArray<ObaStop> EMPTY_ARRAY = new ObaArray<ObaStop>();
     public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaStop>>(){}.getType();
 
+    public static final ObaRefMap<ObaStop> EMPTY_MAP = new ObaRefMap<ObaStop>();
+    public static final Type MAP_TYPE = new TypeToken<ObaRefMap<ObaStop>>(){}.getType();
+
     static class Deserialize implements JsonHelp.Deserialize<ObaStop> {
         public ObaStop doDeserialize(JsonObject obj,
                                 String id,

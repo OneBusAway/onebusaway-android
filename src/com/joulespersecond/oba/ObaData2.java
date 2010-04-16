@@ -34,11 +34,9 @@ public final class ObaData2 implements ObaData {
             // First, the references
             final ObaReferences refs =
                 JsonHelp.deserializeChild(obj, "references", ObaReferences.class, context);
-            if (refs != null) {
-                ObaApi.mRefMap.put(context, refs);
-            }
             final ObaEntry entry =
                 JsonHelp.deserializeChild(obj, "entry", ObaEntry.class, context);
+            // This is added in ObaReferences.Deserializer
             ObaApi.mRefMap.remove(context);
             return new ObaData2(refs, entry);
         }

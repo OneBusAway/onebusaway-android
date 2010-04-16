@@ -15,12 +15,52 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
+import java.lang.reflect.Type;
+
 public final class ObaReferences {
     public static final ObaReferences EMPTY_OBJECT = new ObaReferences();
 
-    private final ObaRefMap<ObaAgency> agencies;
-    private final ObaRefMap<ObaRoute> routes;
-    private final ObaRefMap<ObaStop> stops;
+    //
+    // We need to have a custom deserializer because we are responsible for
+    // adding the ObaReferences object to the context map (ObaApi.mRefMap)
+    // because our children also need access to the references.
+    //
+    static class Deserializer implements JsonDeserializer<ObaReferences> {
+        @Override
+        public ObaReferences deserialize(JsonElement element,
+                Type type,
+                JsonDeserializationContext context) throws JsonParseException {
+            final JsonObject obj = element.getAsJsonObject();
+
+            ObaReferences refs = new ObaReferences();
+            ObaApi.mRefMap.put(context, refs);
+            // We need to deserialize directly into the member maps
+            // because lower references might depend on earlier references
+            final ObaRefMap<ObaAgency> a =
+                JsonHelp.deserializeChild(obj, "agencies", ObaAgency.MAP_TYPE, context);
+            refs.agencies = a != null ? a : ObaAgency.EMPTY_MAP;
+
+            final ObaRefMap<ObaRoute> r =
+                JsonHelp.deserializeChild(obj, "routes", ObaRoute.MAP_TYPE, context);
+            refs.routes = r != null ? r : ObaRoute.EMPTY_MAP;
+
+            final ObaRefMap<ObaStop> s =
+                JsonHelp.deserializeChild(obj, "stops", ObaStop.MAP_TYPE, context);
+            refs.stops = s != null ? s : ObaStop.EMPTY_MAP;
+
+            return refs;
+        }
+    }
+
+    private ObaRefMap<ObaAgency> agencies;
+    private ObaRefMap<ObaRoute> routes;
+    private ObaRefMap<ObaStop> stops;
 
     ObaReferences() {
         agencies = null;
@@ -36,36 +76,5 @@ public final class ObaReferences {
     }
     ObaRefMap<ObaStop> getStopMap() {
         return stops;
-    }
-
-    /**
-     * Returns an agency by the specified id, or an empty agency object.
-     */
-    public ObaAgency getAgency(String id) {
-        ObaAgency result = null;
-        if (agencies != null) {
-            result = agencies.get(id);
-        }
-        return (result != null) ? result : ObaAgency.EMPTY_OBJECT;
-    }
-    /**
-     * Returns a route by the specified id, or an empty route object.
-     */
-    public ObaRoute getRoute(String id) {
-        ObaRoute result = null;
-        if (routes != null) {
-            result = routes.get(id);
-        }
-        return (result != null) ? result : ObaRoute.EMPTY_OBJECT;
-    }
-    /**
-     * Returns a stop by the specified id, or an empty stop object.
-     */
-    public ObaStop getStop(String id) {
-        ObaStop result = null;
-        if (stops != null) {
-            result = stops.get(id);
-        }
-        return (result != null) ? result : ObaStop.EMPTY_OBJECT;
     }
 }

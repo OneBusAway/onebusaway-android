@@ -15,11 +15,11 @@
  */
 package com.joulespersecond.oba;
 
-import java.lang.reflect.Type;
-
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 
 
 
@@ -27,6 +27,9 @@ public final class ObaRoute {
     public static final ObaRoute EMPTY_OBJECT = new ObaRoute();
     public static final ObaArray<ObaRoute> EMPTY_ARRAY = new ObaArray<ObaRoute>();
     public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaRoute>>(){}.getType();
+
+    public static final ObaRefMap<ObaRoute> EMPTY_MAP = new ObaRefMap<ObaRoute>();
+    public static final Type MAP_TYPE = new TypeToken<ObaRefMap<ObaRoute>>(){}.getType();
 
     static class Deserialize implements JsonHelp.Deserialize<ObaRoute> {
         public ObaRoute doDeserialize(JsonObject obj,

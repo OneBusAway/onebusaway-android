@@ -149,7 +149,7 @@ public final class ObaResponse {
         return text;
     }
     public ObaData getData() {
-        return (data != null) ? data : new ObaData();
+        return (data != null) ? data : new ObaData1();
     }
     @Override
     public String toString() {

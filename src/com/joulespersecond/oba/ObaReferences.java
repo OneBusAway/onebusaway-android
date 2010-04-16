@@ -16,6 +16,8 @@
 package com.joulespersecond.oba;
 
 public final class ObaReferences {
+    public static final ObaReferences EMPTY_OBJECT = new ObaReferences();
+
     private final ObaRefMap<ObaAgency> agencies;
     private final ObaRefMap<ObaRoute> routes;
     private final ObaRefMap<ObaStop> stops;
@@ -26,6 +28,16 @@ public final class ObaReferences {
         stops = null;
     }
 
+    ObaRefMap<ObaAgency> getAgencyMap() {
+        return agencies;
+    }
+    ObaRefMap<ObaRoute> getRouteMap() {
+        return routes;
+    }
+    ObaRefMap<ObaStop> getStopMap() {
+        return stops;
+    }
+
     /**
      * Returns an agency by the specified id, or an empty agency object.
      */
@@ -34,7 +46,7 @@ public final class ObaReferences {
         if (agencies != null) {
             result = agencies.get(id);
         }
-        return (result != null) ? result : new ObaAgency();
+        return (result != null) ? result : ObaAgency.EMPTY_OBJECT;
     }
     /**
      * Returns a route by the specified id, or an empty route object.
@@ -44,7 +56,7 @@ public final class ObaReferences {
         if (routes != null) {
             result = routes.get(id);
         }
-        return (result != null) ? result : new ObaRoute();
+        return (result != null) ? result : ObaRoute.EMPTY_OBJECT;
     }
     /**
      * Returns a stop by the specified id, or an empty stop object.
@@ -54,6 +66,6 @@ public final class ObaReferences {
         if (stops != null) {
             result = stops.get(id);
         }
-        return (result != null) ? result : new ObaStop();
+        return (result != null) ? result : ObaStop.EMPTY_OBJECT;
     }
 }

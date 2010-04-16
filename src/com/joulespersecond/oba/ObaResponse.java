@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -30,11 +31,41 @@ import java.util.zip.GZIPInputStream;
 
 import android.util.Log;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 public final class ObaResponse {
     private static final String TAG = "ObaResponse";
-    public static final String VERSION = "1.0";
+    public static final String VERSION1 = "1";
+    public static final String VERSION2 = "2";
+
+    static class Deserializer implements JsonDeserializer<ObaResponse> {
+        @Override
+        public ObaResponse deserialize(JsonElement element,
+                Type type,
+                JsonDeserializationContext context) throws JsonParseException {
+            final JsonObject obj = element.getAsJsonObject();
+
+            final String version =
+                JsonHelp.deserializeChild(obj, "version", String.class, context);
+            final int code =
+                JsonHelp.deserializeChild(obj, "code", int.class, context);
+            final String text =
+                JsonHelp.deserializeChild(obj, "text", String.class, context);
+            ObaData data;
+
+            if (VERSION2.equals(version)) {
+                data = JsonHelp.deserializeChild(obj, "data", ObaData2.class, context);
+            }
+            else {
+                data = JsonHelp.deserializeChild(obj, "data", ObaData1.class, context);
+            }
+            return new ObaResponse(version, code, text, data);
+        }
+    }
 
     private final String version;
     private final int code;
@@ -44,21 +75,27 @@ public final class ObaResponse {
     /**
      * Constructor from Deserializer
      */
-    private ObaResponse() {
-        version = VERSION;
+    ObaResponse() {
+        version = VERSION1;
         code = 0;
         text = "Uninit";
-        data = null;
+        data = ObaData1.EMPTY_OBJECT;
     }
 
     /**
      * Constructor for ObaResponse
      */
+    ObaResponse(String v, int c, String t, ObaData d) {
+        version = v;
+        code = c;
+        text = t;
+        data = d;
+    }
     private ObaResponse(String v, int c, String t) {
         version = v;
         code = c;
         text = t;
-        data = null;
+        data = ObaData1.EMPTY_OBJECT;
     }
     static public ObaResponse createFromString(String str)  {
         try {
@@ -74,10 +111,10 @@ public final class ObaResponse {
         }
     }
     static public ObaResponse createFromError(String error) {
-        return new ObaResponse(VERSION, 0, error);
+        return new ObaResponse(VERSION1, 0, error);
     }
     static public ObaResponse createFromError(String error, int code) {
-        return new ObaResponse(VERSION, code, error);
+        return new ObaResponse(VERSION1, code, error);
     }
     static public ObaResponse createFromURL(URL url) throws IOException {
         long start = System.nanoTime();
@@ -149,7 +186,7 @@ public final class ObaResponse {
         return text;
     }
     public ObaData getData() {
-        return (data != null) ? data : new ObaData1();
+        return data;
     }
     @Override
     public String toString() {

@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class JsonHelp {
@@ -82,6 +83,48 @@ final class JsonHelp {
         }
         public void clear() {
             mCache.clear();
+        }
+    }
+
+    // This will look up the "reference" child.
+    // If it exists, it will deference that.
+    // Otherwise, it looks up the "non-reference" child.
+    static <E> E derefObject(JsonObject obj,
+            JsonDeserializationContext context,
+            String refChild,
+            String nonRefChild,
+            ObaRefMap<E> map,
+            Class<E> cls) {
+        final String id =
+            JsonHelp.deserializeChild(obj, refChild, String.class, context);
+        if (id != null) {
+            return map.get(id);
+        }
+        else {
+            return JsonHelp.deserializeChild(obj, nonRefChild, cls, context);
+        }
+    }
+    static <E> ObaArray<E> derefArray(JsonObject obj,
+            JsonDeserializationContext context,
+            String refChild,
+            String nonRefChild,
+            ObaRefMap<E> map,
+            Type arrayType) {
+        final String[] ids =
+            JsonHelp.deserializeChild(obj, refChild, String[].class, context);
+        if (ids != null) {
+            // dereference stops
+            ArrayList<E> array = new ArrayList<E>();
+            for (String id : ids) {
+                E e = map.get(id);
+                if (e != null) {
+                    array.add(e);
+                }
+            }
+            return new ObaArray<E>(array);
+        }
+        else {
+            return JsonHelp.deserializeChild(obj, nonRefChild, arrayType, context);
         }
     }
 }

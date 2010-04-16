@@ -18,9 +18,6 @@ package com.joulespersecond.oba;
 import com.google.android.maps.GeoPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -29,7 +26,6 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLEncoder;
 
@@ -65,6 +61,9 @@ public final class ObaApi {
         static final Gson gsonObj = new GsonBuilder()
             .registerTypeAdapter(ObaArray.class, new ObaArray.Deserializer())
             .registerTypeAdapter(ObaRefMap.class, new ObaRefMap.Deserializer())
+            .registerTypeAdapter(ObaResponse.class, new ObaResponse.Deserializer())
+            .registerTypeAdapter(ObaData2.class, new ObaData2.Deserializer())
+            .registerTypeAdapter(ObaEntry.class, new ObaEntry.Deserializer())
             .registerTypeAdapter(ObaAgency.class, mAgencyDeserializer)
             .registerTypeAdapter(ObaRoute.class, mRouteDeserializer)
             .registerTypeAdapter(ObaStop.class, mStopDeserializer)
@@ -74,33 +73,6 @@ public final class ObaApi {
             mAgencyDeserializer.clear();
             mRouteDeserializer.clear();
             mStopDeserializer.clear();
-        }
-    }
-
-    /**
-     * This rather simply wraps a deserialization context and allows
-     * us to get access to the references during deserialization.
-     *
-     * It is used in ObaData2
-     * @author paulw
-     */
-    static class JsonRefContext implements JsonDeserializationContext {
-        private final ObaReferences mRefs;
-        private final JsonDeserializationContext mContext;
-
-        JsonRefContext(ObaReferences refs, JsonDeserializationContext context) {
-            mContext = context;
-            mRefs = refs;
-        }
-
-        @Override
-        public <T> T deserialize(JsonElement arg0, Type arg1)
-                throws JsonParseException {
-            return mContext.deserialize(arg0, arg1);
-        }
-
-        ObaReferences getReferences() {
-            return mRefs;
         }
     }
 
@@ -119,9 +91,9 @@ public final class ObaApi {
     }
 
     private static String getUrl(Context context) {
-      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-      String serverName = preferences.getString("preferences_oba_api_servername", "api.onebusaway.org");
-      return "http://" + serverName+ "/api/where";
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String serverName = preferences.getString("preferences_oba_api_servername", "api.onebusaway.org");
+        return "http://" + serverName+ "/api/where";
     }
 
 

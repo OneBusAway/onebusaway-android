@@ -23,6 +23,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 public final class ObaStop {
+    public static final ObaStop EMPTY_OBJECT = new ObaStop();
+    public static final ObaArray<ObaStop> EMPTY_ARRAY = new ObaArray<ObaStop>();
+    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaStop>>(){}.getType();
+
     static class Deserialize implements JsonHelp.Deserialize<ObaStop> {
         public ObaStop doDeserialize(JsonObject obj,
                                 String id,
@@ -68,7 +72,7 @@ public final class ObaStop {
         direction = "";
         name = "";
         code = "";
-        routes = null;
+        routes = ObaRoute.EMPTY_ARRAY;
     }
     ObaStop(String _id,
                 double _lat, double _lon,
@@ -80,7 +84,7 @@ public final class ObaStop {
         direction = _dir != null ? _dir : "";
         name = _name != null ? _name : "";
         code = _code != null ? _code : "";
-        routes = _routes;
+        routes = _routes != null ? _routes : ObaRoute.EMPTY_ARRAY;
     }
     /**
      * Returns the stop ID.
@@ -145,7 +149,7 @@ public final class ObaStop {
      * @return The routes serving this stop.
      */
     public ObaArray<ObaRoute> getRoutes() {
-        return (routes != null) ? routes : new ObaArray<ObaRoute>();
+        return routes;
     }
 
     @Override

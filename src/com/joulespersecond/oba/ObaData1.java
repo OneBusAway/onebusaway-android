@@ -16,7 +16,9 @@
 package com.joulespersecond.oba;
 
 
-public final class ObaData1 {
+public final class ObaData1 implements ObaData {
+    public static final ObaData1 EMPTY_OBJECT = new ObaData1();
+
     //
     // This is definitely the most complicated object, because unfortunately
     // there's no way here to tell what type of data we are.
@@ -76,53 +78,32 @@ public final class ObaData1 {
         code = "";
     }
 
-    /**
-     * Retrieves the list of stops, if they exist.
-     *
-     * @return The list of stops, or an empty array.
-     */
+    @Override
     public ObaArray<ObaStop> getStops() {
         return (stops != null) ? stops : new ObaArray<ObaStop>();
     }
-    /**
-     * Retrieves the list of routes, if they exist.
-     *
-     * @return The list of routes, or an empty array.
-     */
+
+    @Override
     public ObaArray<ObaRoute> getRoutes() {
         return (routes != null) ? routes : new ObaArray<ObaRoute>();
     }
-    /**
-     * Retrieves the Stop for this response.
-     *
-     * @return The child stop object, or an empty object.
-     */
+
+    @Override
     public ObaStop getStop() {
         return (stop != null) ? stop : new ObaStop();
     }
-    /**
-     * Retrieves the Route for this response.
-     *
-     * @return The child route object, or an empty object.
-     */
+
+    @Override
     public ObaRoute getRoute() {
         return (route != null) ? route : new ObaRoute();
     }
 
-    /**
-     * Retrieves the list of Nearby Stops for the stop.
-     *
-     * @return The list of nearby stops, or an empty array.
-     */
+    @Override
     public ObaArray<ObaStop> getNearbyStops() {
         return (nearbyStops != null) ? nearbyStops : new ObaArray<ObaStop>();
     }
 
-    /**
-     * Retrieves this object as a route.
-     *
-     * @return This object as a route.
-     */
+    @Override
     public ObaRoute getAsRoute() {
         // TODO: Remove this method after the API change has been rolled out.
         if (route != null) {
@@ -133,11 +114,7 @@ public final class ObaData1 {
         }
     }
 
-    /**
-     * Retrieves this object as a stop.
-     *
-     * @return This object as a stop.
-     */
+    @Override
     public ObaStop getAsStop() {
         // TODO: Remove this method after the API change has been rolled out.
         if (stop != null) {
@@ -148,38 +125,23 @@ public final class ObaData1 {
         }
     }
 
-    /**
-     * Retrieves the list of arrivals and departures.
-     *
-     * @return The list of arrivals/departures, or an empty array.
-     */
+    @Override
     public ObaArray<ObaArrivalInfo> getArrivalsAndDepartures() {
         return (arrivalsAndDepartures != null) ?
                 arrivalsAndDepartures : new ObaArray<ObaArrivalInfo>();
     }
 
-    /**
-     * Retrieves the list of stop groupings.
-     *
-     * @return The list of stop groupings, or an empty array.
-     */
+    @Override
     public ObaArray<ObaStopGrouping> getStopGroupings() {
         return (stopGroupings != null) ? stopGroupings : new ObaArray<ObaStopGrouping>();
     }
 
-    /**
-     * Retrieves the list of polylines.
-     *
-     * @return The list of polylines, or an empty array.
-     */
+    @Override
     public ObaArray<ObaPolyline> getPolylines() {
         return (polylines != null) ? polylines : new ObaArray<ObaPolyline>();
     }
 
-    /**
-     * For searches, returns whether the search exceeded the maximum
-     * number of results.
-     */
+    @Override
     public boolean getLimitExceeded() {
         return limitExceeded;
     }

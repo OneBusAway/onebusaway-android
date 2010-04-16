@@ -21,6 +21,8 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 
 public final class ObaAgency {
+    public static final ObaAgency EMPTY_OBJECT = new ObaAgency();
+
     static class Deserialize implements JsonHelp.Deserialize<ObaAgency> {
         public ObaAgency doDeserialize(JsonObject obj,
                                 String id,

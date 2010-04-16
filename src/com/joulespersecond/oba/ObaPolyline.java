@@ -15,12 +15,18 @@
  */
 package com.joulespersecond.oba;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.android.maps.GeoPoint;
+import com.google.gson.reflect.TypeToken;
 
 public final class ObaPolyline {
+    public static final ObaPolyline EMPTY_OBJECT = new ObaPolyline();
+    public static final ObaArray<ObaPolyline> EMPTY_ARRAY = new ObaArray<ObaPolyline>();
+    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaPolyline>>(){}.getType();
+
     private final String points;
     private final int length;
     private final String levels;

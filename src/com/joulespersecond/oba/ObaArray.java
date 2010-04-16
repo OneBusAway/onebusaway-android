@@ -15,17 +15,17 @@
  */
 package com.joulespersecond.oba;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
-public final class ObaArray<E> {
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+
+public final class ObaArray<E> /*implements Iterable<E>*/ {
     static class Deserializer<E> implements JsonDeserializer<ObaArray<E>> {
         public ObaArray<E> deserialize(JsonElement elem, Type type,
                 JsonDeserializationContext context) throws JsonParseException {
@@ -87,4 +87,35 @@ public final class ObaArray<E> {
     public String toString() {
         return mArray.toString();
     }
+
+    /*
+    private class ReadOnlyIterator implements Iterator<E> {
+        private final Iterator<E> mIter;
+
+        ReadOnlyIterator(Iterator<E> base) {
+            mIter = base;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return mIter.hasNext();
+        }
+
+        @Override
+        public E next() {
+            return mIter.next();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return new ReadOnlyIterator(mArray.iterator());
+    }
+    */
 }

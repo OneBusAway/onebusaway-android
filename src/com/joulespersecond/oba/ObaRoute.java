@@ -43,8 +43,8 @@ public final class ObaRoute {
                 JsonHelp.deserializeChild(obj, "url", String.class, context);
 
             ObaAgency agency;
-            if (context instanceof JsonRefContext) {
-                final ObaReferences refs = ((JsonRefContext)context).getReferences();
+            ObaReferences refs = ObaApi.mRefMap.get(context);
+            if (refs != null) {
                 final ObaRefMap<ObaAgency> map = refs.getAgencyMap();
                 agency = JsonHelp.derefObject(obj,
                         context, "agencyId", "agency", map, ObaAgency.class);

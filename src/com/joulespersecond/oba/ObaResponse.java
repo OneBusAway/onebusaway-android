@@ -39,8 +39,6 @@ import com.google.gson.JsonParseException;
 
 public final class ObaResponse {
     private static final String TAG = "ObaResponse";
-    public static final String VERSION1 = "1";
-    public static final String VERSION2 = "2";
 
     static class Deserializer implements JsonDeserializer<ObaResponse> {
         @Override
@@ -57,7 +55,7 @@ public final class ObaResponse {
                 JsonHelp.deserializeChild(obj, "text", String.class, context);
             ObaData data;
 
-            if (VERSION2.equals(version)) {
+            if (ObaApi.VERSION2.equals(version)) {
                 data = JsonHelp.deserializeChild(obj, "data", ObaData2.class, context);
             }
             else {
@@ -76,7 +74,7 @@ public final class ObaResponse {
      * Constructor from Deserializer
      */
     ObaResponse() {
-        version = VERSION1;
+        version = ObaApi.VERSION1;
         code = 0;
         text = "Uninit";
         data = ObaData1.EMPTY_OBJECT;
@@ -85,17 +83,11 @@ public final class ObaResponse {
     /**
      * Constructor for ObaResponse
      */
-    ObaResponse(String v, int c, String t, ObaData d) {
+    private ObaResponse(String v, int c, String t, ObaData d) {
         version = v;
         code = c;
         text = t;
-        data = d;
-    }
-    private ObaResponse(String v, int c, String t) {
-        version = v;
-        code = c;
-        text = t;
-        data = ObaData1.EMPTY_OBJECT;
+        data = d != null ? d : ObaData1.EMPTY_OBJECT;
     }
     static public ObaResponse createFromString(String str)  {
         try {
@@ -111,10 +103,10 @@ public final class ObaResponse {
         }
     }
     static public ObaResponse createFromError(String error) {
-        return new ObaResponse(VERSION1, 0, error);
+        return new ObaResponse(ObaApi.VERSION1, 0, error, null);
     }
     static public ObaResponse createFromError(String error, int code) {
-        return new ObaResponse(VERSION1, code, error);
+        return new ObaResponse(ObaApi.VERSION1, code, error, null);
     }
     static public ObaResponse createFromURL(URL url) throws IOException {
         long start = System.nanoTime();

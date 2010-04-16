@@ -34,9 +34,12 @@ public final class ObaData2 implements ObaData {
             // First, the references
             final ObaReferences refs =
                 JsonHelp.deserializeChild(obj, "references", ObaReferences.class, context);
+            if (refs != null) {
+                ObaApi.mRefMap.put(context, refs);
+            }
             final ObaEntry entry =
-                JsonHelp.deserializeChild(obj, "entry", ObaEntry.class,
-                        new JsonRefContext(refs != null ? refs : ObaReferences.EMPTY_OBJECT, context));
+                JsonHelp.deserializeChild(obj, "entry", ObaEntry.class, context);
+            ObaApi.mRefMap.remove(context);
             return new ObaData2(refs, entry);
         }
     }
@@ -48,7 +51,7 @@ public final class ObaData2 implements ObaData {
         references = ObaReferences.EMPTY_OBJECT;
         entry = ObaEntry.EMPTY_OBJECT;
     }
-    ObaData2(ObaReferences refs, ObaEntry e) {
+    private ObaData2(ObaReferences refs, ObaEntry e) {
         references = refs != null ? refs : ObaReferences.EMPTY_OBJECT;
         entry = e != null ? e : ObaEntry.EMPTY_OBJECT;
     }

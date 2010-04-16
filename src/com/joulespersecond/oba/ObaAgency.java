@@ -50,10 +50,10 @@ public final class ObaAgency {
         id = _id;
         name = _name;
     }
-    String getId() {
+    public String getId() {
         return id;
     }
-    String getName() {
+    public String getName() {
         return name;
     }
     /*

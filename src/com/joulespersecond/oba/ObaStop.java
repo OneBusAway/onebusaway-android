@@ -43,10 +43,18 @@ public final class ObaStop {
             final String code =
                 JsonHelp.deserializeChild(obj, "code", String.class, context);
 
-            // The deserializer needs the parameterized type, not the raw type.
-            Type paramType = new TypeToken<ObaArray<ObaRoute>>(){}.getType();
-            final ObaArray<ObaRoute> routes =
-                JsonHelp.deserializeChild(obj, "routes", paramType, context);
+            ObaReferences refs = ObaApi.mRefMap.get(context);
+            ObaArray<ObaRoute> routes;
+            if (refs != null) {
+                final ObaRefMap<ObaRoute> map = refs.getRouteMap();
+                routes =
+                    JsonHelp.derefArray(obj,
+                            context, "routeIds", "routes", map, ObaRoute.ARRAY_TYPE);
+            }
+            else {
+                routes =
+                    JsonHelp.deserializeChild(obj, "routes", ObaRoute.ARRAY_TYPE, context);
+            }
 
             final double lat2 = (lat != null) ? lat : 0;
             final double lon2 = (lon != null) ? lon : 0;

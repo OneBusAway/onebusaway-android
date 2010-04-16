@@ -62,22 +62,28 @@ public final class ObaEntry {
             final ObaArray<ObaPolyline> polylines =
                 JsonHelp.deserializeChild(obj,
                         "polylines", ObaPolyline.class, context);
-            final boolean limit =
-                JsonHelp.deserializeChild(obj, "limitExceeded", boolean.class, context);
+            final Boolean _limit =
+                JsonHelp.deserializeChild(obj, "limitExceeded", Boolean.class, context);
+            final boolean limit = _limit != null ? _limit : false;
 
             ObaArray<ObaStop> stops = null;
             ObaArray<ObaRoute> routes = null;
             ObaArray<ObaStop> nearbyStops = null;
+            // If there are any child <stop>,<stopId>,<route>,<routeId> tags,
+            // they take precedence over anything deserialized stops/routes
+            // we created from ourselves above.
+            ObaStop substop = null;
+            ObaRoute subroute = null;
 
             // Finally, see if we have any references.
-            if (context instanceof JsonRefContext) {
-                final ObaReferences refs = ((JsonRefContext)context).getReferences();
+            ObaReferences refs = ObaApi.mRefMap.get(context);
+            if (refs != null) {
                 final ObaRefMap<ObaStop> stopMap = refs.getStopMap();
                 final ObaRefMap<ObaRoute> routeMap = refs.getRouteMap();
 
-                stop = JsonHelp.derefObject(obj,
+                substop = JsonHelp.derefObject(obj,
                         context, "stopId", "stop", stopMap, ObaStop.class);
-                route = JsonHelp.derefObject(obj,
+                subroute = JsonHelp.derefObject(obj,
                         context, "routeId", "route", routeMap, ObaRoute.class);
                 stops = JsonHelp.derefArray(obj,
                         context, "stopIds", "stops", stopMap, ObaStop.ARRAY_TYPE);
@@ -89,12 +95,18 @@ public final class ObaEntry {
             }
             else {
                 // We can only use the normal, non-referenced values
-                stop = JsonHelp.deserializeChild(obj, "stop", ObaStop.class, context);
-                route = JsonHelp.deserializeChild(obj, "route", ObaRoute.class, context);
+                substop = JsonHelp.deserializeChild(obj, "stop", ObaStop.class, context);
+                subroute = JsonHelp.deserializeChild(obj, "route", ObaRoute.class, context);
                 stops = JsonHelp.deserializeChild(obj, "stops", ObaStop.ARRAY_TYPE, context);
                 routes = JsonHelp.deserializeChild(obj, "routes", ObaRoute.ARRAY_TYPE, context);
                 nearbyStops =
                     JsonHelp.deserializeChild(obj, "nearbyStops", ObaStop.ARRAY_TYPE, context);
+            }
+            if (substop != null) {
+                stop = substop;
+            }
+            if (subroute != null) {
+                route = subroute;
             }
 
             return new ObaEntry(stop, route, stops, routes,
@@ -126,7 +138,7 @@ public final class ObaEntry {
         polylines = ObaPolyline.EMPTY_ARRAY;
         limitExceeded = false;
     }
-    ObaEntry(ObaStop _stop,
+    private ObaEntry(ObaStop _stop,
             ObaRoute _route,
             ObaArray<ObaStop> _stops,
             ObaArray<ObaRoute> _routes,

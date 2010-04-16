@@ -106,7 +106,7 @@ public final class ObaApi {
         return "http://" + serverName+ "/api/where";
     }
 
-    private static String mVersion;
+    private static String mVersion = "";
 
     // NOTE: This isn't safe right now, because it's not thread-safe.
     // It's only used for testing.

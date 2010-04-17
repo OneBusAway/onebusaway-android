@@ -620,19 +620,27 @@ public class StopInfoActivity extends ListActivity {
         setProgressBarIndeterminateVisibility(false);
     }
     void setRefreshError() {
-        TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
-        CharSequence relativeTime =
-            DateUtils.getRelativeTimeSpanString(mResponseTime,
-                    System.currentTimeMillis(),
-                    DateUtils.MINUTE_IN_MILLIS,
-                    0);
-        errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
+        final long now = System.currentTimeMillis();
 
-        mResponseError.setVisibility(View.VISIBLE);
-        mEmptyText.setText(R.string.stop_info_nodata);
+        if ((now-mResponseTime) >= 2*DateUtils.MINUTE_IN_MILLIS) {
+            TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
+            CharSequence relativeTime =
+                DateUtils.getRelativeTimeSpanString(mResponseTime,
+                        now,
+                        DateUtils.MINUTE_IN_MILLIS,
+                        0);
+            errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
+
+            mResponseError.setVisibility(View.VISIBLE);
+            mEmptyText.setText(R.string.stop_info_nodata);
+        }
+        else {
+            mResponseError.setVisibility(View.GONE);
+        }
 
         // Just refresh the data with the current response.
-        ((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+        StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
+        adapter.setData(mResponse.getData().getArrivalsAndDepartures());
 
         mLoadingProgress.hideLoading();
         setProgressBarIndeterminateVisibility(false);

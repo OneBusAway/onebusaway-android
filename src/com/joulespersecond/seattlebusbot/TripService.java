@@ -105,6 +105,8 @@ public class TripService extends Service {
 
     @Override
     public void onStart(Intent intent, int startId) {
+        UIHelp.bugHandler(this);
+
         final String action = intent.getAction();
         TaskBase newTask = null;
         if (ACTION_SCHEDULE_ALL.equals(action)) {

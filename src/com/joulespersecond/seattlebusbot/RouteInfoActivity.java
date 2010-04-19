@@ -73,6 +73,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        UIHelp.bugHandler(this);
         setContentView(R.layout.route_info);
         registerForContextMenu(getExpandableListView());
 

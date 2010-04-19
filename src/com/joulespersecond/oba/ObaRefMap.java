@@ -23,46 +23,43 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.HashMap;
 
-public final class ObaArray<E> /*implements Iterable<E>*/ {
-    static class Deserializer<E> implements JsonDeserializer<ObaArray<E>> {
-        public ObaArray<E> deserialize(JsonElement elem, Type type,
+public final class ObaRefMap<E> {
+    static class Deserializer<E> implements JsonDeserializer<ObaRefMap<E>> {
+        public ObaRefMap<E> deserialize(JsonElement elem, Type type,
                 JsonDeserializationContext context) throws JsonParseException {
             try {
                 Type[] typeParameters = ((ParameterizedType)type).getActualTypeArguments();
                 final Type subtype = typeParameters[0];
                 JsonArray array = elem.getAsJsonArray();
                 final int size = array.size();
-                ArrayList<E> result = new ArrayList<E>(size);
+                HashMap<String,E> result = new HashMap<String,E>(size);
                 for (int i=0; i < size; ++i) {
                     JsonElement child = array.get(i);
                     E e = context.deserialize(child, subtype);
-                    result.add(e);
+                    String id = JsonHelp.deserializeChild(child.getAsJsonObject(),
+                            "id", String.class, context);
+                    result.put(id, e);
                 }
-                return new ObaArray<E>(result);
+                return new ObaRefMap<E>(result);
             }
             catch (ClassCastException e) {
-                return new ObaArray<E>();
+                return new ObaRefMap<E>();
             }
             catch (IllegalStateException e) {
-                return new ObaArray<E>();
+                return new ObaRefMap<E>();
             }
         }
     }
 
-    private final ArrayList<E> mArray;
+    private final HashMap<String,E> mRefs;
 
-    /**
-     * Constructor.
-     *
-     * @param The encapsulated array.
-     */
-    ObaArray() {
-        mArray = new ArrayList<E>();
+    ObaRefMap() {
+        mRefs = new HashMap<String,E>();
     }
-    ObaArray(ArrayList<E> array) {
-        mArray = array;
+    ObaRefMap(HashMap<String,E> refs) {
+        mRefs = refs;
     }
     /**
      * Returns the length of the array.
@@ -70,52 +67,21 @@ public final class ObaArray<E> /*implements Iterable<E>*/ {
      * @return The length of the array.
      */
     public int length() {
-        return mArray.size();
+        return mRefs.size();
     }
     /**
-     * Returns the object for the specified index.
+     * Returns the object for the specified ID.
      *
-     * @param index The child index.
+     * @param index The string ID.
      * @return The child object.
      *
      */
-    public E get(int index) {
-        return mArray.get(index);
+    public E get(String id) {
+        return mRefs.get(id);
     }
 
     @Override
     public String toString() {
-        return mArray.toString();
+        return mRefs.toString();
     }
-
-    /*
-    private class ReadOnlyIterator implements Iterator<E> {
-        private final Iterator<E> mIter;
-
-        ReadOnlyIterator(Iterator<E> base) {
-            mIter = base;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return mIter.hasNext();
-        }
-
-        @Override
-        public E next() {
-            return mIter.next();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return new ReadOnlyIterator(mArray.iterator());
-    }
-    */
 }

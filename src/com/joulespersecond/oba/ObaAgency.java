@@ -19,8 +19,14 @@ import java.lang.reflect.Type;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 public final class ObaAgency {
+    public static final ObaAgency EMPTY_OBJECT = new ObaAgency();
+
+    public static final ObaRefMap<ObaAgency> EMPTY_MAP = new ObaRefMap<ObaAgency>();
+    public static final Type MAP_TYPE = new TypeToken<ObaRefMap<ObaAgency>>(){}.getType();
+
     static class Deserialize implements JsonHelp.Deserialize<ObaAgency> {
         public ObaAgency doDeserialize(JsonObject obj,
                                 String id,
@@ -48,10 +54,10 @@ public final class ObaAgency {
         id = _id;
         name = _name;
     }
-    String getId() {
+    public String getId() {
         return id;
     }
-    String getName() {
+    public String getName() {
         return name;
     }
     /*

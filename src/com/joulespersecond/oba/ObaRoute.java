@@ -15,14 +15,22 @@
  */
 package com.joulespersecond.oba;
 
-import java.lang.reflect.Type;
-
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 
 
 
 public final class ObaRoute {
+    public static final ObaRoute EMPTY_OBJECT = new ObaRoute();
+    public static final ObaArray<ObaRoute> EMPTY_ARRAY = new ObaArray<ObaRoute>();
+    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaRoute>>(){}.getType();
+
+    public static final ObaRefMap<ObaRoute> EMPTY_MAP = new ObaRefMap<ObaRoute>();
+    public static final Type MAP_TYPE = new TypeToken<ObaRefMap<ObaRoute>>(){}.getType();
+
     static class Deserialize implements JsonHelp.Deserialize<ObaRoute> {
         public ObaRoute doDeserialize(JsonObject obj,
                                 String id,
@@ -36,12 +44,22 @@ public final class ObaRoute {
                 JsonHelp.deserializeChild(obj, "description", String.class, context);
             final String url =
                 JsonHelp.deserializeChild(obj, "url", String.class, context);
-            final ObaAgency agency =
-                JsonHelp.deserializeChild(obj, "agency", ObaAgency.class, context);
+
+            ObaAgency agency;
+            ObaReferences refs = ObaApi.mRefMap.get(context);
+            if (refs != null) {
+                final ObaRefMap<ObaAgency> map = refs.getAgencyMap();
+                agency = JsonHelp.derefObject(obj,
+                        context, "agencyId", "agency", map, ObaAgency.class);
+            }
+            else {
+                agency = JsonHelp.deserializeChild(obj, "agency", ObaAgency.class, context);
+            }
+
             return new ObaRoute(id, shortName, longName, description, url, agency);
         }
     }
-   static String getAlternateRouteName(String id, String name) {
+    static String getAlternateRouteName(String id, String name) {
        if (id.equals("1_599")) {
            return "Link";
        }
@@ -66,7 +84,7 @@ public final class ObaRoute {
         longName = "";
         description = "";
         url = "";
-        agency = null;
+        agency = ObaAgency.EMPTY_OBJECT;
     }
     ObaRoute(String _id,
             String _short,
@@ -79,7 +97,7 @@ public final class ObaRoute {
         longName = _long != null ? _long : "";
         description = _description != null ? _description : "";
         url = _url != null ? _url : "";
-        agency = _agency;
+        agency = _agency != null ? _agency : ObaAgency.EMPTY_OBJECT;
     }
     /**
      * Returns the route ID.
@@ -138,7 +156,7 @@ public final class ObaRoute {
      * @return The name of the agency running this route.
      */
     public String getAgencyName() {
-        return (agency != null) ? agency.getName() : "";
+        return agency.getName();
     }
     /**
      * Returns the ID of the agency running this route.
@@ -146,7 +164,7 @@ public final class ObaRoute {
      * @return The ID of the agency running this route.
      */
     public String getAgencyId() {
-        return (agency != null) ? agency.getId() : "";
+        return agency.getId();
     }
 
     /**
@@ -154,7 +172,7 @@ public final class ObaRoute {
      * @return The agency object running this route, or an empty object.
      */
     public ObaAgency getAgency() {
-        return (agency != null) ? agency : new ObaAgency();
+        return agency;
     }
     @Override
     public String toString() {

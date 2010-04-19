@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ObaStopGroup {
+    public static final ObaStopGroup EMPTY_OBJECT = new ObaStopGroup();
+    public static final ObaArray<ObaStopGroup> EMPTY_ARRAY = new ObaArray<ObaStopGroup>();
+
     private static final class StopGroupName {
         private final String type;
         private final List<String> names;
@@ -35,7 +38,7 @@ public final class ObaStopGroup {
         }
     }
     private final List<String> stopIds;
-    private final ObaArray<ObaPolyline> polylines;
+    //private final ObaArray<ObaPolyline> polylines;
     private final StopGroupName name;
 
     public static final String TYPE_DESTINATION = "destination";
@@ -45,7 +48,7 @@ public final class ObaStopGroup {
      */
     ObaStopGroup() {
         stopIds = null;
-        polylines = null;
+        //polylines = ObaPolyline.EMPTY_ARRAY;
         name = null;
     }
 
@@ -89,7 +92,8 @@ public final class ObaStopGroup {
      * @return The array of polylines, or an empty array.
      */
     public ObaArray<ObaPolyline> getPolylines() {
-        return polylines;
+        //return polylines;
+        return ObaPolyline.EMPTY_ARRAY;
     }
 
     @Override

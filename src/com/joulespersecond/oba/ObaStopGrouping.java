@@ -15,9 +15,17 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+
 
 public final class ObaStopGrouping {
-    public final String TYPE_DIRECTION = "direction";
+    public static final ObaStopGrouping EMPTY_OBJECT = new ObaStopGrouping();
+    public static final ObaArray<ObaStopGrouping> EMPTY_ARRAY = new ObaArray<ObaStopGrouping>();
+    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaStopGrouping>>(){}.getType();
+
+    public static final String TYPE_DIRECTION = "direction";
 
     private final boolean ordered;
     private final String type;
@@ -29,7 +37,7 @@ public final class ObaStopGrouping {
     ObaStopGrouping() {
         ordered = false;
         type = "";
-        stopGroups = null;
+        stopGroups = ObaStopGroup.EMPTY_ARRAY;
     }
 
     /**
@@ -54,7 +62,7 @@ public final class ObaStopGrouping {
      * @return The list of stop groups.
      */
     public ObaArray<ObaStopGroup> getStopGroups() {
-        return (stopGroups != null) ? stopGroups : new ObaArray<ObaStopGroup>();
+        return stopGroups;
     }
 
     @Override

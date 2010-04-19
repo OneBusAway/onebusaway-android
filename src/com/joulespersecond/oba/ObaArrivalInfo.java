@@ -15,7 +15,15 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+
 public final class ObaArrivalInfo {
+    public static final ObaArrivalInfo EMPTY_OBJECT = new ObaArrivalInfo();
+    public static final ObaArray<ObaArrivalInfo> EMPTY_ARRAY = new ObaArray<ObaArrivalInfo>();
+    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaArrivalInfo>>(){}.getType();
+
     private final String routeId;
     private final String routeShortName;
     private final String tripId;

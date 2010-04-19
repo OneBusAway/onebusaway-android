@@ -18,6 +18,7 @@ package com.joulespersecond.oba;
 import com.google.android.maps.GeoPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ObaApi {
     //private static final String TAG = "ObaApi";
@@ -39,11 +41,10 @@ public final class ObaApi {
     public static final int OBA_NOT_FOUND = 404;
     public static final int OBA_INTERNAL_ERROR = 500;
 
-    private static final String API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
-    // NOTE: This could be provided by Settings to use different versions of the server.
-    //private static final String OBA_URL = "http://api.onebusaway.org/api/where";
+    public static final String VERSION1 = "1";
+    public static final String VERSION2 = "2";
 
-    public static final double E6 = 1000*1000;
+    private static final String API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
 
     private static class GsonHolder {
         static final JsonHelp.CachingDeserializer<ObaAgency> mAgencyDeserializer =
@@ -59,6 +60,11 @@ public final class ObaApi {
         @SuppressWarnings("unchecked")
         static final Gson gsonObj = new GsonBuilder()
             .registerTypeAdapter(ObaArray.class, new ObaArray.Deserializer())
+            .registerTypeAdapter(ObaRefMap.class, new ObaRefMap.Deserializer())
+            .registerTypeAdapter(ObaResponse.class, new ObaResponse.Deserializer())
+            .registerTypeAdapter(ObaData2.class, new ObaData2.Deserializer())
+            .registerTypeAdapter(ObaEntry.class, new ObaEntry.Deserializer())
+            .registerTypeAdapter(ObaReferences.class, new ObaReferences.Deserializer())
             .registerTypeAdapter(ObaAgency.class, mAgencyDeserializer)
             .registerTypeAdapter(ObaRoute.class, mRouteDeserializer)
             .registerTypeAdapter(ObaStop.class, mStopDeserializer)
@@ -70,6 +76,14 @@ public final class ObaApi {
             mStopDeserializer.clear();
         }
     }
+
+    //
+    // Gson doesn't allow us to pass anything of our own into the custom
+    // deserializers, so we have to store it here, indexed by the context object
+    // itself.
+    //
+    static final ConcurrentHashMap<JsonDeserializationContext,ObaReferences> mRefMap =
+        new ConcurrentHashMap<JsonDeserializationContext,ObaReferences>();
 
     static Gson getGson() {
         return GsonHolder.gsonObj;
@@ -86,9 +100,22 @@ public final class ObaApi {
     }
 
     private static String getUrl(Context context) {
-      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-      String serverName = preferences.getString("preferences_oba_api_servername", "api.onebusaway.org");
-      return "http://" + serverName+ "/api/where";
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String serverName = preferences.getString("preferences_oba_api_servername", "api.onebusaway.org");
+        return "http://" + serverName+ "/api/where";
+    }
+
+    private static String mVersion = "";
+
+    // NOTE: This isn't safe right now, because it's not thread-safe.
+    // It's only used for testing.
+    public static void setVersion(String version) {
+        if (VERSION2.equals(version)) {
+            mVersion = "version=2&";
+        }
+        else {
+            mVersion = "";
+        }
     }
 
 
@@ -102,7 +129,8 @@ public final class ObaApi {
 
         // We can do a simple format since we're not expecting the id needs escaping.
         return doRequest(
-                String.format("%s/stop/%s.json?key=%s", getUrl(context), id, API_KEY));
+                String.format("%s/stop/%s.json?%skey=%s",
+                        getUrl(context), id, mVersion, API_KEY));
     }
     /**
      * Retrieves a route by its full ID.
@@ -112,7 +140,8 @@ public final class ObaApi {
      */
     public static ObaResponse getRouteById(Context context, String id) {
         return doRequest(
-                String.format("%s/route/%s.json?key=%s", getUrl(context), id, API_KEY));
+                String.format("%s/route/%s.json?%skey=%s",
+                        getUrl(context), id, mVersion, API_KEY));
     }
     /**
      * Search for stops by a location in a specified radius,
@@ -132,22 +161,23 @@ public final class ObaApi {
             int lonSpan,
             String query,
             int maxCount) {
-        String url = String.format("%s/stops-for-location.json?key=%s&lat=%f&lon=%f",
+        String url = String.format("%s/stops-for-location.json?%skey=%s&lat=%f&lon=%f",
                 getUrl(context),
+                mVersion,
                 API_KEY,
-                (double)location.getLatitudeE6()/E6,
-                (double)location.getLongitudeE6()/E6);
+                (double)location.getLatitudeE6()/1E6,
+                (double)location.getLongitudeE6()/1E6);
         if (radius != 0) {
             url += "&radius=";
             url += String.valueOf(radius);
         }
         if (latSpan != 0) {
             url += "&latSpan=";
-            url += String.valueOf(latSpan/E6);
+            url += String.valueOf(latSpan/1E6);
         }
         if (lonSpan != 0) {
             url += "&lonSpan=";
-            url += String.valueOf(lonSpan/E6);
+            url += String.valueOf(lonSpan/1E6);
         }
         if (query != null) {
             url += "&query=";
@@ -177,11 +207,12 @@ public final class ObaApi {
             int radius,
             String query) {
         StringBuilder url = new StringBuilder(
-                String.format("%s/routes-for-location.json?key=%s&lat=%f&lon=%f",
+                String.format("%s/routes-for-location.json?%skey=%s&lat=%f&lon=%f",
                 getUrl(context),
+                mVersion,
                 API_KEY,
-                (double)location.getLatitudeE6()/E6,
-                (double)location.getLongitudeE6()/E6));
+                (double)location.getLatitudeE6()/1E6,
+                (double)location.getLongitudeE6()/1E6));
         if (radius != 0) {
             url.append("&radius=");
             url.append(String.valueOf(radius));
@@ -207,7 +238,8 @@ public final class ObaApi {
      */
     public static ObaResponse getStopsForRoute(Context context, String id) {
         return doRequest(
-                String.format("%s/stops-for-route/%s.json?key=%s", getUrl(context), id, API_KEY));
+                String.format("%s/stops-for-route/%s.json?%skey=%s",
+                        getUrl(context), id, mVersion, API_KEY));
     }
     /**
      * Get current arrivals and departures for routes serving the specified stop.
@@ -219,7 +251,8 @@ public final class ObaApi {
      */
     public static ObaResponse getArrivalsDeparturesForStop(Context context, String id) {
         return doRequest(
-                String.format("%s/arrivals-and-departures-for-stop/%s.json?key=%s", getUrl(context), id, API_KEY));
+                String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s",
+                        getUrl(context), id, mVersion, API_KEY));
     }
 
     /**
@@ -229,7 +262,7 @@ public final class ObaApi {
      * @return A GeoPoint representing this latitude/longitude.
      */
     public static final GeoPoint makeGeoPoint(double lat, double lon) {
-        return new GeoPoint((int)(lat*E6), (int)(lon*E6));
+        return new GeoPoint((int)(lat*1E6), (int)(lon*1E6));
     }
 
     /**

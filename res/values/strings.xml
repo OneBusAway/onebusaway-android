@@ -45,7 +45,7 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Bug fixes! Improved performance!</string>
+    <string name="main_help_whatsnew">Bug fixes!\n\nImproved performance!</string>
     <string name="main_help_close">Close</string>
 
     <!--  Stop Info -->

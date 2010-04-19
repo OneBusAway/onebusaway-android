@@ -128,6 +128,7 @@ public class MapViewActivity extends MapActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UIHelp.bugHandler(this);
         //
         // Static initialization (what should always be there, regardless of intent)
         //

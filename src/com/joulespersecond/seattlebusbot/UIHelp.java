@@ -125,7 +125,8 @@ final class UIHelp {
 
             ContentValues values = mMap.getValues(stopId);
             if (values != null) {
-                final boolean favorite = (values.getAsInteger(ObaContract.Stops.FAVORITE) == 1);
+                Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
+                final boolean favorite = (i != null) && (i == 1);
                 final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
 
                 nameView.setText(TextUtils.isEmpty(userName) ? stopName : userName);

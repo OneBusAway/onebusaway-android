@@ -649,7 +649,9 @@ public class StopInfoActivity extends ListActivity {
     }
 
     private void setHeader(Bundle bundle) {
-        setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
+        if (bundle != null) {
+            setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
+        }
     }
 
     void setHeader(ObaStop stop, boolean addToDb) {

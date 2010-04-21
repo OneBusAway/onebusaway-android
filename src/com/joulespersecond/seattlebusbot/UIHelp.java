@@ -174,6 +174,8 @@ final class UIHelp {
             return R.string.internal_error;
         case ObaApi.OBA_NOT_FOUND:
             return R.string.route_not_found_error;
+        case ObaApi.OBA_OUT_OF_MEMORY:
+            return R.string.out_of_memory_error;
         default:
             return R.string.generic_comm_error;
         }
@@ -184,6 +186,8 @@ final class UIHelp {
             return R.string.internal_error;
         case ObaApi.OBA_NOT_FOUND:
             return R.string.stop_not_found_error;
+        case ObaApi.OBA_OUT_OF_MEMORY:
+            return R.string.out_of_memory_error;
         default:
             return R.string.generic_comm_error;
         }

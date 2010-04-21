@@ -31,7 +31,7 @@ public final class ObaData1 implements ObaData {
     private final ObaArray<ObaStop> nearbyStops;
     private final ObaArray<ObaArrivalInfo> arrivalsAndDepartures;
     private final ObaArray<ObaStopGrouping> stopGroupings;
-    private final ObaArray<ObaPolyline> polylines;
+    //private final ObaArray<ObaPolyline> polylines;
     private final boolean limitExceeded;
 
     // These are because for the Stop by ID and Route by ID requests,
@@ -63,7 +63,7 @@ public final class ObaData1 implements ObaData {
         nearbyStops = null;
         arrivalsAndDepartures = null;
         stopGroupings = null;
-        polylines = null;
+        //polylines = null;
         limitExceeded = false;
         id = "";
         longName = "";
@@ -138,7 +138,8 @@ public final class ObaData1 implements ObaData {
 
     @Override
     public ObaArray<ObaPolyline> getPolylines() {
-        return (polylines != null) ? polylines : new ObaArray<ObaPolyline>();
+        return ObaPolyline.EMPTY_ARRAY;
+        //return (polylines != null) ? polylines : new ObaArray<ObaPolyline>();
     }
 
     @Override

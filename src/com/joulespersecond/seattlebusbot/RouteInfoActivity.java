@@ -56,6 +56,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     private String mRouteId;
     private AsyncTask<String,?,?> mRouteInfoTask;
     private AsyncTask<String,?,?> mStopsForRouteTask;
+    private TextView mEmptyText;
 
     private ObaResponse mRouteInfo;
     private StopsForRouteInfo mStopsForRoute;
@@ -92,6 +93,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
             finish();
             return;
         }
+
+        mEmptyText = (TextView)findViewById(android.R.id.empty);
 
         setListAdapter(new SimpleExpandableListAdapter(
                     this,
@@ -168,7 +171,10 @@ public class RouteInfoActivity extends ExpandableListActivity {
             int groupPosition, int childPosition, long id) {
         final TextView text = (TextView)v.findViewById(R.id.stop_id);
         final String stopId = (String)text.getText();
-        ObaStop stop = mStopsForRoute.getStopMap().get(stopId);
+        ObaStop stop = null;
+        if (mStopsForRoute != null) {
+            stop = mStopsForRoute.getStopMap().get(stopId);
+        }
         if (stop != null) {
             StopInfoActivity.start(this, stopId, stop.getName(), stop.getDirection());
         }
@@ -215,7 +221,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     }
     @Override
     public void onLowMemory() {
-        //Log.d(TAG, "******** LOW MEMORY ******** ");
+        Log.d(TAG, "******** LOW MEMORY ******** ");
         super.onLowMemory();
         mRouteInfo = null;
         mStopsForRoute = null;
@@ -237,6 +243,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     // This is the return value for GetStopsForRouteTask.
     //
     private final static class StopsForRouteInfo {
+        private final int mResultCode;
         private final ArrayList<HashMap<String,String>> mStopGroups;
         private final ArrayList<ArrayList<HashMap<String,String>>> mStops;
         private final HashMap<String,ObaStop> mStopMap;
@@ -245,6 +252,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             mStopGroups = new ArrayList<HashMap<String,String>>();
             mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
             mStopMap = new HashMap<String,ObaStop>();
+            mResultCode = response.getCode();
             initMaps(cxt, response);
         }
 
@@ -330,6 +338,9 @@ public class RouteInfoActivity extends ExpandableListActivity {
                 }
             }
         }
+        public int getResultCode() {
+            return mResultCode;
+        }
         public ArrayList<HashMap<String,String>> getStopGroups() {
             return mStopGroups;
         }
@@ -346,6 +357,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     //
     private final AsyncTasks.Progress mProgress = new AsyncTasks.Progress() {
         public void showLoading() {
+            mEmptyText.setText("");
             View v = findViewById(R.id.loading);
             v.setVisibility(View.VISIBLE);
         }
@@ -397,8 +409,6 @@ public class RouteInfoActivity extends ExpandableListActivity {
     private void setHeader(ObaResponse routeInfo, boolean addToDb) {
         mRouteInfo = routeInfo;
 
-        TextView empty = (TextView)findViewById(android.R.id.empty);
-
         if (routeInfo.getCode() == ObaApi.OBA_OK) {
             ObaRoute route = routeInfo.getData().getAsRoute();
             TextView shortNameText = (TextView)findViewById(R.id.short_name);
@@ -422,12 +432,19 @@ public class RouteInfoActivity extends ExpandableListActivity {
             }
         }
         else {
-            empty.setText(UIHelp.getRouteErrorString(routeInfo.getCode()));
+            mEmptyText.setText(UIHelp.getRouteErrorString(routeInfo.getCode()));
         }
         mRouteInfoTask = null;
     }
     private void setStopsForRoute(StopsForRouteInfo result) {
         mStopsForRoute = result;
+        final int code = mStopsForRoute.getResultCode();
+        if (code == ObaApi.OBA_OK) {
+            mEmptyText.setText("");
+        }
+        else {
+            mEmptyText.setText(UIHelp.getRouteErrorString(code));
+        }
         setListAdapter(new SimpleExpandableListAdapter(
                 this,
                 result.getStopGroups(),

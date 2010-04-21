@@ -36,7 +36,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".RouteInfoActivity"
-                  android:label="@string/route_info_title">
+                  android:label="@string/route_info_title"
+                  android:process=":routeinfo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>

@@ -15,9 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaArray;
+import com.joulespersecond.oba.ObaArrivalInfo;
+import com.joulespersecond.oba.ObaData;
+import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.ObaRoute;
+import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -52,15 +57,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
-import com.joulespersecond.oba.ObaData;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
-import com.joulespersecond.oba.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
+import java.util.ArrayList;
 
 public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
@@ -77,7 +76,6 @@ public class StopInfoActivity extends ListActivity {
     private String mStopId;
     private String mStopName;
     private Uri mStopUri;
-    private Timer mTimer;
     private long mResponseTime = 0;
     private ArrayList<String> mRoutesFilter;
 
@@ -271,30 +269,27 @@ public class StopInfoActivity extends ListActivity {
     @Override
     public void onPause() {
         mTripsForStop.setKeepUpdated(false);
-        mTimer.cancel();
-        mTimer = null;
+        mRefreshHandler.removeCallbacks(mRefresh);
         super.onPause();
     }
     @Override
     public void onResume() {
-        if (mTimer == null) {
-            mTimer = new Timer();
-        }
         mTripsForStop.setKeepUpdated(true);
         mTripsForStop.requery();
         ((BaseAdapter)getListAdapter()).notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
-        if (System.currentTimeMillis() > (mResponseTime+RefreshPeriod)) {
+        long newPeriod = Math.min(RefreshPeriod,
+                (mResponseTime+RefreshPeriod) - System.currentTimeMillis());
+        // Wait at least one second at least, and the full minute at most.
+        Log.d(TAG, "Refresh period:" + newPeriod);
+        if (newPeriod <= 0) {
             getStopInfo(true);
         }
+        else {
+            mRefreshHandler.postDelayed(mRefresh, newPeriod);
+        }
 
-        mTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mRefreshHandler.post(mRefresh);
-            }
-        }, RefreshPeriod, RefreshPeriod);
         super.onResume();
     }
     @Override
@@ -535,14 +530,11 @@ public class StopInfoActivity extends ListActivity {
         adapter.setData(mResponse.getData().getArrivalsAndDepartures());
     }
 
-    // Similar to the annoying bit in MapViewActivity, the timer is run
-    // in a separate task, so we need to post back to the main thread
-    // to run our AsyncTask. We can't do everything in the timer thread
-    // because the progressBar has to be modified in the UI (main) thread.
     private final Handler mRefreshHandler = new Handler();
     private final Runnable mRefresh = new Runnable() {
         public void run() {
             getStopInfo(true);
+            mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
         }
     };
 
@@ -562,7 +554,7 @@ public class StopInfoActivity extends ListActivity {
     private final AsyncTasks.Progress mTitleProgress
         = new AsyncTasks.ProgressIndeterminateVisibility(this);
 
-    private final class GetStopInfo extends AsyncTasks.StringToResponse {
+    private final class GetStopInfo extends AsyncTasks.ToResponseBase<String> {
         private final boolean mAddToDb;
 
         GetStopInfo(AsyncTasks.Progress progress, boolean addToDb) {
@@ -622,6 +614,8 @@ public class StopInfoActivity extends ListActivity {
         setProgressBarIndeterminateVisibility(false);
     }
     void setRefreshError() {
+        Toast.makeText(this, R.string.generic_comm_error_toast, Toast.LENGTH_LONG).show();
+
         final long now = System.currentTimeMillis();
 
         if ((now-mResponseTime) >= 2*DateUtils.MINUTE_IN_MILLIS) {

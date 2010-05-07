@@ -373,11 +373,17 @@ public class MapViewActivity extends MapActivity
     final Handler mGetStopsHandler = new Handler();
     final Runnable mGetStops = new Runnable() {
         public void run() {
-            setMyLocation(mLocationOverlay.getMyLocation());
+            if (mLocationOverlay != null) {
+                setMyLocation(mLocationOverlay.getMyLocation());
+            }
         }
     };
 
     private void setMyLocation() {
+        // Not really sure how this happened, but it happened in issue #54
+        if (mLocationOverlay == null) {
+            return;
+        }
         GeoPoint point = mLocationOverlay.getMyLocation();
         if (point == null) {
             mLocationOverlay.runOnFirstFix(new Runnable() {
@@ -659,6 +665,10 @@ public class MapViewActivity extends MapActivity
             else if ((oldVer > 0) && (oldVer < newVer)) {
                 showDialog(WHATSNEW_DIALOG);
             }
+            // Updates will remove the alarms. This should put them back.
+            // (Unfortunately I can't find a way to reschedule them without
+            // having the app run again).
+            TripService.scheduleAll(this);
 
             SharedPreferences.Editor edit = settings.edit();
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);

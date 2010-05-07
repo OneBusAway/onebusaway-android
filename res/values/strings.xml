@@ -19,6 +19,7 @@
 
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
+    <string name="generic_comm_error_toast">Failed to update. We'll try again in a minute.</string>
     <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
     <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
     <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>

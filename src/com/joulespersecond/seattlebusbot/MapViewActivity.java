@@ -374,10 +374,16 @@ public class MapViewActivity extends MapActivity
     final Handler mGetStopsHandler = new Handler();
     final Runnable mGetStops = new Runnable() {
         public void run() {
-            setMyLocation(mLocationOverlay.getMyLocation());
+            if (mLocationOverlay != null) {
+                setMyLocation(mLocationOverlay.getMyLocation());
+            }
         }
     };
     private void setMyLocation() {
+        // Not really sure how this happened, but it happened in issue #54
+        if (mLocationOverlay == null) {
+            return;
+        }
         GeoPoint point = mLocationOverlay.getMyLocation();
         if (point == null) {
             mLocationOverlay.runOnFirstFix(new Runnable() {

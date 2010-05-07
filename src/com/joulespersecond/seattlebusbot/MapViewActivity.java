@@ -665,6 +665,10 @@ public class MapViewActivity extends MapActivity
             else if ((oldVer > 0) && (oldVer < newVer)) {
                 showDialog(WHATSNEW_DIALOG);
             }
+            // Updates will remove the alarms. This should put them back.
+            // (Unfortunately I can't find a way to reschedule them without
+            // having the app run again).
+            TripService.scheduleAll(this);
 
             SharedPreferences.Editor edit = settings.edit();
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);

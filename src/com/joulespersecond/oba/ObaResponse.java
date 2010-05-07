@@ -15,6 +15,14 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,20 +30,13 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
-
-import android.util.Log;
-
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 
 public final class ObaResponse {
     private static final String TAG = "ObaResponse";
@@ -111,10 +112,22 @@ public final class ObaResponse {
     static public ObaResponse createFromURL(URL url) throws IOException {
         long start = System.nanoTime();
         boolean useGzip = false;
+        int code = 0;
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        conn.setReadTimeout(30*1000);
         conn.setRequestProperty("Accept-Encoding", "gzip");
-        conn.connect();
-        final int code = conn.getResponseCode();
+        try {
+            conn.connect();
+            code = conn.getResponseCode();
+        }
+        catch (SocketException e) {
+            Log.e(TAG, "Connection failed: " + e.toString());
+            return createFromError("Connection failed: " + e.toString());
+        }
+        catch (IOException e) { // includes SocketTimeoutException
+            Log.e(TAG, "Connection failed: " + e.toString());
+            return createFromError("Connection failed: " + e.toString());
+        }
         if (code != HttpURLConnection.HTTP_OK) {
             return createFromError("Server returned an error", code);
         }

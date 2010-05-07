@@ -57,6 +57,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -613,6 +614,8 @@ public class StopInfoActivity extends ListActivity {
         setProgressBarIndeterminateVisibility(false);
     }
     void setRefreshError() {
+        Toast.makeText(this, R.string.generic_comm_error_toast, Toast.LENGTH_LONG).show();
+
         final long now = System.currentTimeMillis();
 
         if ((now-mResponseTime) >= 2*DateUtils.MINUTE_IN_MILLIS) {

@@ -110,6 +110,7 @@ public final class ObaApi {
     }
 
     private static String mVersion = "";
+    private static String mAppInfo = "";
 
     // NOTE: This isn't safe right now, because it's not thread-safe.
     // It's only used for testing.
@@ -120,6 +121,9 @@ public final class ObaApi {
         else {
             mVersion = "";
         }
+    }
+    public static void setAppInfo(int version, String uuid) {
+        mAppInfo = String.format("&app_ver=%d&app_uid=%s", version, uuid);
     }
 
 
@@ -133,8 +137,8 @@ public final class ObaApi {
 
         // We can do a simple format since we're not expecting the id needs escaping.
         return doRequest(
-                String.format("%s/stop/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/stop/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
     /**
      * Retrieves a route by its full ID.
@@ -144,8 +148,8 @@ public final class ObaApi {
      */
     public static ObaResponse getRouteById(Context context, String id) {
         return doRequest(
-                String.format("%s/route/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/route/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
     /**
      * Search for stops by a location in a specified radius,
@@ -165,10 +169,11 @@ public final class ObaApi {
             int lonSpan,
             String query,
             int maxCount) {
-        String url = String.format("%s/stops-for-location.json?%skey=%s&lat=%f&lon=%f",
+        String url = String.format("%s/stops-for-location.json?%skey=%s%s&lat=%f&lon=%f",
                 getUrl(context),
                 mVersion,
                 API_KEY,
+                mAppInfo,
                 (double)location.getLatitudeE6()/1E6,
                 (double)location.getLongitudeE6()/1E6);
         if (radius != 0) {
@@ -211,10 +216,11 @@ public final class ObaApi {
             int radius,
             String query) {
         StringBuilder url = new StringBuilder(
-                String.format("%s/routes-for-location.json?%skey=%s&lat=%f&lon=%f",
+                String.format("%s/routes-for-location.json?%skey=%s%s&lat=%f&lon=%f",
                 getUrl(context),
                 mVersion,
                 API_KEY,
+                mAppInfo,
                 (double)location.getLatitudeE6()/1E6,
                 (double)location.getLongitudeE6()/1E6));
         if (radius != 0) {
@@ -242,8 +248,8 @@ public final class ObaApi {
      */
     public static ObaResponse getStopsForRoute(Context context, String id) {
         return doRequest(
-                String.format("%s/stops-for-route/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/stops-for-route/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
     /**
      * Get current arrivals and departures for routes serving the specified stop.
@@ -255,8 +261,8 @@ public final class ObaApi {
      */
     public static ObaResponse getArrivalsDeparturesForStop(Context context, String id) {
         return doRequest(
-                String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
 
     /**

@@ -53,76 +53,76 @@ public class ObaProvider extends ContentProvider {
             }
             if (oldVersion == 12) {
                 db.execSQL(
-                    "create table " +
+                    "CREATE TABLE " +
                         ObaContract.StopRouteFilters.PATH     + " (" +
-                        ObaContract.StopRouteFilters.STOP_ID  + " varchar not null, " +
-                        ObaContract.StopRouteFilters.ROUTE_ID + " varchar not null" +
+                        ObaContract.StopRouteFilters.STOP_ID  + " VARCHAR NOT NULL, " +
+                        ObaContract.StopRouteFilters.ROUTE_ID + " VARCHAR NOT NULL" +
                         ");");
                 ++oldVersion;
             }
             if (oldVersion == 13) {
                 db.execSQL(
-                    "alter table " + ObaContract.Stops.PATH +
-                        " add column " + ObaContract.Stops.USER_NAME);
+                    "ALTER TABLE " + ObaContract.Stops.PATH +
+                        " ADD COLUMN " + ObaContract.Stops.USER_NAME);
                 db.execSQL(
-                    "alter table " + ObaContract.Stops.PATH +
-                        " add column " + ObaContract.Stops.ACCESS_TIME);
+                    "ALTER TABLE " + ObaContract.Stops.PATH +
+                        " ADD COLUMN " + ObaContract.Stops.ACCESS_TIME);
                 db.execSQL(
-                    "alter table " + ObaContract.Stops.PATH +
-                        " add column " + ObaContract.Stops.FAVORITE);
+                    "ALTER TABLE " + ObaContract.Stops.PATH +
+                        " ADD COLUMN " + ObaContract.Stops.FAVORITE);
                 // These are being added to the routes database as well,
                 // even though some of them aren't accessible though the UI yet
                 // (we don't allow people to rename routes)
                 db.execSQL(
-                    "alter table " + ObaContract.Routes.PATH +
-                        " add column " + ObaContract.Routes.USER_NAME);
+                    "ALTER TABLE " + ObaContract.Routes.PATH +
+                        " ADD COLUMN " + ObaContract.Routes.USER_NAME);
                 db.execSQL(
-                    "alter table " + ObaContract.Routes.PATH +
-                        " add column " + ObaContract.Routes.ACCESS_TIME);
+                    "ALTER TABLE " + ObaContract.Routes.PATH +
+                        " ADD COLUMN " + ObaContract.Routes.ACCESS_TIME);
                 db.execSQL(
-                    "alter table " + ObaContract.Routes.PATH +
-                        " add column " + ObaContract.Routes.FAVORITE);
+                    "ALTER TABLE " + ObaContract.Routes.PATH +
+                        " ADD COLUMN " + ObaContract.Routes.FAVORITE);
                 ++oldVersion;
             }
             if (oldVersion == 14) {
                 db.execSQL(
-                        "alter table " + ObaContract.Routes.PATH +
-                            " add column " + ObaContract.Routes.URL);
+                        "ALTER TABLE " + ObaContract.Routes.PATH +
+                            " ADD COLUMN " + ObaContract.Routes.URL);
                 ++oldVersion;
             }
         }
 
         private void bootstrapDatabase(SQLiteDatabase db) {
             db.execSQL(
-                "create table " +
+                "CREATE TABLE " +
                     ObaContract.Stops.PATH      + " (" +
-                    ObaContract.Stops._ID       + " varchar primary key, " +
-                    ObaContract.Stops.CODE      + " varchar not null, " +
-                    ObaContract.Stops.NAME      + " varchar not null, " +
-                    ObaContract.Stops.DIRECTION + " char[2] not null," +
-                    ObaContract.Stops.USE_COUNT + " integer not null," +
-                    ObaContract.Stops.LATITUDE  + " double not null," +
-                    ObaContract.Stops.LONGITUDE + " double not null" +
+                    ObaContract.Stops._ID       + " VARCHAR PRIMARY KEY, " +
+                    ObaContract.Stops.CODE      + " VARCHAR NOT NULL, " +
+                    ObaContract.Stops.NAME      + " VARCHAR NOT NULL, " +
+                    ObaContract.Stops.DIRECTION + " CHAR[2] NOT NULL," +
+                    ObaContract.Stops.USE_COUNT + " INTEGER NOT NULL," +
+                    ObaContract.Stops.LATITUDE  + " DOUBLE NOT NULL," +
+                    ObaContract.Stops.LONGITUDE + " DOUBLE NOT NULL" +
                     ");");
             db.execSQL(
-                "create table " +
+                "CREATE TABLE " +
                     ObaContract.Routes.PATH         + " (" +
-                    ObaContract.Routes._ID          + " varchar primary key, " +
-                    ObaContract.Routes.SHORTNAME    + " varchar not null, " +
-                    ObaContract.Routes.LONGNAME     + " varchar, " +
-                    ObaContract.Routes.USE_COUNT    + " integer not null" +
+                    ObaContract.Routes._ID          + " VARCHAR PRIMARY KEY, " +
+                    ObaContract.Routes.SHORTNAME    + " VARCHAR NOT NULL, " +
+                    ObaContract.Routes.LONGNAME     + " VARCHAR, " +
+                    ObaContract.Routes.USE_COUNT    + " INTEGER NOT NULL" +
                     ");");
             db.execSQL(
-                "create table " +
+                "CREATE TABLE " +
                     ObaContract.Trips.PATH          + " (" +
-                    ObaContract.Trips._ID           + " varchar not null, " +
-                    ObaContract.Trips.STOP_ID       + " varchar not null, " +
-                    ObaContract.Trips.ROUTE_ID      + " varchar not null, " +
-                    ObaContract.Trips.DEPARTURE     + " integer not null, " +
-                    ObaContract.Trips.HEADSIGN      + " varchar not null, " +
-                    ObaContract.Trips.NAME          + " varchar not null, " +
-                    ObaContract.Trips.REMINDER      + " integer not null, " +
-                    ObaContract.Trips.DAYS          + " integer not null" +
+                    ObaContract.Trips._ID           + " VARCHAR NOT NULL, " +
+                    ObaContract.Trips.STOP_ID       + " VARCHAR NOT NULL, " +
+                    ObaContract.Trips.ROUTE_ID      + " VARCHAR NOT NULL, " +
+                    ObaContract.Trips.DEPARTURE     + " INTEGER NOT NULL, " +
+                    ObaContract.Trips.HEADSIGN      + " VARCHAR NOT NULL, " +
+                    ObaContract.Trips.NAME          + " VARCHAR NOT NULL, " +
+                    ObaContract.Trips.REMINDER      + " INTEGER NOT NULL, " +
+                    ObaContract.Trips.DAYS          + " INTEGER NOT NULL" +
                     ");");
         }
 

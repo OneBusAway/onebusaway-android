@@ -45,6 +45,7 @@ public class StopsByLocationTest extends ObaTestCase {
         assertNotNull(stops);
         if (mStopCount == -1) {
             mStopCount = stops.length();
+            assert(mStopCount > 0);
         }
         else {
             assertEquals(stops.length(), mStopCount);

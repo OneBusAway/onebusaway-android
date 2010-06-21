@@ -87,7 +87,7 @@ public class StopsController {
         @Override
         protected ObaResponse doInBackground(String... params) {
             if (mInfo.getRouteId() != null) {
-                return ObaApi.getStopsForRoute(mActivity, mInfo.getRouteId());
+                return ObaApi.getStopsForRoute(mActivity, mInfo.getRouteId(), false);
             }
             else {
                 return ObaApi.getStopsByLocation(mActivity,

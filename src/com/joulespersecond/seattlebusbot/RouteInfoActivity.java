@@ -393,7 +393,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         protected StopsForRouteInfo doInBackground(String... params) {
             return new StopsForRouteInfo(
                     RouteInfoActivity.this,
-                    ObaApi.getStopsForRoute(RouteInfoActivity.this, params[0]));
+                    ObaApi.getStopsForRoute(RouteInfoActivity.this, params[0], false));
         }
         @Override
         protected void doResult(StopsForRouteInfo result) {

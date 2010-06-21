@@ -15,10 +15,8 @@
  */
 package com.joulespersecond.oba.provider;
 
-import java.util.HashMap;
-import java.util.List;
-
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
@@ -29,10 +27,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
+import java.util.HashMap;
+import java.util.List;
+
 public class ObaProvider extends ContentProvider {
     private class OpenHelper extends SQLiteOpenHelper {
         private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
-        private static final int DATABASE_VERSION = 15;
+        private static final int DATABASE_VERSION = 16;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -90,6 +91,28 @@ public class ObaProvider extends ContentProvider {
                             " ADD COLUMN " + ObaContract.Routes.URL);
                 ++oldVersion;
             }
+            if (oldVersion == 15) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                            ObaContract.TripAlerts.PATH         + " (" +
+                            ObaContract.TripAlerts._ID          + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            ObaContract.TripAlerts.TRIP_ID      + " VARCHAR NOT NULL, " +
+                            ObaContract.TripAlerts.STOP_ID      + " VARCHAR NOT NULL, " +
+                            ObaContract.TripAlerts.START_TIME   + " INTEGER NOT NULL, " +
+                            ObaContract.TripAlerts.STATE        + " INTEGER NOT NULL DEFAULT " +
+                                ObaContract.TripAlerts.STATE_SCHEDULED +
+                            ");");
+
+                db.execSQL("DROP TRIGGER IF EXISTS trip_alerts_cleanup");
+                db.execSQL("CREATE TRIGGER trip_alerts_cleanup DELETE ON "+ ObaContract.Trips.PATH +
+                        " BEGIN " +
+                            "DELETE FROM " + ObaContract.TripAlerts.PATH +
+                                " WHERE " + ObaContract.TripAlerts.TRIP_ID + " = old." + ObaContract.Trips._ID +
+                                  " AND " + ObaContract.TripAlerts.STOP_ID + " = old." + ObaContract.Trips.STOP_ID +
+                                  ";" +
+                        "END");
+                ++oldVersion;
+            }
         }
 
         private void bootstrapDatabase(SQLiteDatabase db) {
@@ -131,6 +154,7 @@ public class ObaProvider extends ContentProvider {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Routes.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Stops.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Trips.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.TripAlerts.PATH);
         }
     }
 
@@ -140,17 +164,21 @@ public class ObaProvider extends ContentProvider {
     private static final int ROUTES_ID  = 4;
     private static final int TRIPS      = 5;
     private static final int TRIPS_ID   = 6;
-    private static final int STOP_ROUTE_FILTERS = 7;
+    private static final int TRIP_ALERTS= 7;
+    private static final int TRIP_ALERTS_ID = 8;
+    private static final int STOP_ROUTE_FILTERS = 9;
 
     private static final UriMatcher sUriMatcher;
     private static final HashMap<String,String> sStopsProjectionMap;
     private static final HashMap<String,String> sRoutesProjectionMap;
     private static final HashMap<String,String> sTripsProjectionMap;
+    private static final HashMap<String,String> sTripAlertsProjectionMap;
 
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
     private DatabaseUtils.InsertHelper mRoutesInserter;
     private DatabaseUtils.InsertHelper mTripsInserter;
+    private DatabaseUtils.InsertHelper mTripAlertsInserter;
     private DatabaseUtils.InsertHelper mFilterInserter;
 
     static {
@@ -161,6 +189,8 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Routes.PATH + "/*", ROUTES_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Trips.PATH, TRIPS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Trips.PATH + "/*/*", TRIPS_ID);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TripAlerts.PATH, TRIP_ALERTS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TripAlerts.PATH + "/#", TRIP_ALERTS_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopRouteFilters.PATH, STOP_ROUTE_FILTERS);
 
         sStopsProjectionMap = new HashMap<String,String>();
@@ -202,6 +232,14 @@ public class ObaProvider extends ContentProvider {
         sTripsProjectionMap.put(ObaContract.Trips.REMINDER, ObaContract.Trips.REMINDER);
         sTripsProjectionMap.put(ObaContract.Trips.DAYS,     ObaContract.Trips.DAYS);
         sTripsProjectionMap.put(ObaContract.Trips._COUNT,   "count(*)");
+
+        sTripAlertsProjectionMap = new HashMap<String,String>();
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts._ID,        ObaContract.TripAlerts._ID);
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts.TRIP_ID,    ObaContract.TripAlerts.TRIP_ID);
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts.STOP_ID,    ObaContract.TripAlerts.STOP_ID);
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts.START_TIME, ObaContract.TripAlerts.START_TIME);
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts.STATE,      ObaContract.TripAlerts.STATE);
+        sTripAlertsProjectionMap.put(ObaContract.TripAlerts._COUNT,     "count(*)");
     }
 
     private SQLiteDatabase mDb;
@@ -229,6 +267,10 @@ public class ObaProvider extends ContentProvider {
             return ObaContract.Trips.CONTENT_DIR_TYPE;
         case TRIPS_ID:
             return ObaContract.Trips.CONTENT_TYPE;
+        case TRIP_ALERTS:
+            return ObaContract.TripAlerts.CONTENT_DIR_TYPE;
+        case TRIP_ALERTS_ID:
+            return ObaContract.TripAlerts.CONTENT_TYPE;
         case STOP_ROUTE_FILTERS:
             return ObaContract.StopRouteFilters.CONTENT_DIR_TYPE;
         default:
@@ -329,6 +371,11 @@ public class ObaProvider extends ContentProvider {
             mTripsInserter.insert(values);
             return result;
 
+        //case TRIP_ALERTS:
+        //    long longId = mTripAlertsInserter.insert(values);
+        //    result = ContentUris.withAppendedId(ObaContract.TripAlerts.CONTENT_URI, longId);
+        //    return result;
+
         case STOP_ROUTE_FILTERS:
             // TODO: We should provide a "virtual" column that is an array,
             // so clients don't have to call the content provider for each item to insert.
@@ -346,6 +393,7 @@ public class ObaProvider extends ContentProvider {
         case STOPS_ID:
         case ROUTES_ID:
         case TRIPS_ID:
+        case TRIP_ALERTS_ID:
             throw new UnsupportedOperationException("Cannot insert to this URI: " + uri);
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -403,6 +451,21 @@ public class ObaProvider extends ContentProvider {
             return qb.query(mDb, projection, selection, selectionArgs,
                     null, null, sortOrder, limit);
 
+        case TRIP_ALERTS:
+            qb.setTables(ObaContract.TripAlerts.PATH);
+            qb.setProjectionMap(sTripAlertsProjectionMap);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
+        case TRIP_ALERTS_ID:
+            qb.setTables(ObaContract.TripAlerts.PATH);
+            qb.setProjectionMap(sTripAlertsProjectionMap);
+            qb.appendWhere(ObaContract.TripAlerts._ID);
+            qb.appendWhere("=");
+            qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
         case STOP_ROUTE_FILTERS:
             qb.setTables(ObaContract.StopRouteFilters.PATH);
             return qb.query(mDb, projection, selection, selectionArgs,
@@ -437,6 +500,13 @@ public class ObaProvider extends ContentProvider {
         case TRIPS_ID:
             return db.update(ObaContract.Trips.PATH, values, tripWhere(uri), selectionArgs);
 
+        case TRIP_ALERTS:
+            return db.update(ObaContract.TripAlerts.PATH, values, selection, selectionArgs);
+
+        case TRIP_ALERTS_ID:
+            return db.update(ObaContract.TripAlerts.PATH, values,
+                    whereLong(ObaContract.TripAlerts._ID, uri), selectionArgs);
+
         // Can we do anything here??
         case STOP_ROUTE_FILTERS:
             return 0;
@@ -469,6 +539,13 @@ public class ObaProvider extends ContentProvider {
         case TRIPS_ID:
             return db.delete(ObaContract.Trips.PATH, tripWhere(uri), selectionArgs);
 
+        case TRIP_ALERTS:
+            return db.delete(ObaContract.TripAlerts.PATH, selection, selectionArgs);
+
+        case TRIP_ALERTS_ID:
+            return db.delete(ObaContract.TripAlerts.PATH,
+                    whereLong(ObaContract.TripAlerts._ID, uri), selectionArgs);
+
         case STOP_ROUTE_FILTERS:
             return db.delete(ObaContract.StopRouteFilters.PATH, selection, selectionArgs);
 
@@ -482,6 +559,13 @@ public class ObaProvider extends ContentProvider {
         sb.append(column);
         sb.append('=');
         DatabaseUtils.appendValueToSql(sb, uri.getLastPathSegment());
+        return sb.toString();
+    }
+    private String whereLong(String column, Uri uri) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(column);
+        sb.append('=');
+        sb.append(String.valueOf(ContentUris.parseId(uri)));
         return sb.toString();
     }
     private String tripWhere(Uri uri) {
@@ -506,6 +590,7 @@ public class ObaProvider extends ContentProvider {
             mStopsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Stops.PATH);
             mRoutesInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Routes.PATH);
             mTripsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Trips.PATH);
+            mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.StopRouteFilters.PATH);
         }
         return mDb;

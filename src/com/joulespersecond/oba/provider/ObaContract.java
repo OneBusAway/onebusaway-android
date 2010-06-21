@@ -141,6 +141,33 @@ public final class ObaContract {
         public static final String DAYS = "days";
     }
 
+    protected interface TripAlertsColumns {
+        /**
+         * The trip_id key of the corresponding trip.
+         * <P>Type: TEXT</P>
+         */
+        public static final String TRIP_ID = "trip_id";
+        /**
+         * The stop_id key of the corresponding trip.
+         * <P>Type: TEXT</P>
+         */
+        public static final String STOP_ID = "stop_id";
+
+        /** The time in milliseconds to begin the polling.
+         * Unlike the "reminder" time in the Trips columns,
+         * this represents a specific time.
+         * <P>Type: INTEGER</P>
+         */
+        public static final String START_TIME = "start_time";
+
+        /**
+         * The state of the the alert.
+         * Can be SCHEDULED, POLLING, NOTIFY, CANCELED
+         * <P>Type: INTEGER</P>
+         */
+        public static final String STATE = "state";
+    }
+
     protected interface UserColumns {
         /**
          * The number of times this resource has been accessed by the user.
@@ -486,4 +513,26 @@ public final class ObaContract {
         }
     }
 
+    public static class TripAlerts implements BaseColumns, TripAlertsColumns {
+        // Cannot be instantiated
+        private TripAlerts() {}
+
+        /** The URI path portion for this table */
+        public static final String PATH = "trip_alerts";
+        /**
+         * The content:// style URI for this table
+         * URI is of the form content://<authority>/trip_alerts/<id>
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE =
+            "vnd.android.cursor.item/com.joulespersecond.oba.trip_alert";
+        public static final String CONTENT_DIR_TYPE =
+            "vnd.android.dir/com.joulespersecond.oba.trip_alert";
+
+        public static final int STATE_SCHEDULED = 0;
+        public static final int STATE_POLLING = 1;
+        public static final int STATE_NOTIFY = 2;
+        public static final int STATE_CANCELLED = 3;
+    }
 }

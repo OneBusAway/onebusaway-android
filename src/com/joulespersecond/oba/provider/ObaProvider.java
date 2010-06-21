@@ -178,7 +178,7 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mStopsInserter;
     private DatabaseUtils.InsertHelper mRoutesInserter;
     private DatabaseUtils.InsertHelper mTripsInserter;
-    private DatabaseUtils.InsertHelper mTripAlertsInserter;
+    //private DatabaseUtils.InsertHelper mTripAlertsInserter;
     private DatabaseUtils.InsertHelper mFilterInserter;
 
     static {
@@ -590,7 +590,7 @@ public class ObaProvider extends ContentProvider {
             mStopsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Stops.PATH);
             mRoutesInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Routes.PATH);
             mTripsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Trips.PATH);
-            mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
+            //mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.StopRouteFilters.PATH);
         }
         return mDb;

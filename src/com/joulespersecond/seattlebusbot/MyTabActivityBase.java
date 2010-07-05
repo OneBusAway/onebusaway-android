@@ -31,7 +31,6 @@ abstract class MyTabActivityBase extends TabActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        UIHelp.bugHandler(this);
         final Intent intent = getIntent();
         final String action = intent.getAction();
         mShortcutMode = Intent.ACTION_CREATE_SHORTCUT.equals(action);

@@ -18,7 +18,6 @@ package com.joulespersecond.seattlebusbot;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.provider.ObaContract;
-import com.nullwire.trace.ExceptionHandler;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -47,11 +46,6 @@ final class UIHelp {
     //private static final String TAG = "UIHelp";
 
     public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
-    public static final String BUG_REPORT_URL = "http://bugs.joulespersecond.com/bugs/";
-
-    public static void bugHandler(Context context) {
-        ExceptionHandler.register(context, BUG_REPORT_URL);
-    }
 
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
         TextView v = (TextView)parent.findViewById(id);

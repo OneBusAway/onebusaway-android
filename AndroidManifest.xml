@@ -18,6 +18,7 @@
       android:versionCode="14"
       android:versionName="1.2.3">
     <application
+        android:name=".Application"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/Theme.BusBot">
@@ -114,7 +115,6 @@
         <receiver android:name=".BootstrapService">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>

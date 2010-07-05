@@ -18,9 +18,12 @@ package com.joulespersecond.oba.test;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaArray;
 import com.joulespersecond.oba.ObaData;
+import com.joulespersecond.oba.ObaPolyline;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
 import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.ObaStopGroup;
+import com.joulespersecond.oba.ObaStopGrouping;
 
 public class StopsForRouteTest extends ObaTestCase {
     private int mStopCount = -1;
@@ -33,6 +36,42 @@ public class StopsForRouteTest extends ObaTestCase {
     public void testV2() {
         ObaApi.setVersion(ObaApi.VERSION2);
         doTest1(ObaApi.getStopsForRoute(getContext(), "1_43"));
+    }
+
+    public void testPolylines() {
+        doTestPolylines(true);
+    }
+
+    public void testNoPolylines() {
+        doTestPolylines(false);
+    }
+
+    public void doTestPolylines(boolean includePolys) {
+        ObaApi.setVersion(ObaApi.VERSION2);
+        ObaResponse response = ObaApi.getStopsForRoute(getContext(), "1_43", includePolys);
+        assertOK(response);
+        ObaData data = response.getData();
+        assertNotNull(data);
+        ObaArray<ObaPolyline> polylines = data.getPolylines();
+        if (includePolys) {
+            assert(polylines.length() > 0);
+        }
+        else {
+            assertEquals(0, polylines.length());
+        }
+
+
+        ObaArray<ObaStopGrouping> groupings = data.getStopGroupings();
+        assert(groupings.length() > 0);
+        ObaArray<ObaStopGroup> groups = groupings.get(0).getStopGroups();
+        assert(groups.length() > 0);
+        ObaArray<ObaPolyline> polys2 = groups.get(0).getPolylines();
+        if (includePolys) {
+            assert(polys2.length() > 0);
+        }
+        else {
+            assertEquals(0, polys2.length());
+        }
     }
 
     private void doTest1(ObaResponse response) {
@@ -56,6 +95,6 @@ public class StopsForRouteTest extends ObaTestCase {
         ObaArray<ObaRoute> routes = stop.getRoutes();
         assertNotNull(routes);
         assert(routes.length() > 0);
-        checkRoute(routes.get(0), "1_7", "7", "1", "Metro Transit");
+        checkRoute(routes.get(0), "1_10", "10", "1", "Metro Transit");
     }
 }

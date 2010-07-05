@@ -38,7 +38,7 @@ public final class ObaStopGroup {
         }
     }
     private final List<String> stopIds;
-    //private final ObaArray<ObaPolyline> polylines;
+    private final ObaArray<ObaPolyline> polylines;
     private final StopGroupName name;
 
     public static final String TYPE_DESTINATION = "destination";
@@ -48,7 +48,7 @@ public final class ObaStopGroup {
      */
     ObaStopGroup() {
         stopIds = null;
-        //polylines = ObaPolyline.EMPTY_ARRAY;
+        polylines = ObaPolyline.EMPTY_ARRAY;
         name = null;
     }
 
@@ -92,8 +92,7 @@ public final class ObaStopGroup {
      * @return The array of polylines, or an empty array.
      */
     public ObaArray<ObaPolyline> getPolylines() {
-        //return polylines;
-        return ObaPolyline.EMPTY_ARRAY;
+        return polylines;
     }
 
     @Override

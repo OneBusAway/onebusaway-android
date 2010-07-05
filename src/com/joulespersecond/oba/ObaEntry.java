@@ -59,12 +59,10 @@ public final class ObaEntry {
             final ObaArray<ObaStopGrouping> stopGroups =
                 JsonHelp.deserializeChild(obj,
                         "stopGroupings", ObaStopGrouping.ARRAY_TYPE, context);
-            // This takes way too long considering we don't actually use them right now.
-            final ObaArray<ObaPolyline> polylines = null;
-            /*
+            final ObaArray<ObaPolyline> polylines =
                 JsonHelp.deserializeChild(obj,
                         "polylines", ObaPolyline.ARRAY_TYPE, context);
-            */
+
             final Boolean _limit =
                 JsonHelp.deserializeChild(obj, "limitExceeded", Boolean.class, context);
             final boolean limit = _limit != null ? _limit : false;

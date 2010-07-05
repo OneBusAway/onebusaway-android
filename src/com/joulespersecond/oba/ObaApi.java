@@ -108,17 +108,22 @@ public final class ObaApi {
         return "http://" + serverName+ "/api/where";
     }
 
-    private static String mVersion = "";
+    private static final String V2_ARGS = "version=2&";
+    private static String mVersion = V2_ARGS;
+    private static String mAppInfo = "";
 
     // NOTE: This isn't safe right now, because it's not thread-safe.
     // It's only used for testing.
     public static void setVersion(String version) {
         if (VERSION2.equals(version)) {
-            mVersion = "version=2&";
+            mVersion = V2_ARGS;
         }
         else {
             mVersion = "";
         }
+    }
+    public static void setAppInfo(int version, String uuid) {
+        mAppInfo = String.format("&app_ver=%d&app_uid=%s", version, uuid);
     }
 
 
@@ -132,8 +137,8 @@ public final class ObaApi {
 
         // We can do a simple format since we're not expecting the id needs escaping.
         return doRequest(
-                String.format("%s/stop/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/stop/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
     /**
      * Retrieves a route by its full ID.
@@ -143,8 +148,8 @@ public final class ObaApi {
      */
     public static ObaResponse getRouteById(Context context, String id) {
         return doRequest(
-                String.format("%s/route/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/route/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
     /**
      * Search for stops by a location in a specified radius,
@@ -164,10 +169,14 @@ public final class ObaApi {
             int lonSpan,
             String query,
             int maxCount) {
-        String url = String.format("%s/stops-for-location.json?%skey=%s&lat=%f&lon=%f",
+        // NOTE: this hardcodes v1 of the API because we currently can't handle
+        // the "list" type (it's ambiguous as to what it holds)
+        // In order to handle this properly, we will have to bite the bullet
+        // and have multiple response types.
+        String url = String.format("%s/stops-for-location.json?key=%s%s&lat=%f&lon=%f",
                 getUrl(context),
-                mVersion,
                 API_KEY,
+                mAppInfo,
                 (double)location.getLatitudeE6()/1E6,
                 (double)location.getLongitudeE6()/1E6);
         if (radius != 0) {
@@ -209,11 +218,15 @@ public final class ObaApi {
     public static ObaResponse getRoutesByLocation(Context context, GeoPoint location,
             int radius,
             String query) {
+        // NOTE: this hardcodes v1 of the API because we currently can't handle
+        // the "list" type (it's ambiguous as to what it holds)
+        // In order to handle this properly, we will have to bite the bullet
+        // and have multiple response types.
         StringBuilder url = new StringBuilder(
-                String.format("%s/routes-for-location.json?%skey=%s&lat=%f&lon=%f",
+                String.format("%s/routes-for-location.json?key=%s%s&lat=%f&lon=%f",
                 getUrl(context),
-                mVersion,
                 API_KEY,
+                mAppInfo,
                 (double)location.getLatitudeE6()/1E6,
                 (double)location.getLongitudeE6()/1E6));
         if (radius != 0) {
@@ -241,9 +254,31 @@ public final class ObaApi {
      */
     public static ObaResponse getStopsForRoute(Context context, String id) {
         return doRequest(
-                String.format("%s/stops-for-route/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/stops-for-route/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
+
+    /**
+     * Get a list of stops that are services by a given route, including
+     * ordered list of stops for each direction of service, and polylines
+     * mapping the route where available.
+     *
+     * @param id The route ID.
+     * @return A response object.
+     */
+    public static ObaResponse getStopsForRoute(Context context,
+            String id,
+            boolean includePolylines) {
+        return doRequest(
+                String.format("%s/stops-for-route/%s.json?%skey=%s%s&includePolylines=%s",
+                        getUrl(context),
+                        id,
+                        mVersion,
+                        API_KEY,
+                        mAppInfo,
+                        String.valueOf(includePolylines)));
+    }
+
     /**
      * Get current arrivals and departures for routes serving the specified stop.
      * When available, real-time arrival and departure preditions will be
@@ -254,8 +289,8 @@ public final class ObaApi {
      */
     public static ObaResponse getArrivalsDeparturesForStop(Context context, String id) {
         return doRequest(
-                String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s",
-                        getUrl(context), id, mVersion, API_KEY));
+                String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s%s",
+                        getUrl(context), id, mVersion, API_KEY, mAppInfo));
     }
 
     /**

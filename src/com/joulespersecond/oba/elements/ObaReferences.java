@@ -50,9 +50,19 @@ public interface ObaReferences {
      */
     public List<ObaRoute> getRoutes(String[] ids);
 
-    /*
+    /**
+     * References a trip by its ID.
+     * @param id The trip ID.
+     * @return The ObaTrip if it exists, or null if it doesn't.
+     */
     public ObaTrip getTrip(String id);
-    */
+
+    /**
+     * Dereferences a list of trip IDs.
+     * @param ids A list of trips to convert.
+     * @return The list of converted trips.
+     */
+    public List<ObaTrip> getTrips(String[] ids);
 
     /**
      * Dereferences an agency by its ID.

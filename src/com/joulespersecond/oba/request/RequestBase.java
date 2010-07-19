@@ -60,6 +60,15 @@ public class RequestBase {
             // TODO: App/User analytics info.
         }
 
+        protected BuilderBase(Context context, String path, boolean noVersion) {
+            mBuilder = new Uri.Builder();
+            mBuilder.scheme("http");
+            mBuilder.authority(getServer(context));
+            mBuilder.path(path);
+            mBuilder.appendQueryParameter("key", API_KEY);
+            // TODO: App/User analytics info.
+        }
+
         protected static String getPathWithId(String pathElement, String id) {
             StringBuilder builder = new StringBuilder(BASE_PATH);
             builder.append(pathElement);

@@ -23,12 +23,13 @@ public final class ObaReferencesElement implements ObaReferences {
 
     private final ObaStopElement[] stops;
     private final ObaRouteElement[] routes;
-    //private final ObaTripElement[] trips;
+    private final ObaTripElement[] trips;
     private final ObaAgencyElement[] agencies;
 
     public ObaReferencesElement() {
         stops = ObaStopElement.EMPTY_ARRAY;
         routes = ObaRouteElement.EMPTY_ARRAY;
+        trips = ObaTripElement.EMPTY_ARRAY;
         agencies = ObaAgencyElement.EMPTY_ARRAY;
     }
 
@@ -52,11 +53,15 @@ public final class ObaReferencesElement implements ObaReferences {
         return findList(routes, ids);
     }
 
-    /*
-    public ObaTripElement getTrip(String id) {
-
+    @Override
+    public ObaTrip getTrip(String id) {
+        return findById(trips, id);
     }
-    */
+
+    @Override
+    public List<ObaTrip> getTrips(String[] ids) {
+        return findList(trips, ids);
+    }
 
     @Override
     public ObaAgency getAgency(String id) {

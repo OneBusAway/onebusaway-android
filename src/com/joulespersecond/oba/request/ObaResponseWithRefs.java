@@ -19,6 +19,7 @@ import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.elements.ObaTrip;
 
 import java.util.List;
 
@@ -43,11 +44,15 @@ abstract class ObaResponseWithRefs extends ObaResponse implements ObaReferences 
         return getRefs().getRoutes(ids);
     }
 
-    /*
-    public ObaTripElement getTrip(String id) {
-
+    @Override
+    public ObaTrip getTrip(String id) {
+        return getRefs().getTrip(id);
     }
-    */
+
+    @Override
+    public List<ObaTrip> getTrips(String[] ids) {
+        return getRefs().getTrips(ids);
+    }
 
     @Override
     public ObaAgency getAgency(String id) {

@@ -13,74 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.oba;
+package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
-import com.google.gson.reflect.TypeToken;
-import com.joulespersecond.oba.elements.ObaShapeElement;
 
-import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
-public final class ObaPolyline {
-    public static final ObaPolyline EMPTY_OBJECT = new ObaPolyline();
-    public static final ObaArray<ObaPolyline> EMPTY_ARRAY = new ObaArray<ObaPolyline>();
-    public static final Type ARRAY_TYPE = new TypeToken<ObaArray<ObaPolyline>>(){}.getType();
+public final class ObaShapeElement implements ObaShape {
+    public static final ObaShapeElement EMPTY_OBJECT = new ObaShapeElement();
+    public static final ObaShapeElement[] EMPTY_ARRAY = new ObaShapeElement[] {};
 
     private final String points;
     private final int length;
     private final String levels;
 
-    /**
-     * Constructor.
-     */
-    ObaPolyline() {
+    private ObaShapeElement() {
         points = "";
         length = 0;
         levels = "";
     }
 
-    /**
-     * Returns the number of points in the line.
-     *
-     * @return The number of points in the line.
-     */
+    @Override
     public int getLength() {
         return length;
     }
 
-    /**
-     * Returns the levels to display this line.
-     *
-     * @return The levels to display this line, or the empty string.
-     */
+    @Override
     public String getRawLevels() {
         return levels;
     }
 
-    /**
-     * Returns the levels on which to display this line.
-     *
-     * @return The decoded levels to display line.
-     */
+    @Override
     public List<Integer> getLevels() {
         return decodeLevels(levels, length);
     }
 
-    /**
-     * Returns the list of points in this line.
-     *
-     * @return The list of points in this line.
-     */
+    @Override
     public List<GeoPoint> getPoints() {
         return decodeLine(points, length);
     }
 
-    /**
-     * Returns the string encoding of the points in this line.
-     *
-     * @return The string encoding of the points in this line.
-     */
+    @Override
     public String getRawPoints() {
         return points;
     }
@@ -98,7 +72,47 @@ public final class ObaPolyline {
      * @return A list of points from the encoded string.
      */
     public static List<GeoPoint> decodeLine(String encoded, int numPoints) {
-        return ObaShapeElement.decodeLine(encoded, numPoints);
+        assert(numPoints >= 0);
+        ArrayList<GeoPoint> array = new ArrayList<GeoPoint>(numPoints);
+
+        final int len = encoded.length();
+        int i = 0;
+        int lat = 0, lon = 0;
+
+        while (i < len) {
+            int shift = 0;
+            int result = 0;
+
+            int a,b;
+            do {
+                a = encoded.charAt(i);
+                b = a - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+                ++i;
+            } while (b >= 0x20);
+
+            final int dlat = ((result & 1) == 1 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+            do {
+                a = encoded.charAt(i);
+                b = a - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+                ++i;
+            } while (b >= 0x20);
+
+            final int dlon = ((result & 1) == 1 ? ~(result >> 1) : (result >> 1));
+            lon += dlon;
+
+            // The polyline encodes in degrees * 1E5, we need degrees * 1E6
+            array.add(new GeoPoint(lat*10, lon*10));
+        }
+
+        return array;
     }
 
     /**
@@ -112,6 +126,27 @@ public final class ObaPolyline {
      * @return A list of levels from the encoded string.
      */
     public static List<Integer> decodeLevels(String encoded, int numPoints) {
-        return ObaShapeElement.decodeLevels(encoded, numPoints);
+        assert(numPoints >= 0);
+        ArrayList<Integer> array = new ArrayList<Integer>(numPoints);
+
+        final int len = encoded.length();
+        int i = 0;
+        while (i < len) {
+            int shift = 0;
+            int result = 0;
+
+            int a,b;
+            do {
+                a = encoded.charAt(i);
+                b = a - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+                ++i;
+            } while (b >= 0x20);
+
+            array.add(result);
+        }
+
+        return array;
     }
 }

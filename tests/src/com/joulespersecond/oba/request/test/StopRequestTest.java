@@ -21,7 +21,7 @@ import java.util.List;
 
 import android.test.MoreAsserts;
 
-import com.joulespersecond.oba.elements.ObaRouteElement;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopRequest;
 import com.joulespersecond.oba.request.ObaStopResponse;
@@ -40,9 +40,14 @@ public class StopRequestTest extends ObaTestCase {
         assertNotNull(routeIds);
         MoreAsserts.assertContentsInAnyOrder(Arrays.asList(routeIds), "1_8", "1_10", "1_43");
 
-        final List<ObaRouteElement> routes = response.getRoutes();
+        final List<ObaRoute> routes = response.getRoutes();
         assertNotNull(routes);
         assertEquals(routes.size(), routeIds.length);
     }
 
+    public void testNewRequest() {
+        // This is just to make sure we copy and call newRequest() at least once
+        ObaStopRequest request = ObaStopRequest.newRequest(getContext(), "1_29261");
+        assertNotNull(request);
+    }
 }

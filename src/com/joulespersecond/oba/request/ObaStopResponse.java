@@ -17,7 +17,8 @@ package com.joulespersecond.oba.request;
 
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRouteElement;
+import com.joulespersecond.oba.elements.ObaReferencesElement;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.elements.ObaStopElement;
 
@@ -27,11 +28,11 @@ import java.util.List;
  * Response object for ObaStopRequest requests.
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public final class ObaStopResponse extends ObaResponse implements ObaStop {
+public final class ObaStopResponse extends ObaResponseWithRefs implements ObaStop {
     private static final class Data {
         private static final Data EMPTY_OBJECT = new Data();
 
-        private final ObaReferences references = ObaReferences.EMPTY_OBJECT;
+        private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
         private final ObaStopElement entry = ObaStopElement.EMPTY_OBJECT;
     }
     private final Data data;
@@ -88,7 +89,12 @@ public final class ObaStopResponse extends ObaResponse implements ObaStop {
     /**
      * Returns the list of dereferenced routes.
      */
-    public List<ObaRouteElement> getRoutes() {
+    public List<ObaRoute> getRoutes() {
         return data.references.getRoutes(data.entry.getRouteIds());
+    }
+
+    @Override
+    protected ObaReferences getRefs() {
+        return data.references;
     }
 }

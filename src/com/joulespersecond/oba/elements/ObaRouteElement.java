@@ -19,7 +19,7 @@ import android.graphics.Color;
 
 /**
  * Object defining a Route element.
- * http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_RouteElementV2
+ * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_RouteElementV2}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

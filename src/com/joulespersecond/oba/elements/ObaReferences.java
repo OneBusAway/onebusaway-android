@@ -15,67 +15,43 @@
  */
 package com.joulespersecond.oba.elements;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Element representing the <references> object in responses.
+ * Interface representing the <references> object in responses.
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public class ObaReferences {
-    public static final ObaReferences EMPTY_OBJECT = new ObaReferences();
-
-    private final ObaStopElement[] stops;
-    private final ObaRouteElement[] routes;
-    //private final ObaTripElement[] trips;
-    private final ObaAgencyElement[] agencies;
-
-    public ObaReferences() {
-        stops = ObaStopElement.EMPTY_ARRAY;
-        routes = ObaRouteElement.EMPTY_ARRAY;
-        agencies = ObaAgencyElement.EMPTY_ARRAY;
-    }
-
+public interface ObaReferences {
     /**
      * Dereferences a stop by its ID.
      * @param id The stop ID.
      * @return The ObaStop if it exists, or null if it doesn't.
      */
-    public ObaStopElement getStop(String id) {
-        return findById(stops, id);
-    }
+    public ObaStop getStop(String id);
 
     /**
      * Dereferences a list of stop IDs.
      * @param ids A list of stops to convert.
      * @return The list of converted stop.
      */
-    public List<ObaStopElement> getStops(String[] ids) {
-        return findList(stops, ids);
-    }
+    public List<ObaStop> getStops(String[] ids);
 
     /**
      * Dereferences a route by its ID.
      * @param id The route ID.
      * @return The ObaRoute if it exists, or null if it doesn't.
      */
-    public ObaRouteElement getRoute(String id) {
-        return findById(routes, id);
-    }
+    public ObaRoute getRoute(String id);
 
     /**
      * Dereferences a list of route IDs.
      * @param ids A list of routes to convert.
      * @return The list of converted routes.
      */
-    public List<ObaRouteElement> getRoutes(String[] ids) {
-        return findList(routes, ids);
-    }
+    public List<ObaRoute> getRoutes(String[] ids);
 
     /*
-    public ObaTripElement getTrip(String id) {
-
-    }
+    public ObaTrip getTrip(String id);
     */
 
     /**
@@ -83,42 +59,12 @@ public class ObaReferences {
      * @param id The agency ID.
      * @return The ObaAgency if it exists, or null if it doesn't.
      */
-    public ObaAgencyElement getAgency(String id) {
-        return findById(agencies, id);
-    }
+    public ObaAgency getAgency(String id);
 
     /**
      * Dereferences a list of agency IDs.
      * @param ids A list of agency IDs to convert.
      * @return The list of converted agencies.
      */
-    public List<ObaAgencyElement> getAgencies(String[] ids) {
-        return findList(agencies, ids);
-    }
-
-    //
-    // TODO: This will be much easier when we convert to HashMap storage.
-    //
-    private static <T extends ObaElement> T findById(T[] objects, String id) {
-        final int len = objects.length;
-        for (int i=0; i < len; ++i) {
-            final T obj = objects[i];
-            if (obj.getId().equals(id)) {
-                return obj;
-            }
-        }
-        return null;
-    }
-    private static <T extends ObaElement> List<T> findList(T[] objects, String[] ids) {
-        ArrayList<T> result = new ArrayList<T>();
-        final int len = ids.length;
-        for (int i=0; i < len; ++i) {
-            final String id = ids[i];
-            final T obj = findById(objects, id);
-            if (obj != null) {
-                result.add(obj);
-            }
-        }
-        return result;
-    }
+    public List<ObaAgency> getAgencies(String[] ids);
 }

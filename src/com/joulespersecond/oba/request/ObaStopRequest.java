@@ -48,7 +48,7 @@ public final class ObaStopRequest extends RequestBase implements Callable<ObaSto
      * @param stopId The stopId to request.
      * @return The new request instance.
      */
-    public ObaStopRequest newRequest(Context context, String stopId) {
+    public static ObaStopRequest newRequest(Context context, String stopId) {
         return new Builder(context, stopId).build();
     }
 

@@ -43,4 +43,10 @@ public class RouteRequestTest extends ObaTestCase {
         assertEquals(agency.getId(), "1");
         assertEquals(agency.getName(), "Metro Transit");
     }
+
+    public void testNewRequest() {
+        // This is just to make sure we copy and call newRequest() at least once
+        ObaRouteRequest request = ObaRouteRequest.newRequest(getContext(), "1_10");
+        assertNotNull(request);
+    }
 }

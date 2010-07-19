@@ -15,8 +15,9 @@
  */
 package com.joulespersecond.oba.request;
 
-import com.joulespersecond.oba.elements.ObaAgencyElement;
+import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaReferencesElement;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaRouteElement;
 
@@ -24,11 +25,11 @@ import com.joulespersecond.oba.elements.ObaRouteElement;
  * Response object for ObaRouteRequest objects.
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public final class ObaRouteResponse extends ObaResponse implements ObaRoute {
+public final class ObaRouteResponse extends ObaResponseWithRefs implements ObaRoute {
     private static final class Data {
         private static final Data EMPTY_OBJECT = new Data();
 
-        private final ObaReferences references = ObaReferences.EMPTY_OBJECT;
+        private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
         private final ObaRouteElement entry = ObaRouteElement.EMPTY_OBJECT;
     }
     private final Data data;
@@ -85,7 +86,12 @@ public final class ObaRouteResponse extends ObaResponse implements ObaRoute {
     /**
      * @return The agency object.
      */
-    public ObaAgencyElement getAgency() {
+    public ObaAgency getAgency() {
         return data.references.getAgency(data.entry.getAgencyId());
+    }
+
+    @Override
+    protected ObaReferences getRefs() {
+        return data.references;
     }
 }

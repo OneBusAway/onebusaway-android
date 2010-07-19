@@ -22,43 +22,43 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
- * Retrieve info for a specific transit agency
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_Agency}
- *
+ * List all supported agencies along with the center of their coverage area.
+ * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_AgenciesWithCoverage}
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public final class ObaAgencyRequest extends RequestBase implements Callable<ObaAgencyResponse> {
-    protected ObaAgencyRequest(Uri uri) {
+public final class ObaAgenciesWithCoverageRequest extends RequestBase implements
+        Callable<ObaAgenciesWithCoverageResponse> {
+
+    protected ObaAgenciesWithCoverageRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
-        public Builder(Context context, String agencyId) {
-            super(context, getPathWithId("/agency/", agencyId));
+        public Builder(Context context) {
+            super(context, BASE_PATH + "/agencies-with-coverage.json");
         }
 
-        public ObaAgencyRequest build() {
-            return new ObaAgencyRequest(buildUri());
+        public ObaAgenciesWithCoverageRequest build() {
+            return new ObaAgenciesWithCoverageRequest(buildUri());
         }
     }
 
     /**
      * Helper method for constructing new instances.
      * @param context The package context.
-     * @param routeId The agency Id to request.
      * @return The new request instance.
      */
-    public static ObaAgencyRequest newRequest(Context context, String agency) {
-        return new Builder(context, agency).build();
+    public static ObaAgenciesWithCoverageRequest newRequest(Context context) {
+        return new Builder(context).build();
     }
 
     @Override
-    public ObaAgencyResponse call() throws IOException {
-        return call(ObaAgencyResponse.class);
+    public ObaAgenciesWithCoverageResponse call() throws IOException {
+        return call(ObaAgenciesWithCoverageResponse.class);
     }
 
     @Override
     public String toString() {
-        return "ObaAgencyRequest [mUri=" + mUri + "]";
+        return "ObaAgenciesWithCoverageRequest [mUri=" + mUri + "]";
     }
 }

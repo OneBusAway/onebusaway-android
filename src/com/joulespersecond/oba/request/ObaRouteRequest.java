@@ -48,7 +48,7 @@ public final class ObaRouteRequest extends RequestBase implements Callable<ObaRo
      * @param routeId The route Id to request.
      * @return The new request instance.
      */
-    public ObaRouteRequest newRequest(Context context, String routeId) {
+    public static ObaRouteRequest newRequest(Context context, String routeId) {
         return new Builder(context, routeId).build();
     }
 

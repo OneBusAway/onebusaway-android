@@ -21,25 +21,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import android.util.Log;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.SocketException;
 import java.net.URL;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 public final class ObaResponse {
-    private static final String TAG = "ObaResponse";
+    //private static final String TAG = "ObaResponse";
 
     static class Deserializer implements JsonDeserializer<ObaResponse> {
         @Override
@@ -110,66 +98,9 @@ public final class ObaResponse {
         return new ObaResponse(ObaApi.VERSION1, code, error, null);
     }
     static public ObaResponse createFromURL(URL url) throws IOException {
-        long start = System.nanoTime();
-        boolean useGzip = false;
-        int code = 0;
-        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-        conn.setReadTimeout(30*1000);
-        conn.setRequestProperty("Accept-Encoding", "gzip");
-        try {
-            conn.connect();
-            code = conn.getResponseCode();
-        }
-        catch (SocketException e) {
-            Log.e(TAG, "Connection failed: " + e.toString());
-            return createFromError("Connection failed: " + e.toString());
-        }
-        catch (IOException e) { // includes SocketTimeoutException
-            Log.e(TAG, "Connection failed: " + e.toString());
-            return createFromError("Connection failed: " + e.toString());
-        }
-        if (code != HttpURLConnection.HTTP_OK) {
-            return createFromError("Server returned an error", code);
-        }
-        InputStream in = conn.getInputStream();
-
-        final Map<String,List<String>> headers = conn.getHeaderFields();
-        // This is a map, but we can't assume the key we're looking for
-        // is in normal casing. So it's really not a good map, is it?
-        final Set<Map.Entry<String,List<String>>> set = headers.entrySet();
-        for (Iterator<Map.Entry<String,List<String>>> i = set.iterator(); i.hasNext(); ) {
-            Map.Entry<String,List<String>> entry = i.next();
-            if (entry.getKey().equalsIgnoreCase("Content-Encoding")) {
-                for (Iterator<String> j = entry.getValue().iterator(); j.hasNext(); ) {
-                    String str = j.next();
-                    if (str.equalsIgnoreCase("gzip")) {
-                        useGzip = true;
-                        break;
-                    }
-                }
-                // Break out of outer loop.
-                if (useGzip) {
-                    break;
-                }
-            }
-        }
-        long end = System.nanoTime();
-        Log.d(TAG, "Connect: " + (end-start)/1e6);
-        start = end;
-
-        Reader reader;
-        if (useGzip) {
-            reader = new BufferedReader(
-                    new InputStreamReader(new GZIPInputStream(in)), 8*1024);
-        }
-        else {
-            reader = new BufferedReader(
-                    new InputStreamReader(in), 8*1024);
-        }
+        Reader reader = ObaHelp.getUri(url);
         try {
             ObaResponse r = ObaApi.getGson().fromJson(reader, ObaResponse.class);
-            end = System.nanoTime();
-            Log.d(TAG, "Parse: " + (end-start)/1e6);
             if (r != null) {
                 return r;
             }

@@ -87,7 +87,7 @@ public final class ObaApi {
     static final ConcurrentHashMap<JsonDeserializationContext,ObaReferences> mRefMap =
         new ConcurrentHashMap<JsonDeserializationContext,ObaReferences>();
 
-    static Gson getGson() {
+    public static Gson getGson() {
         return GsonHolder.gsonObj;
     }
 

@@ -30,9 +30,15 @@ public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
     private static final class Entry {
         private static final Entry EMPTY_OBJECT = new Entry();
 
-        private final String stopId = "";
-        private final ObaArrivalInfo[] arrivalsAndDepartures = ObaArrivalInfo.EMPTY_ARRAY;
-        private final String[] nearbyStopIds = new String[] {};
+        private final String stopId;
+        private final ObaArrivalInfo[] arrivalsAndDepartures;
+        private final String[] nearbyStopIds;
+
+        private Entry() {
+            stopId = "";
+            arrivalsAndDepartures = ObaArrivalInfo.EMPTY_ARRAY;
+            nearbyStopIds = new String[] {};
+        }
     }
 
     private static final class Data {

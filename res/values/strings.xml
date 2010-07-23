@@ -35,6 +35,7 @@
     <string name="direction_none"></string>
     <string name="loading">Loading...</string>
     <string name="browser_error">Unable to launch browser.</string>
+    <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
 
     <!--  Option strings -->
     <string name="main_option_mylocation">My Location</string>

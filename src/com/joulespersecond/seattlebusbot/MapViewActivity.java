@@ -163,6 +163,7 @@ public class MapViewActivity extends MapActivity
         mStopsController.setNonConfigurationInstance(getLastNonConfigurationInstance());
 
         autoShowWhatsNew();
+        UIHelp.checkAirplaneMode(this);
     }
     @Override
     public void onDestroy() {

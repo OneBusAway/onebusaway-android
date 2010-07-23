@@ -31,6 +31,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -215,6 +216,13 @@ final class UIHelp {
             // Make up a fake "Seattle" location.
             // ll=47.620975,-122.347355
             return ObaApi.makeGeoPoint(47.620975, -122.347355);
+        }
+    }
+
+    public static void checkAirplaneMode(Context context) {
+        ContentResolver cr = context.getContentResolver();
+        if (Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0) {
+            Toast.makeText(context, R.string.airplane_mode, Toast.LENGTH_LONG).show();
         }
     }
 

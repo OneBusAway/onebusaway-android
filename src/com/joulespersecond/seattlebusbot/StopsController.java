@@ -21,6 +21,7 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaResponse;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Handler;
 
 /**
@@ -34,7 +35,7 @@ public class StopsController {
         public void onRequestFulfilled(ObaResponse response);
     }
 
-    public static final class RequestInfo {
+    private static final class RequestInfo {
         private final String mRouteId;
         private final GeoPoint mCenter;
         private final int mLatSpan;
@@ -72,37 +73,53 @@ public class StopsController {
             return "Request: Center=("+mCenter+") Zoom="+mZoomLevel+" Route="+mRouteId;
         }
     }
+    private static final class ResponseInfo {
+        private final RequestInfo mRequest;
+        private final ObaResponse mResponse;
+
+        ResponseInfo(RequestInfo req, ObaResponse resp) {
+            mRequest = req;
+            mResponse = resp;
+        }
+        RequestInfo getRequest() {
+            return mRequest;
+        }
+        ObaResponse getResponse() {
+            return mResponse;
+        }
+    }
 
     private final AsyncTasks.ProgressIndeterminateVisibility mAsyncProgress;
 
-    private class AsyncTask extends AsyncTasks.StringToResponse {
-        private final RequestInfo mInfo;
-
-        AsyncTask(RequestInfo info) {
-            super(mAsyncProgress);
-            mInfo = info;
+    private class MyTask extends AsyncTask<RequestInfo,Void,ResponseInfo> {
+        @Override
+        protected void onPreExecute() {
+            mAsyncProgress.showLoading();
         }
 
         @Override
-        protected ObaResponse doInBackground(String... params) {
-            if (mInfo.getRouteId() != null) {
-                return ObaApi.getStopsForRoute(mActivity, mInfo.getRouteId(), false);
+        protected ResponseInfo doInBackground(RequestInfo... params) {
+            final RequestInfo info = params[0];
+            ObaResponse response = null;
+            if (info.getRouteId() != null) {
+                response = ObaApi.getStopsForRoute(mActivity, info.getRouteId(), false);
             }
             else {
-                return ObaApi.getStopsByLocation(mActivity,
-                        mInfo.getCenter(),
+                response = ObaApi.getStopsByLocation(mActivity,
+                        info.getCenter(),
                         0,
-                        mInfo.getLatSpan(),
-                        mInfo.getLonSpan(),
+                        info.getLatSpan(),
+                        info.getLonSpan(),
                         null,
                         0);
             }
+            return new ResponseInfo(info, response);
         }
         @Override
-        protected void doResult(ObaResponse result) {
-            if (canFulfillRequest(mInfo)) {
-                mCurrentResponse = result;
-                mListener.onRequestFulfilled(result);
+        protected void onPostExecute(ResponseInfo result) {
+            if (canFulfillRequest(result.getRequest())) {
+                mCurrentResponse = result.getResponse();
+                mListener.onRequestFulfilled(result.getResponse());
                 mTask = null;
             }
             else {
@@ -110,13 +127,13 @@ public class StopsController {
                 // to start a new task
                 mMyHandler.post(mStartNewTask);
             }
-
+            mAsyncProgress.hideLoading();
         }
     }
 
     private final Activity mActivity;
     private final Listener mListener;
-    private AsyncTask mTask;
+    private MyTask mTask;
     private RequestInfo mCurrentRequest;
     private ObaResponse mCurrentResponse;
     private final Handler mMyHandler = new Handler();
@@ -158,8 +175,10 @@ public class StopsController {
     }
     private void startTask() {
         //Log.d(TAG, "StartTask: " + mCurrentRequest);
-        mTask = new AsyncTask(mCurrentRequest);
-        mTask.execute();
+        if (mCurrentRequest != null) {
+            mTask = new MyTask();
+            mTask.execute(mCurrentRequest);
+        }
     }
 
     RequestInfo getCurrentRequest() {

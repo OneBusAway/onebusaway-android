@@ -128,7 +128,7 @@ final class AsyncTasks {
      * on an activity.
      */
     public static final class ProgressIndeterminateVisibility implements Progress {
-        final Activity mActivity;
+        private final Activity mActivity;
 
         ProgressIndeterminateVisibility(Activity activity) {
             mActivity = activity;

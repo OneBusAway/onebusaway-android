@@ -21,7 +21,7 @@ import com.joulespersecond.oba.ObaArrivalInfo;
 import com.joulespersecond.oba.ObaData;
 import com.joulespersecond.oba.ObaResponse;
 import com.joulespersecond.oba.ObaRoute;
-import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.app.Activity;
@@ -72,7 +72,7 @@ public class StopInfoActivity extends ListActivity {
     private static final String CURRENT_EDIT = ".CurrentEdit";
 
     private ObaResponse mResponse;
-    private ObaStop mStop;
+    private com.joulespersecond.oba.ObaStop mStop;
     private String mStopId;
     private String mStopName;
     private Uri mStopUri;
@@ -110,6 +110,9 @@ public class StopInfoActivity extends ListActivity {
                         String stopDir) {
         context.startActivity(makeIntent(context, stopId, stopName, stopDir));
     }
+    public static void start(Context context, com.joulespersecond.oba.ObaStop stop) {
+        context.startActivity(makeIntent(context, stop));
+    }
     public static void start(Context context, ObaStop stop) {
         context.startActivity(makeIntent(context, stop));
     }
@@ -132,6 +135,13 @@ public class StopInfoActivity extends ListActivity {
         myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
         myIntent.putExtra(STOP_DIRECTION, stopDir);
+        return myIntent;
+    }
+    public static Intent makeIntent(Context context, com.joulespersecond.oba.ObaStop stop) {
+        Intent myIntent = new Intent(context, StopInfoActivity.class);
+        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
+        myIntent.putExtra(STOP_NAME, stop.getName());
+        myIntent.putExtra(STOP_DIRECTION, stop.getDirection());
         return myIntent;
     }
     public static Intent makeIntent(Context context, ObaStop stop) {
@@ -647,7 +657,7 @@ public class StopInfoActivity extends ListActivity {
         }
     }
 
-    void setHeader(ObaStop stop, boolean addToDb) {
+    void setHeader(com.joulespersecond.oba.ObaStop stop, boolean addToDb) {
         String code = stop.getCode();
         String name = stop.getName();
         String direction = stop.getDirection();

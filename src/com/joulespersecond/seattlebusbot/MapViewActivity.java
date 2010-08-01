@@ -25,11 +25,13 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
-import com.joulespersecond.oba.ObaStop;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.request.ObaResponseWithRefs;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
 
 import android.app.AlertDialog;
@@ -57,6 +59,7 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MapViewActivity extends MapActivity
@@ -91,6 +94,8 @@ public class MapViewActivity extends MapActivity
     private StopsController mStopsController;
     private MapWatcher mMapWatcher;
 
+    private Object mStopWait;
+
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
 
@@ -104,11 +109,7 @@ public class MapViewActivity extends MapActivity
      * @param lon The longitude of the map center.
      */
     public static final void start(Context context, String focusId, double lat, double lon) {
-        Intent myIntent = new Intent(context, MapViewActivity.class);
-        myIntent.putExtra(FOCUS_STOP_ID, focusId);
-        myIntent.putExtra(CENTER_LAT, lat);
-        myIntent.putExtra(CENTER_LON, lon);
-        context.startActivity(myIntent);
+        context.startActivity(makeIntent(context, focusId, lat, lon));
     }
     /**
      * Starts the MapActivity in "RouteMode", which shows stops along a route,
@@ -116,13 +117,42 @@ public class MapViewActivity extends MapActivity
      *
      * @param context The context of the activity.
      * @param routeId The route to show.
-     * @param stopData If this is non-null, this is string representation of
-     *          the ObaResponse to use as the stops for the route.
      */
     public static final void start(Context context, String routeId) {
+        context.startActivity(makeIntent(context, routeId));
+    }
+
+    /**
+     * Returns an intent that will start the MapActivity with a particular stop
+     * focused with the center of the map at a particular point.
+     *
+     * @param context The context of the activity.
+     * @param focusId The stop to focus.
+     * @param lat The latitude of the map center.
+     * @param lon The longitude of the map center.
+     */
+    public static final Intent makeIntent(Context context,
+            String focusId,
+            double lat,
+            double lon) {
+        Intent myIntent = new Intent(context, MapViewActivity.class);
+        myIntent.putExtra(FOCUS_STOP_ID, focusId);
+        myIntent.putExtra(CENTER_LAT, lat);
+        myIntent.putExtra(CENTER_LON, lon);
+        return myIntent;
+    }
+
+    /**
+     * Returns an intent that starts the MapActivity in "RouteMode", which shows stops
+     * along a route, and does not get new stops when the user pans the map.
+     *
+     * @param context The context of the activity.
+     * @param routeId The route to show.
+     */
+    public static final Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, MapViewActivity.class);
         myIntent.putExtra(ROUTE_ID, routeId);
-        context.startActivity(myIntent);
+        return myIntent;
     }
 
     /** Called when the activity is first created. */
@@ -353,12 +383,24 @@ public class MapViewActivity extends MapActivity
         getStops();
     }
 
+    public void setStopWait(Object obj) {
+        mStopWait = obj;
+    }
+    public StopsController getStopsController() {
+        return mStopsController;
+    }
+
     //
     // StopsController.Listener
     //
     @Override
     public void onRequestFulfilled(ObaResponse response) {
         setOverlays(response);
+        if (mStopWait != null) {
+            synchronized (mStopWait) {
+                mStopWait.notifyAll();
+            }
+        }
     }
 
     private void getStops() {
@@ -406,8 +448,8 @@ public class MapViewActivity extends MapActivity
         }
     }
 
-    private class RouteArrayAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {
-        public RouteArrayAdapter(ObaArray<ObaRoute> routes) {
+    private class RouteArrayAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
+        public RouteArrayAdapter(List<ObaRoute> routes) {
             super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
         }
         @Override
@@ -422,7 +464,8 @@ public class MapViewActivity extends MapActivity
     void populateRoutes(ObaStop stop, boolean force) {
         GridView grid = (GridView)findViewById(R.id.route_list);
         if (grid.getVisibility() != View.GONE || force) {
-            grid.setAdapter(new RouteArrayAdapter(stop.getRoutes()));
+            ObaResponseWithRefs response = (ObaResponseWithRefs)mStopsController.getResponse();
+            grid.setAdapter(new RouteArrayAdapter(response.getRoutes(stop.getRouteIds())));
         }
     }
 
@@ -512,7 +555,14 @@ public class MapViewActivity extends MapActivity
         if (response.getCode() != ObaApi.OBA_OK) {
             return;
         }
-        final ObaArray<ObaStop> stops = response.getData().getStops();
+        List<ObaStop> stops;
+        if (response instanceof ObaStopsForRouteResponse) {
+            stops = ((ObaStopsForRouteResponse)response).getStops();
+        }
+        else {
+            assert(response instanceof ObaStopsForLocationResponse);
+            stops = Arrays.asList(((ObaStopsForLocationResponse)response).getStops());
+        }
 
         List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.

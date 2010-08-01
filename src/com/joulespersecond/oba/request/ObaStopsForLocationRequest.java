@@ -62,6 +62,17 @@ public final class ObaStopsForLocationRequest extends RequestBase
         }
 
         /**
+         * An alternative to {@link #setRadius(int)} to set the search bounding box
+         * @param latSpan The latitude span of the bounding box in microdegrees.
+         * @param lonSpan The longitude span of the bounding box in microdegrees.
+         */
+        public Builder setSpan(int latSpan, int lonSpan) {
+            mBuilder.appendQueryParameter("latSpan", String.valueOf(latSpan/1E6));
+            mBuilder.appendQueryParameter("lonSpan", String.valueOf(lonSpan/1E6));
+            return this;
+        }
+
+        /**
          * A specific route short name to search for.
          * @param query The short name query string.
          */

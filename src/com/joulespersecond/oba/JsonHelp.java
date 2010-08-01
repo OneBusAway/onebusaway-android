@@ -104,6 +104,7 @@ final class JsonHelp {
             return JsonHelp.deserializeChild(obj, nonRefChild, cls, context);
         }
     }
+    @Deprecated
     static <E> ObaArray<E> derefArray(JsonObject obj,
             JsonDeserializationContext context,
             String refChild,

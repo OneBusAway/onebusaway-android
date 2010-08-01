@@ -17,8 +17,10 @@ package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -103,16 +105,16 @@ public class StopsController {
             final RequestInfo info = params[0];
             ObaResponse response = null;
             if (info.getRouteId() != null) {
-                response = ObaApi.getStopsForRoute(mActivity, info.getRouteId(), false);
+                response = new ObaStopsForRouteRequest.Builder(mActivity, info.getRouteId())
+                                .setIncludeShapes(false)
+                                .build()
+                                .call();
             }
             else {
-                response = ObaApi.getStopsByLocation(mActivity,
-                        info.getCenter(),
-                        0,
-                        info.getLatSpan(),
-                        info.getLonSpan(),
-                        null,
-                        0);
+                response = new ObaStopsForLocationRequest.Builder(mActivity, info.getCenter())
+                                .setSpan(info.getLatSpan(), info.getLonSpan())
+                                .build()
+                                .call();
             }
             return new ResponseInfo(info, response);
         }
@@ -195,7 +197,7 @@ public class StopsController {
         }
     }
 
-    ObaResponse getResponse() {
+    public ObaResponse getResponse() {
         return mCurrentResponse;
     }
 
@@ -220,7 +222,7 @@ public class StopsController {
             final int oldZoom = mCurrentRequest.getZoomLevel();
             final int newZoom = info.getZoomLevel();
             if ((newZoom > oldZoom) &&
-                    mCurrentResponse.getData().getLimitExceeded()) {
+                    getLimitExceeded(mCurrentResponse)) {
                 return false;
             }
             else if (newZoom < oldZoom) {
@@ -244,6 +246,15 @@ public class StopsController {
         // entirely within the old one (fuzzy match)
         //  FALSE
 
+    }
+
+    private boolean getLimitExceeded(ObaResponse response) {
+        if (response instanceof ObaStopsForLocationResponse) {
+            return ((ObaStopsForLocationResponse)response).getLimitExceeded();
+        }
+        else {
+            return false;
+        }
     }
 
     static RequestInfo requestFromView(MapView view, String routeId) {

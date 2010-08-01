@@ -15,22 +15,23 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.MapView;
+import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.elements.ObaStop;
+
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.MapView;
-import com.google.android.maps.OverlayItem;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaStop;
+import java.util.List;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     //private static final String TAG = "StopOverlay";
 
-    private final ObaArray<ObaStop> mStops;
+    private final List<ObaStop> mStops;
     private final Activity mActivity;
 
     private static final int getResourceIdForDirection(String direction) {
@@ -67,7 +68,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         }
     }
 
-    public StopOverlay(ObaArray<ObaStop> stops,
+    public StopOverlay(List<ObaStop> stops,
             Activity activity) {
         super(boundCenterBottom(activity.getResources().getDrawable(R.drawable.stop_u)));
         mStops = stops;
@@ -86,7 +87,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     }
     @Override
     public int size() {
-        return mStops.length();
+        return mStops.size();
     }
     @Override
     public boolean onTrackballEvent(MotionEvent event, MapView view) {

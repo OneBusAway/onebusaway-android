@@ -26,13 +26,13 @@ public class TripRequestTest extends ObaTestCase {
         ObaTripRequest request = builder.build();
         ObaTripResponse response = request.call();
         assertOK(response);
-        assertEquals(response.getId(), "1_15551350");
-        assertEquals(response.getRouteId(), "1_65");
+        assertEquals("1_15551350", response.getId());
+        assertEquals("1_65", response.getRouteId());
 
         final ObaRoute route = response.getRoute();
         assertNotNull(route);
-        assertEquals(route.getId(), "1_65");
-        assertEquals(route.getAgencyId(), "1");
+        assertEquals("1_65", route.getId());
+        assertEquals("1", route.getAgencyId());
     }
 
     public void testNewRequest() {

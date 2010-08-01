@@ -26,8 +26,8 @@ public class AgencyRequestTest extends ObaTestCase {
         ObaAgencyResponse response = request.call();
         assertOK(response);
 
-        assertEquals(response.getId(), "1");
-        assertEquals(response.getName(), "Metro Transit");
+        assertEquals("1", response.getId());
+        assertEquals("Metro Transit", response.getName());
     }
 
     public void testNewRequest() {

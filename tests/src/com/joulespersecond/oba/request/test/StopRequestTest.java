@@ -32,9 +32,9 @@ public class StopRequestTest extends ObaTestCase {
         ObaStopRequest request = builder.build();
         ObaStopResponse response = request.call();
         assertOK(response);
-        assertEquals(response.getId(), "1_29261");
-        assertEquals(response.getStopCode(), "29261");
-        assertEquals(response.getLocationType(), ObaStop.LOCATION_STOP);
+        assertEquals("1_29261", response.getId());
+        assertEquals("29261", response.getStopCode());
+        assertEquals(ObaStop.LOCATION_STOP, response.getLocationType());
         final String[] routeIds = response.getRouteIds();
         assertNotNull(routeIds);
         MoreAsserts.assertContentsInAnyOrder(Arrays.asList(routeIds), "1_8", "1_10", "1_43");

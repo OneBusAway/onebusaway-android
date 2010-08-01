@@ -36,7 +36,7 @@ public class StopsForRouteRequestTest extends ObaTestCase {
         assertTrue(stops.size() > 0);
         // Check one
         final ObaStop stop = stops.get(0);
-        assertEquals(stop.getId(), "1_10911");
+        assertEquals("1_10911", stop.getId());
         final ObaStopGrouping[] groupings = response.getStopGroupings();
         assertNotNull(groupings);
 
@@ -54,6 +54,6 @@ public class StopsForRouteRequestTest extends ObaTestCase {
         assertOK(response);
         final ObaShape[] shapes = response.getShapes();
         assertNotNull(shapes);
-        assertEquals(shapes.length, 0);
+        assertEquals(0, shapes.length);
     }
 }

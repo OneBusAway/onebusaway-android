@@ -40,12 +40,12 @@ public class StopsForLocationTest extends ObaTestCase {
 
         final ObaStop first = list[0];
         // This may not always be true, but it is now.
-        assertEquals(first.getId(), "1_1030");
+        assertEquals("1_1030", first.getId());
         final ObaRoute route = response.getRoute(first.getRouteIds()[0]);
-        assertEquals(route.getId(), "1_25");
+        assertEquals("1_25", route.getId());
         final ObaAgency agency = response.getAgency(route.getAgencyId());
-        assertEquals(agency.getId(), "1");
-        assertEquals(agency.getName(), "Metro Transit");
+        assertEquals("1", agency.getId());
+        assertEquals("Metro Transit", agency.getName());
     }
 
     public void testQuery() {
@@ -64,9 +64,9 @@ public class StopsForLocationTest extends ObaTestCase {
 
         final ObaStop first = list[0];
         // This may not always be true, but it is now.
-        assertEquals(first.getId(), "3_26");
+        assertEquals("3_26", first.getId());
         final ObaRoute route = response.getRoute(first.getRouteIds()[0]);
-        assertEquals(route.getAgencyId(), "3");
+        assertEquals("3", route.getAgencyId());
     }
 
     public void testQueryFail() {
@@ -79,7 +79,7 @@ public class StopsForLocationTest extends ObaTestCase {
                 .call();
         assertOK(response);
         final ObaStop[] list = response.getStops();
-        assertEquals(list.length, 0);
+        assertEquals(0, list.length);
         assertFalse(response.getLimitExceeded());
         assertFalse(response.getOutOfRange());
     }

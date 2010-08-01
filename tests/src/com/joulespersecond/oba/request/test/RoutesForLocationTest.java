@@ -39,9 +39,9 @@ public class RoutesForLocationTest extends ObaTestCase {
 
         final ObaRoute first = list[0];
         // This may not always be true, but it is now.
-        assertEquals(first.getType(), ObaRoute.TYPE_BUS);
+        assertEquals(ObaRoute.TYPE_BUS, first.getType());
         final ObaAgency agency = response.getAgency(first.getAgencyId());
-        assertEquals(agency.getId(), "1");
+        assertEquals("1", agency.getId());
     }
 
     public void testQuery() {
@@ -62,7 +62,7 @@ public class RoutesForLocationTest extends ObaTestCase {
         // This may not always be true, but it is now.
         assertEquals(first.getType(), ObaRoute.TYPE_BUS);
         final ObaAgency agency = response.getAgency(first.getAgencyId());
-        assertEquals(agency.getId(), "3");
+        assertEquals("3", agency.getId());
     }
 
     public void testQueryFail() {
@@ -75,7 +75,7 @@ public class RoutesForLocationTest extends ObaTestCase {
                 .call();
         assertOK(response);
         final ObaRoute[] list = response.getRoutes();
-        assertEquals(list.length, 0);
+        assertEquals(0, list.length);
         assertFalse(response.getLimitExceeded());
         assertFalse(response.getOutOfRange());
     }

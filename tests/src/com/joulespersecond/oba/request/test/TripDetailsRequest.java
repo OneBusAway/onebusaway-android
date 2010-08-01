@@ -29,7 +29,7 @@ public class TripDetailsRequest extends ObaTestCase {
         ObaTripDetailsRequest request = builder.build();
         ObaTripDetailsResponse response = request.call();
         assertOK(response);
-        assertEquals(response.getId(), "1_15551350");
+        assertEquals("1_15551350", response.getId());
 
         ObaTripSchedule schedule = response.getSchedule();
         assertNotNull(schedule);
@@ -49,7 +49,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 .build()
                 .call();
         assertOK(response);
-        assertEquals(response.getId(), "1_15551350");
+        assertEquals("1_15551350", response.getId());
         // Make sure the trip exists
         ObaTrip trip = response.getTrip(response.getId());
         assertNull(trip);
@@ -62,7 +62,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 .build()
                 .call();
         assertOK(response);
-        assertEquals(response.getId(), "1_15551350");
+        assertEquals("1_15551350", response.getId());
 
         ObaTripSchedule schedule = response.getSchedule();
         assertNull(schedule);
@@ -75,7 +75,7 @@ public class TripDetailsRequest extends ObaTestCase {
                 .build()
                 .call();
         assertOK(response);
-        assertEquals(response.getId(), "1_15551350");
+        assertEquals("1_15551350", response.getId());
 
         ObaTripDetails.Status status = response.getStatus();
         assertNull(status);

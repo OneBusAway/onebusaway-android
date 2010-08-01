@@ -34,7 +34,7 @@ public class ScheduleForStopTest extends ObaTestCase {
         // know the day we can't really assume very much.
         assertOK(response);
         final ObaStop stop = response.getStop();
-        assertEquals(stop.getId(), "1_75403");
+        assertEquals("1_75403", stop.getId());
         final ObaStopSchedule.CalendarDay[] days = response.getCalendarDays();
         assertTrue(days.length > 0);
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
@@ -55,15 +55,15 @@ public class ScheduleForStopTest extends ObaTestCase {
                 .call();
         assertOK(response);
         final ObaStop stop = response.getStop();
-        assertEquals(stop.getId(), "1_75403");
+        assertEquals("1_75403", stop.getId());
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
-        assertEquals(schedules[0].getRouteId(), "1_31");
+        assertEquals("1_31", schedules[0].getRouteId());
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
-        assertEquals(dirs[0].getTripHeadsign(), "Central Magnolia");
+        assertEquals("Central Magnolia", dirs[0].getTripHeadsign());
         final ObaRouteSchedule.Time[] times = dirs[0].getStopTimes();
         assertTrue(times.length > 0);
-        assertEquals(times[0].getTripId(), "1_15415380");
+        assertEquals("1_15415380", times[0].getTripId());
     }
 }

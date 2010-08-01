@@ -34,11 +34,11 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
-        assertEquals(stop.getId(), "1_29261");
+        assertEquals("1_29261", stop.getId());
         final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
         assertTrue(routes.size() > 0);
         ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
-        assertEquals(agency.getId(), "1");
+        assertEquals("1", agency.getId());
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         // Uhh, this will vary considerably depending on when this is run.

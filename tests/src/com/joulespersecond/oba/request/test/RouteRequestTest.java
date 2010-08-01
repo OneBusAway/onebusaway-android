@@ -29,17 +29,17 @@ public class RouteRequestTest extends ObaTestCase {
         ObaRouteRequest request = builder.build();
         ObaRouteResponse response = request.call();
         assertOK(response);
-        assertEquals(response.getId(), "1_10");
-        assertEquals(response.getShortName(), "10");
-        assertEquals(response.getAgencyId(), "1");
-        assertEquals(response.getType(), ObaRoute.TYPE_BUS);
-        assertEquals(response.getColor(), Color.WHITE);
-        assertEquals(response.getTextColor(), Color.BLACK);
+        assertEquals("1_10", response.getId());
+        assertEquals("10", response.getShortName());
+        assertEquals("1", response.getAgencyId());
+        assertEquals(ObaRoute.TYPE_BUS, response.getType());
+        assertEquals(Color.WHITE, response.getColor());
+        assertEquals(Color.BLACK, response.getTextColor());
 
         ObaAgency agency = response.getAgency();
         assertNotNull(agency);
-        assertEquals(agency.getId(), "1");
-        assertEquals(agency.getName(), "Metro Transit");
+        assertEquals("1", agency.getId());
+        assertEquals("Metro Transit", agency.getName());
     }
 
     public void testNewRequest() {

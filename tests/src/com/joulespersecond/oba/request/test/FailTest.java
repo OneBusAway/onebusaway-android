@@ -57,7 +57,7 @@ public class FailTest extends ObaTestCase {
     public void test404_1() {
         ObaStopResponse response = ObaStopRequest.newRequest(getContext(), "404test").call();
         assertNotNull(response);
-        assertEquals(response.getCode(), ObaApi.OBA_NOT_FOUND);
+        assertEquals(ObaApi.OBA_NOT_FOUND, response.getCode());
         // Make sure the stop data is not null
         assertNotNull(response.getId());
     }
@@ -67,14 +67,14 @@ public class FailTest extends ObaTestCase {
         BadResponse response =
             new BadRequest.Builder(getContext(), "/foo/1_29261.json").build().call();
         assertNotNull(response);
-        assertEquals(response.getCode(), ObaApi.OBA_NOT_FOUND);
+        assertEquals(ObaApi.OBA_NOT_FOUND, response.getCode());
     }
 
     public void testBadJson() {
         BadResponse response =
             new BadRequest.Builder(getContext(), "/stop/1_29261.xml").build().call();
         assertNotNull(response);
-        assertEquals(response.getCode(), ObaApi.OBA_INTERNAL_ERROR);
+        assertEquals(ObaApi.OBA_INTERNAL_ERROR, response.getCode());
     }
 
 }

@@ -22,6 +22,7 @@ import com.google.gson.JsonDeserializationContext;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -111,10 +112,12 @@ public final class ObaApi {
 
     private static final String V2_ARGS = "version=2&";
     private static String mVersion = V2_ARGS;
+    // AppInfo is for API v1
     private static String mAppInfo = "";
+    private static int mAppVer = 0;
+    private static String mAppUid = null;
 
-    // NOTE: This isn't safe right now, because it's not thread-safe.
-    // It's only used for testing.
+    @Deprecated
     public static void setVersion(String version) {
         if (VERSION2.equals(version)) {
             mVersion = V2_ARGS;
@@ -124,7 +127,17 @@ public final class ObaApi {
         }
     }
     public static void setAppInfo(int version, String uuid) {
+        mAppVer = version;
+        mAppUid = uuid;
         mAppInfo = String.format("&app_ver=%d&app_uid=%s", version, uuid);
+    }
+    public static void setAppInfo(Uri.Builder builder) {
+        if (mAppVer != 0) {
+            builder.appendQueryParameter("app_ver", String.valueOf(mAppVer));
+        }
+        if (mAppUid != null) {
+            builder.appendQueryParameter("app_uid", mAppUid);
+        }
     }
 
 
@@ -134,6 +147,7 @@ public final class ObaApi {
      * @param id The stop ID.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getStopById(Context context, String id) {
 
         // We can do a simple format since we're not expecting the id needs escaping.
@@ -147,6 +161,7 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getRouteById(Context context, String id) {
         return doRequest(
                 String.format("%s/route/%s.json?%skey=%s%s",
@@ -164,6 +179,7 @@ public final class ObaApi {
      * @param maxCount Optional maximum number of stop entries to return.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getStopsByLocation(Context context, GeoPoint location,
             int radius,
             int latSpan,
@@ -216,6 +232,7 @@ public final class ObaApi {
      * @param query The optional route name to search for.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getRoutesByLocation(Context context, GeoPoint location,
             int radius,
             String query) {
@@ -253,6 +270,7 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getStopsForRoute(Context context, String id) {
         return doRequest(
                 String.format("%s/stops-for-route/%s.json?%skey=%s%s",
@@ -267,6 +285,7 @@ public final class ObaApi {
      * @param id The route ID.
      * @return A response object.
      */
+    @Deprecated
     public static ObaResponse getStopsForRoute(Context context,
             String id,
             boolean includePolylines) {
@@ -288,6 +307,7 @@ public final class ObaApi {
      * @param id The stop ID.
      * @return true if successful, false otherwise.
      */
+    @Deprecated
     public static ObaResponse getArrivalsDeparturesForStop(Context context, String id) {
         return doRequest(
                 String.format("%s/arrivals-and-departures-for-stop/%s.json?%skey=%s%s",

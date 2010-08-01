@@ -57,7 +57,7 @@ public class RequestBase {
             mBuilder.path(path);
             mBuilder.appendQueryParameter("version", "2");
             mBuilder.appendQueryParameter("key", API_KEY);
-            // TODO: App/User analytics info.
+            ObaApi.setAppInfo(mBuilder);
         }
 
         protected BuilderBase(Context context, String path, boolean noVersion) {
@@ -66,7 +66,7 @@ public class RequestBase {
             mBuilder.authority(getServer(context));
             mBuilder.path(path);
             mBuilder.appendQueryParameter("key", API_KEY);
-            // TODO: App/User analytics info.
+            ObaApi.setAppInfo(mBuilder);
         }
 
         protected static String getPathWithId(String pathElement, String id) {

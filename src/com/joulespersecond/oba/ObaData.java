@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.oba;
 
-
+@Deprecated
 public interface ObaData {
     /**
      * Retrieves the list of stops, if they exist.

@@ -16,6 +16,7 @@
 package com.joulespersecond.oba;
 
 
+@Deprecated
 public final class ObaData1 implements ObaData {
     public static final ObaData1 EMPTY_OBJECT = new ObaData1();
 

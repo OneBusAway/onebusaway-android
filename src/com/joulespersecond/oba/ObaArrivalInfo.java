@@ -19,6 +19,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
+@Deprecated
 public final class ObaArrivalInfo {
     public static final ObaArrivalInfo EMPTY_OBJECT = new ObaArrivalInfo();
     public static final ObaArray<ObaArrivalInfo> EMPTY_ARRAY = new ObaArray<ObaArrivalInfo>();

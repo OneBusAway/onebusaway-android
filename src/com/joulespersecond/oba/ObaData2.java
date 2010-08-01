@@ -23,6 +23,7 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
 
+@Deprecated
 public final class ObaData2 implements ObaData {
     static class Deserializer implements JsonDeserializer<ObaData2> {
         @Override

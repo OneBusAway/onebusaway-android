@@ -22,6 +22,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
+@Deprecated
 public final class ObaStop {
     public static final ObaStop EMPTY_OBJECT = new ObaStop();
     public static final ObaArray<ObaStop> EMPTY_ARRAY = new ObaArray<ObaStop>();

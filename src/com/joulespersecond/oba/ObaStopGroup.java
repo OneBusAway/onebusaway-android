@@ -18,6 +18,7 @@ package com.joulespersecond.oba;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public final class ObaStopGroup {
     public static final ObaStopGroup EMPTY_OBJECT = new ObaStopGroup();
     public static final ObaArray<ObaStopGroup> EMPTY_ARRAY = new ObaArray<ObaStopGroup>();

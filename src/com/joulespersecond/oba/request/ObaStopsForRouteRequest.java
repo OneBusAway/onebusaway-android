@@ -34,8 +34,8 @@ public final class ObaStopsForRouteRequest extends RequestBase
     }
 
     public static class Builder extends RequestBase.BuilderBase {
-        public Builder(Context context, String stopId) {
-            super(context, getPathWithId("/stops-for-route/", stopId));
+        public Builder(Context context, String routeId) {
+            super(context, getPathWithId("/stops-for-route/", routeId));
         }
 
         public Builder setIncludeShapes(boolean includePolylines) {

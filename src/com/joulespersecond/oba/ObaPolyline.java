@@ -22,6 +22,7 @@ import com.joulespersecond.oba.elements.ObaShapeElement;
 import java.lang.reflect.Type;
 import java.util.List;
 
+@Deprecated
 public final class ObaPolyline {
     public static final ObaPolyline EMPTY_OBJECT = new ObaPolyline();
     public static final ObaArray<ObaPolyline> EMPTY_ARRAY = new ObaArray<ObaPolyline>();

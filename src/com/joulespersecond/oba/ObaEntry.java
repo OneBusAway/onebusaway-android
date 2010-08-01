@@ -23,6 +23,7 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
 
+@Deprecated
 public final class ObaEntry {
     public static final ObaEntry EMPTY_OBJECT = new ObaEntry();
     //

@@ -23,6 +23,7 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
 
+@Deprecated
 public final class ObaReferences {
     public static final ObaReferences EMPTY_OBJECT = new ObaReferences();
 

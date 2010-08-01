@@ -19,7 +19,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
-
+@Deprecated
 public final class ObaStopGrouping {
     public static final ObaStopGrouping EMPTY_OBJECT = new ObaStopGrouping();
     public static final ObaArray<ObaStopGrouping> EMPTY_ARRAY = new ObaArray<ObaStopGrouping>();

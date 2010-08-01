@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URL;
 
+@Deprecated
 public final class ObaResponse {
     //private static final String TAG = "ObaResponse";
 

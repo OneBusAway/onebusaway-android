@@ -21,8 +21,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
-
-
+@Deprecated
 public final class ObaRoute {
     public static final ObaRoute EMPTY_OBJECT = new ObaRoute();
     public static final ObaArray<ObaRoute> EMPTY_ARRAY = new ObaArray<ObaRoute>();

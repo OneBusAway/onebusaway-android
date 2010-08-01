@@ -25,6 +25,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+@Deprecated
 public final class ObaArray<E> /*implements Iterable<E>*/ {
     static class Deserializer<E> implements JsonDeserializer<ObaArray<E>> {
         public ObaArray<E> deserialize(JsonElement elem, Type type,

@@ -21,6 +21,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
+@Deprecated
 public final class ObaAgency {
     public static final ObaAgency EMPTY_OBJECT = new ObaAgency();
 

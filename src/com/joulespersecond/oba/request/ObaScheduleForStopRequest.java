@@ -19,7 +19,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.format.Time;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -55,7 +54,7 @@ public final class ObaScheduleForStopRequest extends RequestBase
     }
 
     @Override
-    public ObaScheduleForStopResponse call() throws IOException {
+    public ObaScheduleForStopResponse call() {
         return call(ObaScheduleForStopResponse.class);
     }
 

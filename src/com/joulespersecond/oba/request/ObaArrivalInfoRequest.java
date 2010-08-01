@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public final class ObaArrivalInfoRequest extends RequestBase implements
@@ -49,7 +48,7 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
     }
 
     @Override
-    public ObaArrivalInfoResponse call() throws IOException {
+    public ObaArrivalInfoResponse call() {
         return call(ObaArrivalInfoResponse.class);
     }
 

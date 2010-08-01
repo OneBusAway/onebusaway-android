@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -53,9 +52,10 @@ public final class ObaAgencyRequest extends RequestBase implements Callable<ObaA
     }
 
     @Override
-    public ObaAgencyResponse call() throws IOException {
+    public ObaAgencyResponse call() {
         return call(ObaAgencyResponse.class);
     }
+
 
     @Override
     public String toString() {

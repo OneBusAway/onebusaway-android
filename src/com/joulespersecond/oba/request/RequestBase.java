@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.oba.request;
 
+import com.google.gson.JsonParseException;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaHelp;
 
@@ -23,6 +24,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -82,8 +84,32 @@ public class RequestBase {
         }
     }
 
-    protected <T> T call(Class<T> cls) throws IOException {
-        final Reader reader = ObaHelp.getUri(mUri);
-        return ObaApi.getGson().fromJson(reader, cls);
+    private <T> T createFromError(Class<T> cls, int code, String error) {
+        // This is not very efficient, but it's an error case and it's easier
+        // than instantiating one ourselves.
+        final String jsonErr =  ObaApi.getGson().toJson(error);
+        final String json = String.format("{code: %d,version:\"2\",text:%s}", code, jsonErr);
+        // Hopefully this never returns null.
+        return ObaApi.getGson().fromJson(json, cls);
+    }
+
+    protected <T> T call(Class<T> cls) {
+        try {
+            Reader reader = ObaHelp.getUri(mUri);
+            T t = ObaApi.getGson().fromJson(reader, cls);
+            if (t == null) {
+                t = createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
+            }
+            return t;
+        }
+        catch (FileNotFoundException e) {
+            return createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
+        }
+        catch (IOException e) {
+            return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());
+        }
+        catch (JsonParseException e) {
+            return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());
+        }
     }
 }

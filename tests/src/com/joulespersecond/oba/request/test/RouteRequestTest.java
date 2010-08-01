@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import android.graphics.Color;
 
 import com.joulespersecond.oba.elements.ObaAgency;
@@ -26,7 +24,7 @@ import com.joulespersecond.oba.request.ObaRouteResponse;
 
 
 public class RouteRequestTest extends ObaTestCase {
-    public void testKCMRoute() throws IOException {
+    public void testKCMRoute() {
         ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getContext(), "1_10");
         ObaRouteRequest request = builder.build();
         ObaRouteResponse response = request.call();

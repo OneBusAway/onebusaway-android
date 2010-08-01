@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.joulespersecond.oba.elements.ObaAgency;
@@ -27,7 +26,7 @@ import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
 
 public class ArrivalInfoRequestTest extends ObaTestCase {
-    public void testKCMStop() throws IOException {
+    public void testKCMStop() {
         ObaArrivalInfoRequest.Builder builder =
             new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
         ObaArrivalInfoRequest request = builder.build();

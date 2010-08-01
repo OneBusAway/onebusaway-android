@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaAgency;
@@ -27,7 +25,7 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 
 public class StopsForLocationTest extends ObaTestCase {
-    public void testDowntownSeattle1() throws IOException {
+    public void testDowntownSeattle1() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.610980, -122.33845);
 
         ObaStopsForLocationRequest.Builder builder =
@@ -50,7 +48,7 @@ public class StopsForLocationTest extends ObaTestCase {
         assertEquals(agency.getName(), "Metro Transit");
     }
 
-    public void testQuery() throws IOException {
+    public void testQuery() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
@@ -71,7 +69,7 @@ public class StopsForLocationTest extends ObaTestCase {
         assertEquals(route.getAgencyId(), "3");
     }
 
-    public void testQueryFail() throws IOException {
+    public void testQueryFail() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
@@ -86,7 +84,7 @@ public class StopsForLocationTest extends ObaTestCase {
         assertFalse(response.getOutOfRange());
     }
 
-    public void testOutOfRange() throws IOException {
+    public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
         final GeoPoint pt = ObaApi.makeGeoPoint(48.85808, 2.29498);
 

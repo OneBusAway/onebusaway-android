@@ -15,14 +15,12 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.joulespersecond.oba.request.ObaCurrentTimeRequest;
 import com.joulespersecond.oba.request.ObaCurrentTimeResponse;
 
 
 public class CurrentTimeRequestTest extends ObaTestCase {
-    public void testCurrentTime() throws IOException {
+    public void testCurrentTime() {
         ObaCurrentTimeRequest.Builder builder = new ObaCurrentTimeRequest.Builder(getContext());
         ObaCurrentTimeRequest request = builder.build();
         ObaCurrentTimeResponse response = request.call();

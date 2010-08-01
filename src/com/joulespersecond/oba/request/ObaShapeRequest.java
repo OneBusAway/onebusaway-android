@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -53,7 +52,7 @@ public final class ObaShapeRequest extends RequestBase implements Callable<ObaSh
     }
 
     @Override
-    public ObaShapeResponse call() throws IOException {
+    public ObaShapeResponse call() {
         return call(ObaShapeResponse.class);
     }
 

@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -53,7 +52,7 @@ public final class ObaStopRequest extends RequestBase implements Callable<ObaSto
     }
 
     @Override
-    public ObaStopResponse call() throws IOException {
+    public ObaStopResponse call() {
         return call(ObaStopResponse.class);
     }
 

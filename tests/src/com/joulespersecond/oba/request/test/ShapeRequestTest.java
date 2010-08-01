@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.google.android.maps.GeoPoint;
@@ -24,7 +23,7 @@ import com.joulespersecond.oba.request.ObaShapeResponse;
 
 public class ShapeRequestTest extends ObaTestCase {
 
-    public void testShape() throws IOException {
+    public void testShape() {
         ObaShapeRequest.Builder builder =
                 new ObaShapeRequest.Builder(getContext(), "1_40046045");
         ObaShapeRequest request = builder.build();

@@ -29,7 +29,7 @@ public class ObaResponse {
     protected ObaResponse() {
         version = ObaApi.VERSION1;
         code = 0;
-        text = "Uninit";
+        text = "ERROR";
     }
 
     /**

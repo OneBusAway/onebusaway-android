@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaTripDetails;
@@ -25,7 +23,7 @@ import com.joulespersecond.oba.request.ObaTripsForLocationResponse;
 
 
 public class TripsForLocationTest extends ObaTestCase {
-    public void test1() throws IOException {
+    public void test1() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.653, -122.307);
 
         ObaTripsForLocationRequest.Builder builder =
@@ -39,7 +37,7 @@ public class TripsForLocationTest extends ObaTestCase {
         assertNotNull(list);
     }
 
-    public void testOutOfRange() throws IOException {
+    public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
         final GeoPoint pt = ObaApi.makeGeoPoint(48.85808, 2.29498);
 

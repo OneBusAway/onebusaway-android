@@ -20,7 +20,6 @@ import com.google.android.maps.GeoPoint;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -77,7 +76,7 @@ public final class ObaStopsForLocationRequest extends RequestBase
     }
 
     @Override
-    public ObaStopsForLocationResponse call() throws IOException {
+    public ObaStopsForLocationResponse call() {
         return call(ObaStopsForLocationResponse.class);
     }
 

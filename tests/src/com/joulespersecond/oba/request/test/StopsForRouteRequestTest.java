@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.joulespersecond.oba.elements.ObaShape;
@@ -26,7 +25,7 @@ import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 
 public class StopsForRouteRequestTest extends ObaTestCase {
 
-    public void testKCMRoute() throws IOException {
+    public void testKCMRoute() {
         ObaStopsForRouteRequest.Builder builder =
                 new ObaStopsForRouteRequest.Builder(getContext(), "1_44");
         ObaStopsForRouteRequest request = builder.build();
@@ -46,7 +45,7 @@ public class StopsForRouteRequestTest extends ObaTestCase {
         assertTrue(shapes.length > 0);
     }
 
-    public void testNoShapes() throws IOException {
+    public void testNoShapes() {
         ObaStopsForRouteResponse response =
             new ObaStopsForRouteRequest.Builder(getContext(), "1_44")
                 .setIncludeShapes(false)

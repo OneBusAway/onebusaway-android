@@ -16,6 +16,7 @@
 package com.joulespersecond.oba;
 
 import android.net.Uri;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,13 +32,15 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 public final class ObaHelp {
-    //private static final String TAG = "ObaHelp";
+    private static final String TAG = "ObaHelp";
 
     public static Reader getUri(Uri uri) throws IOException {
         return getUri(new URL(uri.toString()));
     }
 
     public static Reader getUri(URL url) throws IOException {
+        Log.d(TAG, "getUri: " + url.toString());
+
         boolean useGzip = false;
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setReadTimeout(30*1000);

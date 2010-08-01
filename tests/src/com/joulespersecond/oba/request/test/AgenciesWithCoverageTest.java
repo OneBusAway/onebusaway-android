@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaAgencyWithCoverage;
 import com.joulespersecond.oba.request.ObaAgenciesWithCoverageRequest;
@@ -24,7 +22,7 @@ import com.joulespersecond.oba.request.ObaAgenciesWithCoverageResponse;
 
 
 public class AgenciesWithCoverageTest extends ObaTestCase {
-    public void testRequest() throws IOException {
+    public void testRequest() {
         ObaAgenciesWithCoverageRequest request =
             ObaAgenciesWithCoverageRequest.newRequest(getContext());
         ObaAgenciesWithCoverageResponse response = request.call();

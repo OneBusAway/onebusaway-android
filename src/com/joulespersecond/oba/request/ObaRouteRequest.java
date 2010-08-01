@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
@@ -53,7 +52,7 @@ public final class ObaRouteRequest extends RequestBase implements Callable<ObaRo
     }
 
     @Override
-    public ObaRouteResponse call() throws IOException {
+    public ObaRouteResponse call() {
         return call(ObaRouteResponse.class);
     }
 

@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import android.text.format.Time;
 
 import com.joulespersecond.oba.elements.ObaRouteSchedule;
@@ -27,7 +25,7 @@ import com.joulespersecond.oba.request.ObaScheduleForStopResponse;
 
 
 public class ScheduleForStopTest extends ObaTestCase {
-    public void testKCMStop() throws IOException {
+    public void testKCMStop() {
         ObaScheduleForStopResponse response =
             new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
                 .build()
@@ -45,7 +43,7 @@ public class ScheduleForStopTest extends ObaTestCase {
         assertTrue(dirs.length > 0);
     }
 
-    public void testDate() throws IOException {
+    public void testDate() {
         Time time = new Time();
         time.year = 2010;
         time.month = 7;

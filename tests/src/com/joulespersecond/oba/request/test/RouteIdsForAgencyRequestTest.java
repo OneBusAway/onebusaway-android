@@ -15,14 +15,12 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.joulespersecond.oba.request.ObaRouteIdsForAgencyRequest;
 import com.joulespersecond.oba.request.ObaRouteIdsForAgencyResponse;
 
 
 public class RouteIdsForAgencyRequestTest extends ObaTestCase {
-    public void testST() throws IOException {
+    public void testST() {
         ObaRouteIdsForAgencyRequest.Builder builder =
             new ObaRouteIdsForAgencyRequest.Builder(getContext(), "40");
         ObaRouteIdsForAgencyRequest request = builder.build();

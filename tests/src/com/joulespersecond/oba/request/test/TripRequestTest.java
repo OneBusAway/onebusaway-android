@@ -15,15 +15,13 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaTripRequest;
 import com.joulespersecond.oba.request.ObaTripResponse;
 
 public class TripRequestTest extends ObaTestCase {
 
-    public void testKCMTrip() throws IOException {
+    public void testKCMTrip() {
         ObaTripRequest.Builder builder = new ObaTripRequest.Builder(getContext(), "1_15551350");
         ObaTripRequest request = builder.build();
         ObaTripResponse response = request.call();

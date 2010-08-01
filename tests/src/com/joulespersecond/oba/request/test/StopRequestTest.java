@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +27,7 @@ import com.joulespersecond.oba.request.ObaStopResponse;
 
 public class StopRequestTest extends ObaTestCase {
 
-    public void testKCMStop() throws IOException {
+    public void testKCMStop() {
         ObaStopRequest.Builder builder = new ObaStopRequest.Builder(getContext(), "1_29261");
         ObaStopRequest request = builder.build();
         ObaStopResponse response = request.call();

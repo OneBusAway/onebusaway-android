@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.io.IOException;
-
 import com.joulespersecond.oba.elements.ObaTrip;
 import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.elements.ObaTripSchedule;
@@ -25,7 +23,7 @@ import com.joulespersecond.oba.request.ObaTripDetailsResponse;
 
 public class TripDetailsRequest extends ObaTestCase {
 
-    public void testKCMTrip() throws IOException {
+    public void testKCMTrip() {
         ObaTripDetailsRequest.Builder builder =
                 new ObaTripDetailsRequest.Builder(getContext(), "1_15551350");
         ObaTripDetailsRequest request = builder.build();
@@ -44,7 +42,7 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNotNull(trip);
     }
 
-    public void testNoTrips() throws IOException {
+    public void testNoTrips() {
         ObaTripDetailsResponse response =
             new ObaTripDetailsRequest.Builder(getContext(), "1_15551350")
                 .setIncludeTrip(false)
@@ -57,7 +55,7 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNull(trip);
     }
 
-    public void testNoSchedule() throws IOException {
+    public void testNoSchedule() {
         ObaTripDetailsResponse response =
             new ObaTripDetailsRequest.Builder(getContext(), "1_15551350")
                 .setIncludeSchedule(false)
@@ -70,7 +68,7 @@ public class TripDetailsRequest extends ObaTestCase {
         assertNull(schedule);
     }
 
-    public void testNoStatus() throws IOException {
+    public void testNoStatus() {
         ObaTripDetailsResponse response =
             new ObaTripDetailsRequest.Builder(getContext(), "1_15551350")
                 .setIncludeStatus(false)

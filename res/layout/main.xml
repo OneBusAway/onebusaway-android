@@ -14,137 +14,136 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mainlayout"
-    android:orientation="vertical"
+  android:id="@+id/mainlayout"
+  android:orientation="vertical"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+
+  <!-- Action Bar -->
+  <RelativeLayout android:id="@+id/actionbar" style="@style/ActionBar">
+    <ImageButton android:id="@+id/action_title"
+      style="@style/ActionBarTitle" />
+
+    <ImageButton android:id="@+id/action_list"
+      style="@style/ActionBarButton"
+      android:src="@drawable/action_btn_list"
+      android:layout_alignParentRight="true"/>
+
+    <ImageButton android:id="@+id/action_search"
+      style="@style/ActionBarButton"
+      android:src="@drawable/action_btn_search"
+      android:layout_toLeftOf="@id/action_list"/>
+  </RelativeLayout>
+
+  <!-- Info popup -->
+  <RelativeLayout
+    android:id="@+id/map_popup"
+    android:visibility="gone"
+    android:background="@color/android:white"
+    android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
-  <LinearLayout
-      android:id="@+id/actionbar"
-      android:orientation="horizontal"
+    android:layout_height="wrap_content"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp">
+      <ImageButton
+        android:id="@+id/map_popup_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentLeft="true"
+        android:src="@drawable/ic_bus_large"
+        android:background="@null" />
+
+      <LinearLayout
+        android:id="@+id/stop_container"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_toRightOf="@id/map_popup_button">
+         <ImageView
+           android:id="@+id/stop_favorite"
+           android:src="@drawable/star_on"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:visibility="gone"
+           android:layout_marginLeft="-3dp" />
+        <TextView
+            android:id="@+id/stop_name"
+            android:textSize="18sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
+     </LinearLayout>
+
+
+     <LinearLayout
+        android:id="@+id/links"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/stop_container"
+        android:layout_toRightOf="@id/map_popup_button"
+        android:orientation="horizontal">
+
+        <TextView android:id="@+id/show_arrival_info"
+          android:text="@string/main_arrival_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingRight="5dp"
+            android:textSize="14sp"
+            android:bufferType="spannable"
+            android:linksClickable="true" />
+
+        <TextView android:id="@+id/show_routes"
+            android:text="@string/main_show_routes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:bufferType="spannable"
+            android:linksClickable="true" />
+      </LinearLayout>
+
+      <GridView android:id="@+id/route_list"
+        android:visibility="gone"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/links"
+        android:layout_toRightOf="@id/map_popup_button"
+        android:numColumns="auto_fit"
+        android:columnWidth="30sp"
+        android:verticalSpacing="1dp"
+        android:horizontalSpacing="3dp" />
+
+  </RelativeLayout>
+
+  <!-- Map and map controls -->
+  <RelativeLayout android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
+
+    <com.google.android.maps.MapView
+      android:id="@+id/mapview"
       android:layout_width="fill_parent"
-      style="@style/ActionBar">
-       <TextView android:text="action bar"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="wrap_content" />
-       <ImageButton
-           android:id="@+id/action_search"
-           style="@style/ActionBarButton"/>
-       <ImageButton
-           android:id="@+id/action_something"
-           style="@style/ActionBarButton" />
-  </LinearLayout>
-        <RelativeLayout android:id="@+id/map_popup"
-          android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          android:visibility="gone"
-          android:background="@drawable/map_popup"
-          android:layout_alignParentLeft="true"
-          android:layout_alignParentTop="true" >
-          <LinearLayout
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:orientation="vertical">
-              <include layout="@layout/stop_item" />
+      android:layout_height="fill_parent"
+      android:clickable="true"
+      android:apiKey="0FyPlkxcKszF8kGff6452hjOza5Y22wpBnGYuIg"
+      android:focusableInTouchMode="true" />
 
-              <TextView android:id="@+id/direction"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content" />
-              <LinearLayout
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal">
-                  <TextView
-                      android:id="@+id/show_arrival_info"
-                      android:text="@string/main_arrival_info"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:paddingRight="5dp"
-                      android:bufferType="spannable"
-                      android:linksClickable="true" />
-                  <TextView
-                      android:id="@+id/show_routes"
-                      android:text="@string/main_show_routes"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:bufferType="spannable"
-                      android:linksClickable="true" />
-              </LinearLayout>
-              <GridView
-                  android:id="@+id/route_list"
-                  android:visibility="gone"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:numColumns="auto_fit"
-                  android:columnWidth="30sp"
-                  android:verticalSpacing="1dp"
-                  android:horizontalSpacing="3dp" />
-          </LinearLayout>
-      </RelativeLayout>
-    <RelativeLayout
-      android:orientation="vertical"
-      android:layout_width="fill_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1">
+    <ProgressBar android:id="@+android:id/progress"
+        style="@style/LoadingProgress"
+        android:visibility="gone"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:paddingTop="5dp"
+        android:paddingRight="5dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"/>
 
-      <com.google.android.maps.MapView
-          android:id="@+id/mapview"
-          android:layout_width="fill_parent"
-          android:layout_height="fill_parent"
-          android:clickable="true"
-          android:apiKey="0FyPlkxcKszF8kGff6452hjOza5Y22wpBnGYuIg"
-          android:focusableInTouchMode="true"
-      />
-    <!--
-      <RelativeLayout android:id="@+id/map_popup"
-          android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          android:visibility="gone"
-          android:background="@drawable/map_popup"
-          android:layout_alignParentLeft="true"
-          android:layout_alignParentTop="true" >
-          <LinearLayout
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:orientation="vertical">
-              <include layout="@layout/stop_item" />
-
-              <TextView android:id="@+id/direction"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content" />
-              <LinearLayout
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal">
-                  <TextView
-                      android:id="@+id/show_arrival_info"
-                      android:text="@string/main_arrival_info"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:paddingRight="5dp"
-                      android:bufferType="spannable"
-                      android:linksClickable="true" />
-                  <TextView
-                      android:id="@+id/show_routes"
-                      android:text="@string/main_show_routes"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:bufferType="spannable"
-                      android:linksClickable="true" />
-              </LinearLayout>
-              <GridView
-                  android:id="@+id/route_list"
-                  android:visibility="gone"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"
-                  android:numColumns="auto_fit"
-                  android:columnWidth="30sp"
-                  android:verticalSpacing="1dp"
-                  android:horizontalSpacing="3dp" />
-          </LinearLayout>
-      </RelativeLayout>
-     -->
-
+    <ZoomControls android:id="@+id/zoom_controls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true" />
   </RelativeLayout>
 </LinearLayout>
 

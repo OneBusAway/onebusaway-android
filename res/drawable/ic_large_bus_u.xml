@@ -13,6 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#ffffffff"/>
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_bus_large" />
+    <!-- <item android:drawable="@drawable/dir_e" /> -->
+</layer-list>

@@ -54,16 +54,16 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ZoomControls;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class MapViewActivity extends MapActivity
-        implements MapWatcher.Listener, StopsController.Listener {
+        implements MapWatcher.Listener, StopsController.Listener, AsyncTasks.Progress {
     private static final String TAG = "MapViewActivity";
 
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
@@ -78,6 +78,8 @@ public class MapViewActivity extends MapActivity
     private static final String SHOW_ROUTES = ".ShowRoutes";
 
     MapView mMapView;
+    private View mProgress;
+    private ZoomControls mZoomControls;
     private MyLocationOverlay mLocationOverlay;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
@@ -162,20 +164,18 @@ public class MapViewActivity extends MapActivity
         //
         // Static initialization (what should always be there, regardless of intent)
         //
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
-        mMapView.setBuiltInZoomControls(true);
-        mStopsController = new StopsController(this, this);
+        mMapView.setBuiltInZoomControls(false);
+        mProgress = findViewById(android.R.id.progress);
+        mZoomControls = (ZoomControls)findViewById(R.id.zoom_controls);
+        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
+        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
+        mStopsController = new StopsController(this, this, this);
 
         // Initialize the links
         UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
         UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
-
-        // If you click on the popup but not on a link, nothing happens
-        // (if this weren't there, the popup would be dismissed)
-        View popup = findViewById(R.id.map_popup);
-        popup.setOnClickListener(mPopupClick);
 
         // Set up everything we can from the intent --
         // all of the UI is set-up/torn down in onResume/onPause
@@ -496,9 +496,11 @@ public class MapViewActivity extends MapActivity
 
                      // Is this a favorite?
                      mStopUserMap.setView(popup, stop.getId(), stop.getName());
+                     /*
                      UIHelp.setStopDirection(popup.findViewById(R.id.direction),
                              stop.getDirection(),
                              false);
+                     */
 
                      populateRoutes(stop, false);
 
@@ -516,14 +518,43 @@ public class MapViewActivity extends MapActivity
             }
         }
     };
+
     private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
             showRoutes((TextView)v, !mShowRoutes);
         }
     };
-    private final View.OnClickListener mPopupClick = new View.OnClickListener() {
+
+    static final int MAX_ZOOM = 21;
+    static final int MIN_ZOOM = 1;
+
+    void enableZoom() {
+        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevel() != MAX_ZOOM);
+        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevel() != MIN_ZOOM);
+    }
+
+    private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
-            // Eat the click so the Map doesn't get it.
+            if (!mMapView.getController().zoomIn()) {
+                mZoomControls.setIsZoomInEnabled(false);
+                mZoomControls.setIsZoomOutEnabled(true);
+            }
+            else {
+                enableZoom();
+            }
+        }
+    };
+    private final View.OnClickListener mOnZoomOut = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (!mMapView.getController().zoomOut()) {
+                mZoomControls.setIsZoomInEnabled(true);
+                mZoomControls.setIsZoomOutEnabled(false);
+            }
+            else {
+                enableZoom();
+            }
         }
     };
 
@@ -566,8 +597,10 @@ public class MapViewActivity extends MapActivity
 
         List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.
-        final View popup = findViewById(R.id.map_popup);
-        popup.setVisibility(View.GONE);
+        if (mFocusStopId == null) {
+            final View popup = findViewById(R.id.map_popup);
+            popup.setVisibility(View.GONE);
+        }
 
         if (mStopOverlay != null) {
             mapOverlays.remove(mStopOverlay);
@@ -577,7 +610,10 @@ public class MapViewActivity extends MapActivity
         mStopOverlay = new StopOverlay(stops, this);
         mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
         if (mFocusStopId != null) {
-            mStopOverlay.setFocusById(mFocusStopId);
+            if (!mStopOverlay.setFocusById(mFocusStopId)) {
+                final View popup = findViewById(R.id.map_popup);
+                popup.setVisibility(View.GONE);
+            }
         }
 
         if (isRouteMode()) {
@@ -770,5 +806,17 @@ public class MapViewActivity extends MapActivity
 
     private boolean isRouteMode() {
         return mRouteId != null;
+    }
+
+    //
+    // AsyncTasks.Progress
+    //
+    @Override
+    public void hideLoading() {
+        mProgress.setVisibility(View.GONE);
+    }
+    @Override
+    public void showLoading() {
+        mProgress.setVisibility(View.VISIBLE);
     }
 }

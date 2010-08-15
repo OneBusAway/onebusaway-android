@@ -15,6 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -27,9 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaStop;
+import java.util.Arrays;
 
 public class MySearchStopsActivity extends MySearchActivity {
     //private static final String TAG = "MySearchStopsActivity";
@@ -108,10 +111,10 @@ public class MySearchStopsActivity extends MySearchActivity {
         MapViewActivity.start(this, stopId, lat, lon);
     }
 
-    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaStop> {
+    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter2<ObaStop> {
         public SearchResultsListAdapter(ObaResponse response) {
             super(MySearchStopsActivity.this,
-                    response.getData().getStops(),
+                    Arrays.asList(((ObaStopsForLocationResponse)response).getStops()),
                     R.layout.stop_list_item);
         }
         @Override
@@ -157,6 +160,9 @@ public class MySearchStopsActivity extends MySearchActivity {
 
     @Override
     protected ObaResponse doFindInBackground(String param) {
-        return ObaApi.getStopsByLocation(this, UIHelp.getLocation(this), 0, 0, 0, param, 0);
+        return new ObaStopsForLocationRequest.Builder(this, UIHelp.getLocation(this))
+            .setQuery(param)
+            .build()
+            .call();
     }
 }

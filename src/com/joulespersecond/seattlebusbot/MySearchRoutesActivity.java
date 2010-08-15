@@ -15,7 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
+import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
+
 import android.content.Intent;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
@@ -26,10 +33,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
+import java.util.Arrays;
 
 public class MySearchRoutesActivity extends MySearchActivity {
     private static final String TAG = "MySearchRoutesActivity";
@@ -106,10 +110,10 @@ public class MySearchRoutesActivity extends MySearchActivity {
         return route.getUrl();
     }
 
-    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter<ObaRoute> {
+    private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
         public SearchResultsListAdapter(ObaResponse response) {
             super(MySearchRoutesActivity.this,
-                    response.getData().getRoutes(),
+                    Arrays.asList(((ObaRoutesForLocationResponse)response).getRoutes()),
                     R.layout.route_list_item);
         }
         @Override
@@ -119,7 +123,11 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
             ObaRoute route = mArray.get(position);
             shortName.setText(route.getShortName());
-            longName.setText(route.getLongNameOrDescription());
+            String longNameStr = route.getLongName();
+            if (TextUtils.isEmpty(longNameStr)) {
+                longNameStr = route.getDescription();
+            }
+            longName.setText(longNameStr);
         }
     }
 
@@ -146,20 +154,25 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
     @Override
     protected ObaResponse doFindInBackground(String routeId) {
-        ObaResponse response = ObaApi.getRoutesByLocation(this,
-                UIHelp.getLocation(this), 0, routeId);
+        ObaRoutesForLocationResponse response =
+            new ObaRoutesForLocationRequest.Builder(this, UIHelp.getLocation(this))
+                .setQuery(routeId)
+                .build()
+                .call();
         // If there is no results from the user-centered query,
         // open a wider next in some "default" Seattle/Bellevue location
         Log.d(TAG, "Server returns: " + response.getCode());
         if (response.getCode() == ObaApi.OBA_OK) {
-            ObaArray<ObaRoute> routes = response.getData().getRoutes();
-            if (routes.length() != 0) {
+            ObaRoute[] routes = response.getRoutes();
+            if (routes.length != 0) {
                 return response;
             }
         }
 
-        return ObaApi.getRoutesByLocation(this, UIHelp.DEFAULT_SEARCH_CENTER,
-                UIHelp.DEFAULT_SEARCH_RADIUS,
-                routeId);
+        return new ObaRoutesForLocationRequest.Builder(this, UIHelp.DEFAULT_SEARCH_CENTER)
+                .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
+                .setQuery(routeId)
+                .build()
+                .call();
     }
 }

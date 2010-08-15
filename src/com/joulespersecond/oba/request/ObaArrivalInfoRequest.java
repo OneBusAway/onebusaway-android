@@ -43,8 +43,8 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
      * @param routeId The stop Id to request.
      * @return The new request instance.
      */
-    public static ObaArrivalInfoRequest newRequest(Context context, String routeId) {
-        return new Builder(context, routeId).build();
+    public static ObaArrivalInfoRequest newRequest(Context context, String stopId) {
+        return new Builder(context, stopId).build();
     }
 
     @Override

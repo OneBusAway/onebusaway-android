@@ -15,8 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.HashMap;
-import java.util.List;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -36,11 +39,8 @@ import android.os.RemoteException;
 import android.text.format.Time;
 import android.util.Log;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.provider.ObaContract;
+import java.util.HashMap;
+import java.util.List;
 
 // Required operations:
 //
@@ -362,14 +362,13 @@ public class TripService extends Service {
         }
 
         // This returns 'true' if we need to break out of the poll loop.
-        final boolean checkArrivals(ObaResponse response,
+        final boolean checkArrivals(ObaArrivalInfoResponse response,
                 Cursor c, long reminderMS, long now) {
             final String tripId = mTripId;
-            final ObaArray<ObaArrivalInfo> arrivals
-                    = response.getData().getArrivalsAndDepartures();
-            final int length = arrivals.length();
+            final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+            final int length = arrivals.length;
             for (int i=0; i < length; ++i) {
-                ObaArrivalInfo info = arrivals.get(i);
+                ObaArrivalInfo info = arrivals[i];
                 if (tripId.equals(info.getTripId())) {
                     if (mState == NOT_FOUND) {
                         Log.d(TAG, "Found trip: " + getTaskId());
@@ -420,8 +419,8 @@ public class TripService extends Service {
 
             while (mState != DONE) {
                 Log.d(TAG, "Get arrivals/departures: " + getTaskId());
-                ObaResponse response =
-                        ObaApi.getArrivalsDeparturesForStop(TripService.this, stopId);
+                ObaArrivalInfoResponse response =
+                        ObaArrivalInfoRequest.newRequest(TripService.this, stopId).call();
                 synchronized (this) {
                     // First check to see if we were marked as DONE while
                     // getArrivalsDeparturesForStop was running

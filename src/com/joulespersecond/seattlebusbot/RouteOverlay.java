@@ -15,20 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.Projection;
+import com.joulespersecond.oba.elements.ObaShape;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.util.Log;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.Projection;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaPolyline;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RouteOverlay extends Overlay {
     private static final String TAG = "RouteOverlay";
@@ -60,18 +59,18 @@ public class RouteOverlay extends Overlay {
         mLines.add(new Line(color, points));
         // TODO: Invalidate
     }
-    public void addLine(int color, ObaPolyline line) {
+    public void addLine(int color, ObaShape line) {
         List<GeoPoint> points = line.getPoints();
         mLines.add(new Line(color, points));
         // TODO: Invalidate
     }
-    public void addLines(int color, ObaArray<ObaPolyline> lines) {
-        final int len = lines.length();
+    public void addLines(int color, ObaShape[] lines) {
+        final int len = lines.length;
         for (int i=0; i < len; ++i) {
-            addLine(color, lines.get(i));
+            addLine(color, lines[i]);
         }
     }
-    public void setLines(int color, ObaArray<ObaPolyline> lines) {
+    public void setLines(int color, ObaShape[] lines) {
         mLines.clear();
         addLines(color, lines);
     }

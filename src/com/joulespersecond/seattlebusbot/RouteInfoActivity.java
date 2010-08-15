@@ -15,10 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.elements.ObaStopGroup;
+import com.joulespersecond.oba.elements.ObaStopGrouping;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaRouteRequest;
+import com.joulespersecond.oba.request.ObaRouteResponse;
+import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
+import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 
 import android.app.ExpandableListActivity;
 import android.content.ContentValues;
@@ -39,15 +44,10 @@ import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaData;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
-import com.joulespersecond.oba.ObaStop;
-import com.joulespersecond.oba.ObaStopGroup;
-import com.joulespersecond.oba.ObaStopGrouping;
-import com.joulespersecond.oba.provider.ObaContract;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RouteInfoActivity extends ExpandableListActivity {
     private static final String TAG = "RouteInfoActivity";
@@ -58,7 +58,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     private AsyncTask<String,?,?> mStopsForRouteTask;
     private TextView mEmptyText;
 
-    private ObaResponse mRouteInfo;
+    private ObaRouteResponse mRouteInfo;
     private StopsForRouteInfo mStopsForRoute;
 
     public static void start(Context context, String routeId) {
@@ -110,7 +110,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         Object config = getLastNonConfigurationInstance();
         if (config != null) {
             Object[] results = (Object[])config;
-            setHeader((ObaResponse)results[0], false);
+            setHeader((ObaRouteResponse)results[0], false);
             setStopsForRoute((StopsForRouteInfo)results[1]);
         }
         else {
@@ -146,7 +146,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         boolean hasUrl = false;
         if (mRouteInfo != null) {
-            hasUrl = !TextUtils.isEmpty(mRouteInfo.getData().getAsRoute().getUrl());
+            hasUrl = !TextUtils.isEmpty(mRouteInfo.getUrl());
         }
         menu.findItem(R.id.goto_url).setEnabled(hasUrl).setVisible(hasUrl);
         return true;
@@ -159,7 +159,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             return true;
         }
         else if (id == R.id.goto_url) {
-            UIHelp.goToUrl(this, mRouteInfo.getData().getAsRoute().getUrl());
+            UIHelp.goToUrl(this, mRouteInfo.getUrl());
             return true;
         }
         return false;
@@ -247,7 +247,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
         private final ArrayList<ArrayList<HashMap<String,String>>> mStops;
         private final HashMap<String,ObaStop> mStopMap;
 
-        public StopsForRouteInfo(Context cxt, ObaResponse response) {
+        public StopsForRouteInfo(Context cxt, ObaStopsForRouteResponse response) {
             mStopGroups = new ArrayList<HashMap<String,String>>();
             mStops = new ArrayList<ArrayList<HashMap<String,String>>>();
             mStopMap = new HashMap<String,ObaStop>();
@@ -255,8 +255,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
             initMaps(cxt, response);
         }
 
-        private static Map<String,ObaStop> getStopMap(ObaArray<ObaStop> stops) {
-            final int len = stops.length();
+        private static Map<String,ObaStop> getStopMap(List<ObaStop> stops) {
+            final int len = stops.size();
             HashMap<String,ObaStop> result = new HashMap<String,ObaStop>(len);
             for (int i=0; i < len; ++i) {
                 ObaStop stop = stops.get(i);
@@ -265,7 +265,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
             return result;
         }
 
-        private void initMaps(Context cxt, ObaResponse response) {
+        private void initMaps(Context cxt, ObaStopsForRouteResponse response) {
             // Convert to weird array type. From the documentation of
             // SimpleExpandableListAdapter:
             // StopGroupings: A List of Maps. Each entry in the List corresponds
@@ -284,33 +284,32 @@ public class RouteInfoActivity extends ExpandableListActivity {
             // in the childFrom array). The Map contains the data for each child,
             // and should include all the entries specified in "childFrom"
             if (response.getCode() == ObaApi.OBA_OK) {
-                final ObaData data = response.getData();
-                final ObaArray<ObaStop> stops = data.getStops();
+                final List<ObaStop> stops = response.getStops();
                 final Map<String,ObaStop> stopMap = getStopMap(stops);
-                final ObaArray<ObaStopGrouping> groupings = data.getStopGroupings();
-                final int groupingsLen = groupings.length();
+                final ObaStopGrouping[] groupings = response.getStopGroupings();
+                final int groupingsLen = groupings.length;
 
                 for (int groupingIndex = 0; groupingIndex < groupingsLen; ++groupingIndex) {
-                    final ObaStopGrouping grouping = groupings.get(groupingIndex);
-                    final ObaArray<ObaStopGroup> groups = grouping.getStopGroups();
-                    final int groupsLen = groups.length();
+                    final ObaStopGrouping grouping = groupings[groupingIndex];
+                    final ObaStopGroup[] groups = grouping.getStopGroups();
+                    final int groupsLen = groups.length;
 
                     for (int i=0; i < groupsLen; ++i) {
                         final HashMap<String,String> groupMap = new HashMap<String,String>(1);
-                        final ObaStopGroup group = groups.get(i);
+                        final ObaStopGroup group = groups[i];
                         // We can initialize the stop grouping values.
                         groupMap.put("name", group.getName());
                         // Add this to the groupings map
 
                         // Create the sub list (the list of stops in the group)
-                        final List<String> stopIds = group.getStopIds();
-                        final int stopIdLen = stopIds.size();
+                        final String[] stopIds = group.getStopIds();
+                        final int stopIdLen = stopIds.length;
 
                         final ArrayList<HashMap<String,String>> childList =
                                 new ArrayList<HashMap<String,String>>(stopIdLen);
 
                         for (int j=0; j < stopIdLen; ++j) {
-                            final String stopId = stopIds.get(j);
+                            final String stopId = stopIds[j];
                             final ObaStop stop = stopMap.get(stopId);
                             HashMap<String,String> groupStopMap =
                                     new HashMap<String,String>(2);
@@ -371,16 +370,16 @@ public class RouteInfoActivity extends ExpandableListActivity {
             v.setVisibility(View.GONE);
         }
     };
-    private final class GetRouteInfo extends AsyncTasks.StringToResponse {
+    private final class GetRouteInfo extends AsyncTasks.ToResponse<String,ObaRouteResponse> {
         public GetRouteInfo() {
             super(RouteInfoActivity.this.mProgress);
         }
         @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getRouteById(RouteInfoActivity.this, params[0]);
+        protected ObaRouteResponse doInBackground(String... params) {
+            return ObaRouteRequest.newRequest(RouteInfoActivity.this, params[0]).call();
         }
         @Override
-        protected void doResult(ObaResponse result) {
+        protected void doResult(ObaRouteResponse result) {
             setHeader(result, true);
             mStopsForRouteTask = new GetStopsForRoute().execute(mRouteId);
         }
@@ -391,9 +390,12 @@ public class RouteInfoActivity extends ExpandableListActivity {
         }
         @Override
         protected StopsForRouteInfo doInBackground(String... params) {
-            return new StopsForRouteInfo(
-                    RouteInfoActivity.this,
-                    ObaApi.getStopsForRoute(RouteInfoActivity.this, params[0], false));
+            final ObaStopsForRouteResponse response =
+                new ObaStopsForRouteRequest.Builder(RouteInfoActivity.this, params[0])
+                    .setIncludeShapes(false)
+                    .build()
+                    .call();
+            return new StopsForRouteInfo(RouteInfoActivity.this, response);
         }
         @Override
         protected void doResult(StopsForRouteInfo result) {
@@ -405,29 +407,31 @@ public class RouteInfoActivity extends ExpandableListActivity {
     // Helper functions (should be private, but they are mostly accessed
     // by our child classes.)
     //
-    private void setHeader(ObaResponse routeInfo, boolean addToDb) {
+    private void setHeader(ObaRouteResponse routeInfo, boolean addToDb) {
         mRouteInfo = routeInfo;
 
         if (routeInfo.getCode() == ObaApi.OBA_OK) {
-            ObaRoute route = routeInfo.getData().getAsRoute();
             TextView shortNameText = (TextView)findViewById(R.id.short_name);
             TextView longNameText = (TextView)findViewById(R.id.long_name);
             TextView agencyText = (TextView)findViewById(R.id.agency);
 
-            String shortName = route.getShortName();
-            String longName = route.getLongNameOrDescription();
-            String url = route.getUrl();
+            String shortName = mRouteInfo.getShortName();
+            String longName = mRouteInfo.getLongName();
+            String url = mRouteInfo.getUrl();
+            if (TextUtils.isEmpty(longName)) {
+                longName = mRouteInfo.getDescription();
+            }
 
             shortNameText.setText(shortName);
             longNameText.setText(longName);
-            agencyText.setText(route.getAgencyName());
+            agencyText.setText(mRouteInfo.getAgency().getName());
 
             if (addToDb) {
                 ContentValues values = new ContentValues();
                 values.put(ObaContract.Routes.SHORTNAME, shortName);
                 values.put(ObaContract.Routes.LONGNAME, longName);
                 values.put(ObaContract.Routes.URL, url);
-                ObaContract.Routes.insertOrUpdate(this, route.getId(), values, true);
+                ObaContract.Routes.insertOrUpdate(this, mRouteInfo.getId(), values, true);
             }
         }
         else {

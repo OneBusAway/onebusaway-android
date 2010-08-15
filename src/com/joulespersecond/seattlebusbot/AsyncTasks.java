@@ -93,17 +93,12 @@ final class AsyncTasks {
         protected abstract void doResult(Result result);
     }
 
-
-    public static abstract class
-    ToResponseBase<T> extends Base<T,com.joulespersecond.oba.ObaResponse> {
-        public ToResponseBase(Progress progress) {
-            super(progress);
-        }
-        public ToResponseBase(Progress progress, Handler<com.joulespersecond.oba.ObaResponse> handler) {
-            super(progress, handler);
-        }
-    }
-
+    /**
+     * This is the base class for converting to an ObaResponse.
+     * Subclasses are expected to override doResult.
+     *
+     * @author paulw
+     */
     public static abstract class
     ToResponse<T, Result extends ObaResponse> extends Base<T,Result> {
         public ToResponse(Progress progress) {
@@ -114,24 +109,6 @@ final class AsyncTasks {
         }
     }
 
-    /**
-     * This is the base class for converting a string to an ObaResponse.
-     * Subclasses are expected to override doResult.
-     *
-     * @author paulw
-     */
-    public static abstract class StringToResponse extends ToResponseBase<String> {
-        public StringToResponse(Progress progress) {
-            super(progress);
-        }
-        public StringToResponse(Progress progress, Handler<com.joulespersecond.oba.ObaResponse> handler) {
-            super(progress, handler);
-        }
-        @Override
-        protected com.joulespersecond.oba.ObaResponse doInBackground(String... params) {
-            return com.joulespersecond.oba.ObaResponse.createFromString(params[0]);
-        }
-    }
 
     /**
      * This is a helper that set the IndeterminateVisibility

@@ -16,7 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaResponse;
+import com.joulespersecond.oba.request.ObaResponse;
 
 import android.app.Activity;
 import android.app.ListActivity;
@@ -265,7 +265,7 @@ abstract class MySearchActivity extends ListActivity {
         }
     };
 
-    protected class FindTask extends AsyncTasks.StringToResponse {
+    protected class FindTask extends AsyncTasks.ToResponse<String,ObaResponse> {
         public FindTask() {
             super(mLoadingProgress);
         }

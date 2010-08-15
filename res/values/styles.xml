@@ -17,11 +17,28 @@
     <!-- Themes -->
     <style name="Theme.BusBot" parent="@android:style/Theme.Light">
     </style>
+    <style name="Theme.BusBot.NoTitleBar" parent="@android:style/Theme.Light.NoTitleBar">
+    </style>
     <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
+        <item name="android:windowBackground">@null</item>
+    </style>
+    <style name="Theme.BusBot.NoBackground.NoTitleBar" parent="@style/Theme.BusBot.NoTitleBar">
         <item name="android:windowBackground">@null</item>
     </style>
 
     <!--  Styles -->
+    <style name="ActionBar">
+        <item name="android:background">@drawable/actionbar_bg</item>
+        <item name="android:layout_height">45sp</item>
+    </style>
+    <style name="ActionBarButton">
+      <item name="android:background">@drawable/action_button_bg</item>
+      <item name="android:layout_width">40sp</item>
+      <item name="android:layout_height">40sp</item>
+      <item name="android:layout_marginTop">0dp</item>
+      <item name="android:layout_marginLeft">1sp</item>
+    </style>
+
     <style name="HeaderItem">
         <item name="android:background">@drawable/header_bg</item>
         <item name="android:padding">4dp</item>

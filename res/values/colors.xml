@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <resources>
+    <color name="oba_green">#78AA36</color>
     <color name="focus">#ff8e00</color>
     <color name="tab_widget_bg">#ff202020</color>
     <color name="stop_info_ontime">#00ff00</color>

@@ -18,8 +18,8 @@ package com.joulespersecond.seattlebusbot.test;
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 
-import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.request.test.ObaTestCase;
 import com.joulespersecond.seattlebusbot.MapViewActivity;
 import com.joulespersecond.seattlebusbot.StopsController;
 
@@ -71,8 +71,7 @@ public class MapViewActivityTest extends
             @Override
             public void onStops(StopsController controller) {
                 ObaResponse response = controller.getResponse();
-                assertNotNull(response);
-                assertEquals(ObaApi.OBA_OK, response.getCode());
+                ObaTestCase.assertOK(response);
             }
         });
     }
@@ -86,8 +85,7 @@ public class MapViewActivityTest extends
             @Override
             public void onStops(StopsController controller) {
                 ObaResponse response = controller.getResponse();
-                assertNotNull(response);
-                assertEquals(ObaApi.OBA_OK, response.getCode());
+                ObaTestCase.assertOK(response);
             }
         });
     }

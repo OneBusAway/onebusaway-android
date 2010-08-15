@@ -21,7 +21,7 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
 
 public class ObaTestCase extends AndroidTestCase {
-    static void assertOK(ObaResponse response) {
+    public static void assertOK(ObaResponse response) {
         assertNotNull(response);
         assertEquals(ObaApi.OBA_OK, response.getCode());
     }

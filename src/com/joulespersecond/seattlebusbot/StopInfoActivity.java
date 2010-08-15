@@ -16,13 +16,12 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
-import com.joulespersecond.oba.ObaData;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -60,6 +59,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
@@ -71,8 +71,8 @@ public class StopInfoActivity extends ListActivity {
 
     private static final String CURRENT_EDIT = ".CurrentEdit";
 
-    private ObaResponse mResponse;
-    private com.joulespersecond.oba.ObaStop mStop;
+    private ObaArrivalInfoResponse mResponse;
+    private ObaStop mStop;
     private String mStopId;
     private String mStopName;
     private Uri mStopUri;
@@ -98,6 +98,9 @@ public class StopInfoActivity extends ListActivity {
     private boolean mFavorite = false;
     private String mStopUserName;
 
+    // Used by the test code to signal when we've retrieved stops.
+    private Object mStopWait;
+
     public static void start(Context context, String stopId) {
         context.startActivity(makeIntent(context, stopId));
     }
@@ -109,9 +112,6 @@ public class StopInfoActivity extends ListActivity {
                         String stopName,
                         String stopDir) {
         context.startActivity(makeIntent(context, stopId, stopName, stopDir));
-    }
-    public static void start(Context context, com.joulespersecond.oba.ObaStop stop) {
-        context.startActivity(makeIntent(context, stop));
     }
     public static void start(Context context, ObaStop stop) {
         context.startActivity(makeIntent(context, stop));
@@ -135,13 +135,6 @@ public class StopInfoActivity extends ListActivity {
         myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         myIntent.putExtra(STOP_NAME, stopName);
         myIntent.putExtra(STOP_DIRECTION, stopDir);
-        return myIntent;
-    }
-    public static Intent makeIntent(Context context, com.joulespersecond.oba.ObaStop stop) {
-        Intent myIntent = new Intent(context, StopInfoActivity.class);
-        myIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
-        myIntent.putExtra(STOP_NAME, stop.getName());
-        myIntent.putExtra(STOP_DIRECTION, stop.getDirection());
         return myIntent;
     }
     public static Intent makeIntent(Context context, ObaStop stop) {
@@ -201,7 +194,7 @@ public class StopInfoActivity extends ListActivity {
 
         Object response = getLastNonConfigurationInstance();
         if (response != null) {
-            setResponse((ObaResponse)response, false);
+            setResponse((ObaArrivalInfoResponse)response, false);
         }
         else {
             getStopInfo(false);
@@ -310,7 +303,7 @@ public class StopInfoActivity extends ListActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.stop_info_item_options_title);
 
-        final ObaRoute route = stop.getRoute(mResponse);
+        final ObaRoute route = mResponse.getRoute(stop.getInfo().getRouteId());
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
         // Check to see if the trip name is visible.
@@ -356,11 +349,18 @@ public class StopInfoActivity extends ListActivity {
         dialog.show();
     }
 
+    public void setStopWait(Object obj) {
+        mStopWait = obj;
+    }
+    public ObaArrivalInfoResponse getResponse() {
+        return mResponse;
+    }
+
     private static final int FILTER_DIALOG_RESULT = 1;
 
     private void showRoutesFilterDialog() {
-        final ObaArray<ObaRoute> routes = mStop.getRoutes();
-        final int len = routes.length();
+        final List<ObaRoute> routes = mResponse.getRoutes(mStop.getRouteIds());
+        final int len = routes.size();
         final ArrayList<String> filter = mRoutesFilter;
 
         //mRouteIds = new ArrayList<String>(len);
@@ -407,8 +407,8 @@ public class StopInfoActivity extends ListActivity {
         final int len = checks.length;
         final ArrayList<String> newFilter = new ArrayList<String>(len);
 
-        final ObaArray<ObaRoute> routes = mStop.getRoutes();
-        assert(routes.length() == len);
+        final List<ObaRoute> routes = mResponse.getRoutes(mStop.getRouteIds());
+        assert(routes.size() == len);
 
         for (int i=0; i < len; ++i) {
             final ObaRoute route = routes.get(i);
@@ -460,7 +460,7 @@ public class StopInfoActivity extends ListActivity {
             return false;
         }
 
-        public void setData(ObaArray<ObaArrivalInfo> arrivals) {
+        public void setData(ObaArrivalInfo[] arrivals) {
             mInfo = StopInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
             setFilterHeader();
             notifyDataSetChanged();
@@ -536,7 +536,7 @@ public class StopInfoActivity extends ListActivity {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(this, mStopId, mRoutesFilter);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
-        adapter.setData(mResponse.getData().getArrivalsAndDepartures());
+        adapter.setData(mResponse.getArrivalInfo());
     }
 
     private final Handler mRefreshHandler = new Handler();
@@ -563,7 +563,8 @@ public class StopInfoActivity extends ListActivity {
     private final AsyncTasks.Progress mTitleProgress
         = new AsyncTasks.ProgressIndeterminateVisibility(this);
 
-    private final class GetStopInfo extends AsyncTasks.ToResponseBase<String> {
+    private final class GetStopInfo
+            extends AsyncTasks.ToResponse<String,ObaArrivalInfoResponse> {
         private final boolean mAddToDb;
 
         GetStopInfo(AsyncTasks.Progress progress, boolean addToDb) {
@@ -571,11 +572,11 @@ public class StopInfoActivity extends ListActivity {
             mAddToDb = addToDb;
         }
         @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaApi.getArrivalsDeparturesForStop(StopInfoActivity.this, params[0]);
+        protected ObaArrivalInfoResponse doInBackground(String... params) {
+            return ObaArrivalInfoRequest.newRequest(StopInfoActivity.this, params[0]).call();
         }
         @Override
-        protected void doResult(ObaResponse result) {
+        protected void doResult(ObaArrivalInfoResponse result) {
             if (result.getCode() == ObaApi.OBA_OK) {
                 setResponse(result, mAddToDb);
             }
@@ -603,15 +604,14 @@ public class StopInfoActivity extends ListActivity {
         mAsyncTask = new GetStopInfo(progress, !refresh).execute(mStopId);
     }
 
-    void setResponse(ObaResponse response, boolean addToDb) {
+    void setResponse(ObaArrivalInfoResponse response, boolean addToDb) {
         assert(response != null);
         mResponse = response;
         mResponseTime = System.currentTimeMillis();
-        ObaData data = response.getData();
-        mStop = data.getStop();
+        mStop = mResponse.getStop();
         setHeader(mStop, addToDb);
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
-        adapter.setData(data.getArrivalsAndDepartures());
+        adapter.setData(mResponse.getArrivalInfo());
 
         mResponseError.setVisibility(View.GONE);
 
@@ -621,6 +621,11 @@ public class StopInfoActivity extends ListActivity {
 
         mLoadingProgress.hideLoading();
         setProgressBarIndeterminateVisibility(false);
+        if (mStopWait != null) {
+            synchronized (mStopWait) {
+                mStopWait.notifyAll();
+            }
+        }
     }
     void setRefreshError() {
         Toast.makeText(this, R.string.generic_comm_error_toast, Toast.LENGTH_LONG).show();
@@ -645,7 +650,7 @@ public class StopInfoActivity extends ListActivity {
 
         // Just refresh the data with the current response.
         StopInfoListAdapter adapter = (StopInfoListAdapter)getListView().getAdapter();
-        adapter.setData(mResponse.getData().getArrivalsAndDepartures());
+        adapter.setData(mResponse.getArrivalInfo());
 
         mLoadingProgress.hideLoading();
         setProgressBarIndeterminateVisibility(false);
@@ -657,8 +662,8 @@ public class StopInfoActivity extends ListActivity {
         }
     }
 
-    void setHeader(com.joulespersecond.oba.ObaStop stop, boolean addToDb) {
-        String code = stop.getCode();
+    void setHeader(ObaStop stop, boolean addToDb) {
+        String code = stop.getStopCode();
         String name = stop.getName();
         String direction = stop.getDirection();
         double lat = stop.getLatitude();
@@ -701,7 +706,7 @@ public class StopInfoActivity extends ListActivity {
         TextView v = (TextView)findViewById(R.id.filter);
         final int num = (mRoutesFilter != null) ? mRoutesFilter.size() : 0;
         if (num > 0) {
-            final int total = mStop.getRoutes().length();
+            final int total = mStop.getRouteIds().length;
             v.setText(getString(R.string.stop_info_filter_header, num, total));
             // Show the filter text (except when in name edit mode)
             mFilterGroup.setVisibility(mInNameEdit ? View.GONE : View.VISIBLE);

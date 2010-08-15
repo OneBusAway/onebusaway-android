@@ -15,10 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.ObaArray;
-import com.joulespersecond.oba.ObaArrivalInfo;
-import com.joulespersecond.oba.ObaResponse;
-import com.joulespersecond.oba.ObaRoute;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -36,14 +33,14 @@ final class StopInfo {
 
     public static final ArrayList<StopInfo>
     convertObaArrivalInfo(Context context,
-              ObaArray<ObaArrivalInfo> arrivalInfo,
+              ObaArrivalInfo[] arrivalInfo,
               ArrayList<String> filter) {
-        final int len = arrivalInfo.length();
+        final int len = arrivalInfo.length;
         ArrayList<StopInfo> result = new ArrayList<StopInfo>(len);
         final long ms = System.currentTimeMillis();
         if (filter != null && filter.size() > 0) {
             for (int i=0; i < len; ++i) {
-                ObaArrivalInfo arrival = arrivalInfo.get(i);
+                ObaArrivalInfo arrival = arrivalInfo[i];
                 if (filter.contains(arrival.getRouteId())) {
                     result.add(new StopInfo(context, arrival, ms));
                 }
@@ -51,7 +48,7 @@ final class StopInfo {
         }
         else {
             for (int i=0; i < len; ++i) {
-                result.add(new StopInfo(context, arrivalInfo.get(i), ms));
+                result.add(new StopInfo(context, arrivalInfo[i], ms));
             }
         }
 
@@ -152,17 +149,5 @@ final class StopInfo {
     }
     final int getColor() {
         return mColor;
-    }
-    final ObaRoute getRoute(ObaResponse response) {
-        final String routeId = mInfo.getRouteId();
-        ObaArray<ObaRoute> routes = response.getData().getStop().getRoutes();
-        final int len = routes.length();
-        for (int i=0; i < len; ++i) {
-            ObaRoute route = routes.get(i);
-            if (route.getId().equals(routeId)) {
-                return route;
-            }
-        }
-        return null;
     }
 }

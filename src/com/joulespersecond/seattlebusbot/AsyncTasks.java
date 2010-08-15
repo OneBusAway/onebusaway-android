@@ -15,10 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.request.ObaResponse;
+
 import android.app.Activity;
 import android.os.AsyncTask;
-
-import com.joulespersecond.oba.ObaResponse;
 
 /**
  * This provides a bunch of helper base classes that provide much
@@ -95,11 +95,21 @@ final class AsyncTasks {
 
 
     public static abstract class
-    ToResponseBase<T> extends Base<T,ObaResponse> {
+    ToResponseBase<T> extends Base<T,com.joulespersecond.oba.ObaResponse> {
         public ToResponseBase(Progress progress) {
             super(progress);
         }
-        public ToResponseBase(Progress progress, Handler<ObaResponse> handler) {
+        public ToResponseBase(Progress progress, Handler<com.joulespersecond.oba.ObaResponse> handler) {
+            super(progress, handler);
+        }
+    }
+
+    public static abstract class
+    ToResponse<T, Result extends ObaResponse> extends Base<T,Result> {
+        public ToResponse(Progress progress) {
+            super(progress);
+        }
+        public ToResponse(Progress progress, Handler<Result> handler) {
             super(progress, handler);
         }
     }
@@ -114,12 +124,12 @@ final class AsyncTasks {
         public StringToResponse(Progress progress) {
             super(progress);
         }
-        public StringToResponse(Progress progress, Handler<ObaResponse> handler) {
+        public StringToResponse(Progress progress, Handler<com.joulespersecond.oba.ObaResponse> handler) {
             super(progress, handler);
         }
         @Override
-        protected ObaResponse doInBackground(String... params) {
-            return ObaResponse.createFromString(params[0]);
+        protected com.joulespersecond.oba.ObaResponse doInBackground(String... params) {
+            return com.joulespersecond.oba.ObaResponse.createFromString(params[0]);
         }
     }
 

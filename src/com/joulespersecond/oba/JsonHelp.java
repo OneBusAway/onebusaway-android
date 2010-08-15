@@ -22,7 +22,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class JsonHelp {
@@ -102,30 +101,6 @@ final class JsonHelp {
         }
         else {
             return JsonHelp.deserializeChild(obj, nonRefChild, cls, context);
-        }
-    }
-    @Deprecated
-    static <E> ObaArray<E> derefArray(JsonObject obj,
-            JsonDeserializationContext context,
-            String refChild,
-            String nonRefChild,
-            ObaRefMap<E> map,
-            Type arrayType) {
-        final String[] ids =
-            JsonHelp.deserializeChild(obj, refChild, String[].class, context);
-        if (ids != null) {
-            // dereference stops
-            ArrayList<E> array = new ArrayList<E>();
-            for (String id : ids) {
-                E e = map.get(id);
-                if (e != null) {
-                    array.add(e);
-                }
-            }
-            return new ObaArray<E>(array);
-        }
-        else {
-            return JsonHelp.deserializeChild(obj, nonRefChild, arrayType, context);
         }
     }
 }

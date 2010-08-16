@@ -18,7 +18,12 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
-    <include layout="@layout/stop_item" />
+    <TextView
+        android:id="@+id/stop_name"
+        style="@style/Line1Text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"/>
     <TextView
         android:id="@+id/direction"
         style="@style/Line2Text"

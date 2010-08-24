@@ -11,7 +11,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.telephony.TelephonyManager;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 public class Application extends android.app.Application {
@@ -35,15 +34,15 @@ public class Application extends android.app.Application {
     }
 
     private String getAppUid() {
-        final TelephonyManager telephony =
-            (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        final String id = telephony.getDeviceId();
         try {
+            final TelephonyManager telephony =
+                (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+            final String id = telephony.getDeviceId();
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.update(id.getBytes());
             return getHex(digest.digest());
         }
-        catch (NoSuchAlgorithmException e) {
+        catch (Exception e) {
             return UUID.randomUUID().toString();
         }
     }

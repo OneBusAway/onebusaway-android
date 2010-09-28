@@ -495,8 +495,7 @@ public class MapViewActivity extends MapActivity
                      mFocusStopId = stop.getId();
 
                      // Is this a favorite?
-                     TextView stopName = (TextView)popup.findViewById(R.id.stop_name);
-                     mStopUserMap.setView2(stopName, stop.getId(), stop.getName());
+                     mStopUserMap.setView(popup, stop.getId(), stop.getName());
                      /*
                      UIHelp.setStopDirection(popup.findViewById(R.id.direction),
                              stop.getDirection(),

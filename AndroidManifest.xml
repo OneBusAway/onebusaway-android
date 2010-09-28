@@ -122,7 +122,7 @@
 
         <uses-library android:name="com.google.android.maps" />
     </application>
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="8" />
+    <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="8" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

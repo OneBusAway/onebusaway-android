@@ -25,7 +25,7 @@
         android:debuggable="true">
         <activity android:name=".MapViewActivity"
                   android:label="@string/app_name"
-                  android:theme="@style/Theme.BusBot.NoBackground.NoTitleBar">
+                  android:theme="@style/Theme.BusBot.NoBackground">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -13,6 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#ffffffff"/>
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@drawable/popup_border"/>
+  <item android:left="-6dip" android:right="-6dip" android:top="12dip" android:bottom="-6dip" >
+    <shape>
+        <gradient android:startColor="#e0e0e0" android:centerColor="#ffffff" android:endColor="#ffffff" android:angle="90"/>
+        <corners android:radius="6dp" />
+    </shape>
+  </item>
+</layer-list>

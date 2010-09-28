@@ -29,13 +29,13 @@
           android:gravity="center_horizontal"
           android:layout_width="fill_parent"
           android:layout_height="wrap_content">
-           <ImageButton
+           <ImageView
              android:id="@+id/stop_favorite"
              android:src="@drawable/android:star_off"
-             android:background="@null"
              android:layout_width="wrap_content"
              android:layout_height="wrap_content"
-             android:layout_gravity="center_vertical"/>
+             android:layout_gravity="center_vertical"
+             android:focusable="true"/>
           <TextView
               android:id="@+id/stop_name"
               style="@style/HeaderText"
@@ -120,14 +120,25 @@
                 android:linksClickable="true" >
           </TextView>
         </LinearLayout>
-        <TextView
-          android:text="1 minute ago"
-          android:drawableLeft="@drawable/stop_info_error"
+        <LinearLayout
           android:id="@+id/response_error"
           style="@style/Header2Text"
-          android:layout_width="wrap_content"
+          android:layout_width="fill_parent"
           android:layout_height="wrap_content"
-          android:visibility="gone"/>
+          android:visibility="gone">
+          <ImageView
+            android:src="@drawable/stop_info_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dip"/>
+          <TextView
+            android:text="1 minute ago"
+            android:id="@+id/response_error_text"
+              style="@style/Header2Text"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"/>
+        </LinearLayout>
+
     </LinearLayout>
 
     <ListView android:id="@id/android:list"

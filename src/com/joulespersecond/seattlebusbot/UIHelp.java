@@ -116,7 +116,21 @@ final class UIHelp {
 
         public void setView(View stopRoot, String stopId, String stopName) {
             TextView nameView = (TextView)stopRoot.findViewById(R.id.stop_name);
-            setView2(nameView, stopId, stopName);
+            View favoriteView = stopRoot.findViewById(R.id.stop_favorite);
+
+            ContentValues values = mMap.getValues(stopId);
+            if (values != null) {
+                Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
+                final boolean favorite = (i != null) && (i == 1);
+                final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
+
+                nameView.setText(TextUtils.isEmpty(userName) ? stopName : userName);
+                favoriteView.setVisibility(favorite ? View.VISIBLE : View.GONE);
+            }
+            else {
+                nameView.setText(stopName);
+                favoriteView.setVisibility(View.GONE);
+            }
         }
 
         /**

@@ -24,25 +24,19 @@
     android:orientation="vertical"
     style="@style/DialogFrame">
 
-   <LinearLayout
-       style="@style/DialogHead"
+   <TextView
+       android:drawableLeft="@drawable/ic_dialog_menu_generic"
+       android:drawablePadding="5dp"
+       android:id="@+id/alertTitle"
+       android:gravity="center_vertical"
+       style="?android:attr/textAppearanceMedium"
        android:layout_width="fill_parent"
        android:layout_height="wrap_content"
-       android:layout_weight="0"
-       android:orientation="horizontal"
-       android:gravity="center_vertical">
-       <ImageView android:id="@+id/icon"
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content"
-           android:layout_gravity="top"
-           android:paddingTop="6dp"
-           android:paddingRight="10dp"
-           android:src="@drawable/ic_dialog_menu_generic" />
-       <TextView android:id="@+id/alertTitle"
-           style="?android:attr/textAppearanceMedium"
-           android:layout_width="fill_parent"
-           android:layout_height="wrap_content" />
-   </LinearLayout>
+       android:layout_marginTop="6dp"
+       android:layout_marginBottom="9dp"
+       android:layout_marginLeft="10dp"
+       android:layout_marginRight="10dp"
+       />
 
      <ListView android:id="@id/android:list"
            style="@style/DialogList"

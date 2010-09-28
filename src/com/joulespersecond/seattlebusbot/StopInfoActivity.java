@@ -53,7 +53,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -84,11 +84,11 @@ public class StopInfoActivity extends ListActivity {
     private View mEditNameContainerView;
     private TextView mNameView;
     private EditText mEditNameView;
-    private ImageView mFavoriteView;
+    private ImageButton mFavoriteView;
     private TextView mEmptyText;
     private View mDirectionView;
     private View mFilterGroup;
-    private View mResponseError;
+    private TextView mResponseError;
     private boolean mInNameEdit;
 
     private AsyncTask<String,?,?> mAsyncTask;
@@ -174,9 +174,9 @@ public class StopInfoActivity extends ListActivity {
         mEditNameContainerView = findViewById(R.id.edit_name_container);
         mNameView = (TextView)findViewById(R.id.stop_name);
         mEditNameView = (EditText)findViewById(R.id.edit_name);
-        mFavoriteView = (ImageView)findViewById(R.id.stop_favorite);
+        mFavoriteView = (ImageButton)findViewById(R.id.stop_favorite);
         mEmptyText = (TextView)findViewById(android.R.id.empty);
-        mResponseError = findViewById(R.id.response_error);
+        mResponseError = (TextView)findViewById(R.id.response_error);
         mDirectionView = findViewById(R.id.direction);
         mFilterGroup = findViewById(R.id.filter_group);
 
@@ -501,12 +501,11 @@ public class StopInfoActivity extends ListActivity {
             if (values != null) {
                 String tripName = values.getAsString(ObaContract.Trips.NAME);
 
-                View tripInfo = view.findViewById(R.id.trip_info);
-                TextView tripNameView = (TextView)view.findViewById(R.id.trip_name);
+                TextView tripInfo = (TextView)view.findViewById(R.id.trip_info);
                 if (tripName.length() == 0) {
                     tripName = getString(R.string.trip_info_noname);
                 }
-                tripNameView.setText(tripName);
+                tripInfo.setText(tripName);
                 tripInfo.setVisibility(View.VISIBLE);
             }
             else {
@@ -633,13 +632,12 @@ public class StopInfoActivity extends ListActivity {
         final long now = System.currentTimeMillis();
 
         if ((now-mResponseTime) >= 2*DateUtils.MINUTE_IN_MILLIS) {
-            TextView errorText = (TextView)mResponseError.findViewById(R.id.response_error_text);
             CharSequence relativeTime =
                 DateUtils.getRelativeTimeSpanString(mResponseTime,
                         now,
                         DateUtils.MINUTE_IN_MILLIS,
                         0);
-            errorText.setText(getString(R.string.stop_info_old_data, relativeTime));
+            mResponseError.setText(getString(R.string.stop_info_old_data, relativeTime));
 
             mResponseError.setVisibility(View.VISIBLE);
             mEmptyText.setText(R.string.stop_info_nodata);
@@ -817,7 +815,6 @@ public class StopInfoActivity extends ListActivity {
         cr.update(mStopUri, values, null, null);
     }
     private void toggleFavorite() {
-        final ImageView favoriteView = (ImageView)findViewById(R.id.stop_favorite);
         int newRes;
         if (mFavorite) {
             // Turn it off
@@ -830,7 +827,7 @@ public class StopInfoActivity extends ListActivity {
         if (ObaContract.Stops.markAsFavorite(
                 StopInfoActivity.this, mStopUri, !mFavorite)) {
             mFavorite = !mFavorite;
-            favoriteView.setImageResource(newRes);
+            mFavoriteView.setImageResource(newRes);
         }
     }
 

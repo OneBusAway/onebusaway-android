@@ -148,7 +148,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         int[] to = new int[] {
                 R.id.stop_name,
                 R.id.direction,
-                R.id.stop_favorite
+                R.id.stop_name
         };
         SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.stop_list_item, c, from, to);
@@ -158,9 +158,9 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                 if (columnIndex == COL_FAVORITE) {
-                    View favorite = view.findViewById(R.id.stop_favorite);
-                    favorite.setVisibility(
-                            cursor.getInt(columnIndex) == 1 ? View.VISIBLE : View.GONE);
+                    TextView favorite = (TextView)view.findViewById(R.id.stop_name);
+                    int icon = (cursor.getInt(columnIndex) == 1) ? R.drawable.star_on : 0;
+                    favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
                     return true;
                 }
                 else if (columnIndex == COL_DIRECTION) {

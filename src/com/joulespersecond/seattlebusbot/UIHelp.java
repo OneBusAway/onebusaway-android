@@ -132,6 +132,26 @@ final class UIHelp {
                 favoriteView.setVisibility(View.GONE);
             }
         }
+
+        /**
+         * This should be used with compound drawables
+         */
+        public void setView2(TextView nameView, String stopId, String stopName) {
+            ContentValues values = mMap.getValues(stopId);
+            int icon = 0;
+            if (values != null) {
+                Integer i = values.getAsInteger(ObaContract.Stops.FAVORITE);
+                final boolean favorite = (i != null) && (i == 1);
+                final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
+
+                nameView.setText(TextUtils.isEmpty(userName) ? stopName : userName);
+                icon = favorite ? R.drawable.star_on : 0;
+            }
+            else {
+                nameView.setText(stopName);
+            }
+            nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+        }
     }
 
     /**

@@ -159,16 +159,15 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         }
         return true;
     }
-    boolean setFocusById(String id) {
+    void setFocusById(String id) {
         final int size = size();
         for (int i=0; i < size; ++i) {
             StopOverlayItem item = (StopOverlayItem)getItem(i);
             if (id.equals(item.getStop().getId())) {
                 setFocus(item);
-                return true;
+                break;
             }
         }
-        return false;
     }
     String getFocusedId() {
         final OverlayItem focus = getFocus();

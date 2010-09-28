@@ -92,7 +92,7 @@ public class StopsController {
         }
     }
 
-    private final AsyncTasks.Progress mAsyncProgress;
+    private final AsyncTasks.ProgressIndeterminateVisibility mAsyncProgress;
 
     private class MyTask extends AsyncTask<RequestInfo,Void,ResponseInfo> {
         @Override
@@ -147,10 +147,10 @@ public class StopsController {
         }
     };
 
-    StopsController(Activity activity, Listener listener, AsyncTasks.Progress progress) {
+    StopsController(Activity activity, Listener listener) {
         mActivity = activity;
         mListener = listener;
-        mAsyncProgress = progress;
+        mAsyncProgress = new AsyncTasks.ProgressIndeterminateVisibility(activity);
     }
 
     void setNonConfigurationInstance(Object obj) {

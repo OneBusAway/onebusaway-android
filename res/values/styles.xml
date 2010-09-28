@@ -29,24 +29,12 @@
     <!--  Styles -->
     <style name="ActionBar">
         <item name="android:background">@drawable/actionbar_bg</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:orientation">horizontal</item>
-    </style>
-    <style name="ActionBarTitle">
-      <item name="android:background">@null</item>
-      <item name="android:src">@drawable/title</item>
-      <item name="android:gravity">left|center_vertical</item>
-      <item name="android:layout_alignParentLeft">true</item>
-      <item name="android:layout_centerInParent">true</item>
-      <item name="android:layout_width">wrap_content</item>
-      <item name="android:layout_weight">1</item>
-      <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_height">45sp</item>
     </style>
     <style name="ActionBarButton">
-      <item name="android:background">@null</item>
-      <item name="android:layout_width">wrap_content</item>
-      <item name="android:layout_height">wrap_content</item>
+      <item name="android:background">@drawable/action_button_bg</item>
+      <item name="android:layout_width">40sp</item>
+      <item name="android:layout_height">40sp</item>
       <item name="android:layout_marginTop">0dp</item>
       <item name="android:layout_marginLeft">1sp</item>
     </style>

@@ -31,8 +31,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:layout_marginTop="2dp"
-        android:background="@drawable/map_popup"
+        android:background="@android:color/white"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
         <LinearLayout
@@ -75,5 +74,12 @@
                 android:horizontalSpacing="3dp" />
         </LinearLayout>
     </RelativeLayout>
+
+    <ZoomControls android:id="@+id/zoom_controls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true" />
+
 </RelativeLayout>
 

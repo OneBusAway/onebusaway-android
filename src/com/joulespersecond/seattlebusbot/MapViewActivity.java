@@ -58,6 +58,7 @@ import android.view.Window;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ZoomControls;
 
 import java.util.Arrays;
 import java.util.List;
@@ -79,6 +80,7 @@ public class MapViewActivity extends MapActivity
 
     MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
+    private ZoomControls mZoomControls;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
     //private RouteOverlay mRouteOverlay;
@@ -165,17 +167,15 @@ public class MapViewActivity extends MapActivity
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
-        mMapView.setBuiltInZoomControls(true);
+        mMapView.setBuiltInZoomControls(false);
+        mZoomControls = (ZoomControls)findViewById(R.id.zoom_controls);
+        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
+        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
         mStopsController = new StopsController(this, this);
 
         // Initialize the links
         UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
         UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
-
-        // If you click on the popup but not on a link, nothing happens
-        // (if this weren't there, the popup would be dismissed)
-        View popup = findViewById(R.id.map_popup);
-        popup.setOnClickListener(mPopupClick);
 
         // Set up everything we can from the intent --
         // all of the UI is set-up/torn down in onResume/onPause
@@ -521,9 +521,37 @@ public class MapViewActivity extends MapActivity
             showRoutes((TextView)v, !mShowRoutes);
         }
     };
-    private final View.OnClickListener mPopupClick = new View.OnClickListener() {
+
+    static final int MAX_ZOOM = 21;
+    static final int MIN_ZOOM = 1;
+
+    void enableZoom() {
+        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevel() != MAX_ZOOM);
+        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevel() != MIN_ZOOM);
+    }
+
+    private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
-            // Eat the click so the Map doesn't get it.
+            if (!mMapView.getController().zoomIn()) {
+                mZoomControls.setIsZoomInEnabled(false);
+                mZoomControls.setIsZoomOutEnabled(true);
+            }
+            else {
+                enableZoom();
+            }
+        }
+    };
+
+    private final View.OnClickListener mOnZoomOut = new View.OnClickListener() {
+        public void onClick(View v) {
+            if (!mMapView.getController().zoomOut()) {
+                mZoomControls.setIsZoomInEnabled(true);
+                mZoomControls.setIsZoomOutEnabled(false);
+            }
+            else {
+                enableZoom();
+            }
         }
     };
 
@@ -566,8 +594,10 @@ public class MapViewActivity extends MapActivity
 
         List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.
-        final View popup = findViewById(R.id.map_popup);
-        popup.setVisibility(View.GONE);
+        if (mFocusStopId == null) {
+            final View popup = findViewById(R.id.map_popup);
+            popup.setVisibility(View.GONE);
+        }
 
         if (mStopOverlay != null) {
             mapOverlays.remove(mStopOverlay);
@@ -577,7 +607,10 @@ public class MapViewActivity extends MapActivity
         mStopOverlay = new StopOverlay(stops, this);
         mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
         if (mFocusStopId != null) {
-            mStopOverlay.setFocusById(mFocusStopId);
+            if (!mStopOverlay.setFocusById(mFocusStopId)) {
+                final View popup = findViewById(R.id.map_popup);
+                popup.setVisibility(View.GONE);
+            }
         }
 
         if (isRouteMode()) {

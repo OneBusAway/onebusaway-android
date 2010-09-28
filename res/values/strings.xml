@@ -50,6 +50,10 @@
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">Manage your favorite stops better!\n\nAdd stars to stops, and give them names!\n\nThat and more!</string>
     <string name="main_help_close">Close</string>
+    <string name="main_nolocation_title">Location not enabled</string>
+    <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
+    <string name="main_waiting_for_location">Trying to get a fix on your location...</string>
+    <string name="main_location_unavailable">Unable to get your location.</string>
 
     <!--  Stop Info -->
     <string name="stop_info_title">OneBusAway</string>

@@ -47,6 +47,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.Spannable;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -100,6 +101,7 @@ public class MapViewActivity extends MapActivity
 
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
+    private static final int NOLOCATION_DIALOG = 3;
 
     /**
      * Starts the MapActivity with a particular stop focused with the
@@ -196,6 +198,7 @@ public class MapViewActivity extends MapActivity
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
     }
+
     @Override
     public void onDestroy() {
         mStopUserMap.close();
@@ -204,12 +207,14 @@ public class MapViewActivity extends MapActivity
         mStopsController = null;
         super.onDestroy();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_options, menu);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
@@ -238,6 +243,7 @@ public class MapViewActivity extends MapActivity
         }
         return false;
     }
+
     @Override
     public void onResume() {
         //
@@ -299,6 +305,7 @@ public class MapViewActivity extends MapActivity
 
         super.onResume();
     }
+
     @Override
     public void onPause() {
         mLocationOverlay.disableMyLocation();
@@ -331,14 +338,17 @@ public class MapViewActivity extends MapActivity
         outState.putDouble(CENTER_LON, center.getLongitudeE6()/1E6);
         outState.putInt(MAP_ZOOM, mMapView.getZoomLevel());
     }
+
     @Override
     public Object onRetainNonConfigurationInstance() {
         return mStopsController.onRetainNonConfigurationInstance();
     }
+
     @Override
     protected boolean isRouteDisplayed() {
         return false;
     }
+
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
@@ -347,14 +357,25 @@ public class MapViewActivity extends MapActivity
 
         case WHATSNEW_DIALOG:
             return createWhatsNewDialog();
+
+        case NOLOCATION_DIALOG:
+            return createNoLocationDialog();
         }
         return null;
     }
+
     @Override
     public void onLowMemory() {
         super.onLowMemory();
         Log.d(TAG, "******** LOW MEMORY ******** ");
         ObaApi.clearCache();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Clear the map center so we can get the user's location again
+        mMapCenter = null;
     }
 
     //
@@ -421,13 +442,51 @@ public class MapViewActivity extends MapActivity
             }
         }
     };
+
+    static final int WAIT_FOR_LOCATION_TIMEOUT = 5000;
+
+    final Handler mWaitingForLocationHandler = new Handler();
+    final Runnable mWaitingForLocation = new Runnable() {
+        public void run() {
+           if (mLocationOverlay != null && mLocationOverlay.getMyLocation() == null) {
+               Toast.makeText(MapViewActivity.this,
+                       R.string.main_waiting_for_location,
+                       Toast.LENGTH_LONG).show();
+               mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,
+                       2*WAIT_FOR_LOCATION_TIMEOUT);
+           }
+        }
+    };
+
+    final Runnable mUnableToGetLocation = new Runnable() {
+        public void run() {
+            if (mLocationOverlay != null && mLocationOverlay.getMyLocation() == null) {
+                Toast.makeText(MapViewActivity.this,
+                        R.string.main_location_unavailable,
+                        Toast.LENGTH_LONG).show();
+                // Just get stops I guess
+                if (!isRouteMode()) {
+                    getStops();
+                }
+            }
+         }
+    };
+
     private void setMyLocation() {
         // Not really sure how this happened, but it happened in issue #54
         if (mLocationOverlay == null) {
             return;
         }
+
+        if (!mLocationOverlay.isMyLocationEnabled()) {
+            showDialog(NOLOCATION_DIALOG);
+            return;
+        }
+
         GeoPoint point = mLocationOverlay.getMyLocation();
         if (point == null) {
+            mWaitingForLocationHandler.postDelayed(mWaitingForLocation,
+                    WAIT_FOR_LOCATION_TIMEOUT);
             mLocationOverlay.runOnFirstFix(new Runnable() {
                 public void run() {
                     mGetStopsHandler.post(mGetStops);
@@ -438,6 +497,7 @@ public class MapViewActivity extends MapActivity
             setMyLocation(point);
         }
     }
+
     private void setMyLocation(GeoPoint point) {
         MapController mapCtrl = mMapView.getController();
         mapCtrl.animateTo(point);
@@ -687,6 +747,7 @@ public class MapViewActivity extends MapActivity
         });
         return builder.create();
     }
+
     private Dialog createWhatsNewDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
@@ -711,6 +772,31 @@ public class MapViewActivity extends MapActivity
         });
         return dialog;
         */
+    }
+
+    private Dialog createNoLocationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_nolocation_title);
+        builder.setIcon(android.R.drawable.ic_dialog_map);
+        builder.setMessage(R.string.main_nolocation);
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                dismissDialog(NOLOCATION_DIALOG);
+            }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Ok, I suppose we can just try looking from where we are.
+                if (!isRouteMode()) {
+                    getStops();
+                }
+                dismissDialog(NOLOCATION_DIALOG);
+            }
+        });
+        return builder.create();
     }
 
     private static final String WHATS_NEW_VER = "whatsNewVer";

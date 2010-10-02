@@ -32,7 +32,7 @@ import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 abstract class MyRouteListActivity extends MyBaseListActivity {
-    //private static final String TAG = "MyRouteListActivity";
+    // private static final String TAG = "MyRouteListActivity";
 
     protected static final String[] PROJECTION = {
         ObaContract.Routes._ID,
@@ -42,7 +42,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
     };
     private static final int COL_ID = 0;
     private static final int COL_SHORTNAME = 1;
-    //private static final int COL_LONGNAME = 2;
+    // private static final int COL_LONGNAME = 2;
     private static final int COL_URL = 3;
 
     @Override
@@ -56,9 +56,8 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         final String routeName = c.getString(COL_SHORTNAME);
 
         if (mShortcutMode) {
-            final Intent shortcut =
-                UIHelp.makeShortcut(this, routeName,
-                        RouteInfoActivity.makeIntent(this, routeId));
+            final Intent shortcut = UIHelp.makeShortcut(this, routeName,
+                    RouteInfoActivity.makeIntent(this, routeId));
 
             if (isChild()) {
                 // Is there a way to do this more generically?
@@ -67,13 +66,11 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
                     MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
                     myRoutes.returnShortcut(shortcut);
                 }
-            }
-            else {
+            } else {
                 setResult(RESULT_OK, shortcut);
                 finish();
             }
-        }
-        else {
+        } else {
             RouteInfoActivity.start(this, routeId);
         }
     }
@@ -83,31 +80,38 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
     private static final int CONTEXT_MENU_SHOW_URL = 3;
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
+    public void onCreateContextMenu(ContextMenu menu,
+            View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView.findViewById(R.id.short_name);
+        final TextView text = (TextView)info.targetView
+                .findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (mShortcutMode) {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
-        }
-        else {
-            menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_route_info);
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0,
+                    R.string.my_context_create_shortcut);
+        } else {
+            menu.add(0, CONTEXT_MENU_DEFAULT, 0,
+                    R.string.my_context_get_route_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
         final String url = getUrl(getListView(), info.position);
         if (!TextUtils.isEmpty(url)) {
-            menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
+            menu.add(0, CONTEXT_MENU_SHOW_URL, 0,
+                    R.string.my_context_show_schedule);
         }
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item
+                .getMenuInfo();
         switch (item.getItemId()) {
         case CONTEXT_MENU_DEFAULT:
             // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position, info.id);
+            onListItemClick(getListView(), info.targetView, info.position,
+                    info.id);
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
             MapViewActivity.start(this, getId(getListView(), info.position));
@@ -127,6 +131,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         c.moveToPosition(position - l.getHeaderViewsCount());
         return c.getString(COL_ID);
     }
+
     protected String getUrl(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
@@ -134,6 +139,33 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         c.moveToPosition(position - l.getHeaderViewsCount());
         return c.getString(COL_URL);
     }
+
+    private static final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
+
+        @Override
+        public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+            if (columnIndex == 1) {
+                String shortName = cursor.getString(1);
+                if (!TextUtils.isEmpty(shortName)) {
+                    ((TextView)view).setText(shortName);
+                } else {
+                    ((TextView)view).setText(cursor.getString(2));
+                }
+                return true;
+            } else if (columnIndex == 2) {
+                // Only set the long name if we didn't set it in the "shortName"
+                // (because the shortName didn't exist)
+                String shortName = cursor.getString(1);
+                if (!TextUtils.isEmpty(shortName)) {
+                    ((TextView)view).setText(cursor.getString(2));
+                } else {
+                    ((TextView)view).setText("");
+                }
+                return true;
+            }
+            return false;
+        }
+    };
 
     @Override
     protected void initList(Cursor c) {

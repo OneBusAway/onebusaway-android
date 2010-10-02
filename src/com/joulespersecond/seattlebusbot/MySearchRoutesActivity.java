@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
@@ -46,13 +47,12 @@ public class MySearchRoutesActivity extends MySearchActivity {
         ListAdapter adapter = l.getAdapter();
         ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
         final String routeId = route.getId();
-        final String routeName = route.getShortName();
+        final String routeName = UIHelp.getRouteDisplayName(route);
 
         if (isShortcutMode()) {
             Intent intent = RouteInfoActivity.makeIntent(this, routeId);
             makeShortcut(routeName, intent);
-        }
-        else {
+        } else {
             RouteInfoActivity.start(this, routeId);
         }
     }
@@ -62,16 +62,14 @@ public class MySearchRoutesActivity extends MySearchActivity {
     private static final int CONTEXT_MENU_SHOW_URL = 3;
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
         final TextView text = (TextView)info.targetView.findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
-        }
-        else {
+        } else {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_route_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
@@ -80,22 +78,23 @@ public class MySearchRoutesActivity extends MySearchActivity {
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
         }
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DEFAULT:
-            // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position, info.id);
-            return true;
-        case CONTEXT_MENU_SHOW_ON_MAP:
-            MapViewActivity.start(this, getId(getListView(), info.position));
-            return true;
-        case CONTEXT_MENU_SHOW_URL:
-            UIHelp.goToUrl(this, getUrl(getListView(), info.position));
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DEFAULT:
+                // Fake a click
+                onListItemClick(getListView(), info.targetView, info.position, info.id);
+                return true;
+            case CONTEXT_MENU_SHOW_ON_MAP:
+                MapViewActivity.start(this, getId(getListView(), info.position));
+                return true;
+            case CONTEXT_MENU_SHOW_URL:
+                UIHelp.goToUrl(this, getUrl(getListView(), info.position));
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
@@ -104,6 +103,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
         ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
         return route.getId();
     }
+
     private String getUrl(ListView l, int position) {
         ListAdapter adapter = l.getAdapter();
         ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
@@ -112,22 +112,27 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
         public SearchResultsListAdapter(ObaResponse response) {
-            super(MySearchRoutesActivity.this,
-                    Arrays.asList(((ObaRoutesForLocationResponse)response).getRoutes()),
+            super(MySearchRoutesActivity.this, Arrays
+                    .asList(((ObaRoutesForLocationResponse)response).getRoutes()),
                     R.layout.route_list_item);
         }
+
         @Override
         protected void setData(View view, int position) {
-            TextView shortName = (TextView)view.findViewById(R.id.short_name);
-            TextView longName = (TextView)view.findViewById(R.id.long_name);
+            TextView text1 = (TextView)view.findViewById(R.id.short_name);
+            TextView text2 = (TextView)view.findViewById(R.id.long_name);
 
             ObaRoute route = mArray.get(position);
-            shortName.setText(route.getShortName());
-            String longNameStr = route.getLongName();
-            if (TextUtils.isEmpty(longNameStr)) {
-                longNameStr = route.getDescription();
+            final String shortName = route.getShortName();
+            final String longName = route.getLongName();
+
+            if (!TextUtils.isEmpty(shortName)) {
+                text1.setText(shortName);
+                text2.setText(longName);
+            } else {
+                text1.setText(longName);
+                text2.setText("");
             }
-            longName.setText(longNameStr);
         }
     }
 
@@ -135,18 +140,22 @@ public class MySearchRoutesActivity extends MySearchActivity {
     protected int getLayoutId() {
         return R.layout.my_search_route_list;
     }
+
     @Override
     protected int getEditBoxHintText() {
         return R.string.search_route_hint;
     }
+
     @Override
     protected int getMinSearchLength() {
         return 1;
     }
+
     @Override
     protected void setResultsAdapter(ObaResponse response) {
         setListAdapter(new SearchResultsListAdapter(response));
     }
+
     @Override
     protected void setHintText() {
         mEmptyText.setText(R.string.find_hint_nofavoriteroutes);

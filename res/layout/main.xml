@@ -76,7 +76,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:numColumns="auto_fit"
-            android:columnWidth="30sp"
+            android:columnWidth="40sp"
             android:verticalSpacing="1dp"
             android:horizontalSpacing="3dp" />
     </LinearLayout>

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
@@ -64,8 +65,8 @@ import android.widget.ZoomControls;
 import java.util.Arrays;
 import java.util.List;
 
-public class MapViewActivity extends MapActivity
-        implements MapWatcher.Listener, StopsController.Listener {
+public class MapViewActivity extends MapActivity implements
+        MapWatcher.Listener, StopsController.Listener {
     private static final String TAG = "MapViewActivity";
 
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
@@ -93,10 +94,8 @@ public class MapViewActivity extends MapActivity
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
     private boolean mShowRoutes;
-
     private StopsController mStopsController;
     private MapWatcher mMapWatcher;
-
     private Object mStopWait;
 
     private static final int HELP_DIALOG = 1;
@@ -104,23 +103,33 @@ public class MapViewActivity extends MapActivity
     private static final int NOLOCATION_DIALOG = 3;
 
     /**
-     * Starts the MapActivity with a particular stop focused with the
-     * center of the map at a particular point.
+     * Starts the MapActivity with a particular stop focused with the center of
+     * the map at a particular point.
      *
-     * @param context The context of the activity.
-     * @param focusId The stop to focus.
-     * @param lat The latitude of the map center.
-     * @param lon The longitude of the map center.
+     * @param context
+     *            The context of the activity.
+     * @param focusId
+     *            The stop to focus.
+     * @param lat
+     *            The latitude of the map center.
+     * @param lon
+     *            The longitude of the map center.
      */
-    public static final void start(Context context, String focusId, double lat, double lon) {
+    public static final void start(Context context,
+            String focusId,
+            double lat,
+            double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
+
     /**
      * Starts the MapActivity in "RouteMode", which shows stops along a route,
      * and does not get new stops when the user pans the map.
      *
-     * @param context The context of the activity.
-     * @param routeId The route to show.
+     * @param context
+     *            The context of the activity.
+     * @param routeId
+     *            The route to show.
      */
     public static final void start(Context context, String routeId) {
         context.startActivity(makeIntent(context, routeId));
@@ -130,10 +139,14 @@ public class MapViewActivity extends MapActivity
      * Returns an intent that will start the MapActivity with a particular stop
      * focused with the center of the map at a particular point.
      *
-     * @param context The context of the activity.
-     * @param focusId The stop to focus.
-     * @param lat The latitude of the map center.
-     * @param lon The longitude of the map center.
+     * @param context
+     *            The context of the activity.
+     * @param focusId
+     *            The stop to focus.
+     * @param lat
+     *            The latitude of the map center.
+     * @param lon
+     *            The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
             String focusId,
@@ -147,11 +160,14 @@ public class MapViewActivity extends MapActivity
     }
 
     /**
-     * Returns an intent that starts the MapActivity in "RouteMode", which shows stops
-     * along a route, and does not get new stops when the user pans the map.
+     * Returns an intent that starts the MapActivity in "RouteMode", which shows
+     * stops along a route, and does not get new stops when the user pans the
+     * map.
      *
-     * @param context The context of the activity.
-     * @param routeId The route to show.
+     * @param context
+     *            The context of the activity.
+     * @param routeId
+     *            The route to show.
      */
     public static final Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, MapViewActivity.class);
@@ -164,7 +180,8 @@ public class MapViewActivity extends MapActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //
-        // Static initialization (what should always be there, regardless of intent)
+        // Static initialization (what should always be there, regardless of
+        // intent)
         //
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
@@ -193,7 +210,8 @@ public class MapViewActivity extends MapActivity
             mapValuesFromBundle(savedInstanceState);
         }
 
-        mStopsController.setNonConfigurationInstance(getLastNonConfigurationInstance());
+        mStopsController
+                .setNonConfigurationInstance(getLastNonConfigurationInstance());
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
@@ -221,23 +239,19 @@ public class MapViewActivity extends MapActivity
         if (id == R.id.my_location) {
             setMyLocation();
             return true;
-        }
-        else if (id == R.id.find_route) {
+        } else if (id == R.id.find_route) {
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
             startActivity(myIntent);
             return true;
-        }
-        else if (id == R.id.find_stop) {
+        } else if (id == R.id.find_stop) {
             Intent myIntent = new Intent(this, MyStopsActivity.class);
             startActivity(myIntent);
             return true;
-        }
-        else if (id == R.id.view_trips) {
+        } else if (id == R.id.view_trips) {
             Intent myIntent = new Intent(this, TripListActivity.class);
             startActivity(myIntent);
             return true;
-        }
-        else if (id == R.id.help) {
+        } else if (id == R.id.help) {
             showDialog(HELP_DIALOG);
             return true;
         }
@@ -257,8 +271,7 @@ public class MapViewActivity extends MapActivity
 
         if (mStopUserMap == null) {
             mStopUserMap = new UIHelp.StopUserInfoMap(this);
-        }
-        else {
+        } else {
             mStopUserMap.requery();
         }
 
@@ -273,7 +286,6 @@ public class MapViewActivity extends MapActivity
             mapCtrl.setZoom(mMapZoom);
         }
 
-
         // If we have previous stops, then we want to use those.
 
         // Otherwise, we want to make a new request to get some.
@@ -286,8 +298,7 @@ public class MapViewActivity extends MapActivity
             if (mStopOverlay != null) {
                 showRoutes(null, mShowRoutes);
             }
-        }
-        else if (isRouteMode()) {
+        } else if (isRouteMode()) {
             getStops();
         }
 
@@ -295,8 +306,7 @@ public class MapViewActivity extends MapActivity
         if (!isRouteMode()) {
             if (prevCenter == null) {
                 setMyLocation();
-            }
-            else {
+            } else {
                 getStops();
             }
             mMapWatcher = new MapWatcher(mMapView, this);
@@ -319,7 +329,8 @@ public class MapViewActivity extends MapActivity
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
         Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
-        // Clear the overlays to save memory and re-establish them when we are resumed.
+        // Clear the overlays to save memory and re-establish them when we are
+        // resumed.
         List<Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.clear();
         mStopOverlay = null;
@@ -334,8 +345,8 @@ public class MapViewActivity extends MapActivity
         outState.putString(FOCUS_STOP_ID, mFocusStopId);
         outState.putBoolean(SHOW_ROUTES, mShowRoutes);
         GeoPoint center = mMapView.getMapCenter();
-        outState.putDouble(CENTER_LAT, center.getLatitudeE6()/1E6);
-        outState.putDouble(CENTER_LON, center.getLongitudeE6()/1E6);
+        outState.putDouble(CENTER_LAT, center.getLatitudeE6() / 1E6);
+        outState.putDouble(CENTER_LON, center.getLongitudeE6() / 1E6);
         outState.putInt(MAP_ZOOM, mMapView.getZoomLevel());
     }
 
@@ -400,13 +411,14 @@ public class MapViewActivity extends MapActivity
     @Override
     public void onMapCenterChanged() {
         mMapCenter = mMapView.getMapCenter();
-        Log.d(TAG, "Map center changed: "+mMapCenter);
+        Log.d(TAG, "Map center changed: " + mMapCenter);
         getStops();
     }
 
     public void setStopWait(Object obj) {
         mStopWait = obj;
     }
+
     public StopsController getStopsController() {
         return mStopsController;
     }
@@ -425,8 +437,8 @@ public class MapViewActivity extends MapActivity
     }
 
     private void getStops() {
-        mStopsController.setCurrentRequest(
-                StopsController.requestFromView(mMapView, mRouteId));
+        mStopsController.setCurrentRequest(StopsController.requestFromView(
+                mMapView, mRouteId));
     }
 
     // This is a bit annoying: runOnFirstFix() calls its runnable either
@@ -435,6 +447,7 @@ public class MapViewActivity extends MapActivity
     // to be created from the UI thread, we need to post a message back to the
     // UI thread just to create another AsyncTask.
     final Handler mGetStopsHandler = new Handler();
+
     final Runnable mGetStops = new Runnable() {
         public void run() {
             if (mLocationOverlay != null) {
@@ -446,30 +459,33 @@ public class MapViewActivity extends MapActivity
     static final int WAIT_FOR_LOCATION_TIMEOUT = 5000;
 
     final Handler mWaitingForLocationHandler = new Handler();
+
     final Runnable mWaitingForLocation = new Runnable() {
         public void run() {
-           if (mLocationOverlay != null && mLocationOverlay.getMyLocation() == null) {
-               Toast.makeText(MapViewActivity.this,
-                       R.string.main_waiting_for_location,
-                       Toast.LENGTH_LONG).show();
-               mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,
-                       2*WAIT_FOR_LOCATION_TIMEOUT);
-           }
+            if (mLocationOverlay != null
+                    && mLocationOverlay.getMyLocation() == null) {
+                Toast.makeText(MapViewActivity.this,
+                        R.string.main_waiting_for_location, Toast.LENGTH_LONG)
+                        .show();
+                mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,
+                        2 * WAIT_FOR_LOCATION_TIMEOUT);
+            }
         }
     };
 
     final Runnable mUnableToGetLocation = new Runnable() {
         public void run() {
-            if (mLocationOverlay != null && mLocationOverlay.getMyLocation() == null) {
+            if (mLocationOverlay != null
+                    && mLocationOverlay.getMyLocation() == null) {
                 Toast.makeText(MapViewActivity.this,
-                        R.string.main_location_unavailable,
-                        Toast.LENGTH_LONG).show();
+                        R.string.main_location_unavailable, Toast.LENGTH_LONG)
+                        .show();
                 // Just get stops I guess
                 if (!isRouteMode()) {
                     getStops();
                 }
             }
-         }
+        }
     };
 
     private void setMyLocation() {
@@ -492,8 +508,7 @@ public class MapViewActivity extends MapActivity
                     mGetStopsHandler.post(mGetStops);
                 }
             });
-        }
-        else {
+        } else {
             setMyLocation(point);
         }
     }
@@ -508,67 +523,76 @@ public class MapViewActivity extends MapActivity
         }
     }
 
-    private class RouteArrayAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
+    private class RouteArrayAdapter extends
+            Adapters.BaseArrayAdapter2<ObaRoute> {
         public RouteArrayAdapter(List<ObaRoute> routes) {
             super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
         }
+
         @Override
         protected void setData(View view, int position) {
             TextView shortName = (TextView)view.findViewById(R.id.short_name);
 
             ObaRoute route = mArray.get(position);
-            shortName.setText(route.getShortName());
+            shortName.setText(UIHelp.getRouteDisplayName(route));
         }
     }
 
     void populateRoutes(ObaStop stop, boolean force) {
         GridView grid = (GridView)findViewById(R.id.route_list);
         if (grid.getVisibility() != View.GONE || force) {
-            ObaResponseWithRefs response = (ObaResponseWithRefs)mStopsController.getResponse();
-            grid.setAdapter(new RouteArrayAdapter(response.getRoutes(stop.getRouteIds())));
+            ObaResponseWithRefs response = (ObaResponseWithRefs)mStopsController
+                    .getResponse();
+            grid.setAdapter(new RouteArrayAdapter(response.getRoutes(stop
+                    .getRouteIds())));
         }
     }
 
     final Handler mStopChangedHandler = new Handler();
+
     final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
         public void onFocusChanged(@SuppressWarnings("unchecked") ItemizedOverlay overlay,
                 final OverlayItem newFocus) {
-             mStopChangedHandler.post(new Runnable() {
-                 public void run() {
-                     // There are times when this can be fired after we've already destroyed
-                     // ourselves (so mStopUserMap == null).
-                     // If that happens, just ignore it (later we could potentially remove the
-                     // runnable from the handler)
-                     if (mStopUserMap == null) {
-                         mFocusStopId = null;
-                         return;
-                     }
-                     final View popup = findViewById(R.id.map_popup);
-                     if (newFocus == null) {
-                         mFocusStopId = null;
-                         popup.setVisibility(View.GONE);
-                         return;
-                     }
+            mStopChangedHandler.post(new Runnable() {
+                public void run() {
+                    // There are times when this can be fired after we've
+                    // already destroyed
+                    // ourselves (so mStopUserMap == null).
+                    // If that happens, just ignore it (later we could
+                    // potentially remove the
+                    // runnable from the handler)
+                    if (mStopUserMap == null) {
+                        mFocusStopId = null;
+                        return;
+                    }
+                    final View popup = findViewById(R.id.map_popup);
+                    if (newFocus == null) {
+                        mFocusStopId = null;
+                        popup.setVisibility(View.GONE);
+                        return;
+                    }
 
-                     final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
-                     final ObaStop stop = item.getStop();
-                     mFocusStopId = stop.getId();
+                    final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
+                    final ObaStop stop = item.getStop();
+                    mFocusStopId = stop.getId();
 
-                     // Is this a favorite?
-                     TextView stopName = (TextView)popup.findViewById(R.id.stop_name);
-                     mStopUserMap.setView2(stopName, stop.getId(), stop.getName());
-                     UIHelp.setStopDirection(popup.findViewById(R.id.direction),
-                             stop.getDirection(),
-                             false);
+                    // Is this a favorite?
+                    TextView stopName = (TextView)popup
+                            .findViewById(R.id.stop_name);
+                    mStopUserMap.setView2(stopName, stop.getId(), stop
+                            .getName());
+                    UIHelp.setStopDirection(popup.findViewById(R.id.direction),
+                            stop.getDirection(), false);
 
-                     populateRoutes(stop, false);
+                    populateRoutes(stop, false);
 
-                     // Right now the popup is always at the top of the screen.
-                     popup.setVisibility(View.VISIBLE);
+                    // Right now the popup is always at the top of the screen.
+                    popup.setVisibility(View.VISIBLE);
                 }
-             });
+            });
         }
     };
+
     final ClickableSpan mOnShowArrivals = new ClickableSpan() {
         public void onClick(View v) {
             StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
@@ -577,6 +601,7 @@ public class MapViewActivity extends MapActivity
             }
         }
     };
+
     private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
             showRoutes((TextView)v, !mShowRoutes);
@@ -597,8 +622,7 @@ public class MapViewActivity extends MapActivity
             if (!mMapView.getController().zoomIn()) {
                 mZoomControls.setIsZoomInEnabled(false);
                 mZoomControls.setIsZoomOutEnabled(true);
-            }
-            else {
+            } else {
                 enableZoom();
             }
         }
@@ -609,8 +633,7 @@ public class MapViewActivity extends MapActivity
             if (!mMapView.getController().zoomOut()) {
                 mZoomControls.setIsZoomInEnabled(true);
                 mZoomControls.setIsZoomOutEnabled(false);
-            }
-            else {
+            } else {
                 enableZoom();
             }
         }
@@ -622,15 +645,15 @@ public class MapViewActivity extends MapActivity
             text = (TextView)findViewById(R.id.show_routes);
         }
         if (show) {
-            final StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
+            final StopOverlayItem item = (StopOverlayItem)mStopOverlay
+                    .getFocus();
             if (item != null) {
                 populateRoutes(item.getStop(), true);
             }
             // TODO: Animate at some point...
             grid.setVisibility(View.VISIBLE);
             text.setText(R.string.main_hide_routes);
-        }
-        else {
+        } else {
             grid.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);
         }
@@ -647,10 +670,10 @@ public class MapViewActivity extends MapActivity
         List<ObaStop> stops;
         if (response instanceof ObaStopsForRouteResponse) {
             stops = ((ObaStopsForRouteResponse)response).getStops();
-        }
-        else {
+        } else {
             assert(response instanceof ObaStopsForLocationResponse);
-            stops = Arrays.asList(((ObaStopsForLocationResponse)response).getStops());
+            stops = Arrays.asList(((ObaStopsForLocationResponse)response)
+                    .getStops());
         }
 
         List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -723,28 +746,31 @@ public class MapViewActivity extends MapActivity
     private Dialog createHelpDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_title);
-        builder.setItems(R.array.main_help_options, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                case 0:
-                    UIHelp.goToUrl(MapViewActivity.this, HELP_URL);
-                    break;
-                case 1:
-                    UIHelp.goToUrl(MapViewActivity.this, TWITTER_URL);
-                    break;
-                case 2:
-                    showDialog(WHATSNEW_DIALOG);
-                    break;
-                case 3:
-                    goToBugReport();
-                    break;
-                case 4:
-                    Intent preferences = new Intent(MapViewActivity.this, EditPreferencesActivity.class);
-                    startActivity(preferences);
-                    break;
-                }
-            }
-        });
+        builder.setItems(R.array.main_help_options,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                        case 0:
+                            UIHelp.goToUrl(MapViewActivity.this, HELP_URL);
+                            break;
+                        case 1:
+                            UIHelp.goToUrl(MapViewActivity.this, TWITTER_URL);
+                            break;
+                        case 2:
+                            showDialog(WHATSNEW_DIALOG);
+                            break;
+                        case 3:
+                            goToBugReport();
+                            break;
+                        case 4:
+                            Intent preferences = new Intent(
+                                    MapViewActivity.this,
+                                    EditPreferencesActivity.class);
+                            startActivity(preferences);
+                            break;
+                        }
+                    }
+                });
         return builder.create();
     }
 
@@ -753,11 +779,12 @@ public class MapViewActivity extends MapActivity
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.drawable.icon);
         builder.setMessage(R.string.main_help_whatsnew);
-        builder.setNeutralButton(R.string.main_help_close, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                dismissDialog(WHATSNEW_DIALOG);
-            }
-        });
+        builder.setNeutralButton(R.string.main_help_close,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dismissDialog(WHATSNEW_DIALOG);
+                    }
+                });
         return builder.create();
         /*
         // If we get here, we need to show the dialog.
@@ -779,23 +806,27 @@ public class MapViewActivity extends MapActivity
         builder.setTitle(R.string.main_nolocation_title);
         builder.setIcon(android.R.drawable.ic_dialog_map);
         builder.setMessage(R.string.main_nolocation);
-        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                startActivityForResult(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
-                dismissDialog(NOLOCATION_DIALOG);
-            }
-        });
-        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Ok, I suppose we can just try looking from where we are.
-                if (!isRouteMode()) {
-                    getStops();
-                }
-                dismissDialog(NOLOCATION_DIALOG);
-            }
-        });
+        builder.setPositiveButton(android.R.string.yes,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivityForResult(new Intent(
+                                Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                        dismissDialog(NOLOCATION_DIALOG);
+                    }
+                });
+        builder.setNegativeButton(android.R.string.no,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Ok, I suppose we can just try looking from where we
+                        // are.
+                        if (!isRouteMode()) {
+                            getStops();
+                        }
+                        dismissDialog(NOLOCATION_DIALOG);
+                    }
+                });
         return builder.create();
     }
 
@@ -808,7 +839,8 @@ public class MapViewActivity extends MapActivity
         PackageManager pm = getPackageManager();
         PackageInfo appInfo = null;
         try {
-            appInfo = pm.getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+            appInfo = pm.getPackageInfo(getPackageName(),
+                    PackageManager.GET_META_DATA);
         } catch (NameNotFoundException e) {
             // Do nothing, perhaps we'll get to show it again? Or never.
             return;
@@ -825,14 +857,13 @@ public class MapViewActivity extends MapActivity
             // visited any stops -- in most cases that will mean they have
             // just installed.
             if (oldVer == 0 && newVer == 7) {
-                Integer count = UIHelp.intForQuery(this,
-                        ObaContract.Stops.CONTENT_URI,
-                        ObaContract.Stops._COUNT);
+                Integer count = UIHelp
+                        .intForQuery(this, ObaContract.Stops.CONTENT_URI,
+                                ObaContract.Stops._COUNT);
                 if (count != null && count != 0) {
                     showDialog(WHATSNEW_DIALOG);
                 }
-            }
-            else if ((oldVer > 0) && (oldVer < newVer)) {
+            } else if ((oldVer > 0) && (oldVer < newVer)) {
                 showDialog(WHATSNEW_DIALOG);
             }
             // Updates will remove the alarms. This should put them back.
@@ -850,7 +881,8 @@ public class MapViewActivity extends MapActivity
         PackageManager pm = getPackageManager();
         PackageInfo appInfo = null;
         try {
-            appInfo = pm.getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+            appInfo = pm.getPackageInfo(getPackageName(),
+                    PackageManager.GET_META_DATA);
         } catch (NameNotFoundException e) {
             // Do nothing, perhaps we'll get to show it again? Or never.
             return;
@@ -867,15 +899,17 @@ public class MapViewActivity extends MapActivity
                  Build.VERSION.SDK); // TODO: Change to SDK_INT when we switch to 1.6
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
-                    new String[] { getString(R.string.bug_report_dest) });
-        send.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.bug_report_subject));
+                new String[] { getString(R.string.bug_report_dest) });
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                getString(R.string.bug_report_subject));
         send.putExtra(Intent.EXTRA_TEXT, body);
         send.setType("message/rfc822");
         try {
-            startActivity(Intent.createChooser(send, getString(R.string.bug_report_subject)));
-        }
-        catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.bug_report_error, Toast.LENGTH_LONG).show();
+            startActivity(Intent.createChooser(send,
+                    getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.bug_report_error, Toast.LENGTH_LONG)
+                    .show();
         }
     }
 

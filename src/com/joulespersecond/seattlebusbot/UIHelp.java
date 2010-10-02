@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.app.Activity;
@@ -44,7 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 
 final class UIHelp {
-    //private static final String TAG = "UIHelp";
+    // private static final String TAG = "UIHelp";
 
     public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
 
@@ -76,15 +78,29 @@ final class UIHelp {
             return R.string.direction_none;
         }
     }
-    // Shows or hides the view, depending on whether or not the direction is available.
+
+    public static final String getRouteDisplayName(ObaRoute route) {
+        String result = route.getShortName();
+        if (!TextUtils.isEmpty(result)) {
+            return result;
+        }
+        result = route.getLongName();
+        if (!TextUtils.isEmpty(result)) {
+            return result;
+        }
+        // Just so we never return null.
+        return "";
+    }
+
+    // Shows or hides the view, depending on whether or not the direction is
+    // available.
     public static final void setStopDirection(View v, String direction, boolean show) {
         final TextView text = (TextView)v;
         final int directionText = UIHelp.getStopDirectionText(direction);
         if ((directionText != R.string.direction_none) || show) {
             text.setText(directionText);
             text.setVisibility(View.VISIBLE);
-        }
-        else {
+        } else {
             text.setVisibility(View.GONE);
         }
     }
@@ -94,18 +110,18 @@ final class UIHelp {
         ObaContract.Stops.FAVORITE,
         ObaContract.Stops.USER_NAME
     };
+
     public static class StopUserInfoMap {
         private final ContentQueryMap mMap;
 
         public StopUserInfoMap(Context context) {
             ContentResolver cr = context.getContentResolver();
-            Cursor c = cr.query(ObaContract.Stops.CONTENT_URI,
-                        STOP_USER_PROJECTION,
-                        "(" + ObaContract.Stops.USER_NAME + " IS NOT NULL)" +
-                        "OR (" + ObaContract.Stops.FAVORITE + "=1)",
-                        null, null);
+            Cursor c = cr.query(ObaContract.Stops.CONTENT_URI, STOP_USER_PROJECTION, "("
+                    + ObaContract.Stops.USER_NAME + " IS NOT NULL)" + "OR ("
+                    + ObaContract.Stops.FAVORITE + "=1)", null, null);
             mMap = new ContentQueryMap(c, ObaContract.Stops._ID, true, null);
         }
+
         public void close() {
             mMap.close();
         }
@@ -132,8 +148,7 @@ final class UIHelp {
 
                 nameView.setText(TextUtils.isEmpty(userName) ? stopName : userName);
                 icon = favorite ? R.drawable.star_on : 0;
-            }
-            else {
+            } else {
                 nameView.setText(stopName);
             }
             nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
@@ -142,6 +157,7 @@ final class UIHelp {
 
     /**
      * Default implementation for creating a shortcut when in shortcut mode.
+     *
      * @param name The name of the shortcut.
      * @param destIntent The destination intent.
      */
@@ -150,8 +166,7 @@ final class UIHelp {
         Intent intent = new Intent();
         intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
-        Parcelable iconResource = Intent.ShortcutIconResource.fromContext(
-                context,  R.drawable.icon);
+        Parcelable iconResource = Intent.ShortcutIconResource.fromContext(context, R.drawable.icon);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
         return intent;
     }
@@ -160,65 +175,62 @@ final class UIHelp {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         try {
             context.startActivity(intent);
-        }
-        catch (ActivityNotFoundException e) {
-            Toast.makeText(context,
-                    context.getString(R.string.browser_error),
-                    Toast.LENGTH_SHORT).show();
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, context.getString(R.string.browser_error), Toast.LENGTH_SHORT)
+                    .show();
         }
     }
-
 
     public static final int getRouteErrorString(int code) {
         switch (code) {
-        case ObaApi.OBA_INTERNAL_ERROR:
-            return R.string.internal_error;
-        case ObaApi.OBA_NOT_FOUND:
-            return R.string.route_not_found_error;
-        case ObaApi.OBA_OUT_OF_MEMORY:
-            return R.string.out_of_memory_error;
-        default:
-            return R.string.generic_comm_error;
-        }
-    }
-    public static final int getStopErrorString(int code) {
-        switch (code) {
-        case ObaApi.OBA_INTERNAL_ERROR:
-            return R.string.internal_error;
-        case ObaApi.OBA_NOT_FOUND:
-            return R.string.stop_not_found_error;
-        case ObaApi.OBA_OUT_OF_MEMORY:
-            return R.string.out_of_memory_error;
-        default:
-            return R.string.generic_comm_error;
+            case ObaApi.OBA_INTERNAL_ERROR:
+                return R.string.internal_error;
+            case ObaApi.OBA_NOT_FOUND:
+                return R.string.route_not_found_error;
+            case ObaApi.OBA_OUT_OF_MEMORY:
+                return R.string.out_of_memory_error;
+            default:
+                return R.string.generic_comm_error;
         }
     }
 
-    public static final GeoPoint DEFAULT_SEARCH_CENTER =
-        ObaApi.makeGeoPoint(47.612181, -122.22908);
+    public static final int getStopErrorString(int code) {
+        switch (code) {
+            case ObaApi.OBA_INTERNAL_ERROR:
+                return R.string.internal_error;
+            case ObaApi.OBA_NOT_FOUND:
+                return R.string.stop_not_found_error;
+            case ObaApi.OBA_OUT_OF_MEMORY:
+                return R.string.out_of_memory_error;
+            default:
+                return R.string.generic_comm_error;
+        }
+    }
+
+    public static final GeoPoint DEFAULT_SEARCH_CENTER = ObaApi.makeGeoPoint(47.612181, -122.22908);
+
     public static final int DEFAULT_SEARCH_RADIUS = 15000;
 
     // We need to provide the API for a location used to disambiguate
     // stop IDs in case of collision, or to provide multiple results
-    // in the case multiple agencies. But we really don't need it to be very accurate.
+    // in the case multiple agencies. But we really don't need it to be very
+    // accurate.
     public static GeoPoint getLocation(Context cxt) {
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+        for (Iterator<String> i = providers.iterator(); i.hasNext();) {
             Location loc = mgr.getLastKnownLocation(i.next());
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
             // 2. Our last location is older than this location.
-            if (loc != null &&
-                (last == null || loc.getTime() > last.getTime())) {
+            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
                 last = loc;
             }
         }
         if (last != null) {
             return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
-        }
-        else {
+        } else {
             // Make up a fake "Seattle" location.
             // ll=47.620975,-122.347355
             return ObaApi.makeGeoPoint(47.620975, -122.347355);
@@ -234,6 +246,7 @@ final class UIHelp {
 
     /**
      * Returns the first string for the query URI.
+     *
      * @param context
      * @param uri
      * @param column
@@ -247,8 +260,7 @@ final class UIHelp {
                 if (c.moveToFirst()) {
                     return c.getString(0);
                 }
-            }
-            finally {
+            } finally {
                 c.close();
             }
         }
@@ -263,8 +275,7 @@ final class UIHelp {
                 if (c.moveToFirst()) {
                     return c.getInt(0);
                 }
-            }
-            finally {
+            } finally {
                 c.close();
             }
         }

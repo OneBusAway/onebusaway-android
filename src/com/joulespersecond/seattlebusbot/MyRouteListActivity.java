@@ -181,6 +181,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         };
         SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.route_list_item, c, from, to);
+        simpleAdapter.setViewBinder(mViewBinder);
         setListAdapter(simpleAdapter);
     }
 

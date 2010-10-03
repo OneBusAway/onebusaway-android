@@ -58,12 +58,12 @@ public class ScheduleForStopTest extends ObaTestCase {
         assertEquals("1_75403", stop.getId());
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
-        assertEquals("1_31", schedules[0].getRouteId());
+        assertEquals("29_810", schedules[0].getRouteId());
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
-        assertEquals("Central Magnolia", dirs[0].getTripHeadsign());
+        assertEquals("McCollum Park Park &Ride", dirs[0].getTripHeadsign());
         final ObaRouteSchedule.Time[] times = dirs[0].getStopTimes();
         assertTrue(times.length > 0);
-        assertEquals("1_15415380", times[0].getTripId());
+        assertEquals("29_10JUN-Weekday-810s-0", times[0].getTripId());
     }
 }

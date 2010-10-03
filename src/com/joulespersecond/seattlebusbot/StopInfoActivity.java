@@ -478,7 +478,7 @@ public class StopInfoActivity extends ListActivity {
             final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
 
             route.setText(arrivalInfo.getShortName());
-            destination.setText(arrivalInfo.getHeadsign());
+            destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
             status.setText(stopInfo.getStatusText());
 
             long eta = stopInfo.getEta();
@@ -661,13 +661,14 @@ public class StopInfoActivity extends ListActivity {
 
     private void setHeader(Bundle bundle) {
         if (bundle != null) {
-            setHeader(bundle.getString(STOP_NAME), bundle.getString(STOP_DIRECTION));
+            setHeader(MyTextUtils.toTitleCase(bundle.getString(STOP_NAME)),
+                    bundle.getString(STOP_DIRECTION));
         }
     }
 
     void setHeader(ObaStop stop, boolean addToDb) {
         String code = stop.getStopCode();
-        String name = stop.getName();
+        String name = MyTextUtils.toTitleCase(stop.getName());
         String direction = stop.getDirection();
         double lat = stop.getLatitude();
         double lon = stop.getLongitude();

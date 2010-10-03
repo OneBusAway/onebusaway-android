@@ -146,10 +146,11 @@ final class UIHelp {
                 final boolean favorite = (i != null) && (i == 1);
                 final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
 
-                nameView.setText(TextUtils.isEmpty(userName) ? stopName : userName);
+                nameView.setText(TextUtils.isEmpty(userName) ?
+                        MyTextUtils.toTitleCase(stopName) : userName);
                 icon = favorite ? R.drawable.star_on : 0;
             } else {
-                nameView.setText(stopName);
+                nameView.setText(MyTextUtils.toTitleCase(stopName));
             }
             nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
         }

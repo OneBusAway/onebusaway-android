@@ -243,11 +243,8 @@ public class RouteInfoActivity extends ExpandableListActivity {
     //
     private final static class StopsForRouteInfo {
         private final int mResultCode;
-
         private final ArrayList<HashMap<String, String>> mStopGroups;
-
         private final ArrayList<ArrayList<HashMap<String, String>>> mStops;
-
         private final HashMap<String, ObaStop> mStopMap;
 
         public StopsForRouteInfo(Context cxt, ObaStopsForRouteResponse response) {
@@ -306,7 +303,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
                         final HashMap<String, String> groupMap = new HashMap<String, String>(1);
                         final ObaStopGroup group = groups[i];
                         // We can initialize the stop grouping values.
-                        groupMap.put("name", group.getName());
+                        groupMap.put("name", MyTextUtils.toTitleCase(group.getName()));
                         // Add this to the groupings map
 
                         // Create the sub list (the list of stops in the group)
@@ -321,7 +318,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
                             final ObaStop stop = stopMap.get(stopId);
                             HashMap<String, String> groupStopMap = new HashMap<String, String>(2);
                             if (stop != null) {
-                                groupStopMap.put("name", stop.getName());
+                                groupStopMap.put("name", MyTextUtils.toTitleCase(stop.getName()));
                                 String dir = cxt.getString(UIHelp.getStopDirectionText(stop
                                         .getDirection()));
                                 groupStopMap.put("direction", dir);
@@ -429,22 +426,23 @@ public class RouteInfoActivity extends ExpandableListActivity {
         mRouteInfo = routeInfo;
 
         if (routeInfo.getCode() == ObaApi.OBA_OK) {
-            TextView text1 = (TextView)findViewById(R.id.short_name);
-            TextView text2 = (TextView)findViewById(R.id.long_name);
+            TextView shortNameText = (TextView)findViewById(R.id.short_name);
+            TextView longNameText = (TextView)findViewById(R.id.long_name);
             TextView agencyText = (TextView)findViewById(R.id.agency);
             String url = mRouteInfo.getUrl();
 
-            final String shortName = routeInfo.getShortName();
-            final String longName = routeInfo.getLongName();
+            String shortName = routeInfo.getShortName();
+            String longName = routeInfo.getLongName();
 
-            if (!TextUtils.isEmpty(shortName)) {
-                text1.setText(shortName);
-                text2.setText(longName);
-            } else {
-                text1.setText(longName);
-                text2.setText("");
+            if (TextUtils.isEmpty(shortName)) {
+                shortName = longName;
+            }
+            if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+                longName = routeInfo.getDescription();
             }
 
+            shortNameText.setText(shortName);
+            longNameText.setText(longName);
             agencyText.setText(mRouteInfo.getAgency().getName());
 
             if (addToDb) {

@@ -140,33 +140,6 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         return c.getString(COL_URL);
     }
 
-    private static final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
-
-        @Override
-        public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-            if (columnIndex == 1) {
-                String shortName = cursor.getString(1);
-                if (!TextUtils.isEmpty(shortName)) {
-                    ((TextView)view).setText(shortName);
-                } else {
-                    ((TextView)view).setText(cursor.getString(2));
-                }
-                return true;
-            } else if (columnIndex == 2) {
-                // Only set the long name if we didn't set it in the "shortName"
-                // (because the shortName didn't exist)
-                String shortName = cursor.getString(1);
-                if (!TextUtils.isEmpty(shortName)) {
-                    ((TextView)view).setText(cursor.getString(2));
-                } else {
-                    ((TextView)view).setText("");
-                }
-                return true;
-            }
-            return false;
-        }
-    };
-
     @Override
     protected void initList(Cursor c) {
         startManagingCursor(c);
@@ -181,7 +154,6 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
         };
         SimpleCursorAdapter simpleAdapter =
             new SimpleCursorAdapter(this, R.layout.route_list_item, c, from, to);
-        simpleAdapter.setViewBinder(mViewBinder);
         setListAdapter(simpleAdapter);
     }
 

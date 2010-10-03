@@ -119,20 +119,22 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
         @Override
         protected void setData(View view, int position) {
-            TextView text1 = (TextView)view.findViewById(R.id.short_name);
-            TextView text2 = (TextView)view.findViewById(R.id.long_name);
+            TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
+            TextView longNameText = (TextView)view.findViewById(R.id.long_name);
 
             ObaRoute route = mArray.get(position);
-            final String shortName = route.getShortName();
-            final String longName = route.getLongName();
+            String shortName = route.getShortName();
+            String longName = route.getLongName();
 
-            if (!TextUtils.isEmpty(shortName)) {
-                text1.setText(shortName);
-                text2.setText(longName);
-            } else {
-                text1.setText(longName);
-                text2.setText("");
+            if (TextUtils.isEmpty(shortName)) {
+                shortName = longName;
             }
+            if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+                longName = route.getDescription();
+            }
+
+            shortNameText.setText(shortName);
+            longNameText.setText(longName);
         }
     }
 

@@ -51,7 +51,6 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -67,7 +66,7 @@ import java.util.List;
 
 public class MapViewActivity extends MapActivity implements
         MapWatcher.Listener, StopsController.Listener {
-    private static final String TAG = "MapViewActivity";
+    //private static final String TAG = "MapViewActivity";
 
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
@@ -328,7 +327,7 @@ public class MapViewActivity extends MapActivity implements
 
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
-        Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
+        //Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
         // Clear the overlays to save memory and re-establish them when we are
         // resumed.
         List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -378,7 +377,7 @@ public class MapViewActivity extends MapActivity implements
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        Log.d(TAG, "******** LOW MEMORY ******** ");
+        //Log.d(TAG, "******** LOW MEMORY ******** ");
         ObaApi.clearCache();
     }
 
@@ -394,24 +393,24 @@ public class MapViewActivity extends MapActivity implements
     //
     @Override
     public void onMapZoomChanging() {
-        Log.d(TAG, "Map zoom changing");
+        //Log.d(TAG, "Map zoom changing");
     }
 
     @Override
     public void onMapZoomChanged() {
-        Log.d(TAG, "Map zoom changed");
+        //Log.d(TAG, "Map zoom changed");
         getStops();
     }
 
     @Override
     public void onMapCenterChanging() {
-        Log.d(TAG, "Map center changing");
+        //Log.d(TAG, "Map center changing");
     }
 
     @Override
     public void onMapCenterChanged() {
         mMapCenter = mMapView.getMapCenter();
-        Log.d(TAG, "Map center changed: " + mMapCenter);
+        //Log.d(TAG, "Map center changed: " + mMapCenter);
         getStops();
     }
 

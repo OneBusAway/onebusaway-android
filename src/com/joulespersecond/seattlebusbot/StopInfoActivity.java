@@ -284,7 +284,7 @@ public class StopInfoActivity extends ListActivity {
         long newPeriod = Math.min(RefreshPeriod, (mResponseTime + RefreshPeriod)
                 - System.currentTimeMillis());
         // Wait at least one second at least, and the full minute at most.
-        Log.d(TAG, "Refresh period:" + newPeriod);
+        //Log.d(TAG, "Refresh period:" + newPeriod);
         if (newPeriod <= 0) {
             getStopInfo(true);
         } else {

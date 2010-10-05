@@ -221,7 +221,7 @@ public class RouteInfoActivity extends ExpandableListActivity {
 
     @Override
     public void onLowMemory() {
-        Log.d(TAG, "******** LOW MEMORY ******** ");
+        //Log.d(TAG, "******** LOW MEMORY ******** ");
         super.onLowMemory();
         mRouteInfo = null;
         mStopsForRoute = null;

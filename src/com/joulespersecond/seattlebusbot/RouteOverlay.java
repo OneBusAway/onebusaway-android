@@ -24,13 +24,12 @@ import com.joulespersecond.oba.elements.ObaShape;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RouteOverlay extends Overlay {
-    private static final String TAG = "RouteOverlay";
+    //private static final String TAG = "RouteOverlay";
 
     public static final class Line {
         private final List<GeoPoint> mPoints;
@@ -121,7 +120,7 @@ public class RouteOverlay extends Overlay {
             projection.toPixels(geoPoints.get(j), pt);
             points[j*2]   = pt.x;
             points[j*2+1] = pt.y;
-            Log.d(TAG, "Points: " + points);
+            //Log.d(TAG, "Points: " + points);
             assert((j*2+2) == points.length);
 
             canvas.drawLines(points, line.getPaint());

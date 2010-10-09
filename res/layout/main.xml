@@ -24,7 +24,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:clickable="true"
-        android:apiKey="0FyPlkxcKszF8kGff6452hjOza5Y22wpBnGYuIg"
+        android:apiKey="0FyPlkxcKszF8iaMAcqUt6_Jrv7g_d8GAyfszYA"
         android:focusableInTouchMode="true"
     />
 

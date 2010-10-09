@@ -106,7 +106,7 @@ public class RequestBase {
             return createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
         }
         catch (IOException e) {
-            return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());
+            return createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
         }
         catch (JsonParseException e) {
             return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());

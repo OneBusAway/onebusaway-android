@@ -22,12 +22,12 @@
         style="@style/HeaderItem"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
       <LinearLayout
           android:id="@+id/name_container"
           android:orientation="horizontal"
-          android:gravity="center_horizontal"
-          android:layout_width="fill_parent"
+          android:layout_width="wrap_content"
           android:layout_height="wrap_content">
            <ImageButton
              android:id="@+id/stop_favorite"
@@ -41,7 +41,6 @@
               style="@style/HeaderText"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:layout_gravity="center_vertical"
               android:focusable="true"
               android:background="@drawable/focus_title_bg"/>
 
@@ -58,7 +57,7 @@
               guaranteed to work across any release -->
           <EditText
               android:id="@+id/edit_name"
-              style="@style/HeaderTextNoCenter"
+              style="@style/HeaderText"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
               android:inputType="text"
@@ -94,13 +93,13 @@
         <TextView
             android:id="@+id/direction"
             style="@style/Header2Text"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         </TextView>
         <LinearLayout
             android:id="@+id/filter_group"
             style="@style/Header2Text"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone">
           <TextView

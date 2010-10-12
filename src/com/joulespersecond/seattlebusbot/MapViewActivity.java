@@ -52,6 +52,7 @@ import android.provider.Settings;
 import android.text.Spannable;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -97,10 +98,13 @@ public class MapViewActivity extends MapActivity implements
     private StopsController mStopsController;
     private MapWatcher mMapWatcher;
     private Object mStopWait;
+    // We only display the out of range dialog once
+    private boolean mWarnOutOfRange = true;
 
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
     private static final int NOLOCATION_DIALOG = 3;
+    private static final int OUTOFRANGE_DIALOG = 4;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -371,6 +375,9 @@ public class MapViewActivity extends MapActivity implements
 
         case NOLOCATION_DIALOG:
             return createNoLocationDialog();
+
+        case OUTOFRANGE_DIALOG:
+            return createOutOfRangeDialog();
         }
         return null;
     }
@@ -672,8 +679,13 @@ public class MapViewActivity extends MapActivity implements
             stops = ((ObaStopsForRouteResponse)response).getStops();
         } else {
             assert(response instanceof ObaStopsForLocationResponse);
-            stops = Arrays.asList(((ObaStopsForLocationResponse)response)
-                    .getStops());
+            ObaStopsForLocationResponse stopsResponse = (ObaStopsForLocationResponse)response;
+            if (stopsResponse.getOutOfRange() && mWarnOutOfRange) {
+                showDialog(OUTOFRANGE_DIALOG);
+                return;
+            }
+
+            stops = Arrays.asList(stopsResponse.getStops());
         }
 
         List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -825,6 +837,36 @@ public class MapViewActivity extends MapActivity implements
                             getStops();
                         }
                         dismissDialog(NOLOCATION_DIALOG);
+                    }
+                });
+        return builder.create();
+    }
+
+    // This is in lieu of a more complicated map of agencies screen
+    // like on the iPhone app. Eventually that'd be cool, but I don't really
+    // have time right now.
+
+    // This array must be kept in sync with R.array.agency_locations!
+    private static final GeoPoint[] AGENCY_LOCATIONS = new GeoPoint[] {
+        new GeoPoint(47605990, -122331780), // Seattle, WA
+        new GeoPoint(47252090, -122443740), // Tacoma, WA
+        new GeoPoint(47979090, -122201530), // Everett, WA
+    };
+
+    private Dialog createOutOfRangeDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title, null));
+
+        builder.setItems(R.array.agency_locations,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which >= 0 && which < AGENCY_LOCATIONS.length) {
+                            setMyLocation(AGENCY_LOCATIONS[which]);
+                        }
+                        dismissDialog(OUTOFRANGE_DIALOG);
+                        mWarnOutOfRange = false;
                     }
                 });
         return builder.create();

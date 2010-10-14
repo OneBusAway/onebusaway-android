@@ -54,6 +54,10 @@
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
     <string name="main_waiting_for_location">Trying to get a fix on your location...</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
+    <string name="main_outofrange_title">Out of range</string>
+    <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
+    <string name="main_outofrange_yes">Take me there!</string>
+    <string name="main_outofrange_no">Stay here</string>
 
     <!--  Stop Info -->
     <string name="stop_info_title">OneBusAway</string>

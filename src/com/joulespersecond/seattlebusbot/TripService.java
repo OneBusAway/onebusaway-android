@@ -68,9 +68,9 @@ public class TripService extends Service {
     public static final String ACTION_CANCEL_POLL =
         "com.joulespersecond.seattlebusbot.action.CANCEL_POLL";
 
-    private static final long ONE_MINUTE = 60*1000;
-    private static final long ONE_HOUR = 60*ONE_MINUTE;
-    private static final long LOOKAHEAD_DURATION_MS = 5*ONE_MINUTE;
+    private static final long ONE_MINUTE = 60 * 1000;
+    private static final long ONE_HOUR = 60 * ONE_MINUTE;
+    private static final long LOOKAHEAD_DURATION_MS = 5 * ONE_MINUTE;
     // This is the amount in the past which will not consider reminders.
     private static final long SCHEDULE_BUFFER_TIME = ONE_HOUR;
 
@@ -95,13 +95,12 @@ public class TripService extends Service {
         context.startService(tripService);
     }
 
-
     // We don't want to stop the service when any particular call to onStart
     // completes: we want to stop the service when *all* tasks that have
     // been started by onStart complete.
     // So we store the startIds here as "task IDs" and each task calls
     // stopTask(), and when there are no more tasks, we call stopSelf().
-    private HashMap<String,TaskBase> mActiveTasks = new HashMap<String,TaskBase>();
+    private HashMap<String, TaskBase> mActiveTasks = new HashMap<String, TaskBase>();
 
     @Override
     public void onStart(Intent intent, int startId) {
@@ -109,26 +108,23 @@ public class TripService extends Service {
         TaskBase newTask = null;
         if (ACTION_SCHEDULE_ALL.equals(action)) {
             newTask = new ScheduleAllTask();
-        }
-        else if (ACTION_SCHEDULE_TRIP.equals(action)) {
+        } else if (ACTION_SCHEDULE_TRIP.equals(action)) {
             // Decode the content URI.
             final Uri contentUri = intent.getData();
             if (contentUri != null) {
                 newTask = new Schedule1Task(contentUri);
             }
-        }
-        else if (ACTION_POLL_TRIP.equals(action)) {
+        } else if (ACTION_POLL_TRIP.equals(action)) {
             // Decode the content URI.
             final Uri contentUri = intent.getData();
             if (contentUri != null) {
                 newTask = new PollTask(contentUri);
             }
-        }
-        else if (ACTION_CANCEL_POLL.equals(action)) {
+        } else if (ACTION_CANCEL_POLL.equals(action)) {
             // Decode the content URI.
             final Uri contentUri = intent.getData();
             if (contentUri != null) {
-                final String taskId = PollTask.PREFIX+contentUri.toString();
+                final String taskId = PollTask.PREFIX + contentUri.toString();
                 synchronized (this) {
                     TaskBase base = mActiveTasks.get(taskId);
                     if (base instanceof PollTask) {
@@ -146,13 +142,11 @@ public class TripService extends Service {
                 if (!mActiveTasks.containsKey(taskId)) {
                     Thread thr = new Thread(null, newTask, TAG);
                     thr.start();
-                }
-                else {
+                } else {
                     Log.w(TAG, "Task already started: " + taskId);
                 }
             }
-        }
-        else {
+        } else {
             Log.e(TAG, "No new task -- something went wrong: " + action);
             synchronized (this) {
                 if (mActiveTasks.isEmpty()) {
@@ -169,21 +163,24 @@ public class TripService extends Service {
     abstract class TaskBase implements Runnable {
         private final String mTaskId;
         private PowerManager.WakeLock mWakeLock;
+
         // Keep the CPU on while we work on these tasks.
 
         TaskBase(String taskId) {
             mTaskId = taskId;
         }
+
         protected void startTask() {
-            synchronized(TripService.this) {
+            synchronized (TripService.this) {
                 PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
                 mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
                 mWakeLock.acquire();
                 mActiveTasks.put(mTaskId, this);
             }
         }
+
         protected void endTask() {
-            synchronized(TripService.this) {
+            synchronized (TripService.this) {
                 mActiveTasks.remove(mTaskId);
                 if (mActiveTasks.isEmpty()) {
                     Log.d(TAG, "Stopping service");
@@ -192,19 +189,22 @@ public class TripService extends Service {
                 mWakeLock.release();
             }
         }
+
         public void run() {
             Log.d(TAG, "Starting task: " + mTaskId);
             startTask();
 
             runTask();
 
-            // Done with our work...  stop the service!
+            // Done with our work... stop the service!
             Log.d(TAG, "Exiting task: " + mTaskId);
             endTask();
         }
+
         protected void runTask() {
             // Meant to be overridden.
         }
+
         public String getTaskId() {
             return mTaskId;
         }
@@ -213,7 +213,9 @@ public class TripService extends Service {
         public String toString() {
             return String.format("{Task id=%s}", mTaskId);
         }
-        // Everything that identifies the task *MUST* be specified in the TaskID.
+
+        // Everything that identifies the task *MUST* be specified in the
+        // TaskID.
         @Override
         public final boolean equals(Object obj) {
             if (obj == this) {
@@ -225,6 +227,7 @@ public class TripService extends Service {
             TaskBase task = (TaskBase)obj;
             return mTaskId.equals(task.mTaskId);
         }
+
         @Override
         public final int hashCode() {
             int result = 33;
@@ -238,9 +241,10 @@ public class TripService extends Service {
         private final Uri mUri;
 
         Schedule1Task(Uri uri) {
-            super(PREFIX+uri.toString());
+            super(PREFIX + uri.toString());
             mUri = uri;
         }
+
         @Override
         protected void runTask() {
             ContentResolver cr = getContentResolver();
@@ -253,15 +257,16 @@ public class TripService extends Service {
 
     final class ScheduleAllTask extends TaskBase {
         public static final String PREFIX = "ScheduleAll:";
+
         ScheduleAllTask() {
             super(PREFIX);
         }
+
         @Override
         protected void runTask() {
             ContentResolver cr = getContentResolver();
-            Cursor c = cr.query(
-                    ObaContract.Trips.CONTENT_URI,
-                    PROJECTION, null, null, null);
+            Cursor c = cr.query(ObaContract.Trips.CONTENT_URI, PROJECTION,
+                    null, null, null);
 
             // Schedule will close the cursor
             Schedule(TripService.this, c);
@@ -269,19 +274,18 @@ public class TripService extends Service {
     }
 
     final String getNotifyText(Cursor c, long timeDiff) {
-        final String routeName = getRouteShortName(this, c.getString(COL_ROUTE_ID));
+        final String routeName = getRouteShortName(this, c
+                .getString(COL_ROUTE_ID));
 
         if (timeDiff <= 0) {
             return getString(R.string.trip_stat_gone, routeName);
-        }
-        else if (timeDiff < ONE_MINUTE) {
+        } else if (timeDiff < ONE_MINUTE) {
             return getString(R.string.trip_stat_lessthanone, routeName);
-        }
-        else if (timeDiff < ONE_MINUTE*2) {
+        } else if (timeDiff < ONE_MINUTE * 2) {
             return getString(R.string.trip_stat_one, routeName);
-        }
-        else {
-            return getString(R.string.trip_stat, routeName, (int)(timeDiff/ONE_MINUTE));
+        } else {
+            return getString(R.string.trip_stat, routeName,
+                    (int)(timeDiff / ONE_MINUTE));
         }
     }
 
@@ -297,7 +301,7 @@ public class TripService extends Service {
         private int mState = UNINIT;
 
         PollTask(Uri uri) {
-            super(PREFIX+uri.toString());
+            super(PREFIX + uri.toString());
             mUri = uri;
             List<String> segments = uri.getPathSegments();
             mTripId = segments.get(1);
@@ -325,10 +329,11 @@ public class TripService extends Service {
 
             if (mNotification == null) {
                 Log.d(TAG, "Creating notification for trip: " + getTaskId());
-                mNotification = new Notification(R.drawable.stat_trip, null, System.currentTimeMillis());
+                mNotification = new Notification(R.drawable.stat_trip, null,
+                        System.currentTimeMillis());
                 mNotification.defaults = Notification.DEFAULT_SOUND;
-                mNotification.flags = Notification.FLAG_ONLY_ALERT_ONCE|
-                                    Notification.FLAG_SHOW_LIGHTS;
+                mNotification.flags = Notification.FLAG_ONLY_ALERT_ONCE
+                        | Notification.FLAG_SHOW_LIGHTS;
                 mNotification.ledOnMS = 1000;
                 mNotification.ledOffMS = 1000;
                 mNotification.ledARGB = 0xFF00FF00;
@@ -339,35 +344,36 @@ public class TripService extends Service {
                         1000, // off
                         1000, // on
                         1000, // off
-                        };
+                };
 
                 Intent deleteIntent = new Intent(ctx, TripService.class);
                 deleteIntent.setAction(ACTION_CANCEL_POLL);
                 deleteIntent.setData(mUri);
-                mNotification.deleteIntent = PendingIntent.getService(ctx,
-                        0, deleteIntent, PendingIntent.FLAG_ONE_SHOT);
+                mNotification.deleteIntent = PendingIntent.getService(ctx, 0,
+                        deleteIntent, PendingIntent.FLAG_ONE_SHOT);
 
-                mNotificationIntent = PendingIntent.getActivity(ctx,
-                        0, StopInfoActivity.makeIntent(ctx, mStopId),
+                mNotificationIntent = PendingIntent.getActivity(ctx, 0,
+                        StopInfoActivity.makeIntent(ctx, mStopId),
                         PendingIntent.FLAG_ONE_SHOT);
             }
 
             final String title = getString(R.string.app_name);
 
-            mNotification.setLatestEventInfo(ctx, title,
-                    getNotifyText(c, timeDiff), mNotificationIntent);
-            NotificationManager nm =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            mNotification.setLatestEventInfo(ctx, title, getNotifyText(c,
+                    timeDiff), mNotificationIntent);
+            NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
             nm.notify(NOTIFY_ID, mNotification);
         }
 
         // This returns 'true' if we need to break out of the poll loop.
         final boolean checkArrivals(ObaArrivalInfoResponse response,
-                Cursor c, long reminderMS, long now) {
+                Cursor c,
+                long reminderMS,
+                long now) {
             final String tripId = mTripId;
             final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
             final int length = arrivals.length;
-            for (int i=0; i < length; ++i) {
+            for (int i = 0; i < length; ++i) {
                 ObaArrivalInfo info = arrivals[i];
                 if (tripId.equals(info.getTripId())) {
                     if (mState == NOT_FOUND) {
@@ -384,7 +390,7 @@ public class TripService extends Service {
 
                     // This is the difference in time between now
                     // and when when the bus leaves.
-                    final long timeDiff = depart-now;
+                    final long timeDiff = depart - now;
                     if (timeDiff <= 0) {
                         // Bus has left. Do one last notification and bail.
                         // Note: only notify if we have already notified.
@@ -393,8 +399,13 @@ public class TripService extends Service {
                         }
                         mState = DONE;
                         return true;
-                    }
-                    else if (timeDiff <= reminderMS) {
+                    } else if (timeDiff <= reminderMS) {
+                        // Just catch this case where we have already cancelled
+                        // the notification.
+                        if (mState == DONE) {
+                            return true;
+                        }
+
                         // Within the reminder time. Do the first notification
                         // or continue to notify, but remain in the loop.
                         doNotification(timeDiff, c);
@@ -408,10 +419,11 @@ public class TripService extends Service {
         final void doPoll(Cursor c) {
             final String stopId = mStopId;
 
-            // Add one so we notify at least that many minutes before the reminder time --
+            // Add one so we notify at least that many minutes before the
+            // reminder time --
             // it's better to be half a minute early than half a minute late.
-            final long reminderMS = (1+c.getInt(COL_REMINDER))*ONE_MINUTE;
-            final long departMS = c.getInt(COL_DEPARTURE)*ONE_MINUTE;
+            final long reminderMS = (1 + c.getInt(COL_REMINDER)) * ONE_MINUTE;
+            final long departMS = c.getInt(COL_DEPARTURE) * ONE_MINUTE;
 
             // This is OK, since we don't expect anything other than this thread
             // to be accessing this before we have notified someone.
@@ -419,8 +431,8 @@ public class TripService extends Service {
 
             while (mState != DONE) {
                 Log.d(TAG, "Get arrivals/departures: " + getTaskId());
-                ObaArrivalInfoResponse response =
-                        ObaArrivalInfoRequest.newRequest(TripService.this, stopId).call();
+                ObaArrivalInfoResponse response = ObaArrivalInfoRequest
+                        .newRequest(TripService.this, stopId).call();
                 synchronized (this) {
                     // First check to see if we were marked as DONE while
                     // getArrivalsDeparturesForStop was running
@@ -436,7 +448,8 @@ public class TripService extends Service {
                     }
                     // If we haven't found the trip, then give up after
                     // 10 minutes past the scheduled departure time.
-                    if (mState == NOT_FOUND && ((departMS+LOOKAHEAD_DURATION_MS) > now)) {
+                    if (mState == NOT_FOUND
+                            && ((departMS + LOOKAHEAD_DURATION_MS) > now)) {
                         // Give up.
                         Log.d(TAG, "Giving up: " + getTaskId());
                         mState = DONE;
@@ -444,7 +457,7 @@ public class TripService extends Service {
                     }
                 }
                 try {
-                    Thread.sleep(30*1000);
+                    Thread.sleep(30 * 1000);
                 } catch (InterruptedException e) {
                     // Okay...
                 }
@@ -459,18 +472,19 @@ public class TripService extends Service {
                 // This was a one-shot timer. Delete it.
                 ContentResolver cr = getContentResolver();
                 cr.delete(mUri, null, null);
-            }
-            else {
+            } else {
                 TripService ctx = TripService.this;
-                Intent myIntent =
-                    new Intent(ACTION_SCHEDULE_TRIP, mUri, ctx, AlarmReceiver.class);
+                Intent myIntent = new Intent(ACTION_SCHEDULE_TRIP, mUri, ctx,
+                        AlarmReceiver.class);
 
-                PendingIntent alarmIntent =
-                    PendingIntent.getBroadcast(ctx, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent alarmIntent = PendingIntent.getBroadcast(ctx, 0,
+                        myIntent, PendingIntent.FLAG_ONE_SHOT);
 
-                AlarmManager alarm = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+                AlarmManager alarm = (AlarmManager)ctx
+                        .getSystemService(Context.ALARM_SERVICE);
 
-                long triggerTime = System.currentTimeMillis() + SCHEDULE_BUFFER_TIME + 2*ONE_MINUTE;
+                long triggerTime = System.currentTimeMillis()
+                        + SCHEDULE_BUFFER_TIME + 2 * ONE_MINUTE;
                 alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
             }
         }
@@ -483,8 +497,7 @@ public class TripService extends Service {
             if (c != null && c.moveToFirst()) {
                 doPoll(c);
                 scheduleNext(c);
-            }
-            else {
+            } else {
                 Log.e(TAG, "No such trip");
             }
             if (c != null) {
@@ -503,8 +516,7 @@ public class TripService extends Service {
                 while (c.moveToNext()) {
                     Schedule1(context, c, tNow, now);
                 }
-            }
-            finally {
+            } finally {
                 c.close();
             }
         }
@@ -520,7 +532,7 @@ public class TripService extends Service {
     // we expect the bus has left by then.
     static void Schedule1(Context context, Cursor c, Time tNow, long now) {
         final int departureMins = c.getInt(COL_DEPARTURE);
-        final long reminderMS = c.getInt(COL_REMINDER)*ONE_MINUTE;
+        final long reminderMS = c.getInt(COL_REMINDER) * ONE_MINUTE;
         if (reminderMS == 0) {
             return;
         }
@@ -528,22 +540,23 @@ public class TripService extends Service {
         long remindTime = 0;
         long triggerTime = 0;
         if (days == 0) {
-            remindTime = ObaContract.Trips.convertDBToTime(departureMins) - reminderMS;
-        }
-        else {
+            remindTime = ObaContract.Trips.convertDBToTime(departureMins)
+                    - reminderMS;
+        } else {
             final int currentWeekDay = tNow.weekDay;
-            for (int i=0; i < 7; ++i) {
-                final int day = (currentWeekDay+i)%7;
+            for (int i = 0; i < 7; ++i) {
+                final int day = (currentWeekDay + i) % 7;
                 final int bit = ObaContract.Trips.getDayBit(day);
                 if ((days & bit) == bit) {
                     Time tmp = new Time();
-                    tmp.set(0, departureMins, 0, tNow.monthDay+i, tNow.month, tNow.year);
+                    tmp.set(0, departureMins, 0, tNow.monthDay + i, tNow.month,
+                            tNow.year);
                     tmp.normalize(false);
                     remindTime = tmp.toMillis(false) - reminderMS;
                     triggerTime = remindTime - LOOKAHEAD_DURATION_MS;
                     // Ignore anything that has a trigger time more than
                     // one hour in the past.
-                    if ((now-triggerTime) < ONE_HOUR) {
+                    if ((now - triggerTime) < ONE_HOUR) {
                         break;
                     }
                 }
@@ -559,13 +572,16 @@ public class TripService extends Service {
         final Uri uri = ObaContract.Trips.buildUri(tripId, stopId);
         Time tmp = new Time();
         tmp.set(triggerTime);
-        Log.d(TAG, "Scheduling poll: " + uri.toString() + "  " + tmp.format2445());
+        Log.d(TAG, "Scheduling poll: " + uri.toString() + "  "
+                + tmp.format2445());
 
-        Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context, AlarmReceiver.class);
-        PendingIntent alarmIntent =
-            PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_ONE_SHOT);
+        Intent myIntent = new Intent(ACTION_POLL_TRIP, uri, context,
+                AlarmReceiver.class);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0,
+                myIntent, PendingIntent.FLAG_ONE_SHOT);
 
-        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        AlarmManager alarm = (AlarmManager)context
+                .getSystemService(Context.ALARM_SERVICE);
         alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
     }
 
@@ -576,7 +592,9 @@ public class TripService extends Service {
 
     private final IBinder mBinder = new Binder() {
         @Override
-        protected boolean onTransact(int code, Parcel data, Parcel reply,
+        protected boolean onTransact(int code,
+                Parcel data,
+                Parcel reply,
                 int flags) throws RemoteException {
             return super.onTransact(code, data, reply, flags);
         }
@@ -586,8 +604,8 @@ public class TripService extends Service {
     // Trip helpers
     //
     public static String getRouteShortName(Context context, String id) {
-        return UIHelp.stringForQuery(context,
-                Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, id),
+        return UIHelp.stringForQuery(context, Uri.withAppendedPath(
+                ObaContract.Routes.CONTENT_URI, id),
                 ObaContract.Routes.SHORTNAME);
     }
 }

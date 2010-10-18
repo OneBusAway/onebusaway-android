@@ -25,7 +25,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.format.Time;
-import android.util.Log;
 
 /**
  * This is the runnable that implements scheduling of trips.
@@ -35,7 +34,7 @@ import android.util.Log;
  *
  */
 public final class SchedulerTask implements Runnable {
-    private static final String TAG = "SchedulerTask";
+    //private static final String TAG = "SchedulerTask";
 
     private static final long ONE_MINUTE = 60 * 1000;
     private static final long LOOKAHEAD_DURATION_MS = 5 * ONE_MINUTE;
@@ -140,12 +139,12 @@ public final class SchedulerTask implements Runnable {
             String tripId,
             String stopId,
             long triggerTime) {
-
+        /*
         Time tmp = new Time();
         tmp.set(triggerTime);
         Log.d(TAG, "Scheduling poll: " + uri.toString() + "  "
                 + tmp.format2445());
-
+        */
         // Check to see if this alert has already been cancelled.
         Uri alertUri = null;
 

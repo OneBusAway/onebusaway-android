@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot.test;
+package com.joulespersecond.oba.provider.test;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;

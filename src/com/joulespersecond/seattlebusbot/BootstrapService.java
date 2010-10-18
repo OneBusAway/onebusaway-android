@@ -27,9 +27,6 @@ public class BootstrapService extends BroadcastReceiver {
     //
     @Override
     public void onReceive(Context context, Intent intent) {
-        // Run the trip service.
-        final Intent tripService = new Intent(context, TripService.class);
-        tripService.setAction(TripService.ACTION_SCHEDULE_ALL);
-        context.startService(tripService);
+        TripService.scheduleAll(context);
     }
 }

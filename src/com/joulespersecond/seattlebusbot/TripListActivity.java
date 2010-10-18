@@ -31,7 +31,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.joulespersecond.oba.provider.ObaContract;
 
 public class TripListActivity extends ListActivity {
-    //private static final String TAG = "TripListActivity";
+    // private static final String TAG = "TripListActivity";
 
     private static final String[] PROJECTION = {
         ObaContract.Trips._ID,
@@ -43,7 +43,7 @@ public class TripListActivity extends ListActivity {
     };
     private static final int COL_ID = 0;
     private static final int COL_NAME = 1;
-    //private static final int COL_HEADSIGN = 2;
+    private static final int COL_HEADSIGN = 2;
     private static final int COL_DEPARTURE = 3;
     private static final int COL_ROUTE_ID = 4;
     private static final int COL_STOP_ID = 5;
@@ -60,8 +60,8 @@ public class TripListActivity extends ListActivity {
 
     private void fillTrips() {
         ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI,
-                PROJECTION, null, null, ObaContract.Trips.NAME + " asc");
+        Cursor c = cr.query(ObaContract.Trips.CONTENT_URI, PROJECTION, null,
+                null, ObaContract.Trips.NAME + " asc");
         startManagingCursor(c);
 
         final String[] from = {
@@ -80,7 +80,9 @@ public class TripListActivity extends ListActivity {
             new SimpleCursorAdapter(this, R.layout.trip_list_listitem, c, from, to);
 
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
-            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+            public boolean setViewValue(View view,
+                    Cursor cursor,
+                    int columnIndex) {
                 if (columnIndex == COL_NAME) {
                     TextView text = (TextView)view;
                     String name = cursor.getString(columnIndex);
@@ -89,25 +91,30 @@ public class TripListActivity extends ListActivity {
                     }
                     text.setText(name);
                     return true;
-                }
-                else if (columnIndex == COL_DEPARTURE) {
+                } else if (columnIndex == COL_HEADSIGN) {
+                    String headSign = cursor.getString(columnIndex);
+                    TextView text = (TextView)view;
+                    text.setText(MyTextUtils.toTitleCase(headSign));
+                    return true;
+                } else if (columnIndex == COL_DEPARTURE) {
                     TextView text = (TextView)view;
                     text.setText(TripInfoActivity.getDepartureTime(
                             TripListActivity.this,
-                            ObaContract.Trips.convertDBToTime(cursor.getInt(columnIndex))));
+                            ObaContract.Trips.convertDBToTime(cursor
+                                    .getInt(columnIndex))));
                     return true;
-                }
-                else if (columnIndex == COL_ROUTE_ID) {
+                } else if (columnIndex == COL_ROUTE_ID) {
                     //
                     // Translate the Route ID into the Route Name by looking
                     // it up in the Routes table.
                     //
                     TextView text = (TextView)view;
                     final String routeId = cursor.getString(columnIndex);
-                    final String routeName =
-                        TripService.getRouteShortName(TripListActivity.this, routeId);
+                    final String routeName = TripService.getRouteShortName(
+                            TripListActivity.this, routeId);
                     if (routeName != null) {
-                        text.setText(getString(R.string.trip_info_route, routeName));
+                        text.setText(getString(R.string.trip_info_route,
+                                routeName));
                     }
                     return true;
                 }
@@ -116,6 +123,7 @@ public class TripListActivity extends ListActivity {
         });
         setListAdapter(simpleAdapter);
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -133,7 +141,8 @@ public class TripListActivity extends ListActivity {
     private static final int CONTEXT_MENU_SHOWROUTE = 4;
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
+    public void onCreateContextMenu(ContextMenu menu,
+            View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
@@ -141,16 +150,21 @@ public class TripListActivity extends ListActivity {
         menu.setHeaderTitle(text.getText());
         menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.trip_list_context_edit);
         menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.trip_list_context_delete);
-        menu.add(0, CONTEXT_MENU_SHOWSTOP, 0, R.string.trip_list_context_showstop);
-        menu.add(0, CONTEXT_MENU_SHOWROUTE, 0, R.string.trip_list_context_showroute);
+        menu.add(0, CONTEXT_MENU_SHOWSTOP, 0,
+                R.string.trip_list_context_showstop);
+        menu.add(0, CONTEXT_MENU_SHOWROUTE, 0,
+                R.string.trip_list_context_showroute);
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item
+                .getMenuInfo();
         switch (item.getItemId()) {
         case CONTEXT_MENU_DEFAULT:
             // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position, info.id);
+            onListItemClick(getListView(), info.targetView, info.position,
+                    info.id);
             return true;
         case CONTEXT_MENU_DELETE:
             deleteTrip(getListView(), info.position);
@@ -165,6 +179,7 @@ public class TripListActivity extends ListActivity {
             return super.onContextItemSelected(item);
         }
     }
+
     private void deleteTrip(ListView l, int position) {
         String[] ids = getIds(l, position);
 
@@ -173,17 +188,21 @@ public class TripListActivity extends ListActivity {
         cr.delete(ObaContract.Trips.buildUri(ids[0], ids[1]), null, null);
         TripService.scheduleAll(this);
 
-        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView().getAdapter();
+        SimpleCursorAdapter adapter = (SimpleCursorAdapter)getListView()
+                .getAdapter();
         adapter.getCursor().requery();
     }
+
     private void goToStop(ListView l, int position) {
         String[] ids = getIds(l, position);
         StopInfoActivity.start(this, ids[1]);
     }
+
     private void goToRoute(ListView l, int position) {
         String[] ids = getIds(l, position);
         RouteInfoActivity.start(this, ids[2]);
     }
+
     private String[] getIds(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();

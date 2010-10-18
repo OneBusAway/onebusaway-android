@@ -45,7 +45,7 @@ import android.widget.Toast;
 import java.util.Iterator;
 import java.util.List;
 
-final class UIHelp {
+public final class UIHelp {
     // private static final String TAG = "UIHelp";
 
     public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";

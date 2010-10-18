@@ -10,7 +10,7 @@ public final class MyTextUtils {
      */
     public static String toTitleCase(String str) {
         if (str == null) {
-            throw new RuntimeException("String cannot be null");
+            return null;
         }
         boolean space = true;
         StringBuilder builder = new StringBuilder(str);

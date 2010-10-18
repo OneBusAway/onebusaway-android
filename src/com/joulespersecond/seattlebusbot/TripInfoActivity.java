@@ -92,10 +92,15 @@ public class TripInfoActivity extends Activity {
         myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId));
         context.startActivity(myIntent);
     }
+
     public static void start(Context context,
-            String tripId, String stopId,
-            String routeId, String routeName, String stopName,
-            long departureTime, String headsign) {
+            String tripId,
+            String stopId,
+            String routeId,
+            String routeName,
+            String stopName,
+            long departureTime,
+            String headsign) {
         Intent myIntent = new Intent(context, TripInfoActivity.class);
         myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId));
         myIntent.putExtra(ROUTE_ID, routeId);
@@ -129,8 +134,7 @@ public class TripInfoActivity extends Activity {
             mTripId = segments.get(1);
             mStopId = segments.get(2);
             mTripUri = data;
-        }
-        else if (bundle != null) {
+        } else if (bundle != null) {
             // Backward compatibility
             mTripId = bundle.getString(TRIP_ID);
             mStopId = bundle.getString(STOP_ID);
@@ -150,11 +154,13 @@ public class TripInfoActivity extends Activity {
             if (mRouteName != null) {
                 ContentValues values = new ContentValues();
                 values.put(ObaContract.Routes.SHORTNAME, mRouteName);
-                ObaContract.Routes.insertOrUpdate(this, mRouteId, values, false);
+                ObaContract.Routes
+                        .insertOrUpdate(this, mRouteId, values, false);
             }
         }
         return true;
     }
+
     private boolean initFromDB() {
         // Look up the trip in the database.
         ContentResolver cr = getContentResolver();
@@ -181,8 +187,8 @@ public class TripInfoActivity extends Activity {
             mHeadsign = cursor.getString(COL_HEADSIGN);
         }
         if (mDepartTime == 0) {
-            mDepartTime = ObaContract.Trips.convertDBToTime(
-                    cursor.getInt(COL_DEPARTURE));
+            mDepartTime = ObaContract.Trips.convertDBToTime(cursor
+                    .getInt(COL_DEPARTURE));
         }
 
         // If we don't have the route name, look it up in the DB
@@ -190,8 +196,8 @@ public class TripInfoActivity extends Activity {
             mRouteName = TripService.getRouteShortName(this, mRouteId);
         }
         if (mStopName == null) {
-            mStopName = UIHelp.stringForQuery(this,
-                    Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, mStopId),
+            mStopName = UIHelp.stringForQuery(this, Uri.withAppendedPath(
+                    ObaContract.Stops.CONTENT_URI, mStopId),
                     ObaContract.Stops.NAME);
         }
         cursor.close();
@@ -209,13 +215,13 @@ public class TripInfoActivity extends Activity {
         // Static (header values)
         //
         final TextView stopName = (TextView)findViewById(R.id.stop_name);
-        stopName.setText(mStopName);
+        stopName.setText(MyTextUtils.toTitleCase(mStopName));
 
         final TextView routeName = (TextView)findViewById(R.id.route_name);
-        routeName.setText(getString(R.string.trip_info_route,  mRouteName));
+        routeName.setText(getString(R.string.trip_info_route, mRouteName));
 
         final TextView headsign = (TextView)findViewById(R.id.headsign);
-        headsign.setText(mHeadsign);
+        headsign.setText(MyTextUtils.toTitleCase(mHeadsign));
 
         final TextView departText = (TextView)findViewById(R.id.departure_time);
         departText.setText(getDepartureTime(this, mDepartTime));
@@ -258,6 +264,7 @@ public class TripInfoActivity extends Activity {
             delete.setVisibility(View.GONE);
         }
     }
+
     private void setUserValues() {
         final TextView tripName = (TextView)findViewById(R.id.name);
         tripName.setText(mTripName);
@@ -268,16 +275,19 @@ public class TripInfoActivity extends Activity {
         final Button repeats = (Button)findViewById(R.id.trip_info_reminder_days);
         repeats.setText(getRepeatText(this, mReminderDays));
     }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         final Spinner reminderView = (Spinner)findViewById(R.id.trip_info_reminder_time);
         final TextView nameView = (TextView)findViewById(R.id.name);
 
-        final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
+        final int reminder = selectionToReminder(reminderView
+                .getSelectedItemPosition());
         outState.putString(TRIP_NAME, nameView.getText().toString());
         outState.putInt(REMINDER_TIME, reminder);
         outState.putInt(REMINDER_DAYS, mReminderDays);
     }
+
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         String name = savedInstanceState.getString(TRIP_NAME);
@@ -289,24 +299,26 @@ public class TripInfoActivity extends Activity {
         mReminderDays = savedInstanceState.getInt(REMINDER_DAYS, mReminderDays);
         setUserValues();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.trip_info_options, menu);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.show_route) {
             RouteInfoActivity.start(this, mRouteId);
             return true;
-        }
-        else if (item.getItemId() == R.id.show_stop) {
+        } else if (item.getItemId() == R.id.show_stop) {
             StopInfoActivity.start(this, mStopId, mStopName);
             return true;
         }
         return false;
     }
+
     //
     // Buttons (1.6 only)
     //
@@ -335,12 +347,13 @@ public class TripInfoActivity extends Activity {
         final Spinner reminderView = (Spinner)findViewById(R.id.trip_info_reminder_time);
         final TextView nameView = (TextView)findViewById(R.id.name);
 
-        final int reminder = selectionToReminder(reminderView.getSelectedItemPosition());
+        final int reminder = selectionToReminder(reminderView
+                .getSelectedItemPosition());
 
         ContentValues values = new ContentValues();
         values.put(ObaContract.Trips.ROUTE_ID, mRouteId);
-        values.put(ObaContract.Trips.DEPARTURE,
-                ObaContract.Trips.convertTimeToDB(mDepartTime));
+        values.put(ObaContract.Trips.DEPARTURE, ObaContract.Trips
+                .convertTimeToDB(mDepartTime));
         values.put(ObaContract.Trips.HEADSIGN, mHeadsign);
         values.put(ObaContract.Trips.NAME, nameView.getText().toString());
         values.put(ObaContract.Trips.REMINDER, reminder);
@@ -348,14 +361,12 @@ public class TripInfoActivity extends Activity {
 
         // Insert or update?
         ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(mTripUri,
-                new String[] { ObaContract.Trips._ID },
+        Cursor c = cr.query(mTripUri, new String[] { ObaContract.Trips._ID },
                 null, null, null);
         if (c != null && c.getCount() > 0) {
             // Update
             cr.update(mTripUri, values, null, null);
-        }
-        else {
+        } else {
             values.put(ObaContract.Trips._ID, mTripId);
             values.put(ObaContract.Trips.STOP_ID, mStopId);
             cr.insert(ObaContract.Trips.CONTENT_URI, values);
@@ -365,9 +376,11 @@ public class TripInfoActivity extends Activity {
         }
         TripService.scheduleAll(this);
 
-        Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.trip_info_saved, Toast.LENGTH_SHORT)
+                .show();
         finish();
     }
+
     private void deleteTrip() {
         ContentResolver cr = getContentResolver();
         cr.delete(mTripUri, null, null);
@@ -386,6 +399,7 @@ public class TripInfoActivity extends Activity {
             .setNegativeButton(R.string.trip_info_dismiss)
             .startForResult(REMINDER_DAYS_DIALOG);
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -461,6 +475,7 @@ public class TripInfoActivity extends Activity {
             return 0;
         }
     }
+
     private static int selectionToReminder(int selection) {
         switch (selection) {
         case 0:     return 0;
@@ -493,8 +508,8 @@ public class TripInfoActivity extends Activity {
         if ((days & ObaContract.Trips.DAY_ALL) == ObaContract.Trips.DAY_ALL) {
             return res.getString(R.string.trip_info_repeat_everyday);
         }
-        if (((days & ObaContract.Trips.DAY_WEEKDAY) == ObaContract.Trips.DAY_WEEKDAY) &&
-             (days & ~ObaContract.Trips.DAY_WEEKDAY) == 0) {
+        if (((days & ObaContract.Trips.DAY_WEEKDAY) == ObaContract.Trips.DAY_WEEKDAY)
+                && (days & ~ObaContract.Trips.DAY_WEEKDAY) == 0) {
             return res.getString(R.string.trip_info_repeat_weekdays);
         }
         if (days == 0) {
@@ -509,14 +524,16 @@ public class TripInfoActivity extends Activity {
         // Find the first day
         int rangeStart = 0;
         while (rangeStart < 7) {
-            for (; rangeStart < 7 && array[rangeStart] != true; ++rangeStart) {}
+            for (; rangeStart < 7 && array[rangeStart] != true; ++rangeStart) {
+            }
 
             if (rangeStart == 7) {
                 break;
             }
 
-            int rangeEnd = rangeStart+1;
-            for (; rangeEnd < 7 && array[rangeEnd] == true; ++rangeEnd) {}
+            int rangeEnd = rangeStart + 1;
+            for (; rangeEnd < 7 && array[rangeEnd] == true; ++rangeEnd) {
+            }
 
             if (buf.length() != 0) {
                 // TODO: Move to string table
@@ -524,14 +541,13 @@ public class TripInfoActivity extends Activity {
             }
 
             // Single day?
-            if ((rangeEnd-rangeStart) == 1) {
+            if ((rangeEnd - rangeStart) == 1) {
                 buf.append(dayNames[rangeStart]);
-            }
-            else {
+            } else {
                 buf.append(dayNames[rangeStart]);
                 // TODO: Move to string table
                 buf.append(" - ");
-                buf.append(dayNames[rangeEnd-1]);
+                buf.append(dayNames[rangeEnd - 1]);
             }
             rangeStart = rangeEnd;
         }

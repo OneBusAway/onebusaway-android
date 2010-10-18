@@ -26,17 +26,18 @@
           android:orientation="vertical"
           android:layout_width="fill_parent"
           android:layout_height="wrap_content"
+          android:gravity="center_horizontal"
           android:paddingBottom="16dp">
           <TextView
               android:id="@+id/stop_name"
               style="@style/HeaderText"
-              android:layout_width="fill_parent"
+              android:layout_width="wrap_content"
               android:layout_height="wrap_content">
           </TextView>
           <LinearLayout
               android:gravity="center_horizontal"
               android:orientation="horizontal"
-              android:layout_width="fill_parent"
+              android:layout_width="wrap_content"
               android:layout_height="wrap_content">
               <TextView
                   style="@style/Header2Text"
@@ -63,7 +64,7 @@
               style="@style/Header2Text"
               android:text="@string/trip_info_depart"
               android:id="@+id/departure_time"
-              android:layout_width="fill_parent"
+              android:layout_width="wrap_content"
               android:layout_height="wrap_content">
           </TextView>
       </LinearLayout>

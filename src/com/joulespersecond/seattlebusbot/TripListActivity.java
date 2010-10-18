@@ -95,6 +95,7 @@ public class TripListActivity extends ListActivity {
                     String headSign = cursor.getString(columnIndex);
                     TextView text = (TextView)view;
                     text.setText(MyTextUtils.toTitleCase(headSign));
+                    return true;
                 } else if (columnIndex == COL_DEPARTURE) {
                     TextView text = (TextView)view;
                     text.setText(TripInfoActivity.getDepartureTime(

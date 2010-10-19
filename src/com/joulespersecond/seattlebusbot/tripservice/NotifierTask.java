@@ -133,7 +133,7 @@ public final class NotifierTask implements Runnable {
         deleteIntent.setAction(TripService.ACTION_CANCEL);
         deleteIntent.setData(alertUri);
         notification.deleteIntent = PendingIntent.getService(mContext, 0,
-                deleteIntent, PendingIntent.FLAG_ONE_SHOT);
+                deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return notification;
     }
 
@@ -145,7 +145,7 @@ public final class NotifierTask implements Runnable {
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
                 StopInfoActivity.makeIntent(mContext, stopId),
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
         notification.setLatestEventInfo(mContext,
                 title,

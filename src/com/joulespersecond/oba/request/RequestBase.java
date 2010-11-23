@@ -82,6 +82,15 @@ public class RequestBase {
         protected Uri buildUri() {
             return mBuilder.build();
         }
+
+        /**
+         * Allows the caller to assign a different server for a specific request.
+         * Useful for unit-testing against specific servers (for instance, soak-api
+         * when some new APIs haven't been released to production)
+         */
+        public void setServer(String server) {
+            mBuilder.authority(server);
+        }
     }
 
     private <T> T createFromError(Class<T> cls, int code, String error) {

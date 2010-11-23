@@ -20,6 +20,7 @@ import com.joulespersecond.oba.elements.ObaReferencesElement;
 import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.elements.ObaTripDetailsElement;
 import com.joulespersecond.oba.elements.ObaTripSchedule;
+import com.joulespersecond.oba.elements.ObaTripStatus;
 
 /**
  * Response object for ObaStopRequest requests.
@@ -50,7 +51,7 @@ public final class ObaTripDetailsResponse extends ObaResponseWithRefs
     }
 
     @Override
-    public Status getStatus() {
+    public ObaTripStatus getStatus() {
         return data.entry.getStatus();
     }
 

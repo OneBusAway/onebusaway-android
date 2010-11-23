@@ -18,6 +18,7 @@ package com.joulespersecond.oba.request.test;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
@@ -94,5 +95,56 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         //assertEquals(1, consequences.length);
         //assertEquals("diversion", consequences[0].getCondition());
 
+    }
+
+    public void testTripSituation() {
+        ObaArrivalInfoRequest.Builder builder =
+            new ObaArrivalInfoRequest.Builder(getContext(), "1_10020");
+        builder.setServer("soak-api.onebusaway.org");
+        builder.setApiKey("TEST");
+        ObaArrivalInfoRequest request = builder.build();
+        ObaArrivalInfoResponse response = request.call();
+        assertOK(response);
+        ObaArrivalInfo[] infoList = response.getArrivalInfo();
+        assertNotNull(infoList);
+        assertEquals(1, infoList.length);
+        ObaArrivalInfo info = infoList[0];
+        String[] situationIds = info.getSituationIds();
+        assertNotNull(situationIds);
+        List<ObaSituation> situations = response.getSituations(situationIds);
+        assertNotNull(situations);
+        assertEquals(1, situations.size());
+        ObaSituation situation = situations.get(0);
+        assertEquals("Snow Reroute", situation.getSummary());
+        assertEquals("heavySnowFall", situation.getReason());
+        assertEquals(ObaSituation.REASON_TYPE_ENVIRONMENT,
+                situation.getReasonType());
+
+        ObaSituation.Affects affects = situation.getAffects();
+        assertNotNull(affects);
+        ObaSituation.VehicleJourney[] journeys = affects.getVehicleJourneys();
+        assertNotNull(journeys);
+        ObaSituation.VehicleJourney journey = journeys[0];
+        assertNotNull("1", journey.getDirection());
+        assertNotNull("1_30", journey.getRouteId());
+        List<String> journeyStops = journey.getStopIds();
+        assertNotNull(journeyStops);
+        assertTrue(journeyStops.size() > 0);
+        assertEquals("1_9980", journeyStops.get(0));
+
+        ObaSituation.Consequence[] consequences = situation.getConsequences();
+        assertNotNull(consequences);
+        assertEquals(1, consequences.length);
+        ObaSituation.Consequence c = consequences[0];
+        assertEquals(ObaSituation.Consequence.CONDITION_DIVERSION,
+                c.getCondition());
+        ObaSituation.ConditionDetails details = c.getDetails();
+        assertNotNull(details);
+        List<String> stopIds = details.getDiversionStopIds();
+        assertNotNull(stopIds);
+        assertTrue(stopIds.size() > 0);
+        assertEquals("1_9972", stopIds.get(0));
+        ObaShape diversion = details.getDiversionPath();
+        assertNotNull(diversion);
     }
 }

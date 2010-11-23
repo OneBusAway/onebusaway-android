@@ -18,6 +18,7 @@ package com.joulespersecond.oba.elements;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class ObaSituationElement implements ObaSituation {
@@ -111,13 +112,38 @@ public final class ObaSituationElement implements ObaSituation {
         }
     }
 
+    public static final class ConditionDetailsElement
+            implements ConditionDetails {
+
+        private final String[] diversionStopIds;
+        private final ObaShapeElement diversionPath;
+
+        ConditionDetailsElement() {
+            diversionStopIds = null;
+            diversionPath = null;
+        }
+
+        @Override
+        public ObaShape getDiversionPath() {
+            return diversionPath;
+        }
+
+        @Override
+        public List<String> getDiversionStopIds() {
+            return Arrays.asList(diversionStopIds);
+        }
+
+    }
+
     public static final class ConsequenceElement implements Consequence {
         public static final ConsequenceElement[] EMPTY_ARRAY = new ConsequenceElement[] {};
 
         private final String condition;
+        private final ConditionDetailsElement conditionDetails;
 
         ConsequenceElement() {
             condition = "";
+            conditionDetails = null;
         }
 
         @Override
@@ -127,7 +153,7 @@ public final class ObaSituationElement implements ObaSituation {
 
         @Override
         public ConditionDetails getDetails() {
-            return null;
+            return conditionDetails;
         }
     }
 

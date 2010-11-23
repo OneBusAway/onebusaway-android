@@ -62,8 +62,7 @@ public final class ObaArrivalInfo {
     private final long lastUpdateTime;
     private final Boolean predicted;
     private final ObaTripStatusElement tripStatus;
-
-    // TODO: Situations
+    private final String[] situationIds;
 
     ObaArrivalInfo() {
         routeId = "";
@@ -85,6 +84,7 @@ public final class ObaArrivalInfo {
         lastUpdateTime = 0;
         predicted = null;
         tripStatus = null;
+        situationIds = null;
     }
 
     /**
@@ -223,5 +223,12 @@ public final class ObaArrivalInfo {
      */
     public ObaTripStatus getTripStatus() {
         return tripStatus;
+    }
+
+    /**
+     * @return The array of situation IDs, or null.
+     */
+    public String[] getSituationIds() {
+        return situationIds;
     }
 }

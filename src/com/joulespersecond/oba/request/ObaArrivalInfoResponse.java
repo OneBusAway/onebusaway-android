@@ -18,6 +18,7 @@ package com.joulespersecond.oba.request;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaReferencesElement;
+import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 
 import java.util.List;
@@ -33,11 +34,13 @@ public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
         private final String stopId;
         private final ObaArrivalInfo[] arrivalsAndDepartures;
         private final String[] nearbyStopIds;
+        private final String[] situationIds;
 
         private Entry() {
             stopId = "";
             arrivalsAndDepartures = ObaArrivalInfo.EMPTY_ARRAY;
             nearbyStopIds = new String[] {};
+            situationIds = new String[] {};
         }
     }
 
@@ -69,6 +72,10 @@ public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
 
     public ObaArrivalInfo[] getArrivalInfo() {
         return data.entry.arrivalsAndDepartures;
+    }
+
+    public List<ObaSituation> getSituations() {
+        return data.references.getSituations(data.entry.situationIds);
     }
 
     @Override

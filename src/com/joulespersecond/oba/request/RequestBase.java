@@ -51,6 +51,7 @@ public class RequestBase {
         protected static final String BASE_PATH = "/api/where";
 
         protected final Uri.Builder mBuilder;
+        private String mApiKey = API_KEY;
 
         protected BuilderBase(Context context, String path) {
             mBuilder = new Uri.Builder();
@@ -58,7 +59,6 @@ public class RequestBase {
             mBuilder.authority(getServer(context));
             mBuilder.path(path);
             mBuilder.appendQueryParameter("version", "2");
-            mBuilder.appendQueryParameter("key", API_KEY);
             ObaApi.setAppInfo(mBuilder);
         }
 
@@ -67,7 +67,6 @@ public class RequestBase {
             mBuilder.scheme("http");
             mBuilder.authority(getServer(context));
             mBuilder.path(path);
-            mBuilder.appendQueryParameter("key", API_KEY);
             ObaApi.setAppInfo(mBuilder);
         }
 
@@ -80,16 +79,30 @@ public class RequestBase {
         }
 
         protected Uri buildUri() {
+            mBuilder.appendQueryParameter("key", mApiKey);
             return mBuilder.build();
         }
 
         /**
          * Allows the caller to assign a different server for a specific request.
          * Useful for unit-testing against specific servers (for instance, soak-api
-         * when some new APIs haven't been released to production)
+         * when some new APIs haven't been released to production).
+         *
+         * Because this is implemented in the base class, it can't return 'this'
+         * to use the standard builder pattern. Oh well, it's only for test.
          */
         public void setServer(String server) {
             mBuilder.authority(server);
+        }
+
+        /**
+         * Allows the caller to assign a different API key for a specific request.
+         *
+         * Because this is implemented in the base class, it can't return 'this'
+         * to use the standard builder pattern. Oh well, it's only for test.
+         */
+        public void setApiKey(String key) {
+            mApiKey = key;
         }
     }
 

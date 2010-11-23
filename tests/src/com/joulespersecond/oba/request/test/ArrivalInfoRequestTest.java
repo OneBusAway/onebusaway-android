@@ -15,14 +15,15 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.List;
-
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+
+import java.util.List;
 
 
 public class ArrivalInfoRequestTest extends ObaTestCase {
@@ -52,5 +53,46 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         // This is just to make sure we copy and call newRequest() at least once
         ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getContext(), "1_10");
         assertNotNull(request);
+    }
+
+    public void testStopSituation() {
+        ObaArrivalInfoRequest.Builder builder =
+            new ObaArrivalInfoRequest.Builder(getContext(), "1_75403");
+        builder.setServer("soak-api.onebusaway.org");
+        builder.setApiKey("TEST");
+        ObaArrivalInfoRequest request = builder.build();
+        ObaArrivalInfoResponse response = request.call();
+        assertOK(response);
+        List<ObaSituation> situations = response.getSituations();
+        assertNotNull(situations);
+        assertTrue(situations.size() > 0);
+        // This is all test data, we really shouldn't depend on it.
+        // This is why we need a way of inserting canned data for testing.
+        ObaSituation situation = situations.get(0);
+        assertEquals("Stop Moved", situation.getSummary());
+        assertEquals("", situation.getReason());
+        assertEquals(ObaSituation.REASON_TYPE_UNDEFINED, situation.getReasonType());
+
+        ObaSituation.Affects affects = situation.getAffects();
+        assertNotNull(affects);
+        List<String> affectedStops = affects.getStopIds();
+        assertNotNull(affectedStops);
+        assertEquals(1, affectedStops.size());
+        assertEquals("1_75403", affectedStops.get(0));
+        //ObaSituation.VehicleJourney[] journeys = affects.getVehicleJourneys();
+        //assertNotNull(journeys);
+        //ObaSituation.VehicleJourney journey = journeys[0];
+        //assertNotNull("1", journey.getDirection());
+        //assertNotNull("1_30", journey.getRouteId());
+        //List<String> journeyStops = journey.getStopIds();
+        //assertNotNull(journeyStops);
+        //assertTrue(journeyStops.size() > 0);
+        //assertEquals("1_9980", journeyStops.get(0));
+
+        //ObaSituation.Consequence[] consequences = situation.getConsequences();
+        //assertNotNull(consequences);
+        //assertEquals(1, consequences.length);
+        //assertEquals("diversion", consequences[0].getCondition());
+
     }
 }

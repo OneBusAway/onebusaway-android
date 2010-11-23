@@ -25,12 +25,14 @@ public final class ObaReferencesElement implements ObaReferences {
     private final ObaRouteElement[] routes;
     private final ObaTripElement[] trips;
     private final ObaAgencyElement[] agencies;
+    private final ObaSituationElement[] situations;
 
     public ObaReferencesElement() {
         stops = ObaStopElement.EMPTY_ARRAY;
         routes = ObaRouteElement.EMPTY_ARRAY;
         trips = ObaTripElement.EMPTY_ARRAY;
         agencies = ObaAgencyElement.EMPTY_ARRAY;
+        situations = ObaSituationElement.EMPTY_ARRAY;
     }
 
     @Override
@@ -71,6 +73,16 @@ public final class ObaReferencesElement implements ObaReferences {
     @Override
     public List<ObaAgency> getAgencies(String[] ids) {
         return findList(agencies, ids);
+    }
+
+    @Override
+    public ObaSituation getSituation(String id) {
+        return findById(situations, id);
+    }
+
+    @Override
+    public List<ObaSituation> getSituations(String[] ids) {
+        return findList(situations, ids);
     }
 
     //

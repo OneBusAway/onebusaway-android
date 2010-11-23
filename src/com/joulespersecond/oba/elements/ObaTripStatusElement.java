@@ -16,7 +16,6 @@
 package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
-import com.joulespersecond.oba.ObaApi;
 
 public final class ObaTripStatusElement implements ObaTripStatus {
     protected static final ObaTripStatusElement EMPTY_OBJECT = new ObaTripStatusElement();
@@ -28,6 +27,18 @@ public final class ObaTripStatusElement implements ObaTripStatus {
     private final String closestStop;
     private final long closestStopTimeOffset;
     private final Position position;
+    private final String activeTripId;
+    private final Double distanceAlongTrip;
+    private final Double scheduledDistanceAlongTrip;
+    private final Double totalDistanceAlongTrip;
+    private final Double orientation;
+    private final String nextStop;
+    private final long nextStopTimeOffset;
+    private final String phase;
+    private final String status;
+    private final Long lastUpdateTime;
+    private final Position lastKnownLocation;
+    private final Double lastKnownOrientation;
 
     ObaTripStatusElement() {
         serviceDate = 0;
@@ -37,66 +48,112 @@ public final class ObaTripStatusElement implements ObaTripStatus {
         closestStop = "";
         closestStopTimeOffset = 0;
         position = null;
+        activeTripId = null;
+        distanceAlongTrip = null;
+        scheduledDistanceAlongTrip = null;
+        totalDistanceAlongTrip = null;
+        orientation = null;
+        nextStop = null;
+        nextStopTimeOffset = 0;
+        phase = null;
+        status = null;
+        lastUpdateTime = null;
+        lastKnownLocation = null;
+        lastKnownOrientation = null;
     }
 
-    /**
-     * @return The time, in milliseconds since the epoch, of midnight
-     * for start of the service day for the trip.
-     */
+    @Override
     public long getServiceDate() {
         return serviceDate;
     }
 
-    /**
-     * @return 'true' if we have real-time arrival info available for this trip.
-     */
+    @Override
     public boolean isPredicted() {
         return predicted;
     }
 
-    /**
-     * @return If real-time arrival info is available, this lists the deviation
-     * from the schedule in seconds, where positive number indicates the trip
-     * is running late and negative indicates the trips is running early.
-     * If not real-time arrival info is available, this will be zero.
-     */
+    @Override
     public long getScheduleDeviation() {
         return scheduleDeviation;
     }
 
-    /**
-     * @return If real-time arrival info is available, this lists the id of the transit
-     * vehicle currently running the trip.
-     */
+    @Override
     public String getVehicleId() {
         return vehicleId;
     }
 
-    /**
-     * @return The ID of the closest stop to the current location of the transit vehicle,
-     * whether from schedule or real-time predicted location data
-     */
+    @Override
     public String getClosestStop() {
         return closestStop;
     }
 
-    /**
-     * @return The time offset, in seconds, from the closest stop to the current
-     *  position of the transit vehicle among the stop times of the current trip.
-     *  If the number is positive, the stop is coming up. If negative, the stop
-     *  has already been passed.
-     */
+    @Override
     public long getClosestStopTimeOffset() {
         return closestStopTimeOffset;
     }
 
-    /**
-     * @return The current position of the transit vehicle. This element is optional,
-     * and will only be present if the trip is actively running.
-     * If real-time arrival data is available, the position will take that into account,
-     * otherwise the position reflects the scheduled position of the vehicle.
-     */
+    @Override
     public GeoPoint getPosition() {
-        return (position != null) ? ObaApi.makeGeoPoint(position.getLat(), position.getLon()) : null;
+        return (position != null) ? position.getPoint() : null;
+    }
+
+    @Override
+    public String getActiveTripId() {
+        return activeTripId;
+    }
+
+    @Override
+    public Double getDistanceAlongTrip() {
+        return distanceAlongTrip;
+    }
+
+    @Override
+    public Double getScheduledDistanceAlongTrip() {
+        return scheduledDistanceAlongTrip;
+    }
+
+    @Override
+    public Double getTotalDistanceAlongTrip() {
+        return totalDistanceAlongTrip;
+    }
+
+    @Override
+    public Double getOrientation() {
+        return orientation;
+    }
+
+    @Override
+    public String getNextStop() {
+        return nextStop;
+    }
+
+    @Override
+    public Long getNextStopTimeOffset() {
+        return nextStopTimeOffset;
+    }
+
+    @Override
+    public String getPhase() {
+        return phase;
+    }
+
+    @Override
+    public String getStatus() {
+        return status;
+    }
+
+    @Override
+    public long getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
+    @Override
+    public GeoPoint getLastKnownLocation() {
+        return (lastKnownLocation != null) ? lastKnownLocation.getPoint() : null;
+    }
+
+    @Override
+    public Double getLastKnownOrientation() {
+        return lastKnownOrientation;
     }
 }

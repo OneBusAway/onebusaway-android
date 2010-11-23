@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
+import com.joulespersecond.oba.ObaApi;
 
 public interface ObaTripStatus {
     public static final class Position {
@@ -28,6 +29,10 @@ public interface ObaTripStatus {
 
         public double getLon() {
             return lon;
+        }
+
+        public GeoPoint getPoint() {
+            return ObaApi.makeGeoPoint(lat, lon);
         }
     }
 
@@ -77,4 +82,73 @@ public interface ObaTripStatus {
      * otherwise the position reflects the scheduled position of the vehicle.
      */
     public GeoPoint getPosition();
+
+    /**
+     * @return The trip ID of the trip the vehicle is actively serving.
+     * All trip-specific values will be in reference to this active trip.
+     * This can be null if it not provided.
+     */
+    public String getActiveTripId();
+
+    /**
+     * @return The distance, in meters, the transit vehicle has progressed along
+     * the active trip; or null if this isn't provided.
+     */
+    public Double getDistanceAlongTrip();
+
+    /**
+     * @return The distance, in meters, the transit vehicle is scheduled to have
+     * progressed along the active trip; or null if it isn't provided.
+     */
+    public Double getScheduledDistanceAlongTrip();
+
+    /**
+     * @return The total length of the trip, in meters; or null if it isn't provided.
+     */
+    public Double getTotalDistanceAlongTrip();
+
+    /**
+     * @return The orientation of the transit vehicle, as an angle in degrees. Can be null.
+     */
+    public Double getOrientation();
+
+    /**
+     * @return Similar to getClosestStop(), but always retrieves the next stop. Can be null.
+     */
+    public String getNextStop();
+
+    /**
+     * @return Similar to getClosestStopTimeOffset(), but always retrieves the next stop.
+     * Can be null.
+     */
+    public Long getNextStopTimeOffset();
+
+    /**
+     * @return The current journey phase. Can be null.
+     */
+    public String getPhase();
+
+    /**
+     * @return The status modifiers for the trip. Can be null.
+     */
+    public String getStatus();
+
+    /**
+     * @return The last known real-time update for the transit vehicle, or 0 if we
+     * haven't heard from the vehicle.
+     */
+    public long getLastUpdateTime();
+
+    /**
+     * @return The last known location of the transit vehicle. Can be null.
+     * This differs from the position, in that the position is potentially
+     * extrapolated forward from the last known position and other data.
+     */
+    public GeoPoint getLastKnownLocation();
+
+    /**
+     * @return The last known orientation value received in real-time from the transit vehicle.
+     * Can be null.
+     */
+    public Double getLastKnownOrientation();
 }

@@ -5,6 +5,5 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="lib" path="lib/gson-1.4-javadoc.jar"/>
 	<classpathentry kind="lib" path="lib/gson-1.4.jar"/>
-	<classpathentry kind="lib" path="lib/trace.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

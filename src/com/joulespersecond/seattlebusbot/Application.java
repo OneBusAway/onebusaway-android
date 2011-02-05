@@ -1,7 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
-import com.nullwire.trace.ExceptionHandler;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -14,12 +13,12 @@ import java.security.MessageDigest;
 import java.util.UUID;
 
 public class Application extends android.app.Application {
-    public static final String BUG_REPORT_URL = "http://bugs.joulespersecond.com/bugs/";
+    //public static final String BUG_REPORT_URL = "http://bugs.joulespersecond.com/bugs/";
     public static final String APP_UID = "app_uid";
 
     @Override
     public void onCreate() {
-        ExceptionHandler.register(this, BUG_REPORT_URL);
+        //ExceptionHandler.register(this, BUG_REPORT_URL);
         initOba();
     }
 

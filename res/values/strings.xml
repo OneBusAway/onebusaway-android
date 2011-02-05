@@ -48,7 +48,7 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Bug fixes!</string>
+    <string name="main_help_whatsnew">Better support for frequency schedules (RapidRide, Link Light Rail).</string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>

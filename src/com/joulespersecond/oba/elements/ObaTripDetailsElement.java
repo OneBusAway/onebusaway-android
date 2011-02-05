@@ -27,7 +27,7 @@ public final class ObaTripDetailsElement implements ObaTripDetails {
 
     private final String tripId;
     private final ObaTripSchedule schedule;
-    private final Status status;
+    private final ObaTripStatusElement status;
 
     private ObaTripDetailsElement() {
         tripId = "";
@@ -41,7 +41,7 @@ public final class ObaTripDetailsElement implements ObaTripDetails {
     }
 
     @Override
-    public Status getStatus() {
+    public ObaTripStatus getStatus() {
         return status;
     }
 

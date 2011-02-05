@@ -16,8 +16,8 @@
 package com.joulespersecond.oba.request.test;
 
 import com.joulespersecond.oba.elements.ObaTrip;
-import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.elements.ObaTripSchedule;
+import com.joulespersecond.oba.elements.ObaTripStatus;
 import com.joulespersecond.oba.request.ObaTripDetailsRequest;
 import com.joulespersecond.oba.request.ObaTripDetailsResponse;
 
@@ -34,7 +34,7 @@ public class TripDetailsRequest extends ObaTestCase {
         ObaTripSchedule schedule = response.getSchedule();
         assertNotNull(schedule);
 
-        ObaTripDetails.Status status = response.getStatus();
+        ObaTripStatus status = response.getStatus();
         assertNotNull(status);
 
         // Make sure the trip exists
@@ -77,7 +77,7 @@ public class TripDetailsRequest extends ObaTestCase {
         assertOK(response);
         assertEquals("1_15551350", response.getId());
 
-        ObaTripDetails.Status status = response.getStatus();
+        ObaTripStatus status = response.getStatus();
         assertNull(status);
     }
 

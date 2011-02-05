@@ -83,7 +83,7 @@ public class TripAlertsTest extends ProviderTestCase2<ObaProvider> {
         c = cr.query(uri, PROJECTION, null, null, null);
         assertNotNull(c);
         c.moveToNext();
-        assertEquals(TripAlerts.STATE_SCHEDULED, c.getInt(0));
+        assertEquals(TripAlerts.STATE_POLLING, c.getInt(0));
         c.close();
 
         cr.delete(uri, null, null);

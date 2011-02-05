@@ -1,0 +1,8 @@
+#Sat Oct 02 11:03:17 PDT 2010
+eclipse.preferences.version=1
+formatter_profile=_OneBusAwayAndroid
+formatter_settings_version=11
+org.eclipse.jdt.ui.ignorelowercasenames=true
+org.eclipse.jdt.ui.importorder=com;org;android;java;javax;
+org.eclipse.jdt.ui.ondemandthreshold=99
+org.eclipse.jdt.ui.staticondemandthreshold=99

@@ -18,6 +18,7 @@ package com.joulespersecond.oba.request;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.elements.ObaTrip;
 
@@ -62,6 +63,16 @@ public abstract class ObaResponseWithRefs extends ObaResponse implements ObaRefe
     @Override
     public List<ObaAgency> getAgencies(String[] ids) {
         return getRefs().getAgencies(ids);
+    }
+
+    @Override
+    public ObaSituation getSituation(String id) {
+        return getRefs().getSituation(id);
+    }
+
+    @Override
+    public List<ObaSituation> getSituations(String[] ids) {
+        return getRefs().getSituations(ids);
     }
 
     abstract protected ObaReferences getRefs();

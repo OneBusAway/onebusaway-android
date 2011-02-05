@@ -77,4 +77,18 @@ public interface ObaReferences {
      * @return The list of converted agencies.
      */
     public List<ObaAgency> getAgencies(String[] ids);
+
+    /**
+     * Dereferences a situation by ID.
+     * @param id The situation ID.
+     * @return The ObaSituation if it exists, or null if it doesn't.
+     */
+    public ObaSituation getSituation(String id);
+
+    /**
+     * Dereferences a list of situation IDs.
+     * @param ids A list of situation IDs to convert.
+     * @return The list of converted situations.
+     */
+    public List<ObaSituation> getSituations(String[] ids);
 }

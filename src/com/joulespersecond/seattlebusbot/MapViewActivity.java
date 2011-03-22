@@ -602,6 +602,10 @@ public class MapViewActivity extends MapActivity implements
 
     final ClickableSpan mOnShowArrivals = new ClickableSpan() {
         public void onClick(View v) {
+            // This really shouldn't happen, but it does sometimes.
+            if (mStopOverlay == null) {
+                return;
+            }
             StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
             if (item != null) {
                 goToStop(MapViewActivity.this, item.getStop());

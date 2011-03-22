@@ -55,7 +55,7 @@ public final class ObaHelp {
         final Set<Map.Entry<String,List<String>>> set = headers.entrySet();
         for (Iterator<Map.Entry<String,List<String>>> i = set.iterator(); i.hasNext(); ) {
             Map.Entry<String,List<String>> entry = i.next();
-            if (entry.getKey().equalsIgnoreCase("Content-Encoding")) {
+            if ("Content-Encoding".equalsIgnoreCase(entry.getKey())) {
                 for (Iterator<String> j = entry.getValue().iterator(); j.hasNext(); ) {
                     String str = j.next();
                     if (str.equalsIgnoreCase("gzip")) {

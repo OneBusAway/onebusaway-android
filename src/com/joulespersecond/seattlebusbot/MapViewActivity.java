@@ -558,7 +558,7 @@ public class MapViewActivity extends MapActivity implements
     final Handler mStopChangedHandler = new Handler();
 
     final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-        public void onFocusChanged(@SuppressWarnings("unchecked") ItemizedOverlay overlay,
+        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
                 final OverlayItem newFocus) {
             mStopChangedHandler.post(new Runnable() {
                 public void run() {

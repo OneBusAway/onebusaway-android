@@ -57,6 +57,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -540,8 +541,17 @@ public class MapViewActivity extends MapActivity implements
         protected void setData(View view, int position) {
             TextView shortName = (TextView)view.findViewById(R.id.short_name);
 
-            ObaRoute route = mArray.get(position);
+            final ObaRoute route = mArray.get(position);
             shortName.setText(UIHelp.getRouteDisplayName(route));
+            
+            view.setOnClickListener( new OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+                    RouteInfoActivity.start(MapViewActivity.this, route.getId());
+                }
+            } );
+
         }
     }
 

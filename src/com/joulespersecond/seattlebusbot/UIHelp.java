@@ -39,6 +39,8 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
+import android.view.Window;
+import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -282,4 +284,26 @@ public final class UIHelp {
         }
         return null;
     }
+    
+    public static void setContentView( final Activity activity, int layoutId ) {
+        activity.requestWindowFeature( Window.FEATURE_CUSTOM_TITLE );
+        activity.setContentView( layoutId );
+        UIHelp.applyCustomTitle( activity );
+    }
+
+    private static void applyCustomTitle( final Activity activity ) {
+
+        activity.getWindow().setFeatureInt( Window.FEATURE_CUSTOM_TITLE, R.layout.title );
+
+        activity.findViewById( R.id.title ).setOnClickListener( new OnClickListener() {
+
+            @Override
+            public void onClick( View view ) {
+                MapViewActivity.start( activity, null );
+            }
+            
+        } );
+
+    }
+
 }

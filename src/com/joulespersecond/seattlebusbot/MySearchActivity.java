@@ -59,7 +59,8 @@ abstract class MySearchActivity extends ListActivity {
 
         super.onCreate(savedInstanceState);
 
-        UIHelp.setContentView( this, getLayoutId() );
+        getWindow().requestFeature( Window.FEATURE_INDETERMINATE_PROGRESS );
+        setContentView( getLayoutId() );
         
         registerForContextMenu(getListView());
 

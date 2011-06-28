@@ -56,10 +56,11 @@ abstract class MySearchActivity extends ListActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-        setContentView(getLayoutId());
+        super.onCreate(savedInstanceState);
+
+        UIHelp.setContentView( this, getLayoutId() );
+        
         registerForContextMenu(getListView());
 
         mShortcutMode = getIntent().getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
@@ -110,6 +111,7 @@ abstract class MySearchActivity extends ListActivity {
         } );
         
     }
+
     @Override
     protected void onDestroy() {
         cancelDelayedSearch();

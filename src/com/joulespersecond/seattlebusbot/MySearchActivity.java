@@ -30,7 +30,9 @@ import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnFocusChangeListener;
 import android.view.Window;
+import android.view.WindowManager.LayoutParams;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -95,6 +97,18 @@ abstract class MySearchActivity extends ListActivity {
             }
 
         });
+        
+        mSearchText.setOnFocusChangeListener( new OnFocusChangeListener() {
+
+            @Override
+            public void onFocusChange( View view, boolean hasFocus ) {
+                if( hasFocus ) {
+                    getWindow().setSoftInputMode( LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE );
+                }
+            }
+
+        } );
+        
     }
     @Override
     protected void onDestroy() {

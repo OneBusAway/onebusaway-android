@@ -981,4 +981,11 @@ public class MapViewActivity extends MapActivity implements
     private boolean isRouteMode() {
         return mRouteId != null;
     }
+    
+    @Override
+    public boolean onSearchRequested() {
+        Intent intent = new Intent( this, MySearchRoutesActivity.class );
+        startActivity(intent);
+        return true;
+    }
 }

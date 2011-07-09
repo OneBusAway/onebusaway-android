@@ -982,7 +982,8 @@ public class MapViewActivity extends MapActivity implements
 
     @Override
     public boolean onSearchRequested() {
-        Intent intent = new Intent(this, MySearchRoutesActivity.class);
+        Intent intent = new Intent(this, MyRoutesActivity.class);
+        intent.setData(MyTabActivityBase.getDefaultTabUri(MySearchRoutesActivity.TAB_NAME));
         startActivity(intent);
         return true;
     }

@@ -543,15 +543,13 @@ public class MapViewActivity extends MapActivity implements
 
             final ObaRoute route = mArray.get(position);
             shortName.setText(UIHelp.getRouteDisplayName(route));
-            
-            view.setOnClickListener( new OnClickListener() {
 
+            view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     RouteInfoActivity.start(MapViewActivity.this, route.getId());
                 }
-            } );
-
+            });
         }
     }
 
@@ -981,10 +979,10 @@ public class MapViewActivity extends MapActivity implements
     private boolean isRouteMode() {
         return mRouteId != null;
     }
-    
+
     @Override
     public boolean onSearchRequested() {
-        Intent intent = new Intent( this, MySearchRoutesActivity.class );
+        Intent intent = new Intent(this, MySearchRoutesActivity.class);
         startActivity(intent);
         return true;
     }

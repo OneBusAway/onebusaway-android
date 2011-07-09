@@ -59,9 +59,9 @@ abstract class MySearchActivity extends ListActivity {
 
         super.onCreate(savedInstanceState);
 
-        getWindow().requestFeature( Window.FEATURE_INDETERMINATE_PROGRESS );
-        setContentView( getLayoutId() );
-        
+        getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setContentView(getLayoutId());
+
         registerForContextMenu(getListView());
 
         mShortcutMode = getIntent().getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
@@ -99,18 +99,15 @@ abstract class MySearchActivity extends ListActivity {
             }
 
         });
-        
-        mSearchText.setOnFocusChangeListener( new OnFocusChangeListener() {
 
+        mSearchText.setOnFocusChangeListener(new OnFocusChangeListener() {
             @Override
-            public void onFocusChange( View view, boolean hasFocus ) {
-                if( hasFocus ) {
-                    getWindow().setSoftInputMode( LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE );
+            public void onFocusChange(View view, boolean hasFocus) {
+                if (hasFocus) {
+                    getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                 }
             }
-
-        } );
-        
+        });
     }
 
     @Override

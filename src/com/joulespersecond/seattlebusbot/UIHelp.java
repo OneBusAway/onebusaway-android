@@ -284,26 +284,21 @@ public final class UIHelp {
         }
         return null;
     }
-    
+
     public static void setContentView( final Activity activity, int layoutId ) {
         activity.requestWindowFeature( Window.FEATURE_CUSTOM_TITLE );
         activity.setContentView( layoutId );
         UIHelp.applyCustomTitle( activity );
     }
 
-    private static void applyCustomTitle( final Activity activity ) {
+    private static void applyCustomTitle(final Activity activity) {
+        activity.getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
 
-        activity.getWindow().setFeatureInt( Window.FEATURE_CUSTOM_TITLE, R.layout.title );
-
-        activity.findViewById( R.id.title ).setOnClickListener( new OnClickListener() {
-
+        activity.findViewById(R.id.title).setOnClickListener(new OnClickListener() {
             @Override
-            public void onClick( View view ) {
-                MapViewActivity.start( activity, null );
+            public void onClick(View view) {
+                MapViewActivity.start(activity, null);
             }
-            
-        } );
-
+        });
     }
-
 }

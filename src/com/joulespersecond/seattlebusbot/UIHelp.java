@@ -285,10 +285,10 @@ public final class UIHelp {
         return null;
     }
 
-    public static void setContentView( final Activity activity, int layoutId ) {
-        activity.requestWindowFeature( Window.FEATURE_CUSTOM_TITLE );
-        activity.setContentView( layoutId );
-        UIHelp.applyCustomTitle( activity );
+    public static void setContentView(final Activity activity, int layoutId) {
+        activity.requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+        activity.setContentView(layoutId);
+        UIHelp.applyCustomTitle(activity);
     }
 
     private static void applyCustomTitle(final Activity activity) {

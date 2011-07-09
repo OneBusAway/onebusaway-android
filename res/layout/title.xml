@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+	<TextView
+		android:layout_height="wrap_content"
+		android:id="@+id/title"
+		android:layout_width="match_parent"
+		android:text="@string/app_name"
+		android:textStyle="bold"
+		android:textColor="#FFFFFFFF"
+		android:shadowRadius="2"
+		android:shadowColor="#FF000000"
+		android:shadowDx="0"
+		android:shadowDy="0"
+		android:layout_margin="2dp"
+	/>
+</LinearLayout>

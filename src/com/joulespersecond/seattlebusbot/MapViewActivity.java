@@ -27,6 +27,7 @@ import com.google.android.maps.OverlayItem;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaResponse;
@@ -45,6 +46,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -87,7 +89,7 @@ public class MapViewActivity extends MapActivity implements
     private ZoomControls mZoomControls;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
-    //private RouteOverlay mRouteOverlay;
+    private RouteOverlay mRouteOverlay;
 
     // Values that are initialized by either the intent extras
     // or by the frozen state.
@@ -445,8 +447,12 @@ public class MapViewActivity extends MapActivity implements
     }
 
     private void getStops() {
+        getStops(false);
+    }
+    
+    private void getStops(boolean force) {
         mStopsController.setCurrentRequest(StopsController.requestFromView(
-                mMapView, mRouteId));
+                mMapView, mRouteId), force);
     }
 
     // This is a bit annoying: runOnFirstFix() calls its runnable either
@@ -547,7 +553,10 @@ public class MapViewActivity extends MapActivity implements
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    RouteInfoActivity.start(MapViewActivity.this, route.getId());
+//                    RouteInfoActivity.start(MapViewActivity.this, route.getId());
+                    mRouteId = route.getId();
+                    mStopsController.setCurrentRequest(StopsController.requestFromView(
+                            mMapView, mRouteId), true);
                 }
             });
         }
@@ -673,6 +682,13 @@ public class MapViewActivity extends MapActivity implements
             grid.setVisibility(View.VISIBLE);
             text.setText(R.string.main_hide_routes);
         } else {
+            if (mRouteId != null){
+                mRouteId = null;
+                if (mRouteOverlay != null)
+                    mRouteOverlay.clearLines();
+                mStopsController.setCurrentRequest(StopsController.requestFromView(
+                        mMapView, null), true);
+            }
             grid.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);
         }
@@ -722,26 +738,28 @@ public class MapViewActivity extends MapActivity implements
         }
 
         if (isRouteMode()) {
-            /*
             if (mRouteOverlay == null) {
                 mRouteOverlay = new RouteOverlay();
                 mapOverlays.add(mRouteOverlay);
             }
             setRouteOverlayLines(mRouteOverlay, response);
-            */
         }
 
         mapOverlays.add(mStopOverlay);
         mMapView.postInvalidate();
     }
 
-    /*
     private static void setRouteOverlayLines(RouteOverlay overlay, ObaResponse response) {
         overlay.clearLines();
-        final ObaArray<ObaPolyline> lines = response.getData().getPolylines();
-        if (lines.length() > 0) {
-            overlay.addLine(Color.BLUE, lines.get(0));
+        
+        ObaStopsForRouteResponse stopResponse = (ObaStopsForRouteResponse)response;
+        final ObaShape[] lines = stopResponse.getShapes();
+        if (lines.length > 0) {
+            for (int j = 0; j < lines.length; j++) {
+                overlay.addLine(Color.BLUE, lines[j]);
+            }
         }
+        /*
         // Get all the stop groupings
         ObaArray<ObaStopGrouping> stopGroupings = response.getData().getStopGroupings();
         // For each stop grouping, get
@@ -758,10 +776,9 @@ public class MapViewActivity extends MapActivity implements
                     color = (color+1)%mColors.length;
                 }
             }
-
         }
+        */
     }
-    */
 
     static void goToStop(Context context, ObaStop stop) {
         StopInfoActivity.start(context, stop);

@@ -96,6 +96,7 @@ public class RouteOverlay extends Overlay {
         // TODO: This is probably too slow to do within draw() --
         // spawn off another thread to generate the path?
         final int len = mLines.size();
+        Log.d(TAG, "Drawing " + Integer.toString(len) + " line(s)");
         for (int i=0; i < len; ++i) {
             final Line line = mLines.get(i);
             final List<GeoPoint> geoPoints = line.getPoints();
@@ -125,7 +126,6 @@ public class RouteOverlay extends Overlay {
             projection.toPixels(geoPoints.get(j), pt);
             points[j*4-2] = pt.x;
             points[j*4-1] = pt.y;
-            Log.d(TAG, "Points: " + points);
             assert((j*4-1) == points.length);
 
             canvas.drawLines(points, line.getPaint());

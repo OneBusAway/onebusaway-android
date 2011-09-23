@@ -106,7 +106,7 @@ public class StopsController {
             ObaResponse response = null;
             if (info.getRouteId() != null) {
                 response = new ObaStopsForRouteRequest.Builder(mActivity, info.getRouteId())
-                                .setIncludeShapes(false)
+                                .setIncludeShapes(true)
                                 .build()
                                 .call();
             }
@@ -164,9 +164,9 @@ public class StopsController {
         return new Object[] { mCurrentRequest, mCurrentResponse };
     }
 
-    void setCurrentRequest(RequestInfo info) {
+    void setCurrentRequest(RequestInfo info, boolean force) {
         assert(info != null);
-        if (!canFulfillRequest(info) || (mCurrentResponse == null)) {
+        if (force || !canFulfillRequest(info) || (mCurrentResponse == null)) {
             mCurrentRequest = info;
             // Start the task if it isn't running.
             // If it is running, wait for it to complete and it

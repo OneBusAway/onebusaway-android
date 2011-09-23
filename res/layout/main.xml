@@ -60,14 +60,16 @@
                 android:layout_height="wrap_content"
                 android:paddingRight="5dp"
                 android:bufferType="spannable"
-                android:linksClickable="true" />
+                android:linksClickable="true"
+                android:textSize="20sp" />
             <TextView
                 android:id="@+id/show_routes"
                 android:text="@string/main_show_routes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:bufferType="spannable"
-                android:linksClickable="true" />
+                android:linksClickable="true"
+                android:textSize="20sp" />
         </LinearLayout>
         <GridView
             android:id="@+id/route_list"

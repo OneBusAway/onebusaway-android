@@ -26,13 +26,13 @@ import android.graphics.Paint;
 import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Point;
-import android.util.Log;
+// import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RouteOverlay extends Overlay {
-    private static final String TAG = "RouteOverlay";
+    // private static final String TAG = "RouteOverlay";
 
     public static final class Line {
         private final List<GeoPoint> mPoints;
@@ -96,7 +96,8 @@ public class RouteOverlay extends Overlay {
         // TODO: This is probably too slow to do within draw() --
         // spawn off another thread to generate the path?
         final int len = mLines.size();
-        Log.d(TAG, "Drawing " + Integer.toString(len) + " line(s)");
+        // Log.d(TAG, "Drawing " + Integer.toString(len) + " line(s)");
+
         for (int i=0; i < len; ++i) {
             final Line line = mLines.get(i);
             final List<GeoPoint> geoPoints = line.getPoints();

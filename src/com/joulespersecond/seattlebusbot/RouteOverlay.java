@@ -23,6 +23,8 @@ import com.joulespersecond.oba.elements.ObaShape;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Paint.Cap;
+import android.graphics.Paint.Join;
 import android.graphics.Point;
 import android.util.Log;
 
@@ -41,6 +43,8 @@ public class RouteOverlay extends Overlay {
             mPaint = new Paint();
             mPaint.setColor(color);
             mPaint.setStrokeWidth(5);
+            mPaint.setStrokeCap(Cap.ROUND);
+            mPaint.setStrokeJoin(Join.ROUND);
         }
         public List<GeoPoint> getPoints() {
             return mPoints;
@@ -104,7 +108,7 @@ public class RouteOverlay extends Overlay {
             //		(x0,y0) -> (x1,y1)
             //		(x1,y1)	-> (x2,y2)
             // So we need to double each point after the first.
-            float points[] = new float[numPts*3];
+            float points[] = new float[numPts*4-1];
 
             projection.toPixels(geoPoints.get(0), pt);
             points[0] = pt.x;
@@ -113,16 +117,16 @@ public class RouteOverlay extends Overlay {
             int j=1;
             for (; j < (numPts-1); ++j) {
                 projection.toPixels(geoPoints.get(j), pt);
-                points[j*2]   = pt.x;
-                points[j*2+1] = pt.y;
-                points[j*2+2] = pt.x;
-                points[j*2+3] = pt.y;
+                points[j*4-2] = pt.x;
+                points[j*4-1] = pt.y;
+                points[j*4+0] = pt.x;
+                points[j*4+1] = pt.y;
             }
             projection.toPixels(geoPoints.get(j), pt);
-            points[j*2]   = pt.x;
-            points[j*2+1] = pt.y;
+            points[j*4-2] = pt.x;
+            points[j*4-1] = pt.y;
             Log.d(TAG, "Points: " + points);
-            assert((j*2+2) == points.length);
+            assert((j*4-1) == points.length);
 
             canvas.drawLines(points, line.getPaint());
         }

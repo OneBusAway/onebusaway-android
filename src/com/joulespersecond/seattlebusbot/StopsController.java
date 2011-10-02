@@ -71,6 +71,10 @@ public class StopsController {
         int getZoomLevel() {
             return mZoomLevel;
         }
+        boolean isSameRoute(RequestInfo compare) {
+            return (this.mRouteId == null && compare.mRouteId == null)
+                    || (this.mRouteId != null && this.mRouteId.equals(compare.mRouteId));
+        }
         @Override
         public String toString() {
             return "Request: Center=("+mCenter+") Zoom="+mZoomLevel+" Route="+mRouteId;
@@ -164,9 +168,9 @@ public class StopsController {
         return new Object[] { mCurrentRequest, mCurrentResponse };
     }
 
-    void setCurrentRequest(RequestInfo info, boolean force) {
+    void setCurrentRequest(RequestInfo info) {
         assert(info != null);
-        if (force || !canFulfillRequest(info) || (mCurrentResponse == null)) {
+        if (!canFulfillRequest(info) || (mCurrentResponse == null)) {
             mCurrentRequest = info;
             // Start the task if it isn't running.
             // If it is running, wait for it to complete and it
@@ -213,6 +217,9 @@ public class StopsController {
         }
         if (info == null) {
             return true;
+        }
+        if (mCurrentRequest.getRouteId() != null || info.getRouteId() != null) {
+            return mCurrentRequest.isSameRoute(info);
         }
         // This is the old logic, we can do better:
         if (!mCurrentRequest.getCenter().equals(info.getCenter())) {

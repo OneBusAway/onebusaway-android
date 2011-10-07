@@ -49,8 +49,9 @@ abstract class MyBaseListActivity extends ListActivity {
 
     protected boolean mShortcutMode;
     private MyObserver mObserver;
-    // intent action name as well as permission name
-    protected static final String INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT"; 
+    // intent and permission names
+    protected static final String INSTALL_SHORTCUT_PERMISSION = "com.android.launcher.permission.INSTALL_SHORTCUT";
+    protected static final String INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
     protected static boolean mHasInstallShortcutPermission;
     
 
@@ -80,7 +81,7 @@ abstract class MyBaseListActivity extends ListActivity {
         }
         
         mHasInstallShortcutPermission = (PackageManager.PERMISSION_GRANTED ==
-                getPackageManager().checkPermission(INSTALL_SHORTCUT, getPackageName()));
+                getPackageManager().checkPermission(INSTALL_SHORTCUT_PERMISSION, getPackageName()));
     }
     @Override
     public void onDestroy() {

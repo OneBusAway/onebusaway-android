@@ -18,10 +18,8 @@ package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.oba.request.ObaResponseWithRefs;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 
@@ -152,19 +150,16 @@ public class MySearchRoutesActivity extends MySearchActivity {
     }
 
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
-        private ObaResponseWithRefs mResponse;
         public SearchResultsListAdapter(ObaResponse response) {
             super(MySearchRoutesActivity.this, Arrays
                     .asList(((ObaRoutesForLocationResponse)response).getRoutes()),
                     R.layout.route_list_item);
-            mResponse = (ObaResponseWithRefs)response;
         }
 
         @Override
         protected void setData(View view, int position) {
             TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
             TextView longNameText = (TextView)view.findViewById(R.id.long_name);
-            TextView agencyNameText = (TextView)view.findViewById(R.id.agency);
 
             ObaRoute route = mArray.get(position);
             String shortName = route.getShortName();
@@ -179,8 +174,6 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
             shortNameText.setText(shortName);
             longNameText.setText(longName);
-            ObaAgency agency = mResponse.getAgency(route.getAgencyId());
-            agencyNameText.setText(agency.getName());
         }
     }
 

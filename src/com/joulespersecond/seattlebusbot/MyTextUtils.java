@@ -12,20 +12,25 @@ public final class MyTextUtils {
         if (str == null) {
             return null;
         }
-        boolean space = true;
+        // skip if already contains mixed case
+        if (!str.equals(str.toLowerCase()) && !str.equals(str.toUpperCase())) {
+            return str;
+        }
+
+        boolean isSeparator = true;
         StringBuilder builder = new StringBuilder(str);
         final int len = builder.length();
 
         for (int i=0; i < len; ++i) {
             char c = builder.charAt(i);
-            if (space) {
-                if (!Character.isWhitespace(c)) {
+            if (isSeparator) {
+                if (Character.isLetterOrDigit(c)) {
                     // Convert to title case and switch out of whitespace mode.
                     builder.setCharAt(i, Character.toTitleCase(c));
-                    space = false;
+                    isSeparator = false;
                 }
-            } else if (Character.isWhitespace(c)) {
-                space = true;
+            } else if (!Character.isLetterOrDigit(c)) {
+                isSeparator = true;
             } else {
                 builder.setCharAt(i, Character.toLowerCase(c));
             }
@@ -33,5 +38,4 @@ public final class MyTextUtils {
 
         return builder.toString();
     }
-
 }

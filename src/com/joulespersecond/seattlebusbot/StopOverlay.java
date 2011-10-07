@@ -195,6 +195,8 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         }
         else {
             setFocus(item);
+            // fix odd behavior where previously selected item is not re-highlighted
+            setLastFocusedIndex(-1);
         }
         return true;
     }

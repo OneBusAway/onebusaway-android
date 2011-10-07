@@ -16,11 +16,12 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.Projection;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
-import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 
@@ -33,15 +34,17 @@ import android.graphics.Point;
 // import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RouteOverlay {
-    // private static final String TAG = "RouteOverlay";
+    @SuppressWarnings("unused")
+    private static final String TAG = "RouteOverlay";
 
     protected final MapView mMapView;
     protected LineOverlay mLineOverlay;
     protected String mRouteId;
+    protected String mZoomToRouteId;
+    protected ObaRoute mRoute;
 
     private static int mLineOverlayColor;
 
@@ -54,40 +57,37 @@ public class RouteOverlay {
         return mRouteId;
     }
 
-    public void setRouteId(String routeId) {
+    public void setRouteId(String routeId, boolean willZoom) {
         mRouteId = routeId;
+        if (willZoom)
+            mZoomToRouteId = routeId;
     }
 
-    /*
-     * Display or hide line of route using RouteOverlay,
-     * returning true when needing to make new request
-     */
-    public boolean beginShowRoute(String routeId) {
-        if (routeId != null) {
-            if (mLineOverlay == null)
-                attach();
-            else if (isCurrentRoute(routeId))
-                return false;
-
-            mRouteId = routeId;
-            return true;
-        } else {
-            clearRoute();
-        }
-        return false;
+    public ObaRoute getRoute() {
+        return mRoute;
     }
 
     /*
      * Update the route once the new response has been obtained
      */
-    public void completeShowRoute(ObaResponse response) {
-        if (response != null && isStopsForRouteResponse(response)) {
-            ObaStopsForRouteResponse routeResponse = (ObaStopsForRouteResponse)response;
-            if (mLineOverlay == null)
-                attach();
-            else
-                mLineOverlay.clearLines();
-            mLineOverlay.addLines(mLineOverlayColor, routeResponse.getShapes());
+    public void completeShowRoute(ObaStopsForRouteResponse response) {
+        List<Overlay> overlays = mMapView.getOverlays();
+        if (mLineOverlay != null)
+            overlays.remove(mLineOverlay);
+        if (response != null) {
+            String routeId = response.getRouteId();
+            mLineOverlay = new LineOverlay();
+            
+            mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
+            overlays.add(mLineOverlay);
+
+            // wait to zoom till we have the right response
+            if (mZoomToRouteId != null && mZoomToRouteId.equals(routeId)) {
+                // route zoom only once
+                mZoomToRouteId = null;
+                mLineOverlay.zoom(mMapView.getController());
+            }
+            mRoute = response.getRoute(routeId); 
         }
 
         // TODO: are the polylines in "stopGroups" just subsets of the polylines in "entry"?
@@ -121,47 +121,12 @@ public class RouteOverlay {
     public void clearRoute() {
         // hide route
         mRouteId = null;
+        mRoute = null;
         if (mLineOverlay != null) {
             mMapView.getOverlays().remove(mLineOverlay);
             mLineOverlay = null;
         }
         mMapView.invalidate();
-    }
-
-    /*
-     * Allow immediate feedback of current response by filtering
-     * current response to the specific route
-     */
-    public List<ObaStop> filterStops(List<ObaStop> stops) {
-        List<ObaStop> stopList = stops;
-        if (isRouteMode()) {
-            stopList = new ArrayList<ObaStop>();
-            for (ObaStop stop : stops) {
-                if (Arrays.asList(stop.getRouteIds()).contains(getRouteId()))
-                    stopList.add(stop);
-            }
-            if (stopList.size() > 0) // don't bother if nothing found
-                stops = stopList;
-        }
-        return stopList;
-    }
-
-    /*
-     * Detach the overlay from the view
-     */
-    public void detach() {
-        List<Overlay> overlays = mMapView.getOverlays();
-        if (mLineOverlay != null && overlays.size() > 0 && overlays.contains(mLineOverlay))
-            overlays.remove(mLineOverlay);
-        mLineOverlay = null;
-    }
-
-    /*
-     * Attach the overlay to the view
-     */
-    public void attach() {
-        mLineOverlay = new LineOverlay();
-        mMapView.getOverlays().add(mLineOverlay);
     }
 
     /*
@@ -171,20 +136,6 @@ public class RouteOverlay {
      */
     public boolean isRouteMode() {
         return getRouteId() != null;
-    }
-
-    /*
-     * Check that response makes sense for routeId value (used from onResume())
-     */
-    public boolean validateResponseForRoute(ObaResponse response) {
-        if (!isStopsForRouteResponse(response)) {
-            return isRouteMode();
-        } else {
-            if (!isRouteMode())
-                return false;
-            ObaStopsForRouteResponse routeResponse = (ObaStopsForRouteResponse)response;
-            return (routeResponse.getRoute(mRouteId) != null);
-        }
     }
 
     /*
@@ -232,6 +183,7 @@ public class RouteOverlay {
             mLines.add(new Line(color, points));
             // TODO: Invalidate
         }
+
         public void addLine(int color, ObaShape line) {
             List<GeoPoint> points = line.getPoints();
             mLines.add(new Line(color, points));
@@ -300,6 +252,33 @@ public class RouteOverlay {
 
                 canvas.drawLines(points, line.getPaint());
             }
+        }
+
+        public void zoom(MapController mapCtrl) {
+            if (mapCtrl == null)
+                return;
+
+            int minLat = Integer.MAX_VALUE;
+            int maxLat = Integer.MIN_VALUE;
+            int minLon = Integer.MAX_VALUE;
+            int maxLon = Integer.MIN_VALUE;
+
+            for (Line line : mLines) {
+                for (GeoPoint item : line.mPoints) {
+                    int lat = (int)(item.getLatitudeE6());
+                    int lon = (int)(item.getLongitudeE6());
+
+                    maxLat = Math.max(lat, maxLat);
+                    minLat = Math.min(lat, minLat);
+                    maxLon = Math.max(lon, maxLon);
+                    minLon = Math.min(lon, minLon);
+                }
+            }
+
+            mapCtrl.zoomToSpan(Math.abs(maxLat - minLat),
+                    Math.abs(maxLon - minLon));
+            mapCtrl.animateTo(new GeoPoint((maxLat + minLat) / 2,
+                    (maxLon + minLon) / 2));
         }
     }
 }

@@ -16,13 +16,16 @@
 
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 
+import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -37,9 +40,40 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import java.util.Arrays;
 
 public class MySearchRoutesActivity extends MySearchActivity {
+    private static final String RETURN_ROUTE = ".ReturnRoute";
+    private static final String LOCATION_LAT = ".LocationLat";
+    private static final String LOCATION_LON = ".LocationLon";
+    public static final String RESULT_ROUTE_ID = ".RouteId";
+
     private static final String TAG = "MySearchRoutesActivity";
 
     public static final String TAB_NAME = "search";
+    protected boolean mMapMode = false;
+    protected GeoPoint mLocation = null;
+
+    public static final Intent makeIntent(Context context, GeoPoint location) {
+        Intent intent = new Intent(context, MySearchRoutesActivity.class);
+        intent.putExtra(RETURN_ROUTE, true);
+        if (location != null) {
+            intent.putExtra(LOCATION_LAT, location.getLatitudeE6());
+            intent.putExtra(LOCATION_LON, location.getLongitudeE6());
+        }
+        return intent;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        mMapMode = intent.getBooleanExtra(RETURN_ROUTE, false);
+        if (mMapMode) {
+            int lat = intent.getIntExtra(LOCATION_LAT, 0);
+            int lon = intent.getIntExtra(LOCATION_LON, 0);
+            if (lat != 0 && lon != 0) {
+                mLocation = new GeoPoint(lat, lon);
+            }
+        }
+    }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -52,6 +86,11 @@ public class MySearchRoutesActivity extends MySearchActivity {
         if (isShortcutMode()) {
             Intent intent = RouteInfoActivity.makeIntent(this, routeId);
             makeShortcut(routeName, intent);
+        } else if (mMapMode) {
+            Intent resultData = new Intent();
+            resultData.putExtra(RESULT_ROUTE_ID, routeId);
+            setResult(RESULT_OK, resultData);
+            finish();
         } else {
             RouteInfoActivity.start(this, routeId);
         }
@@ -124,13 +163,13 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
             ObaRoute route = mArray.get(position);
             String shortName = route.getShortName();
-            String longName = route.getLongName();
+            String longName = MyTextUtils.toTitleCase(route.getLongName());
 
             if (TextUtils.isEmpty(shortName)) {
                 shortName = longName;
             }
             if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
-                longName = route.getDescription();
+                longName = MyTextUtils.toTitleCase(route.getDescription());
             }
 
             shortNameText.setText(shortName);
@@ -165,8 +204,11 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
     @Override
     protected ObaResponse doFindInBackground(String routeId) {
+        GeoPoint location = mLocation;
+        if (location == null)
+            location = UIHelp.getLocation(this);
         ObaRoutesForLocationResponse response =
-            new ObaRoutesForLocationRequest.Builder(this, UIHelp.getLocation(this))
+            new ObaRoutesForLocationRequest.Builder(this, location)
                 .setQuery(routeId)
                 .build()
                 .call();

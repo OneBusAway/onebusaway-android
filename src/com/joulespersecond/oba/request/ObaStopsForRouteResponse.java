@@ -20,8 +20,10 @@ import com.joulespersecond.oba.elements.ObaReferencesElement;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaShapeElement;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.elements.ObaStopGroup;
 import com.joulespersecond.oba.elements.ObaStopGrouping;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,6 +34,7 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
     private static final class Entry {
         private static final Entry EMPTY_OBJECT = new Entry();
 
+        private final String routeId;
         private final String[] stopIds;
         private final ObaStopGrouping[] stopGroupings;
         private final ObaShapeElement[] polylines;
@@ -40,6 +43,7 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
             stopIds = new String[] {};
             stopGroupings = ObaStopGrouping.EMPTY_ARRAY;
             polylines = ObaShapeElement.EMPTY_ARRAY;
+            routeId = null;
         }
     }
 
@@ -53,6 +57,13 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
 
     private ObaStopsForRouteResponse() {
         data = Data.EMPTY_OBJECT;
+    }
+
+    /**
+     * Returns the route this response describes
+     */
+    public String getRouteId() {
+        return data.entry.routeId;
     }
 
     /**
@@ -74,6 +85,33 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
      */
     public ObaStopGrouping[] getStopGroupings() {
         return data.entry.stopGroupings;
+    }
+
+    /**
+     * Search for a stop within the stop groups
+     * @param stopId
+     * @return Returns the first ObaStopGroup that contains the specified stop
+     */
+    public ObaStopGroup getGroupForStop(String stopId) {
+        ObaStopGrouping[] stopGroupings = getStopGroupings();
+        if (stopGroupings == null) {
+            return null;
+        }
+
+        for (ObaStopGrouping grouping : stopGroupings) {
+            ObaStopGroup[] stopGroups = grouping.getStopGroups();
+            if (stopGroups == null) {
+                continue;
+            }
+
+            for (ObaStopGroup stopGroup : stopGroups) {
+                if (Arrays.asList(stopGroup.getStopIds()).contains(stopId)) {
+                    return stopGroup;
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override

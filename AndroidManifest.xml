@@ -89,7 +89,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".MyStarredRoutesActivity" />
-        <activity android:name=".MySearchRoutesActivity" />
+        <activity android:name=".MySearchRoutesActivity"
+        		  android:theme="@style/android:Theme.Dialog" />
 
         <activity android:name=".MultiChoiceActivity"
                   android:theme="@android:style/Theme.Dialog">

@@ -50,6 +50,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.Spannable;
+import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -85,13 +86,13 @@ public class MapViewActivity extends MapActivity implements
     MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
     private ZoomControls mZoomControls;
+    private View mPopup;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
-    //private RouteOverlay mRouteOverlay;
+    private RouteOverlay mRouteOverlay;
 
     // Values that are initialized by either the intent extras
     // or by the frozen state.
-    private String mRouteId;
     private String mFocusStopId;
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
@@ -106,6 +107,9 @@ public class MapViewActivity extends MapActivity implements
     private static final int WHATSNEW_DIALOG = 2;
     private static final int NOLOCATION_DIALOG = 3;
     private static final int OUTOFRANGE_DIALOG = 4;
+
+    private static final int REQUEST_NO_LOCATION = 41;
+    private static final int REQUEST_SEARCH_RESULT = 42;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -191,11 +195,18 @@ public class MapViewActivity extends MapActivity implements
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
+        mPopup = findViewById(R.id.map_popup);
+        // pop-up was leaking clicks through to the map
+        mPopup.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) { /* no-op */ }
+        });
         mMapView.setBuiltInZoomControls(false);
         mZoomControls = (ZoomControls)findViewById(R.id.zoom_controls);
         mZoomControls.setOnZoomInClickListener(mOnZoomIn);
         mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
         mStopsController = new StopsController(this, this);
+        mRouteOverlay = new RouteOverlay(this, mMapView);
 
         // Initialize the links
         UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
@@ -205,14 +216,16 @@ public class MapViewActivity extends MapActivity implements
         // all of the UI is set-up/torn down in onResume/onPause
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            mRouteId = bundle.getString(ROUTE_ID);
             mFocusStopId = bundle.getString(FOCUS_STOP_ID);
             mapValuesFromBundle(bundle);
+            mRouteOverlay.setRouteId(bundle.getString(ROUTE_ID), true);
         }
         if (savedInstanceState != null) {
             mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
             mShowRoutes = savedInstanceState.getBoolean(SHOW_ROUTES);
             mapValuesFromBundle(savedInstanceState);
+            mRouteOverlay.setRouteId(savedInstanceState.getString(ROUTE_ID),
+                    false);
         }
 
         mStopsController
@@ -300,23 +313,17 @@ public class MapViewActivity extends MapActivity implements
         ObaResponse response = mStopsController.getResponse();
         if (response != null) {
             setOverlays(response);
-            if (mStopOverlay != null) {
+            if (mStopOverlay != null && mFocusStopId != null) {
                 showRoutes(null, mShowRoutes);
             }
-        } else if (isRouteMode()) {
-            getStops();
         }
 
-        // We only care about watching the map when we're not in route mode.
-        if (!isRouteMode()) {
-            if (prevCenter == null) {
-                setMyLocation();
-            } else {
-                getStops();
-            }
-            mMapWatcher = new MapWatcher(mMapView, this);
-            mMapWatcher.start();
+        if (prevCenter == null && !mRouteOverlay.isRouteMode()) {
+            setMyLocation();
+        } else {
+            getStops();
         }
+        watchMap(true);
 
         super.onResume();
     }
@@ -326,10 +333,7 @@ public class MapViewActivity extends MapActivity implements
         mLocationOverlay.disableMyLocation();
         mStopsController.cancel();
 
-        if (mMapWatcher != null) {
-            mMapWatcher.stop();
-            mMapWatcher = null;
-        }
+        watchMap(false);
 
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
@@ -348,6 +352,7 @@ public class MapViewActivity extends MapActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         // The only thing we really need to save it the focused stop ID.
         outState.putString(FOCUS_STOP_ID, mFocusStopId);
+        outState.putString(ROUTE_ID, mRouteOverlay.getRouteId());
         outState.putBoolean(SHOW_ROUTES, mShowRoutes);
         GeoPoint center = mMapView.getMapCenter();
         outState.putDouble(CENTER_LAT, center.getLatitudeE6() / 1E6);
@@ -393,8 +398,21 @@ public class MapViewActivity extends MapActivity implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // Clear the map center so we can get the user's location again
-        mMapCenter = null;
+        switch (requestCode) {
+        case REQUEST_NO_LOCATION:
+            // Clear the map center so we can get the user's location again
+            mMapCenter = null;
+            break;
+
+        case REQUEST_SEARCH_RESULT:
+            if (resultCode == RESULT_OK) {
+                String routeId = data.getStringExtra(MySearchRoutesActivity.RESULT_ROUTE_ID);
+                if (routeId != null) {
+                    mRouteOverlay.setRouteId(routeId, true);
+                    getStops();
+                }
+            }
+        }
     }
 
     //
@@ -437,6 +455,7 @@ public class MapViewActivity extends MapActivity implements
     @Override
     public void onRequestFulfilled(ObaResponse response) {
         setOverlays(response);
+
         if (mStopWait != null) {
             synchronized (mStopWait) {
                 mStopWait.notifyAll();
@@ -446,7 +465,7 @@ public class MapViewActivity extends MapActivity implements
 
     private void getStops() {
         mStopsController.setCurrentRequest(StopsController.requestFromView(
-                mMapView, mRouteId));
+                mMapView, mRouteOverlay.getRouteId()));
     }
 
     // This is a bit annoying: runOnFirstFix() calls its runnable either
@@ -489,7 +508,7 @@ public class MapViewActivity extends MapActivity implements
                         R.string.main_location_unavailable, Toast.LENGTH_LONG)
                         .show();
                 // Just get stops I guess
-                if (!isRouteMode()) {
+                if (!mRouteOverlay.isRouteMode()) {
                     getStops();
                 }
             }
@@ -526,13 +545,16 @@ public class MapViewActivity extends MapActivity implements
         mapCtrl.animateTo(point);
         mapCtrl.setZoom(16);
         mMapZoom = 16;
-        if (!isRouteMode()) {
+        if (!mRouteOverlay.isRouteMode()) {
             getStops();
         }
     }
 
     private class RouteArrayAdapter extends
             Adapters.BaseArrayAdapter2<ObaRoute> {
+        // track to reset background
+        private View currentSelectedView;
+
         public RouteArrayAdapter(List<ObaRoute> routes) {
             super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
         }
@@ -544,17 +566,41 @@ public class MapViewActivity extends MapActivity implements
             final ObaRoute route = mArray.get(position);
             shortName.setText(UIHelp.getRouteDisplayName(route));
 
+            final String currentRouteId = route.getId();
+            if (mRouteOverlay.isCurrentRoute(currentRouteId)) {
+                // highlight already selected route
+                view.setBackgroundResource(R.drawable.main_popup_route_hl);
+                currentSelectedView = view;
+            }
+
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    RouteInfoActivity.start(MapViewActivity.this, route.getId());
+                    final String selectedRouteId = route.getId();
+
+                    if (!mRouteOverlay.isCurrentRoute(selectedRouteId)) {
+                        // Selecting a route
+                        if (currentSelectedView != null)
+                            currentSelectedView
+                                    .setBackgroundResource(R.drawable.main_popup_route_bg);
+                        currentSelectedView = view;
+                        view.setBackgroundResource(R.drawable.main_popup_route_hl);
+                        mRouteOverlay.setRouteId(selectedRouteId, false);
+                        getStops();
+                    } else {
+                        // UN-selecting a route
+                        view.setBackgroundResource(R.drawable.main_popup_route_bg);
+                        currentSelectedView = null;
+                        mRouteOverlay.clearRoute();
+                        getStops();
+                    }
                 }
             });
         }
     }
 
     void populateRoutes(ObaStop stop, boolean force) {
-        GridView grid = (GridView)findViewById(R.id.route_list);
+        GridView grid = (GridView)mPopup.findViewById(R.id.route_list);
         if (grid.getVisibility() != View.GONE || force) {
             ObaResponseWithRefs response = (ObaResponseWithRefs)mStopsController
                     .getResponse();
@@ -580,10 +626,9 @@ public class MapViewActivity extends MapActivity implements
                         mFocusStopId = null;
                         return;
                     }
-                    final View popup = findViewById(R.id.map_popup);
                     if (newFocus == null) {
                         mFocusStopId = null;
-                        popup.setVisibility(View.GONE);
+                        setPopup(mRouteOverlay.getRoute(), null);
                         return;
                     }
 
@@ -591,18 +636,7 @@ public class MapViewActivity extends MapActivity implements
                     final ObaStop stop = item.getStop();
                     mFocusStopId = stop.getId();
 
-                    // Is this a favorite?
-                    TextView stopName = (TextView)popup
-                            .findViewById(R.id.stop_name);
-                    mStopUserMap.setView2(stopName, stop.getId(), stop
-                            .getName());
-                    UIHelp.setStopDirection(popup.findViewById(R.id.direction),
-                            stop.getDirection(), false);
-
-                    populateRoutes(stop, false);
-
-                    // Right now the popup is always at the top of the screen.
-                    popup.setVisibility(View.VISIBLE);
+                    setPopup(mRouteOverlay.getRoute(), stop);
                 }
             });
         }
@@ -624,6 +658,13 @@ public class MapViewActivity extends MapActivity implements
     private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
             showRoutes((TextView)v, !mShowRoutes);
+        }
+    };
+
+    private final ClickableSpan mOnHideRoute = new ClickableSpan() {
+        public void onClick(View v) {
+            mRouteOverlay.clearRoute();
+            getStops();
         }
     };
 
@@ -684,29 +725,30 @@ public class MapViewActivity extends MapActivity implements
 
     private void setOverlays(ObaResponse response) {
         if (response.getCode() != ObaApi.OBA_OK) {
+            Log.d(TAG, String.format("setOverlays: unexpected response = %d",
+                    response.getCode()));
             return;
         }
+
         List<ObaStop> stops;
-        if (response instanceof ObaStopsForRouteResponse) {
-            stops = ((ObaStopsForRouteResponse)response).getStops();
+        ObaStop stop = null;
+        ObaStopsForRouteResponse routeResponse = null;
+        if (RouteOverlay.isStopsForRouteResponse(response)) {
+            routeResponse = (ObaStopsForRouteResponse)response;
+            stops = routeResponse.getStops();
+            mRouteOverlay.completeShowRoute(routeResponse);
         } else {
-            assert(response instanceof ObaStopsForLocationResponse);
+            assert (response instanceof ObaStopsForLocationResponse);
             ObaStopsForLocationResponse stopsResponse = (ObaStopsForLocationResponse)response;
             if (stopsResponse.getOutOfRange() && mWarnOutOfRange) {
                 showDialog(OUTOFRANGE_DIALOG);
                 return;
             }
-
             stops = Arrays.asList(stopsResponse.getStops());
         }
 
-        List<Overlay> mapOverlays = mMapView.getOverlays();
         // If there is an existing StopOverlay, remove it.
-        if (mFocusStopId == null) {
-            final View popup = findViewById(R.id.map_popup);
-            popup.setVisibility(View.GONE);
-        }
-
+        List<Overlay> mapOverlays = mMapView.getOverlays();
         if (mStopOverlay != null) {
             mapOverlays.remove(mStopOverlay);
             mStopOverlay = null;
@@ -715,53 +757,34 @@ public class MapViewActivity extends MapActivity implements
         mStopOverlay = new StopOverlay(stops, this);
         mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
         if (mFocusStopId != null) {
-            if (!mStopOverlay.setFocusById(mFocusStopId)) {
-                final View popup = findViewById(R.id.map_popup);
-                popup.setVisibility(View.GONE);
-            }
+            mStopOverlay.setFocusById(mFocusStopId);
+            stop = ((ObaResponseWithRefs)response).getStop(mFocusStopId);
+            // if (routeResponse != null) {
+            // ObaStopGroup group = routeResponse.getGroupForStop(mFocusStopId);
+            // if (group != null)
+            // Log.d(TAG, "StopGroup: " + group.getName());
+            // }
         }
-
-        if (isRouteMode()) {
-            /*
-            if (mRouteOverlay == null) {
-                mRouteOverlay = new RouteOverlay();
-                mapOverlays.add(mRouteOverlay);
-            }
-            setRouteOverlayLines(mRouteOverlay, response);
-            */
-        }
-
         mapOverlays.add(mStopOverlay);
+        setPopup(mRouteOverlay.getRoute(), stop);
+
         mMapView.postInvalidate();
     }
 
     /*
-    private static void setRouteOverlayLines(RouteOverlay overlay, ObaResponse response) {
-        overlay.clearLines();
-        final ObaArray<ObaPolyline> lines = response.getData().getPolylines();
-        if (lines.length() > 0) {
-            overlay.addLine(Color.BLUE, lines.get(0));
-        }
-        // Get all the stop groupings
-        ObaArray<ObaStopGrouping> stopGroupings = response.getData().getStopGroupings();
-        // For each stop grouping, get
-        int color = 0;
-        final int numGroupings = stopGroupings.length();
-        for (int i=0; i < numGroupings; ++i) {
-            final ObaArray<ObaStopGroup> groups = stopGroupings.get(i).getStopGroups();
-            final int numGroups = groups.length();
-            for (int j=0; j < numGroups; ++j) {
-                final ObaArray<ObaPolyline> lines = groups.get(j).getPolylines();
-                final int numLines = lines.length();
-                for (int k=0; k < numLines; ++k) {
-                    overlay.addLine(mColors[color], lines.get(k));
-                    color = (color+1)%mColors.length;
-                }
-            }
-
+     * Start or stop the MapWatcher
+     */
+    protected void watchMap(boolean watch) {
+        if (watch) {
+            if (mMapWatcher == null)
+                mMapWatcher = new MapWatcher(mMapView, this);
+            mMapWatcher.start();
+        } else {
+            if (mMapWatcher != null)
+                mMapWatcher.stop();
+            mMapWatcher = null;
         }
     }
-    */
 
     static void goToStop(Context context, ObaStop stop) {
         StopInfoActivity.start(context, stop);
@@ -834,8 +857,9 @@ public class MapViewActivity extends MapActivity implements
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        startActivityForResult(new Intent(
-                                Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                        startActivityForResult(
+                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+                                REQUEST_NO_LOCATION);
                         dismissDialog(NOLOCATION_DIALOG);
                     }
                 });
@@ -845,9 +869,7 @@ public class MapViewActivity extends MapActivity implements
                     public void onClick(DialogInterface dialog, int which) {
                         // Ok, I suppose we can just try looking from where we
                         // are.
-                        if (!isRouteMode()) {
-                            getStops();
-                        }
+                        getStops();
                         dismissDialog(NOLOCATION_DIALOG);
                     }
                 });
@@ -868,7 +890,8 @@ public class MapViewActivity extends MapActivity implements
     private Dialog createOutOfRangeDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
-        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title, null));
+        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
+                null));
 
         builder.setItems(R.array.agency_locations,
                 new DialogInterface.OnClickListener() {
@@ -976,15 +999,96 @@ public class MapViewActivity extends MapActivity implements
         mMapZoom = bundle.getInt(MAP_ZOOM, mMapZoom);
     }
 
-    private boolean isRouteMode() {
-        return mRouteId != null;
-    }
-
     @Override
     public boolean onSearchRequested() {
-        Intent intent = new Intent(this, MyRoutesActivity.class);
-        intent.setData(MyTabActivityBase.getDefaultTabUri(MySearchRoutesActivity.TAB_NAME));
-        startActivity(intent);
+        GeoPoint location = mMapCenter;
+        // show popup to search for routes near current map center
+        if (mMapView != null) {
+            location = mMapView.getMapCenter();
+        }
+        startActivityForResult(MySearchRoutesActivity.makeIntent(this, location),
+                REQUEST_SEARCH_RESULT);
         return true;
+    }
+
+    /**
+     * show popup with a route and/or a stop
+     * @param route
+     * @param stop
+     */
+    protected void setPopup(final ObaRoute route, final ObaStop stop) {
+        if (route == null && stop == null) {
+            mPopup.setVisibility(View.GONE);
+        } else if (route == null && stop != null) {
+            setPopup(stop, null, null);
+        } else if (route != null && stop == null) {
+            setPopup(route);
+        } else {
+            // mostly stop logic
+            setPopup(stop, UIHelp.getRouteDescription(route), route.getShortName());
+        }
+    }
+
+    protected void setPopup(final ObaRoute route) {
+        TextView nameView = (TextView)mPopup.findViewById(R.id.stop_name);
+        nameView.setText(UIHelp.getRouteDescription(route));
+        nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+        setViewVisibilityById(mPopup, R.id.direction, View.GONE);
+        setViewVisibilityById(mPopup, R.id.show_arrival_info, View.GONE);
+        setViewVisibilityById(mPopup, R.id.route_list, View.GONE);
+        setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
+
+        TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
+        text.setText(R.string.main_hide_routes);
+        Log.d(TAG, "text " + text.getText());
+        UIHelp.setChildClickable(this, R.id.show_routes, mOnHideRoute);
+
+        text = (TextView)mPopup.findViewById(R.id.route_short_name);
+        text.setText(UIHelp.getRouteDisplayName(route));
+
+        mPopup.setVisibility(View.VISIBLE);
+    }
+
+    protected void setPopup(final ObaStop stop, String routeLong, String routeShort) {
+        setViewVisibilityById(mPopup, R.id.show_arrival_info, View.VISIBLE);
+
+        TextView nameView = (TextView)mPopup.findViewById(R.id.stop_name);
+        TextView direction = (TextView)mPopup.findViewById(R.id.direction);
+        TextView routeNumView = (TextView)mPopup
+                .findViewById(R.id.route_short_name);
+
+        if (TextUtils.isEmpty(routeLong) && TextUtils.isEmpty(routeShort)) {
+            // Is this a favorite?
+            mStopUserMap.setView2(nameView, stop.getId(), stop.getName(), true);
+            UIHelp.setStopDirection(direction, stop.getDirection(), false);
+            setViewVisibilityById(mPopup, R.id.route_container, View.GONE);
+        } else {
+            nameView.setText(routeLong);
+            nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+            mStopUserMap.setView2(direction, stop.getId(), stop.getName(), false);
+            routeNumView.setText(routeShort);
+            setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
+        }
+        direction.setVisibility(View.VISIBLE);
+
+        TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
+        if (mShowRoutes) {
+            populateRoutes(stop, mShowRoutes);
+            setViewVisibilityById(mPopup, R.id.route_list, View.VISIBLE);
+            text.setText(R.string.main_hide_routes);
+        } else {
+            text.setText(R.string.main_show_routes);
+        }
+        Log.d(TAG, "text " + text.getText());
+        UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
+
+        // Right now the popup is always at the top of the screen.
+        mPopup.setVisibility(View.VISIBLE);
+    }
+
+    protected void setViewVisibilityById(View parent, int id, int visibility) {
+        View view = parent.findViewById(id);
+        view.setVisibility(visibility);
     }
 }

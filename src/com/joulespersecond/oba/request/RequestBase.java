@@ -106,7 +106,7 @@ public class RequestBase {
         }
     }
 
-    private <T> T createFromError(Class<T> cls, int code, String error) {
+    protected <T> T createFromError(Class<T> cls, int code, String error) {
         // This is not very efficient, but it's an error case and it's easier
         // than instantiating one ourselves.
         final String jsonErr =  ObaApi.getGson().toJson(error);

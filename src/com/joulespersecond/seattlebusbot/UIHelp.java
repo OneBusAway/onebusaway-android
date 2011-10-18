@@ -94,6 +94,19 @@ public final class UIHelp {
         return "";
     }
 
+    public static final String getRouteDescription(ObaRoute route) {
+        String shortName = route.getShortName();
+        String longName = route.getLongName();
+
+        if (TextUtils.isEmpty(shortName)) {
+            shortName = longName;
+        }
+        if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+            longName = route.getDescription();
+        }
+        return MyTextUtils.toTitleCase(longName);
+    }
+
     // Shows or hides the view, depending on whether or not the direction is
     // available.
     public static final void setStopDirection(View v, String direction, boolean show) {
@@ -134,13 +147,13 @@ public final class UIHelp {
 
         public void setView(View stopRoot, String stopId, String stopName) {
             TextView nameView = (TextView)stopRoot.findViewById(R.id.stop_name);
-            setView2(nameView, stopId, stopName);
+            setView2(nameView, stopId, stopName, true);
         }
 
         /**
          * This should be used with compound drawables
          */
-        public void setView2(TextView nameView, String stopId, String stopName) {
+        public void setView2(TextView nameView, String stopId, String stopName, boolean showIcon) {
             ContentValues values = mMap.getValues(stopId);
             int icon = 0;
             if (values != null) {
@@ -150,7 +163,7 @@ public final class UIHelp {
 
                 nameView.setText(TextUtils.isEmpty(userName) ?
                         MyTextUtils.toTitleCase(stopName) : userName);
-                icon = favorite ? R.drawable.star_on : 0;
+                icon = favorite && showIcon ? R.drawable.star_on : 0;
             } else {
                 nameView.setText(MyTextUtils.toTitleCase(stopName));
             }

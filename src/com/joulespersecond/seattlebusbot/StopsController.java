@@ -71,6 +71,10 @@ public class StopsController {
         int getZoomLevel() {
             return mZoomLevel;
         }
+        boolean isSameRoute(RequestInfo compare) {
+            return (this.mRouteId == null && compare.mRouteId == null)
+                    || (this.mRouteId != null && this.mRouteId.equals(compare.mRouteId));
+        }
         @Override
         public String toString() {
             return "Request: Center=("+mCenter+") Zoom="+mZoomLevel+" Route="+mRouteId;
@@ -106,7 +110,7 @@ public class StopsController {
             ObaResponse response = null;
             if (info.getRouteId() != null) {
                 response = new ObaStopsForRouteRequest.Builder(mActivity, info.getRouteId())
-                                .setIncludeShapes(false)
+                                .setIncludeShapes(true)
                                 .build()
                                 .call();
             }
@@ -213,6 +217,9 @@ public class StopsController {
         }
         if (info == null) {
             return true;
+        }
+        if (mCurrentRequest.getRouteId() != null || info.getRouteId() != null) {
+            return mCurrentRequest.isSameRoute(info);
         }
         // This is the old logic, we can do better:
         if (!mCurrentRequest.getCenter().equals(info.getCenter())) {

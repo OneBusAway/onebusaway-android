@@ -18,12 +18,16 @@ package com.joulespersecond.seattlebusbot;
 import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.DateUtils;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.View;
 import android.view.Window;
 import android.widget.SimpleCursorAdapter;
 
@@ -45,6 +49,11 @@ abstract class MyBaseListActivity extends ListActivity {
 
     protected boolean mShortcutMode;
     private MyObserver mObserver;
+    // intent and permission names
+    protected static final String INSTALL_SHORTCUT_PERMISSION = "com.android.launcher.permission.INSTALL_SHORTCUT";
+    protected static final String INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
+    protected static boolean mHasInstallShortcutPermission;
+    
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,6 +79,9 @@ abstract class MyBaseListActivity extends ListActivity {
             mObserver = new MyObserver();
             cr.registerContentObserver(uri, true, mObserver);
         }
+        
+        mHasInstallShortcutPermission = (PackageManager.PERMISSION_GRANTED ==
+                getPackageManager().checkPermission(INSTALL_SHORTCUT_PERMISSION, getPackageName()));
     }
     @Override
     public void onDestroy() {
@@ -79,7 +91,15 @@ abstract class MyBaseListActivity extends ListActivity {
         }
         super.onDestroy();
     }
+    
+    protected static final int CONTEXT_MENU_CREATE_SHORTCUT = 15;
 
+    public void addShortcutContextMenuItem(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+        if (!mShortcutMode && mHasInstallShortcutPermission){
+            menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0, R.string.my_context_create_shortcut);
+        }
+    }
+    
     protected Cursor recentQuery(final Uri uri,
                 final String[] projection,
                 final String accessTime,

@@ -24,7 +24,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:clickable="true"
-        android:apiKey="0FyPlkxcKszF8kGff6452hjOza5Y22wpBnGYuIg"
+        android:apiKey="@string/apiKey"
         android:focusableInTouchMode="true"
     />
 
@@ -39,11 +39,30 @@
         android:background="@drawable/map_popup"
         android:visibility="gone">
 
-        <TextView
-            android:id="@+id/stop_name"
-            style="@style/HeaderText"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <LinearLayout
+            	android:id="@+id/route_container"
+            	android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:paddingRight="5sp"
+	            android:orientation="horizontal">
+		        <TextView
+		            android:id="@+id/route_short_name"
+		            android:background="@drawable/main_popup_route_bg"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:paddingLeft="5sp"
+		            android:paddingRight="5sp" />
+		    </LinearLayout>
+	        <TextView
+	            android:id="@+id/stop_name"
+	            style="@style/HeaderText"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content" />
+		</LinearLayout>
 
         <TextView android:id="@+id/direction"
             android:layout_width="wrap_content"
@@ -60,14 +79,16 @@
                 android:layout_height="wrap_content"
                 android:paddingRight="5dp"
                 android:bufferType="spannable"
-                android:linksClickable="true" />
+                android:linksClickable="true"
+                android:textSize="20sp" />
             <TextView
                 android:id="@+id/show_routes"
                 android:text="@string/main_show_routes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:bufferType="spannable"
-                android:linksClickable="true" />
+                android:linksClickable="true"
+                android:textSize="20sp" />
         </LinearLayout>
         <GridView
             android:id="@+id/route_list"

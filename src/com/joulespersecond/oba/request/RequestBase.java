@@ -54,19 +54,13 @@ public class RequestBase {
         private String mApiKey = API_KEY;
 
         protected BuilderBase(Context context, String path) {
-            mBuilder = new Uri.Builder();
-            mBuilder.scheme("http");
-            mBuilder.authority(getServer(context));
-            mBuilder.path(path);
+            mBuilder = Uri.parse("http://"+getServer(context)+path).buildUpon();
             mBuilder.appendQueryParameter("version", "2");
             ObaApi.setAppInfo(mBuilder);
         }
 
         protected BuilderBase(Context context, String path, boolean noVersion) {
-            mBuilder = new Uri.Builder();
-            mBuilder.scheme("http");
-            mBuilder.authority(getServer(context));
-            mBuilder.path(path);
+            mBuilder = Uri.parse("http://"+getServer(context)+path).buildUpon();
             ObaApi.setAppInfo(mBuilder);
         }
 

@@ -64,7 +64,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
                 final Activity parent = getParent();
                 if (parent instanceof MyRoutesActivity) {
                     MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
-                    myRoutes.returnShortcut(shortcut);
+                    myRoutes.returnResult(shortcut);
                 }
             } else {
                 setResult(RESULT_OK, shortcut);

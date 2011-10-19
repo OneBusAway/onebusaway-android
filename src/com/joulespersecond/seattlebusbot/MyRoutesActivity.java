@@ -29,23 +29,32 @@ public class MyRoutesActivity extends MyTabActivityBase {
 
         final Resources res = getResources();
         final TabHost tabHost = getTabHost();
+        Intent intent;
+
+        intent = new Intent(this, MyRecentRoutesActivity.class)
+                            .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)
+                            .putExtra(EXTRA_SEARCHMODE, mSearchMode);
+        putSearchCenter(intent, mSearchCenter);
+
         tabHost.addTab(tabHost.newTabSpec(MyRecentRoutesActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_recent_title),
                               res.getDrawable(R.drawable.ic_tab_recent))
-                .setContent(new Intent(this, MyRecentRoutesActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
+                .setContent(intent));
         /*
         tabHost.addTab(tabHost.newTabSpec("starred")
                 .setIndicator(getString(R.string.my_starred_title))
                 .setContent(new Intent(this, MyStarredRoutesActivity.class)
                                     .setAction(action)));
         */
+
+        intent = new Intent(this, MySearchRoutesActivity.class)
+                            .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)
+                            .putExtra(EXTRA_SEARCHMODE, mSearchMode);
+        putSearchCenter(intent, mSearchCenter);
         tabHost.addTab(tabHost.newTabSpec(MySearchRoutesActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_search_title),
                                 res.getDrawable(R.drawable.ic_tab_search))
-                .setContent(new Intent(this, MySearchRoutesActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
-
+                .setContent(intent));
 
         restoreDefaultTab();
     }

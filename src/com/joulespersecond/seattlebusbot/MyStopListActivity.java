@@ -64,7 +64,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
                 final Activity parent = getParent();
                 if (parent instanceof MyStopsActivity) {
                     MyStopsActivity myStops = (MyStopsActivity)parent;
-                    myStops.returnShortcut(shortcut);
+                    myStops.returnResult(shortcut);
                 }
             }
             else {
@@ -75,12 +75,12 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         else {
             StopInfoActivity.start(this, stopData.id, stopData.name, stopData.dir);
         }
-        }
-    
+    }
+
     protected StopData getStopData(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
-        return new StopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());        
+        return new StopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());
     }
 
     private static final int CONTEXT_MENU_DEFAULT = 1;
@@ -186,13 +186,13 @@ abstract class MyStopListActivity extends MyBaseListActivity {
     protected Uri getObserverUri() {
         return ObaContract.Stops.CONTENT_URI;
     }
-    
+
     protected class StopData {
         private final String id;
         private final String name;
         private final String dir;
         private final String uiName;
-        
+
         public StopData(Cursor c, int row){
             c.moveToPosition(row);
             id = c.getString(COL_ID);

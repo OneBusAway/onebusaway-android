@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
 
@@ -43,6 +44,8 @@ import java.util.TimerTask;
 
 abstract class MySearchActivity extends ListActivity {
     protected boolean mShortcutMode = false;
+    protected boolean mSearchMode = false;
+    protected GeoPoint mSearchCenter = null;
 
     private ObaResponse mResponse;
     private FindTask mAsyncTask;
@@ -64,7 +67,10 @@ abstract class MySearchActivity extends ListActivity {
 
         registerForContextMenu(getListView());
 
-        mShortcutMode = getIntent().getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
+        Intent intent = getIntent();
+        mShortcutMode = intent.getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
+        mSearchMode = intent.getBooleanExtra(MyTabActivityBase.EXTRA_SEARCHMODE, false);
+        mSearchCenter = MyTabActivityBase.getSearchCenter(intent);
 
         mSearchText = (EditText)findViewById(R.id.search_text);
         mSearchText.setHint(getEditBoxHintText());
@@ -190,11 +196,11 @@ abstract class MySearchActivity extends ListActivity {
             final Activity parent = getParent();
             if (parent instanceof MyStopsActivity) {
                 MyStopsActivity myStops = (MyStopsActivity)parent;
-                myStops.returnShortcut(shortcut);
+                myStops.returnResult(shortcut);
             }
             else if (parent instanceof MyRoutesActivity) {
                 MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
-                myRoutes.returnShortcut(shortcut);
+                myRoutes.returnResult(shortcut);
             }
         }
         else {
@@ -230,6 +236,12 @@ abstract class MySearchActivity extends ListActivity {
     }
     protected final boolean isShortcutMode() {
         return mShortcutMode;
+    }
+    protected final boolean isSearchMode() {
+        return mSearchMode;
+    }
+    protected final GeoPoint getSearchCenter() {
+        return mSearchCenter;
     }
 
     /**

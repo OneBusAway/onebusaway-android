@@ -1006,8 +1006,15 @@ public class MapViewActivity extends MapActivity implements
         if (mMapView != null) {
             location = mMapView.getMapCenter();
         }
-        startActivityForResult(MySearchRoutesActivity.makeIntent(this, location),
-                REQUEST_SEARCH_RESULT);
+        Intent myIntent = new Intent(this, MyRoutesActivity.class);
+        // Start on the search tab
+        myIntent.putExtra(MyTabActivityBase.EXTRA_SEARCHMODE, true);
+
+        myIntent.setData(MyTabActivityBase.getDefaultTabUri(
+                MySearchRoutesActivity.TAB_NAME));
+        MyTabActivityBase.putSearchCenter(myIntent,  location);
+
+        startActivityForResult(myIntent, REQUEST_SEARCH_RESULT);
         return true;
     }
 

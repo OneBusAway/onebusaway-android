@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
+
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,8 +25,12 @@ import android.os.Bundle;
 
 abstract class MyTabActivityBase extends TabActivity {
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
+    public static final String EXTRA_SEARCHMODE = ".SearchMode";
+    public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
     protected boolean mShortcutMode;
+    protected boolean mSearchMode;
+    protected GeoPoint mSearchCenter;
     private String mDefaultTab;
 
     @Override
@@ -37,6 +43,9 @@ abstract class MyTabActivityBase extends TabActivity {
         if (!mShortcutMode) {
             setTitle(R.string.app_name);
         }
+
+        mSearchMode = intent.getBooleanExtra(EXTRA_SEARCHMODE, false);
+        mSearchCenter = getSearchCenter(intent);
 
         // Determine what tab we're supposed to show by default
         final Uri data = intent.getData();
@@ -79,7 +88,7 @@ abstract class MyTabActivityBase extends TabActivity {
         }
     }
 
-    void returnShortcut(Intent intent) {
+    void returnResult(Intent intent) {
         setResult(RESULT_OK, intent);
         finish();
     }
@@ -100,4 +109,23 @@ abstract class MyTabActivityBase extends TabActivity {
     }
 
     protected abstract String getLastTabPref();
+
+    //
+    // Helper for getting the search center from the intent
+    //
+    public static final Intent putSearchCenter(Intent intent, GeoPoint pt) {
+        if (pt != null) {
+            int[] p = { pt.getLatitudeE6(), pt.getLongitudeE6() };
+            intent.putExtra(EXTRA_SEARCHCENTER, p);
+        }
+        return intent;
+    }
+
+    public static final GeoPoint getSearchCenter(Intent intent) {
+        int[] p = intent.getIntArrayExtra(EXTRA_SEARCHCENTER);
+        if (p != null && p.length == 2) {
+            return new GeoPoint(p[0], p[1]);
+        }
+        return null;
+    }
 }

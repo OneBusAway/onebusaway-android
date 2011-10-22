@@ -39,7 +39,7 @@ public final class ObaHelp {
     }
 
     public static Reader getUri(URL url) throws IOException {
-        Log.d(TAG, "getUri: " + url.toString());
+        //Log.d(TAG, "getUri: " + url.toString());
 
         boolean useGzip = false;
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();

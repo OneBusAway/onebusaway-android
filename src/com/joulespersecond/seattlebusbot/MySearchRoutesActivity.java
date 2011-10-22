@@ -26,7 +26,6 @@ import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 import android.app.Activity;
 import android.content.Intent;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
@@ -41,7 +40,7 @@ import java.util.Arrays;
 public class MySearchRoutesActivity extends MySearchActivity {
     public static final String RESULT_ROUTE_ID = ".RouteId";
 
-    private static final String TAG = "MySearchRoutesActivity";
+    //private static final String TAG = "MySearchRoutesActivity";
 
     public static final String TAB_NAME = "search";
 
@@ -187,7 +186,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
                 .call();
         // If there is no results from the user-centered query,
         // open a wider next in some "default" Seattle/Bellevue location
-        Log.d(TAG, "Server returns: " + response.getCode());
+        //Log.d(TAG, "Server returns: " + response.getCode());
         if (response.getCode() == ObaApi.OBA_OK) {
             ObaRoute[] routes = response.getRoutes();
             if (routes.length != 0) {

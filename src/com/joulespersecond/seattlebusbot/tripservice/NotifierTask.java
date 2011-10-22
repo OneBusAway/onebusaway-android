@@ -30,7 +30,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 /**
  *
@@ -38,7 +37,7 @@ import android.util.Log;
  *
  */
 public final class NotifierTask implements Runnable {
-    private static final String TAG = "NotifierTask";
+    //private static final String TAG = "NotifierTask";
 
     private static final long ONE_MINUTE = 60 * 1000;
 
@@ -111,7 +110,7 @@ public final class NotifierTask implements Runnable {
     }
 
     private Notification createNotification(Uri alertUri) {
-        Log.d(TAG, "Creating notification for alert: " + alertUri);
+        //Log.d(TAG, "Creating notification for alert: " + alertUri);
         Notification notification = new Notification(R.drawable.stat_trip, null,
                 System.currentTimeMillis());
         notification.defaults = Notification.DEFAULT_SOUND;

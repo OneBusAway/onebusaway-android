@@ -406,7 +406,7 @@ public class MapViewActivity extends MapActivity implements
 
         case REQUEST_SEARCH_RESULT:
             if (resultCode == RESULT_OK) {
-                String routeId = data.getStringExtra(MySearchRoutesActivity.RESULT_ROUTE_ID);
+                String routeId = data.getStringExtra(MyTabActivityBase.RESULT_ROUTE_ID);
                 if (routeId != null) {
                     mRouteOverlay.setRouteId(routeId, true);
                     getStops();

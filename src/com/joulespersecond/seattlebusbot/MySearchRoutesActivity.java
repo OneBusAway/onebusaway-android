@@ -38,8 +38,6 @@ import android.widget.TextView;
 import java.util.Arrays;
 
 public class MySearchRoutesActivity extends MySearchActivity {
-    public static final String RESULT_ROUTE_ID = ".RouteId";
-
     //private static final String TAG = "MySearchRoutesActivity";
 
     public static final String TAB_NAME = "search";
@@ -60,7 +58,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
             MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
 
             Intent resultData = new Intent();
-            resultData.putExtra(RESULT_ROUTE_ID, routeId);
+            resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
             myRoutes.returnResult(resultData);
         } else {
             RouteInfoActivity.start(this, routeId);

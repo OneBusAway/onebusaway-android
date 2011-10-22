@@ -70,6 +70,13 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
                 setResult(RESULT_OK, shortcut);
                 finish();
             }
+        } else if (mSearchMode) {
+            final Activity parent = getParent();
+            MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
+
+            Intent resultData = new Intent();
+            resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
+            myRoutes.returnResult(resultData);
         } else {
             RouteInfoActivity.start(this, routeId);
         }

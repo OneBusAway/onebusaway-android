@@ -28,6 +28,8 @@ abstract class MyTabActivityBase extends TabActivity {
     public static final String EXTRA_SEARCHMODE = ".SearchMode";
     public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
+    public static final String RESULT_ROUTE_ID = ".RouteId";
+
     protected boolean mShortcutMode;
     protected boolean mSearchMode;
     protected GeoPoint mSearchCenter;

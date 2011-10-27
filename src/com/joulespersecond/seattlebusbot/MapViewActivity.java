@@ -1048,7 +1048,6 @@ public class MapViewActivity extends MapActivity implements
 
         TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
         text.setText(R.string.main_hide_routes);
-        Log.d(TAG, "text " + text.getText());
         UIHelp.setChildClickable(this, R.id.show_routes, mOnHideRoute);
 
         text = (TextView)mPopup.findViewById(R.id.route_short_name);
@@ -1087,7 +1086,6 @@ public class MapViewActivity extends MapActivity implements
         } else {
             text.setText(R.string.main_show_routes);
         }
-        Log.d(TAG, "text " + text.getText());
         UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
 
         // Right now the popup is always at the top of the screen.

@@ -12,10 +12,6 @@ public final class MyTextUtils {
         if (str == null) {
             return null;
         }
-        // skip if already contains mixed case
-        if (!str.equals(str.toLowerCase()) && !str.equals(str.toUpperCase())) {
-            return str;
-        }
 
         boolean isSeparator = true;
         StringBuilder builder = new StringBuilder(str);

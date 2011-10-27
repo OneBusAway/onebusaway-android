@@ -18,15 +18,28 @@ package com.joulespersecond.oba.request.test;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaTripRequest;
 import com.joulespersecond.oba.request.ObaTripResponse;
+import com.joulespersecond.seattlebusbot.test.UriAssert;
 
+import java.util.HashMap;
+
+@SuppressWarnings("serial")
 public class TripRequestTest extends ObaTestCase {
 
-    public void testKCMTrip() {
-        ObaTripRequest.Builder builder = new ObaTripRequest.Builder(getContext(), "1_15551350");
+    protected final String TEST_TRIP_ID = "1_18196913";
+
+    public void testKCMTripRequest() {
+        ObaTripRequest.Builder builder = new ObaTripRequest.Builder(getContext(), TEST_TRIP_ID);
         ObaTripRequest request = builder.build();
-        ObaTripResponse response = request.call();
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/trip/" + TEST_TRIP_ID + ".json",
+                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                request);
+    }
+
+    public void testKCMTripResponse() throws Exception {
+        ObaTripResponse response = getRawResourceAs("trip_" + TEST_TRIP_ID, ObaTripResponse.class);
         assertOK(response);
-        assertEquals("1_15551350", response.getId());
+        assertEquals(TEST_TRIP_ID, response.getId());
         assertEquals("1_65", response.getRouteId());
 
         final ObaRoute route = response.getRoute();
@@ -37,7 +50,10 @@ public class TripRequestTest extends ObaTestCase {
 
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
-        ObaTripRequest request = ObaTripRequest.newRequest(getContext(), "1_15551350");
-        assertNotNull(request);
+        ObaTripRequest request = ObaTripRequest.newRequest(getContext(), TEST_TRIP_ID);
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/trip/" + TEST_TRIP_ID + ".json",
+                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                request);
     }
 }

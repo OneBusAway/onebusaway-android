@@ -77,7 +77,7 @@ public class RouteOverlay {
         if (response != null) {
             String routeId = response.getRouteId();
             mLineOverlay = new LineOverlay();
-            
+
             mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
             overlays.add(mLineOverlay);
 
@@ -87,7 +87,7 @@ public class RouteOverlay {
                 mZoomToRouteId = null;
                 mLineOverlay.zoom(mMapView.getController());
             }
-            mRoute = response.getRoute(routeId); 
+            mRoute = response.getRoute(routeId);
         }
 
         // TODO: are the polylines in "stopGroups" just subsets of the polylines in "entry"?

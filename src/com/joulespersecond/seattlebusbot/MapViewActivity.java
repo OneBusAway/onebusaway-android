@@ -1073,7 +1073,11 @@ public class MapViewActivity extends MapActivity implements
             nameView.setText(routeLong);
             nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
             mStopUserMap.setView2(direction, stop.getId(), stop.getName(), false);
-            routeNumView.setText(routeShort);
+            if (TextUtils.isEmpty(routeShort)) {
+                routeNumView.setText(routeLong);
+            } else {
+                routeNumView.setText(routeShort);
+            }
             setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
         }
         direction.setVisibility(View.VISIBLE);

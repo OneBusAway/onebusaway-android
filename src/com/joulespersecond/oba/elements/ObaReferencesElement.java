@@ -42,7 +42,7 @@ public final class ObaReferencesElement implements ObaReferences {
 
     @Override
     public List<ObaStop> getStops(String[] ids) {
-        return findList(stops, ids);
+        return findList(ObaStop.class, stops, ids);
     }
 
     @Override
@@ -52,7 +52,7 @@ public final class ObaReferencesElement implements ObaReferences {
 
     @Override
     public List<ObaRoute> getRoutes(String[] ids) {
-        return findList(routes, ids);
+        return findList(ObaRoute.class, routes, ids);
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class ObaReferencesElement implements ObaReferences {
 
     @Override
     public List<ObaTrip> getTrips(String[] ids) {
-        return findList(trips, ids);
+        return findList(ObaTrip.class, trips, ids);
     }
 
     @Override
@@ -72,7 +72,7 @@ public final class ObaReferencesElement implements ObaReferences {
 
     @Override
     public List<ObaAgency> getAgencies(String[] ids) {
-        return findList(agencies, ids);
+        return findList(ObaAgency.class, agencies, ids);
     }
 
     @Override
@@ -82,7 +82,7 @@ public final class ObaReferencesElement implements ObaReferences {
 
     @Override
     public List<ObaSituation> getSituations(String[] ids) {
-        return findList(situations, ids);
+        return findList(ObaSituation.class, situations, ids);
     }
 
     //
@@ -99,7 +99,7 @@ public final class ObaReferencesElement implements ObaReferences {
         return null;
     }
     private static <E extends ObaElement, T extends E> List<E> findList(
-            T[] objects, String[] ids) {
+            Class<E> cls, T[] objects, String[] ids) {
         ArrayList<E> result = new ArrayList<E>();
         final int len = ids.length;
         for (int i=0; i < len; ++i) {

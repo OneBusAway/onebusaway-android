@@ -54,14 +54,20 @@
 		            android:background="@drawable/main_popup_route_bg"
 		            android:layout_width="wrap_content"
 		            android:layout_height="wrap_content"
-		            android:paddingLeft="5sp"
-		            android:paddingRight="5sp" />
+		            android:gravity="center_horizontal"
+		            android:minWidth="47sp"
+		            android:maxWidth="47sp"
+		            android:singleLine="true"
+		            android:ellipsize="none"
+	            />
 		    </LinearLayout>
 	        <TextView
 	            android:id="@+id/stop_name"
 	            style="@style/HeaderText"
 	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content" />
+	            android:layout_height="wrap_content"
+	            android:maxLines="3"
+	        />
 		</LinearLayout>
 
         <TextView android:id="@+id/direction"

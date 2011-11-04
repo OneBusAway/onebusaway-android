@@ -65,6 +65,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -187,6 +188,7 @@ public class MapViewActivity extends MapActivity implements
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
         //
         // Static initialization (what should always be there, regardless of
@@ -233,6 +235,11 @@ public class MapViewActivity extends MapActivity implements
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
+
+        // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
+        if (firstRun) {
+            firstRunSetLocation(mMapView.getController());
+        }
     }
 
     @Override
@@ -1016,6 +1023,26 @@ public class MapViewActivity extends MapActivity implements
 
         startActivityForResult(myIntent, REQUEST_SEARCH_RESULT);
         return true;
+    }
+
+    /**
+     * Returns true if no files in private directory
+     * (MapView or MapActivity caches prefs and tiles)
+     * This will fail if MapViewActivty never got to onPause
+     */
+    private boolean firstRunCheck() {
+        File dir = getFilesDir();
+        return (dir.list().length == 0);
+    }
+
+    /**
+     * Center on Seattle with a region-level zoom, should
+     * give first-time users better first impression
+     */
+    private void firstRunSetLocation(MapController controller) {
+        mMapZoom = 11;
+        controller.setCenter(new GeoPoint(47605990, -122331780));
+        controller.setZoom(mMapZoom);
     }
 
     /**

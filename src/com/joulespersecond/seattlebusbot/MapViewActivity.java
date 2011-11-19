@@ -337,7 +337,7 @@ public class MapViewActivity extends MapActivity implements
 
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
-        Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
+        //Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
         // Clear the overlays to save memory and re-establish them when we are
         // resumed.
         List<Overlay> mapOverlays = mMapView.getOverlays();
@@ -406,7 +406,7 @@ public class MapViewActivity extends MapActivity implements
 
         case REQUEST_SEARCH_RESULT:
             if (resultCode == RESULT_OK) {
-                String routeId = data.getStringExtra(MySearchRoutesActivity.RESULT_ROUTE_ID);
+                String routeId = data.getStringExtra(MyTabActivityBase.RESULT_ROUTE_ID);
                 if (routeId != null) {
                     mRouteOverlay.setRouteId(routeId, true);
                     getStops();
@@ -420,24 +420,24 @@ public class MapViewActivity extends MapActivity implements
     //
     @Override
     public void onMapZoomChanging() {
-        Log.d(TAG, "Map zoom changing");
+        //Log.d(TAG, "Map zoom changing");
     }
 
     @Override
     public void onMapZoomChanged() {
-        Log.d(TAG, "Map zoom changed");
+        //Log.d(TAG, "Map zoom changed");
         getStops();
     }
 
     @Override
     public void onMapCenterChanging() {
-        Log.d(TAG, "Map center changing");
+        //Log.d(TAG, "Map center changing");
     }
 
     @Override
     public void onMapCenterChanged() {
         mMapCenter = mMapView.getMapCenter();
-        Log.d(TAG, "Map center changed: " + mMapCenter);
+        //Log.d(TAG, "Map center changed: " + mMapCenter);
         getStops();
     }
 
@@ -725,8 +725,8 @@ public class MapViewActivity extends MapActivity implements
 
     private void setOverlays(ObaResponse response) {
         if (response.getCode() != ObaApi.OBA_OK) {
-            Log.d(TAG, String.format("setOverlays: unexpected response = %d",
-                    response.getCode()));
+            //Log.d(TAG, String.format("setOverlays: unexpected response = %d",
+            //       response.getCode()));
             return;
         }
 
@@ -1048,7 +1048,7 @@ public class MapViewActivity extends MapActivity implements
 
         TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
         text.setText(R.string.main_hide_routes);
-        Log.d(TAG, "text " + text.getText());
+        //Log.d(TAG, "text " + text.getText());
         UIHelp.setChildClickable(this, R.id.show_routes, mOnHideRoute);
 
         text = (TextView)mPopup.findViewById(R.id.route_short_name);
@@ -1087,7 +1087,7 @@ public class MapViewActivity extends MapActivity implements
         } else {
             text.setText(R.string.main_show_routes);
         }
-        Log.d(TAG, "text " + text.getText());
+        //Log.d(TAG, "text " + text.getText());
         UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
 
         // Right now the popup is always at the top of the screen.

@@ -48,12 +48,13 @@ abstract class MyBaseListActivity extends ListActivity {
     }
 
     protected boolean mShortcutMode;
+    protected boolean mSearchMode;
     private MyObserver mObserver;
     // intent and permission names
     protected static final String INSTALL_SHORTCUT_PERMISSION = "com.android.launcher.permission.INSTALL_SHORTCUT";
     protected static final String INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
     protected static boolean mHasInstallShortcutPermission;
-    
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,6 +72,7 @@ abstract class MyBaseListActivity extends ListActivity {
         registerForContextMenu(getListView());
 
         mShortcutMode = myIntent.getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
+        mSearchMode = myIntent.getBooleanExtra(MyTabActivityBase.EXTRA_SEARCHMODE, false);
 
         initList(getCursor());
         Uri uri = getObserverUri();
@@ -79,7 +81,7 @@ abstract class MyBaseListActivity extends ListActivity {
             mObserver = new MyObserver();
             cr.registerContentObserver(uri, true, mObserver);
         }
-        
+
         mHasInstallShortcutPermission = (PackageManager.PERMISSION_GRANTED ==
                 getPackageManager().checkPermission(INSTALL_SHORTCUT_PERMISSION, getPackageName()));
     }
@@ -91,7 +93,7 @@ abstract class MyBaseListActivity extends ListActivity {
         }
         super.onDestroy();
     }
-    
+
     protected static final int CONTEXT_MENU_CREATE_SHORTCUT = 15;
 
     public void addShortcutContextMenuItem(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
@@ -99,7 +101,7 @@ abstract class MyBaseListActivity extends ListActivity {
             menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0, R.string.my_context_create_shortcut);
         }
     }
-    
+
     protected Cursor recentQuery(final Uri uri,
                 final String[] projection,
                 final String accessTime,

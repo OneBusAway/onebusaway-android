@@ -25,14 +25,13 @@ import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.util.Log;
 
 /**
  * This class controls when and how the map refreshes the stops it is showing.
  * @author paulw
  */
 public class StopsController {
-    private static final String TAG = "StopsController";
+    //private static final String TAG = "StopsController";
 
     public interface Listener {
         public void onRequestFulfilled(ObaResponse response);
@@ -181,7 +180,7 @@ public class StopsController {
         }
     }
     private void startTask() {
-        Log.d(TAG, "StartTask: " + mCurrentRequest);
+        //Log.d(TAG, "StartTask: " + mCurrentRequest);
         if (mCurrentRequest != null) {
             mTask = new MyTask();
             mTask.execute(mCurrentRequest);
@@ -210,8 +209,8 @@ public class StopsController {
      * @return
      */
     boolean canFulfillRequest(RequestInfo info) {
-        Log.d(TAG, "CurrentRequest: " + mCurrentRequest);
-        Log.d(TAG, "Candidate: " + info);
+        //Log.d(TAG, "CurrentRequest: " + mCurrentRequest);
+        //Log.d(TAG, "Candidate: " + info);
         if (mCurrentRequest == null) {
             return false;
         }

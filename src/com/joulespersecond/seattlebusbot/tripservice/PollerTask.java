@@ -30,10 +30,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 public final class PollerTask implements Runnable {
-    private static final String TAG = "PollerTask";
+    //private static final String TAG = "PollerTask";
 
     private static final long ONE_MINUTE = 60 * 1000;
 
@@ -125,7 +124,7 @@ public final class PollerTask implements Runnable {
             if (diffTime <= reminderMS) {
                 // Bus is within the reminder interval (or it possibly has left!)
                 // Send off a notification.
-                Log.d(TAG, "Notify for trip: " + alertUri);
+                //Log.d(TAG, "Notify for trip: " + alertUri);
                 TripService.notifyTrip(mContext, mUri, diffTime);
             }
         }

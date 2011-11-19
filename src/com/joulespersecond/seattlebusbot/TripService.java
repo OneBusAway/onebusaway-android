@@ -69,7 +69,7 @@ public class TripService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "service destroyed");
+        //Log.d(TAG, "service destroyed");
         if (mThreadPool != null) {
             mThreadPool.shutdownNow();
             // TODO: Await termination???
@@ -100,7 +100,7 @@ public class TripService extends Service {
 
         @Override
         public void taskComplete() {
-            Log.d(TAG, "Task complete: " + mStartId);
+            //Log.d(TAG, "Task complete: " + mStartId);
             // If we have notifications, then we can't stop ourselves.
             if (mNotifications.isEmpty()) {
                 stopSelfResult(mStartId);
@@ -121,7 +121,7 @@ public class TripService extends Service {
             // (and nothing else to process in the thread queue?)
             // stop the service.
             if (mNotifications.isEmpty()) {
-                Log.d(TAG, "Stopping service");
+                //Log.d(TAG, "Stopping service");
                 stopSelf();
             }
         }
@@ -137,9 +137,9 @@ public class TripService extends Service {
         final String action = intent.getAction();
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();
-        Log.d(TAG, "Handle command: startId=" + startId +
-                " action=" + action +
-                " uri=" + uri);
+        //Log.d(TAG, "Handle command: startId=" + startId +
+        //        " action=" + action +
+        //        " uri=" + uri);
 
         if (ACTION_SCHEDULE.equals(action)) {
             mThreadPool.submit(new SchedulerTask(this, taskContext, uri));

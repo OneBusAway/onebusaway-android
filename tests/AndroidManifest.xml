@@ -8,6 +8,6 @@
       android:debuggable="true">
       <uses-library android:name="android.test.runner" />
     </application>
-    <uses-sdk android:minSdkVersion="4" />
+    <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="8" />
     <instrumentation android:targetPackage="com.joulespersecond.seattlebusbot" android:name="android.test.InstrumentationTestRunner" />
 </manifest>

@@ -30,8 +30,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
+import android.graphics.Path;
 import android.graphics.Point;
-// import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +58,10 @@ public class RouteOverlay {
     }
 
     public void setRouteId(String routeId, boolean willZoom) {
+        if (routeId == null) {
+            clearRoute();
+            return;
+        }
         mRouteId = routeId;
         if (willZoom)
             mZoomToRouteId = routeId;
@@ -77,7 +81,7 @@ public class RouteOverlay {
         if (response != null) {
             String routeId = response.getRouteId();
             mLineOverlay = new LineOverlay();
-            
+
             mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
             overlays.add(mLineOverlay);
 
@@ -87,7 +91,7 @@ public class RouteOverlay {
                 mZoomToRouteId = null;
                 mLineOverlay.zoom(mMapView.getController());
             }
-            mRoute = response.getRoute(routeId); 
+            mRoute = response.getRoute(routeId);
         }
 
         // TODO: are the polylines in "stopGroups" just subsets of the polylines in "entry"?
@@ -138,7 +142,7 @@ public class RouteOverlay {
         return getRouteId() != null;
     }
 
-    /*
+    /**
      * Returns true if response is of type ObaStopsForRouteResponse
      * which is appropriate for route mode
      */
@@ -146,7 +150,7 @@ public class RouteOverlay {
         return (response instanceof ObaStopsForRouteResponse);
     }
 
-    /*
+    /**
      * Compare to current route
      */
     protected boolean isCurrentRoute(String routeCompare) {
@@ -165,9 +169,11 @@ public class RouteOverlay {
                 mPoints = points;
                 mPaint = new Paint();
                 mPaint.setColor(color);
+                mPaint.setAlpha(128);
                 mPaint.setStrokeWidth(5);
                 mPaint.setStrokeCap(Cap.ROUND);
                 mPaint.setStrokeJoin(Join.ROUND);
+                mPaint.setStyle(Paint.Style.STROKE);
             }
             public List<GeoPoint> getPoints() {
                 return mPoints;
@@ -219,38 +225,21 @@ public class RouteOverlay {
             final int len = mLines.size();
             // Log.d(TAG, String.format("Drawing %d line(s)", len));
 
+            Path path = new Path();
             for (int i=0; i < len; ++i) {
                 final Line line = mLines.get(i);
                 final List<GeoPoint> geoPoints = line.getPoints();
-                final int numPts = geoPoints.size();
-
-                // drawLines() draws lines as:
-                //		(x0,y0) -> (x1,y1)
-                //		(x2,y2) -> (x3,y3)
-                // The polyline encodes lines as:
-                //		(x0,y0) -> (x1,y1)
-                //		(x1,y1)	-> (x2,y2)
-                // So we need to double each point after the first.
-                float points[] = new float[numPts*4-1];
-
+                int numPts = geoPoints.size();
                 projection.toPixels(geoPoints.get(0), pt);
-                points[0] = pt.x;
-                points[1] = pt.y;
+                path.moveTo(pt.x, pt.y);
 
                 int j=1;
-                for (; j < (numPts-1); ++j) {
+                for (; j < numPts; ++j) {
                     projection.toPixels(geoPoints.get(j), pt);
-                    points[j*4-2] = pt.x;
-                    points[j*4-1] = pt.y;
-                    points[j*4+0] = pt.x;
-                    points[j*4+1] = pt.y;
+                    path.lineTo(pt.x, pt.y);
                 }
-                projection.toPixels(geoPoints.get(j), pt);
-                points[j*4-2] = pt.x;
-                points[j*4-1] = pt.y;
-                assert((j*4-1) == points.length);
-
-                canvas.drawLines(points, line.getPaint());
+                canvas.drawPath(path, line.getPaint());
+                path.rewind();
             }
         }
 

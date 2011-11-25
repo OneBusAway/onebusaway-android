@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.oba.request;
 
-import com.google.gson.JsonParseException;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaHelp;
 
@@ -100,32 +99,21 @@ public class RequestBase {
         }
     }
 
-    protected <T> T createFromError(Class<T> cls, int code, String error) {
-        // This is not very efficient, but it's an error case and it's easier
-        // than instantiating one ourselves.
-        final String jsonErr =  ObaApi.getGson().toJson(error);
-        final String json = String.format("{code: %d,version:\"2\",text:%s}", code, jsonErr);
-        // Hopefully this never returns null.
-        return ObaApi.getGson().fromJson(json, cls);
-    }
-
     protected <T> T call(Class<T> cls) {
+        ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
         try {
             Reader reader = ObaHelp.getUri(mUri);
-            T t = ObaApi.getGson().fromJson(reader, cls);
+            T t = handler.deserialize(reader, cls);
             if (t == null) {
-                t = createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
+                t = handler.createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
             }
             return t;
         }
         catch (FileNotFoundException e) {
-            return createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
+            return handler.createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
         }
         catch (IOException e) {
-            return createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
-        }
-        catch (JsonParseException e) {
-            return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());
+            return handler.createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
         }
     }
 }

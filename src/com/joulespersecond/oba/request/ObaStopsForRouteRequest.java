@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public final class ObaStopsForRouteRequest extends JacksonRequestBase
+public final class ObaStopsForRouteRequest extends RequestBase
         implements Callable<ObaStopsForRouteResponse> {
     protected ObaStopsForRouteRequest(Uri uri) {
         super(uri);

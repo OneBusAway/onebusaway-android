@@ -15,14 +15,48 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.test.AndroidTestCase;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
 
+import android.content.Context;
+import android.net.Uri;
+import android.test.AndroidTestCase;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+
 public class ObaTestCase extends AndroidTestCase {
+    protected static final String TEST_RAW_URI = "android.resource://com.joulespersecond.seattlebusbot.test/raw/";
+
     public static void assertOK(ObaResponse response) {
         assertNotNull(response);
         assertEquals(ObaApi.OBA_OK, response.getCode());
+    }
+
+    /**
+     * Read a resource by Uri
+     */
+    protected Reader readResource(Uri resourceUri) throws IOException {
+        Context localContext = getContext();
+        InputStream stream = localContext.getContentResolver().openInputStream(resourceUri);
+        InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+        return reader;
+    }
+
+    /**
+     * Read a resource by Uri (String convenience overload)
+     */
+    protected Reader readResource(String resourceUriString) throws IOException {
+        Uri uri = Uri.parse(resourceUriString);
+        return readResource(uri);
+    }
+
+    protected <T> T getRawResourceAs(String resourceUriString, Class<T> cls) throws IOException {
+        Reader reader = readResource(TEST_RAW_URI + resourceUriString);
+        ObaApi.SerializationHandler serializer = ObaApi.getSerializer(cls);
+        T response = serializer.deserialize(reader, cls);
+        return response;
     }
 }

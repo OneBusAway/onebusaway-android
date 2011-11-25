@@ -15,16 +15,15 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.text.format.Time;
-
-import java.util.HashMap;
-
 import com.joulespersecond.oba.elements.ObaRouteSchedule;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.elements.ObaStopSchedule;
 import com.joulespersecond.oba.request.ObaScheduleForStopRequest;
 import com.joulespersecond.oba.request.ObaScheduleForStopResponse;
 import com.joulespersecond.seattlebusbot.test.UriAssert;
+
+import android.text.format.Time;
+
+import java.util.HashMap;
 
 @SuppressWarnings("serial")
 public class ScheduleForStopTest extends ObaTestCase {
@@ -48,9 +47,10 @@ public class ScheduleForStopTest extends ObaTestCase {
         // know the day we can't really assume very much.
         assertOK(response);
         final ObaStop stop = response.getStop();
-        assertEquals("Failure expected / TODO: no stop element in response, report API bug?", "1_75403", stop.getId());
-        final ObaStopSchedule.CalendarDay[] days = response.getCalendarDays();
-        assertTrue(days.length > 0);
+        assertEquals("1_75403", stop.getId());
+        // TODO: This is no longer included?
+        //final ObaStopSchedule.CalendarDay[] days = response.getCalendarDays();
+        //assertTrue(days.length > 0);
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
@@ -80,15 +80,15 @@ public class ScheduleForStopTest extends ObaTestCase {
         ObaScheduleForStopResponse response = getRawResourceAs("schedule_for_stop_1_75403", ObaScheduleForStopResponse.class);
         assertOK(response);
         final ObaStop stop = response.getStop();
-        assertEquals("Failure expected / TODO: no stop element in response, report API bug?", "1_75403", stop.getId());
+        assertEquals("1_75403", stop.getId());
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
-        assertEquals("29_810", schedules[0].getRouteId());
+        assertEquals("1_31", schedules[0].getRouteId());
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
-        assertEquals("McCollum Park Park &Ride", dirs[0].getTripHeadsign());
+        assertEquals("CENTRAL MAGNOLIA FREMONT", dirs[0].getTripHeadsign());
         final ObaRouteSchedule.Time[] times = dirs[0].getStopTimes();
         assertTrue(times.length > 0);
-        assertEquals("29_10JUN-Weekday-810s-0", times[0].getTripId());
+        assertEquals("1_18196572", times[0].getTripId());
     }
 }

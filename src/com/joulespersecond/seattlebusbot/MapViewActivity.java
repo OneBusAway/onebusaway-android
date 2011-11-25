@@ -18,13 +18,13 @@ package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -289,7 +289,7 @@ public class MapViewActivity extends MapActivity implements
         // This is where we initialize all the UI elements.
         // They are torn down in onPause to save memory.
         //
-        mLocationOverlay = new MyFixedLocationOverlay(this, mMapView);
+        mLocationOverlay = new MyLocationOverlay(this, mMapView);
         List<Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.add(mLocationOverlay);
         mLocationOverlay.enableMyLocation();

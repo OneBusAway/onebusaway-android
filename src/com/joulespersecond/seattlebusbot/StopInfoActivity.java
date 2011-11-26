@@ -66,7 +66,6 @@ public class StopInfoActivity extends ListActivity {
     private static final String TAG = "StopInfoActivity";
     private static final long RefreshPeriod = 60 * 1000;
 
-    private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
     private static final String STOP_DIRECTION = ".StopDir";
 
@@ -151,24 +150,27 @@ public class StopInfoActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         setContentView(R.layout.stop_info);
         setListAdapter(new StopInfoListAdapter());
+        */
 
         final Intent intent = getIntent();
-        final Bundle bundle = intent.getExtras();
+        //final Bundle bundle = intent.getExtras();
         final Uri data = intent.getData();
         if (data != null) {
             mStopId = data.getLastPathSegment();
-        } else if (bundle != null) {
-            // This is for backward compatibility
-            mStopId = bundle.getString(STOP_ID);
         } else {
             Log.e(TAG, "No stop ID!");
             finish();
             return;
         }
+        ArrivalsListActivity.start(this, mStopId);
+        finish();
+
+        /*
 
         mNameContainerView = findViewById(R.id.name_container);
         mEditNameContainerView = findViewById(R.id.edit_name_container);
@@ -205,11 +207,14 @@ public class StopInfoActivity extends ListActivity {
                 beginNameEdit(lastEdit);
             }
         }
+        */
     }
 
     @Override
     public void onDestroy() {
-        mTripsForStop.close();
+        if (mTripsForStop != null) {
+            mTripsForStop.close();
+        }
         if (mAsyncTask != null) {
             mAsyncTask.cancel(true);
         }
@@ -296,7 +301,7 @@ public class StopInfoActivity extends ListActivity {
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        final StopInfo stop = (StopInfo)getListView().getItemAtPosition(position);
+        final ArrivalInfo stop = (ArrivalInfo)getListView().getItemAtPosition(position);
         if (stop == null) {
             return;
         }
@@ -426,10 +431,10 @@ public class StopInfoActivity extends ListActivity {
     }
 
     final class StopInfoListAdapter extends BaseAdapter {
-        private ArrayList<StopInfo> mInfo;
+        private ArrayList<ArrivalInfo> mInfo;
 
         public StopInfoListAdapter() {
-            mInfo = new ArrayList<StopInfo>();
+            mInfo = new ArrayList<ArrivalInfo>();
         }
 
         public int getCount() {
@@ -449,7 +454,7 @@ public class StopInfoActivity extends ListActivity {
             ViewGroup newView;
             if (convertView == null) {
                 LayoutInflater inflater = getLayoutInflater();
-                newView = (ViewGroup)inflater.inflate(R.layout.stop_info_listitem, null);
+                newView = (ViewGroup)inflater.inflate(R.layout.arrivals_list_item, null);
             } else {
                 newView = (ViewGroup)convertView;
             }
@@ -462,7 +467,7 @@ public class StopInfoActivity extends ListActivity {
         }
 
         public void setData(ObaArrivalInfo[] arrivals) {
-            mInfo = StopInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
+            mInfo = ArrivalInfo.convertObaArrivalInfo(StopInfoActivity.this, arrivals, mRoutesFilter);
             setFilterHeader();
             notifyDataSetChanged();
         }
@@ -474,7 +479,7 @@ public class StopInfoActivity extends ListActivity {
             TextView status = (TextView)view.findViewById(R.id.status);
             TextView etaView = (TextView)view.findViewById(R.id.eta);
 
-            final StopInfo stopInfo = mInfo.get(position);
+            final ArrivalInfo stopInfo = mInfo.get(position);
             final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
 
             route.setText(arrivalInfo.getShortName());
@@ -518,7 +523,7 @@ public class StopInfoActivity extends ListActivity {
         }
     }
 
-    private void goToTrip(StopInfo stop) {
+    private void goToTrip(ArrivalInfo stop) {
         ObaArrivalInfo stopInfo = stop.getInfo();
         TripInfoActivity.start(this,
                 stopInfo.getTripId(),
@@ -530,7 +535,7 @@ public class StopInfoActivity extends ListActivity {
                 stopInfo.getHeadsign());
     }
 
-    private void goToRoute(StopInfo stop) {
+    private void goToRoute(ArrivalInfo stop) {
         RouteInfoActivity.start(this, stop.getInfo().getRouteId());
     }
 

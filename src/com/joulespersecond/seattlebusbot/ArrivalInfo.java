@@ -27,34 +27,34 @@ import android.content.res.Resources;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaArrivalInfo.Frequency;
 
-final class StopInfo {
-    final static class StopInfoComparator implements Comparator<StopInfo> {
-        public int compare(StopInfo lhs, StopInfo rhs) {
+final class ArrivalInfo {
+    final static class InfoComparator implements Comparator<ArrivalInfo> {
+        public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
             return (int)(lhs.mEta - rhs.mEta);
         }
     }
 
-    public static final ArrayList<StopInfo> convertObaArrivalInfo(Context context,
+    public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
             ObaArrivalInfo[] arrivalInfo,
             ArrayList<String> filter) {
         final int len = arrivalInfo.length;
-        ArrayList<StopInfo> result = new ArrayList<StopInfo>(len);
+        ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
         final long ms = System.currentTimeMillis();
         if (filter != null && filter.size() > 0) {
             for (int i = 0; i < len; ++i) {
                 ObaArrivalInfo arrival = arrivalInfo[i];
                 if (filter.contains(arrival.getRouteId())) {
-                    result.add(new StopInfo(context, arrival, ms));
+                    result.add(new ArrivalInfo(context, arrival, ms));
                 }
             }
         } else {
             for (int i = 0; i < len; ++i) {
-                result.add(new StopInfo(context, arrivalInfo[i], ms));
+                result.add(new ArrivalInfo(context, arrivalInfo[i], ms));
             }
         }
 
         // Sort by ETA
-        Collections.sort(result, new StopInfoComparator());
+        Collections.sort(result, new InfoComparator());
         return result;
     }
 
@@ -66,7 +66,7 @@ final class StopInfo {
 
     private static final int ms_in_mins = 60 * 1000;
 
-    public StopInfo(Context context, ObaArrivalInfo info, long now) {
+    public ArrivalInfo(Context context, ObaArrivalInfo info, long now) {
         mInfo = info;
         // First, all times have to have to be converted to 'minutes'
         final long nowMins = now / ms_in_mins;

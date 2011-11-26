@@ -794,7 +794,7 @@ public class MapViewActivity extends MapActivity implements
     }
 
     static void goToStop(Context context, ObaStop stop) {
-        StopInfoActivity.start(context, stop);
+        ArrivalsListActivity.start(context, stop);
     }
 
     private Dialog createHelpDialog() {

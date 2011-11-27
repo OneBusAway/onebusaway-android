@@ -163,6 +163,7 @@ public class ArrivalsListFragment extends MyListFragment
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
         Log.d(TAG, "Load finished!");
+        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
 
         ObaArrivalInfo[] info = null;
 
@@ -524,6 +525,7 @@ public class ArrivalsListFragment extends MyListFragment
     // Refreshing!
     //
     private void refresh() {
+        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
         getArrivalsLoader().onContentChanged();
     }
 

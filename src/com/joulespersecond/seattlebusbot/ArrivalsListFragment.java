@@ -11,6 +11,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.Menu;
@@ -33,7 +35,7 @@ public class ArrivalsListFragment extends MyListFragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
                    ArrivalsListHeader.Controller {
     private static final String TAG = "ArrivalsListFragment";
-    //private static final long RefreshPeriod = 60 * 1000;
+    private static final long RefreshPeriod = 60 * 1000;
 
     //private static int TRIPS_FOR_STOP_LOADER = 1;
     private static int ARRIVALS_LIST_LOADER = 2;
@@ -104,34 +106,33 @@ public class ArrivalsListFragment extends MyListFragment
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 
-    /*
     @Override
     public void onPause() {
-        mTripsForStop.setKeepUpdated(false);
+        //mTripsForStop.setKeepUpdated(false);
         mRefreshHandler.removeCallbacks(mRefresh);
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        mTripsForStop.setKeepUpdated(true);
-        mTripsForStop.requery();
-        ((BaseAdapter)getListAdapter()).notifyDataSetChanged();
+        //mTripsForStop.setKeepUpdated(true);
+        //mTripsForStop.requery();
+        mAdapter.notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
-        long newPeriod = Math.min(RefreshPeriod, (mResponseTime + RefreshPeriod)
+        long lastResponseTime = getArrivalsLoader().getLastResponseTime();
+        long newPeriod = Math.min(RefreshPeriod, (lastResponseTime + RefreshPeriod)
                 - System.currentTimeMillis());
         // Wait at least one second at least, and the full minute at most.
         //Log.d(TAG, "Refresh period:" + newPeriod);
         if (newPeriod <= 0) {
-            getStopInfo(true);
+            refresh();
         } else {
             mRefreshHandler.postDelayed(mRefresh, newPeriod);
         }
 
         super.onResume();
     }
-    */
 
     @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
@@ -160,7 +161,8 @@ public class ArrivalsListFragment extends MyListFragment
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
             // page load and we want to display the error in the empty text.
-            ObaArrivalInfoResponse lastGood = getLastGoodResponse();
+            ObaArrivalInfoResponse lastGood =
+                    getArrivalsLoader().getLastGoodResponse();
             if (lastGood != null) {
                 // Refresh error
                 Toast.makeText(getActivity(),
@@ -196,6 +198,9 @@ public class ArrivalsListFragment extends MyListFragment
                 mStopWait.notifyAll();
             }
         }
+
+        // Post an update
+        mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
     }
 
     @Override
@@ -213,10 +218,12 @@ public class ArrivalsListFragment extends MyListFragment
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
+        String title = mFavorite ?
+                getString(R.string.stop_info_option_removestar) :
+                getString(R.string.stop_info_option_addstar);
         menu.findItem(R.id.toggle_favorite)
-            .setTitle(mFavorite ?
-                    R.string.stop_info_option_removestar :
-                    R.string.stop_info_option_addstar);
+            .setTitle(title)
+            .setTitleCondensed(title);
     }
 
     @Override
@@ -230,7 +237,7 @@ public class ArrivalsListFragment extends MyListFragment
             */
             return true;
         } else if (id == R.id.refresh) {
-            //getStopInfo(true);
+            refresh();
             return true;
         } else if (id == R.id.filter) {
             /*
@@ -241,7 +248,8 @@ public class ArrivalsListFragment extends MyListFragment
         } else if (id == R.id.edit_name) {
             mHeader.beginNameEdit(null);
         } else if (id == R.id.toggle_favorite) {
-            //toggleFavorite();
+            setFavorite(!mFavorite);
+            mHeader.refresh();
         }
         return false;
     }
@@ -310,14 +318,10 @@ public class ArrivalsListFragment extends MyListFragment
 
     @Override
     public long getLastGoodResponseTime() {
-        Loader<ObaArrivalInfoResponse> l =
-                getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
-        // Special case in onActivityCreated() when we haven't even
-        // created the loader yet..
-        if (l == null) {
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader == null) {
             return 0;
         }
-        ArrivalsListLoader loader = (ArrivalsListLoader)l;
         return loader.getLastGoodResponseTime();
     }
 
@@ -333,13 +337,43 @@ public class ArrivalsListFragment extends MyListFragment
 
     @Override
     public boolean setFavorite(boolean favorite) {
-        // TODO Auto-generated method stub
-        return false;
+        if (ObaContract.Stops.markAsFavorite(getActivity(), mStopUri, favorite)) {
+            mFavorite = favorite;
+        }
+        // Apparently we can't rely on onPrepareOptionsMenu to set the
+        // menus like we did before.
+        // ALSO: we need to downcast this because getActivity() returns
+        // an Activity, but Activity.invalidateOptionsMenu doesn't exist
+        // pre-Honeycomb. So we need to make sure we are calling the
+        // FragmentActivity's version.
+        // Gotta love backward compatibility...
+        ((FragmentActivity)getActivity()).invalidateOptionsMenu();
+        return mFavorite;
     }
 
     //
     // Helpers
     //
+    private ArrivalsListLoader getArrivalsLoader() {
+        Loader<ObaArrivalInfoResponse> l =
+                getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
+        return (ArrivalsListLoader)l;
+    }
+
+    //
+    // Refreshing!
+    //
+    private void refresh() {
+        getArrivalsLoader().onContentChanged();
+    }
+
+    private final Handler mRefreshHandler = new Handler();
+
+    private final Runnable mRefresh = new Runnable() {
+        public void run() {
+            refresh();
+        }
+    };
 
     private void setStopId() {
         Uri uri = (Uri)getArguments().getParcelable("uri");
@@ -369,16 +403,6 @@ public class ArrivalsListFragment extends MyListFragment
                 c.close();
             }
         }
-    }
-
-    //
-    // Helper to get the response
-    //
-    private ObaArrivalInfoResponse getLastGoodResponse() {
-        Loader<ObaArrivalInfoResponse> l =
-                getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
-        ArrivalsListLoader loader = (ArrivalsListLoader)l;
-        return loader.getLastGoodResponse();
     }
 
     public void setStopWait(Object obj) {

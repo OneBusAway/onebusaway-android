@@ -11,6 +11,7 @@ import android.support.v4.content.AsyncTaskLoader;
 class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
     private final String mStopId;
     private ObaArrivalInfoResponse mLastGoodResponse;
+    private long mLastResponseTime = 0;
     private long mLastGoodResponseTime = 0;
 
     public ArrivalsListLoader(Context context, String stopId) {
@@ -25,11 +26,16 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     @Override
     public void deliverResult(ObaArrivalInfoResponse data) {
+        mLastResponseTime = System.currentTimeMillis();
         if (data.getCode() == ObaApi.OBA_OK) {
             mLastGoodResponse = data;
-            mLastGoodResponseTime = System.currentTimeMillis();
+            mLastGoodResponseTime = mLastResponseTime;
         }
         super.deliverResult(data);
+    }
+
+    public long getLastResponseTime() {
+        return mLastResponseTime;
     }
 
     public ObaArrivalInfoResponse getLastGoodResponse() {
@@ -38,13 +44,6 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     public long getLastGoodResponseTime() {
         return mLastGoodResponseTime;
-    }
-
-    @Override
-    protected void onStartLoading() {
-        // TODO: If the last good response time is < 1 second
-        // just use that.
-        forceLoad();
     }
 
     /**

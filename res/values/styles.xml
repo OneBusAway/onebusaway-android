@@ -15,7 +15,7 @@
 -->
 <resources>
     <!-- Themes -->
-    <style name="Theme.BusBot" parent="@android:style/Theme.Light">
+    <style name="Theme.BusBot" parent="@style/Theme.Sherlock.Light">
     </style>
     <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
         <item name="android:windowBackground">@null</item>

@@ -28,33 +28,25 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentQueryMap;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.text.style.ClickableSpan;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -74,19 +66,19 @@ public class StopInfoActivity extends ListActivity {
     private ObaArrivalInfoResponse mResponse;
     private ObaStop mStop;
     private String mStopId;
-    private String mStopName;
-    private Uri mStopUri;
+    //private String mStopName;
+    //private Uri mStopUri;
     private long mResponseTime = 0;
     private ArrayList<String> mRoutesFilter;
 
     // Cached UI items
-    private View mNameContainerView;
-    private View mEditNameContainerView;
-    private TextView mNameView;
+    //private View mNameContainerView;
+    //private View mEditNameContainerView;
+    //private TextView mNameView;
     private EditText mEditNameView;
-    private ImageButton mFavoriteView;
+    //private ImageButton mFavoriteView;
     private TextView mEmptyText;
-    private View mDirectionView;
+    //private View mDirectionView;
     private View mFilterGroup;
     private TextView mResponseError;
     private boolean mInNameEdit;
@@ -96,7 +88,7 @@ public class StopInfoActivity extends ListActivity {
     private ContentQueryMap mTripsForStop;
 
     private boolean mFavorite = false;
-    private String mStopUserName;
+    //private String mStopUserName;
 
     // Used by the test code to signal when we've retrieved stops.
     private Object mStopWait;
@@ -265,9 +257,9 @@ public class StopInfoActivity extends ListActivity {
                 showRoutesFilterDialog();
             }
         } else if (id == R.id.edit_name) {
-            beginNameEdit(null);
+            //beginNameEdit(null);
         } else if (id == R.id.toggle_favorite) {
-            toggleFavorite();
+            //toggleFavorite();
         }
         return false;
     }
@@ -664,13 +656,6 @@ public class StopInfoActivity extends ListActivity {
         setProgressBarIndeterminateVisibility(false);
     }
 
-    private void setHeader(Bundle bundle) {
-        if (bundle != null) {
-            setHeader(MyTextUtils.toTitleCase(bundle.getString(STOP_NAME)),
-                    bundle.getString(STOP_DIRECTION));
-        }
-    }
-
     void setHeader(ObaStop stop, boolean addToDb) {
         String code = stop.getStopCode();
         String name = MyTextUtils.toTitleCase(stop.getName());
@@ -678,7 +663,7 @@ public class StopInfoActivity extends ListActivity {
         double lat = stop.getLatitude();
         double lon = stop.getLongitude();
 
-        setHeader(name, direction);
+        //setHeader(name, direction);
 
         if (addToDb) {
             // Update the database
@@ -692,6 +677,7 @@ public class StopInfoActivity extends ListActivity {
         }
     }
 
+    /*
     private void setHeader(String name, String direction) {
         mStopName = name;
 
@@ -710,6 +696,7 @@ public class StopInfoActivity extends ListActivity {
             }
         }
     }
+    */
 
     void setFilterHeader() {
         TextView v = (TextView)findViewById(R.id.filter);
@@ -724,6 +711,7 @@ public class StopInfoActivity extends ListActivity {
         }
     }
 
+    /*
     private final ClickableSpan mShowAllClick = new ClickableSpan() {
         public void onClick(View v) {
             if (mResponse != null) {
@@ -841,7 +829,9 @@ public class StopInfoActivity extends ListActivity {
             mFavoriteView.setImageResource(newRes);
         }
     }
+    */
 
+    /*
     private static final String[] TRIPS_PROJECTION = {
             ObaContract.Trips._ID, ObaContract.Trips.NAME
     };
@@ -853,24 +843,5 @@ public class StopInfoActivity extends ListActivity {
                 }, null);
         return new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
     }
-
-    private static final String[] USER_PROJECTION = {
-        ObaContract.Stops.FAVORITE,
-        ObaContract.Stops.USER_NAME
-    };
-
-    private void getUserInfo() {
-        ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(mStopUri, USER_PROJECTION, null, null, null);
-        if (c != null) {
-            try {
-                if (c.moveToNext()) {
-                    mFavorite = (c.getInt(0) == 1);
-                    mStopUserName = c.getString(1);
-                }
-            } finally {
-                c.close();
-            }
-        }
-    }
+    */
 }

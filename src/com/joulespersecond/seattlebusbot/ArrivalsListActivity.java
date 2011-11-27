@@ -14,8 +14,8 @@ import android.support.v4.app.FragmentManager;
 public class ArrivalsListActivity extends FragmentActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
-    private static final String STOP_NAME = ".StopName";
-    private static final String STOP_DIRECTION = ".StopDir";
+    public static final String STOP_NAME = ".StopName";
+    public static final String STOP_DIRECTION = ".StopDir";
 
     public static void start(Context context, String stopId) {
         context.startActivity(makeIntent(context, stopId));

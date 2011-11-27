@@ -313,7 +313,7 @@ public class TripInfoActivity extends Activity {
             RouteInfoActivity.start(this, mRouteId);
             return true;
         } else if (item.getItemId() == R.id.show_stop) {
-            StopInfoActivity.start(this, mStopId, mStopName);
+            ArrivalsListActivity.start(this, mStopId, mStopName);
             return true;
         }
         return false;

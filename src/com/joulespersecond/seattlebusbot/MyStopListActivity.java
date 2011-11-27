@@ -57,7 +57,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         if (mShortcutMode) {
             final Intent shortcut =
                 UIHelp.makeShortcut(this, stopData.getUiName(),
-                        StopInfoActivity.makeIntent(this, stopData.getId(), stopData.getName(), stopData.getDir()));
+                        ArrivalsListActivity.makeIntent(this, stopData.getId(), stopData.getName(), stopData.getDir()));
 
             if (isChild()) {
                 // Is there a way to do this more generically?
@@ -73,7 +73,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
             }
         }
         else {
-            StopInfoActivity.start(this, stopData.id, stopData.name, stopData.dir);
+            ArrivalsListActivity.start(this, stopData.id, stopData.name, stopData.dir);
         }
     }
 
@@ -117,7 +117,7 @@ abstract class MyStopListActivity extends MyBaseListActivity {
             StopData stopData = getStopData(getListView(), info.position);
             final Intent shortcutIntent =
                     UIHelp.makeShortcut(this, stopData.uiName,
-                            StopInfoActivity.makeIntent(this, stopData.id, stopData.name, stopData.dir));
+                            ArrivalsListActivity.makeIntent(this, stopData.id, stopData.name, stopData.dir));
             shortcutIntent.setAction(INSTALL_SHORTCUT);
             sendBroadcast(shortcutIntent);
             return true;

@@ -61,11 +61,11 @@ public class MySearchStopsActivity extends MySearchActivity {
         final String shortcutName = stopName;
 
         if (mShortcutMode) {
-            Intent intent = StopInfoActivity.makeIntent(this, stopId, stopName, stopDir);
+            Intent intent = ArrivalsListActivity.makeIntent(this, stopId, stopName, stopDir);
             makeShortcut(shortcutName, intent);
         }
         else {
-            StopInfoActivity.start(this, stopId, stopName, stopDir);
+            ArrivalsListActivity.start(this, stopId, stopName, stopDir);
         }
     }
 

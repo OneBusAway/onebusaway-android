@@ -195,7 +195,7 @@ public class TripListActivity extends ListActivity {
 
     private void goToStop(ListView l, int position) {
         String[] ids = getIds(l, position);
-        StopInfoActivity.start(this, ids[1]);
+        ArrivalsListActivity.start(this, ids[1]);
     }
 
     private void goToRoute(ListView l, int position) {

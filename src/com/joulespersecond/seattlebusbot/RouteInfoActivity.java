@@ -177,9 +177,9 @@ public class RouteInfoActivity extends ExpandableListActivity {
             stop = mStopsForRoute.getStopMap().get(stopId);
         }
         if (stop != null) {
-            StopInfoActivity.start(this, stopId, stop.getName(), stop.getDirection());
+            ArrivalsListActivity.start(this, stopId, stop.getName(), stop.getDirection());
         } else {
-            StopInfoActivity.start(this, stopId);
+            ArrivalsListActivity.start(this, stopId);
         }
         return true;
     }

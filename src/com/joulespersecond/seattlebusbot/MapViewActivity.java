@@ -30,10 +30,10 @@ import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.oba.request.ObaResponseWithRefs;
-import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
-import com.joulespersecond.seattlebusbot.StopOverlay.StopOverlayItem;
+import com.joulespersecond.seattlebusbot.map.MapWatcher;
+import com.joulespersecond.seattlebusbot.map.RouteOverlay;
+import com.joulespersecond.seattlebusbot.map.StopOverlay;
+import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -66,11 +66,9 @@ import android.widget.Toast;
 import android.widget.ZoomControls;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
-public class MapViewActivity extends MapActivity implements
-        MapWatcher.Listener, StopsController.Listener {
+public class MapViewActivity extends MapActivity {
     private static final String TAG = "MapViewActivity";
 
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
@@ -86,7 +84,6 @@ public class MapViewActivity extends MapActivity implements
 
     MapView mMapView;
     private MyLocationOverlay mLocationOverlay;
-    private ZoomControls mZoomControls;
     private View mPopup;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
@@ -98,7 +95,7 @@ public class MapViewActivity extends MapActivity implements
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
     private boolean mShowRoutes;
-    private StopsController mStopsController;
+    //private StopsController mStopsController;
     private MapWatcher mMapWatcher;
     private Object mStopWait;
     // We only display the out of range dialog once
@@ -204,10 +201,7 @@ public class MapViewActivity extends MapActivity implements
             public void onClick(View v) { /* no-op */ }
         });
         mMapView.setBuiltInZoomControls(false);
-        mZoomControls = (ZoomControls)findViewById(R.id.zoom_controls);
-        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
-        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
-        mStopsController = new StopsController(this, this);
+        //mStopsController = new StopsController(this, this);
         mRouteOverlay = new RouteOverlay(this, mMapView);
 
         // Initialize the links
@@ -230,8 +224,8 @@ public class MapViewActivity extends MapActivity implements
                     false);
         }
 
-        mStopsController
-                .setNonConfigurationInstance(getLastNonConfigurationInstance());
+        //mStopsController
+        //        .setNonConfigurationInstance(getLastNonConfigurationInstance());
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
@@ -246,8 +240,8 @@ public class MapViewActivity extends MapActivity implements
     public void onDestroy() {
         mStopUserMap.close();
         mStopUserMap = null;
-        mStopsController.cancel();
-        mStopsController = null;
+        //mStopsController.cancel();
+        //mStopsController = null;
         super.onDestroy();
     }
 
@@ -262,9 +256,9 @@ public class MapViewActivity extends MapActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
-            setMyLocation();
+            //setMyLocation();
             return true;
-        } else if (id == R.id.find_route) {
+        } else if (id == R.id.search) {
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
             startActivity(myIntent);
             return true;
@@ -317,6 +311,7 @@ public class MapViewActivity extends MapActivity implements
         // UNLESS we don't have a previous center, in which case
         // this is the first time we've started up, and in that
         // case we want to go to the user's current fix.
+        /*
         ObaResponse response = mStopsController.getResponse();
         if (response != null) {
             setOverlays(response);
@@ -324,13 +319,16 @@ public class MapViewActivity extends MapActivity implements
                 showRoutes(null, mShowRoutes);
             }
         }
+        */
 
+        /*
         if (prevCenter == null && !mRouteOverlay.isRouteMode()) {
             setMyLocation();
         } else {
             getStops();
         }
         watchMap(true);
+        */
 
         super.onResume();
     }
@@ -338,9 +336,9 @@ public class MapViewActivity extends MapActivity implements
     @Override
     public void onPause() {
         mLocationOverlay.disableMyLocation();
-        mStopsController.cancel();
+        //mStopsController.cancel();
 
-        watchMap(false);
+        //watchMap(false);
 
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
@@ -369,7 +367,8 @@ public class MapViewActivity extends MapActivity implements
 
     @Override
     public Object onRetainNonConfigurationInstance() {
-        return mStopsController.onRetainNonConfigurationInstance();
+        //return mStopsController.onRetainNonConfigurationInstance();
+        return null;
     }
 
     @Override
@@ -416,49 +415,20 @@ public class MapViewActivity extends MapActivity implements
                 String routeId = data.getStringExtra(MyTabActivityBase.RESULT_ROUTE_ID);
                 if (routeId != null) {
                     mRouteOverlay.setRouteId(routeId, true);
-                    getStops();
+                    //getStops();
                 }
             }
         }
-    }
-
-    //
-    // MapWatcher.Listener
-    //
-    @Override
-    public void onMapZoomChanging() {
-        //Log.d(TAG, "Map zoom changing");
-    }
-
-    @Override
-    public void onMapZoomChanged() {
-        //Log.d(TAG, "Map zoom changed");
-        getStops();
-    }
-
-    @Override
-    public void onMapCenterChanging() {
-        //Log.d(TAG, "Map center changing");
-    }
-
-    @Override
-    public void onMapCenterChanged() {
-        mMapCenter = mMapView.getMapCenter();
-        //Log.d(TAG, "Map center changed: " + mMapCenter);
-        getStops();
     }
 
     public void setStopWait(Object obj) {
         mStopWait = obj;
     }
 
-    public StopsController getStopsController() {
-        return mStopsController;
-    }
-
     //
     // StopsController.Listener
     //
+    /*
     @Override
     public void onRequestFulfilled(ObaResponse response) {
         setOverlays(response);
@@ -469,93 +439,7 @@ public class MapViewActivity extends MapActivity implements
             }
         }
     }
-
-    private void getStops() {
-        mStopsController.setCurrentRequest(StopsController.requestFromView(
-                mMapView, mRouteOverlay.getRouteId()));
-    }
-
-    // This is a bit annoying: runOnFirstFix() calls its runnable either
-    // immediately or on another thread (AsyncTask). Since we don't know
-    // what thread the runnable will be run on , and since AsyncTasks have
-    // to be created from the UI thread, we need to post a message back to the
-    // UI thread just to create another AsyncTask.
-    final Handler mGetStopsHandler = new Handler();
-
-    final Runnable mGetStops = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null) {
-                setMyLocation(mLocationOverlay.getMyLocation());
-            }
-        }
-    };
-
-    static final int WAIT_FOR_LOCATION_TIMEOUT = 5000;
-
-    final Handler mWaitingForLocationHandler = new Handler();
-
-    final Runnable mWaitingForLocation = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null
-                    && mLocationOverlay.getMyLocation() == null) {
-                Toast.makeText(MapViewActivity.this,
-                        R.string.main_waiting_for_location, Toast.LENGTH_LONG)
-                        .show();
-                mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,
-                        2 * WAIT_FOR_LOCATION_TIMEOUT);
-            }
-        }
-    };
-
-    final Runnable mUnableToGetLocation = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null
-                    && mLocationOverlay.getMyLocation() == null) {
-                Toast.makeText(MapViewActivity.this,
-                        R.string.main_location_unavailable, Toast.LENGTH_LONG)
-                        .show();
-                // Just get stops I guess
-                if (!mRouteOverlay.isRouteMode()) {
-                    getStops();
-                }
-            }
-        }
-    };
-
-    private void setMyLocation() {
-        // Not really sure how this happened, but it happened in issue #54
-        if (mLocationOverlay == null) {
-            return;
-        }
-
-        if (!mLocationOverlay.isMyLocationEnabled()) {
-            showDialog(NOLOCATION_DIALOG);
-            return;
-        }
-
-        GeoPoint point = mLocationOverlay.getMyLocation();
-        if (point == null) {
-            mWaitingForLocationHandler.postDelayed(mWaitingForLocation,
-                    WAIT_FOR_LOCATION_TIMEOUT);
-            mLocationOverlay.runOnFirstFix(new Runnable() {
-                public void run() {
-                    mGetStopsHandler.post(mGetStops);
-                }
-            });
-        } else {
-            setMyLocation(point);
-        }
-    }
-
-    private void setMyLocation(GeoPoint point) {
-        MapController mapCtrl = mMapView.getController();
-        mapCtrl.animateTo(point);
-        mapCtrl.setZoom(16);
-        mMapZoom = 16;
-        if (!mRouteOverlay.isRouteMode()) {
-            getStops();
-        }
-    }
+    */
 
     private class RouteArrayAdapter extends
             Adapters.BaseArrayAdapter2<ObaRoute> {
@@ -574,17 +458,20 @@ public class MapViewActivity extends MapActivity implements
             shortName.setText(UIHelp.getRouteDisplayName(route));
 
             final String currentRouteId = route.getId();
+            /*
             if (mRouteOverlay.isCurrentRoute(currentRouteId)) {
                 // highlight already selected route
                 view.setBackgroundResource(R.drawable.main_popup_route_hl);
                 currentSelectedView = view;
             }
+            */
 
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     final String selectedRouteId = route.getId();
 
+                    /*
                     if (!mRouteOverlay.isCurrentRoute(selectedRouteId)) {
                         // Selecting a route
                         if (currentSelectedView != null)
@@ -601,11 +488,13 @@ public class MapViewActivity extends MapActivity implements
                         mRouteOverlay.clearRoute();
                         getStops();
                     }
+                    */
                 }
             });
         }
     }
 
+    /*
     void populateRoutes(ObaStop stop, boolean force) {
         GridView grid = (GridView)mPopup.findViewById(R.id.route_list);
         if (grid.getVisibility() != View.GONE || force) {
@@ -615,39 +504,7 @@ public class MapViewActivity extends MapActivity implements
                     .getRouteIds())));
         }
     }
-
-    final Handler mStopChangedHandler = new Handler();
-
-    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
-                final OverlayItem newFocus) {
-            mStopChangedHandler.post(new Runnable() {
-                public void run() {
-                    // There are times when this can be fired after we've
-                    // already destroyed
-                    // ourselves (so mStopUserMap == null).
-                    // If that happens, just ignore it (later we could
-                    // potentially remove the
-                    // runnable from the handler)
-                    if (mStopUserMap == null) {
-                        mFocusStopId = null;
-                        return;
-                    }
-                    if (newFocus == null) {
-                        mFocusStopId = null;
-                        setPopup(mRouteOverlay.getRoute(), null);
-                        return;
-                    }
-
-                    final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
-                    final ObaStop stop = item.getStop();
-                    mFocusStopId = stop.getId();
-
-                    setPopup(mRouteOverlay.getRoute(), stop);
-                }
-            });
-        }
-    };
+    */
 
     final ClickableSpan mOnShowArrivals = new ClickableSpan() {
         public void onClick(View v) {
@@ -671,38 +528,7 @@ public class MapViewActivity extends MapActivity implements
     private final ClickableSpan mOnHideRoute = new ClickableSpan() {
         public void onClick(View v) {
             mRouteOverlay.clearRoute();
-            getStops();
-        }
-    };
-
-    static final int MAX_ZOOM = 21;
-    static final int MIN_ZOOM = 1;
-
-    void enableZoom() {
-        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevel() != MAX_ZOOM);
-        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevel() != MIN_ZOOM);
-    }
-
-    private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (!mMapView.getController().zoomIn()) {
-                mZoomControls.setIsZoomInEnabled(false);
-                mZoomControls.setIsZoomOutEnabled(true);
-            } else {
-                enableZoom();
-            }
-        }
-    };
-
-    private final View.OnClickListener mOnZoomOut = new View.OnClickListener() {
-        public void onClick(View v) {
-            if (!mMapView.getController().zoomOut()) {
-                mZoomControls.setIsZoomInEnabled(true);
-                mZoomControls.setIsZoomOutEnabled(false);
-            } else {
-                enableZoom();
-            }
+            //getStops();
         }
     };
 
@@ -715,7 +541,7 @@ public class MapViewActivity extends MapActivity implements
             final StopOverlayItem item = (StopOverlayItem)mStopOverlay
                     .getFocus();
             if (item != null) {
-                populateRoutes(item.getStop(), true);
+                //populateRoutes(item.getStop(), true);
             }
             // TODO: Animate at some point...
             grid.setVisibility(View.VISIBLE);
@@ -737,6 +563,7 @@ public class MapViewActivity extends MapActivity implements
             return;
         }
 
+        /*
         List<ObaStop> stops;
         ObaStop stop = null;
         ObaStopsForRouteResponse routeResponse = null;
@@ -744,56 +571,14 @@ public class MapViewActivity extends MapActivity implements
             routeResponse = (ObaStopsForRouteResponse)response;
             stops = routeResponse.getStops();
             mRouteOverlay.completeShowRoute(routeResponse);
-        } else {
-            assert (response instanceof ObaStopsForLocationResponse);
-            ObaStopsForLocationResponse stopsResponse = (ObaStopsForLocationResponse)response;
-            if (stopsResponse.getOutOfRange() && mWarnOutOfRange) {
-                showDialog(OUTOFRANGE_DIALOG);
-                return;
-            }
-            stops = Arrays.asList(stopsResponse.getStops());
         }
-
-        // If there is an existing StopOverlay, remove it.
-        List<Overlay> mapOverlays = mMapView.getOverlays();
-        if (mStopOverlay != null) {
-            mapOverlays.remove(mStopOverlay);
-            mStopOverlay = null;
-        }
-
-        mStopOverlay = new StopOverlay(stops, this);
-        mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
-        if (mFocusStopId != null) {
-            mStopOverlay.setFocusById(mFocusStopId);
-            stop = ((ObaResponseWithRefs)response).getStop(mFocusStopId);
-            // if (routeResponse != null) {
-            // ObaStopGroup group = routeResponse.getGroupForStop(mFocusStopId);
-            // if (group != null)
-            // Log.d(TAG, "StopGroup: " + group.getName());
-            // }
-        }
-        mapOverlays.add(mStopOverlay);
         setPopup(mRouteOverlay.getRoute(), stop);
-
+        */
         mMapView.postInvalidate();
     }
 
-    /*
-     * Start or stop the MapWatcher
-     */
-    protected void watchMap(boolean watch) {
-        if (watch) {
-            if (mMapWatcher == null)
-                mMapWatcher = new MapWatcher(mMapView, this);
-            mMapWatcher.start();
-        } else {
-            if (mMapWatcher != null)
-                mMapWatcher.stop();
-            mMapWatcher = null;
-        }
-    }
 
-    static void goToStop(Context context, ObaStop stop) {
+    public static void goToStop(Context context, ObaStop stop) {
         ArrivalsListActivity.start(context, stop);
     }
 
@@ -876,7 +661,7 @@ public class MapViewActivity extends MapActivity implements
                     public void onClick(DialogInterface dialog, int which) {
                         // Ok, I suppose we can just try looking from where we
                         // are.
-                        getStops();
+                        //getStops();
                         dismissDialog(NOLOCATION_DIALOG);
                     }
                 });
@@ -905,7 +690,7 @@ public class MapViewActivity extends MapActivity implements
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which >= 0 && which < AGENCY_LOCATIONS.length) {
-                            setMyLocation(AGENCY_LOCATIONS[which]);
+                            //setMyLocation(AGENCY_LOCATIONS[which]);
                         }
                         dismissDialog(OUTOFRANGE_DIALOG);
                         mWarnOutOfRange = false;
@@ -1111,7 +896,7 @@ public class MapViewActivity extends MapActivity implements
 
         TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
         if (mShowRoutes) {
-            populateRoutes(stop, mShowRoutes);
+            //populateRoutes(stop, mShowRoutes);
             setViewVisibilityById(mPopup, R.id.route_list, View.VISIBLE);
             text.setText(R.string.main_hide_routes);
         } else {

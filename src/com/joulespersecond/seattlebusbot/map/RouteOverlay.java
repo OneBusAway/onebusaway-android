@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
@@ -24,6 +24,7 @@ import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+import com.joulespersecond.seattlebusbot.R;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -76,8 +77,9 @@ public class RouteOverlay {
      */
     public void completeShowRoute(ObaStopsForRouteResponse response) {
         List<Overlay> overlays = mMapView.getOverlays();
-        if (mLineOverlay != null)
+        if (mLineOverlay != null) {
             overlays.remove(mLineOverlay);
+        }
         if (response != null) {
             String routeId = response.getRouteId();
             mLineOverlay = new LineOverlay();
@@ -154,8 +156,9 @@ public class RouteOverlay {
      * Compare to current route
      */
     protected boolean isCurrentRoute(String routeCompare) {
-        if (mRouteId == null)
+        if (mRouteId == null) {
             return false;
+        }
         return mRouteId.equals(routeCompare);
     }
 
@@ -244,8 +247,9 @@ public class RouteOverlay {
         }
 
         public void zoom(MapController mapCtrl) {
-            if (mapCtrl == null)
+            if (mapCtrl == null) {
                 return;
+            }
 
             int minLat = Integer.MAX_VALUE;
             int maxLat = Integer.MIN_VALUE;

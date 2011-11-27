@@ -38,7 +38,8 @@
     <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
 
     <!--  Option strings -->
-    <string name="main_option_mylocation">My Location</string>
+    <string name="map_option_mylocation">My Location</string>
+    <string name="map_option_search">Search</string>
     <string name="main_option_findroute">My Routes</string>
     <string name="main_option_findstop">My Stops</string>
     <string name="main_option_viewtrips">View Reminders</string>

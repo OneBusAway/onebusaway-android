@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;

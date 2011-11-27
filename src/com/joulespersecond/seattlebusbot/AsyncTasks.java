@@ -27,7 +27,7 @@ import android.os.AsyncTask;
  * @author paulw
  *
  */
-final class AsyncTasks {
+public final class AsyncTasks {
     //private static final String TAG = "AsyncTasks";
     // Uninstantiatable
     private AsyncTasks() { throw new AssertionError(); }
@@ -117,7 +117,7 @@ final class AsyncTasks {
     public static final class ProgressIndeterminateVisibility implements Progress {
         private final Activity mActivity;
 
-        ProgressIndeterminateVisibility(Activity activity) {
+        public ProgressIndeterminateVisibility(Activity activity) {
             mActivity = activity;
         }
         public void showLoading() {

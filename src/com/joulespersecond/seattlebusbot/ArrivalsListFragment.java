@@ -2,12 +2,17 @@ package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,9 +28,11 @@ import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 
 //
 // We don't use the ListFragment because the support library's version of
@@ -135,6 +142,15 @@ public class ArrivalsListFragment extends MyListFragment
     }
 
     @Override
+    public void onDestroy() {
+        //if (mTripsForStop != null) {
+        //    mTripsForStop.close();
+        //}
+        super.onDestroy();
+    }
+
+
+    @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
         return new ArrivalsListLoader(getActivity(), mStopId);
     }
@@ -180,10 +196,7 @@ public class ArrivalsListFragment extends MyListFragment
         if (info != null) {
             // Reset the empty text just in case there is no data.
             setEmptyText(getString(R.string.stop_info_nodata));
-            ArrayList<ArrivalInfo> list =
-                    ArrivalInfo.convertObaArrivalInfo(getActivity(),
-                            result.getArrivalInfo(), mRoutesFilter);
-            mAdapter.setData(list);
+            mAdapter.setData(result.getArrivalInfo(), mRoutesFilter);
         }
 
         // The list should now be shown.
@@ -205,7 +218,7 @@ public class ArrivalsListFragment extends MyListFragment
 
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
-        mAdapter.setData(null);
+        mAdapter.setData(null, mRoutesFilter);
     }
 
     //
@@ -240,11 +253,9 @@ public class ArrivalsListFragment extends MyListFragment
             refresh();
             return true;
         } else if (id == R.id.filter) {
-            /*
-            if (mResponse != null) {
+            if (mStop != null) {
                 showRoutesFilterDialog();
             }
-            */
         } else if (id == R.id.edit_name) {
             mHeader.beginNameEdit(null);
         } else if (id == R.id.toggle_favorite) {
@@ -252,6 +263,61 @@ public class ArrivalsListFragment extends MyListFragment
             mHeader.refresh();
         }
         return false;
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        final ArrivalInfo stop = (ArrivalInfo)getListView().getItemAtPosition(position);
+        if (stop == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.stop_info_item_options_title);
+
+        ObaArrivalInfoResponse response =
+                getArrivalsLoader().getLastGoodResponse();
+        final ObaRoute route = response.getRoute(stop.getInfo().getRouteId());
+        final String url = route != null ? route.getUrl() : null;
+        final boolean hasUrl = !TextUtils.isEmpty(url);
+        // Check to see if the trip name is visible.
+        // (we don't have any other state, so this is good enough)
+        int options;
+        View tripView = v.findViewById(R.id.trip_info);
+        if (tripView.getVisibility() != View.GONE) {
+            if (hasUrl) {
+                options = R.array.stop_item_options_edit;
+            } else {
+                options = R.array.stop_item_options_edit_noschedule;
+            }
+        } else if (hasUrl) {
+            options = R.array.stop_item_options;
+        } else {
+            options = R.array.stop_item_options_noschedule;
+        }
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        goToTrip(stop);
+                        break;
+                    case 1:
+                        goToRoute(stop);
+                        break;
+                    case 2:
+                        ArrayList<String> routes = new ArrayList<String>(1);
+                        routes.add(stop.getInfo().getRouteId());
+                        setRoutesFilter(routes);
+                        mHeader.refresh();
+                        break;
+                    case 3:
+                        UIHelp.goToUrl(getActivity(), url);
+                        break;
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.setOwnerActivity(getActivity());
+        dialog.show();
     }
 
     //
@@ -307,13 +373,11 @@ public class ArrivalsListFragment extends MyListFragment
 
     @Override
     public void setRoutesFilter(ArrayList<String> routes) {
-        // TODO:
-        /*
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
-        StopInfoListAdapter adapter = (StopInfoListAdapter) getListView().getAdapter();
-        adapter.setData(mResponse.getArrivalInfo());
-        */
+        ObaArrivalInfoResponse response =
+                getArrivalsLoader().getLastGoodResponse();
+        mAdapter.setData(response.getArrivalInfo(), mRoutesFilter);
     }
 
     @Override
@@ -349,6 +413,102 @@ public class ArrivalsListFragment extends MyListFragment
         // Gotta love backward compatibility...
         ((FragmentActivity)getActivity()).invalidateOptionsMenu();
         return mFavorite;
+    }
+
+    private static final int FILTER_DIALOG_RESULT = 1;
+
+    private void showRoutesFilterDialog() {
+        ObaArrivalInfoResponse response =
+                getArrivalsLoader().getLastGoodResponse();
+        final List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
+        final int len = routes.size();
+        final ArrayList<String> filter = mRoutesFilter;
+
+        // mRouteIds = new ArrayList<String>(len);
+        String[] items = new String[len];
+        boolean[] checks = new boolean[len];
+
+        // Go through all the stops, add them to the Ids and Names
+        // For each stop, if it is in the enabled list, mark it as checked.
+        for (int i = 0; i < len; ++i) {
+            final ObaRoute route = routes.get(i);
+            // final String id = route.getId();
+            // mRouteIds.add(i, id);
+            items[i] = UIHelp.getRouteDisplayName(route);
+            if (filter.contains(route.getId())) {
+                checks[i] = true;
+            }
+        }
+        new MultiChoiceActivity.Builder(getActivity())
+            .setTitle(R.string.stop_info_filter_title)
+            .setItems(items, checks)
+            .setPositiveButton(R.string.stop_info_save)
+            .setNegativeButton(R.string.stop_info_cancel)
+            .startFromFragment(this, FILTER_DIALOG_RESULT);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case FILTER_DIALOG_RESULT:
+                if (resultCode == Activity.RESULT_OK) {
+                    setRoutesFilterFromIntent(data);
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void setRoutesFilterFromIntent(Intent intent) {
+        final boolean[] checks = intent.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
+        if (checks == null) {
+            return;
+        }
+
+        final int len = checks.length;
+        final ArrayList<String> newFilter = new ArrayList<String>(len);
+
+        ObaArrivalInfoResponse response =
+                getArrivalsLoader().getLastGoodResponse();
+        final List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
+        assert(routes.size() == len);
+
+        for (int i = 0; i < len; ++i) {
+            final ObaRoute route = routes.get(i);
+            if (checks[i]) {
+                newFilter.add(route.getId());
+            }
+        }
+        // If the size of the filter is the number of routes
+        // (i.e., the user selected every checkbox) act then
+        // don't select any.
+        if (newFilter.size() == len) {
+            newFilter.clear();
+        }
+
+        setRoutesFilter(newFilter);
+        mHeader.refresh();
+    }
+
+    //
+    // Navigation
+    //
+    private void goToTrip(ArrivalInfo stop) {
+        ObaArrivalInfo stopInfo = stop.getInfo();
+        TripInfoActivity.start(getActivity(),
+                stopInfo.getTripId(),
+                mStopId,
+                stopInfo.getRouteId(),
+                stopInfo.getShortName(),
+                mStop.getName(),
+                stopInfo.getScheduledDepartureTime(),
+                stopInfo.getHeadsign());
+    }
+
+    private void goToRoute(ArrivalInfo stop) {
+        RouteInfoActivity.start(getActivity(),
+                stop.getInfo().getRouteId());
     }
 
     //

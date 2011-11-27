@@ -31,7 +31,18 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         notifyDataSetChanged();
     }
 
-    public void setData(ArrayList<ArrivalInfo> data) {
+    public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter) {
+        if (arrivals != null) {
+            ArrayList<ArrivalInfo> list =
+                    ArrivalInfo.convertObaArrivalInfo(getContext(),
+                            arrivals, routesFilter);
+            setData(list);
+        } else {
+            setData(null);
+        }
+    }
+
+    private void setData(ArrayList<ArrivalInfo> data) {
         clear();
         if (data != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

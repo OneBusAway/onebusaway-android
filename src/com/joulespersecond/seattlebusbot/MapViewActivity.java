@@ -95,8 +95,6 @@ public class MapViewActivity extends MapActivity {
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
     private boolean mShowRoutes;
-    //private StopsController mStopsController;
-    private MapWatcher mMapWatcher;
     private Object mStopWait;
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
@@ -194,7 +192,7 @@ public class MapViewActivity extends MapActivity {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
-        mPopup = findViewById(R.id.map_popup);
+        //mPopup = findViewById(R.id.map_popup);
         // pop-up was leaking clicks through to the map
         mPopup.setOnClickListener(new OnClickListener() {
             @Override
@@ -203,10 +201,6 @@ public class MapViewActivity extends MapActivity {
         mMapView.setBuiltInZoomControls(false);
         //mStopsController = new StopsController(this, this);
         mRouteOverlay = new RouteOverlay(this, mMapView);
-
-        // Initialize the links
-        UIHelp.setChildClickable(this, R.id.show_arrival_info, mOnShowArrivals);
-        UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
 
         // Set up everything we can from the intent --
         // all of the UI is set-up/torn down in onResume/onPause
@@ -506,19 +500,6 @@ public class MapViewActivity extends MapActivity {
     }
     */
 
-    final ClickableSpan mOnShowArrivals = new ClickableSpan() {
-        public void onClick(View v) {
-            // This really shouldn't happen, but it does sometimes.
-            if (mStopOverlay == null) {
-                return;
-            }
-            StopOverlayItem item = (StopOverlayItem)mStopOverlay.getFocus();
-            if (item != null) {
-                goToStop(MapViewActivity.this, item.getStop());
-            }
-        }
-    };
-
     private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
         public void onClick(View v) {
             showRoutes((TextView)v, !mShowRoutes);
@@ -577,10 +558,6 @@ public class MapViewActivity extends MapActivity {
         mMapView.postInvalidate();
     }
 
-
-    public static void goToStop(Context context, ObaStop stop) {
-        ArrivalsListActivity.start(context, stop);
-    }
 
     private Dialog createHelpDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -856,13 +833,13 @@ public class MapViewActivity extends MapActivity {
         setViewVisibilityById(mPopup, R.id.direction, View.GONE);
         setViewVisibilityById(mPopup, R.id.show_arrival_info, View.GONE);
         setViewVisibilityById(mPopup, R.id.route_list, View.GONE);
-        setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
+        //setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
 
         TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
         text.setText(R.string.main_hide_routes);
         UIHelp.setChildClickable(this, R.id.show_routes, mOnHideRoute);
 
-        text = (TextView)mPopup.findViewById(R.id.route_short_name);
+        //text = (TextView)mPopup.findViewById(R.id.route_short_name);
         text.setText(UIHelp.getRouteDisplayName(route));
 
         mPopup.setVisibility(View.VISIBLE);
@@ -873,24 +850,24 @@ public class MapViewActivity extends MapActivity {
 
         TextView nameView = (TextView)mPopup.findViewById(R.id.stop_name);
         TextView direction = (TextView)mPopup.findViewById(R.id.direction);
-        TextView routeNumView = (TextView)mPopup
-                .findViewById(R.id.route_short_name);
+        //TextView routeNumView = (TextView)mPopup
+        //        .findViewById(R.id.route_short_name);
 
         if (TextUtils.isEmpty(routeLong) && TextUtils.isEmpty(routeShort)) {
             // Is this a favorite?
             mStopUserMap.setView2(nameView, stop.getId(), stop.getName(), true);
             UIHelp.setStopDirection(direction, stop.getDirection(), false);
-            setViewVisibilityById(mPopup, R.id.route_container, View.GONE);
+        //    setViewVisibilityById(mPopup, R.id.route_container, View.GONE);
         } else {
             nameView.setText(routeLong);
             nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
             mStopUserMap.setView2(direction, stop.getId(), stop.getName(), false);
             if (TextUtils.isEmpty(routeShort)) {
-                routeNumView.setText(routeLong);
+        //        routeNumView.setText(routeLong);
             } else {
-                routeNumView.setText(routeShort);
+        //        routeNumView.setText(routeShort);
             }
-            setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
+        //    setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
         }
         direction.setVisibility(View.VISIBLE);
 

@@ -1,12 +1,33 @@
+/*
+ * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com) and individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
+import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -53,9 +74,15 @@ public class MapFragment extends Fragment
     //private static final String SHOW_ROUTES = ".ShowRoutes";
 
     private MapView mMapView;
+    private UIHelp.StopUserInfoMap mStopUserMap;
+
+    // The Fragment controls the stop overlay, since that
+    // is used by both modes.
+    private StopOverlay mStopOverlay;
+    StopPopup mStopPopup;
+
     private MyLocationOverlay mLocationOverlay;
     private ZoomControls mZoomControls;
-    private UIHelp.StopUserInfoMap mStopUserMap;
 
     private MapFragmentController mController;
 
@@ -66,11 +93,15 @@ public class MapFragment extends Fragment
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
 
-        mMapView = (MapView)getView().findViewById(R.id.mapview);
+        View view = getView();
+        mMapView = (MapView)view.findViewById(R.id.mapview);
         mMapView.setBuiltInZoomControls(false);
-        mZoomControls = (ZoomControls)getView().findViewById(R.id.zoom_controls);
+        mZoomControls = (ZoomControls)view.findViewById(R.id.zoom_controls);
         mZoomControls.setOnZoomInClickListener(mOnZoomIn);
         mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
+
+        // Initialize the StopPopup (hidden)
+        mStopPopup = new StopPopup(getActivity(), view.findViewById(R.id.stop_info));
 
         // TODO: Our initial mode is basically determined by whether
         // or not there is a Route ID as an argument.
@@ -117,6 +148,7 @@ public class MapFragment extends Fragment
         List<Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.clear();
         mLocationOverlay = null;
+        mStopOverlay = null;
 
         super.onPause();
     }
@@ -137,6 +169,7 @@ public class MapFragment extends Fragment
         } else {
             mStopUserMap.requery();
         }
+        mStopPopup.setStopUserMap(mStopUserMap);
 
         if (mController != null) {
             mController.onResume();
@@ -154,8 +187,6 @@ public class MapFragment extends Fragment
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
-            // TODO: We will probably have to handle
-            // getting our location as a common function.
             setMyLocation();
             return true;
         } else if (id == R.id.search) {
@@ -194,9 +225,64 @@ public class MapFragment extends Fragment
     }
 
     @Override
+    public void showStops(List<ObaStop> stops, ObaReferences refs) {
+        // If there is an eList<E>ing StopOverlay, remove it.
+        List<Overlay> mapOverlays = mMapView.getOverlays();
+        if (mStopOverlay != null) {
+            mapOverlays.remove(mStopOverlay);
+            mStopOverlay = null;
+        }
+
+        if (stops != null) {
+            mStopOverlay = new StopOverlay(stops, getActivity());
+            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
+            mStopPopup.setReferences(refs);
+            // TODO: Refocus the stop id
+            /*
+            if (mFocusStopId != null) {
+                mStopOverlay.setFocusById(mFocusStopId);
+                stop = ((ObaResponseWithRefs)response).getStop(mFocusStopId);
+                // if (routeResponse != null) {
+                // ObaStopGroup group = routeResponse.getGroupForStop(mFocusStopId);
+                // if (group != null)
+                // Log.d(TAG, "StopGroup: " + group.getName());
+                // }
+            }
+            */
+            mapOverlays.add(mStopOverlay);
+        }
+
+        // TODO: Refresh the popup
+        mMapView.postInvalidate();
+    }
+
+    @Override
     public void notifyOutOfRange() {
         // TODO:
     }
+
+    //
+    // Stop changed handler
+    //
+    final Handler mStopChangedHandler = new Handler();
+
+    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
+        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
+                final OverlayItem newFocus) {
+            mStopChangedHandler.post(new Runnable() {
+                public void run() {
+                    if (newFocus != null) {
+                        final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
+                        final ObaStop stop = item.getStop();
+                        //mFocusStopId = stop.getId();
+                        mStopPopup.show(stop);
+                    } else {
+                        mStopPopup.hide();
+                    }
+                }
+            });
+        }
+    };
 
     //
     // INitialization help

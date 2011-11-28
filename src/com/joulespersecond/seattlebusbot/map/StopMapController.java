@@ -1,12 +1,23 @@
+/*
+ * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com) and individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
@@ -14,7 +25,6 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.FragmentMapActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -33,7 +43,6 @@ class StopMapController implements MapFragmentController,
 
     private final FragmentCallback mFragment;
 
-    private StopOverlay mOverlay;
     private MapWatcher mMapWatcher;
     // Cache the map center -- if we don't have one when we resume,
     // we want to get the user's location.
@@ -45,14 +54,11 @@ class StopMapController implements MapFragmentController,
 
     @Override
     public void initialize(Bundle savedInstanceState) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void destroy() {
         watchMap(false);
-        mOverlay = null;
     }
 
     @Override
@@ -60,8 +66,6 @@ class StopMapController implements MapFragmentController,
         mMapCenter = mFragment.getMapView().getMapCenter();
         // Stop watching the map
         watchMap(false);
-        // Clear the overlay
-        mOverlay = null;
     }
 
     @Override
@@ -80,8 +84,6 @@ class StopMapController implements MapFragmentController,
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -118,32 +120,7 @@ class StopMapController implements MapFragmentController,
         }
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
-        MapView mapView = mFragment.getMapView();
-
-        // If there is an eList<E>ing StopOverlay, remove it.
-        List<Overlay> mapOverlays = mapView.getOverlays();
-        if (mOverlay != null) {
-            mapOverlays.remove(mOverlay);
-            mOverlay = null;
-        }
-
-        mOverlay = new StopOverlay(stops, mFragment.getActivity());
-        mOverlay.setOnFocusChangeListener(mFocusChangeListener);
-        // TODO: Refocus the stop id
-        /*
-        if (mFocusStopId != null) {
-            mStopOverlay.setFocusById(mFocusStopId);
-            stop = ((ObaResponseWithRefs)response).getStop(mFocusStopId);
-            // if (routeResponse != null) {
-            // ObaStopGroup group = routeResponse.getGroupForStop(mFocusStopId);
-            // if (group != null)
-            // Log.d(TAG, "StopGroup: " + group.getName());
-            // }
-        }
-        */
-        mapOverlays.add(mOverlay);
-        // Refresh the popup
-        mapView.postInvalidate();
+        mFragment.showStops(stops, response);
 
         ((FragmentMapActivity)mFragment.getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
     }
@@ -151,13 +128,7 @@ class StopMapController implements MapFragmentController,
     @Override
     public void onLoaderReset(Loader<ObaStopsForLocationResponse> loader) {
         // Clear the overlay.
-        MapView mapView = mFragment.getMapView();
-        List<Overlay> mapOverlays = mapView.getOverlays();
-        if (mOverlay != null) {
-            mapOverlays.remove(mOverlay);
-            mOverlay = null;
-        }
-        mapView.postInvalidate();
+        mFragment.showStops(null, null);
     }
 
     //
@@ -174,6 +145,7 @@ class StopMapController implements MapFragmentController,
         // Otherwise, we need to restart the loader with the new request.
         StopsLoader loader = getLoader();
         if (loader == null || !loader.canFulfill(mFragment.getMapView())) {
+            Log.d(TAG,  "Refreshing stops");
             ((FragmentMapActivity)mFragment.getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
             mFragment.getLoaderManager().restartLoader(STOPS_LOADER, null, this);
         }
@@ -251,33 +223,6 @@ class StopMapController implements MapFragmentController,
             //  FALSE
         }
     }
-
-    //
-    // Stop changed handler
-    //
-    final Handler mStopChangedHandler = new Handler();
-
-    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
-                final OverlayItem newFocus) {
-            mStopChangedHandler.post(new Runnable() {
-                public void run() {
-                    if (newFocus == null) {
-                        // TODO: This mostly changes the header, right now
-                        // we don't know how to do that yet.
-                        //mFocusStopId = null;
-                        //setPopup(mRouteOverlay.getRoute(), null);
-                        return;
-                    }
-
-                    //final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
-                    //final ObaStop stop = item.getStop();
-                    //mFocusStopId = stop.getId();
-                    //setPopup(mRouteOverlay.getRoute(), stop);
-                }
-            });
-        }
-    };
 
     //
     // Map watcher

@@ -20,7 +20,7 @@ import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.MapViewActivity;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
 
 import android.app.Activity;
@@ -124,7 +124,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         else if (action == MotionEvent.ACTION_UP) {
             final OverlayItem focus = getFocus();
             if (focus != null) {
-                MapViewActivity.goToStop(mActivity, ((StopOverlayItem)focus).getStop());
+                ArrivalsListActivity.start(mActivity, ((StopOverlayItem)focus).getStop());
             }
         }
         return true;
@@ -149,7 +149,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         case KeyEvent.KEYCODE_DPAD_CENTER:
             final OverlayItem focus = getFocus();
             if (focus != null) {
-                MapViewActivity.goToStop(mActivity, ((StopOverlayItem)focus).getStop());
+                ArrivalsListActivity.start(mActivity, ((StopOverlayItem)focus).getStop());
             }
             break;
         default:
@@ -193,7 +193,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         final OverlayItem item = getItem(index);
         if (item.equals(getFocus())) {
             ObaStop stop = mStops.get(index);
-            MapViewActivity.goToStop(mActivity, stop);
+            ArrivalsListActivity.start(mActivity, stop);
         }
         else {
             setFocus(item);

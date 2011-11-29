@@ -127,7 +127,7 @@ public class MySearchStopsActivity extends MySearchActivity {
         }
     }
 
-    private static final String URL_STOPID = MapViewActivity.HELP_URL + "#finding_stop_ids";
+    private static final String URL_STOPID = HomeActivity.HELP_URL + "#finding_stop_ids";
 
     @Override
     protected int getLayoutId() {

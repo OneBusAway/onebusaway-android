@@ -30,8 +30,14 @@ import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentMapActivity;
 import android.support.v4.view.Menu;
@@ -66,6 +72,9 @@ public class MapFragment extends Fragment
             implements MapFragmentController.FragmentCallback {
     //private static final String TAG = "MapFragment";
 
+    private static final String TAG_NO_LOCATION_DIALOG = ".NoLocation";
+    private static final String TAG_OUT_OF_RANGE_DIALOG = ".OutOfRange";
+
     // Fragment arguments.
     //private static final String FOCUS_STOP_ID = ".FocusStopId";
     //private static final String CENTER_LAT = ".CenterLat";
@@ -87,6 +96,9 @@ public class MapFragment extends Fragment
     private MyLocationOverlay mLocationOverlay;
     private ZoomControls mZoomControls;
 
+    // We only display the out of range dialog once
+    private boolean mWarnOutOfRange = true;
+
     private MapFragmentController mController;
 
     @Override
@@ -106,6 +118,10 @@ public class MapFragment extends Fragment
         // Initialize the StopPopup (hidden)
         mStopPopup = new StopPopup(this, view.findViewById(R.id.stop_info));
         mRoutePopup = new RoutePopup(this, view.findViewById(R.id.route_info));
+
+        // TODO: Should the fragment be responsible for automatically
+        // going to the current location? Or should the activity?
+        // Should it be by default, or should it be enabled by an argument?
 
         // TODO: Our initial mode is basically determined by whether
         // or not there is a Route ID as an argument.
@@ -219,6 +235,9 @@ public class MapFragment extends Fragment
         */
     }
 
+    public boolean isRouteDisplayed() {
+        return mController instanceof RouteMapController;
+    }
 
     //
     // Fragment Controller
@@ -248,9 +267,8 @@ public class MapFragment extends Fragment
             mController.destroy();
         }
         mRoutePopup.hide();
-        StopMapController ctrl = new StopMapController(this);
-        ctrl.restart();
-        mController = ctrl;
+        mController = new StopMapController(this);
+        mController.onResume();
     }
 
     @Override
@@ -301,9 +319,20 @@ public class MapFragment extends Fragment
         mMapView.postInvalidate();
     }
 
+    // Apparently you can't show a dialog from within OnLoadFinished?
+    final Handler mShowOutOfRangeHandler = new Handler();
+
     @Override
     public void notifyOutOfRange() {
-        // TODO:
+        if (mWarnOutOfRange) {
+            mShowOutOfRangeHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    new OutOfRangeDialog().show(getSupportFragmentManager(),
+                            TAG_OUT_OF_RANGE_DIALOG);
+                }
+            });
+        }
     }
 
     //
@@ -400,8 +429,8 @@ public class MapFragment extends Fragment
         }
 
         if (!mLocationOverlay.isMyLocationEnabled()) {
-            // TODO: S
-            //showDialog(NOLOCATION_DIALOG);
+            new NoLocationDialog().show(getSupportFragmentManager(),
+                    TAG_NO_LOCATION_DIALOG);
             return;
         }
 
@@ -425,6 +454,86 @@ public class MapFragment extends Fragment
         mapCtrl.setZoom(16);
         if (mController != null) {
             mController.onLocation();
+        }
+    }
+
+
+    //
+    // Dialogs
+    //
+
+    private class NoLocationDialog extends DialogFragment {
+        private static final int REQUEST_NO_LOCATION = 1;
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            switch (requestCode) {
+                case REQUEST_NO_LOCATION:
+                    setMyLocation();
+                    break;
+                default:
+                    super.onActivityResult(requestCode, resultCode, data);
+            }
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setTitle(R.string.main_nolocation_title);
+            builder.setIcon(android.R.drawable.ic_dialog_map);
+            builder.setMessage(R.string.main_nolocation);
+            builder.setPositiveButton(android.R.string.yes,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            NoLocationDialog.this.startActivityForResult(
+                                    new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+                                    REQUEST_NO_LOCATION);
+                            dialog.dismiss();
+                        }
+                    });
+            builder.setNegativeButton(android.R.string.no,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            return builder.create();
+        }
+    }
+
+    // This is in lieu of a more complicated map of agencies screen
+    // like on the iPhone app. Eventually that'd be cool, but I don't really
+    // have time right now.
+
+    // This array must be kept in sync with R.array.agency_locations!
+    private static final GeoPoint[] AGENCY_LOCATIONS = new GeoPoint[] {
+        new GeoPoint(47605990, -122331780), // Seattle, WA
+        new GeoPoint(47252090, -122443740), // Tacoma, WA
+        new GeoPoint(47979090, -122201530), // Everett, WA
+    };
+
+    private class OutOfRangeDialog extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            LayoutInflater inflater = getActivity().getLayoutInflater();
+            builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
+                    null));
+
+            builder.setItems(R.array.agency_locations,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which >= 0 && which < AGENCY_LOCATIONS.length) {
+                                setMyLocation(AGENCY_LOCATIONS[which]);
+                            }
+                            dialog.dismiss();
+                            mWarnOutOfRange = false;
+                        }
+                    });
+            return builder.create();
         }
     }
 

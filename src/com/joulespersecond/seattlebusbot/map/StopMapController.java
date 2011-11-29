@@ -16,7 +16,6 @@
 package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -43,18 +42,9 @@ class StopMapController implements MapFragmentController,
     private final FragmentCallback mFragment;
 
     private MapWatcher mMapWatcher;
-    // Cache the map center -- if we don't have one when we resume,
-    // we want to get the user's location.
-    private GeoPoint mMapCenter;
 
     StopMapController(FragmentCallback callback) {
         mFragment = callback;
-    }
-
-    // Called when we switch back to stop mode.
-    public void restart() {
-        watchMap(true);
-        refresh();
     }
 
     @Override
@@ -64,7 +54,6 @@ class StopMapController implements MapFragmentController,
 
     @Override
     public void onPause() {
-        mMapCenter = mFragment.getMapView().getMapCenter();
         // Stop watching the map
         watchMap(false);
     }
@@ -72,15 +61,7 @@ class StopMapController implements MapFragmentController,
     @Override
     public void onResume() {
         watchMap(true);
-        // If we are resuming and we don't have a previous center,
-        // we want to get the user's location.
-        GeoPoint prevCenter = mMapCenter;
-        if (prevCenter != null) {
-            MapController mapCtrl = mFragment.getMapView().getController();
-            mapCtrl.setCenter(prevCenter);
-        } else {
-            mFragment.setMyLocation();
-        }
+        refresh();
     }
 
     @Override

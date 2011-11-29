@@ -20,45 +20,19 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
-import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.Overlay;
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.map.StopOverlay;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
-import java.util.List;
 
 public class MapViewActivity extends MapActivity {
     private static final String TAG = "MapViewActivity";
 
-    public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
-    public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
 
     private static final String FOCUS_STOP_ID = ".FocusStopId";
     private static final String CENTER_LAT = ".CenterLat";
@@ -69,10 +43,6 @@ public class MapViewActivity extends MapActivity {
     private static final String SHOW_ROUTES = ".ShowRoutes";
 
     MapView mMapView;
-    private MyLocationOverlay mLocationOverlay;
-    private View mPopup;
-    StopOverlay mStopOverlay;
-    UIHelp.StopUserInfoMap mStopUserMap;
 
     // Values that are initialized by either the intent extras
     // or by the frozen state.
@@ -80,16 +50,7 @@ public class MapViewActivity extends MapActivity {
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
     private boolean mShowRoutes;
-    private Object mStopWait;
-    // We only display the out of range dialog once
-    private boolean mWarnOutOfRange = true;
 
-    private static final int HELP_DIALOG = 1;
-    private static final int WHATSNEW_DIALOG = 2;
-    private static final int NOLOCATION_DIALOG = 3;
-    private static final int OUTOFRANGE_DIALOG = 4;
-
-    private static final int REQUEST_NO_LOCATION = 41;
     private static final int REQUEST_SEARCH_RESULT = 42;
 
     /**
@@ -197,9 +158,6 @@ public class MapViewActivity extends MapActivity {
         //mStopsController
         //        .setNonConfigurationInstance(getLastNonConfigurationInstance());
 
-        autoShowWhatsNew();
-        UIHelp.checkAirplaneMode(this);
-
         // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
         if (firstRun) {
             firstRunSetLocation(mMapView.getController());
@@ -208,43 +166,9 @@ public class MapViewActivity extends MapActivity {
 
     @Override
     public void onDestroy() {
-        mStopUserMap.close();
-        mStopUserMap = null;
         //mStopsController.cancel();
         //mStopsController = null;
         super.onDestroy();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_options, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        final int id = item.getItemId();
-        if (id == R.id.my_location) {
-            //setMyLocation();
-            return true;
-        } else if (id == R.id.search) {
-            Intent myIntent = new Intent(this, MyRoutesActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.find_stop) {
-            Intent myIntent = new Intent(this, MyStopsActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.view_trips) {
-            Intent myIntent = new Intent(this, TripListActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.help) {
-            showDialog(HELP_DIALOG);
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -253,16 +177,6 @@ public class MapViewActivity extends MapActivity {
         // This is where we initialize all the UI elements.
         // They are torn down in onPause to save memory.
         //
-        mLocationOverlay = new MyLocationOverlay(this, mMapView);
-        List<Overlay> mapOverlays = mMapView.getOverlays();
-        mapOverlays.add(mLocationOverlay);
-        mLocationOverlay.enableMyLocation();
-
-        if (mStopUserMap == null) {
-            mStopUserMap = new UIHelp.StopUserInfoMap(this);
-        } else {
-            mStopUserMap.requery();
-        }
 
         MapController mapCtrl = mMapView.getController();
         // First, if we have a previous center and zoom,
@@ -305,20 +219,10 @@ public class MapViewActivity extends MapActivity {
 
     @Override
     public void onPause() {
-        mLocationOverlay.disableMyLocation();
-        //mStopsController.cancel();
-
-        //watchMap(false);
 
         mMapCenter = mMapView.getMapCenter();
         mMapZoom = mMapView.getZoomLevel();
         //Log.d(TAG, "PAUSE: Saving center: " + mMapCenter);
-        // Clear the overlays to save memory and re-establish them when we are
-        // resumed.
-        List<Overlay> mapOverlays = mMapView.getOverlays();
-        mapOverlays.clear();
-        mStopOverlay = null;
-        mLocationOverlay = null;
 
         super.onPause();
     }
@@ -347,24 +251,6 @@ public class MapViewActivity extends MapActivity {
     }
 
     @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-        case HELP_DIALOG:
-            return createHelpDialog();
-
-        case WHATSNEW_DIALOG:
-            return createWhatsNewDialog();
-
-        case NOLOCATION_DIALOG:
-            return createNoLocationDialog();
-
-        case OUTOFRANGE_DIALOG:
-            return createOutOfRangeDialog();
-        }
-        return null;
-    }
-
-    @Override
     public void onLowMemory() {
         super.onLowMemory();
         Log.d(TAG, "******** LOW MEMORY ******** ");
@@ -375,11 +261,6 @@ public class MapViewActivity extends MapActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-        case REQUEST_NO_LOCATION:
-            // Clear the map center so we can get the user's location again
-            mMapCenter = null;
-            break;
-
         case REQUEST_SEARCH_RESULT:
             if (resultCode == RESULT_OK) {
                 String routeId = data.getStringExtra(MyTabActivityBase.RESULT_ROUTE_ID);
@@ -388,226 +269,6 @@ public class MapViewActivity extends MapActivity {
                     //getStops();
                 }
             }
-        }
-    }
-
-    public void setStopWait(Object obj) {
-        mStopWait = obj;
-    }
-
-    //
-    // StopsController.Listener
-    //
-    /*
-    @Override
-    public void onRequestFulfilled(ObaResponse response) {
-        setOverlays(response);
-
-        if (mStopWait != null) {
-            synchronized (mStopWait) {
-                mStopWait.notifyAll();
-            }
-        }
-    }
-    */
-
-    private Dialog createHelpDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.main_help_title);
-        builder.setItems(R.array.main_help_options,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                        case 0:
-                            UIHelp.goToUrl(MapViewActivity.this, HELP_URL);
-                            break;
-                        case 1:
-                            UIHelp.goToUrl(MapViewActivity.this, TWITTER_URL);
-                            break;
-                        case 2:
-                            showDialog(WHATSNEW_DIALOG);
-                            break;
-                        case 3:
-                            goToBugReport();
-                            break;
-                        case 4:
-                            Intent preferences = new Intent(
-                                    MapViewActivity.this,
-                                    EditPreferencesActivity.class);
-                            startActivity(preferences);
-                            break;
-                        }
-                    }
-                });
-        return builder.create();
-    }
-
-    private Dialog createWhatsNewDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.main_help_whatsnew_title);
-        builder.setIcon(R.drawable.icon);
-        builder.setMessage(R.string.main_help_whatsnew);
-        builder.setNeutralButton(R.string.main_help_close,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(WHATSNEW_DIALOG);
-                    }
-                });
-        return builder.create();
-        /*
-        // If we get here, we need to show the dialog.
-        final Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.whats_new);
-        // OK dismisses
-        Button button = (Button)dialog.findViewById(android.R.id.closeButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                dismissDialog(WHATSNEW_DIALOG);
-            }
-        });
-        return dialog;
-        */
-    }
-
-    private Dialog createNoLocationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.main_nolocation_title);
-        builder.setIcon(android.R.drawable.ic_dialog_map);
-        builder.setMessage(R.string.main_nolocation);
-        builder.setPositiveButton(android.R.string.yes,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivityForResult(
-                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-                                REQUEST_NO_LOCATION);
-                        dismissDialog(NOLOCATION_DIALOG);
-                    }
-                });
-        builder.setNegativeButton(android.R.string.no,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Ok, I suppose we can just try looking from where we
-                        // are.
-                        //getStops();
-                        dismissDialog(NOLOCATION_DIALOG);
-                    }
-                });
-        return builder.create();
-    }
-
-    // This is in lieu of a more complicated map of agencies screen
-    // like on the iPhone app. Eventually that'd be cool, but I don't really
-    // have time right now.
-
-    // This array must be kept in sync with R.array.agency_locations!
-    private static final GeoPoint[] AGENCY_LOCATIONS = new GeoPoint[] {
-        new GeoPoint(47605990, -122331780), // Seattle, WA
-        new GeoPoint(47252090, -122443740), // Tacoma, WA
-        new GeoPoint(47979090, -122201530), // Everett, WA
-    };
-
-    private Dialog createOutOfRangeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
-                null));
-
-        builder.setItems(R.array.agency_locations,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which >= 0 && which < AGENCY_LOCATIONS.length) {
-                            //setMyLocation(AGENCY_LOCATIONS[which]);
-                        }
-                        dismissDialog(OUTOFRANGE_DIALOG);
-                        mWarnOutOfRange = false;
-                    }
-                });
-        return builder.create();
-    }
-
-    private static final String WHATS_NEW_VER = "whatsNewVer";
-
-    private void autoShowWhatsNew() {
-        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
-
-        // Get the current app version.
-        PackageManager pm = getPackageManager();
-        PackageInfo appInfo = null;
-        try {
-            appInfo = pm.getPackageInfo(getPackageName(),
-                    PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-
-        final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
-        final int newVer = appInfo.versionCode;
-
-        if (oldVer != newVer) {
-            // It's impossible to tell the difference from people updating
-            // from an older version without a What's New dialog and people
-            // with fresh installs just by the settings alone.
-            // So we'll do a heuristic and just check to see if they have
-            // visited any stops -- in most cases that will mean they have
-            // just installed.
-            if (oldVer == 0 && newVer == 7) {
-                Integer count = UIHelp
-                        .intForQuery(this, ObaContract.Stops.CONTENT_URI,
-                                ObaContract.Stops._COUNT);
-                if (count != null && count != 0) {
-                    showDialog(WHATSNEW_DIALOG);
-                }
-            } else if ((oldVer > 0) && (oldVer < newVer)) {
-                showDialog(WHATSNEW_DIALOG);
-            }
-            // Updates will remove the alarms. This should put them back.
-            // (Unfortunately I can't find a way to reschedule them without
-            // having the app run again).
-            TripService.scheduleAll(this);
-
-            SharedPreferences.Editor edit = settings.edit();
-            edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
-            edit.commit();
-        }
-    }
-
-    private void goToBugReport() {
-        PackageManager pm = getPackageManager();
-        PackageInfo appInfo = null;
-        try {
-            appInfo = pm.getPackageInfo(getPackageName(),
-                    PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-        // appInfo.versionName
-        // Build.MODEL
-        // Build.VERSION.RELEASE
-        // Build.VERSION.SDK
-        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
-        final String body = getString(R.string.bug_report_body,
-                 appInfo.versionName,
-                 Build.MODEL,
-                 Build.VERSION.RELEASE,
-                 Build.VERSION.SDK); // TODO: Change to SDK_INT when we switch to 1.6
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.putExtra(Intent.EXTRA_EMAIL,
-                new String[] { getString(R.string.bug_report_dest) });
-        send.putExtra(Intent.EXTRA_SUBJECT,
-                getString(R.string.bug_report_subject));
-        send.putExtra(Intent.EXTRA_TEXT, body);
-        send.setType("message/rfc822");
-        try {
-            startActivity(Intent.createChooser(send,
-                    getString(R.string.bug_report_subject)));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.bug_report_error, Toast.LENGTH_LONG)
-                    .show();
         }
     }
 

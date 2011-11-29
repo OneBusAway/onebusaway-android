@@ -42,6 +42,7 @@ import java.util.List;
  *
  */
 class StopPopup {
+    private final MapFragment mFragment;
     private final Context mContext;
     private final View mView;
     private final TextView mNameView;
@@ -53,8 +54,9 @@ class StopPopup {
     private ObaReferences mReferences;
     private UIHelp.StopUserInfoMap mStopUserMap;
 
-    StopPopup(Context context, View view) {
-        mContext = context;
+    StopPopup(MapFragment fragment, View view) {
+        mFragment = fragment;
+        mContext = fragment.getActivity();
         mView = view;
         mNameView = (TextView)view.findViewById(R.id.stop_name);
         mDirection = (TextView)view.findViewById(R.id.direction);
@@ -170,27 +172,7 @@ class StopPopup {
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    // TODO: Switch to Route Mode
-
-                    //final String selectedRouteId = route.getId();
-                    /*
-                    if (!mRouteOverlay.isCurrentRoute(selectedRouteId)) {
-                        // Selecting a route
-                        if (currentSelectedView != null)
-                            currentSelectedView
-                                    .setBackgroundResource(R.drawable.main_popup_route_bg);
-                        currentSelectedView = view;
-                        view.setBackgroundResource(R.drawable.main_popup_route_hl);
-                        mRouteOverlay.setRouteId(selectedRouteId, false);
-                        getStops();
-                    } else {
-                        // UN-selecting a route
-                        view.setBackgroundResource(R.drawable.main_popup_route_bg);
-                        currentSelectedView = null;
-                        mRouteOverlay.clearRoute();
-                        getStops();
-                    }
-                    */
+                    mFragment.switchToRouteMode(route);
                 }
             });
 

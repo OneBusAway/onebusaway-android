@@ -25,7 +25,6 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.FragmentMapActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -39,7 +38,7 @@ class StopMapController implements MapFragmentController,
             LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse>,
             MapWatcher.Listener {
     private static final String TAG = "StopMapController";
-    private static final int STOPS_LOADER = 5677;
+    private static final int STOPS_LOADER = 5678;
 
     private final FragmentCallback mFragment;
 
@@ -52,8 +51,10 @@ class StopMapController implements MapFragmentController,
         mFragment = callback;
     }
 
-    @Override
-    public void initialize(Bundle savedInstanceState) {
+    // Called when we switch back to stop mode.
+    public void restart() {
+        watchMap(true);
+        refresh();
     }
 
     @Override
@@ -121,8 +122,7 @@ class StopMapController implements MapFragmentController,
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
         mFragment.showStops(stops, response);
-
-        ((FragmentMapActivity)mFragment.getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
+        mFragment.showProgress(false);
     }
 
     @Override
@@ -146,7 +146,7 @@ class StopMapController implements MapFragmentController,
         StopsLoader loader = getLoader();
         if (loader == null || !loader.canFulfill(mFragment.getMapView())) {
             Log.d(TAG,  "Refreshing stops");
-            ((FragmentMapActivity)mFragment.getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
+            mFragment.showProgress(true);
             mFragment.getLoaderManager().restartLoader(STOPS_LOADER, null, this);
         }
     }

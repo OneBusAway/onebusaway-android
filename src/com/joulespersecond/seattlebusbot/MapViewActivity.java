@@ -17,23 +17,15 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.seattlebusbot.map.MapWatcher;
-import com.joulespersecond.seattlebusbot.map.RouteOverlay;
 import com.joulespersecond.seattlebusbot.map.StopOverlay;
-import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -47,11 +39,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
-import android.text.Spannable;
-import android.text.TextUtils;
-import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -60,10 +48,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ZoomControls;
 
 import java.io.File;
 import java.util.List;
@@ -87,7 +73,6 @@ public class MapViewActivity extends MapActivity {
     private View mPopup;
     StopOverlay mStopOverlay;
     UIHelp.StopUserInfoMap mStopUserMap;
-    private RouteOverlay mRouteOverlay;
 
     // Values that are initialized by either the intent extras
     // or by the frozen state.
@@ -192,15 +177,6 @@ public class MapViewActivity extends MapActivity {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.main);
         mMapView = (MapView)findViewById(R.id.mapview);
-        //mPopup = findViewById(R.id.map_popup);
-        // pop-up was leaking clicks through to the map
-        mPopup.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) { /* no-op */ }
-        });
-        mMapView.setBuiltInZoomControls(false);
-        //mStopsController = new StopsController(this, this);
-        mRouteOverlay = new RouteOverlay(this, mMapView);
 
         // Set up everything we can from the intent --
         // all of the UI is set-up/torn down in onResume/onPause
@@ -208,14 +184,14 @@ public class MapViewActivity extends MapActivity {
         if (bundle != null) {
             mFocusStopId = bundle.getString(FOCUS_STOP_ID);
             mapValuesFromBundle(bundle);
-            mRouteOverlay.setRouteId(bundle.getString(ROUTE_ID), true);
+            //mRouteOverlay.setRouteId(bundle.getString(ROUTE_ID), true);
         }
         if (savedInstanceState != null) {
             mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
             mShowRoutes = savedInstanceState.getBoolean(SHOW_ROUTES);
             mapValuesFromBundle(savedInstanceState);
-            mRouteOverlay.setRouteId(savedInstanceState.getString(ROUTE_ID),
-                    false);
+            //mRouteOverlay.setRouteId(savedInstanceState.getString(ROUTE_ID),
+            //        false);
         }
 
         //mStopsController
@@ -351,7 +327,7 @@ public class MapViewActivity extends MapActivity {
     protected void onSaveInstanceState(Bundle outState) {
         // The only thing we really need to save it the focused stop ID.
         outState.putString(FOCUS_STOP_ID, mFocusStopId);
-        outState.putString(ROUTE_ID, mRouteOverlay.getRouteId());
+        //outState.putString(ROUTE_ID, mRouteOverlay.getRouteId());
         outState.putBoolean(SHOW_ROUTES, mShowRoutes);
         GeoPoint center = mMapView.getMapCenter();
         outState.putDouble(CENTER_LAT, center.getLatitudeE6() / 1E6);
@@ -408,7 +384,7 @@ public class MapViewActivity extends MapActivity {
             if (resultCode == RESULT_OK) {
                 String routeId = data.getStringExtra(MyTabActivityBase.RESULT_ROUTE_ID);
                 if (routeId != null) {
-                    mRouteOverlay.setRouteId(routeId, true);
+                    //mRouteOverlay.setRouteId(routeId, true);
                     //getStops();
                 }
             }
@@ -434,130 +410,6 @@ public class MapViewActivity extends MapActivity {
         }
     }
     */
-
-    private class RouteArrayAdapter extends
-            Adapters.BaseArrayAdapter2<ObaRoute> {
-        // track to reset background
-        private View currentSelectedView;
-
-        public RouteArrayAdapter(List<ObaRoute> routes) {
-            super(MapViewActivity.this, routes, R.layout.main_popup_route_item);
-        }
-
-        @Override
-        protected void setData(View view, int position) {
-            TextView shortName = (TextView)view.findViewById(R.id.short_name);
-
-            final ObaRoute route = mArray.get(position);
-            shortName.setText(UIHelp.getRouteDisplayName(route));
-
-            final String currentRouteId = route.getId();
-            /*
-            if (mRouteOverlay.isCurrentRoute(currentRouteId)) {
-                // highlight already selected route
-                view.setBackgroundResource(R.drawable.main_popup_route_hl);
-                currentSelectedView = view;
-            }
-            */
-
-            view.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    final String selectedRouteId = route.getId();
-
-                    /*
-                    if (!mRouteOverlay.isCurrentRoute(selectedRouteId)) {
-                        // Selecting a route
-                        if (currentSelectedView != null)
-                            currentSelectedView
-                                    .setBackgroundResource(R.drawable.main_popup_route_bg);
-                        currentSelectedView = view;
-                        view.setBackgroundResource(R.drawable.main_popup_route_hl);
-                        mRouteOverlay.setRouteId(selectedRouteId, false);
-                        getStops();
-                    } else {
-                        // UN-selecting a route
-                        view.setBackgroundResource(R.drawable.main_popup_route_bg);
-                        currentSelectedView = null;
-                        mRouteOverlay.clearRoute();
-                        getStops();
-                    }
-                    */
-                }
-            });
-        }
-    }
-
-    /*
-    void populateRoutes(ObaStop stop, boolean force) {
-        GridView grid = (GridView)mPopup.findViewById(R.id.route_list);
-        if (grid.getVisibility() != View.GONE || force) {
-            ObaResponseWithRefs response = (ObaResponseWithRefs)mStopsController
-                    .getResponse();
-            grid.setAdapter(new RouteArrayAdapter(response.getRoutes(stop
-                    .getRouteIds())));
-        }
-    }
-    */
-
-    private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
-        public void onClick(View v) {
-            showRoutes((TextView)v, !mShowRoutes);
-        }
-    };
-
-    private final ClickableSpan mOnHideRoute = new ClickableSpan() {
-        public void onClick(View v) {
-            mRouteOverlay.clearRoute();
-            //getStops();
-        }
-    };
-
-    private void showRoutes(TextView text, boolean show) {
-        final GridView grid = (GridView)findViewById(R.id.route_list);
-        if (text == null) {
-            text = (TextView)findViewById(R.id.show_routes);
-        }
-        if (show) {
-            final StopOverlayItem item = (StopOverlayItem)mStopOverlay
-                    .getFocus();
-            if (item != null) {
-                //populateRoutes(item.getStop(), true);
-            }
-            // TODO: Animate at some point...
-            grid.setVisibility(View.VISIBLE);
-            text.setText(R.string.main_hide_routes);
-        } else {
-            grid.setVisibility(View.GONE);
-            text.setText(R.string.main_show_routes);
-        }
-        mShowRoutes = show;
-        // When the text changes, we need to reset its clickable status
-        Spannable span = (Spannable)text.getText();
-        span.setSpan(mOnShowRoutes, 0, span.length(), 0);
-    }
-
-    private void setOverlays(ObaResponse response) {
-        if (response.getCode() != ObaApi.OBA_OK) {
-            //Log.d(TAG, String.format("setOverlays: unexpected response = %d",
-            //       response.getCode()));
-            return;
-        }
-
-        /*
-        List<ObaStop> stops;
-        ObaStop stop = null;
-        ObaStopsForRouteResponse routeResponse = null;
-        if (RouteOverlay.isStopsForRouteResponse(response)) {
-            routeResponse = (ObaStopsForRouteResponse)response;
-            stops = routeResponse.getStops();
-            mRouteOverlay.completeShowRoute(routeResponse);
-        }
-        setPopup(mRouteOverlay.getRoute(), stop);
-        */
-        mMapView.postInvalidate();
-    }
-
 
     private Dialog createHelpDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -805,88 +657,5 @@ public class MapViewActivity extends MapActivity {
         mMapZoom = 11;
         controller.setCenter(new GeoPoint(47605990, -122331780));
         controller.setZoom(mMapZoom);
-    }
-
-    /**
-     * show popup with a route and/or a stop
-     * @param route
-     * @param stop
-     */
-    protected void setPopup(final ObaRoute route, final ObaStop stop) {
-        if (route == null && stop == null) {
-            mPopup.setVisibility(View.GONE);
-        } else if (route == null && stop != null) {
-            setPopup(stop, null, null);
-        } else if (route != null && stop == null) {
-            setPopup(route);
-        } else {
-            // mostly stop logic
-            setPopup(stop, UIHelp.getRouteDescription(route), route.getShortName());
-        }
-    }
-
-    protected void setPopup(final ObaRoute route) {
-        TextView nameView = (TextView)mPopup.findViewById(R.id.stop_name);
-        nameView.setText(UIHelp.getRouteDescription(route));
-        nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-
-        setViewVisibilityById(mPopup, R.id.direction, View.GONE);
-        setViewVisibilityById(mPopup, R.id.show_arrival_info, View.GONE);
-        setViewVisibilityById(mPopup, R.id.route_list, View.GONE);
-        //setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
-
-        TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
-        text.setText(R.string.main_hide_routes);
-        UIHelp.setChildClickable(this, R.id.show_routes, mOnHideRoute);
-
-        //text = (TextView)mPopup.findViewById(R.id.route_short_name);
-        text.setText(UIHelp.getRouteDisplayName(route));
-
-        mPopup.setVisibility(View.VISIBLE);
-    }
-
-    protected void setPopup(final ObaStop stop, String routeLong, String routeShort) {
-        setViewVisibilityById(mPopup, R.id.show_arrival_info, View.VISIBLE);
-
-        TextView nameView = (TextView)mPopup.findViewById(R.id.stop_name);
-        TextView direction = (TextView)mPopup.findViewById(R.id.direction);
-        //TextView routeNumView = (TextView)mPopup
-        //        .findViewById(R.id.route_short_name);
-
-        if (TextUtils.isEmpty(routeLong) && TextUtils.isEmpty(routeShort)) {
-            // Is this a favorite?
-            mStopUserMap.setView2(nameView, stop.getId(), stop.getName(), true);
-            UIHelp.setStopDirection(direction, stop.getDirection(), false);
-        //    setViewVisibilityById(mPopup, R.id.route_container, View.GONE);
-        } else {
-            nameView.setText(routeLong);
-            nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-            mStopUserMap.setView2(direction, stop.getId(), stop.getName(), false);
-            if (TextUtils.isEmpty(routeShort)) {
-        //        routeNumView.setText(routeLong);
-            } else {
-        //        routeNumView.setText(routeShort);
-            }
-        //    setViewVisibilityById(mPopup, R.id.route_container, View.VISIBLE);
-        }
-        direction.setVisibility(View.VISIBLE);
-
-        TextView text = (TextView)mPopup.findViewById(R.id.show_routes);
-        if (mShowRoutes) {
-            //populateRoutes(stop, mShowRoutes);
-            setViewVisibilityById(mPopup, R.id.route_list, View.VISIBLE);
-            text.setText(R.string.main_hide_routes);
-        } else {
-            text.setText(R.string.main_show_routes);
-        }
-        UIHelp.setChildClickable(this, R.id.show_routes, mOnShowRoutes);
-
-        // Right now the popup is always at the top of the screen.
-        mPopup.setVisibility(View.VISIBLE);
-    }
-
-    protected void setViewVisibilityById(View parent, int id, int visibility) {
-        View view = parent.findViewById(id);
-        view.setVisibility(visibility);
     }
 }

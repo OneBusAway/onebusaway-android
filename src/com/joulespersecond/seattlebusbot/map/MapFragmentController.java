@@ -17,6 +17,7 @@ package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 
 import android.app.Activity;
@@ -40,7 +41,12 @@ public interface MapFragmentController {
         Activity getActivity();
         LoaderManager getLoaderManager();
 
+        void showProgress(boolean show);
+
         MapView getMapView();
+
+        void switchToRouteMode(ObaRoute route);
+        void switchToStopMode();
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
@@ -48,7 +54,6 @@ public interface MapFragmentController {
         void notifyOutOfRange();
     }
 
-    void initialize(Bundle savedInstanceState);
     void destroy();
 
     void onPause();

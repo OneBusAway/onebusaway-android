@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot.test;
 
+/*
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 
@@ -89,10 +90,5 @@ public class MapViewActivityTest extends
             }
         });
     }
-
-    /*
-    public void testFocusMode() {
-
-    }
-    */
 }
+*/

@@ -24,6 +24,7 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
@@ -32,6 +33,7 @@ import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentMapActivity;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
@@ -70,7 +72,7 @@ public class MapFragment extends Fragment
     //private static final String CENTER_LON = ".CenterLon";
     //private static final String MAP_ZOOM = ".MapZoom";
     // Switches to 'route mode' -- stops aren't updated on move
-    //private static final String ROUTE_ID = ".RouteId";
+    public static final String ROUTE_ID = ".RouteId";
     //private static final String SHOW_ROUTES = ".ShowRoutes";
 
     private MapView mMapView;
@@ -80,6 +82,7 @@ public class MapFragment extends Fragment
     // is used by both modes.
     private StopOverlay mStopOverlay;
     StopPopup mStopPopup;
+    RoutePopup mRoutePopup;
 
     private MyLocationOverlay mLocationOverlay;
     private ZoomControls mZoomControls;
@@ -101,13 +104,14 @@ public class MapFragment extends Fragment
         mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
 
         // Initialize the StopPopup (hidden)
-        mStopPopup = new StopPopup(getActivity(), view.findViewById(R.id.stop_info));
+        mStopPopup = new StopPopup(this, view.findViewById(R.id.stop_info));
+        mRoutePopup = new RoutePopup(this, view.findViewById(R.id.route_info));
 
         // TODO: Our initial mode is basically determined by whether
         // or not there is a Route ID as an argument.
         // But for now we just create an StopsController.
         mController = new StopMapController(this);
-        mController.initialize(savedInstanceState);
+        //mController.initialize(savedInstanceState);
 
         UIHelp.checkAirplaneMode(getActivity());
     }
@@ -225,10 +229,58 @@ public class MapFragment extends Fragment
     }
 
     @Override
+    public void showProgress(boolean show) {
+        ((FragmentMapActivity)getActivity()).setProgressBarIndeterminateVisibility(show ?
+                Boolean.TRUE : Boolean.FALSE);
+    }
+
+    //
+    // Switching isn't as seamless as I'd like it to be,
+    // there are a few things that require special knowledge
+    // of the implementation.
+    //
+    @Override
+    public void switchToStopMode() {
+        if (mController instanceof StopMapController) {
+            return;
+        }
+        if (mController != null) {
+            mController.destroy();
+        }
+        mRoutePopup.hide();
+        StopMapController ctrl = new StopMapController(this);
+        ctrl.restart();
+        mController = ctrl;
+    }
+
+    @Override
+    public void switchToRouteMode(ObaRoute route) {
+        if (mController instanceof RouteMapController) {
+            // We just need to reset the route
+            ((RouteMapController)mController).setRoute(route.getId());
+        } else {
+            if (mController != null) {
+                mController.destroy();
+            }
+            RouteMapController ctrl = new RouteMapController(this);
+            ctrl.setRoute(route.getId());
+            mController = ctrl;
+        }
+        mRoutePopup.show(route);
+    }
+
+
+    @Override
     public void showStops(List<ObaStop> stops, ObaReferences refs) {
-        // If there is an eList<E>ing StopOverlay, remove it.
+        // Maintain focus through this step.
+        // If we can't maintain focus through this step, then we
+        // have to hide the stop popup
+        String focusedId = null;
+
+        // If there is an List<E>ing StopOverlay, remove it.
         List<Overlay> mapOverlays = mMapView.getOverlays();
         if (mStopOverlay != null) {
+            focusedId = mStopOverlay.getFocusedId();
             mapOverlays.remove(mStopOverlay);
             mStopOverlay = null;
         }
@@ -237,22 +289,15 @@ public class MapFragment extends Fragment
             mStopOverlay = new StopOverlay(stops, getActivity());
             mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
             mStopPopup.setReferences(refs);
-            // TODO: Refocus the stop id
-            /*
-            if (mFocusStopId != null) {
-                mStopOverlay.setFocusById(mFocusStopId);
-                stop = ((ObaResponseWithRefs)response).getStop(mFocusStopId);
-                // if (routeResponse != null) {
-                // ObaStopGroup group = routeResponse.getGroupForStop(mFocusStopId);
-                // if (group != null)
-                // Log.d(TAG, "StopGroup: " + group.getName());
-                // }
+
+            if (focusedId != null) {
+                if (!mStopOverlay.setFocusById(focusedId)) {
+                    mStopPopup.hide();
+                }
             }
-            */
             mapOverlays.add(mStopOverlay);
         }
 
-        // TODO: Refresh the popup
         mMapView.postInvalidate();
     }
 

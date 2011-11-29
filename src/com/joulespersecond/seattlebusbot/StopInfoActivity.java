@@ -29,6 +29,7 @@ import android.util.Log;
  * @author paulw
 
  */
+@Deprecated
 public class StopInfoActivity extends Activity {
     private static final String TAG = "StopInfoActivity";
 

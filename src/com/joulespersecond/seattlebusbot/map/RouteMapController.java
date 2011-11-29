@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com) and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.Projection;
-import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaShape;
-import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.R;
 
@@ -33,135 +34,156 @@ import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteOverlay {
-    @SuppressWarnings("unused")
-    private static final String TAG = "RouteOverlay";
+class RouteMapController implements MapFragmentController,
+            LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse> {
+    //private static final String TAG = "RouteMapController";
+    private static final int ROUTES_LOADER = 5677;
 
-    protected final MapView mMapView;
-    protected LineOverlay mLineOverlay;
-    protected String mRouteId;
-    protected String mZoomToRouteId;
-    protected ObaRoute mRoute;
+    private final FragmentCallback mFragment;
 
-    private static int mLineOverlayColor;
+    private String mRouteId;
+    private LineOverlay mLineOverlay;
+    //protected String mZoomToRouteId;
+    private final int mLineOverlayColor;
 
-    public RouteOverlay(Context context, MapView mapView) {
-        mMapView = mapView;
-        mLineOverlayColor = context.getResources().getColor(R.color.route_overlay_line);
+    RouteMapController(FragmentCallback callback) {
+        mFragment = callback;
+        mLineOverlayColor = mFragment.getActivity()
+                                .getResources()
+                                .getColor(R.color.route_overlay_line);
     }
 
-    public String getRouteId() {
-        return mRouteId;
+    public void setRoute(String routeId) {
+        // Initialize from a route ID
+        if (!routeId.equals(mRouteId)) {
+            mRouteId = routeId;
+            mFragment.showProgress(true);
+            mFragment.getLoaderManager().restartLoader(ROUTES_LOADER, null, this);
+        }
     }
 
-    public void setRouteId(String routeId, boolean willZoom) {
-        if (routeId == null) {
-            clearRoute();
+    @Override
+    public void destroy() {
+        removeOverlay();
+    }
+
+    @Override
+    public void onPause() {
+    }
+
+    @Override
+    public void onResume() {
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+    }
+
+    @Override
+    public void onLocation() {
+        // Don't care
+    }
+
+    @Override
+    public void onNoLocation() {
+        // Don't care
+    }
+
+    @Override
+    public Loader<ObaStopsForRouteResponse> onCreateLoader(int id,
+            Bundle args) {
+        return new RoutesLoader(mFragment.getActivity(), mRouteId);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<ObaStopsForRouteResponse> loader,
+            ObaStopsForRouteResponse response) {
+        MapView mapView = mFragment.getMapView();
+        List<Overlay> overlays = mapView.getOverlays();
+
+        if (mLineOverlay != null) {
+            overlays.remove(mLineOverlay);
+            mLineOverlay = null;
+        }
+
+        if (response.getCode() != ObaApi.OBA_OK) {
+            // TODO: Some form of toast
             return;
         }
-        mRouteId = routeId;
-        if (willZoom)
-            mZoomToRouteId = routeId;
+
+        mLineOverlay = new LineOverlay();
+        mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
+        overlays.add(mLineOverlay);
+
+        // Set the stops for this route
+        List<ObaStop> stops = response.getStops();
+        mFragment.showStops(stops, response);
+        mFragment.showProgress(false);
+
+        // TODO Zoom to route
+        //mLineOverlay.zoom(mapView.getController());
+        // wait to zoom till we have the right response
+        mapView.postInvalidate();
     }
 
-    public ObaRoute getRoute() {
-        return mRoute;
+    @Override
+    public void onLoaderReset(Loader<ObaStopsForRouteResponse> loader) {
+        removeOverlay();
     }
 
-    /*
-     * Update the route once the new response has been obtained
-     */
-    public void completeShowRoute(ObaStopsForRouteResponse response) {
-        List<Overlay> overlays = mMapView.getOverlays();
+    private void removeOverlay() {
+        MapView mapView = mFragment.getMapView();
+        List<Overlay> overlays = mapView.getOverlays();
         if (mLineOverlay != null) {
             overlays.remove(mLineOverlay);
         }
-        if (response != null) {
-            String routeId = response.getRouteId();
-            mLineOverlay = new LineOverlay();
+        mLineOverlay = null;
+        mapView.postInvalidate();
+    }
 
-            mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
-            overlays.add(mLineOverlay);
+    //
+    // Loader
+    //
+    private static class RoutesLoader extends AsyncTaskLoader<ObaStopsForRouteResponse> {
+        private final String mRouteId;
+        //private ObaStopsForRouteResponse mResponse;
 
-            // wait to zoom till we have the right response
-            if (mZoomToRouteId != null && mZoomToRouteId.equals(routeId)) {
-                // route zoom only once
-                mZoomToRouteId = null;
-                mLineOverlay.zoom(mMapView.getController());
-            }
-            mRoute = response.getRoute(routeId);
+        public RoutesLoader(Context context, String routeId) {
+            super(context);
+            mRouteId = routeId;
         }
 
-        // TODO: are the polylines in "stopGroups" just subsets of the polylines in "entry"?
-        // Is this still needed (other than having multi-color lines)?
-        // What about detour situations (e.g., snow routes)?
-
-        /*
-        // Get all the stop groupings
-        ObaArray<ObaStopGrouping> stopGroupings = response.getData().getStopGroupings();
-        // For each stop grouping, get
-        int color = 0;
-        final int numGroupings = stopGroupings.length();
-        for (int i=0; i < numGroupings; ++i) {
-            final ObaArray<ObaStopGroup> groups = stopGroupings.get(i).getStopGroups();
-            final int numGroups = groups.length();
-            for (int j=0; j < numGroups; ++j) {
-                final ObaArray<ObaPolyline> lines = groups.get(j).getPolylines();
-                final int numLines = lines.length();
-                for (int k=0; k < numLines; ++k) {
-                    overlay.addLine(mColors[color], lines.get(k));
-                    color = (color+1)%mColors.length;
-                }
-            }
+        @Override
+        public ObaStopsForRouteResponse loadInBackground() {
+            return new ObaStopsForRouteRequest.Builder(getContext(), mRouteId)
+                .setIncludeShapes(true)
+                .build()
+                .call();
         }
-        */
-    }
 
-    /*
-     * Remove the route and the overlay
-     */
-    public void clearRoute() {
-        // hide route
-        mRouteId = null;
-        mRoute = null;
-        if (mLineOverlay != null) {
-            mMapView.getOverlays().remove(mLineOverlay);
-            mLineOverlay = null;
+        @Override
+        public void deliverResult(ObaStopsForRouteResponse data) {
+            //mResponse = data;
+            super.deliverResult(data);
         }
-        mMapView.invalidate();
-    }
 
-    /*
-     * Returns true if overlay is in route mode,
-     * with the selected route drawn and only its
-     * stops shown
-     */
-    public boolean isRouteMode() {
-        return getRouteId() != null;
-    }
-
-    /**
-     * Returns true if response is of type ObaStopsForRouteResponse
-     * which is appropriate for route mode
-     */
-    protected static boolean isStopsForRouteResponse(ObaResponse response) {
-        return (response instanceof ObaStopsForRouteResponse);
-    }
-
-    /**
-     * Compare to current route
-     */
-    protected boolean isCurrentRoute(String routeCompare) {
-        if (mRouteId == null) {
-            return false;
+        @Override
+        public void onStartLoading() {
+            forceLoad();
         }
-        return mRouteId.equals(routeCompare);
     }
 
+    //
+    // The real line Overlay
+    //
     public static class LineOverlay extends Overlay {
 
         public static final class Line {

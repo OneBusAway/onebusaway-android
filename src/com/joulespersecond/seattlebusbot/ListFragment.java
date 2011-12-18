@@ -38,7 +38,7 @@ import android.widget.TextView;
  * because being able to specify our own custom view and still use all of this
  * good switching code is helpful.
  */
-public class MyListFragment extends Fragment {
+public class ListFragment extends Fragment {
     final private Handler mHandler = new Handler();
 
     final private Runnable mRequestFocus = new Runnable() {
@@ -63,7 +63,7 @@ public class MyListFragment extends Fragment {
     CharSequence mEmptyText;
     boolean mListShown;
 
-    public MyListFragment() {
+    public ListFragment() {
     }
 
     /**

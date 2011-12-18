@@ -33,10 +33,13 @@ public class MyRecentRoutesActivity extends MyRouteListActivity {
 
     @Override
     protected Cursor getCursor() {
+        return null;
+        /*
         return recentQuery(ObaContract.Routes.CONTENT_URI,
                 PROJECTION,
                 ObaContract.Routes.ACCESS_TIME,
                 ObaContract.Routes.USE_COUNT);
+        */
     }
     @Override
     protected int getLayoutId() {

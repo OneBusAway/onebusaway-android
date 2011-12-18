@@ -38,7 +38,7 @@ import java.util.List;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends MyListFragment
+public class ArrivalsListFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
                    ArrivalsListHeader.Controller {
     private static final String TAG = "ArrivalsListFragment";

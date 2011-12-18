@@ -15,40 +15,23 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.ListView;
+import android.widget.TextView;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
-abstract class MyStopListActivity extends MyBaseListActivity {
+abstract class MyStopListActivity extends MyBaseListActivity implements QueryUtils.StopList.Columns {
     //private static final String TAG = "MyStopListActivity";
-
-    protected static final String[] PROJECTION = {
-        ObaContract.Stops._ID,
-        ObaContract.Stops.UI_NAME,
-        ObaContract.Stops.DIRECTION,
-        ObaContract.Stops.LATITUDE,
-        ObaContract.Stops.LONGITUDE,
-        ObaContract.Stops.UI_NAME,
-        ObaContract.Stops.FAVORITE
-    };
-    private static final int COL_ID = 0;
-    private static final int COL_NAME = 1;
-    private static final int COL_DIRECTION = 2;
-    private static final int COL_LATITUDE = 3;
-    private static final int COL_LONGITUDE = 4;
-    private static final int COL_UI_NAME = 5;
-    private static final int COL_FAVORITE = 6;
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -137,50 +120,10 @@ abstract class MyStopListActivity extends MyBaseListActivity {
         MapViewActivity.start(this, stopId, lat, lon);
     }
 
-    protected String getId(ListView l, int position) {
-        // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
-        Cursor c = cursorAdapter.getCursor();
-        c.moveToPosition(position - l.getHeaderViewsCount());
-        return c.getString(COL_ID);
-    }
-
     protected void initList(Cursor c) {
         startManagingCursor(c);
 
-        String[] from = new String[] {
-                ObaContract.Stops.UI_NAME,
-                ObaContract.Stops.DIRECTION,
-                ObaContract.Stops.FAVORITE
-        };
-        int[] to = new int[] {
-                R.id.stop_name,
-                R.id.direction,
-                R.id.stop_name
-        };
-        SimpleCursorAdapter simpleAdapter =
-            new SimpleCursorAdapter(this, R.layout.stop_list_item, c, from, to);
-
-        // We need to convert the direction text (N/NW/E/etc)
-        // to user level text (North/Northwest/etc..)
-        simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
-            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                if (columnIndex == COL_FAVORITE) {
-                    TextView favorite = (TextView)view.findViewById(R.id.stop_name);
-                    int icon = (cursor.getInt(columnIndex) == 1) ? R.drawable.star_on : 0;
-                    favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
-                    return true;
-                }
-                else if (columnIndex == COL_DIRECTION) {
-                    UIHelp.setStopDirection(view.findViewById(R.id.direction),
-                            cursor.getString(columnIndex),
-                            true);
-                    return true;
-                }
-                return false;
-            }
-        });
-        setListAdapter(simpleAdapter);
+        setListAdapter(QueryUtils.StopList.newAdapter(this));
     }
 
     protected Uri getObserverUri() {

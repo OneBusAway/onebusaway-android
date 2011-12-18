@@ -21,15 +21,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.ListView;
+import android.widget.TextView;
 
 abstract class MyRouteListActivity extends MyBaseListActivity {
     // private static final String TAG = "MyRouteListActivity";

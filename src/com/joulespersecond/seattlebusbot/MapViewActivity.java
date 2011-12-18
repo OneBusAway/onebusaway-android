@@ -25,14 +25,13 @@ import com.joulespersecond.oba.ObaApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Window;
 
 import java.io.File;
 
+@Deprecated
 public class MapViewActivity extends MapActivity {
-    private static final String TAG = "MapViewActivity";
-
+    //private static final String TAG = "MapViewActivity";
 
     private static final String FOCUS_STOP_ID = ".FocusStopId";
     private static final String CENTER_LAT = ".CenterLat";
@@ -40,16 +39,16 @@ public class MapViewActivity extends MapActivity {
     private static final String MAP_ZOOM = ".MapZoom";
     // Switches to 'route mode' -- stops aren't updated on move
     private static final String ROUTE_ID = ".RouteId";
-    private static final String SHOW_ROUTES = ".ShowRoutes";
+    //private static final String SHOW_ROUTES = ".ShowRoutes";
 
     MapView mMapView;
 
     // Values that are initialized by either the intent extras
     // or by the frozen state.
-    private String mFocusStopId;
+    //private String mFocusStopId;
     private GeoPoint mMapCenter;
     private int mMapZoom = 16; // initial zoom
-    private boolean mShowRoutes;
+    //private boolean mShowRoutes;
 
     private static final int REQUEST_SEARCH_RESULT = 42;
 
@@ -143,32 +142,22 @@ public class MapViewActivity extends MapActivity {
         // all of the UI is set-up/torn down in onResume/onPause
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            mFocusStopId = bundle.getString(FOCUS_STOP_ID);
+            //mFocusStopId = bundle.getString(FOCUS_STOP_ID);
             mapValuesFromBundle(bundle);
             //mRouteOverlay.setRouteId(bundle.getString(ROUTE_ID), true);
         }
         if (savedInstanceState != null) {
-            mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
-            mShowRoutes = savedInstanceState.getBoolean(SHOW_ROUTES);
+            //mFocusStopId = savedInstanceState.getString(FOCUS_STOP_ID);
+            //mShowRoutes = savedInstanceState.getBoolean(SHOW_ROUTES);
             mapValuesFromBundle(savedInstanceState);
             //mRouteOverlay.setRouteId(savedInstanceState.getString(ROUTE_ID),
             //        false);
         }
 
-        //mStopsController
-        //        .setNonConfigurationInstance(getLastNonConfigurationInstance());
-
         // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
         if (firstRun) {
             firstRunSetLocation(mMapView.getController());
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        //mStopsController.cancel();
-        //mStopsController = null;
-        super.onDestroy();
     }
 
     @Override
@@ -228,33 +217,8 @@ public class MapViewActivity extends MapActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        // The only thing we really need to save it the focused stop ID.
-        outState.putString(FOCUS_STOP_ID, mFocusStopId);
-        //outState.putString(ROUTE_ID, mRouteOverlay.getRouteId());
-        outState.putBoolean(SHOW_ROUTES, mShowRoutes);
-        GeoPoint center = mMapView.getMapCenter();
-        outState.putDouble(CENTER_LAT, center.getLatitudeE6() / 1E6);
-        outState.putDouble(CENTER_LON, center.getLongitudeE6() / 1E6);
-        outState.putInt(MAP_ZOOM, mMapView.getZoomLevel());
-    }
-
-    @Override
-    public Object onRetainNonConfigurationInstance() {
-        //return mStopsController.onRetainNonConfigurationInstance();
-        return null;
-    }
-
-    @Override
     protected boolean isRouteDisplayed() {
         return false;
-    }
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        Log.d(TAG, "******** LOW MEMORY ******** ");
-        ObaApi.clearCache();
     }
 
     @Override

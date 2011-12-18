@@ -15,20 +15,20 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+
 import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-
-import com.joulespersecond.oba.provider.ObaContract;
+import android.widget.ListView;
+import android.widget.TextView;
 
 public class TripListActivity extends ListActivity {
     // private static final String TAG = "TripListActivity";

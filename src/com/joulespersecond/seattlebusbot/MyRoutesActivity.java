@@ -15,10 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import android.content.Intent;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.widget.TabHost;
 
 public class MyRoutesActivity extends MyTabActivityBase {
     //private static final String TAG = "MyRoutesActivity";
@@ -27,6 +24,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*
         final Resources res = getResources();
         final TabHost tabHost = getTabHost();
         Intent intent;
@@ -40,6 +38,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
                 .setIndicator(res.getString(R.string.my_recent_title),
                               res.getDrawable(R.drawable.ic_tab_recent))
                 .setContent(intent));
+        */
         /*
         tabHost.addTab(tabHost.newTabSpec("starred")
                 .setIndicator(getString(R.string.my_starred_title))
@@ -47,6 +46,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
                                     .setAction(action)));
         */
 
+        /*
         intent = new Intent(this, MySearchRoutesActivity.class)
                             .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)
                             .putExtra(EXTRA_SEARCHMODE, mSearchMode);
@@ -57,6 +57,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
                 .setContent(intent));
 
         restoreDefaultTab();
+        */
     }
 
     @Override

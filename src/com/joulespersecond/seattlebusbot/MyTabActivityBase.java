@@ -95,9 +95,19 @@ abstract class MyTabActivityBase extends FragmentActivity {
         }
     }
 
-    void returnResult(Intent intent) {
-        setResult(RESULT_OK, intent);
-        finish();
+    //
+    // Accessors for tabs
+    //
+    boolean isShortcutMode() {
+        return mShortcutMode;
+    }
+
+    boolean isSearchMode() {
+        return mSearchMode;
+    }
+
+    GeoPoint getSearchCenter() {
+        return mSearchCenter;
     }
 
     //

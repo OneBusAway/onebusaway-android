@@ -196,11 +196,11 @@ abstract class MySearchActivity extends ListActivity {
             final Activity parent = getParent();
             if (parent instanceof MyStopsActivity) {
                 MyStopsActivity myStops = (MyStopsActivity)parent;
-                myStops.returnResult(shortcut);
+                //myStops.returnResult(shortcut);
             }
             else if (parent instanceof MyRoutesActivity) {
                 MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
-                myRoutes.returnResult(shortcut);
+                //myRoutes.returnResult(shortcut);
             }
         }
         else {

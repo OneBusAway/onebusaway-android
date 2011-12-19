@@ -21,42 +21,46 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.view.MenuItem;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-abstract class MyStopListActivity extends MyBaseListActivity implements QueryUtils.StopList.Columns {
+abstract class MyStopListFragmentBase extends MyListFragmentBase
+            implements QueryUtils.StopList.Columns {
     //private static final String TAG = "MyStopListActivity";
 
     @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
+    protected SimpleCursorAdapter newAdapter() {
+        return QueryUtils.StopList.newAdapter(getActivity());
+    }
+
+    @Override
+    protected Uri getContentUri() {
+        return ObaContract.Stops.CONTENT_URI;
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
         StopData stopData = getStopData(l, position);
 
-        if (mShortcutMode) {
+        if (isShortcutMode()) {
             final Intent shortcut =
-                UIHelp.makeShortcut(this, stopData.getUiName(),
-                        ArrivalsListActivity.makeIntent(this, stopData.getId(), stopData.getName(), stopData.getDir()));
+                UIHelp.makeShortcut(getActivity(), stopData.getUiName(),
+                        ArrivalsListActivity.makeIntent(getActivity(),
+                                stopData.getId(), stopData.getName(), stopData.getDir()));
 
-            if (isChild()) {
-                // Is there a way to do this more generically?
-                final Activity parent = getParent();
-                if (parent instanceof MyStopsActivity) {
-                    MyStopsActivity myStops = (MyStopsActivity)parent;
-                    myStops.returnResult(shortcut);
-                }
-            }
-            else {
-                setResult(RESULT_OK, shortcut);
-                finish();
-            }
+            Activity activity = getActivity();
+            activity.setResult(Activity.RESULT_OK, shortcut);
+            activity.finish();
         }
         else {
-            ArrivalsListActivity.start(this, stopData.id, stopData.name, stopData.dir);
+            ArrivalsListActivity.start(getActivity(), stopData.id, stopData.name, stopData.dir);
         }
     }
 
@@ -66,9 +70,6 @@ abstract class MyStopListActivity extends MyBaseListActivity implements QueryUti
         return new StopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());
     }
 
-    private static final int CONTEXT_MENU_DEFAULT = 1;
-    private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
-
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
@@ -76,15 +77,18 @@ abstract class MyStopListActivity extends MyBaseListActivity implements QueryUti
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
         final TextView text = (TextView)info.targetView.findViewById(R.id.stop_name);
         menu.setHeaderTitle(text.getText());
-        if (mShortcutMode) {
+        if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
         }
         else {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_stop_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
-        addShortcutContextMenuItem(menu, v, menuInfo);
+        if (!isShortcutMode()){
+            menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0, R.string.my_context_create_shortcut);
+        }
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
@@ -99,15 +103,20 @@ abstract class MyStopListActivity extends MyBaseListActivity implements QueryUti
         case CONTEXT_MENU_CREATE_SHORTCUT:
             StopData stopData = getStopData(getListView(), info.position);
             final Intent shortcutIntent =
-                    UIHelp.makeShortcut(this, stopData.uiName,
-                            ArrivalsListActivity.makeIntent(this, stopData.id, stopData.name, stopData.dir));
-            shortcutIntent.setAction(INSTALL_SHORTCUT);
-            sendBroadcast(shortcutIntent);
+                    UIHelp.makeShortcut(getActivity(), stopData.uiName,
+                            ArrivalsListActivity.makeIntent(getActivity(),
+                                    stopData.id, stopData.name, stopData.dir));
+            shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
+            getActivity().sendBroadcast(shortcutIntent);
+            Toast.makeText(getActivity(),
+                    R.string.my_context_create_shortcut_success,
+                    Toast.LENGTH_LONG).show();
             return true;
         default:
             return super.onContextItemSelected(item);
         }
     }
+
     private void showOnMap(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
@@ -117,17 +126,7 @@ abstract class MyStopListActivity extends MyBaseListActivity implements QueryUti
         final double lat = c.getDouble(COL_LATITUDE);
         final double lon = c.getDouble(COL_LONGITUDE);
 
-        MapViewActivity.start(this, stopId, lat, lon);
-    }
-
-    protected void initList(Cursor c) {
-        startManagingCursor(c);
-
-        setListAdapter(QueryUtils.StopList.newAdapter(this));
-    }
-
-    protected Uri getObserverUri() {
-        return ObaContract.Stops.CONTENT_URI;
+        MapViewActivity.start(getActivity(), stopId, lat, lon);
     }
 
     protected class StopData {

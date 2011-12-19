@@ -123,6 +123,7 @@
     <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
     <string name="my_context_create_shortcut">Create shortcut</string>
+    <string name="my_context_create_shortcut_success">A shortcut was placed on your home screen!</string>
     <string name="my_context_showonmap">Show on map</string>
     <string name="my_context_remove_recent">Remove from recent</string>
     <string name="my_context_remove_star">Remove star</string>

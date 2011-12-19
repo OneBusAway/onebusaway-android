@@ -20,41 +20,17 @@ import com.joulespersecond.oba.provider.ObaContract;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class MyRecentRoutesFragment extends ListFragment
-            implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     public static final String TAB_NAME = "recent";
-
-    private SimpleCursorAdapter mAdapter;
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        // Set empty text
-        setEmptyText(getString(R.string.my_no_recent_routes));
-
-        // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
-        registerForContextMenu(getListView());
-
-        // Create our generic adapter
-        mAdapter = QueryUtils.RouteList.newAdapter(getActivity());
-        setListAdapter(mAdapter);
-
-        // Prepare the loader
-        getLoaderManager().initLoader(0, null, this);
-    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -63,16 +39,6 @@ public class MyRecentRoutesFragment extends ListFragment
                 QueryUtils.RouteList.Columns.PROJECTION,
                 ObaContract.Routes.ACCESS_TIME,
                 ObaContract.Routes.USE_COUNT);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mAdapter.swapCursor(data);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
     }
 
     private static final int CONTEXT_MENU_DELETE = 10;
@@ -110,5 +76,10 @@ public class MyRecentRoutesFragment extends ListFragment
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected int getEmptyText() {
+        return R.string.my_no_recent_routes;
     }
 }

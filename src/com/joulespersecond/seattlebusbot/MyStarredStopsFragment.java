@@ -20,42 +20,18 @@ import com.joulespersecond.oba.provider.ObaContract;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class MyStarredStopsFragment extends ListFragment
-            implements LoaderManager.LoaderCallbacks<Cursor> {
+public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public static final String TAB_NAME = "starred";
-
-    private SimpleCursorAdapter mAdapter;
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        // Set empty text
-        setEmptyText(getString(R.string.my_no_starred_stops));
-
-        // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
-        registerForContextMenu(getListView());
-
-        // Create our generic adapter
-        mAdapter = QueryUtils.StopList.newAdapter(getActivity());
-        setListAdapter(mAdapter);
-
-        // Prepare the loader
-        getLoaderManager().initLoader(0, null, this);
-    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -68,29 +44,17 @@ public class MyStarredStopsFragment extends ListFragment
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mAdapter.swapCursor(data);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
-    }
-
-    private static final int CONTEXT_MENU_DELETE = 10;
-
-    @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.my_context_remove_star);
+        menu.add(0, MyListConstants.CONTEXT_MENU_DELETE, 0, R.string.my_context_remove_star);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DELETE:
+        case MyListConstants.CONTEXT_MENU_DELETE:
             final String id = QueryUtils.StopList.getId(getListView(), info.position);
             final Uri uri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id);
             ObaContract.Stops.markAsFavorite(getActivity(), uri, false);
@@ -113,5 +77,10 @@ public class MyStarredStopsFragment extends ListFragment
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected int getEmptyText() {
+        return R.string.my_no_starred_stops;
     }
 }

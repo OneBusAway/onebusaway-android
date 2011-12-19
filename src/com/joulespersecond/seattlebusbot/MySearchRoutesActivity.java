@@ -59,7 +59,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
             Intent resultData = new Intent();
             resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
-            myRoutes.returnResult(resultData);
+            //myRoutes.returnResult(resultData);
         } else {
             RouteInfoActivity.start(this, routeId);
         }

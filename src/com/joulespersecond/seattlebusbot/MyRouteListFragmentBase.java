@@ -21,21 +21,32 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.view.MenuItem;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
 
-abstract class MyRouteListActivity extends MyBaseListActivity implements QueryUtils.RouteList.Columns {
+abstract class MyRouteListFragmentBase extends MyListFragmentBase
+            implements QueryUtils.RouteList.Columns {
     // private static final String TAG = "MyRouteListActivity";
 
     @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
+    protected SimpleCursorAdapter newAdapter() {
+        return QueryUtils.RouteList.newAdapter(getActivity());
+    }
+
+    @Override
+    protected Uri getContentUri() {
+        return ObaContract.Routes.CONTENT_URI;
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
 
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
@@ -44,36 +55,26 @@ abstract class MyRouteListActivity extends MyBaseListActivity implements QueryUt
         final String routeId = c.getString(COL_ID);
         final String routeName = c.getString(COL_SHORTNAME);
 
-        if (mShortcutMode) {
-            final Intent shortcut = UIHelp.makeShortcut(this, routeName,
-                    RouteInfoActivity.makeIntent(this, routeId));
+        if (isShortcutMode()) {
+            final Intent shortcut = UIHelp.makeShortcut(getActivity(), routeName,
+                    RouteInfoActivity.makeIntent(getActivity(), routeId));
 
-            if (isChild()) {
-                // Is there a way to do this more generically?
-                final Activity parent = getParent();
-                if (parent instanceof MyRoutesActivity) {
-                    MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
-                    myRoutes.returnResult(shortcut);
-                }
-            } else {
-                setResult(RESULT_OK, shortcut);
-                finish();
-            }
-        } else if (mSearchMode) {
-            final Activity parent = getParent();
-            MyRoutesActivity myRoutes = (MyRoutesActivity)parent;
+            Activity activity = getActivity();
+            activity.setResult(Activity.RESULT_OK, shortcut);
+            activity.finish();
+
+        } else if (isSearchMode()) {
+            Activity activity = getActivity();
 
             Intent resultData = new Intent();
             resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
-            myRoutes.returnResult(resultData);
+            activity.setResult(Activity.RESULT_OK, resultData);
+            activity.finish();
+
         } else {
-            RouteInfoActivity.start(this, routeId);
+            RouteInfoActivity.start(getActivity(), routeId);
         }
     }
-
-    private static final int CONTEXT_MENU_DEFAULT = 1;
-    private static final int CONTEXT_MENU_SHOW_ON_MAP = 2;
-    private static final int CONTEXT_MENU_SHOW_URL = 3;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu,
@@ -84,7 +85,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity implements QueryUt
         final TextView text = (TextView)info.targetView
                 .findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
-        if (mShortcutMode) {
+        if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0,
                     R.string.my_context_create_shortcut);
         } else {
@@ -110,17 +111,17 @@ abstract class MyRouteListActivity extends MyBaseListActivity implements QueryUt
                     info.id);
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
-            MapViewActivity.start(this, QueryUtils.RouteList.getId(getListView(), info.position));
+            MapViewActivity.start(getActivity(),
+                    QueryUtils.RouteList.getId(getListView(), info.position));
             return true;
         case CONTEXT_MENU_SHOW_URL:
-            UIHelp.goToUrl(this, QueryUtils.RouteList.getUrl(getListView(), info.position));
+            UIHelp.goToUrl(getActivity(),
+                    QueryUtils.RouteList.getUrl(getListView(), info.position));
             return true;
         default:
             return super.onContextItemSelected(item);
         }
     }
 
-    protected Uri getObserverUri() {
-        return ObaContract.Routes.CONTENT_URI;
-    }
+    abstract protected int getEmptyText();
 }

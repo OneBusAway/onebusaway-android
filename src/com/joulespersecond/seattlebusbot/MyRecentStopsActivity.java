@@ -32,7 +32,6 @@ public class MyRecentStopsActivity extends Activity {
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
             setResult(RESULT_OK, getShortcutIntent());
-            return;
         }
         finish();
     }

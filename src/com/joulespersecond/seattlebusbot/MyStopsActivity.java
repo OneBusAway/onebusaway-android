@@ -49,19 +49,10 @@ public class MyStopsActivity extends MyTabActivityBase {
                         MyStarredStopsFragment.TAB_NAME,
                         MyStarredStopsFragment.class)));
 
+        // TODO: Search stops
 
         /*
         final TabHost tabHost = getTabHost();
-        tabHost.addTab(tabHost.newTabSpec(MyRecentStopsActivity.TAB_NAME)
-                .setIndicator(,
-                              )
-                .setContent(new Intent(this, MyRecentStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
-        tabHost.addTab(tabHost.newTabSpec(MyStarredStopsActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_starred_title),
-                              res.getDrawable(R.drawable.ic_tab_starred))
-                .setContent(new Intent(this, MyStarredStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
         tabHost.addTab(tabHost.newTabSpec(MySearchStopsActivity.TAB_NAME)
                 .setIndicator(res.getString(R.string.my_search_title),
                               res.getDrawable(R.drawable.ic_tab_search))

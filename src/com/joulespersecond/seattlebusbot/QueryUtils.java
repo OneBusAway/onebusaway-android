@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.provider.ObaContract;
@@ -37,6 +52,52 @@ final class QueryUtils {
                 null,
                 accessTime + " desc, " +
                 useCount + " desc");
+    }
+
+    static final class RouteList {
+        public interface Columns {
+            public static final String[] PROJECTION = {
+                ObaContract.Routes._ID,
+                ObaContract.Routes.SHORTNAME,
+                ObaContract.Routes.LONGNAME,
+                ObaContract.Routes.URL
+            };
+            public static final int COL_ID = 0;
+            public static final int COL_SHORTNAME = 1;
+            // private static final int COL_LONGNAME = 2;
+            public static final int COL_URL = 3;
+        }
+
+        public static SimpleCursorAdapter newAdapter(Context context) {
+            final String[] from = {
+                    ObaContract.Routes.SHORTNAME,
+                    ObaContract.Routes.LONGNAME
+            };
+            final int[] to = {
+                    R.id.short_name,
+                    R.id.long_name
+            };
+            SimpleCursorAdapter simpleAdapter =
+                    new SimpleCursorAdapter(context, R.layout.route_list_item,
+                            null, from, to, 0);
+            return simpleAdapter;
+        }
+
+        static protected String getId(ListView l, int position) {
+            // Get the cursor and fetch the stop ID from that.
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            Cursor c = cursorAdapter.getCursor();
+            c.moveToPosition(position - l.getHeaderViewsCount());
+            return c.getString(Columns.COL_ID);
+        }
+
+        static protected String getUrl(ListView l, int position) {
+            // Get the cursor and fetch the stop ID from that.
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            Cursor c = cursorAdapter.getCursor();
+            c.moveToPosition(position - l.getHeaderViewsCount());
+            return c.getString(Columns.COL_URL);
+        }
     }
 
     static final class StopList {

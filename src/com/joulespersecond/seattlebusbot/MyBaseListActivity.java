@@ -70,7 +70,7 @@ abstract class MyBaseListActivity extends ListActivity {
         mShortcutMode = myIntent.getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
         mSearchMode = myIntent.getBooleanExtra(MyTabActivityBase.EXTRA_SEARCHMODE, false);
 
-        initList(getCursor());
+        //initList(getCursor());
         Uri uri = getObserverUri();
         if (uri != null) {
             ContentResolver cr = getContentResolver();
@@ -95,10 +95,6 @@ abstract class MyBaseListActivity extends ListActivity {
         }
     }
 
-    /**
-     * Initializes the list with a cursor
-     */
-    abstract protected void initList(Cursor c);
     /**
      * @return The cursor of the data to be managed.
      */

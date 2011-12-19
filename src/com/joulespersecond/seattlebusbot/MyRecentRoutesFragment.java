@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-
-public class MyRecentStopsFragment extends ListFragment
+public class MyRecentRoutesFragment extends ListFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
     public static final String TAB_NAME = "recent";
 
@@ -43,28 +42,27 @@ public class MyRecentStopsFragment extends ListFragment
         super.onActivityCreated(savedInstanceState);
 
         // Set empty text
-        setEmptyText(getString(R.string.my_no_recent_stops));
+        setEmptyText(getString(R.string.my_no_recent_routes));
 
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
         registerForContextMenu(getListView());
 
         // Create our generic adapter
-        mAdapter = QueryUtils.StopList.newAdapter(getActivity());
+        mAdapter = QueryUtils.RouteList.newAdapter(getActivity());
         setListAdapter(mAdapter);
 
         // Prepare the loader
         getLoaderManager().initLoader(0, null, this);
     }
 
-
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return QueryUtils.newRecentQuery(getActivity(),
-                ObaContract.Stops.CONTENT_URI,
-                QueryUtils.StopList.Columns.PROJECTION,
-                ObaContract.Stops.ACCESS_TIME,
-                ObaContract.Stops.USE_COUNT);
+                ObaContract.Routes.CONTENT_URI,
+                QueryUtils.RouteList.Columns.PROJECTION,
+                ObaContract.Routes.ACCESS_TIME,
+                ObaContract.Routes.USE_COUNT);
     }
 
     @Override
@@ -76,10 +74,6 @@ public class MyRecentStopsFragment extends ListFragment
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
     }
-
-    //
-    // MyRecentStopsActivity
-    //
 
     private static final int CONTEXT_MENU_DELETE = 10;
 
@@ -95,9 +89,9 @@ public class MyRecentStopsFragment extends ListFragment
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
         switch (item.getItemId()) {
         case CONTEXT_MENU_DELETE:
-            ObaContract.Stops.markAsUnused(getActivity(),
-                    Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI,
-                            QueryUtils.StopList.getId(getListView(), info.position)));
+            ObaContract.Routes.markAsUnused(getActivity(),
+                    Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                            QueryUtils.RouteList.getId(getListView(), info.position)));
             return true;
         default:
             return super.onContextItemSelected(item);
@@ -106,13 +100,13 @@ public class MyRecentStopsFragment extends ListFragment
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.my_recent_stop_options, menu);
+        inflater.inflate(R.menu.my_recent_route_options, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
-            ObaContract.Stops.markAsUnused(getActivity(), ObaContract.Stops.CONTENT_URI);
+            ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);
             return true;
         }
         return false;

@@ -15,7 +15,9 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.support.v4.app.ActionBar;
 
 public class MyRoutesActivity extends MyTabActivityBase {
     //private static final String TAG = "MyRoutesActivity";
@@ -24,27 +26,20 @@ public class MyRoutesActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        /*
+        ensureSupportActionBarAttached();
         final Resources res = getResources();
-        final TabHost tabHost = getTabHost();
-        Intent intent;
+        final ActionBar bar = getSupportActionBar();
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
 
-        intent = new Intent(this, MyRecentRoutesActivity.class)
-                            .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)
-                            .putExtra(EXTRA_SEARCHMODE, mSearchMode);
-        putSearchCenter(intent, mSearchCenter);
-
-        tabHost.addTab(tabHost.newTabSpec(MyRecentRoutesActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_recent_title),
-                              res.getDrawable(R.drawable.ic_tab_recent))
-                .setContent(intent));
-        */
-        /*
-        tabHost.addTab(tabHost.newTabSpec("starred")
-                .setIndicator(getString(R.string.my_starred_title))
-                .setContent(new Intent(this, MyStarredRoutesActivity.class)
-                                    .setAction(action)));
-        */
+        bar.addTab(bar.newTab()
+                .setTag(MyRecentRoutesFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_recent_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_recent))
+                .setTabListener(new TabListener<MyRecentRoutesFragment>(
+                        this,
+                        MyRecentRoutesFragment.TAB_NAME,
+                        MyRecentRoutesFragment.class)));
 
         /*
         intent = new Intent(this, MySearchRoutesActivity.class)
@@ -55,9 +50,9 @@ public class MyRoutesActivity extends MyTabActivityBase {
                 .setIndicator(res.getString(R.string.my_search_title),
                                 res.getDrawable(R.drawable.ic_tab_search))
                 .setContent(intent));
+        */
 
         restoreDefaultTab();
-        */
     }
 
     @Override

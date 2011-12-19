@@ -94,7 +94,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".MyStarredRoutesActivity" />
         <activity android:name=".MySearchRoutesActivity" />
 
         <activity android:name=".MultiChoiceActivity"

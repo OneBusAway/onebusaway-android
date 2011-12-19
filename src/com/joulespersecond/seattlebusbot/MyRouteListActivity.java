@@ -31,19 +31,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
 
-abstract class MyRouteListActivity extends MyBaseListActivity {
+abstract class MyRouteListActivity extends MyBaseListActivity implements QueryUtils.RouteList.Columns {
     // private static final String TAG = "MyRouteListActivity";
-
-    protected static final String[] PROJECTION = {
-        ObaContract.Routes._ID,
-        ObaContract.Routes.SHORTNAME,
-        ObaContract.Routes.LONGNAME,
-        ObaContract.Routes.URL
-    };
-    private static final int COL_ID = 0;
-    private static final int COL_SHORTNAME = 1;
-    // private static final int COL_LONGNAME = 2;
-    private static final int COL_URL = 3;
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -103,7 +92,7 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
                     R.string.my_context_get_route_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
-        final String url = getUrl(getListView(), info.position);
+        final String url = QueryUtils.RouteList.getUrl(getListView(), info.position);
         if (!TextUtils.isEmpty(url)) {
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0,
                     R.string.my_context_show_schedule);
@@ -121,47 +110,14 @@ abstract class MyRouteListActivity extends MyBaseListActivity {
                     info.id);
             return true;
         case CONTEXT_MENU_SHOW_ON_MAP:
-            MapViewActivity.start(this, getId(getListView(), info.position));
+            MapViewActivity.start(this, QueryUtils.RouteList.getId(getListView(), info.position));
             return true;
         case CONTEXT_MENU_SHOW_URL:
-            UIHelp.goToUrl(this, getUrl(getListView(), info.position));
+            UIHelp.goToUrl(this, QueryUtils.RouteList.getUrl(getListView(), info.position));
             return true;
         default:
             return super.onContextItemSelected(item);
         }
-    }
-
-    protected String getId(ListView l, int position) {
-        // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
-        Cursor c = cursorAdapter.getCursor();
-        c.moveToPosition(position - l.getHeaderViewsCount());
-        return c.getString(COL_ID);
-    }
-
-    protected String getUrl(ListView l, int position) {
-        // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
-        Cursor c = cursorAdapter.getCursor();
-        c.moveToPosition(position - l.getHeaderViewsCount());
-        return c.getString(COL_URL);
-    }
-
-    @Override
-    protected void initList(Cursor c) {
-        startManagingCursor(c);
-
-        final String[] from = {
-                ObaContract.Routes.SHORTNAME,
-                ObaContract.Routes.LONGNAME
-        };
-        final int[] to = {
-                R.id.short_name,
-                R.id.long_name
-        };
-        SimpleCursorAdapter simpleAdapter =
-            new SimpleCursorAdapter(this, R.layout.route_list_item, c, from, to);
-        setListAdapter(simpleAdapter);
     }
 
     protected Uri getObserverUri() {

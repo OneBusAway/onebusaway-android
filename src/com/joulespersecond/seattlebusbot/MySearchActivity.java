@@ -70,7 +70,7 @@ abstract class MySearchActivity extends ListActivity {
         Intent intent = getIntent();
         mShortcutMode = intent.getBooleanExtra(MyTabActivityBase.EXTRA_SHORTCUTMODE, false);
         mSearchMode = intent.getBooleanExtra(MyTabActivityBase.EXTRA_SEARCHMODE, false);
-        mSearchCenter = MyTabActivityBase.getSearchCenter(intent);
+        mSearchCenter = null; //MyTabActivityBase.getSearchCenter(intent);
 
         mSearchText = (EditText)findViewById(R.id.search_text);
         mSearchText.setHint(getEditBoxHintText());

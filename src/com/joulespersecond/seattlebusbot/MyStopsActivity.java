@@ -18,6 +18,7 @@ package com.joulespersecond.seattlebusbot;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.ActionBar;
+import android.support.v4.view.Window;
 
 public class MyStopsActivity extends MyTabActivityBase {
     //private static final String TAG = "MyStopsActivity";
@@ -25,6 +26,7 @@ public class MyStopsActivity extends MyTabActivityBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         ensureSupportActionBarAttached();
         final Resources res = getResources();
@@ -48,17 +50,15 @@ public class MyStopsActivity extends MyTabActivityBase {
                         this,
                         MyStarredStopsFragment.TAB_NAME,
                         MyStarredStopsFragment.class)));
+        bar.addTab(bar.newTab()
+                .setTag(MySearchStopsFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_search_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_search))
+                .setTabListener(new TabListener<MySearchStopsFragment>(
+                        this,
+                        MySearchStopsFragment.TAB_NAME,
+                        MySearchStopsFragment.class)));
 
-        // TODO: Search stops
-
-        /*
-        final TabHost tabHost = getTabHost();
-        tabHost.addTab(tabHost.newTabSpec(MySearchStopsActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_search_title),
-                              res.getDrawable(R.drawable.ic_tab_search))
-                .setContent(new Intent(this, MySearchStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
-        */
         restoreDefaultTab();
     }
 

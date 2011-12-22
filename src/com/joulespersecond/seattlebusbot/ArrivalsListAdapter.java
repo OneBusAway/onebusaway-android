@@ -6,24 +6,18 @@ import com.joulespersecond.oba.provider.ObaContract;
 import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
-import android.os.Build;
 import android.text.format.DateUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
 
 public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
-    private final LayoutInflater mInflater;
     private ContentQueryMap mTripsForStop;
 
     public ArrivalsListAdapter(Context context) {
         super(context, R.layout.arrivals_list_item);
-        mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     public void setTripsForStop(ContentQueryMap tripsForStop) {
@@ -42,35 +36,8 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         }
     }
 
-    private void setData(ArrayList<ArrivalInfo> data) {
-        clear();
-        if (data != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                addAll(data);
-            } else {
-                for (ArrivalInfo info: data) {
-                    add(info);
-                }
-            }
-        }
-    }
-
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View view;
-
-        if (convertView == null) {
-            view = mInflater.inflate(R.layout.arrivals_list_item, parent, false);
-        } else {
-            view = convertView;
-        }
-
-        ArrivalInfo item = getItem(position);
-        initView(view, item);
-        return view;
-    }
-
-    private void initView(View view, ArrivalInfo stopInfo) {
+    protected void initView(View view, ArrivalInfo stopInfo) {
         TextView route = (TextView)view.findViewById(R.id.route);
         TextView destination = (TextView)view.findViewById(R.id.destination);
         TextView time = (TextView)view.findViewById(R.id.time);

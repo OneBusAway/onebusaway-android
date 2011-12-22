@@ -25,7 +25,6 @@ import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
@@ -34,8 +33,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import java.util.Arrays;
 
 public class MySearchRoutesActivity extends MySearchActivity {
     //private static final String TAG = "MySearchRoutesActivity";
@@ -59,6 +56,8 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
             Intent resultData = new Intent();
             resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
+            //Activity act = getActivity();
+
             //myRoutes.returnResult(resultData);
         } else {
             RouteInfoActivity.start(this, routeId);
@@ -118,6 +117,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
         return route.getUrl();
     }
 
+    /*
     private final class SearchResultsListAdapter extends Adapters.BaseArrayAdapter2<ObaRoute> {
         public SearchResultsListAdapter(ObaResponse response) {
             super(MySearchRoutesActivity.this, Arrays
@@ -145,6 +145,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
             longNameText.setText(longName);
         }
     }
+    */
 
     @Override
     protected int getLayoutId() {
@@ -163,7 +164,7 @@ public class MySearchRoutesActivity extends MySearchActivity {
 
     @Override
     protected void setResultsAdapter(ObaResponse response) {
-        setListAdapter(new SearchResultsListAdapter(response));
+        //setListAdapter(new SearchResultsListAdapter(response));
     }
 
     @Override

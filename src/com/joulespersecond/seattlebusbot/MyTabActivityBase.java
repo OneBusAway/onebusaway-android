@@ -138,7 +138,7 @@ abstract class MyTabActivityBase extends FragmentActivity {
         return intent;
     }
 
-    public static final GeoPoint getSearchCenter(Intent intent) {
+    private static final GeoPoint getSearchCenter(Intent intent) {
         int[] p = intent.getIntArrayExtra(EXTRA_SEARCHCENTER);
         if (p != null && p.length == 2) {
             return new GeoPoint(p[0], p[1]);

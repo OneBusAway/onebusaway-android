@@ -67,9 +67,6 @@ abstract class MyListFragmentBase extends ListFragment
 
         // Set empty text
         setEmptyText(getString(getEmptyText()));
-
-        // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
         registerForContextMenu(getListView());
 
         // Create our generic adapter

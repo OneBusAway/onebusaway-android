@@ -61,7 +61,6 @@
     <string name="main_outofrange_no">Stay here</string>
 
     <!--  Stop Info -->
-    <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
       <item quantity="one">1 minute delay</item>
@@ -101,7 +100,6 @@
     <string name="stop_info_old_data">Data updated %s</string>
 
     <!-- Route Info  -->
-    <string name="route_info_title">OneBusAway</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_goto_url">View schedule</string>
@@ -146,7 +144,6 @@
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->
-    <string name="trip_info_title">OneBusAway</string>
     <string name="trip_info_name">Reminder name</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
@@ -169,7 +166,6 @@
     <string name="trip_info_option_showstop">Show stop</string>
 
     <!--  Trip list -->
-    <string name="trip_list_title">OneBusAway</string>
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>

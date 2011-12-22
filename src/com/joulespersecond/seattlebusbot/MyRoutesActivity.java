@@ -40,17 +40,14 @@ public class MyRoutesActivity extends MyTabActivityBase {
                         this,
                         MyRecentRoutesFragment.TAB_NAME,
                         MyRecentRoutesFragment.class)));
-
-        /*
-        intent = new Intent(this, MySearchRoutesActivity.class)
-                            .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)
-                            .putExtra(EXTRA_SEARCHMODE, mSearchMode);
-        putSearchCenter(intent, mSearchCenter);
-        tabHost.addTab(tabHost.newTabSpec(MySearchRoutesActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_search_title),
-                                res.getDrawable(R.drawable.ic_tab_search))
-                .setContent(intent));
-        */
+        bar.addTab(bar.newTab()
+                .setTag(MySearchRoutesFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_search_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_search))
+                .setTabListener(new TabListener<MySearchRoutesFragment>(
+                        this,
+                        MySearchRoutesFragment.TAB_NAME,
+                        MySearchRoutesFragment.class)));
 
         restoreDefaultTab();
     }

@@ -37,25 +37,18 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".StopInfoActivity"
-                  android:label="@string/stop_info_title">
+        <activity android:name=".StopInfoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".RouteInfoActivity"
-                  android:label="@string/route_info_title"
-                  android:process=":routeinfo">
+        <activity android:name=".RouteInfoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".TripInfoActivity"
-                  android:label="@string/trip_info_title">
-        </activity>
-        <activity android:name=".TripListActivity"
-                  android:label="@string/trip_list_title">
-        </activity>
+        <activity android:name=".TripInfoActivity" />
+        <activity android:name=".TripListActivity" />
 
         <activity android:name=".MyStopsActivity"
                   android:label="@string/stop_shortcut">
@@ -93,7 +86,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".MySearchRoutesActivity" />
 
         <activity android:name=".MultiChoiceActivity"
                   android:theme="@android:style/Theme.Dialog">

@@ -257,7 +257,7 @@ public class MapViewActivity extends MapActivity {
         myIntent.putExtra(MyTabActivityBase.EXTRA_SEARCHMODE, true);
 
         myIntent.setData(MyTabActivityBase.getDefaultTabUri(
-                MySearchRoutesActivity.TAB_NAME));
+                MySearchRoutesFragment.TAB_NAME));
         MyTabActivityBase.putSearchCenter(myIntent,  location);
 
         startActivityForResult(myIntent, REQUEST_SEARCH_RESULT);

@@ -50,15 +50,20 @@
         </TableRow>
     </TableLayout>
 
-    <ExpandableListView android:id="@id/android:list"
-        style="@style/HeaderList"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
-
     <include layout="@layout/loading" />
 
-    <TextView android:id="@id/android:empty"
-        style="@style/ListHintText"
+    <FrameLayout
+        android:id="@+id/listContainer"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="fill_parent">
+        <ExpandableListView android:id="@id/android:list"
+            style="@style/HeaderList"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" />
+
+        <TextView android:id="@+id/internalEmpty"
+            style="@style/ListHintText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
 </LinearLayout>

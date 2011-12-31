@@ -17,6 +17,7 @@ package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.map.MapFragment;
+import com.joulespersecond.seattlebusbot.map.MapParams;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -39,6 +40,8 @@ import android.support.v4.view.Window;
 import android.view.MenuInflater;
 import android.widget.Toast;
 
+import java.io.File;
+
 public class HomeActivity extends FragmentMapActivity {
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
@@ -46,10 +49,84 @@ public class HomeActivity extends FragmentMapActivity {
     private static final String TAG_HELP_DIALOG = ".HelpDialog";
     private static final String TAG_WHATSNEW_DIALOG = ".WhatsNew";
 
-    private MapFragment mMapFragment;
+    /**
+     * Starts the MapActivity with a particular stop focused with the center of
+     * the map at a particular point.
+     *
+     * @param context
+     *            The context of the activity.
+     * @param focusId
+     *            The stop to focus.
+     * @param lat
+     *            The latitude of the map center.
+     * @param lon
+     *            The longitude of the map center.
+     */
+    public static final void start(Context context,
+            String focusId,
+            double lat,
+            double lon) {
+        context.startActivity(makeIntent(context, focusId, lat, lon));
+    }
+
+    /**
+     * Starts the MapActivity in "RouteMode", which shows stops along a route,
+     * and does not get new stops when the user pans the map.
+     *
+     * @param context
+     *            The context of the activity.
+     * @param routeId
+     *            The route to show.
+     */
+    public static final void start(Context context, String routeId) {
+        context.startActivity(makeIntent(context, routeId));
+    }
+
+    /**
+     * Returns an intent that will start the MapActivity with a particular stop
+     * focused with the center of the map at a particular point.
+     *
+     * @param context
+     *            The context of the activity.
+     * @param focusId
+     *            The stop to focus.
+     * @param lat
+     *            The latitude of the map center.
+     * @param lon
+     *            The longitude of the map center.
+     */
+    public static final Intent makeIntent(Context context,
+            String focusId,
+            double lat,
+            double lon) {
+        Intent myIntent = new Intent(context, HomeActivity.class);
+        myIntent.putExtra(MapParams.STOP_ID, focusId);
+        myIntent.putExtra(MapParams.CENTER_LAT, lat);
+        myIntent.putExtra(MapParams.CENTER_LON, lon);
+        return myIntent;
+    }
+
+    /**
+     * Returns an intent that starts the MapActivity in "RouteMode", which shows
+     * stops along a route, and does not get new stops when the user pans the
+     * map.
+     *
+     * @param context
+     *            The context of the activity.
+     * @param routeId
+     *            The route to show.
+     */
+    public static final Intent makeIntent(Context context, String routeId) {
+        Intent myIntent = new Intent(context, HomeActivity.class);
+        myIntent.putExtra(MapParams.MODE, MapParams.MODE_ROUTE);
+        myIntent.putExtra(MapParams.ZOOM_TO_ROUTE, true);
+        myIntent.putExtra(MapParams.ROUTE_ID, routeId);
+        return myIntent;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
@@ -60,21 +137,24 @@ public class HomeActivity extends FragmentMapActivity {
 
         // Create the list fragment and add it as our sole content.
         if (fm.findFragmentById(android.R.id.content) == null) {
-            mMapFragment = new MapFragment();
+            MapFragment frag = new MapFragment();
+            Bundle args = FragmentUtils.getIntentArgs(getIntent());
 
-            // TODO: The HomeActivity always goes to the user's current location.
-            // TODO: We could do one of two things:
-            // 1. We could have the home activity implement everything about
-            // every map;
-            // 2. We could have multiple map activities, each in its separate process.
+            // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
+            if (firstRun) {
+                firstRunSetLocation(args);
+            }
 
-            fm.beginTransaction().add(android.R.id.content, mMapFragment).commit();
+            frag.setArguments(args);
+            fm.beginTransaction().add(android.R.id.content, frag).commit();
         }
     }
 
     @Override
     protected boolean isRouteDisplayed() {
-        return (mMapFragment != null) && mMapFragment.isRouteDisplayed();
+        FragmentManager fm = getSupportFragmentManager();
+        MapFragment frag = (MapFragment)fm.findFragmentById(android.R.id.content);
+        return (frag != null) && frag.isRouteDisplayed();
     }
 
     @Override
@@ -241,5 +321,24 @@ public class HomeActivity extends FragmentMapActivity {
             Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
         }
+    }
+
+    /**
+     * Returns true if no files in private directory
+     * (MapView or MapActivity caches prefs and tiles)
+     * This will fail if MapViewActivty never got to onPause
+     */
+    private boolean firstRunCheck() {
+        File dir = getFilesDir();
+        return (dir.list().length == 0);
+    }
+
+    /**
+     * Center on Seattle with a region-level zoom, should
+     * give first-time users better first impression
+     */
+    private void firstRunSetLocation(Bundle args) {
+        args.putDouble(MapParams.CENTER_LAT, 47.605990);
+        args.putDouble(MapParams.CENTER_LON, -122.331780);
     }
 }

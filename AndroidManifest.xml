@@ -29,9 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapViewActivity"
-                  android:theme="@style/Theme.BusBot.NoBackground">
-        </activity>
         <activity android:name=".ArrivalsListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

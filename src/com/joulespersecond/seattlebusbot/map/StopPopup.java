@@ -24,6 +24,7 @@ import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.Spannable;
 import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
@@ -172,7 +173,9 @@ class StopPopup {
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mFragment.switchToRouteMode(route);
+                    Bundle args = new Bundle();
+                    args.putString(MapParams.ROUTE_ID, route.getId());
+                    mFragment.setMapMode(MapParams.MODE_ROUTE, args);
                 }
             });
 

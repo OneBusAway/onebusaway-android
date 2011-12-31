@@ -21,12 +21,15 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.Projection;
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.UIHelp;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -38,6 +41,9 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,27 +57,38 @@ class RouteMapController implements MapFragmentController,
 
     private String mRouteId;
     private LineOverlay mLineOverlay;
-    //protected String mZoomToRouteId;
+    private boolean mZoomToRoute;
     private final int mLineOverlayColor;
+    private RoutePopup mRoutePopup;
 
     RouteMapController(FragmentCallback callback) {
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
                                 .getResources()
                                 .getColor(R.color.route_overlay_line);
+        mRoutePopup = new RoutePopup();
     }
 
-    public void setRoute(String routeId) {
-        // Initialize from a route ID
+    @Override
+    public void setState(Bundle args) {
+        String routeId = args.getString(MapParams.ROUTE_ID);
+        mZoomToRoute = args.getBoolean(MapParams.ZOOM_TO_ROUTE, false);
         if (!routeId.equals(mRouteId)) {
             mRouteId = routeId;
+            mRoutePopup.showLoading();
             mFragment.showProgress(true);
             mFragment.getLoaderManager().restartLoader(ROUTES_LOADER, null, this);
         }
     }
 
     @Override
+    public String getMode() {
+        return MapParams.MODE_ROUTE;
+    }
+
+    @Override
     public void destroy() {
+        mRoutePopup.hide();
         removeOverlay();
     }
 
@@ -85,6 +102,8 @@ class RouteMapController implements MapFragmentController,
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        outState.putString(MapParams.ROUTE_ID, mRouteId);
+        outState.putBoolean(MapParams.ZOOM_TO_ROUTE, mZoomToRoute);
     }
 
     @Override
@@ -109,27 +128,32 @@ class RouteMapController implements MapFragmentController,
         MapView mapView = mFragment.getMapView();
         List<Overlay> overlays = mapView.getOverlays();
 
-        if (mLineOverlay != null) {
-            overlays.remove(mLineOverlay);
-            mLineOverlay = null;
+        if (mLineOverlay == null) {
+            mLineOverlay = new LineOverlay();
+            overlays.add(mLineOverlay);
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            // TODO: Some form of toast
+            Activity act = mFragment.getActivity();
+            Toast.makeText(act,
+                    act.getString(R.string.main_stop_errors),
+                    Toast.LENGTH_LONG);
             return;
         }
 
-        mLineOverlay = new LineOverlay();
-        mLineOverlay.addLines(mLineOverlayColor, response.getShapes());
-        overlays.add(mLineOverlay);
+        mRoutePopup.show(response.getRoute(response.getRouteId()));
+        mLineOverlay.setLines(mLineOverlayColor, response.getShapes());
 
         // Set the stops for this route
         List<ObaStop> stops = response.getStops();
         mFragment.showStops(stops, response);
         mFragment.showProgress(false);
 
-        // TODO Zoom to route
-        //mLineOverlay.zoom(mapView.getController());
+        if (mZoomToRoute) {
+            mLineOverlay.zoom(mapView.getController());
+            mZoomToRoute = false;
+        }
+        //
         // wait to zoom till we have the right response
         mapView.postInvalidate();
     }
@@ -147,6 +171,48 @@ class RouteMapController implements MapFragmentController,
         }
         mLineOverlay = null;
         mapView.postInvalidate();
+    }
+
+    //
+    // Map popup
+    //
+    private class RoutePopup {
+        //private final Context mContext;
+        private final View mView;
+        private final TextView mRouteShortName;
+        private final TextView mRouteLongName;
+
+        RoutePopup() {
+            //mContext = fragment.getActivity();
+            mView = mFragment.getView().findViewById(R.id.route_info);
+            mRouteShortName = (TextView)mView.findViewById(R.id.short_name);
+            mRouteLongName = (TextView)mView.findViewById(R.id.route_long_name);
+
+            View cancel = mView.findViewById(R.id.cancel_route_mode);
+            cancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mFragment.setMapMode(MapParams.MODE_STOP, null);
+                }
+            });
+        }
+
+        void showLoading() {
+            mRouteShortName.setVisibility(View.GONE);
+            mRouteLongName.setText(R.string.loading);
+            mView.setVisibility(View.VISIBLE);
+        }
+
+        void show(ObaRoute route) {
+            mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
+            mRouteLongName.setText(UIHelp.getRouteDescription(route));
+            mRouteShortName.setVisibility(View.VISIBLE);
+            mView.setVisibility(View.VISIBLE);
+        }
+
+        void hide() {
+            mView.setVisibility(View.GONE);
+        }
     }
 
     //
@@ -245,8 +311,6 @@ class RouteMapController implements MapFragmentController,
             Point pt = new Point();
 
             // Convert points to coords and then call drawLines()
-            // TODO: This is probably too slow to do within draw() --
-            // spawn off another thread to generate the path?
             final int len = mLines.size();
             // Log.d(TAG, String.format("Drawing %d line(s)", len));
 

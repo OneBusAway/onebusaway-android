@@ -202,7 +202,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
         final double lat = stop.getLatitude();
         final double lon = stop.getLongitude();
 
-        MapViewActivity.start(getActivity(), stopId, lat, lon);
+        HomeActivity.start(getActivity(), stopId, lat, lon);
     }
 
     //

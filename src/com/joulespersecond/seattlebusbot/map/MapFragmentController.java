@@ -17,12 +17,12 @@ package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
+import android.view.View;
 
 import java.util.List;
 
@@ -39,14 +39,16 @@ public interface MapFragmentController {
     interface FragmentCallback {
         // Used by the controller to tell the Fragment what to do.
         Activity getActivity();
+        View getView();
+
         LoaderManager getLoaderManager();
 
         void showProgress(boolean show);
 
-        MapView getMapView();
+        String getMapMode();
+        void setMapMode(String mode, Bundle args);
 
-        void switchToRouteMode(ObaRoute route);
-        void switchToStopMode();
+        MapView getMapView();
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
@@ -54,6 +56,9 @@ public interface MapFragmentController {
         void notifyOutOfRange();
     }
 
+    String getMode();
+
+    void setState(Bundle args);
     void destroy();
 
     void onPause();

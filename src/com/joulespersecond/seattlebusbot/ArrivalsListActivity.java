@@ -73,15 +73,7 @@ public class ArrivalsListActivity extends FragmentActivity {
         // Create the list fragment and add it as our sole content.
         if (fm.findFragmentById(android.R.id.content) == null) {
             ArrivalsListFragment list = new ArrivalsListFragment();
-            Intent intent = getIntent();
-            Bundle args = intent.getExtras();
-            if (args != null) {
-                args = (Bundle)args.clone();
-            } else {
-                args = new Bundle();
-            }
-            args.putParcelable("uri", intent.getData());
-            list.setArguments(args);
+            list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }

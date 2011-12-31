@@ -185,7 +185,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 onListItemClick(getListView(), info.targetView, info.position, info.id);
                 return true;
             case CONTEXT_MENU_SHOW_ON_MAP:
-                MapViewActivity.start(getActivity(), getId(getListView(), info.position));
+                HomeActivity.start(getActivity(), getId(getListView(), info.position));
                 return true;
             case CONTEXT_MENU_SHOW_URL:
                 UIHelp.goToUrl(getActivity(), getUrl(getListView(), info.position));

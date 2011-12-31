@@ -43,7 +43,6 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
-import android.widget.ListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
@@ -81,7 +80,7 @@ public class RouteInfoListFragment extends ListFragment {
         list.setOnChildClickListener(mChildClick);
 
         // Get the route ID from the "uri" argument
-        Uri uri = (Uri)getArguments().getParcelable("uri");
+        Uri uri = (Uri)getArguments().getParcelable(FragmentUtils.URI);
         if (uri == null) {
             Log.e(TAG, "No URI in arguments");
             return;
@@ -121,7 +120,7 @@ public class RouteInfoListFragment extends ListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
-            MapViewActivity.start(getActivity(), mRouteId);
+            HomeActivity.start(getActivity(), mRouteId);
             return true;
         } else if (id == R.id.goto_url) {
             UIHelp.goToUrl(getActivity(), mRouteInfo.getUrl());
@@ -198,7 +197,7 @@ public class RouteInfoListFragment extends ListFragment {
         if (stop == null) {
             return;
         }
-        MapViewActivity.start(getActivity(), stopId, stop.getLatitude(), stop.getLongitude());
+        HomeActivity.start(getActivity(), stopId, stop.getLatitude(), stop.getLongitude());
     }
 
     //

@@ -126,7 +126,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
         final double lat = c.getDouble(COL_LATITUDE);
         final double lon = c.getDouble(COL_LONGITUDE);
 
-        MapViewActivity.start(getActivity(), stopId, lat, lon);
+        HomeActivity.start(getActivity(), stopId, lat, lon);
     }
 
     protected class StopData {

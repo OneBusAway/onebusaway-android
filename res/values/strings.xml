@@ -59,6 +59,7 @@
     <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
     <string name="main_outofrange_yes">Take me there!</string>
     <string name="main_outofrange_no">Stay here</string>
+    <string name="main_stop_errors">Problem getting stops!</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">On time</string>

@@ -536,7 +536,7 @@ public class ArrivalsListFragment extends ListFragment
     };
 
     private void setStopId() {
-        Uri uri = (Uri)getArguments().getParcelable("uri");
+        Uri uri = (Uri)getArguments().getParcelable(FragmentUtils.URI);
         if (uri == null) {
             Log.e(TAG, "No URI in arguments");
             return;

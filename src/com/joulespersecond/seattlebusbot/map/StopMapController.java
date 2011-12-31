@@ -16,18 +16,21 @@
 package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.R;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,23 +48,50 @@ class StopMapController implements MapFragmentController,
 
     StopMapController(FragmentCallback callback) {
         mFragment = callback;
+        mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
+    }
+
+    @Override
+    public void setState(Bundle args) {
+        if (args != null) {
+            GeoPoint center = null;
+            int mapZoom = args.getInt(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
+
+            double lat = args.getDouble(MapParams.CENTER_LAT);
+            double lon = args.getDouble(MapParams.CENTER_LON);
+            if (lat != 0.0 && lon != 0.0) {
+                center = ObaApi.makeGeoPoint(lat, lon);
+            }
+            MapController mapCtrl = mFragment.getMapView().getController();
+            mapCtrl.setZoom(mapZoom);
+            if (center != null) {
+                mapCtrl.setCenter(center);
+                onLocation();
+            } else {
+                mFragment.setMyLocation();
+            }
+        }
+    }
+
+    @Override
+    public String getMode() {
+        return MapParams.MODE_STOP;
     }
 
     @Override
     public void destroy() {
+        mFragment.getLoaderManager().destroyLoader(STOPS_LOADER);
         watchMap(false);
     }
 
     @Override
     public void onPause() {
-        // Stop watching the map
         watchMap(false);
     }
 
     @Override
     public void onResume() {
         watchMap(true);
-        refresh();
     }
 
     @Override
@@ -75,13 +105,13 @@ class StopMapController implements MapFragmentController,
 
     @Override
     public void onNoLocation() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public Loader<ObaStopsForLocationResponse> onCreateLoader(int id, Bundle args) {
-        return new StopsLoader(mFragment.getActivity(), mFragment.getMapView());
+        StopsLoader loader = new StopsLoader(mFragment);
+        loader.update(mFragment.getMapView());
+        return loader;
     }
 
     @Override
@@ -90,9 +120,10 @@ class StopMapController implements MapFragmentController,
         Log.d(TAG, "Load finished!");
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            // TODO: Make a toast or something when we fail.
-            //Log.d(TAG, String.format("setOverlays: unexpected response = %d",
-            //       response.getCode()));
+            Activity act = mFragment.getActivity();
+            Toast.makeText(act,
+                    act.getString(R.string.main_stop_errors),
+                    Toast.LENGTH_LONG);
             return;
         }
 
@@ -125,10 +156,8 @@ class StopMapController implements MapFragmentController,
         // First we need to check to see if the current request we have can handle this.
         // Otherwise, we need to restart the loader with the new request.
         StopsLoader loader = getLoader();
-        if (loader == null || !loader.canFulfill(mFragment.getMapView())) {
-            Log.d(TAG,  "Refreshing stops");
-            mFragment.showProgress(true);
-            mFragment.getLoaderManager().restartLoader(STOPS_LOADER, null, this);
+        if (loader != null) {
+            loader.update(mFragment.getMapView());
         }
     }
 
@@ -136,23 +165,22 @@ class StopMapController implements MapFragmentController,
     // Loader
     //
     private static class StopsLoader extends AsyncTaskLoader<ObaStopsForLocationResponse> {
-        private final GeoPoint mCenter;
-        private final int mLatSpan;
-        private final int mLonSpan;
-        private final int mZoomLevel;
+
+        private final FragmentCallback mFragment;
+        private GeoPoint mCenter;
+        private int mLatSpan;
+        private int mLonSpan;
+        private int mZoomLevel;
 
         private ObaStopsForLocationResponse mResponse;
 
-        public StopsLoader(Context context, MapView view) {
-            super(context);
-            mCenter = view.getMapCenter();
-            mLatSpan = view.getLatitudeSpan();
-            mLonSpan = view.getLongitudeSpan();
-            mZoomLevel = view.getZoomLevel();
+        public StopsLoader(FragmentCallback fragment) {
+            super(fragment.getActivity());
+            mFragment = fragment;
         }
 
         @Override
-        public ObaStopsForLocationResponse loadInBackground() {
+        public synchronized ObaStopsForLocationResponse loadInBackground() {
             return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
                     .setSpan(mLatSpan, mLonSpan)
                     .build()
@@ -167,23 +195,54 @@ class StopMapController implements MapFragmentController,
 
         @Override
         public void onStartLoading() {
-            forceLoad();
+            if (takeContentChanged()) {
+                forceLoad();
+            }
         }
 
-        public boolean canFulfill(MapView view) {
+        @Override
+        public void onForceLoad() {
+            mFragment.showProgress(true);
+            super.onForceLoad();
+        }
+
+        public synchronized void update(MapView view) {
             GeoPoint newCenter = view.getMapCenter();
+            int newLatSpan = view.getLatitudeSpan();
+            int newLonSpan = view.getLongitudeSpan();
             int newZoom = view.getZoomLevel();
 
+            if (!canFulfill(newCenter, newZoom)) {
+                mCenter = newCenter;
+                mLatSpan = newLatSpan;
+                mLonSpan = newLonSpan;
+                mZoomLevel = newZoom;
+                onContentChanged();
+            }
+        }
+
+        private boolean canFulfill(GeoPoint newCenter, int newZoom) {
             // This is the old logic, we can do better:
+            if (mResponse == null) {
+                Log.d(TAG, "No response");
+                return false;
+            }
+            if (mCenter == null) {
+                Log.d(TAG, "No center");
+                return false;
+            }
             if (!mCenter.equals(newCenter)) {
+                Log.d(TAG, "Center not the same");
                 return false;
             }
             if (mResponse != null) {
                 if ((newZoom > mZoomLevel) &&
                         mResponse.getLimitExceeded()) {
+                    Log.d(TAG, "Zooming in -- limit exceeded");
                     return false;
                 }
                 else if (newZoom < mZoomLevel) {
+                    Log.d(TAG, "Zooming out");
                     return false;
                 }
             }

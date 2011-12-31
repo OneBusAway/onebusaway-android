@@ -51,7 +51,7 @@ public class TripListActivity extends FragmentActivity {
         }
     }
 
-    private static final class TripListFragment extends ListFragment
+    public static final class TripListFragment extends ListFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String[] PROJECTION = {

@@ -77,19 +77,6 @@
 
           <TextView
               style="@style/TripInfoOptionHead"
-              android:text="@string/trip_info_name"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content">
-          </TextView>
-          <EditText
-              android:hint="@string/trip_info_name_hint"
-              android:id="@+id/name"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content">
-          </EditText>
-
-          <TextView
-              style="@style/TripInfoOptionHead"
               android:text="@string/trip_info_reminder_header"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content">
@@ -113,6 +100,19 @@
               android:layout_width="fill_parent"
               android:layout_height="wrap_content">
           </Button>
+
+          <TextView
+              style="@style/TripInfoOptionHead"
+              android:text="@string/trip_info_name"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+          </TextView>
+          <EditText
+              android:hint="@string/trip_info_name_hint"
+              android:id="@+id/name"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+          </EditText>
 
           <LinearLayout
               android:id="@+id/trip_info_buttons"

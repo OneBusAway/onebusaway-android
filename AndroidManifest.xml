@@ -22,6 +22,17 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/Theme.BusBot">
+        <meta-data android:name="android.app.default_searchable"
+                   android:value=".SearchActivity" />
+        <activity android:name=".SearchActivity"
+                  android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <meta-data android:name="android.app.searchable"
+                       android:resource="@xml/searchable"/>
+        </activity>
+
         <activity android:name=".HomeActivity"
                   android:theme="@style/Theme.BusBot.NoBackground">
             <intent-filter>
@@ -83,6 +94,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
 
         <activity android:name=".MultiChoiceActivity"
                   android:theme="@android:style/Theme.Dialog">

@@ -16,11 +16,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/refresh"
           android:title="@string/stop_info_option_refresh"
-          android:icon="@drawable/ic_menu_refresh"
+          android:icon="@drawable/ic_action_refresh"
           android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap"
-          android:icon="@drawable/android:ic_menu_mapmode"
+          android:icon="@drawable/ic_action_map"
           android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/filter"
           android:title="@string/stop_info_option_filter"

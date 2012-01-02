@@ -25,12 +25,11 @@ import com.joulespersecond.seattlebusbot.UIHelp;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -71,8 +70,11 @@ class StopPopup {
         });
 
         // Initialize the links
-        UIHelp.setChildClickable(mView, R.id.show_arrival_info, mOnShowArrivals);
-        UIHelp.setChildClickable(mView, R.id.show_routes, mOnShowRoutes);
+        View showArrivals = mView.findViewById(R.id.show_arrival_info);
+        showArrivals.setOnClickListener(mOnShowArrivals);
+
+        View showRoutes = mView.findViewById(R.id.show_routes);
+        showRoutes.setOnClickListener(mOnShowRoutes);
     }
 
     void show(ObaStop stop) {
@@ -81,7 +83,11 @@ class StopPopup {
             // Fill in the information for this stop and show the popup
             mStopUserMap.setView2(mNameView, stop.getId(), stop.getName(), false);
             UIHelp.setStopDirection(mDirection, stop.getDirection(), false);
-            mView.setVisibility(View.VISIBLE);
+            if (mView.getVisibility() != View.VISIBLE) {
+                mView.startAnimation(AnimationUtils.loadAnimation(
+                        mContext, android.R.anim.fade_in));
+                mView.setVisibility(View.VISIBLE);
+            }
 
             if (mRoutesView.isShown()) {
                 List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
@@ -91,6 +97,8 @@ class StopPopup {
     }
 
     void hide() {
+        mView.startAnimation(AnimationUtils.loadAnimation(
+                mContext, android.R.anim.fade_out));
         mView.setVisibility(View.GONE);
         mStop = null;
     }
@@ -103,13 +111,15 @@ class StopPopup {
         mStopUserMap = map;
     }
 
-    private final ClickableSpan mOnShowArrivals = new ClickableSpan() {
+    private final View.OnClickListener mOnShowArrivals = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             ArrivalsListActivity.start(mContext, mStop);
         }
     };
 
-    private final ClickableSpan mOnShowRoutes = new ClickableSpan() {
+    private final View.OnClickListener mOnShowRoutes = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             toggleShowRoutes((TextView)v);
         }
@@ -132,8 +142,6 @@ class StopPopup {
             mRoutesView.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);
         }
-        Spannable span = (Spannable)text.getText();
-        span.setSpan(mOnShowRoutes, 0, span.length(), 0);
     }
 
     private class RoutesAdapter extends ArrayAdapter<ObaRoute> {

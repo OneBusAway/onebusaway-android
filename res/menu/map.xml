@@ -16,10 +16,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/my_location"
           android:title="@string/map_option_mylocation"
-          android:icon="@drawable/android:ic_menu_mylocation"
+          android:icon="@drawable/ic_action_mylocation"
           android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/search"
           android:title="@string/map_option_search"
-          android:icon="@drawable/android:ic_menu_search"
+          android:icon="@drawable/ic_action_search"
           android:showAsAction="ifRoom|withText" />>
 </menu>

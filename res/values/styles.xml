@@ -16,6 +16,10 @@
 <resources>
     <!-- Themes -->
     <style name="Theme.BusBot" parent="@style/Theme.Sherlock.Light">
+        <item name="abBackground">@drawable/actionbar_bg</item>
+        <item name="abLogo">@drawable/logo</item>
+        <item name="abDisplayOptions">useLogo|showHome</item>
+        <item name="abDivider">@android:color/white</item>
     </style>
     <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
         <item name="android:windowBackground">@null</item>
@@ -39,6 +43,11 @@
     </style>
     <style name="Header2Text">
         <item name="android:textColor">#000000</item>
+    </style>
+    <style name="HeaderLink">
+        <item name="android:textSize">20sp</item>
+        <item name="android:background">@drawable/stop_popup_button_bg</item>
+        <item name="android:padding">3sp</item>
     </style>
     <style name="Line1Text">
         <item name="android:textSize">16sp</item>

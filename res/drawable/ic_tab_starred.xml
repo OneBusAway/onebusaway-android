@@ -14,7 +14,6 @@
      limitations under the License.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_selected="true" android:state_pressed="false" android:drawable="@drawable/ic_tab_selected_starred" />
-    <item android:drawable="@drawable/ic_tab_unselected_starred" />
+    <item android:state_selected="true" android:state_pressed="false" android:drawable="@drawable/ic_tab_starred_selected" />
+    <item android:drawable="@drawable/ic_tab_starred_unselected" />
 </selector>
-

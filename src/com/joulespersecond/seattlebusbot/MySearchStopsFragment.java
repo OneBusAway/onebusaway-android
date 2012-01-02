@@ -76,7 +76,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public void onDestroy() {
-        mStopUserMap.close();
+        if (mStopUserMap != null) {
+            mStopUserMap.close();
+        }
         super.onDestroy();
     }
 

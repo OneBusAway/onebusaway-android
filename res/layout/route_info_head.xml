@@ -47,6 +47,7 @@
         </LinearLayout>
         <ImageButton
             android:id="@+id/cancel_route_mode"
+            android:contentDescription="@android:string/cancel"
             android:visibility="gone"
             android:background="@drawable/ic_action_cancel_dark"
             android:layout_width="wrap_content"

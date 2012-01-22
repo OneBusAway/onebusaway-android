@@ -116,7 +116,6 @@
         </TextView>
     </LinearLayout>
     <TextView
-        android:text="1 minute ago"
         android:drawableLeft="@drawable/stop_info_error"
         android:id="@+id/response_error"
         style="@style/Header2Text"

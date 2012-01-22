@@ -37,13 +37,14 @@
         </TextView>
         <TextView
             style="@style/Line2Text"
-            android:text=" - "
+            android:text="@string/trip_info_separator"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         </TextView>
         <TextView
             style="@style/Line2Text"
-            android:text="Headsign"
             android:id="@+id/headsign"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">

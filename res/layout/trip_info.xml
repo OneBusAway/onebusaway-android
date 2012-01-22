@@ -48,13 +48,14 @@
               </TextView>
               <TextView
                   style="@style/Header2Text"
-                  android:text=" - "
+                  android:paddingLeft="4dp"
+                  android:paddingRight="4dp"
+                  android:text="@string/trip_info_separator"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content">
               </TextView>
               <TextView
                   style="@style/Header2Text"
-                  android:text="Headsign"
                   android:id="@+id/headsign"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content">
@@ -94,7 +95,6 @@
               android:layout_height="wrap_content">
           </TextView>
           <Button
-              android:text="Days"
               android:id="@+id/trip_info_reminder_days"
               android:ellipsize="end"
               android:layout_width="fill_parent"

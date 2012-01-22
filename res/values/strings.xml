@@ -33,7 +33,7 @@
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
     <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
     <string name="search_hint">Search stops or routes</string>
@@ -54,12 +54,9 @@
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
-    <string name="main_waiting_for_location">Trying to get a fix on your location...</string>
+    <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
-    <string name="main_outofrange_title">Out of range</string>
     <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
-    <string name="main_outofrange_yes">Take me there!</string>
-    <string name="main_outofrange_no">Stay here</string>
     <string name="main_stop_errors">Problem getting stops!</string>
 
     <!--  Stop Info -->
@@ -113,12 +110,12 @@
     <string name="my_no_recent_stops">You have no recent stops.</string>
     <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on the arrivals screen.</string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
-    <string name="my_no_starred_routes">You have no starred routes.</string>
+    <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
 
     <string name="my_option_clear_recent_stops">Clear recent stops</string>
     <string name="my_option_clear_recent_routes">Clear recent routes</string>
     <string name="my_option_clear_starred_stops">Remove all starred stops</string>
-    <string name="my_option_clear_starred_routes">Remove all starred routes</string>
+    <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
 
     <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
@@ -142,7 +139,7 @@
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>
-    <string name="starred_routes_shortcut">Starred Routes</string>
+    <!-- <string name="starred_routes_shortcut">Starred Routes</string> -->
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->
@@ -156,7 +153,6 @@
     <string name="trip_info_cancel">Cancel</string>
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
-    <string name="trip_info_deleted">Trip deleted.</string>
     <string name="trip_info_dismiss">Cancel</string>
     <string name="trip_info_delete_trip">This trip will be deleted.</string>
     <string name="trip_info_repeat_every">Every %s</string>
@@ -166,6 +162,7 @@
     <string name="trip_info_noname">(no name)</string>
     <string name="trip_info_option_showroute">Show route</string>
     <string name="trip_info_option_showstop">Show stop</string>
+    <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>

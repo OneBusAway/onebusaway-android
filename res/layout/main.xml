@@ -37,8 +37,6 @@
             android:id="@+id/route_info"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
             android:orientation="horizontal"
             android:visibility="gone">
                 <include layout="@layout/route_info_head" />
@@ -47,8 +45,6 @@
         <!-- STOP INFO -->
         <LinearLayout
             android:id="@+id/stop_info"
-            android:layout_alignParentLeft="true"
-            android:layout_alignBottom="@id/route_info"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"

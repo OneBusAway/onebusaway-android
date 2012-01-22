@@ -39,8 +39,6 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
-import android.view.Window;
-import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,6 +52,15 @@ public final class UIHelp {
 
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
         TextView v = (TextView)parent.findViewById(id);
+        setClickable(v, span);
+    }
+
+    public static void setChildClickable(View parent, int id, ClickableSpan span) {
+        TextView v = (TextView)parent.findViewById(id);
+        setClickable(v, span);
+    }
+
+    public static void setClickable(TextView v, ClickableSpan span) {
         Spannable text = (Spannable)v.getText();
         text.setSpan(span, 0, text.length(), 0);
         v.setMovementMethod(LinkMovementMethod.getInstance());
@@ -296,22 +303,5 @@ public final class UIHelp {
             }
         }
         return null;
-    }
-
-    public static void setContentView(final Activity activity, int layoutId) {
-        activity.requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-        activity.setContentView(layoutId);
-        UIHelp.applyCustomTitle(activity);
-    }
-
-    private static void applyCustomTitle(final Activity activity) {
-        activity.getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
-
-        activity.findViewById(R.id.title).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MapViewActivity.start(activity, null);
-            }
-        });
     }
 }

@@ -16,3 +16,13 @@ It's available on the Android Market: http://market.android.com/details?id=com.j
 
 The issues are still being tracked at Google Code: http://code.google.com/p/seattle-bus-bot/
 
+## Build Setup
+
+OneBusAway requires ActionBarSherlock: http://actionbarsherlock.com/
+
+Luckily, the version that we use is already included for you in this repository. You just need to
+import the SeattleBusBot/ActionBarSherlock project as an existing project. If you have trouble 
+building, make sure you have the latest version of the Android SDK, Android ADT. It never hurts to
+restart Eclipse and clean the project. If you still have trouble building, 
+let me know at paulcwatts@gmail.com.
+

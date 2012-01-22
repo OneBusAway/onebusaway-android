@@ -18,7 +18,11 @@
          android:layout_width="fill_parent"
          android:layout_height="fill_parent"
          android:gravity="top">
-    <include layout="@layout/search_box" />
+
+    <com.joulespersecond.view.SearchView
+        android:id="@+id/search"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
 
     <ListView android:id="@id/android:list"
                android:layout_width="fill_parent"

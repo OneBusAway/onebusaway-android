@@ -15,12 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +28,8 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public final class MultiChoiceActivity extends ListActivity {
     private static final String TITLE = ".Title";
@@ -51,6 +52,9 @@ public final class MultiChoiceActivity extends ListActivity {
         }
         public void startForResult(int requestCode) {
             mActivity.startActivityForResult(mIntent, requestCode);
+        }
+        public void startFromFragment(Fragment fragment, int requestCode) {
+            fragment.startActivityForResult(mIntent, requestCode);
         }
 
         public Builder setItems(

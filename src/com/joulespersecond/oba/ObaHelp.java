@@ -16,6 +16,7 @@
 package com.joulespersecond.oba;
 
 import android.net.Uri;
+import android.os.Build;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,6 +39,26 @@ public final class ObaHelp {
     }
 
     public static Reader getUri(URL url) throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return getUri_Gingerbread(url);
+        } else {
+            return getUri_Froyo(url);
+        }
+    }
+
+    //
+    // Gingerbread and above support Gzip natively.
+    //
+    private static Reader getUri_Gingerbread(URL url) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        conn.setReadTimeout(30*1000);
+        conn.connect();
+
+        InputStream in = conn.getInputStream();
+        return new BufferedReader(new InputStreamReader(in), 8*1024);
+    }
+
+    private static Reader getUri_Froyo(URL url) throws IOException {
         //Log.d(TAG, "getUri: " + url.toString());
 
         boolean useGzip = false;

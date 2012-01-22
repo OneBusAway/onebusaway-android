@@ -36,9 +36,11 @@
     <string name="loading">Loading...</string>
     <string name="browser_error">Unable to launch browser.</string>
     <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
+    <string name="search_hint">Search stops or routes</string>
 
     <!--  Option strings -->
-    <string name="main_option_mylocation">My Location</string>
+    <string name="map_option_mylocation">My Location</string>
+    <string name="map_option_search">Search</string>
     <string name="main_option_findroute">My Routes</string>
     <string name="main_option_findstop">My Stops</string>
     <string name="main_option_viewtrips">View Reminders</string>
@@ -58,9 +60,9 @@
     <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
     <string name="main_outofrange_yes">Take me there!</string>
     <string name="main_outofrange_no">Stay here</string>
+    <string name="main_stop_errors">Problem getting stops!</string>
 
     <!--  Stop Info -->
-    <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
       <item quantity="one">1 minute delay</item>
@@ -100,7 +102,6 @@
     <string name="stop_info_old_data">Data updated %s</string>
 
     <!-- Route Info  -->
-    <string name="route_info_title">OneBusAway</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_goto_url">View schedule</string>
@@ -122,6 +123,7 @@
     <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
     <string name="my_context_create_shortcut">Create shortcut</string>
+    <string name="my_context_create_shortcut_success">A shortcut was placed on your home screen!</string>
     <string name="my_context_showonmap">Show on map</string>
     <string name="my_context_remove_recent">Remove from recent</string>
     <string name="my_context_remove_star">Remove star</string>
@@ -144,7 +146,6 @@
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->
-    <string name="trip_info_title">OneBusAway</string>
     <string name="trip_info_name">Reminder name</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
@@ -167,7 +168,6 @@
     <string name="trip_info_option_showstop">Show stop</string>
 
     <!--  Trip list -->
-    <string name="trip_list_title">OneBusAway</string>
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>
@@ -183,7 +183,7 @@
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>
     <string name="bug_report_subject">OneBusAway: Bug Report</string>
-    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$s\n</string>
+    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$d\n</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->

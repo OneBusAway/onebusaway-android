@@ -18,8 +18,8 @@ package com.joulespersecond.seattlebusbot.tripservice;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.provider.ObaContract.TripAlerts;
 import com.joulespersecond.oba.provider.ObaContract.Trips;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.StopInfoActivity;
 import com.joulespersecond.seattlebusbot.TripService;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
@@ -143,7 +143,7 @@ public final class NotifierTask implements Runnable {
         final String title = mContext.getString(R.string.app_name);
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
-                StopInfoActivity.makeIntent(mContext, stopId),
+                ArrivalsListActivity.makeIntent(mContext, stopId),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         notification.setLatestEventInfo(mContext,

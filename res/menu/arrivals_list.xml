@@ -17,11 +17,11 @@
     <item android:id="@+id/refresh"
           android:title="@string/stop_info_option_refresh"
           android:icon="@drawable/ic_action_refresh"
-          android:showAsAction="ifRoom|withText" />
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap"
           android:icon="@drawable/ic_action_map"
-          android:showAsAction="ifRoom|withText" />
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/filter"
           android:title="@string/stop_info_option_filter"
           android:icon="@drawable/ic_menu_trip" />

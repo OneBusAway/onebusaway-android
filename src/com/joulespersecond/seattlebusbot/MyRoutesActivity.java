@@ -26,7 +26,7 @@ public class MyRoutesActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ensureSupportActionBarAttached();
+        //ensureSupportActionBarAttached();
         final Resources res = getResources();
         final ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);

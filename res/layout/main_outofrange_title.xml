@@ -13,25 +13,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
-   xmlns:android="http://schemas.android.com/apk/res/android"
-   android:orientation="horizontal"
-   android:layout_width="fill_parent"
-   android:layout_height="fill_parent">
-  <ImageView
-       android:layout_width="wrap_content"
-       android:layout_height="fill_parent"
-       android:layout_gravity="center_vertical"
-       android:src="@drawable/android:ic_dialog_map"
-       android:layout_marginLeft="10dp"
-       android:layout_marginRight="10dp" />
-  <TextView
-       android:layout_width="fill_parent"
-       android:layout_height="fill_parent"
-       android:text="@string/main_outofrange"
-       android:textColor="@color/android:white"
-       android:padding="6dip"
-       android:textSize="18sp">
-  </TextView>
-</LinearLayout>
-
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_width="fill_parent"
+     android:layout_height="fill_parent"
+     android:text="@string/main_outofrange"
+     android:textColor="@color/android:white"
+     android:padding="6dip"
+     android:drawableLeft="@drawable/android:ic_dialog_map"
+     android:drawablePadding="10dp"
+     android:textSize="18sp" />

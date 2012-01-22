@@ -30,6 +30,7 @@
           <ImageButton
              android:id="@+id/stop_favorite"
              android:src="@drawable/android:star_off"
+             android:contentDescription="@string/stop_info_favorite"
              android:background="@null"
              android:layout_width="wrap_content"
              android:layout_height="wrap_content"

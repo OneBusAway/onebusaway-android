@@ -186,9 +186,12 @@ class RouteMapController implements MapFragmentController,
             //mContext = fragment.getActivity();
             mView = mFragment.getView().findViewById(R.id.route_info);
             mRouteShortName = (TextView)mView.findViewById(R.id.short_name);
-            mRouteLongName = (TextView)mView.findViewById(R.id.route_long_name);
-
+            mRouteLongName = (TextView)mView.findViewById(R.id.long_name);
+            TextView agency = (TextView)mView.findViewById(R.id.agency);
+            agency.setVisibility(View.GONE);
+            // Make sure the cancel button is shown
             View cancel = mView.findViewById(R.id.cancel_route_mode);
+            cancel.setVisibility(View.VISIBLE);
             cancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

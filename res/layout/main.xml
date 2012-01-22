@@ -39,30 +39,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
-            android:background="@drawable/route_popup_bg"
             android:orientation="horizontal"
             android:visibility="gone">
-            <TextView  xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/short_name"
-                android:background="@drawable/stop_popup_button_bg"
-                android:layout_width="@dimen/route_button_width"
-                android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:ellipsize="none"
-                android:gravity="center" />
-
-            <TextView
-                android:id="@+id/route_long_name"
-                style="@style/HeaderText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-            <ImageButton
-                android:id="@+id/cancel_route_mode"
-                android:src="@drawable/android:ic_menu_close_clear_cancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical" />
+                <include layout="@layout/route_info_head" />
         </LinearLayout><!-- ROUTE MODE -->
 
         <!-- STOP INFO -->

@@ -17,39 +17,8 @@
          android:orientation="vertical"
          android:layout_width="fill_parent"
          android:layout_height="fill_parent">
-    <TableLayout
-        style="@style/HeaderItem"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <TableRow>
-            <TextView
-                android:id="@+id/short_name"
-                style="@style/RouteInfoShortName"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_column="0"
-                android:singleLine="false">
-            </TextView>
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_column="1">
-                <TextView
-                    android:id="@+id/long_name"
-                    style="@style/RouteInfoLongName"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-                </TextView>
-                <TextView
-                    android:id="@+id/agency"
-                    style="@style/RouteInfoAgency"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-                </TextView>
-            </LinearLayout>
-        </TableRow>
-    </TableLayout>
 
+    <include layout="@layout/route_info_head" />
     <include layout="@layout/loading" />
 
     <FrameLayout

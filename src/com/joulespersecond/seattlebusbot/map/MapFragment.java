@@ -29,6 +29,7 @@ import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -360,7 +361,11 @@ public class MapFragment extends Fragment
         public void run() {
             if (mLocationOverlay != null
                     && mLocationOverlay.getMyLocation() == null) {
-                Toast.makeText(getActivity(),
+                Activity act = getActivity();
+                if (act == null) {
+                    return;
+                }
+                Toast.makeText(act,
                         R.string.main_waiting_for_location, Toast.LENGTH_LONG)
                         .show();
                 mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,

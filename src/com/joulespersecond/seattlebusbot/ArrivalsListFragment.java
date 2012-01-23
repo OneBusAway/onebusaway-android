@@ -7,16 +7,16 @@ import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -414,8 +414,6 @@ public class ArrivalsListFragment extends ListFragment
         return mFavorite;
     }
 
-    private static final int FILTER_DIALOG_RESULT = 1;
-
     private void showRoutesFilterDialog() {
         ObaArrivalInfoResponse response =
                 getArrivalsLoader().getLastGoodResponse();
@@ -438,33 +436,61 @@ public class ArrivalsListFragment extends ListFragment
                 checks[i] = true;
             }
         }
-        new MultiChoiceActivity.Builder(getActivity())
-            .setTitle(R.string.stop_info_filter_title)
-            .setItems(items, checks)
-            .setPositiveButton(R.string.stop_info_save)
-            .setNegativeButton(R.string.stop_info_cancel)
-            .startFromFragment(this, FILTER_DIALOG_RESULT);
+        // Arguments
+        Bundle args = new Bundle();
+        args.putStringArray(RoutesFilterDialog.ITEMS, items);
+        args.putBooleanArray(RoutesFilterDialog.CHECKS, checks);
+        RoutesFilterDialog frag = new RoutesFilterDialog();
+        frag.setArguments(args);
+        frag.show(getSupportFragmentManager(), ".RoutesFilterDialog");
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case FILTER_DIALOG_RESULT:
-                if (resultCode == Activity.RESULT_OK) {
-                    setRoutesFilterFromIntent(data);
-                }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
+    public static class RoutesFilterDialog extends DialogFragment
+            implements DialogInterface.OnMultiChoiceClickListener,
+                       DialogInterface.OnClickListener {
+
+        static final String ITEMS = ".items";
+        static final String CHECKS = ".checks";
+        private boolean[] mChecks;
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            Bundle args = getArguments();
+            String[] items = args.getStringArray(ITEMS);
+            mChecks = args.getBooleanArray(CHECKS);
+            if (savedInstanceState != null) {
+                mChecks = args.getBooleanArray(CHECKS);
+            }
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            return builder.setTitle(R.string.stop_info_filter_title)
+                          .setMultiChoiceItems(items, mChecks, this)
+                          .setPositiveButton(R.string.stop_info_save, this)
+                          .setNegativeButton(R.string.stop_info_cancel, null)
+                          .create();
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            outState.putBooleanArray(CHECKS, mChecks);
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            ArrivalsListActivity act = (ArrivalsListActivity)getActivity();
+            // Get the fragment we want...
+            ArrivalsListFragment frag = act.getArrivalsListFragment();
+            frag.setRoutesFilter(mChecks);
+            dialog.dismiss();
+        }
+
+        @Override
+        public void onClick(DialogInterface arg0, int which, boolean isChecked) {
+            mChecks[which] = isChecked;
         }
     }
 
-    private void setRoutesFilterFromIntent(Intent intent) {
-        final boolean[] checks = intent.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
-        if (checks == null) {
-            return;
-        }
-
+    private void setRoutesFilter(boolean[] checks) {
         final int len = checks.length;
         final ArrayList<String> newFilter = new ArrayList<String>(len);
 

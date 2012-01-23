@@ -17,7 +17,6 @@ package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.provider.ObaContract;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -102,6 +101,11 @@ public class TripInfoActivity extends FragmentActivity {
 
             fm.beginTransaction().add(android.R.id.content, content).commit();
         }
+    }
+
+    TripInfoFragment getTripInfoFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        return (TripInfoFragment)fm.findFragmentById(android.R.id.content);
     }
 
     public static final class TripInfoFragment extends Fragment
@@ -419,38 +423,58 @@ public class TripInfoActivity extends FragmentActivity {
             TripService.scheduleAll(getActivity());
         }
 
-        private static final int REMINDER_DAYS_DIALOG = 1;
-
         void showReminderDaysDialog() {
             final boolean[] checks = ObaContract.Trips.daysToArray(mReminderDays);
-
-            new MultiChoiceActivity.Builder(getActivity())
-                .setTitle(R.string.trip_info_reminder_repeat)
-                .setItems(R.array.reminder_days, checks)
-                .setPositiveButton(R.string.trip_info_save)
-                .setNegativeButton(R.string.trip_info_dismiss)
-                .startForResult(REMINDER_DAYS_DIALOG);
+            Bundle args = new Bundle();
+            args.putBooleanArray(ReminderDaysDialog.CHECKS, checks);
+            ReminderDaysDialog frag = new ReminderDaysDialog();
+            frag.setArguments(args);
+            frag.show(getSupportFragmentManager(), ".ReminderDaysDialog");
         }
 
-        @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            switch (requestCode) {
-            case REMINDER_DAYS_DIALOG:
-                if (resultCode == Activity.RESULT_OK) {
-                    setReminderDaysFromIntent(data);
+        public static class ReminderDaysDialog extends DialogFragment
+                implements DialogInterface.OnMultiChoiceClickListener,
+                           DialogInterface.OnClickListener {
+            static final String CHECKS = ".checks";
+            private boolean[] mChecks;
+
+            @Override
+            public Dialog onCreateDialog(Bundle savedInstanceState) {
+                Bundle args = getArguments();
+                mChecks = args.getBooleanArray(CHECKS);
+                if (savedInstanceState != null) {
+                    mChecks = args.getBooleanArray(CHECKS);
                 }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                return builder.setTitle(R.string.trip_info_reminder_repeat)
+                              .setMultiChoiceItems(R.array.reminder_days, mChecks, this)
+                              .setPositiveButton(R.string.trip_info_save, this)
+                              .setNegativeButton(R.string.trip_info_dismiss, null)
+                              .create();
+            }
+
+            @Override
+            public void onSaveInstanceState(Bundle outState) {
+                outState.putBooleanArray(CHECKS, mChecks);
+            }
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                TripInfoActivity act = (TripInfoActivity)getActivity();
+                // Get the fragment we want...
+                TripInfoFragment frag = act.getTripInfoFragment();
+                frag.setReminderDays(mChecks);
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onClick(DialogInterface arg0, int which, boolean isChecked) {
+                mChecks[which] = isChecked;
             }
         }
 
-        private void setReminderDaysFromIntent(Intent data) {
-            final boolean checks[] =
-                data.getBooleanArrayExtra(MultiChoiceActivity.CHECKED_ITEMS);
-            if (checks == null) {
-                return;
-            }
+        private void setReminderDays(boolean[] checks) {
             View view = getView();
             mReminderDays = ObaContract.Trips.arrayToDays(checks);
             final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);

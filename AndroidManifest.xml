@@ -108,10 +108,6 @@
             </intent-filter>
         </activity>
 
-
-        <activity android:name=".MultiChoiceActivity"
-                  android:theme="@android:style/Theme.Dialog">
-        </activity>
         <activity android:name=".EditPreferencesActivity"/>
 
         <provider

@@ -78,4 +78,9 @@ public class ArrivalsListActivity extends FragmentActivity {
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
     }
+
+    public ArrivalsListFragment getArrivalsListFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        return (ArrivalsListFragment)fm.findFragmentById(android.R.id.content);
+    }
 }

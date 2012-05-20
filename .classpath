@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="libs/actionbarsherlock-plugin-maps-3.5.0.jar"/>
 	<classpathentry kind="lib" path="libs/actionbarsherlock-plugin-preference-3.5.0.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ActionBarSherlock"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

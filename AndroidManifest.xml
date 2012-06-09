@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com) and individual contributors.
+<!-- Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com) and individual contributors.
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,8 +15,22 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.joulespersecond.seattlebusbot"
-      android:versionCode="22"
-      android:versionName="1.2.11">
+      android:versionCode="23"
+      android:versionName="1.2.12">
+
+    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="8" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+    <uses-permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE" />
+
     <application
         android:name=".Application"
         android:icon="@drawable/icon"
@@ -99,7 +113,8 @@
             android:name="com.joulespersecond.oba.provider.ObaProvider"
             android:authorities="com.joulespersecond.oba"/>
 
-        <service android:name=".TripService">
+        <service android:name=".TripService"
+            	android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
             <intent-filter>
                 <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />
                 <action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />
@@ -121,15 +136,4 @@
 
         <uses-library android:name="com.google.android.maps" />
     </application>
-    <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="8" />
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 </manifest>

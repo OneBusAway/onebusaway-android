@@ -9,8 +9,5 @@
 	<classpathentry kind="lib" path="libs/actionbarsherlock-plugin-preference-3.5.0.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ActionBarSherlock"/>
-	<classpathentry kind="lib" path="lib/gson-1.4-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/gson-1.4.jar"/>
-	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

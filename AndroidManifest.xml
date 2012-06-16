@@ -17,6 +17,10 @@
       package="com.joulespersecond.seattlebusbot"
       android:versionCode="22"
       android:versionName="1.2.11">
+    <permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
+        android:label="@string/trip_service_perm_label"
+        android:description="@string/trip_service_perm_description"
+        android:protectionLevel="normal" />
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13" />
 

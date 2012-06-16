@@ -17,6 +17,10 @@
 
     <string name="app_name">OneBusAway</string>
 
+    <!-- Permissions -->
+    <string name="trip_service_perm_label">start the trip service</string>
+    <string name="trip_service_perm_description">Allows the application to implement reminders for upcoming buses.</string>
+
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>

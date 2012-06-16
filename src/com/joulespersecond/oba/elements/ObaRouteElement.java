@@ -38,15 +38,30 @@ public final class ObaRouteElement implements ObaRoute {
     private final String agencyId;
 
     public ObaRouteElement() {
+
+/**
+ * Arno Hart (ahart@skuzme.com) removed the restriction to just bus servives. Allow all modes.
+ *      id = "";
+ *      shortName = "";
+ *      longName = "";
+ *      description = "";
+ *      type = TYPE_BUS;
+ *      url = "";
+ *      color = "";
+ *      textColor = "";
+ *      agencyId = "";
+ */
+
         id = "";
         shortName = "";
         longName = "";
         description = "";
-        type = TYPE_BUS;
+        type = 0;
         url = "";
         color = "";
         textColor = "";
         agencyId = "";
+
     }
 
     @Override

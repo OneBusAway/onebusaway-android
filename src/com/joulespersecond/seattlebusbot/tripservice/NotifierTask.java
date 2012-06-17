@@ -111,7 +111,7 @@ public final class NotifierTask implements Runnable {
 
     private Notification createNotification(Uri alertUri) {
         //Log.d(TAG, "Creating notification for alert: " + alertUri);
-        Notification notification = new Notification(R.drawable.stat_trip, null,
+        Notification notification = new Notification(R.drawable.ic_stat_notification, null,
                 System.currentTimeMillis());
         notification.defaults = Notification.DEFAULT_SOUND;
         notification.flags = Notification.FLAG_ONLY_ALERT_ONCE

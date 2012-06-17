@@ -160,7 +160,7 @@
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
     <string name="trip_info_dismiss">Cancel</string>
-    <string name="trip_info_delete_trip">This trip will be deleted.</string>
+    <string name="trip_info_delete_trip">This reminder will be deleted.</string>
     <string name="trip_info_repeat_every">Every %s</string>
     <string name="trip_info_repeat_everyday">Everyday</string>
     <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>

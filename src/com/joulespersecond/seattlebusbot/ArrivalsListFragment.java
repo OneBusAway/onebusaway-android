@@ -9,6 +9,7 @@ import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -19,6 +20,7 @@ import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
@@ -44,7 +46,7 @@ public class ArrivalsListFragment extends ListFragment
     private static final String TAG = "ArrivalsListFragment";
     private static final long RefreshPeriod = 60 * 1000;
 
-    //private static int TRIPS_FOR_STOP_LOADER = 1;
+    private static int TRIPS_FOR_STOP_LOADER = 1;
     private static int ARRIVALS_LIST_LOADER = 2;
 
     private ArrivalsListAdapter mAdapter;
@@ -57,6 +59,8 @@ public class ArrivalsListFragment extends ListFragment
 
     private boolean mFavorite = false;
     private String mStopUserName;
+
+    private TripsForStopCallback mTripsForStopCallback;
 
     // Used by the test code to signal when we've retrieved stops.
     private Object mStopWait;
@@ -87,17 +91,13 @@ public class ArrivalsListFragment extends ListFragment
         setListShown(false);
 
         mRoutesFilter = ObaContract.StopRouteFilters.get(getActivity(), mStopId);
-        //mTripsForStop = getTripsForStop();
+        mTripsForStopCallback = new TripsForStopCallback();
 
         //LoaderManager.enableDebugLogging(true);
+        LoaderManager mgr = getLoaderManager();
 
-        // First load the trips for stop map. When this is finished, we load
-        // the arrivals info.
-        //LoaderManager mgr = getLoaderManager();
-        //Loader<Cursor> loader = mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, new TripsForStopCallback());
-        //loader.forceLoad();
-
-        getLoaderManager().initLoader(ARRIVALS_LIST_LOADER, getArguments(), this);
+        mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
+        mgr.initLoader(ARRIVALS_LIST_LOADER, getArguments(), this);
     }
 
     @Override
@@ -113,15 +113,14 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onPause() {
-        //mTripsForStop.setKeepUpdated(false);
         mRefreshHandler.removeCallbacks(mRefresh);
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        //mTripsForStop.setKeepUpdated(true);
-        //mTripsForStop.requery();
+        // Make sure you try to reload the query map.
+        getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
         mAdapter.notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
@@ -138,15 +137,6 @@ public class ArrivalsListFragment extends ListFragment
 
         super.onResume();
     }
-
-    @Override
-    public void onDestroy() {
-        //if (mTripsForStop != null) {
-        //    mTripsForStop.close();
-        //}
-        super.onDestroy();
-    }
-
 
     @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
@@ -242,11 +232,10 @@ public class ArrivalsListFragment extends ListFragment
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
-            /*
-            if (mResponse != null) {
-                MapViewActivity.start(this, mStopId, mStop.getLatitude(), mStop.getLongitude());
-            }
-            */
+            HomeActivity.start(getActivity(),
+                    mStop.getId(),
+                    mStop.getLatitude(),
+                    mStop.getLongitude());
             return true;
         } else if (id == R.id.refresh) {
             refresh();
@@ -608,7 +597,6 @@ public class ArrivalsListFragment extends ListFragment
         ObaContract.Stops.insertOrUpdate(getActivity(), stop.getId(), values, true);
     }
 
-    /*
     private static final String[] TRIPS_PROJECTION = {
         ObaContract.Trips._ID, ObaContract.Trips.NAME
     };
@@ -641,6 +629,4 @@ public class ArrivalsListFragment extends ListFragment
         public void onLoaderReset(Loader<Cursor> loader) {
         }
     }
-    */
-
 }

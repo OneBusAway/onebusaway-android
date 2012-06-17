@@ -26,13 +26,11 @@ import android.support.v4.app.FragmentActivity;
 
 abstract class MyTabActivityBase extends FragmentActivity {
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
-    public static final String EXTRA_SEARCHMODE = ".SearchMode";
     public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
     public static final String RESULT_ROUTE_ID = ".RouteId";
 
     protected boolean mShortcutMode;
-    protected boolean mSearchMode;
     protected GeoPoint mSearchCenter;
     private String mDefaultTab;
 
@@ -47,7 +45,6 @@ abstract class MyTabActivityBase extends FragmentActivity {
             setTitle(R.string.app_name);
         }
 
-        mSearchMode = intent.getBooleanExtra(EXTRA_SEARCHMODE, false);
         mSearchCenter = getSearchCenter(intent);
 
         // Determine what tab we're supposed to show by default
@@ -100,10 +97,6 @@ abstract class MyTabActivityBase extends FragmentActivity {
     //
     boolean isShortcutMode() {
         return mShortcutMode;
-    }
-
-    boolean isSearchMode() {
-        return mSearchMode;
     }
 
     GeoPoint getSearchCenter() {

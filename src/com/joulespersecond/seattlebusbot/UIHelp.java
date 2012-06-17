@@ -127,6 +127,25 @@ public final class UIHelp {
         }
     }
 
+    // Common code to set a route list item view
+    public static final void setRouteView(View view, ObaRoute route) {
+        TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
+        TextView longNameText = (TextView)view.findViewById(R.id.long_name);
+
+        String shortName = route.getShortName();
+        String longName = MyTextUtils.toTitleCase(route.getLongName());
+
+        if (TextUtils.isEmpty(shortName)) {
+            shortName = longName;
+        }
+        if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+            longName = MyTextUtils.toTitleCase(route.getDescription());
+        }
+
+        shortNameText.setText(shortName);
+        longNameText.setText(longName);
+    }
+
     private static final String[] STOP_USER_PROJECTION = {
         ObaContract.Stops._ID,
         ObaContract.Stops.FAVORITE,

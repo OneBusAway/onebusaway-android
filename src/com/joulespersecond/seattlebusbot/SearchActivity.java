@@ -19,22 +19,19 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.Window;
 import android.util.Log;
 
 
-/**
- * TODO: Bring this back as a place to search for both stops and routes.
- * @author paulw
- *
- */
 public class SearchActivity extends FragmentActivity {
     private static final String TAG = "SearchActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.search);
-
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         handleIntent(getIntent());
     }
 
@@ -56,8 +53,30 @@ public class SearchActivity extends FragmentActivity {
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             // handles a search query
             String query = intent.getStringExtra(SearchManager.QUERY);
-            Log.d(TAG, "Search: " + query);
-            //showResults(query);
+            doSearch(query);
         }
+    }
+
+    private void doSearch(String query) {
+        Log.d(TAG, "Search: " + query);
+        // Find both tabs and start a search for them...
+        FragmentManager fm = getSupportFragmentManager();
+
+        SearchResultsFragment list = (SearchResultsFragment)fm.findFragmentById(android.R.id.content);
+        FragmentTransaction ft = fm.beginTransaction();
+        // Create the list fragment and add it as our sole content.
+        if (list != null) {
+            // The only thing we can do is remove this fragment
+            ft.remove(list);
+        }
+
+        // Create a new fragment
+        list = new SearchResultsFragment();
+        Bundle args = new Bundle();
+        args.putString(SearchResultsFragment.QUERY_TEXT, query);
+        list.setArguments(args);
+
+        ft.add(android.R.id.content, list);
+        ft.commit();
     }
 }

@@ -109,15 +109,6 @@ abstract class MyListFragmentBase extends ListFragment
         return false;
     }
 
-    protected boolean isSearchMode() {
-        Activity act = getActivity();
-        if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase)act;
-            return base.isSearchMode();
-        }
-        return false;
-    }
-
     //
     // Creates a new adapter
     //

@@ -43,6 +43,14 @@
         <item>Show route information</item>
         <item>Show only this route</item>
     </string-array>
+    <string-array name="search_stop_options">
+        <item>Show arrivals</item>
+        <item>Show on map</item>
+    </string-array>
+    <string-array name="search_route_options">
+        <item>Show list of stops</item>
+        <item>Show on map</item>
+    </string-array>
     <string-array name="reminder_time">
         <item>No reminder</item>
         <item>1 minute</item>

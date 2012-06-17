@@ -22,7 +22,6 @@ import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -31,7 +30,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItem;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -145,14 +143,6 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
             Intent intent = RouteInfoActivity.makeIntent(getActivity(), routeId);
             makeShortcut(routeName, intent);
 
-        } else if (isSearchMode()) {
-            Activity act = getActivity();
-
-            Intent resultData = new Intent();
-            resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
-            act.setResult(Activity.RESULT_OK, resultData);
-            act.finish();
-
         } else {
             RouteInfoActivity.start(getActivity(), routeId);
         }
@@ -217,21 +207,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
         @Override
         protected void initView(View view, ObaRoute route) {
-            TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
-            TextView longNameText = (TextView)view.findViewById(R.id.long_name);
-
-            String shortName = route.getShortName();
-            String longName = MyTextUtils.toTitleCase(route.getLongName());
-
-            if (TextUtils.isEmpty(shortName)) {
-                shortName = longName;
-            }
-            if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
-                longName = MyTextUtils.toTitleCase(route.getDescription());
-            }
-
-            shortNameText.setText(shortName);
-            longNameText.setText(longName);
+            UIHelp.setRouteView(view, route);
         }
     }
 

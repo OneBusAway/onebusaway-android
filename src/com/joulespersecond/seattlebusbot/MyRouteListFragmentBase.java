@@ -63,14 +63,6 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
             activity.setResult(Activity.RESULT_OK, shortcut);
             activity.finish();
 
-        } else if (isSearchMode()) {
-            Activity activity = getActivity();
-
-            Intent resultData = new Intent();
-            resultData.putExtra(MyTabActivityBase.RESULT_ROUTE_ID, routeId);
-            activity.setResult(Activity.RESULT_OK, resultData);
-            activity.finish();
-
         } else {
             RouteInfoActivity.start(getActivity(), routeId);
         }

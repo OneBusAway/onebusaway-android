@@ -162,15 +162,6 @@ abstract class MySearchFragmentBase extends ListFragment
         return false;
     }
 
-    protected boolean isSearchMode() {
-        Activity act = getActivity();
-        if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase)act;
-            return base.isSearchMode();
-        }
-        return false;
-    }
-
     protected final GeoPoint getSearchCenter() {
         Activity act = getActivity();
         GeoPoint result = null;

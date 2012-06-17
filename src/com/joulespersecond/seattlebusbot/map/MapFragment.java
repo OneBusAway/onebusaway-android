@@ -198,9 +198,7 @@ public class MapFragment extends Fragment
             setMyLocation();
             return true;
         } else if (id == R.id.search) {
-            // TODO:
-            //Intent myIntent = new Intent(this, MyRoutesActivity.class);
-            //startActivity(myIntent);
+            getActivity().onSearchRequested();
             return true;
         }
         return false;

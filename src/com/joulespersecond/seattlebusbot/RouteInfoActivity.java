@@ -16,17 +16,18 @@
 
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.view.MenuItem;
 
-public class RouteInfoActivity extends FragmentActivity {
+
+public class RouteInfoActivity extends SherlockFragmentActivity {
 
     public static void start(Context context, String routeId) {
         context.startActivity(makeIntent(context, routeId));

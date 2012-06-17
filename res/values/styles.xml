@@ -17,10 +17,10 @@
     <!-- Themes -->
     <style name="Theme.BusBot" parent="@style/Theme.Sherlock.Light">
         <item name="actionBarTabStyle">@style/Theme.BusBot.ActionBar.TabView</item>
-        <item name="abBackground">@drawable/actionbar_bg</item>
-        <item name="abLogo">@drawable/logo</item>
-        <item name="abDisplayOptions">useLogo|showHome</item>
-        <item name="abDivider">@android:color/white</item>
+        <item name="background">@drawable/actionbar_bg</item>
+        <item name="logo">@drawable/logo</item>
+        <item name="displayOptions">useLogo|showHome</item>
+        <item name="divider">@android:color/white</item>
     </style>
     <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
         <item name="android:windowBackground">@null</item>

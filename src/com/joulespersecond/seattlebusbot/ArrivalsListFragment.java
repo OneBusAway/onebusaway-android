@@ -1,5 +1,9 @@
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockListFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -22,12 +26,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -40,7 +41,7 @@ import java.util.List;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends ListFragment
+public class ArrivalsListFragment extends SherlockListFragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
                    ArrivalsListHeader.Controller {
     private static final String TAG = "ArrivalsListFragment";
@@ -431,7 +432,7 @@ public class ArrivalsListFragment extends ListFragment
         args.putBooleanArray(RoutesFilterDialog.CHECKS, checks);
         RoutesFilterDialog frag = new RoutesFilterDialog();
         frag.setArguments(args);
-        frag.show(getSupportFragmentManager(), ".RoutesFilterDialog");
+        frag.show(getActivity().getSupportFragmentManager(), ".RoutesFilterDialog");
     }
 
     public static class RoutesFilterDialog extends DialogFragment

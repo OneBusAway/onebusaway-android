@@ -15,17 +15,18 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.GeoPoint;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.ActionBar;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.MenuItem;
 
-abstract class MyTabActivityBase extends FragmentActivity {
+
+abstract class MyTabActivityBase extends SherlockFragmentActivity {
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
     public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
@@ -63,7 +64,7 @@ abstract class MyTabActivityBase extends FragmentActivity {
         // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
             SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
-            final ActionBar bar = getSupportActionBar();
+            final ActionBar bar = getActionBar();
             final ActionBar.Tab tab = bar.getSelectedTab();
             settings.putString(getLastTabPref(), (String)tab.getTag());
             settings.commit();
@@ -92,7 +93,7 @@ abstract class MyTabActivityBase extends FragmentActivity {
         }
         if (def != null) {
             // Find this tab...
-            final ActionBar bar = getSupportActionBar();
+            final ActionBar bar = getActionBar();
             for (int i=0; i < bar.getTabCount(); ++i) {
                 ActionBar.Tab tab = bar.getTabAt(i);
                 if (def.equals(tab.getTag())) {

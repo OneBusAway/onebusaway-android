@@ -15,6 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockListFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.elements.ObaStopGroup;
@@ -32,14 +36,11 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
@@ -51,7 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RouteInfoListFragment extends ListFragment {
+public class RouteInfoListFragment extends SherlockListFragment {
     private static final String TAG = "RouteInfoListFragment";
     private static final int ROUTE_INFO_LOADER = 0;
     private static final int ROUTE_STOPS_LOADER = 1;
@@ -159,7 +160,7 @@ public class RouteInfoListFragment extends ListFragment {
     }
 
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
+    public boolean onContextItemSelected(android.view.MenuItem item) {
         ExpandableListView.ExpandableListContextMenuInfo info = (ExpandableListView.ExpandableListContextMenuInfo) item
                 .getMenuInfo();
         switch (item.getItemId()) {

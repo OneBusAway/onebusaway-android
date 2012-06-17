@@ -15,17 +15,18 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.app.SherlockListFragment;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.MenuItem;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -34,7 +35,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class TripListActivity extends FragmentActivity {
+public class TripListActivity extends SherlockFragmentActivity {
     // private static final String TAG = "TripListActivity";
 
 
@@ -60,7 +61,7 @@ public class TripListActivity extends FragmentActivity {
         return false;
     }
 
-    public static final class TripListFragment extends ListFragment
+    public static final class TripListFragment extends SherlockListFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String[] PROJECTION = {
@@ -207,7 +208,7 @@ public class TripListActivity extends FragmentActivity {
         }
 
         @Override
-        public boolean onContextItemSelected(MenuItem item) {
+        public boolean onContextItemSelected(android.view.MenuItem item) {
             AdapterContextMenuInfo info = (AdapterContextMenuInfo)item
                     .getMenuInfo();
             switch (item.getItemId()) {

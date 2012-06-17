@@ -15,6 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.app.AlertDialog;
@@ -29,18 +34,13 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -51,7 +51,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
-public class TripInfoActivity extends FragmentActivity {
+public class TripInfoActivity extends SherlockFragmentActivity {
     private static final String TAG = "TripInfoActivity";
 
     private static final String ROUTE_ID = ".RouteId";
@@ -117,7 +117,7 @@ public class TripInfoActivity extends FragmentActivity {
         return (TripInfoFragment)fm.findFragmentById(android.R.id.content);
     }
 
-    public static final class TripInfoFragment extends Fragment
+    public static final class TripInfoFragment extends SherlockFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String TAG_DELETE_DIALOG = ".DeleteDialog";
@@ -319,7 +319,7 @@ public class TripInfoActivity extends FragmentActivity {
             final Button delete = (Button)view.findViewById(R.id.trip_info_delete);
             delete.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    new DeleteDialog().show(getSupportFragmentManager(),
+                    new DeleteDialog().show(getActivity().getSupportFragmentManager(),
                             TAG_DELETE_DIALOG);
                 }
             });
@@ -438,7 +438,7 @@ public class TripInfoActivity extends FragmentActivity {
             args.putBooleanArray(ReminderDaysDialog.CHECKS, checks);
             ReminderDaysDialog frag = new ReminderDaysDialog();
             frag.setArguments(args);
-            frag.show(getSupportFragmentManager(), ".ReminderDaysDialog");
+            frag.show(getActivity().getSupportFragmentManager(), ".ReminderDaysDialog");
         }
 
         public static class ReminderDaysDialog extends DialogFragment

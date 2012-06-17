@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockListFragment;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.view.SearchView;
 
@@ -33,7 +34,7 @@ import android.widget.TextView.BufferType;
 import java.util.Timer;
 import java.util.TimerTask;
 
-abstract class MySearchFragmentBase extends ListFragment
+abstract class MySearchFragmentBase extends SherlockListFragment
             implements SearchView.OnQueryTextListener, MyListConstants {
     private static final String TAG = "MySearchFragmentBase";
 

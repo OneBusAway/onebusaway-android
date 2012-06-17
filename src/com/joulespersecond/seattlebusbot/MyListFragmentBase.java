@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockListFragment;
+
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.database.ContentObserver;
@@ -37,7 +39,7 @@ import android.support.v4.widget.SimpleCursorAdapter;
  * @author paulw
  *
  */
-abstract class MyListFragmentBase extends ListFragment
+abstract class MyListFragmentBase extends SherlockListFragment
         implements LoaderManager.LoaderCallbacks<Cursor>, MyListConstants {
     private static final Handler mHandler = new Handler();
 

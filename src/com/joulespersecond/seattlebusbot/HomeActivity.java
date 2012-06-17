@@ -15,9 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.map.MapFragment;
-import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.seattlebusbot.map.SherlockMapActivityBase;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -33,16 +35,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentMapActivity;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
-import android.support.v4.view.Window;
-import android.view.MenuInflater;
 import android.widget.Toast;
 
 import java.io.File;
 
-public class HomeActivity extends FragmentMapActivity {
+public class HomeActivity extends SherlockMapActivityBase {
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
 
@@ -128,7 +125,6 @@ public class HomeActivity extends FragmentMapActivity {
     protected void onCreate(Bundle savedInstanceState) {
         boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);

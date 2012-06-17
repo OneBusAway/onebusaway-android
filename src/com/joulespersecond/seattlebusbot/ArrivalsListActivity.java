@@ -1,5 +1,8 @@
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 
@@ -7,13 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.view.MenuItem;
-import android.support.v4.view.Window;
 
 
-public class ArrivalsListActivity extends FragmentActivity {
+public class ArrivalsListActivity extends SherlockFragmentActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static final String STOP_NAME = ".StopName";

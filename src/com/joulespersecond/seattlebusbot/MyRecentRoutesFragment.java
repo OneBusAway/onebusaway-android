@@ -15,17 +15,17 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
@@ -51,7 +51,7 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     }
 
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
+    public boolean onContextItemSelected(android.view.MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
         switch (item.getItemId()) {
         case CONTEXT_MENU_DELETE:

@@ -103,6 +103,15 @@ public class TripInfoActivity extends FragmentActivity {
         }
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
+    }
+
     TripInfoFragment getTripInfoFragment() {
         FragmentManager fm = getSupportFragmentManager();
         return (TripInfoFragment)fm.findFragmentById(android.R.id.content);

@@ -51,6 +51,15 @@ public class TripListActivity extends FragmentActivity {
         }
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
+    }
+
     public static final class TripListFragment extends ListFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 

@@ -167,7 +167,10 @@ public class HomeActivity extends FragmentMapActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
-        if (id == R.id.find_stop) {
+        if (id == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        } else if (id == R.id.find_stop) {
             Intent myIntent = new Intent(this, MyStopsActivity.class);
             startActivity(myIntent);
             return true;

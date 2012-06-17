@@ -213,6 +213,12 @@ public final class UIHelp {
         return intent;
     }
 
+    public static void goHome(Context context) {
+        Intent intent = new Intent(context, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        context.startActivity(intent);
+    }
+
     public static void goToUrl(Context context, String url) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         try {

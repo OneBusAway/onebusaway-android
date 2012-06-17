@@ -23,6 +23,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActionBar;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.MenuItem;
 
 abstract class MyTabActivityBase extends FragmentActivity {
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
@@ -69,6 +70,15 @@ abstract class MyTabActivityBase extends FragmentActivity {
         }
 
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
     }
 
     protected void restoreDefaultTab() {

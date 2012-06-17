@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.MenuItem;
 import android.support.v4.view.Window;
 
 
@@ -77,6 +78,15 @@ public class ArrivalsListActivity extends FragmentActivity {
 
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.MenuItem;
 import android.support.v4.view.Window;
 import android.util.Log;
 
@@ -38,6 +39,15 @@ public class SearchActivity extends FragmentActivity {
     @Override
     public void onNewIntent(Intent intent) {
         handleIntent(intent);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
     }
 
     private void handleIntent(Intent intent) {

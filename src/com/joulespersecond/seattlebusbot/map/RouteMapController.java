@@ -48,20 +48,24 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-class RouteMapController implements MapFragmentController,
-            LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse> {
+class RouteMapController implements MapModeController,
+            LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse>,
+            Loader.OnLoadCompleteListener<ObaStopsForRouteResponse>{
     //private static final String TAG = "RouteMapController";
     private static final int ROUTES_LOADER = 5677;
 
-    private final FragmentCallback mFragment;
+    private final Callback mFragment;
 
     private String mRouteId;
     private LineOverlay mLineOverlay;
     private boolean mZoomToRoute;
     private final int mLineOverlayColor;
     private RoutePopup mRoutePopup;
+    // In lieu of using an actual LoaderManager, which isn't
+    // available in SherlockMapActivity
+    private Loader<ObaStopsForRouteResponse> mLoader;
 
-    RouteMapController(FragmentCallback callback) {
+    RouteMapController(Callback callback) {
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
                                 .getResources()
@@ -77,7 +81,10 @@ class RouteMapController implements MapFragmentController,
             mRouteId = routeId;
             mRoutePopup.showLoading();
             mFragment.showProgress(true);
-            mFragment.getLoaderManager().restartLoader(ROUTES_LOADER, null, this);
+            //mFragment.getLoaderManager().restartLoader(ROUTES_LOADER, null, this);
+            mLoader = onCreateLoader(ROUTES_LOADER, null);
+            mLoader.registerListener(0, this);
+            mLoader.startLoading();
         }
     }
 
@@ -161,6 +168,12 @@ class RouteMapController implements MapFragmentController,
     @Override
     public void onLoaderReset(Loader<ObaStopsForRouteResponse> loader) {
         removeOverlay();
+    }
+
+    @Override
+    public void onLoadComplete(Loader<ObaStopsForRouteResponse> loader,
+            ObaStopsForRouteResponse response) {
+        onLoadFinished(loader, response);
     }
 
     private void removeOverlay() {

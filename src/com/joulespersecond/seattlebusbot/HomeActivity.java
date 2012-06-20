@@ -15,10 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
 import android.app.AlertDialog;
@@ -38,7 +38,7 @@ import android.widget.Toast;
 
 import java.io.File;
 
-public class HomeActivity extends SherlockMapActivity {
+public class HomeActivity extends BaseMapActivity {
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
 
@@ -121,43 +121,20 @@ public class HomeActivity extends SherlockMapActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        //setContentView(R.layout.main);
 
         UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
 
-        /* MAP TODO:
-        FragmentManager fm = getSupportFragmentManager();
-
-        // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(android.R.id.content) == null) {
-            MapFragment frag = new MapFragment();
-            Bundle args = FragmentUtils.getIntentArgs(getIntent());
-
-            // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
-            if (firstRun) {
-                firstRunSetLocation(args);
-            }
-
-            frag.setArguments(args);
-            fm.beginTransaction().add(android.R.id.content, frag).commit();
+        // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
+        if (firstRun) {
+            firstRunSetLocation(getIntent().getExtras());
         }
-        */
-    }
-
-    @Override
-    protected boolean isRouteDisplayed() {
-        /* MAP TODO:
-        FragmentManager fm = getSupportFragmentManager();
-        MapFragment frag = (MapFragment)fm.findFragmentById(android.R.id.content);
-        return (frag != null) && frag.isRouteDisplayed();
-        */
-        return false;
     }
 
     @Override

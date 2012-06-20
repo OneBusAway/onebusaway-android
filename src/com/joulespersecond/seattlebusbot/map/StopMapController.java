@@ -36,19 +36,26 @@ import java.util.Arrays;
 import java.util.List;
 
 
-class StopMapController implements MapFragmentController,
+class StopMapController implements MapModeController,
             LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse>,
+            Loader.OnLoadCompleteListener<ObaStopsForLocationResponse>,
             MapWatcher.Listener {
     private static final String TAG = "StopMapController";
     private static final int STOPS_LOADER = 5678;
 
-    private final FragmentCallback mFragment;
+    private final Callback mFragment;
+    // In lieu of using an actual LoaderManager, which isn't
+    // available in SherlockMapActivity
+    private Loader<ObaStopsForLocationResponse> mLoader;
 
     private MapWatcher mMapWatcher;
 
-    StopMapController(FragmentCallback callback) {
+    StopMapController(Callback callback) {
         mFragment = callback;
-        mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
+        //mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
+        mLoader = onCreateLoader(STOPS_LOADER, null);
+        mLoader.registerListener(0, this);
+        mLoader.startLoading();
     }
 
     @Override
@@ -80,7 +87,8 @@ class StopMapController implements MapFragmentController,
 
     @Override
     public void destroy() {
-        mFragment.getLoaderManager().destroyLoader(STOPS_LOADER);
+        //mFragment.getLoaderManager().destroyLoader(STOPS_LOADER);
+        getLoader().reset();
         watchMap(false);
     }
 
@@ -143,13 +151,21 @@ class StopMapController implements MapFragmentController,
         mFragment.showStops(null, null);
     }
 
+    // Remove when adding back LoaderManager help.
+    @Override
+    public void onLoadComplete(Loader<ObaStopsForLocationResponse> loader,
+            ObaStopsForLocationResponse response) {
+        onLoadFinished(loader, response);
+    }
+
     //
     // Loading
     //
     private StopsLoader getLoader() {
-        Loader<ObaStopsForLocationResponse> l =
-                mFragment.getLoaderManager().getLoader(STOPS_LOADER);
-        return (StopsLoader)l;
+        //Loader<ObaStopsForLocationResponse> l =
+        //        mFragment.getLoaderManager().getLoader(STOPS_LOADER);
+        //return (StopsLoader)l;
+        return (StopsLoader)mLoader;
     }
 
     private void refresh() {
@@ -166,7 +182,7 @@ class StopMapController implements MapFragmentController,
     //
     private static class StopsLoader extends AsyncTaskLoader<ObaStopsForLocationResponse> {
 
-        private final FragmentCallback mFragment;
+        private final Callback mFragment;
         private GeoPoint mCenter;
         private int mLatSpan;
         private int mLonSpan;
@@ -174,7 +190,7 @@ class StopMapController implements MapFragmentController,
 
         private ObaStopsForLocationResponse mResponse;
 
-        public StopsLoader(FragmentCallback fragment) {
+        public StopsLoader(Callback fragment) {
             super(fragment.getActivity());
             mFragment = fragment;
         }

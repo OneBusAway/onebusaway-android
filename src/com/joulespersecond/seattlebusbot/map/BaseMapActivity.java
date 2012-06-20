@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
@@ -67,8 +67,8 @@ import java.util.List;
  * @author paulw
  *
  */
-public class MapFragment extends SherlockFragment
-            implements MapFragmentController.FragmentCallback {
+abstract public class BaseMapActivity extends SherlockMapActivity
+            implements MapModeController.Callback {
     //private static final String TAG = "MapFragment";
 
     private static final String TAG_NO_LOCATION_DIALOG = ".NoLocation";
@@ -89,14 +89,17 @@ public class MapFragment extends SherlockFragment
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
 
-    private MapFragmentController mController;
+    private MapModeController mController;
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // MAP TODO: call this from the subclass?
+        setContentView(R.layout.main);
 
         // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
+        // MAP TODO:
+        //setHasOptionsMenu(true);
 
         View view = getView();
         mMapView = (MapView)view.findViewById(R.id.mapview);
@@ -118,16 +121,17 @@ public class MapFragment extends SherlockFragment
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
         } else {
-            initMap(getArguments());
+            initMap(getIntent().getExtras());
         }
 
     }
 
     private void initMap(Bundle args) {
-        mFocusStopId = args.getString(MapParams.STOP_ID);
-
-        String mode = args.getString(MapParams.MODE);
-        if (mode == null) {
+        String mode = null;
+        if (args != null) {
+            mFocusStopId = args.getString(MapParams.STOP_ID);
+            mode = args.getString(MapParams.MODE);
+        } else {
             mode = MapParams.MODE_STOP;
         }
         setMapMode(mode, args);
@@ -143,17 +147,6 @@ public class MapFragment extends SherlockFragment
             mController.destroy();
         }
         super.onDestroy();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
-        if (root == null) {
-            // Currently in a layout without a container, so no
-            // reason to create our view.
-            return null;
-        }
-        return inflater.inflate(R.layout.main, null);
     }
 
     @Override
@@ -185,6 +178,8 @@ public class MapFragment extends SherlockFragment
         super.onResume();
     }
 
+    /*
+     * MAP TODO
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.map, menu);
@@ -202,6 +197,7 @@ public class MapFragment extends SherlockFragment
         }
         return false;
     }
+    */
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -225,6 +221,16 @@ public class MapFragment extends SherlockFragment
     // Fragment Controller
     //
     @Override
+    public Activity getActivity() {
+        return this;
+    }
+
+    @Override
+    public View getView() {
+        return findViewById(android.R.id.content);
+    }
+
+    @Override
     public String getMapMode() {
         if (mController != null) {
             return mController.getMode();
@@ -247,7 +253,9 @@ public class MapFragment extends SherlockFragment
         } else if (MapParams.MODE_STOP.equals(mode)) {
             mController = new StopMapController(this);
         }
-        mController.setState(args);
+        if (args != null) {
+            mController.setState(args);
+        }
         mController.onResume();
     }
 

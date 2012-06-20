@@ -21,12 +21,11 @@ import com.joulespersecond.oba.elements.ObaStop;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
 import android.view.View;
 
 import java.util.List;
 
-public interface MapFragmentController {
+public interface MapModeController {
     /**
      * Controllers should make every attempt to communicate through
      * the Callback interface rather than accessing the MapFragment
@@ -36,12 +35,13 @@ public interface MapFragmentController {
      * @author paulw
      *
      */
-    interface FragmentCallback {
+    interface Callback {
         // Used by the controller to tell the Fragment what to do.
         Activity getActivity();
         View getView();
 
-        LoaderManager getLoaderManager();
+        // Can't use a LoaderManager with a SherlockMapActivity
+        //LoaderManager getLoaderManager();
 
         void showProgress(boolean show);
 

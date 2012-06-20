@@ -42,7 +42,7 @@ import java.util.List;
  *
  */
 class StopPopup {
-    private final MapFragment mFragment;
+    private final BaseMapActivity mFragment;
     private final Context mContext;
     private final View mView;
     private final TextView mNameView;
@@ -54,7 +54,7 @@ class StopPopup {
     private ObaReferences mReferences;
     private UIHelp.StopUserInfoMap mStopUserMap;
 
-    StopPopup(MapFragment fragment, View view) {
+    StopPopup(BaseMapActivity fragment, View view) {
         mFragment = fragment;
         mContext = fragment.getActivity();
         mView = view;

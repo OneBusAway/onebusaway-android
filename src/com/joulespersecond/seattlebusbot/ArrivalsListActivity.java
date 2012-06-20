@@ -68,6 +68,7 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        UIHelp.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

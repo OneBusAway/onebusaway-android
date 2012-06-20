@@ -1,6 +1,5 @@
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
@@ -22,7 +21,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -41,7 +39,7 @@ import java.util.List;
 // We don't use the ListFragment because the support library's version of
 // the ListFragment doesn't work well with our header.
 //
-public class ArrivalsListFragment extends SherlockListFragment
+public class ArrivalsListFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
                    ArrivalsListHeader.Controller {
     private static final String TAG = "ArrivalsListFragment";
@@ -152,7 +150,7 @@ public class ArrivalsListFragment extends SherlockListFragment
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
         Log.d(TAG, "Load finished!");
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
+        UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
 
@@ -394,13 +392,8 @@ public class ArrivalsListFragment extends SherlockListFragment
             mFavorite = favorite;
         }
         // Apparently we can't rely on onPrepareOptionsMenu to set the
-        // menus like we did before.
-        // ALSO: we need to downcast this because getActivity() returns
-        // an Activity, but Activity.invalidateOptionsMenu doesn't exist
-        // pre-Honeycomb. So we need to make sure we are calling the
-        // FragmentActivity's version.
-        // Gotta love backward compatibility...
-        ((FragmentActivity)getActivity()).invalidateOptionsMenu();
+        // menus like we did before...
+        getActivity().supportInvalidateOptionsMenu();
         return mFavorite;
     }
 
@@ -539,7 +532,7 @@ public class ArrivalsListFragment extends SherlockListFragment
     // Refreshing!
     //
     private void refresh() {
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
+        UIHelp.showProgress(this, true);
         getArrivalsLoader().onContentChanged();
     }
 

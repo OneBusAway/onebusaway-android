@@ -42,6 +42,7 @@ public class RouteInfoActivity extends SherlockFragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UIHelp.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

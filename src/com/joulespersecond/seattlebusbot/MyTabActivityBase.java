@@ -15,11 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 import com.google.android.maps.GeoPoint;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -39,6 +40,8 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        UIHelp.setupActionBar(this);
 
         final Intent intent = getIntent();
         final String action = intent.getAction();
@@ -64,7 +67,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
             SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
-            final ActionBar bar = getActionBar();
+            final ActionBar bar = getSupportActionBar();
             final ActionBar.Tab tab = bar.getSelectedTab();
             settings.putString(getLastTabPref(), (String)tab.getTag());
             settings.commit();
@@ -93,7 +96,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         }
         if (def != null) {
             // Find this tab...
-            final ActionBar bar = getActionBar();
+            final ActionBar bar = getSupportActionBar();
             for (int i=0; i < bar.getTabCount(); ++i) {
                 ActionBar.Tab tab = bar.getTabAt(i);
                 if (def.equals(tab.getTag())) {

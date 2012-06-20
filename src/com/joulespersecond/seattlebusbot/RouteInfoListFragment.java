@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
@@ -52,7 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RouteInfoListFragment extends SherlockListFragment {
+public class RouteInfoListFragment extends ListFragment {
     private static final String TAG = "RouteInfoListFragment";
     private static final int ROUTE_INFO_LOADER = 0;
     private static final int ROUTE_STOPS_LOADER = 1;

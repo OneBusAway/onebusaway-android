@@ -24,7 +24,6 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -92,7 +91,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     @Override
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
                         ObaStopsForLocationResponse response) {
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
+        UIHelp.showProgress(this, false);
         Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
@@ -119,7 +118,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     //
     @Override
     protected void doSearch(String text) {
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
+        UIHelp.showProgress(this, true);
         Bundle args = new Bundle();
         args.putString(QUERY_TEXT, text);
         Loader<?> loader = getLoaderManager().restartLoader(0, args, this);

@@ -15,11 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.seattlebusbot.map.SherlockMapActivityBase;
+import com.joulespersecond.seattlebusbot.map.MapParams;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -34,12 +34,11 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentManager;
 import android.widget.Toast;
 
 import java.io.File;
 
-public class HomeActivity extends SherlockMapActivityBase {
+public class HomeActivity extends SherlockMapActivity {
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
 
@@ -125,10 +124,14 @@ public class HomeActivity extends SherlockMapActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
 
+        /* MAP TODO:
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
@@ -144,18 +147,22 @@ public class HomeActivity extends SherlockMapActivityBase {
             frag.setArguments(args);
             fm.beginTransaction().add(android.R.id.content, frag).commit();
         }
+        */
     }
 
     @Override
     protected boolean isRouteDisplayed() {
+        /* MAP TODO:
         FragmentManager fm = getSupportFragmentManager();
         MapFragment frag = (MapFragment)fm.findFragmentById(android.R.id.content);
         return (frag != null) && frag.isRouteDisplayed();
+        */
+        return false;
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+        MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.main_options, menu);
         return true;
     }
@@ -179,7 +186,8 @@ public class HomeActivity extends SherlockMapActivityBase {
             startActivity(myIntent);
             return true;
         } else if (id == R.id.help) {
-            new HelpDialog().show(getSupportFragmentManager(), TAG_HELP_DIALOG);
+            // MAP TODO:
+            //new HelpDialog().show(getSupportFragmentManager(), TAG_HELP_DIALOG);
             return true;
         }
         return false;
@@ -201,8 +209,10 @@ public class HomeActivity extends SherlockMapActivityBase {
                                 UIHelp.goToUrl(getActivity(), TWITTER_URL);
                                 break;
                             case 2:
+                                /* MAP TODO
                                 new WhatsNewDialog().show(getSupportFragmentManager(),
                                         TAG_WHATSNEW_DIALOG);
+                                        */
                                 break;
                             case 3:
                                 goToBugReport(getActivity());
@@ -256,6 +266,7 @@ public class HomeActivity extends SherlockMapActivityBase {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
+        /* MAP TODO
         if (oldVer != newVer) {
             // It's impossible to tell the difference from people updating
             // from an older version without a What's New dialog and people
@@ -284,6 +295,7 @@ public class HomeActivity extends SherlockMapActivityBase {
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
             edit.commit();
         }
+        */
     }
 
     private static void goToBugReport(Context ctxt) {

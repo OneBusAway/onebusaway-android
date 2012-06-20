@@ -5,7 +5,6 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="lib" path="libs/jackson-core-asl-1.8.5.jar"/>
 	<classpathentry kind="lib" path="libs/jackson-mapper-asl-1.8.5.jar"/>
-	<classpathentry kind="lib" path="libs/actionbarsherlock-plugin-maps-4.0.0.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ActionBarSherlock"/>
 	<classpathentry kind="output" path="bin/classes"/>

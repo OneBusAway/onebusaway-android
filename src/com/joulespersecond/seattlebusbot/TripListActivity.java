@@ -16,7 +16,6 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.app.SherlockListFragment;
 import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
@@ -42,6 +41,7 @@ public class TripListActivity extends SherlockFragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UIHelp.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 
@@ -61,7 +61,7 @@ public class TripListActivity extends SherlockFragmentActivity {
         return false;
     }
 
-    public static final class TripListFragment extends SherlockListFragment
+    public static final class TripListFragment extends ListFragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String[] PROJECTION = {

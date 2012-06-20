@@ -34,6 +34,7 @@ public class SearchActivity extends SherlockFragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        UIHelp.setupActionBar(this);
         handleIntent(getIntent());
     }
 

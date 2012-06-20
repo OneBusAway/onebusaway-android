@@ -15,6 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
@@ -38,12 +42,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentMapActivity;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -68,7 +67,7 @@ import java.util.List;
  * @author paulw
  *
  */
-public class MapFragment extends Fragment
+public class MapFragment extends SherlockFragment
             implements MapFragmentController.FragmentCallback {
     //private static final String TAG = "MapFragment";
 
@@ -259,8 +258,8 @@ public class MapFragment extends Fragment
 
     @Override
     public void showProgress(boolean show) {
-        ((FragmentMapActivity)getActivity()).setProgressBarIndeterminateVisibility(show ?
-                Boolean.TRUE : Boolean.FALSE);
+        // MAP TODO
+        /* UIHelp.showProgress(this, show); */
     }
 
     @Override
@@ -300,6 +299,7 @@ public class MapFragment extends Fragment
     @Override
     public void notifyOutOfRange() {
         if (mWarnOutOfRange) {
+            /* MAP TODO:
             mShowOutOfRangeHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -307,6 +307,7 @@ public class MapFragment extends Fragment
                             TAG_OUT_OF_RANGE_DIALOG);
                 }
             });
+            */
         }
     }
 
@@ -394,8 +395,10 @@ public class MapFragment extends Fragment
         }
 
         if (!mLocationOverlay.isMyLocationEnabled()) {
+            /* MAP TODO
             new NoLocationDialog().show(getSupportFragmentManager(),
                     TAG_NO_LOCATION_DIALOG);
+            */
             return;
         }
 

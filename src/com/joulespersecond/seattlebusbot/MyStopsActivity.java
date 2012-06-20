@@ -16,7 +16,6 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.view.Window;
 
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -27,7 +26,6 @@ public class MyStopsActivity extends MyTabActivityBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         //ensureSupportActionBarAttached();
         final Resources res = getResources();

@@ -30,7 +30,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -87,7 +86,7 @@ public class SearchResultsFragment extends ListFragment
     }
 
     private void search() {
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.TRUE);
+        UIHelp.showProgress(this, true);
         Loader<?> loader = getLoaderManager().restartLoader(0, getArguments(), this);
         //loader.onContentChanged();
         loader.forceLoad();
@@ -103,7 +102,7 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<SearchResponse> loader,
                 SearchResponse response) {
-        ((FragmentActivity)getActivity()).setProgressBarIndeterminateVisibility(Boolean.FALSE);
+        UIHelp.showProgress(this, false);
         Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {

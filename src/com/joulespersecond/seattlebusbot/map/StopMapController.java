@@ -77,6 +77,8 @@ class StopMapController implements MapModeController,
             } else {
                 mFragment.setMyLocation();
             }
+        } else {
+            mFragment.setMyLocation();
         }
     }
 

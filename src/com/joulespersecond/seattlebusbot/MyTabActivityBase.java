@@ -42,6 +42,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         UIHelp.setupActionBar(this);
+        setSupportProgressBarIndeterminateVisibility(false);
 
         final Intent intent = getIntent();
         final String action = intent.getAction();

@@ -82,6 +82,7 @@ public class ListFragment extends SherlockFragment {
      * way to have the built-in indeterminant progress state be shown.
      */
     @Override
+    @SuppressWarnings("deprecation")
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         final Context context = getActivity();

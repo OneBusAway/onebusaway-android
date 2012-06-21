@@ -16,8 +16,6 @@
 package com.joulespersecond.seattlebusbot.map;
 
 import com.actionbarsherlock.app.SherlockMapActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -41,13 +39,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
+import java.io.File;
 import java.util.List;
 
 
@@ -71,8 +68,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             implements MapModeController.Callback {
     //private static final String TAG = "MapFragment";
 
-    private static final String TAG_NO_LOCATION_DIALOG = ".NoLocation";
-    private static final String TAG_OUT_OF_RANGE_DIALOG = ".OutOfRange";
+    private static final int NOLOCATION_DIALOG = 103;
+    private static final int OUTOFRANGE_DIALOG = 104;
+
+    private static final int REQUEST_NO_LOCATION = 41;
 
     private MapView mMapView;
     private UIHelp.StopUserInfoMap mStopUserMap;
@@ -93,13 +92,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
-        // MAP TODO: call this from the subclass?
-        setContentView(R.layout.main);
-
-        // We have a menu item to show in action bar.
-        // MAP TODO:
-        //setHasOptionsMenu(true);
+        // call this from the subclass? or call an overrideable
+        setContentView(getContentView());
 
         View view = getView();
         mMapView = (MapView)view.findViewById(R.id.mapview);
@@ -121,17 +117,26 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
         } else {
-            initMap(getIntent().getExtras());
+            Bundle args = getIntent().getExtras();
+            // The rest of this code assumes a bundle exists,
+            // even if it's empty
+            if (args == null) {
+                args = new Bundle();
+            }
+            if (firstRun) {
+                firstRunSetLocation(args);
+            }
+            initMap(args);
         }
-
     }
 
+    abstract protected int getContentView();
+
     private void initMap(Bundle args) {
-        String mode = null;
-        if (args != null) {
-            mFocusStopId = args.getString(MapParams.STOP_ID);
-            mode = args.getString(MapParams.MODE);
-        } else {
+        mFocusStopId = args.getString(MapParams.STOP_ID);
+
+        String mode = args.getString(MapParams.MODE);
+        if (mode == null) {
             mode = MapParams.MODE_STOP;
         }
         setMapMode(mode, args);
@@ -178,13 +183,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         super.onResume();
     }
 
-    /*
-     * MAP TODO
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.map, menu);
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
@@ -192,12 +190,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             setMyLocation();
             return true;
         } else if (id == R.id.search) {
-            getActivity().onSearchRequested();
+            onSearchRequested();
             return true;
         }
         return false;
     }
-    */
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -215,6 +212,29 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public boolean isRouteDisplayed() {
         return (mController != null) &&
                 MapParams.MODE_ROUTE.equals(mController.getMode());
+    }
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+        case NOLOCATION_DIALOG:
+            return createNoLocationDialog();
+
+        case OUTOFRANGE_DIALOG:
+            return createOutOfRangeDialog();
+        }
+        return null;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+        case REQUEST_NO_LOCATION:
+            // Clear the map center so we can get the user's location again
+            setMyLocation();
+            break;
+        }
     }
 
     //
@@ -253,9 +273,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         } else if (MapParams.MODE_STOP.equals(mode)) {
             mController = new StopMapController(this);
         }
-        if (args != null) {
-            mController.setState(args);
-        }
+        mController.setState(args);
         mController.onResume();
     }
 
@@ -266,8 +284,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void showProgress(boolean show) {
-        // MAP TODO
-        /* UIHelp.showProgress(this, show); */
+        setSupportProgressBarIndeterminateVisibility(show);
     }
 
     @Override
@@ -396,6 +413,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     };
 
     @Override
+    @SuppressWarnings("deprecation")
     public void setMyLocation() {
         // Not really sure how this happened, but it happened in issue #54
         if (mLocationOverlay == null) {
@@ -403,10 +421,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
 
         if (!mLocationOverlay.isMyLocationEnabled()) {
-            /* MAP TODO
-            new NoLocationDialog().show(getSupportFragmentManager(),
-                    TAG_NO_LOCATION_DIALOG);
-            */
+            showDialog(NOLOCATION_DIALOG);
             return;
         }
 
@@ -436,46 +451,33 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     // Dialogs
     //
-
-    private class NoLocationDialog extends DialogFragment {
-        private static final int REQUEST_NO_LOCATION = 1;
-
-        @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            switch (requestCode) {
-                case REQUEST_NO_LOCATION:
-                    setMyLocation();
-                    break;
-                default:
-                    super.onActivityResult(requestCode, resultCode, data);
-            }
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.main_nolocation_title);
-            builder.setIcon(android.R.drawable.ic_dialog_map);
-            builder.setMessage(R.string.main_nolocation);
-            builder.setPositiveButton(android.R.string.yes,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            NoLocationDialog.this.startActivityForResult(
-                                    new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-                                    REQUEST_NO_LOCATION);
-                            dialog.dismiss();
-                        }
-                    });
-            builder.setNegativeButton(android.R.string.no,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
-            return builder.create();
-        }
+    @SuppressWarnings("deprecation")
+    private Dialog createNoLocationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_nolocation_title);
+        builder.setIcon(android.R.drawable.ic_dialog_map);
+        builder.setMessage(R.string.main_nolocation);
+        builder.setPositiveButton(android.R.string.yes,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivityForResult(
+                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+                                REQUEST_NO_LOCATION);
+                        dismissDialog(NOLOCATION_DIALOG);
+                    }
+                });
+        builder.setNegativeButton(android.R.string.no,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Ok, I suppose we can just try looking from where we
+                        // are.
+                        mController.onLocation();
+                        dismissDialog(NOLOCATION_DIALOG);
+                    }
+                });
+        return builder.create();
     }
 
     // This is in lieu of a more complicated map of agencies screen
@@ -489,27 +491,25 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         new GeoPoint(47979090, -122201530), // Everett, WA
     };
 
-    private class OutOfRangeDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            LayoutInflater inflater = getActivity().getLayoutInflater();
-            builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
-                    null));
+    @SuppressWarnings("deprecation")
+    private Dialog createOutOfRangeDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
+                null));
 
-            builder.setItems(R.array.agency_locations,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (which >= 0 && which < AGENCY_LOCATIONS.length) {
-                                setMyLocation(AGENCY_LOCATIONS[which]);
-                            }
-                            dialog.dismiss();
-                            mWarnOutOfRange = false;
+        builder.setItems(R.array.agency_locations,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which >= 0 && which < AGENCY_LOCATIONS.length) {
+                            setMyLocation(AGENCY_LOCATIONS[which]);
                         }
-                    });
-            return builder.create();
-        }
+                        dismissDialog(OUTOFRANGE_DIALOG);
+                        mWarnOutOfRange = false;
+                    }
+                });
+        return builder.create();
     }
 
     //
@@ -545,4 +545,24 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             }
         }
     };
+
+
+    /**
+     * Returns true if no files in private directory
+     * (MapView or MapActivity caches prefs and tiles)
+     * This will fail if MapViewActivty never got to onPause
+     */
+    private boolean firstRunCheck() {
+        File dir = getFilesDir();
+        return (dir.list().length == 0);
+    }
+
+    /**
+     * Center on Seattle with a region-level zoom, should
+     * give first-time users better first impression
+     */
+    private void firstRunSetLocation(Bundle args) {
+        args.putDouble(MapParams.CENTER_LAT, 47.605990);
+        args.putDouble(MapParams.CENTER_LON, -122.331780);
+    }
 }

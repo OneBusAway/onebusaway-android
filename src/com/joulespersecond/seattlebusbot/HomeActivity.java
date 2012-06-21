@@ -18,6 +18,8 @@ package com.joulespersecond.seattlebusbot;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -33,17 +35,14 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.widget.Toast;
-
-import java.io.File;
 
 public class HomeActivity extends BaseMapActivity {
     public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
     public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
 
-    private static final String TAG_HELP_DIALOG = ".HelpDialog";
-    private static final String TAG_WHATSNEW_DIALOG = ".WhatsNew";
+    private static final int HELP_DIALOG = 1;
+    private static final int WHATSNEW_DIALOG = 2;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -122,7 +121,7 @@ public class HomeActivity extends BaseMapActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        boolean firstRun = firstRunCheck();
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.main);
 
@@ -131,10 +130,12 @@ public class HomeActivity extends BaseMapActivity {
         autoShowWhatsNew();
         UIHelp.checkAirplaneMode(this);
 
-        // stop dropping new users in Tulsa (or users who do Manage app -> Clear data)
-        if (firstRun) {
-            firstRunSetLocation(getIntent().getExtras());
-        }
+
+    }
+
+    @Override
+    protected int getContentView() {
+        return R.layout.main;
     }
 
     @Override
@@ -145,6 +146,7 @@ public class HomeActivity extends BaseMapActivity {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == android.R.id.home) {
@@ -163,69 +165,74 @@ public class HomeActivity extends BaseMapActivity {
             startActivity(myIntent);
             return true;
         } else if (id == R.id.help) {
-            // MAP TODO:
-            //new HelpDialog().show(getSupportFragmentManager(), TAG_HELP_DIALOG);
+            showDialog(HELP_DIALOG);
             return true;
         }
-        return false;
+        return super.onOptionsItemSelected(item);
     }
 
-    private static class HelpDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.main_help_title);
-            builder.setItems(R.array.main_help_options,
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                            case 0:
-                                UIHelp.goToUrl(getActivity(), HELP_URL);
-                                break;
-                            case 1:
-                                UIHelp.goToUrl(getActivity(), TWITTER_URL);
-                                break;
-                            case 2:
-                                /* MAP TODO
-                                new WhatsNewDialog().show(getSupportFragmentManager(),
-                                        TAG_WHATSNEW_DIALOG);
-                                        */
-                                break;
-                            case 3:
-                                goToBugReport(getActivity());
-                                break;
-                            case 4:
-                                Intent preferences = new Intent(
-                                        getActivity(),
-                                        EditPreferencesActivity.class);
-                                startActivity(preferences);
-                                break;
-                            }
-                        }
-                    });
-            return builder.create();
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+        case HELP_DIALOG:
+            return createHelpDialog();
+
+        case WHATSNEW_DIALOG:
+            return createWhatsNewDialog();
         }
+        return super.onCreateDialog(id);
     }
 
-    private static class WhatsNewDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.main_help_whatsnew_title);
-            builder.setIcon(R.drawable.icon);
-            builder.setMessage(R.string.main_help_whatsnew);
-            builder.setNeutralButton(R.string.main_help_close,
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
+    @SuppressWarnings("deprecation")
+    private Dialog createHelpDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_help_title);
+        builder.setItems(R.array.main_help_options,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                        case 0:
+                            UIHelp.goToUrl(HomeActivity.this, HELP_URL);
+                            break;
+                        case 1:
+                            UIHelp.goToUrl(HomeActivity.this, TWITTER_URL);
+                            break;
+                        case 2:
+                            showDialog(WHATSNEW_DIALOG);
+                            break;
+                        case 3:
+                            goToBugReport(HomeActivity.this);
+                            break;
+                        case 4:
+                            Intent preferences = new Intent(
+                                    HomeActivity.this,
+                                    EditPreferencesActivity.class);
+                            startActivity(preferences);
+                            break;
                         }
-                    });
-            return builder.create();
-        }
+                    }
+                });
+        return builder.create();
+    }
+
+    @SuppressWarnings("deprecation")
+    private Dialog createWhatsNewDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_help_whatsnew_title);
+        builder.setIcon(R.drawable.icon);
+        builder.setMessage(R.string.main_help_whatsnew);
+        builder.setNeutralButton(R.string.main_help_close,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dismissDialog(WHATSNEW_DIALOG);
+                    }
+                });
+        return builder.create();
     }
 
     private static final String WHATS_NEW_VER = "whatsNewVer";
 
+    @SuppressWarnings("deprecation")
     private void autoShowWhatsNew() {
         SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
 
@@ -243,7 +250,6 @@ public class HomeActivity extends BaseMapActivity {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
-        /* MAP TODO
         if (oldVer != newVer) {
             // It's impossible to tell the difference from people updating
             // from an older version without a What's New dialog and people
@@ -256,12 +262,10 @@ public class HomeActivity extends BaseMapActivity {
                         .intForQuery(this, ObaContract.Stops.CONTENT_URI,
                                 ObaContract.Stops._COUNT);
                 if (count != null && count != 0) {
-                    new WhatsNewDialog().show(getSupportFragmentManager(),
-                            TAG_WHATSNEW_DIALOG);
+                    showDialog(WHATSNEW_DIALOG);
                 }
             } else if ((oldVer > 0) && (oldVer < newVer)) {
-                new WhatsNewDialog().show(getSupportFragmentManager(),
-                        TAG_WHATSNEW_DIALOG);
+                showDialog(WHATSNEW_DIALOG);
             }
             // Updates will remove the alarms. This should put them back.
             // (Unfortunately I can't find a way to reschedule them without
@@ -272,7 +276,6 @@ public class HomeActivity extends BaseMapActivity {
             edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
             edit.commit();
         }
-        */
     }
 
     private static void goToBugReport(Context ctxt) {
@@ -309,24 +312,5 @@ public class HomeActivity extends BaseMapActivity {
             Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
         }
-    }
-
-    /**
-     * Returns true if no files in private directory
-     * (MapView or MapActivity caches prefs and tiles)
-     * This will fail if MapViewActivty never got to onPause
-     */
-    private boolean firstRunCheck() {
-        File dir = getFilesDir();
-        return (dir.list().length == 0);
-    }
-
-    /**
-     * Center on Seattle with a region-level zoom, should
-     * give first-time users better first impression
-     */
-    private void firstRunSetLocation(Bundle args) {
-        args.putDouble(MapParams.CENTER_LAT, 47.605990);
-        args.putDouble(MapParams.CENTER_LON, -122.331780);
     }
 }

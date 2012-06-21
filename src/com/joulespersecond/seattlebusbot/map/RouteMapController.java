@@ -75,6 +75,7 @@ class RouteMapController implements MapModeController,
 
     @Override
     public void setState(Bundle args) {
+        assert(args != null);
         String routeId = args.getString(MapParams.ROUTE_ID);
         mZoomToRoute = args.getBoolean(MapParams.ZOOM_TO_ROUTE, false);
         if (!routeId.equals(mRouteId)) {

@@ -15,12 +15,17 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import android.os.Bundle;
-import android.preference.PreferenceActivity;
+import com.actionbarsherlock.app.SherlockPreferenceActivity;
 
-public class EditPreferencesActivity extends PreferenceActivity {
+import android.os.Bundle;
+
+public class EditPreferencesActivity extends SherlockPreferenceActivity {
+    // Soo... we can use SherlockPreferenceActivity to display the
+    // action bar, but we can't use a PreferenceFragment?
+    @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UIHelp.setupActionBar(getSupportActionBar());
         addPreferencesFromResource(R.xml.preferences);
     }
 }

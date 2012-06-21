@@ -66,7 +66,7 @@ public class RequestBase {
         protected static String getPathWithId(String pathElement, String id) {
             StringBuilder builder = new StringBuilder(BASE_PATH);
             builder.append(pathElement);
-            builder.append(id);
+            builder.append(Uri.encode(id));
             builder.append(".json");
             return builder.toString();
         }

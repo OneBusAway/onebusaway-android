@@ -17,6 +17,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
@@ -36,7 +37,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.support.v4.app.Fragment;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -62,8 +62,8 @@ public final class UIHelp {
         bar.setDisplayShowTitleEnabled(false);
     }
 
-    public static void showProgress(Fragment fragment, boolean visible) {
-        ((SherlockFragmentActivity)fragment.getActivity()).setSupportProgressBarIndeterminateVisibility(visible);
+    public static void showProgress(SherlockFragment fragment, boolean visible) {
+        fragment.getSherlockActivity().setSupportProgressBarIndeterminateVisibility(visible);
     }
 
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {

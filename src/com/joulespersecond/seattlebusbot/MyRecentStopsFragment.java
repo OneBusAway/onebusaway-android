@@ -45,6 +45,11 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     //
     // MyRecentStopsActivity
     //
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -75,7 +80,7 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
-            ObaContract.Stops.markAsUnused(getActivity(), ObaContract.Stops.CONTENT_URI);
+            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_stops");
             return true;
         }
         return false;
@@ -84,5 +89,12 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     @Override
     protected int getEmptyText() {
         return R.string.my_no_recent_stops;
+    }
+
+    private static class ClearDialog extends ClearConfirmDialog {
+        @Override
+        protected void doClear() {
+            ObaContract.Stops.markAsUnused(getActivity(), ObaContract.Stops.CONTENT_URI);
+        }
     }
 }

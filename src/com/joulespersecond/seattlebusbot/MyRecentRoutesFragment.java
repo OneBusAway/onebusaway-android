@@ -41,6 +41,12 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
                 ObaContract.Routes.USE_COUNT);
     }
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     private static final int CONTEXT_MENU_DELETE = 10;
 
     @Override
@@ -72,7 +78,7 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
-            ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);
+            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_routes");
             return true;
         }
         return false;
@@ -81,5 +87,12 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     @Override
     protected int getEmptyText() {
         return R.string.my_no_recent_routes;
+    }
+
+    private static class ClearDialog extends ClearConfirmDialog {
+        @Override
+        protected void doClear() {
+            ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);
+        }
     }
 }

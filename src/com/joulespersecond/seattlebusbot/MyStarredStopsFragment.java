@@ -44,6 +44,12 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -72,8 +78,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_starred) {
-            // TODO: We should probably have a confirmation..
-            ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
+            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
             return true;
         }
         return false;
@@ -82,5 +87,12 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     @Override
     protected int getEmptyText() {
         return R.string.my_no_starred_stops;
+    }
+
+    private static class ClearDialog extends ClearConfirmDialog {
+        @Override
+        protected void doClear() {
+            ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
+        }
     }
 }

@@ -16,12 +16,16 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -107,6 +111,33 @@ abstract class MyListFragmentBase extends ListFragment
             return base.isShortcutMode();
         }
         return false;
+    }
+
+    protected static abstract class ClearConfirmDialog extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return new AlertDialog.Builder(getActivity())
+                .setMessage(R.string.my_option_clear_confirm)
+                .setTitle(R.string.my_option_clear_confirm_title)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton(android.R.string.yes,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                doClear();
+                            }
+                        })
+                 .setNegativeButton(android.R.string.no,
+                         new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                 .create();
+        }
+
+        abstract protected void doClear();
     }
 
     //

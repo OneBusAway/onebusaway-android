@@ -13,5 +13,5 @@ public class MapParams {
     public static final String MODE_ROUTE = "RouteMode";
     public static final String MODE_STOP = "StopMode";
 
-    public static final int DEFAULT_ZOOM = 17;
+    public static final int DEFAULT_ZOOM = 18;
 }

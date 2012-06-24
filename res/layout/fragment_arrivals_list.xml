@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
          android:layout_height="fill_parent">
 
     <include layout="@layout/arrivals_list_header"/>
+    <include layout="@layout/alert_list"/>
 
     <include layout="@layout/loading" />
 

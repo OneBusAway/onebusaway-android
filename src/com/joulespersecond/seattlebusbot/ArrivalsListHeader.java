@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import android.content.Context;
@@ -34,6 +49,8 @@ class ArrivalsListHeader {
 
         boolean isFavorite();
         boolean setFavorite(boolean favorite);
+
+        AlertList getAlertList();
     }
 
     private Controller mController;
@@ -49,7 +66,6 @@ class ArrivalsListHeader {
     private ImageButton mFavoriteView;
     private View mDirectionView;
     private View mFilterGroup;
-    private TextView mResponseError;
     private boolean mInNameEdit = false;
 
     ArrivalsListHeader(Context context, Controller controller) {
@@ -66,7 +82,7 @@ class ArrivalsListHeader {
         mFavoriteView = (ImageButton)mView.findViewById(R.id.stop_favorite);
         mDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
-        mResponseError = (TextView)mView.findViewById(R.id.response_error);
+
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -183,9 +199,67 @@ class ArrivalsListHeader {
         }
     }
 
+    private static class ResponseError implements AlertList.Alert {
+        private final CharSequence mString;
+
+        ResponseError(CharSequence seq) {
+            mString = seq;
+        }
+
+        @Override
+        public String getId() {
+            return "STATIC: RESPONSE ERROR";
+        }
+
+        @Override
+        public int getType() {
+            return AlertList.Alert.TYPE_ERROR;
+        }
+
+        @Override
+        public int getFlags() {
+            return 0;
+        }
+
+        @Override
+        public CharSequence getString() {
+            return mString;
+        }
+
+        @Override
+        public void onClick() {
+        }
+
+        @Override
+        public int hashCode() {
+            return getId().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ResponseError other = (ResponseError)obj;
+            if (!getId().equals(other.getId()))
+                return false;
+            return true;
+        }
+    }
+
+    private ResponseError mResponseError = null;
+
     private void refreshError() {
         final long now = System.currentTimeMillis();
         final long responseTime = mController.getLastGoodResponseTime();
+        AlertList alerts = mController.getAlertList();
+
+        if (mResponseError != null) {
+            alerts.remove(mResponseError);
+        }
 
         if ((responseTime) != 0 &&
                 ((now - responseTime) >= 2 * DateUtils.MINUTE_IN_MILLIS)) {
@@ -194,11 +268,10 @@ class ArrivalsListHeader {
                         now,
                         DateUtils.MINUTE_IN_MILLIS,
                         0);
-            mResponseError.setText(mContext.getString(R.string.stop_info_old_data,
-                                                    relativeTime));
-            mResponseError.setVisibility(View.VISIBLE);
-        } else {
-            mResponseError.setVisibility(View.GONE);
+            CharSequence s = mContext.getString(R.string.stop_info_old_data,
+                                                relativeTime);
+            mResponseError = new ResponseError(s);
+            alerts.insert(mResponseError, 0);
         }
     }
 

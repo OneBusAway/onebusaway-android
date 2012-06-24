@@ -50,6 +50,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private ArrivalsListAdapter mAdapter;
     private ArrivalsListHeader mHeader;
+    private AlertList mAlertList;
 
     private ObaStop mStop;
     private String mStopId;
@@ -72,6 +73,9 @@ public class ArrivalsListFragment extends ListFragment
 
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
+
+        mAlertList = new AlertList(getActivity());
+        mAlertList.initView(getView().findViewById(R.id.arrivals_alert_list));
 
         mHeader = new ArrivalsListHeader(getActivity(), this);
         View header = getView().findViewById(R.id.arrivals_list_header);
@@ -395,6 +399,11 @@ public class ArrivalsListFragment extends ListFragment
         // menus like we did before...
         getActivity().supportInvalidateOptionsMenu();
         return mFavorite;
+    }
+
+    @Override
+    public AlertList getAlertList() {
+        return mAlertList;
     }
 
     private void showRoutesFilterDialog() {

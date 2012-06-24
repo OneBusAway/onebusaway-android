@@ -116,11 +116,4 @@
             android:linksClickable="true" >
         </TextView>
     </LinearLayout>
-    <TextView
-        android:drawableLeft="@drawable/stop_info_error"
-        android:id="@+id/response_error"
-        style="@style/Header2Text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"/>
 </LinearLayout>

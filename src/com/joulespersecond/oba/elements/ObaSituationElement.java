@@ -142,6 +142,7 @@ public final class ObaSituationElement implements ObaSituation {
     private final long creationTime;
     private final AllAffectsElement[] allAffects;
     private final ConsequenceElement[] consequences;
+    private final String severity;
 
     ObaSituationElement() {
         id = "";
@@ -153,6 +154,7 @@ public final class ObaSituationElement implements ObaSituation {
         creationTime = 0;
         allAffects = AllAffectsElement.EMPTY_ARRAY;
         consequences = ConsequenceElement.EMPTY_ARRAY;
+        severity = "";
     }
 
     @Override
@@ -193,5 +195,10 @@ public final class ObaSituationElement implements ObaSituation {
     @Override
     public Consequence[] getConsequences() {
         return consequences;
+    }
+
+    @Override
+    public String getSeverity() {
+        return severity;
     }
 }

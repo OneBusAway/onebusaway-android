@@ -25,5 +25,5 @@
     <color name="stop_info_scheduled">#008000</color>
     <color name="alert_error">#FFC4C4</color>
     <color name="alert_warning">#FFFF99</color>
-    <color name="alert_info">#CCFFCC</color>
+    <color name="alert_info">#f0f0f0</color>
 </resources>

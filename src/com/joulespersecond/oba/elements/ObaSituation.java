@@ -115,6 +115,8 @@ public interface ObaSituation extends ObaElement {
      */
     public Consequence[] getConsequences();
 
-    // getInternal
-    // getDetail?
+    /**
+     * @return The severity of the situation.
+     */
+    public String getSeverity();
 }

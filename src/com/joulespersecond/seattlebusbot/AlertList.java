@@ -16,9 +16,12 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.content.Context;
+import android.os.Build;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.Collection;
 
 class AlertList {
     interface Alert {
@@ -110,7 +113,15 @@ class AlertList {
         mAdapter.add(alert);
     }
 
-    //void addAll();
+    void addAll(Collection<? extends Alert> alerts) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            addAll(alerts);
+        } else {
+            for (Alert a: alerts) {
+                add(a);
+            }
+        }
+    }
 
     void insert(Alert alert, int index) {
         mAdapter.insert(alert, index);

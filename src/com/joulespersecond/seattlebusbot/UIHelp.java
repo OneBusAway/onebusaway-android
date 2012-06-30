@@ -226,6 +226,7 @@ public final class UIHelp {
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
         Parcelable iconResource = Intent.ShortcutIconResource.fromContext(context, R.drawable.icon);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 

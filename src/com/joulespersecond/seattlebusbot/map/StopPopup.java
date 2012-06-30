@@ -129,15 +129,13 @@ class StopPopup {
         if (text == null) {
             text = (TextView)mView.findViewById(R.id.show_routes);
         }
-        if (!mRoutesView.isShown()) {
+        if (!mRoutesView.isShown() && mStop != null) {
             // Update the routes
             List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
             mRoutesAdapter.setData(routes);
 
             mRoutesView.setVisibility(View.VISIBLE);
             text.setText(R.string.main_hide_routes);
-
-
         } else {
             mRoutesView.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);

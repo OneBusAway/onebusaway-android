@@ -27,12 +27,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
 public class ObaProvider extends ContentProvider {
+    private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
+
     private class OpenHelper extends SQLiteOpenHelper {
-        private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
         private static final int DATABASE_VERSION = 16;
 
         public OpenHelper(Context context) {
@@ -244,6 +246,10 @@ public class ObaProvider extends ContentProvider {
 
     private SQLiteDatabase mDb;
     private OpenHelper mOpenHelper;
+
+    public static File getDatabasePath(Context context) {
+        return context.getDatabasePath(DATABASE_NAME);
+    }
 
     @Override
     public boolean onCreate() {
@@ -594,5 +600,13 @@ public class ObaProvider extends ContentProvider {
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.StopRouteFilters.PATH);
         }
         return mDb;
+    }
+
+    //
+    // Closes the database
+    //
+    public void closeDB() {
+        mOpenHelper.close();
+        mDb = null;
     }
 }

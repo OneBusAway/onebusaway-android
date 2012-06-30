@@ -212,5 +212,13 @@
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
     <string name="preferences_oba_api_servername_default">api.onebusaway.org</string>
-
+    <string name="preferences_save_title">Save to SD card</string>
+    <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
+    <string name="preferences_restore_title">Restore from SD card</string>
+    <string name="preferences_restore_summary">Restores from previous save</string>
+    <string name="preferences_db_saved">Saved successfully!</string>
+    <string name="preferences_db_save_error">Unable to save: %1$s</string>
+    <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?</string>
+    <string name="preferences_db_restored">Restore successful! Please restart OneBusAway.</string>
+    <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
 </resources>

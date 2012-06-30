@@ -77,4 +77,12 @@
         <item>Everett, WA</item>
         <item>Stay where I am</item>
     </string-array>
+    <string-array name="report_stop_problem_code">
+        <item>Choose one</item>
+        <item>Stop name is wrong</item>
+        <item>Stop number is wrong</item>
+        <item>Location is wrong</item>
+        <item>Route or trip is missing</item>
+        <item>Something else</item>
+    </string-array>
 </resources>

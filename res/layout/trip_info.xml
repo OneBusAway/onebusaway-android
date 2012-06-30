@@ -77,7 +77,7 @@
            android:padding="4dp">
 
           <TextView
-              style="@style/TripInfoOptionHead"
+              style="@style/FormLabel"
               android:text="@string/trip_info_reminder_header"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content">
@@ -89,7 +89,7 @@
           </Spinner>
 
           <TextView
-              style="@style/TripInfoOptionHead"
+              style="@style/FormLabel"
               android:text="@string/trip_info_reminder_repeat"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content">
@@ -102,7 +102,7 @@
           </Button>
 
           <TextView
-              style="@style/TripInfoOptionHead"
+              style="@style/FormLabel"
               android:text="@string/trip_info_name"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content">

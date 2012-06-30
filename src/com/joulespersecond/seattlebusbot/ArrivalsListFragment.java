@@ -210,6 +210,7 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
+        UIHelp.showProgress(this, false);
         mAdapter.setData(null, mRoutesFilter);
     }
 
@@ -235,10 +236,12 @@ public class ArrivalsListFragment extends ListFragment
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
-            HomeActivity.start(getActivity(),
-                    mStop.getId(),
-                    mStop.getLatitude(),
-                    mStop.getLongitude());
+            if (mStop != null) {
+                HomeActivity.start(getActivity(),
+                        mStop.getId(),
+                        mStop.getLatitude(),
+                        mStop.getLongitude());
+            }
             return true;
         } else if (id == R.id.refresh) {
             refresh();
@@ -252,6 +255,10 @@ public class ArrivalsListFragment extends ListFragment
         } else if (id == R.id.toggle_favorite) {
             setFavorite(!mFavorite);
             mHeader.refresh();
+        } else if (id == R.id.report_problem) {
+            if (mStop != null) {
+                ReportStopProblemFragment.show(getSherlockActivity(), mStop);
+            }
         }
         return false;
     }
@@ -541,8 +548,10 @@ public class ArrivalsListFragment extends ListFragment
     // Refreshing!
     //
     private void refresh() {
-        UIHelp.showProgress(this, true);
-        getArrivalsLoader().onContentChanged();
+        if (isAdded()) {
+            UIHelp.showProgress(this, true);
+            getArrivalsLoader().onContentChanged();
+        }
     }
 
     private final Handler mRefreshHandler = new Handler();

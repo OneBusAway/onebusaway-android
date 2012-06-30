@@ -280,6 +280,17 @@ public final class UIHelp {
     // in the case multiple agencies. But we really don't need it to be very
     // accurate.
     public static GeoPoint getLocation(Context cxt) {
+        Location last = getLocation2(cxt);
+        if (last != null) {
+            return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
+        } else {
+            // Make up a fake "Seattle" location.
+            // ll=47.620975,-122.347355
+            return ObaApi.makeGeoPoint(47.620975, -122.347355);
+        }
+    }
+
+    public static Location getLocation2(Context cxt) {
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;
@@ -292,13 +303,7 @@ public final class UIHelp {
                 last = loc;
             }
         }
-        if (last != null) {
-            return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
-        } else {
-            // Make up a fake "Seattle" location.
-            // ll=47.620975,-122.347355
-            return ObaApi.makeGeoPoint(47.620975, -122.347355);
-        }
+        return last;
     }
 
     public static void checkAirplaneMode(Context context) {

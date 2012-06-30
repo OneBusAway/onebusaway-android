@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -31,4 +31,7 @@
     <item android:id="@+id/toggle_favorite"
           android:title="@string/stop_info_option_addstar"
           android:icon="@drawable/ic_menu_star" />
+    <item android:id="@+id/report_problem"
+          android:title="@string/stop_info_option_reportproblem"
+          android:icon="@drawable/ic_menu_report_problem" />
 </menu>

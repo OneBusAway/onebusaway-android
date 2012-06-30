@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         private long mDepartTime;
         private int mReminderTime; // DB Value, not selection value
         private int mReminderDays;
+        private boolean mNewTrip = true;
 
 
         @Override
@@ -185,8 +186,9 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-            boolean newTrip = !initFromCursor(data);
-            initForm(newTrip);
+            mNewTrip = !initFromCursor(data);
+            initForm();
+            getActivity().supportInvalidateOptionsMenu();
         }
 
         @Override
@@ -266,7 +268,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             return true;
         }
 
-        private void initForm(boolean newTrip) {
+        private void initForm() {
             View view = getView();
             Spinner s = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
             ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
@@ -302,33 +304,6 @@ public class TripInfoActivity extends SherlockFragmentActivity {
                     showReminderDaysDialog();
                 }
             });
-
-            // Listen to the buttons:
-            final Button save = (Button)view.findViewById(R.id.trip_info_save);
-            save.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    saveTrip();
-                }
-            });
-            final Button discard = (Button)view.findViewById(R.id.trip_info_cancel);
-            discard.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    finish();
-                }
-            });
-
-            final Button delete = (Button)view.findViewById(R.id.trip_info_delete);
-            delete.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    new DeleteDialog().show(getActivity().getSupportFragmentManager(),
-                            TAG_DELETE_DIALOG);
-                }
-            });
-
-            if (newTrip) {
-                // If this is a new trip, then hide the 'delete' button
-                delete.setVisibility(View.GONE);
-            }
         }
 
         void finish() {
@@ -371,11 +346,22 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         }
 
         @Override
+        public void onPrepareOptionsMenu(Menu menu) {
+            menu.findItem(R.id.trip_info_delete).setVisible(!mNewTrip);
+        }
+
+        @Override
         public boolean onOptionsItemSelected(MenuItem item) {
-            if (item.getItemId() == R.id.show_route) {
+            int id = item.getItemId();
+            if (id == R.id.trip_info_save) {
+                saveTrip();
+            } else if (id == R.id.trip_info_delete) {
+                new DeleteDialog().show(getActivity().getSupportFragmentManager(),
+                        TAG_DELETE_DIALOG);
+            } else if (id == R.id.show_route) {
                 RouteInfoActivity.start(getActivity(), mRouteId);
                 return true;
-            } else if (item.getItemId() == R.id.show_stop) {
+            } else if (id == R.id.show_stop) {
                 ArrivalsListActivity.start(getActivity(), mStopId, mStopName);
                 return true;
             }

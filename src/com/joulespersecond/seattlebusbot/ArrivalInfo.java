@@ -70,8 +70,16 @@ final class ArrivalInfo {
         mInfo = info;
         // First, all times have to have to be converted to 'minutes'
         final long nowMins = now / ms_in_mins;
-        final long scheduled = info.getScheduledArrivalTime();
-        final long predicted = info.getPredictedArrivalTime();
+        long scheduled, predicted;
+        // If this is the first stop in the sequence, show the departure time.
+        if (info.getStopSequence() != 0) {
+            scheduled = info.getScheduledArrivalTime();
+            predicted = info.getPredictedArrivalTime();
+        } else {
+            scheduled = info.getScheduledDepartureTime();
+            predicted = info.getPredictedDepartureTime();
+        }
+
         final long scheduledMins = scheduled / ms_in_mins;
         final long predictedMins = predicted / ms_in_mins;
 

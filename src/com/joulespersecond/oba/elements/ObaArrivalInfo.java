@@ -63,6 +63,10 @@ public final class ObaArrivalInfo {
     private final Boolean predicted;
     private final ObaTripStatusElement tripStatus;
     private final String[] situationIds;
+    private final boolean arrivalEnabled;
+    private final boolean departureEnabled;
+    private final int stopSequence;
+    private final int blockTripSequence;
 
     ObaArrivalInfo() {
         routeId = "";
@@ -85,6 +89,10 @@ public final class ObaArrivalInfo {
         predicted = null;
         tripStatus = null;
         situationIds = null;
+        arrivalEnabled = true;
+        departureEnabled = true;
+        stopSequence = 0;
+        blockTripSequence = 0;
     }
 
     /**
@@ -230,5 +238,36 @@ public final class ObaArrivalInfo {
      */
     public String[] getSituationIds() {
         return situationIds;
+    }
+
+    /**
+     * @return True if arrivals are enabled for this trip, false otherwise.
+     */
+    public boolean getArrivalEnabled() {
+        return arrivalEnabled;
+    }
+
+    /**
+     * @return True if departures are enabled for this trip, false otherwise.
+     */
+    public boolean getDepartureEnabled() {
+        return departureEnabled;
+    }
+
+    /**
+     * @return The index of the stop into the sequence of stops that
+     *          make up the trip for this arrival.
+     */
+    public int getStopSequence() {
+        return stopSequence;
+    }
+
+    /**
+     * @return The index of this arrival's trip into the sequence of trips for the active block.
+     * Compare to blockTripSequence in the TripStatus element to determine where the arrival-and-departure
+     * is on the block in comparison to the active block location.
+     */
+    public int getBlockTripSequence() {
+        return blockTripSequence;
     }
 }

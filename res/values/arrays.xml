@@ -26,22 +26,26 @@
         <item>Show route information</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
+        <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_edit">
         <item>Edit this reminder</item>
         <item>Show route information</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
+        <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_noschedule">
         <item>Set a reminder</item>
         <item>Show route information</item>
         <item>Show only this route</item>
+        <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_edit_noschedule">
         <item>Edit this reminder</item>
         <item>Show route information</item>
         <item>Show only this route</item>
+        <item>Report problem with trip</item>
     </string-array>
     <string-array name="search_stop_options">
         <item>Show arrivals</item>
@@ -83,6 +87,15 @@
         <item>Stop number is wrong</item>
         <item>Location is wrong</item>
         <item>Route or trip is missing</item>
+        <item>Something else</item>
+    </string-array>
+    <string-array name="report_trip_problem_code_bus">
+        <item>Choose one</item>
+        <item>The bus never came</item>
+        <item>It came earlier than predicted</item>
+        <item>It came later than predicted</item>
+        <item>Wrong destination shown</item>
+        <item>The bus doesn\'t stop here</item>
         <item>Something else</item>
     </string-array>
 </resources>

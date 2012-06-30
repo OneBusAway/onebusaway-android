@@ -294,22 +294,19 @@ public class ArrivalsListFragment extends ListFragment
         }
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        goToTrip(stop);
-                        break;
-                    case 1:
-                        goToRoute(stop);
-                        break;
-                    case 2:
-                        ArrayList<String> routes = new ArrayList<String>(1);
-                        routes.add(stop.getInfo().getRouteId());
-                        setRoutesFilter(routes);
-                        mHeader.refresh();
-                        break;
-                    case 3:
-                        UIHelp.goToUrl(getActivity(), url);
-                        break;
+                if (which == 0) {
+                    goToTrip(stop);
+                } else if (which == 1) {
+                    goToRoute(stop);
+                } else if (which == 2) {
+                    ArrayList<String> routes = new ArrayList<String>(1);
+                    routes.add(stop.getInfo().getRouteId());
+                    setRoutesFilter(routes);
+                    mHeader.refresh();
+                } else if (hasUrl && which == 3) {
+                    UIHelp.goToUrl(getActivity(), url);
+                } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
+                    ReportTripProblemFragment.show(getSherlockActivity(), stop.getInfo());
                 }
             }
         });

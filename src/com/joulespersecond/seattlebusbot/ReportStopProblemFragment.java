@@ -15,40 +15,23 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaReportProblemWithStopRequest;
-import com.joulespersecond.oba.request.ObaReportProblemWithStopResponse;
 
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
-public class ReportStopProblemFragment extends SherlockFragment
-            implements LoaderManager.LoaderCallbacks<ObaReportProblemWithStopResponse> {
-    private static final String TAG = "ReportStopProblemFragment";
-    private static final int REPORT_LOADER = 100;
-
+public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
 
@@ -74,21 +57,8 @@ public class ReportStopProblemFragment extends SherlockFragment
     private TextView mUserComment;
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        // We have a menu item to show in action bar.
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
-        if (root == null) {
-            // Currently in a layout without a container, so no
-            // reason to create our view.
-            return null;
-        }
-        return inflater.inflate(R.layout.report_stop_problem, null);
+    protected int getLayoutId() {
+        return R.layout.report_stop_problem;
     }
 
     @Override
@@ -112,28 +82,12 @@ public class ReportStopProblemFragment extends SherlockFragment
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.report_problem_options, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        final int id = item.getItemId();
-        if (id == R.id.report_problem_send) {
-            sendReport();
-        }
-        return false;
-    }
-
-    void sendReport() {
+    protected void sendReport() {
         // Hide the soft keyboard.
         InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
-
-        UIHelp.showProgress(this, true);
-
-        getLoaderManager().initLoader(REPORT_LOADER, getArguments(), this);
+        super.sendReport();
     }
 
     private static final String[] SPINNER_TO_CODE = new String[] {
@@ -146,28 +100,25 @@ public class ReportStopProblemFragment extends SherlockFragment
     };
 
     @Override
-    public Loader<ObaReportProblemWithStopResponse> onCreateLoader(int id, Bundle args) {
-        // Stop ID.
-        // Code
-        // Comment
-        // Location
-        // Location accuracy
+    protected ReportLoader createLoader(Bundle args) {
         String stopId = args.getString(STOP_ID);
 
         ObaReportProblemWithStopRequest.Builder builder =
                 new ObaReportProblemWithStopRequest.Builder(getActivity(), stopId);
 
+        // Code
         String code = SPINNER_TO_CODE[mCodeView.getSelectedItemPosition()];
-
         if (code != null) {
             builder.setCode(code);
         }
 
+        // Comment
         CharSequence comment = mUserComment.getText();
         if (!TextUtils.isEmpty(comment)) {
             builder.setUserComment(comment.toString());
         }
 
+        // Location / Location accuracy
         Location location = UIHelp.getLocation2(getActivity());
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
@@ -177,43 +128,5 @@ public class ReportStopProblemFragment extends SherlockFragment
         }
 
         return new ReportLoader(getActivity(), builder.build());
-    }
-
-    @Override
-    public void onLoadFinished(Loader<ObaReportProblemWithStopResponse> loader,
-            ObaReportProblemWithStopResponse response) {
-        Log.d(TAG, "Load finished!");
-        UIHelp.showProgress(this, false);
-
-        if (response.getCode() == ObaApi.OBA_OK) {
-            Toast.makeText(getActivity(), R.string.report_problem_sent, Toast.LENGTH_LONG).show();
-            getActivity().getSupportFragmentManager().popBackStack();
-        } else {
-            Toast.makeText(getActivity(), R.string.report_problem_error, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<ObaReportProblemWithStopResponse> loader) {
-        UIHelp.showProgress(this, false);
-    }
-
-    private static final class ReportLoader extends AsyncTaskLoader<ObaReportProblemWithStopResponse> {
-        private final ObaReportProblemWithStopRequest mRequest;
-
-        public ReportLoader(Context context, ObaReportProblemWithStopRequest request) {
-            super(context);
-            mRequest = request;
-        }
-
-        @Override
-        public void onStartLoading() {
-            forceLoad();
-        }
-
-        @Override
-        public ObaReportProblemWithStopResponse loadInBackground() {
-            return mRequest.call();
-        }
     }
 }

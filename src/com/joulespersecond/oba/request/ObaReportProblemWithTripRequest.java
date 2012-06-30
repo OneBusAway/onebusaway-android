@@ -59,8 +59,8 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * Sets the optional service date of the trip.
          * @param serviceDate The service date.
          */
-        public Builder setServiceDate(String serviceDate) {
-            mBuilder.appendQueryParameter("serviceData", serviceDate);
+        public Builder setServiceDate(long serviceDate) {
+            mBuilder.appendQueryParameter("serviceDate", String.valueOf(serviceDate));
             return this;
         }
 

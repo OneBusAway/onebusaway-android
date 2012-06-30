@@ -29,7 +29,7 @@
 		    android:orientation="vertical"
 		    android:gravity="center_horizontal">
 		    	<TextView
-		              android:id="@+id/stop_name"
+		              android:id="@+id/trip_name"
 		              style="@style/HeaderText"
 		              android:layout_width="fill_parent"
 		              android:layout_height="wrap_content"
@@ -66,6 +66,28 @@
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
               android:minLines="4">
+          </EditText>
+
+          <CheckBox
+              android:id="@+id/report_problem_onvehicle"
+              android:text="@string/report_problem_onvehicle_bus"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+          </CheckBox>
+
+          <TextView
+              android:id="@+id/report_problem_uservehicle_label"
+              style="@style/FormLabel"
+              android:text="@string/report_problem_vehiclenumber_bus"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+          </TextView>
+          <EditText
+              android:id="@+id/report_problem_uservehicle"
+              android:hint="@string/report_problem_uservehicle_hint"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:inputType="number">
           </EditText>
 
           <!--

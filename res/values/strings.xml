@@ -197,6 +197,10 @@
     <string name="report_problem_hint">Your reports help OneBusAway find and fix problems!</string>
     <string name="report_problem_sent">Report sent! Thank you!</string>
     <string name="report_problem_error">Unable to send the report. Try again?</string>
+    <!-- TODO: Modes -->
+    <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
+    <string name="report_problem_vehiclenumber_bus">Bus number</string>
+    <string name="report_problem_uservehicle_hint">optional</string>
 
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>

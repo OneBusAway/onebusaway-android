@@ -17,6 +17,9 @@ package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaReportProblemWithStopRequest;
@@ -69,7 +72,13 @@ public class ReportStopProblemFragment extends SherlockFragment
 
     private Spinner mCodeView;
     private TextView mUserComment;
-    private View mSendButton;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        // We have a menu item to show in action bar.
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater,
@@ -100,25 +109,20 @@ public class ReportStopProblemFragment extends SherlockFragment
 
         // Comment
         mUserComment = (TextView)view.findViewById(R.id.report_problem_comment);
+    }
 
-        //
-        // Set up buttons
-        //
-        View cancel = view.findViewById(android.R.id.button1);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getActivity().getSupportFragmentManager().popBackStack();
-            }
-        });
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.report_problem_options, menu);
+    }
 
-        mSendButton = view.findViewById(android.R.id.button2);
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendReport();
-            }
-        });
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        final int id = item.getItemId();
+        if (id == R.id.report_problem_send) {
+            sendReport();
+        }
+        return false;
     }
 
     void sendReport() {
@@ -127,7 +131,6 @@ public class ReportStopProblemFragment extends SherlockFragment
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
 
-        mSendButton.setClickable(false);
         UIHelp.showProgress(this, true);
 
         getLoaderManager().initLoader(REPORT_LOADER, getArguments(), this);
@@ -180,7 +183,6 @@ public class ReportStopProblemFragment extends SherlockFragment
     public void onLoadFinished(Loader<ObaReportProblemWithStopResponse> loader,
             ObaReportProblemWithStopResponse response) {
         Log.d(TAG, "Load finished!");
-        mSendButton.setClickable(true);
         UIHelp.showProgress(this, false);
 
         if (response.getCode() == ObaApi.OBA_OK) {
@@ -193,7 +195,6 @@ public class ReportStopProblemFragment extends SherlockFragment
 
     @Override
     public void onLoaderReset(Loader<ObaReportProblemWithStopResponse> loader) {
-        mSendButton.setClickable(true);
         UIHelp.showProgress(this, false);
     }
 

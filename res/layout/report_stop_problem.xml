@@ -84,28 +84,6 @@
           </EditText>
           -->
 
-          <LinearLayout
-              android:paddingTop="16sp"
-              android:orientation="horizontal"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:gravity="center">
-              <Button
-                   android:text="@string/report_problem_cancel"
-                   android:id="@id/android:button1"
-                   android:layout_width="0dp"
-                   android:layout_weight="1"
-                   android:layout_height="wrap_content">
-              </Button>
-              <Button
-                  android:text="@string/report_problem_send"
-                  android:id="@+id/android:button2"
-                  android:layout_weight="1"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content">
-              </Button>
-           </LinearLayout>
-
            <TextView
               style="@style/FormLabel"
               android:text="@string/report_problem_hint"

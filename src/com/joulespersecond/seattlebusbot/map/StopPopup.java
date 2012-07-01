@@ -19,12 +19,14 @@ import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.MyTextUtils;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,6 +44,8 @@ import java.util.List;
  *
  */
 class StopPopup {
+    private static final String TAG = "StopPopup";
+
     private final BaseMapActivity mFragment;
     private final Context mContext;
     private final View mView;
@@ -81,7 +85,13 @@ class StopPopup {
         if (!stop.equals(mStop)) {
             mStop = stop;
             // Fill in the information for this stop and show the popup
-            mStopUserMap.setView2(mNameView, stop.getId(), stop.getName(), false);
+            if (mStopUserMap != null) {
+                mStopUserMap.setView2(mNameView, stop.getId(), stop.getName(), false);
+            } else {
+                Log.e(TAG, "Calling show with null stop user map");
+                mNameView.setText(MyTextUtils.toTitleCase(stop.getName()));
+            }
+
             UIHelp.setStopDirection(mDirection, stop.getDirection(), false);
             if (mView.getVisibility() != View.VISIBLE) {
                 mView.startAnimation(AnimationUtils.loadAnimation(

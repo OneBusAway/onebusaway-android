@@ -128,6 +128,7 @@ class StopMapController implements MapModeController,
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
             ObaStopsForLocationResponse response) {
         Log.d(TAG, "Load finished!");
+        mFragment.showProgress(false);
 
         if (response.getCode() != ObaApi.OBA_OK) {
             Activity act = mFragment.getActivity();
@@ -144,7 +145,6 @@ class StopMapController implements MapModeController,
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
         mFragment.showStops(stops, response);
-        mFragment.showProgress(false);
     }
 
     @Override

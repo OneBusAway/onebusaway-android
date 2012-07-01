@@ -326,17 +326,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     final Handler mShowOutOfRangeHandler = new Handler();
 
     @Override
+    @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
         if (mWarnOutOfRange) {
-            /* MAP TODO:
-            mShowOutOfRangeHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    new OutOfRangeDialog().show(getSupportFragmentManager(),
-                            TAG_OUT_OF_RANGE_DIALOG);
-                }
-            });
-            */
+            showDialog(OUTOFRANGE_DIALOG);
         }
     }
 

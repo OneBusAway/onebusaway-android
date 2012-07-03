@@ -158,13 +158,15 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
             setHasOptionsMenu(true);
 
-            if (!initFromArgs(getArguments())) {
+            if (savedInstanceState != null) {
+                initFromBundle(savedInstanceState);
+                initForm();
+            } else if (initFromBundle(getArguments())) {
+                getLoaderManager().initLoader(0, null, this);
+            } else {
                 Log.e(TAG, "Information missing from intent");
                 return;
             }
-
-            // Prepare the loader
-            getLoaderManager().initLoader(0, null, this);
         }
 
         @Override
@@ -195,7 +197,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         public void onLoaderReset(Loader<Cursor> loader) {
         }
 
-        private boolean initFromArgs(Bundle bundle) {
+        private boolean initFromBundle(Bundle bundle) {
             final Uri data = bundle.getParcelable(FragmentUtils.URI);
             if (data == null) {
                 return false;
@@ -291,14 +293,17 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             final TextView departText = (TextView)view.findViewById(R.id.departure_time);
             departText.setText(getDepartureTime(getActivity(), mDepartTime));
 
-            // Potentially input this from the form
+            final TextView tripName = (TextView)view.findViewById(R.id.name);
+            tripName.setText(mTripName);
 
-            setUserValues();
+            final Spinner reminder = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
+            reminder.setSelection(reminderToSelection(mReminderTime));
 
+            final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
+            repeats.setText(getRepeatText(getActivity(), mReminderDays));
             //
             // Buttons
             //
-            final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
             repeats.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     showReminderDaysDialog();
@@ -313,25 +318,20 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             getActivity().finish();
         }
 
-        private void setUserValues() {
-            View view = getView();
-            final TextView tripName = (TextView)view.findViewById(R.id.name);
-            tripName.setText(mTripName);
-
-            final Spinner reminder = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
-            reminder.setSelection(reminderToSelection(mReminderTime));
-
-            final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
-            repeats.setText(getRepeatText(getActivity(), mReminderDays));
-        }
-
-
         @Override
         public void onSaveInstanceState(Bundle outState) {
             super.onSaveInstanceState(outState);
+
+            outState.putParcelable(FragmentUtils.URI, mTripUri);
+            outState.putString(ROUTE_ID, mRouteId);
+            outState.putString(ROUTE_NAME, mRouteName);
+            outState.putString(STOP_NAME, mStopName);
+            outState.putString(HEADSIGN, mHeadsign);
+            outState.putLong(DEPARTURE_TIME, mDepartTime);
+
             View view = getView();
-            final Spinner reminderView = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
-            final TextView nameView = (TextView)view.findViewById(R.id.name);
+            Spinner reminderView = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
+            TextView nameView = (TextView)view.findViewById(R.id.name);
 
             final int reminder = selectionToReminder(reminderView
                     .getSelectedItemPosition());

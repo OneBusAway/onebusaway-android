@@ -35,6 +35,9 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     private static final String STOP_ID = ".StopId";
     private static final String STOP_NAME = ".StopName";
 
+    private static final String CODE = ".Code";
+    private static final String USER_COMMENT = ".UserComment";
+
     static void show(SherlockFragmentActivity activity, ObaStop stop) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
@@ -79,6 +82,21 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
         // Comment
         mUserComment = (TextView)view.findViewById(R.id.report_problem_comment);
+
+        if (savedInstanceState != null) {
+            int position = savedInstanceState.getInt(CODE);
+            mCodeView.setSelection(position);
+
+            CharSequence comment = savedInstanceState.getCharSequence(USER_COMMENT);
+            mUserComment.setText(comment);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(CODE, mCodeView.getSelectedItemPosition());
+        outState.putCharSequence(USER_COMMENT, mUserComment.getText());
     }
 
     @Override

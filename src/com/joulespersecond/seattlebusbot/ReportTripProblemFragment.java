@@ -26,6 +26,11 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     private static final String TRIP_SERVICE_DATE = ".ServiceDate";
     private static final String TRIP_VEHICLE_ID = ".VehicleId";
 
+    private static final String CODE = ".Code";
+    private static final String USER_COMMENT = ".UserComment";
+    private static final String USER_ON_VEHICLE = ".UserOnVehicle";
+    private static final String USER_VEHICLE_NUM = ".UserVehicleNum";
+
     static void show(SherlockFragmentActivity activity, ObaArrivalInfo arrival) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
@@ -51,7 +56,6 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     private TextView mUserComment;
     private CheckBox mUserOnVehicle;
     private TextView mUserVehicle;
-
 
     @Override
     protected int getLayoutId() {
@@ -96,6 +100,30 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 mUserVehicle.setEnabled(checked);
             }
         });
+
+        if (savedInstanceState != null) {
+            int position = savedInstanceState.getInt(CODE);
+            mCodeView.setSelection(position);
+
+            CharSequence comment = savedInstanceState.getCharSequence(USER_COMMENT);
+            mUserComment.setText(comment);
+
+            boolean onVehicle = savedInstanceState.getBoolean(USER_ON_VEHICLE);
+            mUserOnVehicle.setChecked(onVehicle);
+
+            CharSequence num = savedInstanceState.getCharSequence(USER_VEHICLE_NUM);
+            mUserVehicle.setText(num);
+            mUserVehicle.setEnabled(onVehicle);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(CODE, mCodeView.getSelectedItemPosition());
+        outState.putCharSequence(USER_COMMENT, mUserComment.getText());
+        outState.putBoolean(USER_ON_VEHICLE, mUserOnVehicle.isChecked());
+        outState.putCharSequence(USER_VEHICLE_NUM, mUserVehicle.getText());
     }
 
     @Override

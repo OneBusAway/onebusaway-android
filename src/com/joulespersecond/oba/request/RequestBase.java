@@ -132,7 +132,7 @@ public class RequestBase {
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
         ObaConnection conn = null;
         try {
-            conn = new ObaConnection(mUri);
+            conn = ObaApi.getConnectionFactory().newConnection(mUri);
             Reader reader;
             if (mPostData != null) {
                 reader = conn.post(mPostData);
@@ -161,7 +161,7 @@ public class RequestBase {
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
         ObaConnection conn = null;
         try {
-            conn = new ObaConnection(mUri);
+            conn = ObaApi.getConnectionFactory().newConnection(mUri);
             BufferedReader reader;
             reader = (BufferedReader)conn.post(mPostData);
 
@@ -175,6 +175,7 @@ public class RequestBase {
             if (TextUtils.isEmpty(response)) {
                 return handler.createFromError(cls, ObaApi.OBA_OK, "OK");
             } else {
+                // {"actionErrors":[],"fieldErrors":{"stopId":["requiredField.stopId"]}}
                 // TODO: Deserialize the JSON and check "fieldErrors"
                 // if this is empty, then it succeeded? Or check for an actual ObaResponse???
                 return handler.createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, response);

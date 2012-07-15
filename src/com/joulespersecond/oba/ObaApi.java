@@ -40,11 +40,13 @@ public final class ObaApi {
 
     private static int mAppVer = 0;
     private static String mAppUid = null;
+    private static ObaConnectionFactory mConnectionFactory = ObaDefaultConnectionFactory.getInstance();
 
     public static void setAppInfo(int version, String uuid) {
         mAppVer = version;
         mAppUid = uuid;
     }
+
     public static void setAppInfo(Uri.Builder builder) {
         if (mAppVer != 0) {
             builder.appendQueryParameter("app_ver", String.valueOf(mAppVer));
@@ -65,6 +67,16 @@ public final class ObaApi {
         return new GeoPoint((int)(lat*1E6), (int)(lon*1E6));
     }
 
+    /**
+     * Connection factory
+     */
+    public static void setConnectionFactory(ObaConnectionFactory factory) {
+        mConnectionFactory = factory;
+    }
+
+    public static ObaConnectionFactory getConnectionFactory() {
+        return mConnectionFactory;
+    }
 
     /**
      * Clears the object cache for low memory situations.

@@ -15,21 +15,12 @@
  */
 package com.joulespersecond.oba;
 
-import java.io.IOException;
-import java.io.Reader;
+import android.net.Uri;
 
-/**
- * Implements a basic connection object for ObaRequests.
- * These are created by the ObaConnectionFactory class.
- *
- * Under normal circumstances this is always implemented by
- * the ObaDefaultConnection class. In the unit tests, it is
- * replaced by the ObaMockConnection class.
- * @author paulw
- *
- */
-public interface ObaConnection {
-    public void disconnect();
-    public Reader get() throws IOException;
-    public Reader post(String string) throws IOException;
+import java.io.IOException;
+import java.net.URL;
+
+public interface ObaConnectionFactory {
+    public ObaConnection newConnection(URL url) throws IOException;
+    public ObaConnection newConnection(Uri uri) throws IOException;
 }

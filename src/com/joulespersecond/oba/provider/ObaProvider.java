@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class ObaProvider extends ContentProvider {
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
 
     private class OpenHelper extends SQLiteOpenHelper {
-        private static final int DATABASE_VERSION = 16;
+        private static final int DATABASE_VERSION = 17;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -115,6 +115,14 @@ public class ObaProvider extends ContentProvider {
                         "END");
                 ++oldVersion;
             }
+            if (oldVersion == 16) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                            ObaContract.ServiceAlerts.PATH         + " (" +
+                            ObaContract.ServiceAlerts._ID          + " VARCHAR PRIMARY KEY, " +
+                            ObaContract.ServiceAlerts.MARKED_READ_TIME  + " INTEGER " +
+                            ");");
+            }
         }
 
         private void bootstrapDatabase(SQLiteDatabase db) {
@@ -169,12 +177,15 @@ public class ObaProvider extends ContentProvider {
     private static final int TRIP_ALERTS= 7;
     private static final int TRIP_ALERTS_ID = 8;
     private static final int STOP_ROUTE_FILTERS = 9;
+    private static final int SERVICE_ALERTS = 10;
+    private static final int SERVICE_ALERTS_ID = 11;
 
     private static final UriMatcher sUriMatcher;
     private static final HashMap<String,String> sStopsProjectionMap;
     private static final HashMap<String,String> sRoutesProjectionMap;
     private static final HashMap<String,String> sTripsProjectionMap;
     private static final HashMap<String,String> sTripAlertsProjectionMap;
+    private static final HashMap<String,String> sServiceAlertsProjectionMap;
 
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
@@ -182,6 +193,7 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mTripsInserter;
     private DatabaseUtils.InsertHelper mTripAlertsInserter;
     private DatabaseUtils.InsertHelper mFilterInserter;
+    private DatabaseUtils.InsertHelper mServiceAlertsInserter;
 
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -194,6 +206,8 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TripAlerts.PATH, TRIP_ALERTS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.TripAlerts.PATH + "/#", TRIP_ALERTS_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopRouteFilters.PATH, STOP_ROUTE_FILTERS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH, SERVICE_ALERTS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH + "/*", SERVICE_ALERTS_ID);
 
         sStopsProjectionMap = new HashMap<String,String>();
         sStopsProjectionMap.put(ObaContract.Stops._ID,      ObaContract.Stops._ID);
@@ -242,6 +256,10 @@ public class ObaProvider extends ContentProvider {
         sTripAlertsProjectionMap.put(ObaContract.TripAlerts.START_TIME, ObaContract.TripAlerts.START_TIME);
         sTripAlertsProjectionMap.put(ObaContract.TripAlerts.STATE,      ObaContract.TripAlerts.STATE);
         sTripAlertsProjectionMap.put(ObaContract.TripAlerts._COUNT,     "count(*)");
+
+        sServiceAlertsProjectionMap = new HashMap<String,String>();
+        sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts._ID,              ObaContract.ServiceAlerts._ID);
+        sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.MARKED_READ_TIME, ObaContract.ServiceAlerts.MARKED_READ_TIME);
     }
 
     private SQLiteDatabase mDb;
@@ -279,6 +297,10 @@ public class ObaProvider extends ContentProvider {
             return ObaContract.TripAlerts.CONTENT_TYPE;
         case STOP_ROUTE_FILTERS:
             return ObaContract.StopRouteFilters.CONTENT_DIR_TYPE;
+        case SERVICE_ALERTS:
+            return ObaContract.ServiceAlerts.CONTENT_DIR_TYPE;
+        case SERVICE_ALERTS_ID:
+            return ObaContract.ServiceAlerts.CONTENT_TYPE;
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -385,8 +407,8 @@ public class ObaProvider extends ContentProvider {
         case STOP_ROUTE_FILTERS:
             // TODO: We should provide a "virtual" column that is an array,
             // so clients don't have to call the content provider for each item to insert.
-            // Pull out the Trip ID from the values to construct the new URI
-            // (And we'd better have a route ID)
+            // Pull out the stop ID from the values to construct the new URI
+            // (And we'd better have a stop ID)
             id = values.getAsString(ObaContract.StopRouteFilters.STOP_ID);
             if (id == null) {
                 throw new IllegalArgumentException("Need a stop ID to insert! " + uri);
@@ -395,11 +417,23 @@ public class ObaProvider extends ContentProvider {
             mFilterInserter.insert(values);
             return result;
 
+        case SERVICE_ALERTS:
+            // Pull out the Situation ID from the values to construct the new URI
+            // (And we'd better have a situation ID)
+            id = values.getAsString(ObaContract.ServiceAlerts._ID);
+            if (id == null) {
+                throw new IllegalArgumentException("Need a situation ID to insert! " + uri);
+            }
+            result = Uri.withAppendedPath(ObaContract.ServiceAlerts.CONTENT_URI, id);
+            mServiceAlertsInserter.insert(values);
+            return result;
+
         // What would these mean, anyway??
         case STOPS_ID:
         case ROUTES_ID:
         case TRIPS_ID:
         case TRIP_ALERTS_ID:
+        case SERVICE_ALERTS_ID:
             throw new UnsupportedOperationException("Cannot insert to this URI: " + uri);
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -477,6 +511,21 @@ public class ObaProvider extends ContentProvider {
             return qb.query(mDb, projection, selection, selectionArgs,
                     null, null, sortOrder, limit);
 
+        case SERVICE_ALERTS:
+            qb.setTables(ObaContract.ServiceAlerts.PATH);
+            qb.setProjectionMap(sServiceAlertsProjectionMap);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
+        case SERVICE_ALERTS_ID:
+            qb.setTables(ObaContract.ServiceAlerts.PATH);
+            qb.setProjectionMap(sServiceAlertsProjectionMap);
+            qb.appendWhere(ObaContract.ServiceAlerts._ID);
+            qb.appendWhere("=");
+            qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -517,6 +566,13 @@ public class ObaProvider extends ContentProvider {
         case STOP_ROUTE_FILTERS:
             return 0;
 
+        case SERVICE_ALERTS:
+            return db.update(ObaContract.ServiceAlerts.PATH, values, selection, selectionArgs);
+
+        case SERVICE_ALERTS_ID:
+            return db.update(ObaContract.ServiceAlerts.PATH, values,
+                    where(ObaContract.ServiceAlerts._ID, uri), selectionArgs);
+
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -554,6 +610,13 @@ public class ObaProvider extends ContentProvider {
 
         case STOP_ROUTE_FILTERS:
             return db.delete(ObaContract.StopRouteFilters.PATH, selection, selectionArgs);
+
+        case SERVICE_ALERTS:
+            return db.delete(ObaContract.ServiceAlerts.PATH, selection, selectionArgs);
+
+        case SERVICE_ALERTS_ID:
+            return db.delete(ObaContract.ServiceAlerts.PATH,
+                    where(ObaContract.ServiceAlerts._ID, uri), selectionArgs);
 
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -598,6 +661,7 @@ public class ObaProvider extends ContentProvider {
             mTripsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Trips.PATH);
             mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.StopRouteFilters.PATH);
+            mServiceAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.ServiceAlerts.PATH);
         }
         return mDb;
     }

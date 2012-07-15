@@ -40,9 +40,11 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
         super(uri);
     }
 
-    public static class Builder extends RequestBase.BuilderBase {
+    public static class Builder extends RequestBase.PostBuilderBase {
         public Builder(Context context, String tripId) {
             super(context, getPathWithId("/report-problem-with-trip/", tripId));
+            // The trip ID must also be included in the POST data
+            mPostData.appendQueryParameter("tripId", tripId);
         }
 
         /**
@@ -51,7 +53,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param stopId The stop ID.
          */
         public Builder setStopId(String stopId) {
-            mBuilder.appendQueryParameter("stopId", stopId);
+            mPostData.appendQueryParameter("stopId", stopId);
             return this;
         }
 
@@ -60,7 +62,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param serviceDate The service date.
          */
         public Builder setServiceDate(long serviceDate) {
-            mBuilder.appendQueryParameter("serviceDate", String.valueOf(serviceDate));
+            mPostData.appendQueryParameter("serviceDate", String.valueOf(serviceDate));
             return this;
         }
 
@@ -69,7 +71,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param vehicleId The vehicle actively serving the trip.
          */
         public Builder setVehicleId(String vehicleId) {
-            mBuilder.appendQueryParameter("vehicleId", vehicleId);
+            mPostData.appendQueryParameter("vehicleId", vehicleId);
             return this;
         }
 
@@ -78,7 +80,10 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param code The problem code.
          */
         public Builder setCode(String code) {
-            mBuilder.appendQueryParameter("code", code);
+            mPostData.appendQueryParameter("code", code);
+            // This is also for the old, JSON-encoded "data" format of the API.
+            String data = String.format("{\"code\":\"%s\"}", code);
+            mPostData.appendQueryParameter("data", data);
             return this;
         }
 
@@ -87,7 +92,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
-            mBuilder.appendQueryParameter("userComment", comment);
+            mPostData.appendQueryParameter("userComment", comment);
             return this;
         }
 
@@ -97,8 +102,8 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param lon The user's current location.
          */
         public Builder setUserLocation(double lat, double lon) {
-            mBuilder.appendQueryParameter("userLat", String.valueOf(lat));
-            mBuilder.appendQueryParameter("userLon", String.valueOf(lon));
+            mPostData.appendQueryParameter("userLat", String.valueOf(lat));
+            mPostData.appendQueryParameter("userLon", String.valueOf(lon));
             return this;
         }
 
@@ -107,7 +112,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {
-            mBuilder.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
+            mPostData.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
             return this;
         }
 
@@ -117,7 +122,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param onVehicle If the user is on the vehicle.
          */
         public Builder setUserOnVehicle(boolean onVehicle) {
-            mBuilder.appendQueryParameter("userOnVehicle", String.valueOf(onVehicle));
+            mPostData.appendQueryParameter("userOnVehicle", String.valueOf(onVehicle));
             return this;
         }
 
@@ -126,7 +131,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param vehicleNumber The vehicle as reported by the user.
          */
         public Builder setUserVehicleNumber(String vehicleNumber) {
-            mBuilder.appendQueryParameter("userVehicleNumber", vehicleNumber);
+            mPostData.appendQueryParameter("userVehicleNumber", vehicleNumber);
             return this;
         }
 

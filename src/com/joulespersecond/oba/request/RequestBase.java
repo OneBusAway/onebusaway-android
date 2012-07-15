@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
 package com.joulespersecond.oba.request;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaHelp;
+import com.joulespersecond.oba.ObaConnection;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
@@ -32,10 +35,19 @@ import java.io.Reader;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public class RequestBase {
+    private static final String TAG = "RequestBase";
+
     protected final Uri mUri;
+    protected final String mPostData;
 
     protected RequestBase(Uri uri) {
         mUri = uri;
+        mPostData = null;
+    }
+
+    protected RequestBase(Uri uri, String postData) {
+        mUri = uri;
+        mPostData = postData;
     }
 
     private static String getServer(Context context) {
@@ -99,21 +111,85 @@ public class RequestBase {
         }
     }
 
+    /**
+     * Subclass for BuilderBase that can handle post data as well.
+     * @author paulw
+     */
+    public static class PostBuilderBase extends BuilderBase {
+        protected final Uri.Builder mPostData;
+
+        protected PostBuilderBase(Context context, String path) {
+            super(context, path);
+            mPostData = new Uri.Builder();
+        }
+
+        public String buildPostData() {
+            return mPostData.build().getEncodedQuery();
+        }
+    }
+
     protected <T> T call(Class<T> cls) {
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
+        ObaConnection conn = null;
         try {
-            Reader reader = ObaHelp.getUri(mUri);
+            conn = new ObaConnection(mUri);
+            Reader reader;
+            if (mPostData != null) {
+                reader = conn.post(mPostData);
+            } else {
+                reader = conn.get();
+            }
             T t = handler.deserialize(reader, cls);
             if (t == null) {
                 t = handler.createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
             }
             return t;
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, e.toString());
             return handler.createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
             return handler.createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
+    protected <T> T callPostHack(Class<T> cls) {
+        ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
+        ObaConnection conn = null;
+        try {
+            conn = new ObaConnection(mUri);
+            BufferedReader reader;
+            reader = (BufferedReader)conn.post(mPostData);
+
+            String line;
+            StringBuffer text = new StringBuffer();
+            while ((line = reader.readLine()) != null) {
+                text.append(line + "\n");
+            }
+
+            String response = text.toString();
+            if (TextUtils.isEmpty(response)) {
+                return handler.createFromError(cls, ObaApi.OBA_OK, "OK");
+            } else {
+                // TODO: Deserialize the JSON and check "fieldErrors"
+                // if this is empty, then it succeeded? Or check for an actual ObaResponse???
+                return handler.createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, response);
+            }
+
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, e.toString());
+            return handler.createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
+            return handler.createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 }

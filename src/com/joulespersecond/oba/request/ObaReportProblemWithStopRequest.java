@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 
 public final class ObaReportProblemWithStopRequest extends RequestBase
         implements Callable<ObaReportProblemWithStopResponse> {
+    //private static final String TAG = "ObaReportProblemWithStopRequest";
 
     // The stop name in OneBusAway differs from the actual stop name.
     public static final String NAME_WRONG = "stop_name_wrong";
@@ -34,13 +35,15 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
     // Other
     public static final String OTHER = "other";
 
-    protected ObaReportProblemWithStopRequest(Uri uri) {
-        super(uri);
+    protected ObaReportProblemWithStopRequest(Uri uri, String postData) {
+        super(uri, postData);
     }
 
-    public static class Builder extends RequestBase.BuilderBase {
+    public static class Builder extends RequestBase.PostBuilderBase {
         public Builder(Context context, String stopId) {
             super(context, getPathWithId("/report-problem-with-stop/", stopId));
+            // The StopID also needs to be included in the post data.
+            mPostData.appendQueryParameter("stopId", stopId);
         }
 
         /**
@@ -48,7 +51,10 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param code The problem code.
          */
         public Builder setCode(String code) {
-            mBuilder.appendQueryParameter("code", code);
+            mPostData.appendQueryParameter("code", code);
+            // This is also for the old, JSON-encoded "data" format of the API.
+            String data = String.format("{\"code\":\"%s\"}", code);
+            mPostData.appendQueryParameter("data", data);
             return this;
         }
 
@@ -57,7 +63,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
-            mBuilder.appendQueryParameter("userComment", comment);
+            mPostData.appendQueryParameter("userComment", comment);
             return this;
         }
 
@@ -67,8 +73,8 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param lon The user's current location.
          */
         public Builder setUserLocation(double lat, double lon) {
-            mBuilder.appendQueryParameter("userLat", String.valueOf(lat));
-            mBuilder.appendQueryParameter("userLon", String.valueOf(lon));
+            mPostData.appendQueryParameter("userLat", String.valueOf(lat));
+            mPostData.appendQueryParameter("userLon", String.valueOf(lon));
             return this;
         }
 
@@ -77,18 +83,18 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {
-            mBuilder.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
+            mPostData.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
             return this;
         }
 
         public ObaReportProblemWithStopRequest build() {
-            return new ObaReportProblemWithStopRequest(buildUri());
+            return new ObaReportProblemWithStopRequest(buildUri(), buildPostData());
         }
     }
 
     @Override
     public ObaReportProblemWithStopResponse call() {
-        return call(ObaReportProblemWithStopResponse.class);
+        return callPostHack(ObaReportProblemWithStopResponse.class);
     }
 
     @Override

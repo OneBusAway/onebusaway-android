@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,44 +33,65 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-public final class ObaHelp {
+public final class ObaConnection {
     private static final String TAG = "ObaHelp";
 
-    public static Reader getUri(Uri uri) throws IOException {
-        return getUri(new URL(uri.toString()));
+    private HttpURLConnection mConnection;
+
+    public ObaConnection(URL url) throws IOException {
+        Log.d(TAG, url.toString());
+        mConnection = (HttpURLConnection)url.openConnection();
+        mConnection.setReadTimeout(30*1000);
     }
 
-    public static Reader getUri(URL url) throws IOException {
-        Log.d(TAG, url.toString());
+    public ObaConnection(Uri uri) throws IOException {
+        this(new URL(uri.toString()));
+    }
+
+    public void disconnect() {
+        mConnection.disconnect();
+    }
+
+    public Reader get() throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            return getUri_Gingerbread(url);
+            return get_Gingerbread();
         } else {
-            return getUri_Froyo(url);
+            return get_Froyo();
         }
+    }
+
+    public Reader post(String string) throws IOException {
+        byte[] data = string.getBytes();
+
+        mConnection.setDoOutput(true);
+        mConnection.setFixedLengthStreamingMode(data.length);
+        mConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+        // Set the output stream
+        OutputStream stream = mConnection.getOutputStream();
+        stream.write(data);
+        stream.flush();
+        stream.close();
+
+        InputStream in = mConnection.getInputStream();
+        return new BufferedReader(new InputStreamReader(in), 8*1024);
     }
 
     //
     // Gingerbread and above support Gzip natively.
     //
-    private static Reader getUri_Gingerbread(URL url) throws IOException {
-        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-        conn.setReadTimeout(30*1000);
-        conn.connect();
-
-        InputStream in = conn.getInputStream();
+    private Reader get_Gingerbread() throws IOException {
+        InputStream in = mConnection.getInputStream();
         return new BufferedReader(new InputStreamReader(in), 8*1024);
     }
 
-    private static Reader getUri_Froyo(URL url) throws IOException {
+    private Reader get_Froyo() throws IOException {
         boolean useGzip = false;
-        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-        conn.setReadTimeout(30*1000);
-        conn.setRequestProperty("Accept-Encoding", "gzip");
-        conn.connect();
+        mConnection.setRequestProperty("Accept-Encoding", "gzip");
 
-        InputStream in = conn.getInputStream();
+        InputStream in = mConnection.getInputStream();
 
-        final Map<String,List<String>> headers = conn.getHeaderFields();
+        final Map<String,List<String>> headers = mConnection.getHeaderFields();
         // This is a map, but we can't assume the key we're looking for
         // is in normal casing. So it's really not a good map, is it?
         final Set<Map.Entry<String,List<String>>> set = headers.entrySet();

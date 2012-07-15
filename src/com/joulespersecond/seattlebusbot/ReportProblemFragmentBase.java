@@ -9,6 +9,7 @@ import com.joulespersecond.oba.request.ObaResponse;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -72,7 +73,7 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
 
         if (response.getCode() == ObaApi.OBA_OK) {
             Toast.makeText(getActivity(), R.string.report_problem_sent, Toast.LENGTH_LONG).show();
-            getActivity().getSupportFragmentManager().popBackStack();
+            mGoBackHandler.postDelayed(mGoBack, 100);
         } else {
             Toast.makeText(getActivity(), R.string.report_problem_error, Toast.LENGTH_LONG).show();
         }
@@ -82,6 +83,13 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     public void onLoaderReset(Loader<ObaResponse> loader) {
         UIHelp.showProgress(this, false);
     }
+
+    final Handler mGoBackHandler = new Handler();
+    final Runnable mGoBack = new Runnable() {
+        public void run() {
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
+    };
 
     //
     // Report loader

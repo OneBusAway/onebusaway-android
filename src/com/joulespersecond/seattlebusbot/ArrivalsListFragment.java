@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.view.Menu;
@@ -649,35 +664,6 @@ public class ArrivalsListFragment extends ListFragment
     //
     // Situations
     //
-    /* {
-        id: "1_d362e151-7f62-4aa1-a9da-942cd755d2e1"
-        -summary: {
-            value: "Survey"
-            lang: "en"
-        }
-        consequences: [ ]
-        activeWindows: [ ]
-        reason: "UNKNOWN_CAUSE"
-        -description: {
-            value: "Please take our survey: http://onebusaway.org/"
-            lang: "en"
-        }
-        -allAffects: [
-            -{
-                directionId: ""
-                stopId: ""
-                tripId: ""
-                applicationId: ""
-                routeId: ""
-                agencyId: "1"
-            }
-        ]
-        creationTime: 0
-        severity: "noImpact"
-        publicationWindows: [ ]
-        url: null
-        }
-    */
     private class SituationAlert implements AlertList.Alert {
         private final ObaSituation mSituation;
 
@@ -694,6 +680,8 @@ public class ArrivalsListFragment extends ListFragment
         public int getType() {
             if ("noImpact".equals(mSituation.getSeverity())) {
                 return AlertList.Alert.TYPE_INFO;
+            } else if ("severe".equals(mSituation.getSeverity())) {
+                return AlertList.Alert.TYPE_ERROR;
             } else {
                 return AlertList.Alert.TYPE_WARNING;
             }
@@ -711,8 +699,7 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            // TODO Auto-generated method stub
-
+            SituationFragment.show(getSherlockActivity(), mSituation);
         }
 
         @Override

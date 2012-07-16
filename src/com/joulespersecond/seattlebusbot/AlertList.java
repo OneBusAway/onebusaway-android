@@ -54,22 +54,23 @@ class AlertList {
         protected void initView(View view, final Alert alert) {
             TextView text = (TextView)view.findViewById(android.R.id.text1);
             text.setText(alert.getString());
-            int drawableLeft = R.drawable.ic_action_alert_error;
+            int drawableLeft = 0; //R.drawable.ic_action_alert_error;
             int bg = R.color.alert_error;
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
+            int type = alert.getType();
 
-            switch (alert.getType()) {
+            switch (type) {
             case Alert.TYPE_ERROR:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_error;
                 break;
             case Alert.TYPE_WARNING:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_warning;
                 break;
             case Alert.TYPE_INFO:
             default:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_info;
                 break;
             }

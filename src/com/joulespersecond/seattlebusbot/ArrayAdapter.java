@@ -1,5 +1,6 @@
 package com.joulespersecond.seattlebusbot;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.view.LayoutInflater;
@@ -26,6 +27,7 @@ public abstract class ArrayAdapter<T> extends android.widget.ArrayAdapter<T> {
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
+    @TargetApi(11)
     public void setData(List<T> data) {
         clear();
         if (data != null) {

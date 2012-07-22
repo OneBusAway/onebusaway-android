@@ -20,8 +20,10 @@ import com.joulespersecond.oba.provider.ObaProvider;
 
 import org.apache.commons.io.FileUtils;
 
+import android.annotation.TargetApi;
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 
 import java.io.File;
@@ -41,11 +43,19 @@ public final class Backup {
     private static final String BACKUP_TYPE = "OBABackups";
     private static final String BACKUP_NAME = "db.backup";
 
+    public static boolean isBackupEnabled() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
+    }
+
     private static File getDB(Context context) {
         return ObaProvider.getDatabasePath(context);
     }
 
+    @TargetApi(8)
     private static File getBackup(Context context) {
+        if (!isBackupEnabled()) {
+            throw new RuntimeException("Backup isn't enabled!");
+        }
         File backupDir = Environment.getExternalStoragePublicDirectory(BACKUP_TYPE);
         return new File(backupDir, BACKUP_NAME);
     }

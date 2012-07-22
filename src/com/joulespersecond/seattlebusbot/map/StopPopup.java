@@ -23,6 +23,7 @@ import com.joulespersecond.seattlebusbot.MyTextUtils;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
@@ -160,6 +161,7 @@ class StopPopup {
             mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
+        @TargetApi(11)
         private void setData(List<ObaRoute> data) {
             clear();
             if (data != null) {

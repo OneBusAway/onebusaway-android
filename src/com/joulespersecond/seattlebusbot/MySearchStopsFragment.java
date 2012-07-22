@@ -27,8 +27,6 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.text.SpannableStringBuilder;
-import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -135,18 +133,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
         return 5;
     }
 
-    private static final String URL_STOPID = HomeActivity.HELP_URL + "#finding_stop_ids";
-
     @Override
     protected CharSequence getHintText() {
-        final CharSequence first = getText(R.string.find_hint_nofavoritestops);
-        final int firstLen = first.length();
-        final CharSequence second = getText(R.string.find_hint_nofavoritestops_link);
-
-        SpannableStringBuilder builder = new SpannableStringBuilder(first);
-        builder.append(second);
-        builder.setSpan(new URLSpan(URL_STOPID), firstLen, firstLen+second.length(), 0);
-        return builder;
+        return getText(R.string.find_hint_nofavoritestops);
     }
 
     @Override

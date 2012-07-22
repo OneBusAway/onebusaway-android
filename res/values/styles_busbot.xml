@@ -26,17 +26,13 @@
         <item name="actionDropDownStyle">@style/busbot_DropDownNav</item>
         <item name="actionBarStyle">@style/busbot_solid_ActionBar</item>
 
-        <item name="android:selectableItemBackground">@drawable/selectable_background_busbot</item>
+        <item name="android:actionBarItemBackground">@drawable/selectable_background_busbot</item>
         <item name="android:popupMenuStyle">@style/busbot_PopupMenu</item>
         <item name="android:dropDownListViewStyle">@style/busbot_DropDownListView</item>
         <item name="android:actionBarTabStyle">@style/busbot_ActionBarTabStyle</item>
         <item name="android:actionDropDownStyle">@style/busbot_DropDownNav</item>
         <item name="android:actionBarStyle">@style/busbot_solid_ActionBar</item>
         <item name="android:panelBackground">@drawable/menu_hardkey_panel_busbot</item>
-    </style>
-
-    <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
-        <item name="android:windowBackground">@null</item>
     </style>
 
     <style name="busbot_solid_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar.Solid">
@@ -59,7 +55,7 @@
         <item name="android:progressBarStyle">@style/busbot_ProgressBar</item>
     </style>
 
-    <style name="busbot_PopupMenu" parent="@android:style/Widget.Holo.Light.ListPopupWindow">
+    <style name="busbot_PopupMenu" parent="@style/Widget.Sherlock.Light.ListPopupWindow">
         <item name="android:popupBackground">@drawable/menu_dropdown_panel_busbot</item>
     </style>
 

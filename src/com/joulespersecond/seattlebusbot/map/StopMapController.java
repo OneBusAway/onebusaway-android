@@ -134,7 +134,7 @@ class StopMapController implements MapModeController,
             Activity act = mFragment.getActivity();
             Toast.makeText(act,
                     act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG);
+                    Toast.LENGTH_LONG).show();
             return;
         }
 

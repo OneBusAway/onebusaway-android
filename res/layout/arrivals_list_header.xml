@@ -65,14 +65,14 @@
             android:paddingRight="10dip"
             android:gravity="center">
             <Button
-                android:id="@+id/edit_name_save"
-                android:text="@string/stop_info_save"
+                android:id="@+id/edit_name_cancel"
+                android:text="@string/stop_info_cancel"
                 android:layout_height="wrap_content"
                 android:layout_width="0dip"
                 android:layout_weight="1"/>
             <Button
-                android:id="@+id/edit_name_cancel"
-                android:text="@string/stop_info_cancel"
+                android:id="@+id/edit_name_save"
+                android:text="@string/stop_info_save"
                 android:layout_height="wrap_content"
                 android:layout_width="0dip"
                 android:layout_weight="1"/>

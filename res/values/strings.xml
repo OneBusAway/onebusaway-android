@@ -168,8 +168,8 @@
     <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>
     <string name="trip_info_repeat_norepeat">One-time</string>
     <string name="trip_info_noname">(no name)</string>
-    <string name="trip_info_option_showroute">Show route</string>
-    <string name="trip_info_option_showstop">Show stop</string>
+    <string name="trip_info_option_showroute">Show Route</string>
+    <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->

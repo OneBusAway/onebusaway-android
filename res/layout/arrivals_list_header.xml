@@ -20,8 +20,7 @@
     android:id="@+id/arrivals_list_header"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="center_horizontal">
+    android:orientation="vertical">
     <LinearLayout
           android:id="@+id/name_container"
           android:orientation="horizontal"
@@ -39,11 +38,9 @@
               android:id="@+id/stop_name"
               style="@style/HeaderText"
               android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:focusable="true"
-              android:background="@drawable/focus_title_bg"/>
+              android:layout_height="wrap_content"/>
     </LinearLayout>
-       <LinearLayout
+    <LinearLayout
            android:id="@+id/edit_name_container"
         android:orientation="vertical"
         android:layout_width="fill_parent"
@@ -90,6 +87,7 @@
     <TextView
         android:id="@+id/direction"
         style="@style/Header2Text"
+        android:paddingLeft="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
     </TextView>

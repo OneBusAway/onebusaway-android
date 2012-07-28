@@ -14,13 +14,13 @@
      limitations under the License.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/trip_info_delete"
-          android:title="@string/trip_info_delete"
-          android:icon="@drawable/ic_action_trash"
-          android:showAsAction="ifRoom" />
     <item android:id="@+id/trip_info_save"
           android:title="@string/trip_info_save"
           android:icon="@drawable/ic_action_save"
+          android:showAsAction="ifRoom" />
+    <item android:id="@+id/trip_info_delete"
+          android:title="@string/trip_info_delete"
+          android:icon="@drawable/ic_action_trash"
           android:showAsAction="ifRoom" />
     <item android:id="@+id/show_route"
           android:title="@string/trip_info_option_showroute"

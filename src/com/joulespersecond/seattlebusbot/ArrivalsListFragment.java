@@ -172,7 +172,6 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
-        Log.d(TAG, "Load finished!");
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;

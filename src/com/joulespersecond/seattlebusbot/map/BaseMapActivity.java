@@ -39,7 +39,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
@@ -67,7 +66,7 @@ import java.util.List;
  */
 abstract public class BaseMapActivity extends SherlockMapActivity
             implements MapModeController.Callback {
-    private static final String TAG = "BaseMapActivity";
+    //private static final String TAG = "BaseMapActivity";
 
     private static final int NOLOCATION_DIALOG = 103;
     private static final int OUTOFRANGE_DIALOG = 104;
@@ -145,7 +144,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy: " + mStopUserMap);
+        //Log.d(TAG, "onDestroy: " + mStopUserMap);
         if (mStopUserMap != null) {
             mStopUserMap.close();
             mStopUserMap = null;
@@ -172,7 +171,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public void onResume() {
         mLocationOverlay.enableMyLocation();
 
-        Log.d(TAG, "onResume: " + mStopUserMap);
+        //Log.d(TAG, "onResume: " + mStopUserMap);
         if (mStopUserMap == null) {
             mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
         } else {
@@ -347,7 +346,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                         final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
                         final ObaStop stop = item.getStop();
                         mFocusStopId = stop.getId();
-                        Log.d(TAG, "Show stop popup");
+                        //Log.d(TAG, "Show stop popup");
                         mStopPopup.show(stop);
                     } else {
                         mStopPopup.hide();

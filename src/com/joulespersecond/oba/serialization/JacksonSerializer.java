@@ -88,11 +88,11 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
             // Hopefully this never returns null or throws.
             return mMapper.readValue(json, cls);
         } catch (JsonParseException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         } catch (JsonMappingException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         } catch (IOException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         }
         return null;
     }
@@ -129,13 +129,13 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
             return writer.toString();
 
         } catch (JsonGenerationException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_INTERNAL_ERROR, e.toString());
         } catch (JsonMappingException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_INTERNAL_ERROR, e.toString());
         } catch (IOException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_IO_EXCEPTION, e.toString());
         }
     }

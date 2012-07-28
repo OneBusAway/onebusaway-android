@@ -16,7 +16,6 @@
 package com.joulespersecond.oba;
 
 import android.os.Build;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,12 +32,12 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 public final class ObaDefaultConnection implements ObaConnection {
-    private static final String TAG = "ObaHelp";
+    //private static final String TAG = "ObaHelp";
 
     private HttpURLConnection mConnection;
 
     ObaDefaultConnection(URL url) throws IOException {
-        Log.d(TAG, url.toString());
+        //Log.d(TAG, url.toString());
         mConnection = (HttpURLConnection)url.openConnection();
         mConnection.setReadTimeout(30*1000);
     }

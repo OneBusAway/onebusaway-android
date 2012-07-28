@@ -28,7 +28,6 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -44,7 +43,7 @@ import java.util.Arrays;
 
 public class MySearchRoutesFragment extends MySearchFragmentBase
             implements LoaderManager.LoaderCallbacks<ObaRoutesForLocationResponse> {
-    private static final String TAG = "MySearchRoutesActivity";
+    //private static final String TAG = "MySearchRoutesActivity";
     private static final String QUERY_TEXT = "query_text";
 
     public static final String TAB_NAME = "search";
@@ -73,7 +72,6 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     @Override
     public Loader<ObaRoutesForLocationResponse> onCreateLoader(int id, Bundle args) {
-        Log.d(TAG, "Create loader");
         String query = args.getString(QUERY_TEXT);
         return new MyLoader(getActivity(), query, getSearchCenter());
     }
@@ -82,7 +80,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     public void onLoadFinished(Loader<ObaRoutesForLocationResponse> loader,
                         ObaRoutesForLocationResponse response) {
         UIHelp.showProgress(this, false);
-        Log.d(TAG, "Loader finished");
+        //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
             setEmptyText(getString(R.string.find_hint_noresults));

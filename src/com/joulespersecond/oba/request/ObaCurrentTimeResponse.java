@@ -17,15 +17,25 @@ package com.joulespersecond.oba.request;
 
 
 public final class ObaCurrentTimeResponse extends ObaResponse {
-    private static final class Data {
-        private static final Data EMPTY_OBJECT = new Data();
+    private static final class Entry {
+        private static final Entry EMPTY_OBJECT = new Entry();
 
         private final long time;
         private final String readableTime;
 
-        private Data() {
+        private Entry() {
             time = 0;
             readableTime = "";
+        }
+    }
+
+    private static final class Data {
+        private static final Data EMPTY_OBJECT = new Data();
+
+        private final Entry entry;
+
+        private Data() {
+            entry = Entry.EMPTY_OBJECT;
         }
     }
     private final Data data;
@@ -38,13 +48,13 @@ public final class ObaCurrentTimeResponse extends ObaResponse {
      * @return The time as milliseconds past the epoch.
      */
     public long getTime() {
-        return data.time;
+        return data.entry.time;
     }
 
     /**
      * @return The time in ISO8601 format.
      */
     public String getReadableTime() {
-        return data.readableTime;
+        return data.entry.readableTime;
     }
 }

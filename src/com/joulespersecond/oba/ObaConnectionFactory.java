@@ -18,9 +18,7 @@ package com.joulespersecond.oba;
 import android.net.Uri;
 
 import java.io.IOException;
-import java.net.URL;
 
 public interface ObaConnectionFactory {
-    public ObaConnection newConnection(URL url) throws IOException;
     public ObaConnection newConnection(Uri uri) throws IOException;
 }

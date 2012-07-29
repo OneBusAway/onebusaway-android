@@ -18,7 +18,6 @@ package com.joulespersecond.oba;
 import android.net.Uri;
 
 import java.io.IOException;
-import java.net.URL;
 
 public class ObaDefaultConnectionFactory implements ObaConnectionFactory {
     private ObaDefaultConnectionFactory() { }
@@ -32,12 +31,7 @@ public class ObaDefaultConnectionFactory implements ObaConnectionFactory {
     }
 
     @Override
-    public ObaConnection newConnection(URL url) throws IOException {
-        return new ObaDefaultConnection(url);
-    }
-
-    @Override
     public ObaConnection newConnection(Uri uri) throws IOException {
-        return newConnection(new URL(uri.toString()));
+        return new ObaDefaultConnection(uri);
     }
 }

@@ -37,7 +37,6 @@ public class ScheduleForStopTest extends ObaTestCase {
                 request);
     }
 
-    // TODO: is schedule-for-stop response correct?
     public void testKCMStop() {
         ObaScheduleForStopResponse response =
             new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
@@ -59,9 +58,9 @@ public class ScheduleForStopTest extends ObaTestCase {
 
     public void testKCMStopRequestWithDate() {
         Time time = new Time();
-        time.year = 2011;
-        time.month = 9;
-        time.monthDay = 26;
+        time.year = 2012;
+        time.month = 6;
+        time.monthDay = 30;
         ObaScheduleForStopRequest request =
             new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
                 .setDate(time)
@@ -69,7 +68,7 @@ public class ScheduleForStopTest extends ObaTestCase {
         UriAssert.assertUriMatch(
                 "http://api.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
-                    put("date", "2011-10-26");
+                    put("date", "2012-07-30");
                     put("key", "*");
                     put("version", "2");
                 }},
@@ -77,18 +76,26 @@ public class ScheduleForStopTest extends ObaTestCase {
     }
 
     public void testKCMStopResponseWithDate() throws Exception {
-        ObaScheduleForStopResponse response = getRawResourceAs("schedule_for_stop_1_75403", ObaScheduleForStopResponse.class);
+        Time time = new Time();
+        time.year = 2012;
+        time.month = 6;
+        time.monthDay = 30;
+        ObaScheduleForStopRequest request =
+            new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                .setDate(time)
+                .build();
+        ObaScheduleForStopResponse response = request.call();
         assertOK(response);
         final ObaStop stop = response.getStop();
         assertEquals("1_75403", stop.getId());
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
-        assertEquals("1_31", schedules[0].getRouteId());
+        assertEquals("1_25", schedules[0].getRouteId());
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
-        assertEquals("CENTRAL MAGNOLIA FREMONT", dirs[0].getTripHeadsign());
+        assertEquals("DOWNTOWN SEATTLE UNIVERSITY DISTRICT", dirs[0].getTripHeadsign());
         final ObaRouteSchedule.Time[] times = dirs[0].getStopTimes();
         assertTrue(times.length > 0);
-        assertEquals("1_18196572", times[0].getTripId());
+        assertEquals("1_20969000", times[0].getTripId());
     }
 }

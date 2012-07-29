@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.oba;
 
+import android.net.Uri;
 import android.os.Build;
 
 import java.io.BufferedReader;
@@ -36,8 +37,9 @@ public final class ObaDefaultConnection implements ObaConnection {
 
     private HttpURLConnection mConnection;
 
-    ObaDefaultConnection(URL url) throws IOException {
+    ObaDefaultConnection(Uri uri) throws IOException {
         //Log.d(TAG, url.toString());
+        URL url = new URL(uri.toString());
         mConnection = (HttpURLConnection)url.openConnection();
         mConnection.setReadTimeout(30*1000);
     }

@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.oba.request.test;
+package com.joulespersecond.oba.mock;
 
 import com.joulespersecond.oba.ObaConnection;
 
 import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.net.URL;
 
 public class MockConnection implements ObaConnection {
-    private final Context mContext;
-    private final URL mUrl;
+    private static final String TAG = "MockConnection";
 
-    MockConnection(Context context, URL url) {
+    private final MockConnectionFactory.UriMap mUriMap;
+    private final Context mContext;
+    private final Uri mUri;
+
+    MockConnection(Context context,
+            MockConnectionFactory.UriMap map,
+            Uri uri) {
+        mUriMap = map;
         mContext = context;
-        mUrl = url;
+        mUri = uri;
     }
 
     @Override
@@ -38,13 +45,14 @@ public class MockConnection implements ObaConnection {
 
     @Override
     public Reader get() throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        Log.d(TAG, "Get URI: " + mUri);
+        // Find a mock response for this URI.
+        String response = mUriMap.getUri(mUri);
+        return Resources.read(mContext, Resources.getTestUri(response));
     }
 
     @Override
     public Reader post(String string) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 }

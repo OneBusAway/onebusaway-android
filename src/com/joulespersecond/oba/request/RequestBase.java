@@ -70,11 +70,6 @@ public class RequestBase {
             ObaApi.setAppInfo(mBuilder);
         }
 
-        protected BuilderBase(Context context, String path, boolean noVersion) {
-            mBuilder = Uri.parse("http://"+getServer(context)+path).buildUpon();
-            ObaApi.setAppInfo(mBuilder);
-        }
-
         protected static String getPathWithId(String pathElement, String id) {
             StringBuilder builder = new StringBuilder(BASE_PATH);
             builder.append(pathElement);

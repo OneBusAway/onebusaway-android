@@ -70,8 +70,10 @@ public final class ObaApi {
     /**
      * Connection factory
      */
-    public static void setConnectionFactory(ObaConnectionFactory factory) {
+    public static ObaConnectionFactory setConnectionFactory(ObaConnectionFactory factory) {
+        ObaConnectionFactory prev = mConnectionFactory;
         mConnectionFactory = factory;
+        return prev;
     }
 
     public static ObaConnectionFactory getConnectionFactory() {

@@ -57,8 +57,8 @@ public class MockConnectionFactory implements ObaConnectionFactory {
                 Arrays.asList("version", "key", "app_ver", "app_uid");
 
         private String normalizeUri(Uri uri) {
-            Uri.Builder builder = new Uri.Builder();
-            builder.appendEncodedPath(uri.getEncodedPath());
+            Uri.Builder builder = new Uri.Builder()
+                .encodedPath(uri.getEncodedPath());
             // getQueryParameterNames returns an unmodifiable set.
             // In any case, we need the parameters in sorted order
             TreeSet<String> params = new TreeSet<String>(UriCompat.getQueryParameterNames(uri));

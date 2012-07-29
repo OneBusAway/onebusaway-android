@@ -21,6 +21,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -48,6 +49,9 @@ public class MockConnection implements ObaConnection {
         Log.d(TAG, "Get URI: " + mUri);
         // Find a mock response for this URI.
         String response = mUriMap.getUri(mUri);
+        if ("__404__".equals(response)) {
+            throw new FileNotFoundException();
+        }
         return Resources.read(mContext, Resources.getTestUri(response));
     }
 

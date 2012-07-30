@@ -36,8 +36,8 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
     // Other
     public static final String OTHER = "other";
 
-    protected ObaReportProblemWithTripRequest(Uri uri) {
-        super(uri);
+    protected ObaReportProblemWithTripRequest(Uri uri, String postData) {
+        super(uri, postData);
     }
 
     public static class Builder extends RequestBase.PostBuilderBase {
@@ -136,13 +136,13 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
         }
 
         public ObaReportProblemWithTripRequest build() {
-            return new ObaReportProblemWithTripRequest(buildUri());
+            return new ObaReportProblemWithTripRequest(buildUri(), buildPostData());
         }
     }
 
     @Override
     public ObaReportProblemWithTripResponse call() {
-        return call(ObaReportProblemWithTripResponse.class);
+        return callPostHack(ObaReportProblemWithTripResponse.class);
     }
 
     @Override

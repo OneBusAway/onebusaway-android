@@ -209,7 +209,14 @@ class RouteMapController implements MapModeController,
             cancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mFragment.setMapMode(MapParams.MODE_STOP, null);
+                    MapView mapView = mFragment.getMapView();
+                    // We want to preserve the current zoom and center.
+                    Bundle bundle = new Bundle();
+                    bundle.putInt(MapParams.ZOOM, mapView.getZoomLevel());
+                    GeoPoint point = mapView.getMapCenter();
+                    bundle.putDouble(MapParams.CENTER_LAT, point.getLatitudeE6() / 1E6);
+                    bundle.putDouble(MapParams.CENTER_LON, point.getLongitudeE6() / 1E6);
+                    mFragment.setMapMode(MapParams.MODE_STOP, bundle);
                 }
             });
         }

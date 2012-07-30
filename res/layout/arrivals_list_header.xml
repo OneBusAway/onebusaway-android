@@ -87,7 +87,7 @@
     <TextView
         android:id="@+id/direction"
         style="@style/Header2Text"
-        android:paddingLeft="30dp"
+        android:paddingLeft="@dimen/arrivals_header_pad_left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
     </TextView>
@@ -100,6 +100,7 @@
         <TextView
             android:id="@+id/filter"
             style="@style/Header2Text"
+        	android:paddingLeft="@dimen/arrivals_header_pad_left"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
         </TextView>

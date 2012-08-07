@@ -16,7 +16,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.joulespersecond.seattlebusbot"
       android:versionCode="23"
-      android:versionName="1.5.0b1">
+      android:versionName="1.5.0">
     <permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
         android:label="@string/trip_service_perm_label"
         android:description="@string/trip_service_perm_description"

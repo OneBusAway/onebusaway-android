@@ -16,10 +16,11 @@
 package com.joulespersecond.oba;
 
 import com.google.android.maps.GeoPoint;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.joulespersecond.oba.serialization.JacksonSerializer;
 
 import android.net.Uri;
+
+import java.io.Reader;
 
 public final class ObaApi {
     //private static final String TAG = "ObaApi";
@@ -37,54 +38,15 @@ public final class ObaApi {
     public static final String VERSION1 = "1";
     public static final String VERSION2 = "2";
 
-    private static class GsonHolder {
-        /*
-        static final JsonHelp.CachingDeserializer<ObaAgency> mAgencyDeserializer =
-            new JsonHelp.CachingDeserializer<ObaAgency>(
-                    new ObaAgency.Deserialize(), "id");
-        static final JsonHelp.CachingDeserializer<ObaRoute> mRouteDeserializer =
-            new JsonHelp.CachingDeserializer<ObaRoute>(
-                    new ObaRoute.Deserialize(), "id");
-        static final JsonHelp.CachingDeserializer<ObaStop> mStopDeserializer =
-            new JsonHelp.CachingDeserializer<ObaStop>(
-                    new ObaStop.Deserialize(), "id");
-        */
-
-        //@SuppressWarnings("unchecked")
-        static final Gson gsonObj = new GsonBuilder()
-            /*
-            .registerTypeAdapter(ObaArray.class, new ObaArray.Deserializer())
-            .registerTypeAdapter(ObaRefMap.class, new ObaRefMap.Deserializer())
-            .registerTypeAdapter(ObaResponse.class, new ObaResponse.Deserializer())
-            .registerTypeAdapter(ObaData2.class, new ObaData2.Deserializer())
-            .registerTypeAdapter(ObaEntry.class, new ObaEntry.Deserializer())
-            .registerTypeAdapter(ObaReferences.class, new ObaReferences.Deserializer())
-            .registerTypeAdapter(ObaAgency.class, mAgencyDeserializer)
-            .registerTypeAdapter(ObaRoute.class, mRouteDeserializer)
-            .registerTypeAdapter(ObaStop.class, mStopDeserializer)
-            */
-            .create();
-
-        static final void clearCache() {
-            /*
-            mAgencyDeserializer.clear();
-            mRouteDeserializer.clear();
-            mStopDeserializer.clear();
-            */
-        }
-    }
-
-    public static Gson getGson() {
-        return GsonHolder.gsonObj;
-    }
-
     private static int mAppVer = 0;
     private static String mAppUid = null;
+    private static ObaConnectionFactory mConnectionFactory = ObaDefaultConnectionFactory.getInstance();
 
     public static void setAppInfo(int version, String uuid) {
         mAppVer = version;
         mAppUid = uuid;
     }
+
     public static void setAppInfo(Uri.Builder builder) {
         if (mAppVer != 0) {
             builder.appendQueryParameter("app_ver", String.valueOf(mAppVer));
@@ -106,9 +68,33 @@ public final class ObaApi {
     }
 
     /**
+     * Connection factory
+     */
+    public static ObaConnectionFactory setConnectionFactory(ObaConnectionFactory factory) {
+        ObaConnectionFactory prev = mConnectionFactory;
+        mConnectionFactory = factory;
+        return prev;
+    }
+
+    public static ObaConnectionFactory getConnectionFactory() {
+        return mConnectionFactory;
+    }
+
+    /**
      * Clears the object cache for low memory situations.
      */
     public static final void clearCache() {
-        GsonHolder.clearCache();
+        // TODO: is there anything we can do to clear Jackson cache?
+    }
+
+    public interface SerializationHandler {
+        <T> T deserialize(Reader reader, Class<T> cls);
+        String serialize(Object obj);
+
+        <T> T createFromError(Class<T> cls, int code, String error);
+    }
+
+    public static final <T> SerializationHandler getSerializer(Class<T> cls) {
+        return JacksonSerializer.getInstance();
     }
 }

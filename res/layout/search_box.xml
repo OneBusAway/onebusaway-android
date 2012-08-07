@@ -26,8 +26,11 @@
             android:singleLine="true"
             android:imeOptions="actionSearch" />
         <ImageButton
-            android:id="@+id/search"
+            android:id="@+id/search_button"
             android:src="@drawable/ic_btn_search"
+            android:padding="5dp"
+            android:background="@null"
+            android:contentDescription="@string/search"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical" />

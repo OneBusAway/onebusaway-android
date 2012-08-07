@@ -18,40 +18,37 @@ package com.joulespersecond.oba.elements;
 import java.util.List;
 
 public interface ObaSituation extends ObaElement {
-    public static final String REASON_TYPE_EQUIPMENT = "equipment";
-    public static final String REASON_TYPE_ENVIRONMENT = "environment";
-    public static final String REASON_TYPE_PERSONNEL = "personnel";
-    public static final String REASON_TYPE_MISCELLANEOUS = "miscellaneous";
-    public static final String REASON_TYPE_UNDEFINED = "undefined";
-
-    public interface VehicleJourney {
+    public interface AllAffects {
         /**
-         * @return An optional direction ID specify the direction of travel.
+         * The list of affected direction IDs.
+         * @return The affected direction ID, if any.
          */
-        public String getDirection();
+        public String getDirectionId();
 
         /**
-         * @return The ID of the affected route.
+         * @return The affected stop ID, if any.
+         */
+        public String getStopId();
+
+        /**
+         * @return The affected trip ID, if any.
+         */
+        public String getTripId();
+
+        /**
+         * @return The affected application ID, if any.
+         */
+        public String getApplicationId();
+
+        /**
+         * @return The affected route ID, if any.
          */
         public String getRouteId();
 
         /**
-         * @return A list of stop IDs along the vehicle journey that are affected.
+         * @return The affected agency ID, if any.
          */
-        public List<String> getStopIds();
-    }
-
-    public interface Affects {
-        /**
-         * The list of affected stop IDs.
-         * @return
-         */
-        public List<String> getStopIds();
-
-        /**
-         * @return An array of transit vehicle journeys the situation affects.
-         */
-        public VehicleJourney[] getVehicleJourneys();
+        public String getAgencyId();
     }
 
     public interface ConditionDetails {
@@ -104,11 +101,6 @@ public interface ObaSituation extends ObaElement {
     public String getReason();
 
     /**
-     * @return The type of alert code.
-     */
-    public String getReasonType();
-
-    /**
      * @return The Unix timestamp of when this situation was created.
      */
     public long getCreationTime();
@@ -116,13 +108,15 @@ public interface ObaSituation extends ObaElement {
     /**
      * @return Information on what stops and routes this situation affects.
      */
-    public Affects getAffects();
+    public AllAffects[] getAllAffects();
 
     /**
      * @return An array of consequences of this situation
      */
     public Consequence[] getConsequences();
 
-    // getInternal
-    // getDetail?
+    /**
+     * @return The severity of the situation.
+     */
+    public String getSeverity();
 }

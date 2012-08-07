@@ -14,12 +14,14 @@
      limitations under the License.
 -->
 <resources>
+    <color name="light_gray">#f0f0f0</color>
     <color name="focus">#ff8e00</color>
-    <color name="item_selected">#0FF</color>
-    <color name="tab_widget_bg">#ff202020</color>
     <color name="route_overlay_line">#00F</color>
     <color name="stop_info_ontime">#00ff00</color>
     <color name="stop_info_delayed">#0000ff</color>
     <color name="stop_info_early">#ff0000</color>
     <color name="stop_info_scheduled">#008000</color>
+    <color name="alert_error">#FFC4C4</color>
+    <color name="alert_warning">#FFFF99</color>
+    <color name="alert_info">#f0f0f0</color>
 </resources>

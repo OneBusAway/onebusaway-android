@@ -17,48 +17,22 @@
          android:orientation="vertical"
          android:layout_width="fill_parent"
          android:layout_height="fill_parent">
-    <TableLayout
-        style="@style/HeaderItem"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <TableRow>
-            <TextView
-                android:id="@+id/short_name"
-                style="@style/RouteInfoShortName"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_column="0"
-                android:singleLine="false">
-            </TextView>
-            <LinearLayout
-                android:orientation="vertical"
-                android:layout_column="1">
-                <TextView
-                    android:id="@+id/long_name"
-                    style="@style/RouteInfoLongName"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-                </TextView>
-                <TextView
-                    android:id="@+id/agency"
-                    style="@style/RouteInfoAgency"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-                </TextView>
-            </LinearLayout>
-        </TableRow>
-    </TableLayout>
 
-    <ExpandableListView android:id="@id/android:list"
-        style="@style/HeaderList"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
-
+    <include layout="@layout/route_info_head" />
     <include layout="@layout/loading" />
 
-    <TextView android:id="@id/android:empty"
-        style="@style/ListHintText"
+    <FrameLayout
+        android:id="@+id/listContainer"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="fill_parent">
+        <ExpandableListView android:id="@id/android:list"
+            style="@style/HeaderList"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" />
+
+        <TextView android:id="@+id/internalEmpty"
+            style="@style/ListHintText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
 </LinearLayout>

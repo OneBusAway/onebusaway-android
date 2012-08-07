@@ -15,14 +15,42 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.test.AndroidTestCase;
-
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.ObaConnectionFactory;
+import com.joulespersecond.oba.mock.MockConnectionFactory;
 import com.joulespersecond.oba.request.ObaResponse;
 
+import android.test.AndroidTestCase;
+
 public class ObaTestCase extends AndroidTestCase {
+    private MockConnectionFactory mMockFactory = null;
+    private ObaConnectionFactory mOldFactory = null;
+
+    @Override
+    protected void setUp() {
+        enableMock();
+    }
+
+    @Override
+    protected void tearDown() {
+        disableMock();
+    }
+
     public static void assertOK(ObaResponse response) {
         assertNotNull(response);
         assertEquals(ObaApi.OBA_OK, response.getCode());
+    }
+
+    protected void enableMock() {
+        if (mMockFactory == null) {
+            mMockFactory = new MockConnectionFactory(getContext());
+        }
+        mOldFactory = ObaApi.setConnectionFactory(mMockFactory);
+    }
+
+    protected void disableMock() {
+        if (mOldFactory != null) {
+            ObaApi.setConnectionFactory(mOldFactory);
+        }
     }
 }

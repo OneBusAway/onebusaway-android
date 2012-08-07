@@ -17,6 +17,10 @@
 
     <string name="app_name">OneBusAway</string>
 
+    <!-- Permissions -->
+    <string name="trip_service_perm_label">start the trip service</string>
+    <string name="trip_service_perm_description">Allows the application to implement reminders for upcoming buses.</string>
+
     <!-- Generic -->
     <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
@@ -33,34 +37,34 @@
     <string name="direction_w">Westbound</string>
     <string name="direction_nw">Northwest bound</string>
     <string name="direction_none"></string>
-    <string name="loading">Loading...</string>
+    <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
     <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
+    <string name="search_hint">Search stops or routes</string>
+    <string name="search">Search</string>
 
     <!--  Option strings -->
-    <string name="main_option_mylocation">My Location</string>
+    <string name="map_option_mylocation">My Location</string>
+    <string name="map_option_search">Search</string>
     <string name="main_option_findroute">My Routes</string>
     <string name="main_option_findstop">My Stops</string>
-    <string name="main_option_viewtrips">View Reminders</string>
+    <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Show route paths directly from the map!\n\nSearch from the search button!\n\nEasier to install shortcuts!</string>
+    <string name="main_help_whatsnew">All new UI!\n\nSave/restore your data!\n\nBetter bug reporting!\n\nMuch more!</string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
-    <string name="main_waiting_for_location">Trying to get a fix on your location...</string>
+    <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
-    <string name="main_outofrange_title">Out of range</string>
     <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
-    <string name="main_outofrange_yes">Take me there!</string>
-    <string name="main_outofrange_no">Stay here</string>
+    <string name="main_stop_errors">Problem getting stops!</string>
 
     <!--  Stop Info -->
-    <string name="stop_info_title">OneBusAway</string>
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
       <item quantity="one">1 minute delay</item>
@@ -89,6 +93,7 @@
     <string name="stop_info_option_editname">Edit Name</string>
     <string name="stop_info_option_addstar">Add Star</string>
     <string name="stop_info_option_removestar">Remove Star</string>
+    <string name="stop_info_option_reportproblem">Report Problem</string>
     <string name="stop_info_nodata">There are no upcoming arrivals at this stop.</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
@@ -98,9 +103,9 @@
     <string name="stop_info_cancel">Cancel</string>
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_old_data">Data updated %s</string>
+    <string name="stop_info_favorite">Favorite stop</string>
 
     <!-- Route Info  -->
-    <string name="route_info_title">OneBusAway</string>
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_goto_url">View schedule</string>
@@ -112,25 +117,27 @@
     <string name="my_no_recent_stops">You have no recent stops.</string>
     <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on the arrivals screen.</string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
-    <string name="my_no_starred_routes">You have no starred routes.</string>
+    <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
 
     <string name="my_option_clear_recent_stops">Clear recent stops</string>
     <string name="my_option_clear_recent_routes">Clear recent routes</string>
     <string name="my_option_clear_starred_stops">Remove all starred stops</string>
-    <string name="my_option_clear_starred_routes">Remove all starred routes</string>
+    <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
+    <string name="my_option_clear_confirm">There\'s no going back! Go ahead?</string>
+    <string name="my_option_clear_confirm_title">Sure about this?</string>
 
     <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
     <string name="my_context_create_shortcut">Create shortcut</string>
+    <string name="my_context_create_shortcut_success">A shortcut was placed on your home screen!</string>
     <string name="my_context_showonmap">Show on map</string>
     <string name="my_context_remove_recent">Remove from recent</string>
     <string name="my_context_remove_star">Remove star</string>
     <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Find -->
-    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\n</string>
+    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.</string>
     <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in the search box.</string>
-    <string name="find_hint_nofavoritestops_link">What\'s a stop number?</string>
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
@@ -140,11 +147,10 @@
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>
-    <string name="starred_routes_shortcut">Starred Routes</string>
+    <!-- <string name="starred_routes_shortcut">Starred Routes</string> -->
     <string name="route_name">Route %s</string>
 
     <!--  Trip info -->
-    <string name="trip_info_title">OneBusAway</string>
     <string name="trip_info_name">Reminder name</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
@@ -155,19 +161,18 @@
     <string name="trip_info_cancel">Cancel</string>
     <string name="trip_info_delete">Delete</string>
     <string name="trip_info_saved">Trip saved.</string>
-    <string name="trip_info_deleted">Trip deleted.</string>
     <string name="trip_info_dismiss">Cancel</string>
-    <string name="trip_info_delete_trip">This trip will be deleted.</string>
+    <string name="trip_info_delete_trip">This reminder will be deleted.</string>
     <string name="trip_info_repeat_every">Every %s</string>
     <string name="trip_info_repeat_everyday">Everyday</string>
     <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>
     <string name="trip_info_repeat_norepeat">One-time</string>
     <string name="trip_info_noname">(no name)</string>
-    <string name="trip_info_option_showroute">Show route</string>
-    <string name="trip_info_option_showstop">Show stop</string>
+    <string name="trip_info_option_showroute">Show Route</string>
+    <string name="trip_info_option_showstop">Show Stop</string>
+    <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->
-    <string name="trip_list_title">OneBusAway</string>
     <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>
@@ -180,15 +185,39 @@
     <string name="trip_stat_one">Route %s is 1 minute away!</string>
     <string name="trip_stat">Route %1$s is %2$d minutes away!</string>
 
+    <!-- Report problem -->
+    <string name="report_problem_code">What\'s the problem?</string>
+    <string name="report_problem_comment">Anything else?</string>
+    <string name="report_problem_comment_hint">optional</string>
+    <string name="report_problem_email">Your email address</string>
+    <string name="report_problem_email_hint">optional</string>
+    <string name="report_problem_cancel">Cancel</string>
+    <string name="report_problem_send">Send</string>
+    <string name="report_problem_hint">Your reports help OneBusAway find and fix problems!</string>
+    <string name="report_problem_sent">Report sent! Thank you!</string>
+    <string name="report_problem_error">Unable to send the report. Try again?</string>
+    <!-- TODO: Modes -->
+    <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
+    <string name="report_problem_vehiclenumber_bus">Bus number</string>
+    <string name="report_problem_uservehicle_hint">optional</string>
+
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>
     <string name="bug_report_subject">OneBusAway: Bug Report</string>
-    <string name="bug_report_body">What were you doing when the bug happened? Provide steps if possible:\n\n\nWhat did you expect to happen? What happened instead?\n\n\nAnything else we should know?\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$s\n</string>
+    <string name="bug_report_body">Describe the problem:\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$d\n</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
     <string name="preferences_oba_api_servername_default">api.onebusaway.org</string>
-
+    <string name="preferences_save_title">Save to SD card</string>
+    <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
+    <string name="preferences_restore_title">Restore from SD card</string>
+    <string name="preferences_restore_summary">Restores from previous save</string>
+    <string name="preferences_db_saved">Saved successfully!</string>
+    <string name="preferences_db_save_error">Unable to save: %1$s</string>
+    <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?</string>
+    <string name="preferences_db_restored">Restore successful! Please restart OneBusAway.</string>
+    <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
 </resources>

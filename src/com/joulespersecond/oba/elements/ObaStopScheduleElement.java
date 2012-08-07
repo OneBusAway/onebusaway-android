@@ -19,14 +19,14 @@ package com.joulespersecond.oba.elements;
 public final class ObaStopScheduleElement implements ObaStopSchedule {
     public static final ObaStopScheduleElement EMPTY_OBJECT = new ObaStopScheduleElement();
 
-    private final ObaStopElement stop;
+    private final String stopId;
     private final String timeZone;
     private final long date;
     private final CalendarDay[] stopCalendarDays;
     private final ObaRouteSchedule[] stopRouteSchedules;
 
     ObaStopScheduleElement() {
-        stop = ObaStopElement.EMPTY_OBJECT;
+        stopId = "";
         timeZone = "";
         date = 0;
         stopCalendarDays = CalendarDay.EMPTY_ARRAY;
@@ -34,8 +34,8 @@ public final class ObaStopScheduleElement implements ObaStopSchedule {
     }
 
     @Override
-    public ObaStop getStop() {
-        return stop;
+    public String getStopId() {
+        return stopId;
     }
 
     @Override

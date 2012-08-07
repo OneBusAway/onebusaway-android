@@ -15,13 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot.test;
 
+/*
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.test.ObaTestCase;
 import com.joulespersecond.seattlebusbot.MapViewActivity;
-import com.joulespersecond.seattlebusbot.StopsController;
+import com.joulespersecond.seattlebusbot.map.StopsController;
 
 public class MapViewActivityTest extends
         ActivityInstrumentationTestCase2<MapViewActivity> {
@@ -89,10 +90,5 @@ public class MapViewActivityTest extends
             }
         });
     }
-
-    /*
-    public void testFocusMode() {
-
-    }
-    */
 }
+*/

@@ -52,7 +52,7 @@ public interface ObaStopSchedule {
     /**
      * @return Information about the requested stop.
      */
-    public ObaStop getStop();
+    public String getStopId();
 
     /**
      * @return The time zone the stop is located in.

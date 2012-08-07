@@ -15,29 +15,34 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
 import com.google.android.maps.GeoPoint;
 
-import android.app.TabActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 
-abstract class MyTabActivityBase extends TabActivity {
+
+abstract class MyTabActivityBase extends SherlockFragmentActivity {
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
-    public static final String EXTRA_SEARCHMODE = ".SearchMode";
     public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
     public static final String RESULT_ROUTE_ID = ".RouteId";
 
     protected boolean mShortcutMode;
-    protected boolean mSearchMode;
     protected GeoPoint mSearchCenter;
     private String mDefaultTab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        UIHelp.setupActionBar(this);
+        setSupportProgressBarIndeterminateVisibility(false);
 
         final Intent intent = getIntent();
         final String action = intent.getAction();
@@ -46,34 +51,39 @@ abstract class MyTabActivityBase extends TabActivity {
             setTitle(R.string.app_name);
         }
 
-        mSearchMode = intent.getBooleanExtra(EXTRA_SEARCHMODE, false);
         mSearchCenter = getSearchCenter(intent);
 
         // Determine what tab we're supposed to show by default
+        if (savedInstanceState != null) {
+            mDefaultTab = savedInstanceState.getString("tab");
+        }
         final Uri data = intent.getData();
-        if (data != null) {
+        if (data != null && mDefaultTab != null) {
             mDefaultTab = getDefaultTabFromUri(data);
         }
-
-        // A hack inspired mostly by:
-        // http://stackoverflow.com/questions/1906314/android-tabwidget-in-light-theme
-        // (Question by David Hedlund, answer by yanoka)
-        //
-        // This doesn't change any of the font sizes or colors, since those are fine for me.
-        //
-        getTabHost().getTabWidget().setBackgroundColor(
-                getResources().getColor(R.color.tab_widget_bg));
     }
+
     @Override
     public void onDestroy() {
         // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
             SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
-            settings.putString(getLastTabPref(), getTabHost().getCurrentTabTag());
+            final ActionBar bar = getSupportActionBar();
+            final ActionBar.Tab tab = bar.getSelectedTab();
+            settings.putString(getLastTabPref(), (String)tab.getTag());
             settings.commit();
         }
 
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            UIHelp.goHome(this);
+            return true;
+        }
+        return false;
     }
 
     protected void restoreDefaultTab() {
@@ -86,13 +96,26 @@ abstract class MyTabActivityBase extends TabActivity {
             def = settings.getString(getLastTabPref(), null);
         }
         if (def != null) {
-            getTabHost().setCurrentTabByTag(def);
+            // Find this tab...
+            final ActionBar bar = getSupportActionBar();
+            for (int i=0; i < bar.getTabCount(); ++i) {
+                ActionBar.Tab tab = bar.getTabAt(i);
+                if (def.equals(tab.getTag())) {
+                    tab.select();
+                }
+            }
         }
     }
 
-    void returnResult(Intent intent) {
-        setResult(RESULT_OK, intent);
-        finish();
+    //
+    // Accessors for tabs
+    //
+    boolean isShortcutMode() {
+        return mShortcutMode;
+    }
+
+    GeoPoint getSearchCenter() {
+        return mSearchCenter;
     }
 
     //
@@ -123,7 +146,7 @@ abstract class MyTabActivityBase extends TabActivity {
         return intent;
     }
 
-    public static final GeoPoint getSearchCenter(Intent intent) {
+    private static final GeoPoint getSearchCenter(Intent intent) {
         int[] p = intent.getIntArrayExtra(EXTRA_SEARCHCENTER);
         if (p != null && p.length == 2) {
             return new GeoPoint(p[0], p[1]);

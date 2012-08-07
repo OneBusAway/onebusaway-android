@@ -16,3 +16,30 @@ It's available on the Android Market: http://market.android.com/details?id=com.j
 
 The issues are still being tracked at Google Code: http://code.google.com/p/seattle-bus-bot/
 
+## Build Setup
+
+OneBusAway requires ActionBarSherlock: http://actionbarsherlock.com/
+
+Luckily, the version that we use is already included for you in this repository. You just need to
+import the SeattleBusBot/ActionBarSherlock project as an existing project. If you have trouble 
+building, make sure you have the latest version of the Android SDK, Android ADT. It never hurts to
+restart Eclipse and clean the project. If you still have trouble building, 
+let me know at paulcwatts@gmail.com.
+
+## Troubleshooting
+
+### I don't get any map tiles!
+
+The Google Maps API requires an API key that's tied to your keystore. If the API key doesn't match,
+there won't be any map files. If you're using the develop branch, you'll want to download this 
+and replace your existing debug keystore:
+
+https://github.com/downloads/paulcwatts/onebusaway-android/seattlebusbot3.debug.keystore
+
+This will work for develop. If you are using the master branch, that uses the production key generated
+from my private keystore. You'll want to use a different key. Luckily you can easily modify 
+one file to add your own API key (or use the debug key): 
+
+https://github.com/paulcwatts/onebusaway-android/blob/master/res/values/apiKey.xml
+
+

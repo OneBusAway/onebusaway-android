@@ -15,10 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import android.content.Intent;
+import com.actionbarsherlock.app.ActionBar;
+
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.widget.TabHost;
 
 public class MyStopsActivity extends MyTabActivityBase {
     //private static final String TAG = "MyStopsActivity";
@@ -27,26 +27,40 @@ public class MyStopsActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //ensureSupportActionBarAttached();
         final Resources res = getResources();
-        final TabHost tabHost = getTabHost();
-        tabHost.addTab(tabHost.newTabSpec(MyRecentStopsActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_recent_title),
-                              res.getDrawable(R.drawable.ic_tab_recent))
-                .setContent(new Intent(this, MyRecentStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
-        tabHost.addTab(tabHost.newTabSpec(MyStarredStopsActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_starred_title),
-                              res.getDrawable(R.drawable.ic_tab_starred))
-                .setContent(new Intent(this, MyStarredStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
-        tabHost.addTab(tabHost.newTabSpec(MySearchStopsActivity.TAB_NAME)
-                .setIndicator(res.getString(R.string.my_search_title),
-                              res.getDrawable(R.drawable.ic_tab_search))
-                .setContent(new Intent(this, MySearchStopsActivity.class)
-                                    .putExtra(EXTRA_SHORTCUTMODE, mShortcutMode)));
+        final ActionBar bar = getSupportActionBar();
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+
+        bar.addTab(bar.newTab()
+                .setTag(MyRecentStopsFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_recent_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_recent))
+                .setTabListener(new TabListener<MyRecentStopsFragment>(
+                        this,
+                        MyRecentStopsFragment.TAB_NAME,
+                        MyRecentStopsFragment.class)));
+        bar.addTab(bar.newTab()
+                .setTag(MyStarredStopsFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_starred_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_starred))
+                .setTabListener(new TabListener<MyStarredStopsFragment>(
+                        this,
+                        MyStarredStopsFragment.TAB_NAME,
+                        MyStarredStopsFragment.class)));
+        bar.addTab(bar.newTab()
+                .setTag(MySearchStopsFragment.TAB_NAME)
+                .setText(res.getString(R.string.my_search_title))
+                .setIcon(res.getDrawable(R.drawable.ic_tab_search))
+                .setTabListener(new TabListener<MySearchStopsFragment>(
+                        this,
+                        MySearchStopsFragment.TAB_NAME,
+                        MySearchStopsFragment.class)));
 
         restoreDefaultTab();
     }
+
     @Override
     protected String getLastTabPref() {
         return "MyStopsActivity.LastTab";

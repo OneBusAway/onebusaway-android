@@ -16,6 +16,9 @@
 
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -39,8 +42,6 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
-import android.view.Window;
-import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,8 +53,33 @@ public final class UIHelp {
 
     public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
 
+    public static void setupActionBar(SherlockFragmentActivity activity) {
+        setupActionBar(activity.getSupportActionBar());
+    }
+
+    public static void setupActionBar(ActionBar bar) {
+        bar.setDisplayHomeAsUpEnabled(true);
+        bar.setDisplayShowTitleEnabled(false);
+    }
+
+    public static void showProgress(SherlockFragment fragment, boolean visible) {
+        SherlockFragmentActivity act = fragment.getSherlockActivity();
+        if (act != null) {
+            act.setSupportProgressBarIndeterminateVisibility(visible);
+        }
+    }
+
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
         TextView v = (TextView)parent.findViewById(id);
+        setClickable(v, span);
+    }
+
+    public static void setChildClickable(View parent, int id, ClickableSpan span) {
+        TextView v = (TextView)parent.findViewById(id);
+        setClickable(v, span);
+    }
+
+    public static void setClickable(TextView v, ClickableSpan span) {
         Spannable text = (Spannable)v.getText();
         text.setSpan(span, 0, text.length(), 0);
         v.setMovementMethod(LinkMovementMethod.getInstance());
@@ -120,6 +146,25 @@ public final class UIHelp {
         }
     }
 
+    // Common code to set a route list item view
+    public static final void setRouteView(View view, ObaRoute route) {
+        TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
+        TextView longNameText = (TextView)view.findViewById(R.id.long_name);
+
+        String shortName = route.getShortName();
+        String longName = MyTextUtils.toTitleCase(route.getLongName());
+
+        if (TextUtils.isEmpty(shortName)) {
+            shortName = longName;
+        }
+        if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
+            longName = MyTextUtils.toTitleCase(route.getDescription());
+        }
+
+        shortNameText.setText(shortName);
+        longNameText.setText(longName);
+    }
+
     private static final String[] STOP_USER_PROJECTION = {
         ObaContract.Stops._ID,
         ObaContract.Stops.FAVORITE,
@@ -184,7 +229,14 @@ public final class UIHelp {
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
         Parcelable iconResource = Intent.ShortcutIconResource.fromContext(context, R.drawable.icon);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
+    }
+
+    public static void goHome(Context context) {
+        Intent intent = new Intent(context, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        context.startActivity(intent);
     }
 
     public static void goToUrl(Context context, String url) {
@@ -232,6 +284,17 @@ public final class UIHelp {
     // in the case multiple agencies. But we really don't need it to be very
     // accurate.
     public static GeoPoint getLocation(Context cxt) {
+        Location last = getLocation2(cxt);
+        if (last != null) {
+            return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
+        } else {
+            // Make up a fake "Seattle" location.
+            // ll=47.620975,-122.347355
+            return ObaApi.makeGeoPoint(47.620975, -122.347355);
+        }
+    }
+
+    public static Location getLocation2(Context cxt) {
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;
@@ -244,13 +307,7 @@ public final class UIHelp {
                 last = loc;
             }
         }
-        if (last != null) {
-            return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
-        } else {
-            // Make up a fake "Seattle" location.
-            // ll=47.620975,-122.347355
-            return ObaApi.makeGeoPoint(47.620975, -122.347355);
-        }
+        return last;
     }
 
     public static void checkAirplaneMode(Context context) {
@@ -296,22 +353,5 @@ public final class UIHelp {
             }
         }
         return null;
-    }
-
-    public static void setContentView(final Activity activity, int layoutId) {
-        activity.requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-        activity.setContentView(layoutId);
-        UIHelp.applyCustomTitle(activity);
-    }
-
-    private static void applyCustomTitle(final Activity activity) {
-        activity.getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
-
-        activity.findViewById(R.id.title).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MapViewActivity.start(activity, null);
-            }
-        });
     }
 }

@@ -98,6 +98,6 @@ public final class ObaStopGroup {
 
     @Override
     public String toString() {
-        return ObaApi.getGson().toJson(this);
+        return ObaApi.getSerializer(ObaStopGroup.class).serialize(this);
     }
 }

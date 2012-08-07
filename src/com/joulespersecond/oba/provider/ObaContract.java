@@ -250,6 +250,16 @@ public final class ObaContract {
         public static final String UI_NAME = "ui_name";
     }
 
+    protected interface ServiceAlertsColumns {
+        /**
+         * The time it was marked as read.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String MARKED_READ_TIME = "marked_read_time";
+    }
+
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
         // Cannot be instantiated
         private Stops() {
@@ -645,6 +655,58 @@ public final class ObaContract {
             ContentValues values = new ContentValues();
             values.put(STATE, state);
             cr.update(uri, values, null, null);
+        }
+    }
+
+    public static class ServiceAlerts implements BaseColumns, ServiceAlertsColumns {
+        // Cannot be instantiated
+        private ServiceAlerts() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "service_alerts";
+        /**
+         * The content:// style URI for this table URI is of the form
+         * content://<authority>/service_alerts/<id>
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.item/com.joulespersecond.oba.service_alert";
+        public static final String CONTENT_DIR_TYPE = "vnd.android.dir/com.joulespersecond.oba.service_alert";
+
+        public static final Uri buildUri(String situationId) {
+            return CONTENT_URI.buildUpon().appendPath(situationId).build();
+        }
+
+        public static Uri insertOrUpdate(Context context,
+                String id,
+                ContentValues values,
+                boolean markAsRead) {
+            ContentResolver cr = context.getContentResolver();
+            final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
+            Cursor c = cr.query(uri, new String[] {}, null, null, null);
+            Uri result;
+            if (c != null && c.getCount() > 0) {
+                // Update
+                if (markAsRead) {
+                    c.moveToFirst();
+                    values.put(MARKED_READ_TIME, System.currentTimeMillis());
+                }
+                cr.update(uri, values, null, null);
+                result = uri;
+            } else {
+                // Insert
+                if (markAsRead) {
+                    values.put(MARKED_READ_TIME, System.currentTimeMillis());
+                }
+                values.put(_ID, id);
+                result = cr.insert(CONTENT_URI, values);
+            }
+            if (c != null) {
+                c.close();
+            }
+            return result;
         }
     }
 }

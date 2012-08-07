@@ -15,16 +15,28 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.text.format.Time;
-
 import com.joulespersecond.oba.elements.ObaRouteSchedule;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.elements.ObaStopSchedule;
 import com.joulespersecond.oba.request.ObaScheduleForStopRequest;
 import com.joulespersecond.oba.request.ObaScheduleForStopResponse;
+import com.joulespersecond.seattlebusbot.test.UriAssert;
 
+import android.text.format.Time;
 
+import java.util.HashMap;
+
+@SuppressWarnings("serial")
 public class ScheduleForStopTest extends ObaTestCase {
+    public void testKCMStopRequest() {
+        ObaScheduleForStopRequest request =
+                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                    .build();
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
+                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                request);
+    }
+
     public void testKCMStop() {
         ObaScheduleForStopResponse response =
             new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
@@ -35,35 +47,55 @@ public class ScheduleForStopTest extends ObaTestCase {
         assertOK(response);
         final ObaStop stop = response.getStop();
         assertEquals("1_75403", stop.getId());
-        final ObaStopSchedule.CalendarDay[] days = response.getCalendarDays();
-        assertTrue(days.length > 0);
+        // TODO: This is no longer included?
+        //final ObaStopSchedule.CalendarDay[] days = response.getCalendarDays();
+        //assertTrue(days.length > 0);
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
     }
 
-    public void testDate() {
+    public void testKCMStopRequestWithDate() {
         Time time = new Time();
-        time.year = 2010;
-        time.month = 7;
-        time.monthDay = 23;
-        ObaScheduleForStopResponse response =
+        time.year = 2012;
+        time.month = 6;
+        time.monthDay = 30;
+        ObaScheduleForStopRequest request =
             new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
                 .setDate(time)
-                .build()
-                .call();
+                .build();
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
+                new HashMap<String, String>() {{
+                    put("date", "2012-07-30");
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request);
+    }
+
+    public void testKCMStopResponseWithDate() throws Exception {
+        Time time = new Time();
+        time.year = 2012;
+        time.month = 6;
+        time.monthDay = 30;
+        ObaScheduleForStopRequest request =
+            new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                .setDate(time)
+                .build();
+        ObaScheduleForStopResponse response = request.call();
         assertOK(response);
         final ObaStop stop = response.getStop();
         assertEquals("1_75403", stop.getId());
         final ObaRouteSchedule[] schedules = response.getRouteSchedules();
         assertTrue(schedules.length > 0);
-        assertEquals("29_810", schedules[0].getRouteId());
+        assertEquals("1_25", schedules[0].getRouteId());
         final ObaRouteSchedule.Direction[] dirs = schedules[0].getDirectionSchedules();
         assertTrue(dirs.length > 0);
-        assertEquals("McCollum Park Park &Ride", dirs[0].getTripHeadsign());
+        assertEquals("DOWNTOWN SEATTLE UNIVERSITY DISTRICT", dirs[0].getTripHeadsign());
         final ObaRouteSchedule.Time[] times = dirs[0].getStopTimes();
         assertTrue(times.length > 0);
-        assertEquals("29_10JUN-Weekday-810s-0", times[0].getTripId());
+        assertEquals("1_20969000", times[0].getTripId());
     }
 }

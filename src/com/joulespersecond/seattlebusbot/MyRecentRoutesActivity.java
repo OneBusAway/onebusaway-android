@@ -15,74 +15,32 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.os.Bundle;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
-public class MyRecentRoutesActivity extends MyRouteListActivity {
-    public static final String TAB_NAME = "recent";
-
+public class MyRecentRoutesActivity extends Activity {
+    //
+    // The only thing this is used for anymore is to create
+    // a shortcut to the recent routes list.
+    //
     @Override
-    protected Cursor getCursor() {
-        return recentQuery(ObaContract.Routes.CONTENT_URI,
-                PROJECTION,
-                ObaContract.Routes.ACCESS_TIME,
-                ObaContract.Routes.USE_COUNT);
-    }
-    @Override
-    protected int getLayoutId() {
-        return R.layout.my_recent_route_list;
-    }
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    private static final int CONTEXT_MENU_DELETE = 10;
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.my_context_remove_recent);
-    }
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
-        switch (item.getItemId()) {
-        case CONTEXT_MENU_DELETE:
-            ObaContract.Routes.markAsUnused(this,
-                    Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                            getId(getListView(), info.position)));
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+        Intent myIntent = getIntent();
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
+            setResult(RESULT_OK, getShortcutIntent());
         }
+        finish();
     }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.my_recent_route_options, menu);
-        return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.clear_recent) {
-            ObaContract.Routes.markAsUnused(this, ObaContract.Routes.CONTENT_URI);
-            return true;
-        }
-        return false;
-    }
-    @Override
-    protected Intent getShortcutIntent() {
+
+    private Intent getShortcutIntent() {
+        final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentRoutesFragment.TAB_NAME);
         return UIHelp.makeShortcut(this,
                     getString(R.string.recent_routes_shortcut),
                     new Intent(this, MyRoutesActivity.class)
-                        .setData(MyTabActivityBase.getDefaultTabUri(TAB_NAME)));
+                        .setData(uri));
     }
 }

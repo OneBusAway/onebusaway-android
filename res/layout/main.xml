@@ -29,83 +29,81 @@
     />
 
     <LinearLayout
-        android:id="@+id/map_popup"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="2dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:background="@drawable/map_popup"
-        android:visibility="gone">
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <LinearLayout
-            	android:id="@+id/route_container"
-            	android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:paddingRight="5sp"
-	            android:orientation="horizontal">
-		        <TextView
-		            android:id="@+id/route_short_name"
-		            android:background="@drawable/main_popup_route_bg"
-		            android:layout_width="wrap_content"
-		            android:layout_height="wrap_content"
-		            android:paddingLeft="5sp"
-		            android:paddingRight="5sp" />
-		    </LinearLayout>
-	        <TextView
-	            android:id="@+id/stop_name"
-	            style="@style/HeaderText"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content" />
-		</LinearLayout>
-
-        <TextView android:id="@+id/direction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/show_arrival_info"
-                android:text="@string/main_arrival_info"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingRight="5dp"
-                android:bufferType="spannable"
-                android:linksClickable="true"
-                android:textSize="20sp" />
-            <TextView
-                android:id="@+id/show_routes"
-                android:text="@string/main_show_routes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:bufferType="spannable"
-                android:linksClickable="true"
-                android:textSize="20sp" />
-        </LinearLayout>
-        <GridView
-            android:id="@+id/route_list"
-            android:visibility="gone"
+            android:id="@+id/route_info"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:numColumns="auto_fit"
-            android:columnWidth="40sp"
-            android:verticalSpacing="1dp"
-            android:horizontalSpacing="3dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:visibility="gone">
+                <include layout="@layout/route_info_head" />
+        </LinearLayout><!-- ROUTE MODE -->
+
+        <!-- STOP INFO -->
+        <LinearLayout
+            android:id="@+id/stop_info"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/ab_stacked_solid_busbot"
+            android:visibility="gone">
+
+            <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="5sp">
+                <TextView
+                        android:id="@+id/stop_name"
+                        style="@style/HeaderText"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:maxLines="3" />
+                <TextView android:id="@+id/direction"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!--  STOP LINKS -->
+            <LinearLayout
+               android:layout_width="fill_parent"
+               android:layout_height="wrap_content"
+               android:orientation="horizontal">
+               <Button
+                    android:id="@+id/show_arrival_info"
+                    android:text="@string/main_arrival_info"
+                    style="@style/HeaderLink"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content" />
+               <Button
+                    android:id="@+id/show_routes"
+                    android:text="@string/main_show_routes"
+                    style="@style/HeaderLink"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <GridView
+                android:id="@+id/route_list"
+                android:visibility="gone"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:numColumns="auto_fit"
+                android:columnWidth="@dimen/route_button_width"
+                android:padding="0dip"
+                android:verticalSpacing="0dp"
+                android:horizontalSpacing="0dp" />
+        </LinearLayout><!-- STOP INFO -->
+    </LinearLayout><!--  POPUP CONTAINER -->
 
     <ZoomControls android:id="@+id/zoom_controls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true" />
-
 </RelativeLayout>
 

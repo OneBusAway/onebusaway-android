@@ -18,21 +18,30 @@ package com.joulespersecond.oba.request.test;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.test.UriAssert;
 
+import java.util.HashMap;
 import java.util.List;
 
-
+@SuppressWarnings("serial")
 public class ArrivalInfoRequestTest extends ObaTestCase {
-    public void testKCMStop() {
+    public void testKCMStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
-            new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
         ObaArrivalInfoRequest request = builder.build();
-        ObaArrivalInfoResponse response = request.call();
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
+                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                request);
+    }
+
+    public void testKCMStopResponse() throws Exception {
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
@@ -50,36 +59,37 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(nearbyStops.size() > 0);
     }
 
-    public void testNewRequest() {
+    public void testNewRequest() throws Exception {
         // This is just to make sure we copy and call newRequest() at least once
         ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getContext(), "1_10");
         assertNotNull(request);
+        UriAssert.assertUriMatch(
+                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_10.json",
+                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                request);
     }
 
-    public void testStopSituation() {
-        ObaArrivalInfoRequest.Builder builder =
-            new ObaArrivalInfoRequest.Builder(getContext(), "1_75403");
-        builder.setServer("soak-api.onebusaway.org");
-        builder.setApiKey("TEST");
-        ObaArrivalInfoRequest request = builder.build();
-        ObaArrivalInfoResponse response = request.call();
+    // TODO: get/create situation response (not much of a test, otherwise)
+    public void testStopSituation() throws Exception {
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_75403").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
-        assertTrue(situations.size() > 0);
+
         // This is all test data, we really shouldn't depend on it.
         // This is why we need a way of inserting canned data for testing.
-        ObaSituation situation = situations.get(0);
-        assertEquals("Stop Moved", situation.getSummary());
-        assertEquals("", situation.getReason());
-        assertEquals(ObaSituation.REASON_TYPE_UNDEFINED, situation.getReasonType());
+        //ObaSituation situation = situations.get(0);
+        //assertEquals("Stop Moved", situation.getSummary());
+        //assertEquals("", situation.getReason());
+        //assertEquals(ObaSituation.REASON_TYPE_UNDEFINED, situation.getReasonType());
 
-        ObaSituation.Affects affects = situation.getAffects();
-        assertNotNull(affects);
-        List<String> affectedStops = affects.getStopIds();
-        assertNotNull(affectedStops);
-        assertEquals(1, affectedStops.size());
-        assertEquals("1_75403", affectedStops.get(0));
+        //ObaSituation.Affects affects = situation.getAffects();
+        //assertNotNull(affects);
+        //List<String> affectedStops = affects.getStopIds();
+        //assertNotNull(affectedStops);
+        //assertEquals(1, affectedStops.size());
+        //assertEquals("1_75403", affectedStops.get(0));
         //ObaSituation.VehicleJourney[] journeys = affects.getVehicleJourneys();
         //assertNotNull(journeys);
         //ObaSituation.VehicleJourney journey = journeys[0];
@@ -94,43 +104,34 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         //assertNotNull(consequences);
         //assertEquals(1, consequences.length);
         //assertEquals("diversion", consequences[0].getCondition());
-
     }
 
-    public void testTripSituation() {
-        ObaArrivalInfoRequest.Builder builder =
-            new ObaArrivalInfoRequest.Builder(getContext(), "1_10020");
-        builder.setServer("soak-api.onebusaway.org");
-        builder.setApiKey("TEST");
-        ObaArrivalInfoRequest request = builder.build();
-        ObaArrivalInfoResponse response = request.call();
+    // TODO: get/create situation response
+    /*
+    public void testTripSituation() throws Exception {
+        ObaArrivalInfoResponse response =
+                readResourceAs(Resources.getTestUri("arrivals_and_departures_for_stop_1_10020"),
+                        ObaArrivalInfoResponse.class);
         assertOK(response);
+
         ObaArrivalInfo[] infoList = response.getArrivalInfo();
         assertNotNull(infoList);
-        assertEquals(1, infoList.length);
+        assertEquals(2, infoList.length);
         ObaArrivalInfo info = infoList[0];
         String[] situationIds = info.getSituationIds();
         assertNotNull(situationIds);
         List<ObaSituation> situations = response.getSituations(situationIds);
         assertNotNull(situations);
-        assertEquals(1, situations.size());
+
+        assertEquals("Expected failure / TODO: add situation", 1, situations.size());
         ObaSituation situation = situations.get(0);
         assertEquals("Snow Reroute", situation.getSummary());
         assertEquals("heavySnowFall", situation.getReason());
-        assertEquals(ObaSituation.REASON_TYPE_ENVIRONMENT,
-                situation.getReasonType());
+        //assertEquals(ObaSituation.REASON_TYPE_ENVIRONMENT,
+        //        situation.getReasonType());
 
-        ObaSituation.Affects affects = situation.getAffects();
-        assertNotNull(affects);
-        ObaSituation.VehicleJourney[] journeys = affects.getVehicleJourneys();
-        assertNotNull(journeys);
-        ObaSituation.VehicleJourney journey = journeys[0];
-        assertNotNull("1", journey.getDirection());
-        assertNotNull("1_30", journey.getRouteId());
-        List<String> journeyStops = journey.getStopIds();
-        assertNotNull(journeyStops);
-        assertTrue(journeyStops.size() > 0);
-        assertEquals("1_9980", journeyStops.get(0));
+        //ObaSituation.Affects affects = situation.getAffects();
+        //assertNotNull(affects);
 
         ObaSituation.Consequence[] consequences = situation.getConsequences();
         assertNotNull(consequences);
@@ -147,4 +148,5 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         ObaShape diversion = details.getDiversionPath();
         assertNotNull(diversion);
     }
+    */
 }

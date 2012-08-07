@@ -24,11 +24,13 @@ import com.joulespersecond.oba.ObaApi;
 public class ObaResponse {
     private final String version;
     private final int code;
+    private final long currentTime;
     private final String text;
 
     protected ObaResponse() {
         version = ObaApi.VERSION1;
         code = 0;
+        currentTime = 0;
         text = "ERROR";
     }
 
@@ -38,16 +40,27 @@ public class ObaResponse {
     public String getVersion() {
         return version;
     }
+
     /**
      * @return The status code (one of the ObaApi.OBA_ constants)
      */
     public int getCode() {
         return code;
     }
+
     /**
      * @return The status text.
      */
+
     public String getText() {
         return text;
+    }
+
+    /**
+     * @return The current system time on the API server
+     * as milliseconds since the epoch.
+     */
+    public long getCurrentTime() {
+        return currentTime;
     }
 }

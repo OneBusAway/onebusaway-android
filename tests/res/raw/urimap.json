@@ -1,0 +1,52 @@
+{
+	"uris": {
+		"/api/where/agencies-with-coverage.json": "agencies_with_coverage",
+
+		"/api/where/agency/1.json": "agency_1",
+
+		"/api/where/arrivals-and-departures-for-stop/1_29261.json": "arrivals_and_departures_for_stop_1_29261",
+		"/api/where/arrivals-and-departures-for-stop/1_75403.json": "arrivals_and_departures_for_stop_1_75403",
+
+		"/api/where/current-time.json": "current_time",
+
+		"/api/where/route/1_10.json": "route_1_10",
+
+		"/api/where/routes-for-location.json?lat=47.61098&lon=-122.33845": "routes_for_location_downtown_seattle1",
+		"/api/where/routes-for-location.json?lat=48.85808&lon=2.29498": "routes_for_location_outofrange",
+		"/api/where/routes-for-location.json?lat=47.25331&lon=-122.4404&query=11": "routes_for_location_query",
+		"/api/where/routes-for-location.json?lat=47.25331&lon=-122.4404&query=112423": "routes_for_location_queryfail",
+
+		"/api/where/route-ids-for-agency/40.json": "route_ids_for_agency_40",
+
+		"/api/where/schedule-for-stop/1_75403.json": "schedule_for_stop_1_75403",
+		"/api/where/schedule-for-stop/1_75403.json?date=2012-07-30": "schedule_for_stop_1_75403_with_date",
+
+		"/api/where/shape/1_40046045.json": "shape_1_40046045",
+
+		"/api/where/stop/1_29261.json": "stop_1_29261",
+
+		"/api/where/stop-ids-for-agency/40.json": "stop_ids_for_agency_40",
+
+		"/api/where/stops-for-location.json?lat=47.61098&lon=-122.33845": "stops_for_location_downtown_seattle1",
+		"/api/where/stops-for-location.json?lat=48.85808&lon=2.29498": "stops_for_location_outofrange",
+		"/api/where/stops-for-location.json?lat=47.25331&lon=-122.4404&query=26": "stops_for_location_query",
+		"/api/where/stops-for-location.json?lat=47.25331&lon=-122.4404&query=112423": "stops_for_location_queryfail",
+
+		"/api/where/stops-for-route/1_44.json": "stops_for_route_1_44",
+		"/api/where/stops-for-route/1_44.json?includePolylines=false": "stops_for_route_1_44_noshapes",
+
+		"/api/where/trip/1_18196913.json": "trip_1_18196913",
+
+		"/api/where/trip-details/1_18196913.json": "trip_details_1_18196913",
+		"/api/where/trip-details/1_18196913.json?includeSchedule=false": "trip_details_1_18196913_no_schedule",
+		"/api/where/trip-details/1_18196913.json?includeStatus=false": "trip_details_1_18196913_no_status",
+		"/api/where/trip-details/1_18196913.json?includeTrip=false": "trip_details_1_18196913_no_trip",
+
+		"/api/where/trips-for-location.json?lat=47.653&lon=-122.307": "trips_for_location_test1",
+		"/api/where/trips-for-location.json?lat=48.85808&lon=2.29498": "trips_for_location_outofrange",
+
+		"/api/where/stop/404test.json": "test_404_1",
+		"/api/where/foo/1_29261.json": "__404__",
+		"/api/where/stop/1_29261.xml": "test_badjson"
+	}
+}

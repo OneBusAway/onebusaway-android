@@ -151,4 +151,11 @@ public interface ObaTripStatus {
      * Can be null.
      */
     public Double getLastKnownOrientation();
+
+    /**
+     * @return The index of the active trip into the sequence of trips for the active block.
+     * Compare to blockTripSequence in the ArrivalInfo element to determine where the active block
+     * location is relative to an arrival-and-departure.
+     */
+    public int getBlockTripSequence();
 }

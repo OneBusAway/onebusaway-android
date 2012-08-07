@@ -41,8 +41,12 @@ public final class ObaScheduleForStopResponse extends ObaResponseWithRefs
     }
 
     @Override
+    public String getStopId() {
+        return data.entry.getStopId();
+    }
+
     public ObaStop getStop() {
-        return data.entry.getStop();
+        return data.references.getStop(getStopId());
     }
 
     @Override

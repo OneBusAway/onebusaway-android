@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/my_location"
-          android:title="@string/main_option_mylocation"
-          android:icon="@drawable/android:ic_menu_mylocation" />
-    <item android:id="@+id/view_trips"
-          android:title="@string/main_option_viewtrips"
-          android:icon="@drawable/ic_menu_notifications" />
+          android:title="@string/map_option_mylocation"
+          android:icon="@drawable/ic_action_mylocation"
+          android:showAsAction="ifRoom" />
+    <item android:id="@+id/search"
+          android:title="@string/map_option_search"
+          android:icon="@drawable/ic_action_search"
+          android:showAsAction="ifRoom" />
     <item android:id="@+id/find_route"
           android:title="@string/main_option_findroute"
           android:icon="@drawable/ic_menu_trip" />
     <item android:id="@+id/find_stop"
           android:title="@string/main_option_findstop"
           android:icon="@drawable/ic_menu_stop" />
+    <item android:id="@+id/view_trips"
+          android:title="@string/main_option_viewtrips"
+          android:icon="@drawable/ic_menu_notifications" />
     <item android:id="@+id/help"
           android:title="@string/main_option_help"
           android:icon="@drawable/android:ic_menu_help" />

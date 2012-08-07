@@ -18,8 +18,8 @@ package com.joulespersecond.seattlebusbot.tripservice;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.provider.ObaContract.TripAlerts;
 import com.joulespersecond.oba.provider.ObaContract.Trips;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.StopInfoActivity;
 import com.joulespersecond.seattlebusbot.TripService;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.app.NotificationCompat;
 
 /**
  *
@@ -109,31 +110,32 @@ public final class NotifierTask implements Runnable {
         mTaskContext.setNotification(id, notification);
     }
 
+    /*
+    private static final long[] VIBRATE_PATTERN = {
+        0,    // on
+        1000, // off
+        1000, // on
+        1000, // off
+        1000, // on
+        1000, // off
+    };
+    */
+
     private Notification createNotification(Uri alertUri) {
         //Log.d(TAG, "Creating notification for alert: " + alertUri);
-        Notification notification = new Notification(R.drawable.stat_trip, null,
-                System.currentTimeMillis());
-        notification.defaults = Notification.DEFAULT_SOUND;
-        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
-                | Notification.FLAG_SHOW_LIGHTS;
-        notification.ledOnMS = 1000;
-        notification.ledOffMS = 1000;
-        notification.ledARGB = 0xFF00FF00;
-        notification.vibrate = new long[] {
-                0,    // on
-                1000, // off
-                1000, // on
-                1000, // off
-                1000, // on
-                1000, // off
-        };
-
         Intent deleteIntent = new Intent(mContext, TripService.class);
         deleteIntent.setAction(TripService.ACTION_CANCEL);
         deleteIntent.setData(alertUri);
-        notification.deleteIntent = PendingIntent.getService(mContext, 0,
-                deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        return notification;
+
+        return new NotificationCompat.Builder(mContext)
+            .setSmallIcon(R.drawable.ic_stat_notification)
+            .setDefaults(Notification.DEFAULT_ALL)
+            .setOnlyAlertOnce(true)
+             //.setLights(0xFF00FF00, 1000, 1000)
+             //.setVibrate(VIBRATE_PATTERN)
+            .setDeleteIntent(PendingIntent.getService(mContext, 0,
+                    deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT))
+            .getNotification();
     }
 
     private void setLatestInfo(Notification notification,
@@ -143,7 +145,7 @@ public final class NotifierTask implements Runnable {
         final String title = mContext.getString(R.string.app_name);
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
-                StopInfoActivity.makeIntent(mContext, stopId),
+                ArrivalsListActivity.makeIntent(mContext, stopId),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         notification.setLatestEventInfo(mContext,

@@ -110,6 +110,7 @@ public final class NotifierTask implements Runnable {
         mTaskContext.setNotification(id, notification);
     }
 
+    /*
     private static final long[] VIBRATE_PATTERN = {
         0,    // on
         1000, // off
@@ -118,6 +119,7 @@ public final class NotifierTask implements Runnable {
         1000, // on
         1000, // off
     };
+    */
 
     private Notification createNotification(Uri alertUri) {
         //Log.d(TAG, "Creating notification for alert: " + alertUri);
@@ -127,10 +129,10 @@ public final class NotifierTask implements Runnable {
 
         return new NotificationCompat.Builder(mContext)
             .setSmallIcon(R.drawable.ic_stat_notification)
-            .setDefaults(Notification.DEFAULT_SOUND)
+            .setDefaults(Notification.DEFAULT_ALL)
             .setOnlyAlertOnce(true)
-            .setLights(0xFF00FF00, 1000, 1000)
-            .setVibrate(VIBRATE_PATTERN)
+             //.setLights(0xFF00FF00, 1000, 1000)
+             //.setVibrate(VIBRATE_PATTERN)
             .setDeleteIntent(PendingIntent.getService(mContext, 0,
                     deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT))
             .getNotification();

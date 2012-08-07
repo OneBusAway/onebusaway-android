@@ -16,9 +16,12 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.content.Context;
+import android.os.Build;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.Collection;
 
 class AlertList {
     interface Alert {
@@ -51,22 +54,23 @@ class AlertList {
         protected void initView(View view, final Alert alert) {
             TextView text = (TextView)view.findViewById(android.R.id.text1);
             text.setText(alert.getString());
-            int drawableLeft = R.drawable.ic_action_alert_error;
+            int drawableLeft = 0; //R.drawable.ic_action_alert_error;
             int bg = R.color.alert_error;
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
+            int type = alert.getType();
 
-            switch (alert.getType()) {
+            switch (type) {
             case Alert.TYPE_ERROR:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_error;
                 break;
             case Alert.TYPE_WARNING:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_warning;
                 break;
             case Alert.TYPE_INFO:
             default:
-                drawableLeft = R.drawable.ic_action_alert_error;
+                //drawableLeft = R.drawable.ic_action_alert_error;
                 bg = R.color.alert_info;
                 break;
             }
@@ -110,7 +114,15 @@ class AlertList {
         mAdapter.add(alert);
     }
 
-    //void addAll();
+    void addAll(Collection<? extends Alert> alerts) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            addAll(alerts);
+        } else {
+            for (Alert a: alerts) {
+                add(a);
+            }
+        }
+    }
 
     void insert(Alert alert, int index) {
         mAdapter.insert(alert, index);

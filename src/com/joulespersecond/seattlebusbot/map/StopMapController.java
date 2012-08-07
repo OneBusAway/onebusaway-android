@@ -29,7 +29,6 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Arrays;
@@ -40,7 +39,7 @@ class StopMapController implements MapModeController,
             LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse>,
             Loader.OnLoadCompleteListener<ObaStopsForLocationResponse>,
             MapWatcher.Listener {
-    private static final String TAG = "StopMapController";
+    //private static final String TAG = "StopMapController";
     private static final int STOPS_LOADER = 5678;
 
     private final Callback mFragment;
@@ -127,13 +126,13 @@ class StopMapController implements MapModeController,
     @Override
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
             ObaStopsForLocationResponse response) {
-        Log.d(TAG, "Load finished!");
+        mFragment.showProgress(false);
 
         if (response.getCode() != ObaApi.OBA_OK) {
             Activity act = mFragment.getActivity();
             Toast.makeText(act,
                     act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG);
+                    Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -144,7 +143,6 @@ class StopMapController implements MapModeController,
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
         mFragment.showStops(stops, response);
-        mFragment.showProgress(false);
     }
 
     @Override
@@ -242,25 +240,25 @@ class StopMapController implements MapModeController,
         private boolean canFulfill(GeoPoint newCenter, int newZoom) {
             // This is the old logic, we can do better:
             if (mResponse == null) {
-                Log.d(TAG, "No response");
+                //Log.d(TAG, "No response");
                 return false;
             }
             if (mCenter == null) {
-                Log.d(TAG, "No center");
+                //Log.d(TAG, "No center");
                 return false;
             }
             if (!mCenter.equals(newCenter)) {
-                Log.d(TAG, "Center not the same");
+                //Log.d(TAG, "Center not the same");
                 return false;
             }
             if (mResponse != null) {
                 if ((newZoom > mZoomLevel) &&
                         mResponse.getLimitExceeded()) {
-                    Log.d(TAG, "Zooming in -- limit exceeded");
+                    //Log.d(TAG, "Zooming in -- limit exceeded");
                     return false;
                 }
                 else if (newZoom < mZoomLevel) {
-                    Log.d(TAG, "Zooming out");
+                    //Log.d(TAG, "Zooming out");
                     return false;
                 }
             }

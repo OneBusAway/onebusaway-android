@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.view.Menu;
@@ -6,6 +21,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
@@ -61,6 +77,9 @@ public class ArrivalsListFragment extends ListFragment
     private String mStopUserName;
 
     private TripsForStopCallback mTripsForStopCallback;
+
+    // The list of situation alerts
+    private ArrayList<SituationAlert> mSituationAlerts;
 
     // Used by the test code to signal when we've retrieved stops.
     private Object mStopWait;
@@ -153,7 +172,6 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
-        Log.d(TAG, "Load finished!");
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
@@ -184,6 +202,9 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         mHeader.refresh();
+
+        // Convert any stop situations into a list of alerts
+        refreshSituations(result.getSituations());
 
         if (info != null) {
             // Reset the empty text just in case there is no data.
@@ -638,4 +659,89 @@ public class ArrivalsListFragment extends ListFragment
         public void onLoaderReset(Loader<Cursor> loader) {
         }
     }
+
+    //
+    // Situations
+    //
+    private class SituationAlert implements AlertList.Alert {
+        private final ObaSituation mSituation;
+
+        SituationAlert(ObaSituation situation) {
+            mSituation = situation;
+        }
+
+        @Override
+        public String getId() {
+            return mSituation.getId();
+        }
+
+        @Override
+        public int getType() {
+            if ("noImpact".equals(mSituation.getSeverity())) {
+                return AlertList.Alert.TYPE_INFO;
+            } else if ("severe".equals(mSituation.getSeverity())) {
+                return AlertList.Alert.TYPE_ERROR;
+            } else {
+                return AlertList.Alert.TYPE_WARNING;
+            }
+        }
+
+        @Override
+        public int getFlags() {
+            return AlertList.Alert.FLAG_HASMORE;
+        }
+
+        @Override
+        public CharSequence getString() {
+            return mSituation.getSummary();
+        }
+
+        @Override
+        public void onClick() {
+            SituationFragment.show(getSherlockActivity(), mSituation);
+        }
+
+        @Override
+        public int hashCode() {
+            return getId().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SituationAlert other = (SituationAlert)obj;
+            if (!getId().equals(other.getId()))
+                return false;
+            return true;
+        }
+    }
+
+    private void refreshSituations(List<ObaSituation> situations) {
+        // First, remove any existing situations
+        if (mSituationAlerts != null) {
+            for (SituationAlert alert : mSituationAlerts) {
+                mAlertList.remove(alert);
+            }
+        }
+        mSituationAlerts = null;
+
+        if (situations.isEmpty()) {
+            // The normal scenario
+            return;
+        }
+
+        mSituationAlerts = new ArrayList<SituationAlert>();
+
+        for (ObaSituation situation : situations) {
+            SituationAlert alert = new SituationAlert(situation);
+            mSituationAlerts.add(alert);
+        }
+        mAlertList.addAll(mSituationAlerts);
+    }
+
 }

@@ -1,0 +1,62 @@
+<response>
+  <version>2</version>
+  <code>200</code>
+  <currentTime>1343587068333</currentTime>
+  <text>OK</text>
+  <data class="entryWithReferences">
+    <references>
+      <agencies>
+        <agency>
+          <id>1</id>
+          <name>Metro Transit</name>
+          <url>http://metro.kingcounty.gov</url>
+          <timezone>America/Los_Angeles</timezone>
+          <lang>en</lang>
+          <phone>206-553-3000</phone>
+          <disclaimer>Transit scheduling, geographic, and real-time data provided by permission of King County.  Some real-time info provided by UW Intelligent Transportation Systems.</disclaimer>
+          <privateService>false</privateService>
+        </agency>
+      </agencies>
+      <routes>
+        <route>
+          <id>1_8</id>
+          <shortName>8</shortName>
+          <description>Cap.Hill/Denny Wy</description>
+          <type>3</type>
+          <url>http://metro.kingcounty.gov/tops/bus/schedules/s008_0_.html</url>
+          <agencyId>1</agencyId>
+        </route>
+        <route>
+          <id>1_10</id>
+          <shortName>10</shortName>
+          <description>capitol hill</description>
+          <type>3</type>
+          <url>http://metro.kingcounty.gov/tops/bus/schedules/s010_0_.html</url>
+          <agencyId>1</agencyId>
+        </route>
+        <route>
+          <id>1_43</id>
+          <shortName>43</shortName>
+          <description>cbd/u-district</description>
+          <type>3</type>
+          <url>http://metro.kingcounty.gov/tops/bus/schedules/s043_0_.html</url>
+          <agencyId>1</agencyId>
+        </route>
+      </routes>
+    </references>
+    <entry class="stop">
+      <id>1_29261</id>
+      <lat>47.6200371</lat>
+      <lon>-122.313202</lon>
+      <direction>S</direction>
+      <name>E JOHN ST &amp; 15TH AVE E</name>
+      <code>29261</code>
+      <locationType>0</locationType>
+      <routeIds>
+        <string>1_8</string>
+        <string>1_10</string>
+        <string>1_43</string>
+      </routeIds>
+    </entry>
+  </data>
+</response>

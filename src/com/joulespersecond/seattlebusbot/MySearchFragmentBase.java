@@ -23,7 +23,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
 import android.view.WindowManager;
@@ -35,7 +34,7 @@ import java.util.TimerTask;
 
 abstract class MySearchFragmentBase extends ListFragment
             implements SearchView.OnQueryTextListener, MyListConstants {
-    private static final String TAG = "MySearchFragmentBase";
+    //private static final String TAG = "MySearchFragmentBase";
 
     private Timer mSearchTimer;
     private SearchView mSearchView;
@@ -87,11 +86,11 @@ abstract class MySearchFragmentBase extends ListFragment
         // Called when the action bar search text has changed.  Update
         // the search filter, and restart the loader to do a new query
         // with this filter.
-        Log.d(TAG, "new text: " + newText);
+        //Log.d(TAG, "new text: " + newText);
         cancelDelayedSearch();
 
         if (newText.length() == 0) {
-            Log.d(TAG, "CANCEL SEARCH");
+            //Log.d(TAG, "CANCEL SEARCH");
             // Set hint text, etc.
             return true;
         }
@@ -116,7 +115,7 @@ abstract class MySearchFragmentBase extends ListFragment
     @Override
     public boolean onQueryTextSubmit(String query) {
         // Don't care about this.
-        Log.d(TAG, "text submit: " + query);
+        //Log.d(TAG, "text submit: " + query);
         return true;
     }
 

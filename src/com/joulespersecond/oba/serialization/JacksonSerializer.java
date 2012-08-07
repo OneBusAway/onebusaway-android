@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
+ *                and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +40,15 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 
-public class JacksonSerializer
-    implements ObaApi.SerializationHandler {
+public class JacksonSerializer implements ObaApi.SerializationHandler {
+    private static final String TAG = "JacksonSerializer";
+
+    private static class SingletonHolder {
+        public static final JacksonSerializer INSTANCE = new JacksonSerializer();
+    }
 
     private static final ObjectMapper mMapper = new ObjectMapper();
-    private static final JacksonSerializer mInstance = new JacksonSerializer();
-    private static final String TAG = "JacksonSerializer";
+
     static {
         mMapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,false);
         mMapper.setVisibilityChecker(
@@ -57,8 +61,8 @@ public class JacksonSerializer
     /**
      * Make the singleton instance available
      */
-    public static final ObaApi.SerializationHandler getInstance() {
-        return (ObaApi.SerializationHandler)mInstance;
+    public static ObaApi.SerializationHandler getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     private static JsonParser getJsonParser(Reader reader)
@@ -84,11 +88,11 @@ public class JacksonSerializer
             // Hopefully this never returns null or throws.
             return mMapper.readValue(json, cls);
         } catch (JsonParseException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         } catch (JsonMappingException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         } catch (IOException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         }
         return null;
     }
@@ -105,14 +109,11 @@ public class JacksonSerializer
                 t = createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, "Json error");
             }
             return t;
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             return createFromError(cls, ObaApi.OBA_NOT_FOUND, e.toString());
-        }
-        catch (JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             return createFromError(cls, ObaApi.OBA_INTERNAL_ERROR, e.toString());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             return createFromError(cls, ObaApi.OBA_IO_EXCEPTION, e.toString());
         }
     }
@@ -128,13 +129,13 @@ public class JacksonSerializer
             return writer.toString();
 
         } catch (JsonGenerationException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_INTERNAL_ERROR, e.toString());
         } catch (JsonMappingException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_INTERNAL_ERROR, e.toString());
         } catch (IOException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
             return getErrorJson(ObaApi.OBA_IO_EXCEPTION, e.toString());
         }
     }

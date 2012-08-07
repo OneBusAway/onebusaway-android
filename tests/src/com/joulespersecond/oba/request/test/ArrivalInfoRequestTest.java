@@ -18,7 +18,6 @@ package com.joulespersecond.oba.request.test;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
@@ -42,7 +41,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     public void testKCMStopResponse() throws Exception {
         ObaArrivalInfoResponse response =
-                getRawResourceAs("arrivals_and_departures_for_stop_1_29261", ObaArrivalInfoResponse.class);
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
@@ -72,7 +71,8 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     // TODO: get/create situation response (not much of a test, otherwise)
     public void testStopSituation() throws Exception {
-        ObaArrivalInfoResponse response = getRawResourceAs("arrivals_and_departures_for_stop_1_75403", ObaArrivalInfoResponse.class);
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_75403").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
@@ -107,8 +107,11 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
     }
 
     // TODO: get/create situation response
+    /*
     public void testTripSituation() throws Exception {
-        ObaArrivalInfoResponse response = getRawResourceAs("arrivals_and_departures_for_stop_1_10020", ObaArrivalInfoResponse.class);
+        ObaArrivalInfoResponse response =
+                readResourceAs(Resources.getTestUri("arrivals_and_departures_for_stop_1_10020"),
+                        ObaArrivalInfoResponse.class);
         assertOK(response);
 
         ObaArrivalInfo[] infoList = response.getArrivalInfo();
@@ -145,4 +148,5 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         ObaShape diversion = details.getDiversionPath();
         assertNotNull(diversion);
     }
+    */
 }

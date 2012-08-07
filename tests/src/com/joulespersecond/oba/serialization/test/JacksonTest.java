@@ -1,6 +1,7 @@
 package com.joulespersecond.oba.serialization.test;
 
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.mock.Resources;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.oba.request.test.ObaTestCase;
@@ -43,7 +44,7 @@ public class JacksonTest extends ObaTestCase {
     }
 
     public void testStopsForLocation() throws Exception {
-        Reader reader = readResource(TEST_RAW_URI + "stops_for_location_downtown_seattle");
+        Reader reader = Resources.read(getContext(), Resources.getTestUri("stops_for_location_downtown_seattle"));
         ObaApi.SerializationHandler serializer = ObaApi.getSerializer(ObaStopsForLocationResponse.class);
         ObaStopsForLocationResponse response = serializer.deserialize(reader, ObaStopsForLocationResponse.class);
         assertNotNull(response);

@@ -89,7 +89,7 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
         return R.string.my_no_recent_routes;
     }
 
-    private static class ClearDialog extends ClearConfirmDialog {
+    public static class ClearDialog extends ClearConfirmDialog {
         @Override
         protected void doClear() {
             ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);

@@ -14,9 +14,7 @@
      limitations under the License.
 -->
 <resources>
-    <color name="oba_green">#6dce31</color>
-    <color name="oba_green_dark">#78AA36</color>
-    <color name="oba_light_gray">#f0f0f0</color>
+    <color name="light_gray">#f0f0f0</color>
     <color name="focus">#ff8e00</color>
     <color name="route_overlay_line">#00F</color>
     <color name="stop_info_ontime">#00ff00</color>
@@ -25,5 +23,5 @@
     <color name="stop_info_scheduled">#008000</color>
     <color name="alert_error">#FFC4C4</color>
     <color name="alert_warning">#FFFF99</color>
-    <color name="alert_info">#CCFFCC</color>
+    <color name="alert_info">#f0f0f0</color>
 </resources>

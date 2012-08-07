@@ -40,15 +40,18 @@ public class TripDetailsRequest extends ObaTestCase {
     }
 
     public void testKCMTripResponse() throws Exception {
-        ObaTripDetailsResponse response = getRawResourceAs("trip_details_" + TEST_TRIP_ID, ObaTripDetailsResponse.class);
+        ObaTripDetailsResponse response =
+                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                    .build()
+                    .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 
         ObaTripSchedule schedule = response.getSchedule();
         assertNotNull(schedule);
 
-        ObaTripStatus status = response.getStatus();
-        assertNotNull(status);
+        //ObaTripStatus status = response.getStatus();
+        //assertNotNull(status);
 
         // Make sure the trip exists
         ObaTrip trip = response.getTrip(response.getId());
@@ -70,7 +73,11 @@ public class TripDetailsRequest extends ObaTestCase {
 
     // TODO: API response includes the trip anyway
     public void testNoTripsResponse() throws Exception {
-        ObaTripDetailsResponse response = getRawResourceAs("trip_details_" + TEST_TRIP_ID + "_no_trip", ObaTripDetailsResponse.class);
+        ObaTripDetailsResponse response =
+                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                    .setIncludeTrip(false)
+                    .build()
+                    .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
         // Make sure the trip exists
@@ -92,7 +99,11 @@ public class TripDetailsRequest extends ObaTestCase {
     }
 
     public void testNoScheduleResponse() throws Exception {
-        ObaTripDetailsResponse response = getRawResourceAs("trip_details_" + TEST_TRIP_ID + "_no_schedule", ObaTripDetailsResponse.class);
+        ObaTripDetailsResponse response =
+                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                    .setIncludeSchedule(false)
+                    .build()
+                    .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 
@@ -115,7 +126,11 @@ public class TripDetailsRequest extends ObaTestCase {
     }
 
     public void testNoStatus() throws Exception {
-        ObaTripDetailsResponse response = getRawResourceAs("trip_details_" + TEST_TRIP_ID + "_no_status", ObaTripDetailsResponse.class);
+        ObaTripDetailsResponse response =
+                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                    .setIncludeStatus(false)
+                    .build()
+                    .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 

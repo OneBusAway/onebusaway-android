@@ -66,7 +66,7 @@ import java.util.List;
  */
 abstract public class BaseMapActivity extends SherlockMapActivity
             implements MapModeController.Callback {
-    //private static final String TAG = "MapFragment";
+    //private static final String TAG = "BaseMapActivity";
 
     private static final int NOLOCATION_DIALOG = 103;
     private static final int OUTOFRANGE_DIALOG = 104;
@@ -144,9 +144,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void onDestroy() {
+        //Log.d(TAG, "onDestroy: " + mStopUserMap);
         if (mStopUserMap != null) {
             mStopUserMap.close();
             mStopUserMap = null;
+            mStopPopup.setStopUserMap(null);
         }
         if (mController != null) {
             mController.destroy();
@@ -169,6 +171,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public void onResume() {
         mLocationOverlay.enableMyLocation();
 
+        //Log.d(TAG, "onResume: " + mStopUserMap);
         if (mStopUserMap == null) {
             mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
         } else {
@@ -322,17 +325,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     final Handler mShowOutOfRangeHandler = new Handler();
 
     @Override
+    @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
         if (mWarnOutOfRange) {
-            /* MAP TODO:
-            mShowOutOfRangeHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    new OutOfRangeDialog().show(getSupportFragmentManager(),
-                            TAG_OUT_OF_RANGE_DIALOG);
-                }
-            });
-            */
+            showDialog(OUTOFRANGE_DIALOG);
         }
     }
 
@@ -350,6 +346,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                         final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
                         final ObaStop stop = item.getStop();
                         mFocusStopId = stop.getId();
+                        //Log.d(TAG, "Show stop popup");
                         mStopPopup.show(stop);
                     } else {
                         mStopPopup.hide();

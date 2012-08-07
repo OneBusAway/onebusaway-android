@@ -192,18 +192,15 @@ public class HomeActivity extends BaseMapActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                         case 0:
-                            UIHelp.goToUrl(HomeActivity.this, HELP_URL);
-                            break;
-                        case 1:
                             UIHelp.goToUrl(HomeActivity.this, TWITTER_URL);
                             break;
-                        case 2:
+                        case 1:
                             showDialog(WHATSNEW_DIALOG);
                             break;
-                        case 3:
+                        case 2:
                             goToBugReport(HomeActivity.this);
                             break;
-                        case 4:
+                        case 3:
                             Intent preferences = new Intent(
                                     HomeActivity.this,
                                     EditPreferencesActivity.class);

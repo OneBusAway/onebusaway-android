@@ -24,11 +24,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 
 
 public class SearchActivity extends SherlockFragmentActivity {
-    private static final String TAG = "SearchActivity";
+    //private static final String TAG = "SearchActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,7 +54,6 @@ public class SearchActivity extends SherlockFragmentActivity {
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             // handles a click on a search suggestion; launches activity to show word
-            Log.d(TAG, "View");
             /*
             Intent wordIntent = new Intent(this, WordActivity.class);
             wordIntent.setData(intent.getData());
@@ -70,7 +68,7 @@ public class SearchActivity extends SherlockFragmentActivity {
     }
 
     private void doSearch(String query) {
-        Log.d(TAG, "Search: " + query);
+        //Log.d(TAG, "Search: " + query);
         // Find both tabs and start a search for them...
         FragmentManager fm = getSupportFragmentManager();
 

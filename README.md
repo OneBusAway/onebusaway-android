@@ -34,7 +34,7 @@ The Google Maps API requires an API key that's tied to your keystore. If the API
 there won't be any map files. If you're using the develop branch, you'll want to download this 
 and replace your existing debug keystore:
 
-http://code.google.com/p/seattle-bus-bot/downloads/detail?name=seattlebusbot2.debug.keystore
+https://github.com/downloads/paulcwatts/onebusaway-android/seattlebusbot3.debug.keystore
 
 This will work for develop. If you are using the master branch, that uses the production key generated
 from my private keystore. You'll want to use a different key. Luckily you can easily modify 

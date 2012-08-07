@@ -63,7 +63,10 @@ public final class UIHelp {
     }
 
     public static void showProgress(SherlockFragment fragment, boolean visible) {
-        fragment.getSherlockActivity().setSupportProgressBarIndeterminateVisibility(visible);
+        SherlockFragmentActivity act = fragment.getSherlockActivity();
+        if (act != null) {
+            act.setSupportProgressBarIndeterminateVisibility(visible);
+        }
     }
 
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {

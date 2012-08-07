@@ -34,7 +34,7 @@ public final class ObaCurrentTimeRequest extends RequestBase
 
     public static class Builder extends RequestBase.BuilderBase {
         public Builder(Context context) {
-            super(context, BASE_PATH + "/current-time.json", true);
+            super(context, BASE_PATH + "/current-time.json");
         }
 
         public ObaCurrentTimeRequest build() {

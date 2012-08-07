@@ -32,8 +32,7 @@
 		              android:id="@+id/trip_name"
 		              style="@style/HeaderText"
 		              android:layout_width="fill_parent"
-		              android:layout_height="wrap_content"
-		              android:background="@drawable/focus_title_bg"/>
+		              android:layout_height="wrap_content"/>
 		</LinearLayout>
 
       	<LinearLayout

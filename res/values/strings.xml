@@ -48,14 +48,14 @@
     <string name="map_option_search">Search</string>
     <string name="main_option_findroute">My Routes</string>
     <string name="main_option_findstop">My Stops</string>
-    <string name="main_option_viewtrips">View Reminders</string>
+    <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Show route paths directly from the map!\n\nSearch from the search button!\n\nEasier to install shortcuts!</string>
+    <string name="main_help_whatsnew">All new UI!\n\nSave/restore your data!\n\nBetter bug reporting!\n\nMuch more!</string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
@@ -136,9 +136,8 @@
     <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Find -->
-    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\n</string>
+    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.</string>
     <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in the search box.</string>
-    <string name="find_hint_nofavoritestops_link">What\'s a stop number?</string>
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
@@ -169,8 +168,8 @@
     <string name="trip_info_repeat_weekdays">Weekdays (Mon-Fri)</string>
     <string name="trip_info_repeat_norepeat">One-time</string>
     <string name="trip_info_noname">(no name)</string>
-    <string name="trip_info_option_showroute">Show route</string>
-    <string name="trip_info_option_showstop">Show stop</string>
+    <string name="trip_info_option_showroute">Show Route</string>
+    <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->

@@ -20,8 +20,10 @@ import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.content.ContentResolver;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -79,7 +81,26 @@ public class TripListActivity extends SherlockFragmentActivity {
         private static final int COL_ROUTE_ID = 4;
         private static final int COL_STOP_ID = 5;
 
+        private static final Handler mHandler = new Handler();
+        private class Observer extends ContentObserver {
+            Observer() {
+                super(mHandler);
+            }
+
+            @Override
+            public boolean deliverSelfNotifications() {
+                return false;
+            }
+
+            public void onChange(boolean selfChange) {
+                if (isAdded()) {
+                    getLoaderManager().restartLoader(0, null, TripListFragment.this);
+                }
+            }
+        }
+
         private SimpleCursorAdapter mAdapter;
+        private Observer mObserver;
 
         @Override
         public void onActivityCreated(Bundle savedInstanceState) {
@@ -92,9 +113,22 @@ public class TripListActivity extends SherlockFragmentActivity {
             // Create our generic adapter
             mAdapter = newAdapter();
             setListAdapter(mAdapter);
+            ContentResolver cr = getActivity().getContentResolver();
+            mObserver = new Observer();
+            cr.registerContentObserver(ObaContract.Trips.CONTENT_URI, true, mObserver);
 
             // Prepare the loader
             getLoaderManager().initLoader(0, null, this);
+        }
+
+        @Override
+        public void onDestroy() {
+            if (mObserver != null) {
+                ContentResolver cr = getActivity().getContentResolver();
+                cr.unregisterContentObserver(mObserver);
+                mObserver = null;
+            }
+            super.onDestroy();
         }
 
         @Override

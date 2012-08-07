@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -26,6 +41,11 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     private static final String TRIP_SERVICE_DATE = ".ServiceDate";
     private static final String TRIP_VEHICLE_ID = ".VehicleId";
 
+    private static final String CODE = ".Code";
+    private static final String USER_COMMENT = ".UserComment";
+    private static final String USER_ON_VEHICLE = ".UserOnVehicle";
+    private static final String USER_VEHICLE_NUM = ".UserVehicleNum";
+
     static void show(SherlockFragmentActivity activity, ObaArrivalInfo arrival) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
@@ -51,7 +71,6 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     private TextView mUserComment;
     private CheckBox mUserOnVehicle;
     private TextView mUserVehicle;
-
 
     @Override
     protected int getLayoutId() {
@@ -96,6 +115,30 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 mUserVehicle.setEnabled(checked);
             }
         });
+
+        if (savedInstanceState != null) {
+            int position = savedInstanceState.getInt(CODE);
+            mCodeView.setSelection(position);
+
+            CharSequence comment = savedInstanceState.getCharSequence(USER_COMMENT);
+            mUserComment.setText(comment);
+
+            boolean onVehicle = savedInstanceState.getBoolean(USER_ON_VEHICLE);
+            mUserOnVehicle.setChecked(onVehicle);
+
+            CharSequence num = savedInstanceState.getCharSequence(USER_VEHICLE_NUM);
+            mUserVehicle.setText(num);
+            mUserVehicle.setEnabled(onVehicle);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(CODE, mCodeView.getSelectedItemPosition());
+        outState.putCharSequence(USER_COMMENT, mUserComment.getText());
+        outState.putBoolean(USER_ON_VEHICLE, mUserOnVehicle.isChecked());
+        outState.putCharSequence(USER_VEHICLE_NUM, mUserVehicle.getText());
     }
 
     @Override

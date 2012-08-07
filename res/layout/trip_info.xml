@@ -26,7 +26,6 @@
           android:orientation="vertical"
           android:layout_width="fill_parent"
           android:layout_height="wrap_content"
-          android:gravity="center_horizontal"
           android:paddingBottom="16dp">
           <TextView
               android:id="@+id/stop_name"

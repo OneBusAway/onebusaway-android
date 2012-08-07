@@ -27,9 +27,6 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.text.SpannableStringBuilder;
-import android.text.style.URLSpan;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -44,7 +41,7 @@ import java.util.Arrays;
 
 public class MySearchStopsFragment extends MySearchFragmentBase
             implements LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse> {
-    private static final String TAG = "MySearchStopsFragment";
+    //private static final String TAG = "MySearchStopsFragment";
     private static final String QUERY_TEXT = "query_text";
 
     public static final String TAB_NAME = "search";
@@ -83,7 +80,6 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public Loader<ObaStopsForLocationResponse> onCreateLoader(int id, Bundle args) {
-        Log.d(TAG, "Create loader");
         String query = args.getString(QUERY_TEXT);
         return new MyLoader(getActivity(), query, getSearchCenter());
     }
@@ -92,7 +88,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
                         ObaStopsForLocationResponse response) {
         UIHelp.showProgress(this, false);
-        Log.d(TAG, "Loader finished");
+        //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
             setEmptyText(getString(R.string.find_hint_noresults));
@@ -135,18 +131,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
         return 5;
     }
 
-    private static final String URL_STOPID = HomeActivity.HELP_URL + "#finding_stop_ids";
-
     @Override
     protected CharSequence getHintText() {
-        final CharSequence first = getText(R.string.find_hint_nofavoritestops);
-        final int firstLen = first.length();
-        final CharSequence second = getText(R.string.find_hint_nofavoritestops_link);
-
-        SpannableStringBuilder builder = new SpannableStringBuilder(first);
-        builder.append(second);
-        builder.setSpan(new URLSpan(URL_STOPID), firstLen, firstLen+second.length(), 0);
-        return builder;
+        return getText(R.string.find_hint_nofavoritestops);
     }
 
     @Override

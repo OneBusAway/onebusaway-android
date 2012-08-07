@@ -37,7 +37,10 @@ public class TripRequestTest extends ObaTestCase {
     }
 
     public void testKCMTripResponse() throws Exception {
-        ObaTripResponse response = getRawResourceAs("trip_" + TEST_TRIP_ID, ObaTripResponse.class);
+        ObaTripResponse response =
+                new ObaTripRequest.Builder(getContext(), TEST_TRIP_ID)
+                    .build()
+                    .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
         assertEquals("1_65", response.getRouteId());

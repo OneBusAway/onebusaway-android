@@ -33,7 +33,6 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +68,7 @@ final class SearchResponse {
 
 public class SearchResultsFragment extends ListFragment
             implements LoaderManager.LoaderCallbacks<SearchResponse> {
-    private static final String TAG = "SearchResultsFragment";
+    //private static final String TAG = "SearchResultsFragment";
     public static final String QUERY_TEXT = "query_text";
 
     private MyAdapter mAdapter;
@@ -93,7 +92,6 @@ public class SearchResultsFragment extends ListFragment
 
     @Override
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
-        Log.d(TAG, "Create loader");
         String query = args.getString(QUERY_TEXT);
         return new MyLoader(getActivity(), query, UIHelp.getLocation(getActivity()));
     }
@@ -102,7 +100,7 @@ public class SearchResultsFragment extends ListFragment
     public void onLoadFinished(Loader<SearchResponse> loader,
                 SearchResponse response) {
         UIHelp.showProgress(this, false);
-        Log.d(TAG, "Loader finished");
+        //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
             setEmptyText(getString(R.string.find_hint_noresults));

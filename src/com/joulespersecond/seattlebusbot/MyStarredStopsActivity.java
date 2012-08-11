@@ -37,7 +37,7 @@ public class MyStarredStopsActivity extends Activity {
     }
 
     private Intent getShortcutIntent() {
-        final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentStopsFragment.TAB_NAME);
+        final Uri uri = MyTabActivityBase.getDefaultTabUri(MyStarredStopsFragment.TAB_NAME);
         return UIHelp.makeShortcut(this,
                     getString(R.string.starred_stops_shortcut),
                     new Intent(this, MyStopsActivity.class)

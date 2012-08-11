@@ -58,7 +58,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
             mDefaultTab = savedInstanceState.getString("tab");
         }
         final Uri data = intent.getData();
-        if (data != null && mDefaultTab != null) {
+        if (data != null && mDefaultTab == null) {
             mDefaultTab = getDefaultTabFromUri(data);
         }
     }

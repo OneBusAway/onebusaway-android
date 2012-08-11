@@ -38,8 +38,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 public class HomeActivity extends BaseMapActivity {
-    public static final String HELP_URL = "http://www.joulespersecond.com/onebusaway-userguide2/";
-    public static final String TWITTER_URL = "http://mobile.twitter.com/seattlebusbot";
+    public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;

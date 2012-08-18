@@ -384,7 +384,14 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public ArrayList<String> getRoutesFilter() {
-        return mRoutesFilter;
+        // If mStop is null, we don't want the ArrivalsListHeader calling
+        // getNumRoutes, so if we don't have a stop we pretend we don't have
+        // a route filter at all.
+        if (mStop != null) {
+            return mRoutesFilter;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -407,7 +414,11 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public int getNumRoutes() {
-        return mStop.getRouteIds().length;
+        if (mStop != null) {
+            return mStop.getRouteIds().length;
+        } else {
+            return 0;
+        }
     }
 
     @Override

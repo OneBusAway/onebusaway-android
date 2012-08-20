@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 abstract class MyStopListFragmentBase extends MyListFragmentBase
             implements QueryUtils.StopList.Columns {
@@ -108,9 +107,6 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                                     stopData.id, stopData.name, stopData.dir));
             shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
             getActivity().sendBroadcast(shortcutIntent);
-            Toast.makeText(getActivity(),
-                    R.string.my_context_create_shortcut_success,
-                    Toast.LENGTH_LONG).show();
             return true;
         default:
             return super.onContextItemSelected(item);

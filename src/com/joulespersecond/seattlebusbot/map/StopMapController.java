@@ -34,10 +34,99 @@ import android.widget.Toast;
 import java.util.Arrays;
 import java.util.List;
 
+final class StopsRequest {
+    private final GeoPoint mCenter;
+    private final int mLatSpan;
+    private final int mLonSpan;
+    private final int mZoomLevel;
+
+    StopsRequest(MapView view) {
+        mCenter = view.getMapCenter();
+        mLatSpan = view.getLatitudeSpan();
+        mLonSpan = view.getLongitudeSpan();
+        mZoomLevel = view.getZoomLevel();
+    }
+
+    GeoPoint getCenter() {
+        return mCenter;
+    }
+
+    int getLatSpan() {
+        return mLatSpan;
+    }
+
+    int getLonSpan() {
+        return mLonSpan;
+    }
+
+    int getZoomLevel() {
+        return mZoomLevel;
+    }
+}
+
+final class StopsResponse {
+    private final StopsRequest mRequest;
+    private final ObaStopsForLocationResponse mResponse;
+
+    StopsResponse(StopsRequest req, ObaStopsForLocationResponse response) {
+        mRequest = req;
+        mResponse = response;
+    }
+
+    StopsRequest getRequest() {
+        return mRequest;
+    }
+
+    ObaStopsForLocationResponse getResponse() {
+        return mResponse;
+    }
+
+    /**
+     * Returns true if newReq also fulfills response.
+     * @param newReq
+     * @return
+     */
+    boolean fulfills(StopsRequest newReq) {
+        if (mRequest.getCenter() == null) {
+            //Log.d(TAG, "No center");
+            return false;
+        }
+        if (!mRequest.getCenter().equals(newReq.getCenter())) {
+            //Log.d(TAG, "Center not the same");
+            return false;
+        }
+        if (mResponse != null) {
+            if ((newReq.getZoomLevel() > mRequest.getZoomLevel()) &&
+                    mResponse.getLimitExceeded()) {
+                //Log.d(TAG, "Zooming in -- limit exceeded");
+                return false;
+            }
+            else if (newReq.getZoomLevel() < mRequest.getZoomLevel()) {
+                //Log.d(TAG, "Zooming out");
+                return false;
+            }
+        }
+        return true;
+
+        // Otherwise:
+
+        // If the new request's is zoomed in and the current
+        // response has limitExceeded, then no.
+
+        // If the new request's lat/lon span is contained
+        // entirely within the old one:
+        //  Then the new request is fulfilled IFF the old request's
+        //  limitExceeded == false.
+
+        // If the new request's lat/lon span is not contained
+        // entirely within the old one (fuzzy match)
+        //  FALSE
+    }
+}
 
 class StopMapController implements MapModeController,
-            LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse>,
-            Loader.OnLoadCompleteListener<ObaStopsForLocationResponse>,
+            LoaderManager.LoaderCallbacks<StopsResponse>,
+            Loader.OnLoadCompleteListener<StopsResponse>,
             MapWatcher.Listener {
     //private static final String TAG = "StopMapController";
     private static final int STOPS_LOADER = 5678;
@@ -45,7 +134,7 @@ class StopMapController implements MapModeController,
     private final Callback mFragment;
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
-    private Loader<ObaStopsForLocationResponse> mLoader;
+    private Loader<StopsResponse> mLoader;
 
     private MapWatcher mMapWatcher;
 
@@ -117,16 +206,21 @@ class StopMapController implements MapModeController,
     }
 
     @Override
-    public Loader<ObaStopsForLocationResponse> onCreateLoader(int id, Bundle args) {
+    public Loader<StopsResponse> onCreateLoader(int id, Bundle args) {
         StopsLoader loader = new StopsLoader(mFragment);
-        loader.update(mFragment.getMapView());
+        StopsRequest req = new StopsRequest(mFragment.getMapView());
+        loader.update(req);
         return loader;
     }
 
     @Override
-    public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
-            ObaStopsForLocationResponse response) {
+    public void onLoadFinished(Loader<StopsResponse> loader,
+            StopsResponse _response) {
         mFragment.showProgress(false);
+        final ObaStopsForLocationResponse response = _response.getResponse();
+        if (response == null) {
+            return;
+        }
 
         if (response.getCode() != ObaApi.OBA_OK) {
             Activity act = mFragment.getActivity();
@@ -146,15 +240,15 @@ class StopMapController implements MapModeController,
     }
 
     @Override
-    public void onLoaderReset(Loader<ObaStopsForLocationResponse> loader) {
+    public void onLoaderReset(Loader<StopsResponse> loader) {
         // Clear the overlay.
         mFragment.showStops(null, null);
     }
 
     // Remove when adding back LoaderManager help.
     @Override
-    public void onLoadComplete(Loader<ObaStopsForLocationResponse> loader,
-            ObaStopsForLocationResponse response) {
+    public void onLoadComplete(Loader<StopsResponse> loader,
+            StopsResponse response) {
         onLoadFinished(loader, response);
     }
 
@@ -171,24 +265,25 @@ class StopMapController implements MapModeController,
     private void refresh() {
         // First we need to check to see if the current request we have can handle this.
         // Otherwise, we need to restart the loader with the new request.
-        StopsLoader loader = getLoader();
-        if (loader != null) {
-            loader.update(mFragment.getMapView());
-        }
+        mFragment.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                StopsLoader loader = getLoader();
+                if (loader != null) {
+                    StopsRequest req = new StopsRequest(mFragment.getMapView());
+                    loader.update(req);
+                }
+            }
+        });
     }
 
     //
     // Loader
     //
-    private static class StopsLoader extends AsyncTaskLoader<ObaStopsForLocationResponse> {
-
+    private static class StopsLoader extends AsyncTaskLoader<StopsResponse> {
         private final Callback mFragment;
-        private GeoPoint mCenter;
-        private int mLatSpan;
-        private int mLonSpan;
-        private int mZoomLevel;
-
-        private ObaStopsForLocationResponse mResponse;
+        private StopsRequest mRequest;
+        private StopsResponse mResponse;
 
         public StopsLoader(Callback fragment) {
             super(fragment.getActivity());
@@ -196,15 +291,18 @@ class StopMapController implements MapModeController,
         }
 
         @Override
-        public synchronized ObaStopsForLocationResponse loadInBackground() {
-            return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
-                    .setSpan(mLatSpan, mLonSpan)
-                    .build()
-                    .call();
+        public StopsResponse loadInBackground() {
+            StopsRequest req = mRequest;
+            ObaStopsForLocationResponse response =
+                    new ObaStopsForLocationRequest.Builder(getContext(), req.getCenter())
+                                .setSpan(req.getLatSpan(), req.getLonSpan())
+                                .build()
+                                .call();
+            return new StopsResponse(req, response);
         }
 
         @Override
-        public void deliverResult(ObaStopsForLocationResponse data) {
+        public void deliverResult(StopsResponse data) {
             mResponse = data;
             super.deliverResult(data);
         }
@@ -222,61 +320,11 @@ class StopMapController implements MapModeController,
             super.onForceLoad();
         }
 
-        public synchronized void update(MapView view) {
-            GeoPoint newCenter = view.getMapCenter();
-            int newLatSpan = view.getLatitudeSpan();
-            int newLonSpan = view.getLongitudeSpan();
-            int newZoom = view.getZoomLevel();
-
-            if (!canFulfill(newCenter, newZoom)) {
-                mCenter = newCenter;
-                mLatSpan = newLatSpan;
-                mLonSpan = newLonSpan;
-                mZoomLevel = newZoom;
+        public void update(StopsRequest req) {
+            if (mResponse == null || !mResponse.fulfills(req)) {
+                mRequest = req;
                 onContentChanged();
             }
-        }
-
-        private boolean canFulfill(GeoPoint newCenter, int newZoom) {
-            // This is the old logic, we can do better:
-            if (mResponse == null) {
-                //Log.d(TAG, "No response");
-                return false;
-            }
-            if (mCenter == null) {
-                //Log.d(TAG, "No center");
-                return false;
-            }
-            if (!mCenter.equals(newCenter)) {
-                //Log.d(TAG, "Center not the same");
-                return false;
-            }
-            if (mResponse != null) {
-                if ((newZoom > mZoomLevel) &&
-                        mResponse.getLimitExceeded()) {
-                    //Log.d(TAG, "Zooming in -- limit exceeded");
-                    return false;
-                }
-                else if (newZoom < mZoomLevel) {
-                    //Log.d(TAG, "Zooming out");
-                    return false;
-                }
-            }
-            return true;
-
-            // Otherwise:
-
-            // If the new request's is zoomed in and the current
-            // response has limitExceeded, then no.
-
-            // If the new request's lat/lon span is contained
-            // entirely within the old one:
-            //  Then the new request is fulfilled IFF the old request's
-            //  limitExceeded == false.
-
-            // If the new request's lat/lon span is not contained
-            // entirely within the old one (fuzzy match)
-            //  FALSE
         }
     }
 

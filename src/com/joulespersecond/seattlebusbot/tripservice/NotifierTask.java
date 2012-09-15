@@ -138,6 +138,7 @@ public final class NotifierTask implements Runnable {
             .getNotification();
     }
 
+    @SuppressWarnings("deprecation")
     private void setLatestInfo(Notification notification,
             String stopId,
             String routeId,

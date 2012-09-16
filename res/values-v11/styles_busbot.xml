@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources>
+    <style name="Theme.BusBot" parent="@style/Theme.Sherlock.Light">
+        <item name="actionBarItemBackground">@drawable/selectable_background_busbot</item>
+        <item name="popupMenuStyle">@style/busbot_PopupMenu</item>
+        <item name="dropDownListViewStyle">@style/busbot_DropDownListView</item>
+        <item name="actionBarTabStyle">@style/busbot_ActionBarTabStyle</item>
+        <item name="actionDropDownStyle">@style/busbot_DropDownNav</item>
+        <item name="actionBarStyle">@style/busbot_solid_ActionBar</item>
+
+        <item name="android:actionBarItemBackground">@drawable/selectable_background_busbot</item>
+        <item name="android:popupMenuStyle">@style/busbot_PopupMenu</item>
+        <item name="android:dropDownListViewStyle">@style/busbot_DropDownListView</item>
+        <item name="android:actionBarTabStyle">@style/busbot_ActionBarTabStyle</item>
+        <item name="android:actionDropDownStyle">@style/busbot_DropDownNav</item>
+        <item name="android:actionBarStyle">@style/busbot_solid_ActionBar</item>
+        <item name="android:panelBackground">@drawable/menu_hardkey_panel_busbot</item>
+
+        <!-- From http://android-holo-colors.com/ -->
+        <!-- Color: #60b52b -->
+        <item name="android:editTextBackground">@drawable/edit_text_holo_light</item>
+    	<item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
+    	<item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
+    	<item name="android:buttonStyle">@style/Buttonbusbot</item>
+    	<item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
+    	<item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
+    	<item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
+    </style>
+
+    <!-- From http://android-holo-colors.com/ -->
+    <!-- Color: #60b52b -->
+    <style name="Buttonbusbot" parent="android:Widget.Holo.Light.Button">
+	    <item name="android:background">@drawable/btn_default_holo_light</item>
+  	</style>
+
+  	<style name="ImageButtonbusbot" parent="android:Widget.Holo.Light.ImageButton">
+	  	<item name="android:background">@drawable/btn_default_holo_light</item>
+  	</style>
+
+  	<style name="Spinnerbusbot" parent="android:Widget.Holo.Light.Spinner">
+      	<item name="android:background">@drawable/spinner_background_holo_light</item>
+  	</style>
+</resources>

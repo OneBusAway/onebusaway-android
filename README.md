@@ -1,8 +1,6 @@
-# SeattleBusBot / OneBusAway for Android
+# OneBusAway for Android
 
-SeattleBusBot is the official native Android application for OneBusAway.
-
-SeattleBusBot was the old name of the app -- it's now called "OneBusAway for Android" or, when speaking about the app itself, just "OneBusAway". It's listed in the Android Market as OneBusAway.
+This is the official Android app for OneBusAway!
 
 OneBusAway for Android provides:
 
@@ -12,19 +10,23 @@ OneBusAway for Android provides:
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's Main Menu for any stop or route you choose.
 
-It's available on the Android Market: http://market.android.com/details?id=com.joulespersecond.seattlebusbot
-
-The issues are still being tracked at Google Code: http://code.google.com/p/seattle-bus-bot/
+It's available on the Play Store: https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot
 
 ## Build Setup
+
+### Building in Eclipse
 
 OneBusAway requires ActionBarSherlock: http://actionbarsherlock.com/
 
 Luckily, the version that we use is already included for you in this repository. You just need to
 import the SeattleBusBot/ActionBarSherlock project as an existing project. If you have trouble 
-building, make sure you have the latest version of the Android SDK, Android ADT. It never hurts to
+building, make sure you have the latest version of the Android SDK and Android ADT. It never hurts to
 restart Eclipse and clean the project. If you still have trouble building, 
 let me know at paulcwatts@gmail.com.
+
+### Building in Ant
+
+This should just be as simple as using <code>ant debug</code> in the project root path.
 
 ## Troubleshooting
 
@@ -40,6 +42,15 @@ This will work for develop. If you are using the master branch, that uses the pr
 from my private keystore. You'll want to use a different key. Luckily you can easily modify 
 one file to add your own API key (or use the debug key): 
 
-https://github.com/paulcwatts/onebusaway-android/blob/master/res/values/apiKey.xml
+https://github.com/paulcwatts/onebusaway-android/blob/master/res/values/maps_api_key.xml
 
+## OneBusAway Project
+
+Want to learn more about the OneBusAway project? Read up on the entire Application Suite here:
+
+https://github.com/OneBusAway/onebusaway-application-modules/wiki
+
+You can also learn more about the mobile apps here:
+
+https://github.com/OneBusAway/onebusaway-application-modules/wiki/Mobile-App-Design-Considerations
 

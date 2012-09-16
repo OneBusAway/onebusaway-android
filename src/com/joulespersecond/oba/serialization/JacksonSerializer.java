@@ -16,22 +16,21 @@
  */
 package com.joulespersecond.oba.serialization;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 import com.joulespersecond.oba.ObaApi;
-
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.annotate.JsonAutoDetect;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.MappingJsonFactory;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.introspect.VisibilityChecker;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.TextNode;
-import org.codehaus.jackson.node.TreeTraversingParser;
 
 import android.util.Log;
 
@@ -50,7 +49,7 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
     private static final ObjectMapper mMapper = new ObjectMapper();
 
     static {
-        mMapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,false);
+        mMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
         mMapper.setVisibilityChecker(
                 VisibilityChecker.Std.defaultInstance()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY));

@@ -21,6 +21,14 @@
        android:layout_width="fill_parent"
        android:layout_height="wrap_content">
 
+      <!-- This isn't useless, it's for stealing the focus to
+      	   the system doesn't focus the trip name by default. -->
+      <FrameLayout
+          android:layout_width="match_parent"
+          android:layout_height="1dp"
+          android:focusable="true"
+          android:focusableInTouchMode="true"/>
+
        <LinearLayout
           style="@style/HeaderItem"
           android:orientation="vertical"

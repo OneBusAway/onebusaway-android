@@ -27,6 +27,7 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
@@ -41,6 +42,8 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
@@ -67,6 +70,8 @@ import java.util.List;
 abstract public class BaseMapActivity extends SherlockMapActivity
             implements MapModeController.Callback {
     //private static final String TAG = "BaseMapActivity";
+
+    private static final int API_KEY = BuildConfig.DEBUG ? R.string.api_key_debug : R.string.api_key_release;
 
     private static final int NOLOCATION_DIALOG = 103;
     private static final int OUTOFRANGE_DIALOG = 104;
@@ -98,8 +103,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         setContentView(getContentView());
 
         View view = getView();
-        mMapView = (MapView)view.findViewById(R.id.mapview);
-        mMapView.setBuiltInZoomControls(false);
+        mMapView = createMap(view);
+
         mZoomControls = (ZoomControls)view.findViewById(R.id.zoom_controls);
         mZoomControls.setOnZoomInClickListener(mOnZoomIn);
         mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
@@ -128,6 +133,20 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             }
             initMap(args);
         }
+    }
+
+    private MapView createMap(View view) {
+        MapView map = new MapView(this, getString(API_KEY));
+        map.setBuiltInZoomControls(false);
+        map.setClickable(true);
+        map.setFocusableInTouchMode(true);
+
+        RelativeLayout mainLayout = (RelativeLayout)view.findViewById(R.id.mainlayout);
+        RelativeLayout.LayoutParams lp =
+                new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        mainLayout.addView(map, 0, lp);
+
+        return map;
     }
 
     abstract protected int getContentView();

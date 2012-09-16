@@ -106,6 +106,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                             ArrivalsListActivity.makeIntent(getActivity(),
                                     stopData.id, stopData.name, stopData.dir));
             shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
+            shortcutIntent.setFlags(0);
             getActivity().sendBroadcast(shortcutIntent);
             return true;
         default:

@@ -35,7 +35,7 @@ public class ObaProvider extends ContentProvider {
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
 
     private class OpenHelper extends SQLiteOpenHelper {
-        private static final int DATABASE_VERSION = 17;
+        private static final int DATABASE_VERSION = 18;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -122,6 +122,40 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.ServiceAlerts._ID          + " VARCHAR PRIMARY KEY, " +
                             ObaContract.ServiceAlerts.MARKED_READ_TIME  + " INTEGER " +
                             ");");
+                ++oldVersion;
+            }
+            if (oldVersion == 17) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                            ObaContract.Regions.PATH            + " (" +
+                            ObaContract.Regions._ID             + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            ObaContract.Regions.NAME            + " VARCHAR NOT NULL, " +
+                            ObaContract.Regions.OBA_BASE_URL    + " VARCHAR, " +
+                            ObaContract.Regions.SIRI_BASE_URL   + " VARCHAR, " +
+                            ObaContract.Regions.LANGUAGE        + " VARCHAR NOT NULL, " +
+                            ObaContract.Regions.CONTACT_NAME    + " VARCHAR NOT NULL, " +
+                            ObaContract.Regions.CONTACT_EMAIL   + " VARCHAR NOT NULL, " +
+                            ObaContract.Regions.SUPPORTS_OBA_DISCOVERY  + " INTEGER NOT NULL, " +
+                            ObaContract.Regions.SUPPORTS_OBA_REALTIME   + " INTEGER NOT NULL, " +
+                            ObaContract.Regions.SUPPORTS_SIRI_REALTIME  + " INTEGER NOT NULL " +
+                            ");");
+                db.execSQL(
+                        "CREATE TABLE " +
+                            ObaContract.RegionBounds.PATH       + " (" +
+                            ObaContract.RegionBounds._ID        + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            ObaContract.RegionBounds.REGION_ID  + " INTEGER NOT NULL, " +
+                            ObaContract.RegionBounds.LATITUDE   + " REAL NOT NULL, " +
+                            ObaContract.RegionBounds.LONGITUDE  + " REAL NOT NULL, " +
+                            ObaContract.RegionBounds.LAT_SPAN   + " REAL NOT NULL, " +
+                            ObaContract.RegionBounds.LON_SPAN   + " REAL NOT NULL " +
+                            ");");
+                db.execSQL("DROP TRIGGER IF EXISTS region_bounds_cleanup");
+                db.execSQL("CREATE TRIGGER region_bounds_cleanup DELETE ON "+ ObaContract.Regions.PATH +
+                        " BEGIN " +
+                            "DELETE FROM " + ObaContract.RegionBounds.PATH +
+                                " WHERE " + ObaContract.RegionBounds.REGION_ID + " = old." + ObaContract.Regions._ID +
+                                  ";" +
+                        "END");
             }
         }
 
@@ -165,6 +199,9 @@ public class ObaProvider extends ContentProvider {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Stops.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Trips.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.TripAlerts.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.ServiceAlerts.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Regions.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionBounds.PATH);
         }
     }
 
@@ -179,6 +216,10 @@ public class ObaProvider extends ContentProvider {
     private static final int STOP_ROUTE_FILTERS = 9;
     private static final int SERVICE_ALERTS = 10;
     private static final int SERVICE_ALERTS_ID = 11;
+    private static final int REGIONS    = 12;
+    private static final int REGIONS_ID = 13;
+    private static final int REGION_BOUNDS     = 14;
+    private static final int REGION_BOUNDS_ID  = 15;
 
     private static final UriMatcher sUriMatcher;
     private static final HashMap<String,String> sStopsProjectionMap;
@@ -186,6 +227,8 @@ public class ObaProvider extends ContentProvider {
     private static final HashMap<String,String> sTripsProjectionMap;
     private static final HashMap<String,String> sTripAlertsProjectionMap;
     private static final HashMap<String,String> sServiceAlertsProjectionMap;
+    private static final HashMap<String,String> sRegionsProjectionMap;
+    private static final HashMap<String,String> sRegionBoundsProjectionMap;
 
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
@@ -194,6 +237,8 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mTripAlertsInserter;
     private DatabaseUtils.InsertHelper mFilterInserter;
     private DatabaseUtils.InsertHelper mServiceAlertsInserter;
+    private DatabaseUtils.InsertHelper mRegionsInserter;
+    private DatabaseUtils.InsertHelper mRegionBoundsInserter;
 
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -208,6 +253,10 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.StopRouteFilters.PATH, STOP_ROUTE_FILTERS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH, SERVICE_ALERTS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.ServiceAlerts.PATH + "/*", SERVICE_ALERTS_ID);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Regions.PATH, REGIONS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Regions.PATH + "/#", REGIONS_ID);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionBounds.PATH, REGION_BOUNDS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionBounds.PATH + "/#", REGION_BOUNDS_ID);
 
         sStopsProjectionMap = new HashMap<String,String>();
         sStopsProjectionMap.put(ObaContract.Stops._ID,      ObaContract.Stops._ID);
@@ -260,6 +309,26 @@ public class ObaProvider extends ContentProvider {
         sServiceAlertsProjectionMap = new HashMap<String,String>();
         sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts._ID,              ObaContract.ServiceAlerts._ID);
         sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.MARKED_READ_TIME, ObaContract.ServiceAlerts.MARKED_READ_TIME);
+
+        sRegionsProjectionMap = new HashMap<String,String>();
+        sRegionsProjectionMap.put(ObaContract.Regions._ID,              ObaContract.Regions._ID);
+        sRegionsProjectionMap.put(ObaContract.Regions.NAME,             ObaContract.Regions.NAME);
+        sRegionsProjectionMap.put(ObaContract.Regions.OBA_BASE_URL,     ObaContract.Regions.OBA_BASE_URL);
+        sRegionsProjectionMap.put(ObaContract.Regions.SIRI_BASE_URL,    ObaContract.Regions.SIRI_BASE_URL);
+        sRegionsProjectionMap.put(ObaContract.Regions.LANGUAGE,         ObaContract.Regions.LANGUAGE);
+        sRegionsProjectionMap.put(ObaContract.Regions.CONTACT_NAME,     ObaContract.Regions.CONTACT_NAME);
+        sRegionsProjectionMap.put(ObaContract.Regions.CONTACT_EMAIL,    ObaContract.Regions.CONTACT_EMAIL);
+        sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,   ObaContract.Regions.SUPPORTS_OBA_DISCOVERY);
+        sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME,    ObaContract.Regions.SUPPORTS_OBA_REALTIME);
+        sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,   ObaContract.Regions.SUPPORTS_SIRI_REALTIME);
+
+        sRegionBoundsProjectionMap = new HashMap<String, String>();
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID,       ObaContract.RegionBounds._ID);
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds.REGION_ID, ObaContract.RegionBounds.REGION_ID);
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds.LATITUDE,  ObaContract.RegionBounds.LATITUDE);
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds.LONGITUDE, ObaContract.RegionBounds.LONGITUDE);
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds.LAT_SPAN,  ObaContract.RegionBounds.LAT_SPAN);
+        sRegionBoundsProjectionMap.put(ObaContract.RegionBounds.LON_SPAN,  ObaContract.RegionBounds.LON_SPAN);
     }
 
     private SQLiteDatabase mDb;
@@ -301,6 +370,14 @@ public class ObaProvider extends ContentProvider {
             return ObaContract.ServiceAlerts.CONTENT_DIR_TYPE;
         case SERVICE_ALERTS_ID:
             return ObaContract.ServiceAlerts.CONTENT_TYPE;
+        case REGIONS:
+            return ObaContract.Regions.CONTENT_DIR_TYPE;
+        case REGIONS_ID:
+            return ObaContract.Regions.CONTENT_TYPE;
+        case REGION_BOUNDS:
+            return ObaContract.RegionBounds.CONTENT_DIR_TYPE;
+        case REGION_BOUNDS_ID:
+            return ObaContract.RegionBounds.CONTENT_TYPE;
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -364,6 +441,7 @@ public class ObaProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         String id;
         Uri result;
+        long longId;
 
         switch (match) {
         case STOPS:
@@ -400,7 +478,7 @@ public class ObaProvider extends ContentProvider {
             return result;
 
         case TRIP_ALERTS:
-            long longId = mTripAlertsInserter.insert(values);
+            longId = mTripAlertsInserter.insert(values);
             result = ContentUris.withAppendedId(ObaContract.TripAlerts.CONTENT_URI, longId);
             return result;
 
@@ -428,12 +506,24 @@ public class ObaProvider extends ContentProvider {
             mServiceAlertsInserter.insert(values);
             return result;
 
+        case REGIONS:
+            longId = mRegionsInserter.insert(values);
+            result = ContentUris.withAppendedId(ObaContract.Regions.CONTENT_URI, longId);
+            return result;
+
+        case REGION_BOUNDS:
+            longId = mRegionBoundsInserter.insert(values);
+            result = ContentUris.withAppendedId(ObaContract.RegionBounds.CONTENT_URI, longId);
+            return result;
+
         // What would these mean, anyway??
         case STOPS_ID:
         case ROUTES_ID:
         case TRIPS_ID:
         case TRIP_ALERTS_ID:
         case SERVICE_ALERTS_ID:
+        case REGIONS_ID:
+        case REGION_BOUNDS_ID:
             throw new UnsupportedOperationException("Cannot insert to this URI: " + uri);
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -526,6 +616,36 @@ public class ObaProvider extends ContentProvider {
             return qb.query(mDb, projection, selection, selectionArgs,
                     null, null, sortOrder, limit);
 
+        case REGIONS:
+            qb.setTables(ObaContract.Regions.PATH);
+            qb.setProjectionMap(sRegionsProjectionMap);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
+        case REGIONS_ID:
+            qb.setTables(ObaContract.Regions.PATH);
+            qb.setProjectionMap(sRegionsProjectionMap);
+            qb.appendWhere(ObaContract.Regions._ID);
+            qb.appendWhere("=");
+            qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
+        case REGION_BOUNDS:
+            qb.setTables(ObaContract.RegionBounds.PATH);
+            qb.setProjectionMap(sRegionBoundsProjectionMap);
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
+        case REGION_BOUNDS_ID:
+            qb.setTables(ObaContract.RegionBounds.PATH);
+            qb.setProjectionMap(sRegionBoundsProjectionMap);
+            qb.appendWhere(ObaContract.RegionBounds._ID);
+            qb.appendWhere("=");
+            qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+            return qb.query(mDb, projection, selection, selectionArgs,
+                    null, null, sortOrder, limit);
+
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -573,6 +693,20 @@ public class ObaProvider extends ContentProvider {
             return db.update(ObaContract.ServiceAlerts.PATH, values,
                     where(ObaContract.ServiceAlerts._ID, uri), selectionArgs);
 
+        case REGIONS:
+            return db.update(ObaContract.Regions.PATH, values, selection, selectionArgs);
+
+        case REGIONS_ID:
+            return db.update(ObaContract.Regions.PATH, values,
+                    whereLong(ObaContract.Regions._ID, uri), selectionArgs);
+
+        case REGION_BOUNDS:
+            return db.update(ObaContract.RegionBounds.PATH, values, selection, selectionArgs);
+
+        case REGION_BOUNDS_ID:
+            return db.update(ObaContract.RegionBounds.PATH, values,
+                    whereLong(ObaContract.RegionBounds._ID, uri), selectionArgs);
+
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -618,6 +752,20 @@ public class ObaProvider extends ContentProvider {
             return db.delete(ObaContract.ServiceAlerts.PATH,
                     where(ObaContract.ServiceAlerts._ID, uri), selectionArgs);
 
+        case REGIONS:
+            return db.delete(ObaContract.Regions.PATH, selection, selectionArgs);
+
+        case REGIONS_ID:
+            return db.delete(ObaContract.Regions.PATH,
+                    whereLong(ObaContract.Regions._ID, uri), selectionArgs);
+
+        case REGION_BOUNDS:
+            return db.delete(ObaContract.RegionBounds.PATH, selection, selectionArgs);
+
+        case REGION_BOUNDS_ID:
+            return db.delete(ObaContract.RegionBounds.PATH,
+                    whereLong(ObaContract.RegionBounds._ID, uri), selectionArgs);
+
         default:
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -662,6 +810,8 @@ public class ObaProvider extends ContentProvider {
             mTripAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.TripAlerts.PATH);
             mFilterInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.StopRouteFilters.PATH);
             mServiceAlertsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.ServiceAlerts.PATH);
+            mRegionsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Regions.PATH);
+            mRegionBoundsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.RegionBounds.PATH);
         }
         return mDb;
     }

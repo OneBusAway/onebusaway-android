@@ -130,8 +130,8 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.Regions.PATH            + " (" +
                             ObaContract.Regions._ID             + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                             ObaContract.Regions.NAME            + " VARCHAR NOT NULL, " +
-                            ObaContract.Regions.OBA_BASE_URL    + " VARCHAR, " +
-                            ObaContract.Regions.SIRI_BASE_URL   + " VARCHAR, " +
+                            ObaContract.Regions.OBA_BASE_URL    + " VARCHAR NOT NULL, " +
+                            ObaContract.Regions.SIRI_BASE_URL   + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.LANGUAGE        + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.CONTACT_NAME    + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.CONTACT_EMAIL   + " VARCHAR NOT NULL, " +

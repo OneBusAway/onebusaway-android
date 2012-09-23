@@ -45,6 +45,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         ContentValues values = new ContentValues();
         values.put(Regions.NAME, "Test region");
         values.put(Regions.OBA_BASE_URL, "http://test.onebusaway.org/");
+        values.put(Regions.SIRI_BASE_URL, "");
         values.put(Regions.LANGUAGE, "en_US");
         values.put(Regions.CONTACT_NAME, "OneBus Away");
         values.put(Regions.CONTACT_EMAIL, "contact@onebusaway.org");
@@ -93,6 +94,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         ContentValues values = new ContentValues();
         values.put(Regions.NAME, "Test region");
         values.put(Regions.OBA_BASE_URL, "http://test.onebusaway.org/");
+        values.put(Regions.SIRI_BASE_URL, "");
         values.put(Regions.LANGUAGE, "en_US");
         values.put(Regions.CONTACT_NAME, "OneBus Away");
         values.put(Regions.CONTACT_EMAIL, "contact@onebusaway.org");

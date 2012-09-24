@@ -6,11 +6,6 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>org.python.pydev.PyDevBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
 			<name>com.android.ide.eclipse.adt.ResourceManagerBuilder</name>
 			<arguments>
 			</arguments>
@@ -34,13 +29,5 @@
 	<natures>
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>extras</name>
-			<type>2</type>
-			<location>/Users/paulw/android-sdk-mac_x86/extras</location>
-		</link>
-	</linkedResources>
 </projectDescription>

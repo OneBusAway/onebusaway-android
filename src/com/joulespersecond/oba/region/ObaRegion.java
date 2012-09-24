@@ -1,5 +1,6 @@
 package com.joulespersecond.oba.region;
 
+import android.location.Location;
 import android.net.Uri;
 
 public class ObaRegion {
@@ -14,10 +15,6 @@ public class ObaRegion {
             mLon = lon;
             mLatSpan = latSpan;
             mLonSpan = lonSpan;
-        }
-
-        public boolean isInBounds() {
-            return false;
         }
 
         public double getLat() {
@@ -98,18 +95,6 @@ public class ObaRegion {
         return mBounds;
     }
 
-    public boolean isInBounds() {
-        if (mBounds == null) {
-            return false;
-        }
-        for (Bounds b: mBounds) {
-            if (b.isInBounds()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public String getLanguage() {
         return mLanguage;
     }
@@ -132,5 +117,28 @@ public class ObaRegion {
 
     public boolean supportsSiriRealtime() {
         return mSupportsSiriRealtime;
+    }
+
+    /**
+     * Returns the distance from the specified location
+     * to the center of the closest bound in this region.
+     */
+    public Float getDistanceAway(double lat, double lon) {
+        if (mBounds == null) {
+            return null;
+        }
+        float[] results = new float[1];
+        float minDistance = Float.MAX_VALUE;
+        for (Bounds bound: mBounds) {
+            Location.distanceBetween(lat, lon, bound.getLat(), bound.getLon(), results);
+            if (results[0] < minDistance) {
+                minDistance = results[0];
+            }
+        }
+        return minDistance;
+    }
+
+    public Float getDistanceAway(Location loc) {
+        return getDistanceAway(loc.getLatitude(), loc.getLongitude());
     }
 }

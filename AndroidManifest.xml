@@ -116,14 +116,15 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".EditPreferencesActivity"/>
+        <activity android:name=".PreferencesActivity"/>
+        <activity android:name=".RegionsActivity"/>
 
         <provider
             android:name="com.joulespersecond.oba.provider.ObaProvider"
             android:authorities="com.joulespersecond.oba"/>
 
         <service android:name=".TripService"
-            	android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
+              android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
             <intent-filter>
                 <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />
                 <action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />

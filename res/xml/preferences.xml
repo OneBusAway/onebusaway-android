@@ -14,15 +14,25 @@
      limitations under the License.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="preferences_root">
-    <EditTextPreference
-        android:title="@string/preferences_oba_api_servername_title"
-        android:summary="@string/preferences_oba_api_servername_summary"
-        android:defaultValue="@string/preferences_oba_api_servername_default"
-        android:key="preferences_oba_api_servername" />
-    <com.joulespersecond.seattlebusbot.backup.SavePreference
-        android:title="@string/preferences_save_title"
-        android:summary="@string/preferences_save_summary"/>
-    <com.joulespersecond.seattlebusbot.backup.RestorePreference
-        android:title="@string/preferences_restore_title"
-        android:summary="@string/preferences_restore_summary"/>
+    <PreferenceCategory android:title="@string/preferences_category_location">
+        <Preference
+            android:key="preference_region"
+            android:title="@string/preferences_region_title"
+            android:summary="@string/preferences_region_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_backup">
+        <com.joulespersecond.seattlebusbot.backup.SavePreference
+            android:title="@string/preferences_save_title"
+            android:summary="@string/preferences_save_summary"/>
+        <com.joulespersecond.seattlebusbot.backup.RestorePreference
+            android:title="@string/preferences_restore_title"
+            android:summary="@string/preferences_restore_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_advanced">
+        <EditTextPreference
+            android:title="@string/preferences_oba_api_servername_title"
+            android:summary="@string/preferences_oba_api_servername_summary"
+            android:defaultValue="@string/preferences_oba_api_servername_default"
+            android:key="preferences_oba_api_servername" />
+    </PreferenceCategory>
 </PreferenceScreen>

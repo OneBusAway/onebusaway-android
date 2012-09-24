@@ -18,8 +18,10 @@ package com.joulespersecond.seattlebusbot;
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 
 import android.os.Bundle;
+import android.preference.Preference;
 
-public class EditPreferencesActivity extends SherlockPreferenceActivity {
+public class PreferencesActivity extends SherlockPreferenceActivity
+            implements Preference.OnPreferenceClickListener {
     // Soo... we can use SherlockPreferenceActivity to display the
     // action bar, but we can't use a PreferenceFragment?
     @SuppressWarnings("deprecation")
@@ -27,5 +29,14 @@ public class EditPreferencesActivity extends SherlockPreferenceActivity {
         super.onCreate(savedInstanceState);
         UIHelp.setupActionBar(getSupportActionBar());
         addPreferencesFromResource(R.xml.preferences);
+
+        Preference pref = findPreference("preference_region");
+        pref.setOnPreferenceClickListener(this);
+    }
+
+    @Override
+    public boolean onPreferenceClick(Preference arg0) {
+        RegionsActivity.start(this);
+        return true;
     }
 }

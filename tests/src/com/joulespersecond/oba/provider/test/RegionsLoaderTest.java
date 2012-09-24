@@ -61,8 +61,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         ArrayList<ObaRegion> regions = getLoaderResultSynchronously(loader);
         assertNotNull(regions);
         assertEquals(3, regions.size());
-        // Sorted by Name
-        _assertTampa(regions.get(2));
+        _assertTampa(regions.get(0));
         _assertPugetSound(regions.get(1));
 
         // Now do this again so we can test getting it from the DB.
@@ -70,7 +69,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         regions = getLoaderResultSynchronously(loader);
         assertNotNull(regions);
         assertEquals(3, regions.size());
-        _assertTampa(regions.get(2));
+        _assertTampa(regions.get(0));
         _assertPugetSound(regions.get(1));
     }
 }

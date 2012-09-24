@@ -19,8 +19,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -96,7 +94,7 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
             };
 
             ContentResolver cr = getContext().getContentResolver();
-            c = cr.query(Regions.CONTENT_URI, PROJECTION, null, null, Regions.NAME);
+            c = cr.query(Regions.CONTENT_URI, PROJECTION, null, null, Regions._ID);
             if (c == null || c.getCount() == 0) {
                 return null;
             }
@@ -180,13 +178,6 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
         }
     }
 
-    private static final Comparator<ObaRegion> mSortAlpha = new Comparator<ObaRegion>() {
-        @Override
-        public int compare(ObaRegion lhs, ObaRegion rhs) {
-            return lhs.getName().compareTo(rhs.getName());
-        }
-    };
-
     private ArrayList<ObaRegion> getRegionsFromServer() {
         ObaConnection conn = null;
         CSVReader reader = null;
@@ -215,8 +206,6 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                         "TRUE".equals(line[9]))); // Supports SIRI Realtime
                 ++id;
             }
-            // Sort by name
-            Collections.sort(results, mSortAlpha);
             return results;
 
         } catch (FileNotFoundException e) {

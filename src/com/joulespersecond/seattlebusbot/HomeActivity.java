@@ -202,7 +202,7 @@ public class HomeActivity extends BaseMapActivity {
                         case 3:
                             Intent preferences = new Intent(
                                     HomeActivity.this,
-                                    EditPreferencesActivity.class);
+                                    PreferencesActivity.class);
                             startActivity(preferences);
                             break;
                         }

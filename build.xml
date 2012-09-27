@@ -39,6 +39,8 @@
          application and should be checked into Version Control Systems. -->
     <loadproperties srcFile="project.properties" />
 
+    <property file="secure.properties" />
+
     <!-- quick check on sdk.dir -->
     <fail
             message="sdk.dir is missing. Make sure to generate local.properties using 'android update project'"

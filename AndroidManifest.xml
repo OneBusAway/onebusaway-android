@@ -15,8 +15,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.joulespersecond.seattlebusbot"
-      android:versionCode="24"
-      android:versionName="1.5.1">
+      android:versionCode="25"
+      android:versionName="1.5.2">
     <permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
         android:label="@string/trip_service_perm_label"
         android:description="@string/trip_service_perm_description"
@@ -123,7 +123,7 @@
             android:authorities="com.joulespersecond.oba"/>
 
         <service android:name=".TripService"
-            	android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
+              android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
             <intent-filter>
                 <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />
                 <action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />

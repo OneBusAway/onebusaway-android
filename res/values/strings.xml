@@ -28,6 +28,8 @@
     <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
     <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
     <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that request.</string>
+    <string name="bad_gateway_error">OneBusAway\'s servers are overloaded. Please excuse us!</string>
+    <string name="map_generic_error">Unable to get stops.</string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -62,7 +64,6 @@
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
-    <string name="main_stop_errors">Problem getting stops!</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">On time</string>

@@ -30,7 +30,6 @@ import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -45,7 +44,6 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,10 +143,7 @@ class RouteMapController implements MapModeController,
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            Activity act = mFragment.getActivity();
-            Toast.makeText(act,
-                    act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG);
+            BaseMapActivity.showMapError(mFragment.getActivity(), response);
             return;
         }
 

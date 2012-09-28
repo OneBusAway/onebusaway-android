@@ -220,12 +220,7 @@ class StopMapController implements MapModeController,
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            /*
-            Activity act = mFragment.getActivity();
-            Toast.makeText(act,
-                    act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG).show();
-            */
+            BaseMapActivity.showMapError(mFragment.getActivity(), response);
             return;
         }
 

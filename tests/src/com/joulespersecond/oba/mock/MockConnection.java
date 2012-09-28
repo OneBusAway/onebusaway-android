@@ -24,6 +24,7 @@ import android.util.Log;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 
 public class MockConnection implements ObaConnection {
     private static final String TAG = "MockConnection";
@@ -31,6 +32,7 @@ public class MockConnection implements ObaConnection {
     private final MockConnectionFactory.UriMap mUriMap;
     private final Context mContext;
     private final Uri mUri;
+    private int mResponseCode = HttpURLConnection.HTTP_OK;
 
     MockConnection(Context context,
             MockConnectionFactory.UriMap map,
@@ -50,6 +52,7 @@ public class MockConnection implements ObaConnection {
         // Find a mock response for this URI.
         String response = mUriMap.getUri(mUri);
         if ("__404__".equals(response)) {
+            mResponseCode = HttpURLConnection.HTTP_NOT_FOUND;
             throw new FileNotFoundException();
         }
         return Resources.read(mContext, Resources.getTestUri(response));
@@ -58,5 +61,10 @@ public class MockConnection implements ObaConnection {
     @Override
     public Reader post(String string) throws IOException {
         throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public int getResponseCode() throws IOException {
+        return mResponseCode;
     }
 }

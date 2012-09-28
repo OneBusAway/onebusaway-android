@@ -32,6 +32,7 @@ public final class ObaApi {
     public static final int OBA_UNAUTHORIZED = 401;
     public static final int OBA_NOT_FOUND = 404;
     public static final int OBA_INTERNAL_ERROR = 500;
+    public static final int OBA_BAD_GATEWAY = 502;
     public static final int OBA_OUT_OF_MEMORY = 666;
     public static final int OBA_IO_EXCEPTION = 700;
 

@@ -395,7 +395,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     // Location help
     //
-    static final int WAIT_FOR_LOCATION_TIMEOUT = 5000;
+    static final int WAIT_FOR_LOCATION_TIMEOUT = 10000;
 
     final Handler mWaitingForLocationHandler = new Handler();
 

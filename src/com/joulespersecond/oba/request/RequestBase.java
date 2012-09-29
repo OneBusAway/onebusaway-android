@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 
 /**
  * The base class for Oba requests.
@@ -128,6 +129,10 @@ public class RequestBase {
         ObaConnection conn = null;
         try {
             conn = ObaApi.getConnectionFactory().newConnection(mUri);
+            int responseCode = conn.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                return handler.createFromError(cls, responseCode, "");
+            }
             Reader reader;
             if (mPostData != null) {
                 reader = conn.post(mPostData);

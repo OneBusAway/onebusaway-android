@@ -120,4 +120,9 @@ public final class ObaDefaultConnection implements ObaConnection {
                     new InputStreamReader(in), 8*1024);
         }
     }
+
+    @Override
+    public int getResponseCode() throws IOException {
+        return mConnection.getResponseCode();
+    }
 }

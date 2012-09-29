@@ -32,4 +32,5 @@ public interface ObaConnection {
     public void disconnect();
     public Reader get() throws IOException;
     public Reader post(String string) throws IOException;
+    public int getResponseCode() throws IOException;
 }

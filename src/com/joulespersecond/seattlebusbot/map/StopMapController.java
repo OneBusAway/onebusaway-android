@@ -22,14 +22,11 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-import com.joulespersecond.seattlebusbot.R;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.List;
@@ -223,10 +220,7 @@ class StopMapController implements MapModeController,
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            Activity act = mFragment.getActivity();
-            Toast.makeText(act,
-                    act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG).show();
+            BaseMapActivity.showMapError(mFragment.getActivity(), response);
             return;
         }
 

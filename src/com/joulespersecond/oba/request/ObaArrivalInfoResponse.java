@@ -21,6 +21,7 @@ import com.joulespersecond.oba.elements.ObaReferencesElement;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -75,6 +76,12 @@ public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
     }
 
     public List<ObaSituation> getSituations() {
+        // There's some issue with service alerts that's causing an NPE
+        if (data.references == null ||
+            data.entry == null ||
+            data.entry.situationIds == null) {
+            return new ArrayList<ObaSituation>();
+        }
         return data.references.getSituations(data.entry.situationIds);
     }
 

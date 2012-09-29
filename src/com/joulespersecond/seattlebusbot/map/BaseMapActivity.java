@@ -27,6 +27,7 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
@@ -35,6 +36,7 @@ import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -393,7 +395,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     // Location help
     //
-    static final int WAIT_FOR_LOCATION_TIMEOUT = 5000;
+    static final int WAIT_FOR_LOCATION_TIMEOUT = 10000;
 
     final Handler mWaitingForLocationHandler = new Handler();
 
@@ -526,6 +528,15 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                     }
                 });
         return builder.create();
+    }
+
+    //
+    // Error handlers
+    //
+    public static void showMapError(Context context, ObaResponse response) {
+        Toast.makeText(context,
+                context.getString(UIHelp.getMapErrorString(response.getCode())),
+                Toast.LENGTH_LONG).show();
     }
 
     //

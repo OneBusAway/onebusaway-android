@@ -116,10 +116,10 @@ class AlertList {
 
     void addAll(Collection<? extends Alert> alerts) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            addAll(alerts);
+            mAdapter.addAll(alerts);
         } else {
             for (Alert a: alerts) {
-                add(a);
+                mAdapter.add(a);
             }
         }
     }

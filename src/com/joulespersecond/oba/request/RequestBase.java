@@ -131,13 +131,6 @@ public class RequestBase {
                 }
 
                 reader = conn.get();
-                // Theoretically you can't call ResponseCode before calling
-                // getInputStream, but you can't read from the input stream
-                // before you read the response???
-                int responseCode = conn.getResponseCode();
-                if (responseCode != HttpURLConnection.HTTP_OK) {
-                    return handler.createFromError(cls, responseCode, "");
-                }
             }
             T t = handler.deserialize(reader, cls);
             if (t == null) {

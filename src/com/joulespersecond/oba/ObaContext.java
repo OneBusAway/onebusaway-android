@@ -75,6 +75,10 @@ public class ObaContext {
             Uri base = mRegion.getObaBaseUri();
             builder.scheme(base.getScheme());
             builder.encodedAuthority(base.getAuthority());
+        } else {
+            // Current fallback for existing users?
+            builder.scheme("http");
+            builder.authority("api.onebusaway.org");
         }
     }
 

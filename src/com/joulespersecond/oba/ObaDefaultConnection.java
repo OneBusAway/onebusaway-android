@@ -72,14 +72,14 @@ public final class ObaDefaultConnection implements ObaConnection {
         stream.flush();
         stream.close();
 
-        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream()));
+        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream(), 8*1024));
     }
 
     //
     // Gingerbread and above support Gzip natively.
     //
     private Reader get_Gingerbread() throws IOException {
-        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream()));
+        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream(), 8*1024));
     }
 
     private Reader get_Froyo() throws IOException {
@@ -110,9 +110,9 @@ public final class ObaDefaultConnection implements ObaConnection {
         }
 
         if (useGzip) {
-            return new InputStreamReader(new GZIPInputStream(new BufferedInputStream(in)));
+            return new InputStreamReader(new BufferedInputStream(new GZIPInputStream(in), 8*1024));
         } else {
-            return new InputStreamReader(new BufferedInputStream(in));
+            return new InputStreamReader(new BufferedInputStream(in, 8*1024));
         }
     }
 

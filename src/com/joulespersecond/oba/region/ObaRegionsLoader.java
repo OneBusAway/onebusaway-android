@@ -1,30 +1,44 @@
 package com.joulespersecond.oba.region;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.ObaConnection;
 import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.net.http.AndroidHttpClient;
+import android.os.Build;
 import android.support.v4.content.AsyncTaskLoader;
 import android.text.TextUtils;
 import android.util.Log;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     private static final String TAG = "ObaRegionsLoader";
-    private static final Uri REGIONS_URI = Uri.parse("https://docs.google.com/spreadsheet/ccc?key=0AsoU647elPShdHlYc0RJbkEtZnVvTW11WE5NbHNiMXc&pli=1&gid=0&output=csv");
+    private static final String REGIONS_URI = "https://docs.google.com/spreadsheet/ccc?key=0AsoU647elPShdHlYc0RJbkEtZnVvTW11WE5NbHNiMXc&pli=1&gid=0&output=csv";
 
     private ArrayList<ObaRegion> mResults;
     private final boolean mForceReload;
@@ -179,12 +193,11 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     }
 
     private ArrayList<ObaRegion> getRegionsFromServer() {
-        ObaConnection conn = null;
-        CSVReader reader = null;
         try {
-            conn = ObaApi.getConnectionFactory().newConnection(REGIONS_URI);
-            reader = new CSVReader(conn.get());
-            List<String[]> entries = reader.readAll();
+            List<String[]> entries = readCSV();
+            if (entries == null) {
+                return null;
+            }
             ArrayList<ObaRegion> results = new ArrayList<ObaRegion>();
             long id = 0;
             for (String[] line: entries) {
@@ -193,6 +206,12 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                     ++id;
                     continue;
                 }
+                // Ignore any that aren't active
+                if (!"TRUE".equals(line[10])) {
+                    ++id;
+                    continue;
+                }
+
                 results.add(new ObaRegion(id,
                         line[0],                // Name
                         Uri.parse(line[1]),     // OBA Base URL
@@ -207,6 +226,41 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                 ++id;
             }
             return results;
+
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.e(TAG, "Invalid regions line: " + e);
+            return null;
+        }
+    }
+
+    private List<String[]> readCSV() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return readCSV_Gingerbread();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+            return readCSV_Froyo();
+        } else {
+            return readCSV_Eclair();
+        }
+    }
+
+    // This doesn't itself use any Gingerbread APIs, but it does
+    // rely on the connection being able to handle Cookies, which
+    // only can be done with the GB HttpUrlConnection.
+    private List<String[]> readCSV_Gingerbread() {
+        // This doesn't work!
+        return readCSV_Froyo();
+        /*
+        ObaConnection conn = null;
+        CSVReader reader = null;
+        try {
+            conn = ObaApi.getConnectionFactory().newConnection(Uri.parse(REGIONS_URI));
+            reader = new CSVReader(conn.get());
+            int code = conn.getResponseCode();
+            if (code != HttpURLConnection.HTTP_OK) {
+                Log.e(TAG, "Getting region error : " + code);
+                return null;
+            }
+            return reader.readAll();
 
         } catch (FileNotFoundException e) {
             Log.e(TAG, "Unable to get regions from server: " + e);
@@ -228,6 +282,50 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                 conn.disconnect();
             }
         }
+        */
+    }
+
+    @TargetApi(8)
+    private List<String[]> readCSV_Froyo() {
+        return readCSV_Apache(AndroidHttpClient.newInstance("OneBusAway for Android"));
+    }
+
+    private List<String[]> readCSV_Eclair() {
+        return readCSV_Apache(new DefaultHttpClient());
+    }
+
+    private List<String[]> readCSV_Apache(HttpClient client) {
+        HttpClientParams.setRedirecting(client.getParams(), true);
+        CookieStore cookieJar = new BasicCookieStore();
+        HttpContext localContext = new BasicHttpContext();
+        localContext.setAttribute(ClientContext.COOKIE_STORE, cookieJar);
+
+        HttpGet request = new HttpGet(REGIONS_URI);
+        CSVReader reader = null;
+        try {
+            HttpResponse response = client.execute(request, localContext);
+            int code = response.getStatusLine().getStatusCode();
+            if (code != HttpURLConnection.HTTP_OK) {
+                Log.e(TAG, "Getting region error : " + code);
+                return null;
+            }
+            reader = new CSVReader(new BufferedReader(
+                                new InputStreamReader(response.getEntity().getContent()), 8*1024));
+            return reader.readAll();
+
+        } catch (IOException e) {
+            Log.e(TAG, "Getting region error : " + e);
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
     }
 
     private static ObaRegion.Bounds[] parseBounds(String bounds) {

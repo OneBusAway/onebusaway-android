@@ -18,7 +18,7 @@ package com.joulespersecond.oba;
 import android.net.Uri;
 import android.os.Build;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -72,16 +72,14 @@ public final class ObaDefaultConnection implements ObaConnection {
         stream.flush();
         stream.close();
 
-        InputStream in = mConnection.getInputStream();
-        return new BufferedReader(new InputStreamReader(in), 8*1024);
+        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream()));
     }
 
     //
     // Gingerbread and above support Gzip natively.
     //
     private Reader get_Gingerbread() throws IOException {
-        InputStream in = mConnection.getInputStream();
-        return new BufferedReader(new InputStreamReader(in), 8*1024);
+        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream()));
     }
 
     private Reader get_Froyo() throws IOException {
@@ -112,12 +110,9 @@ public final class ObaDefaultConnection implements ObaConnection {
         }
 
         if (useGzip) {
-            return new BufferedReader(
-                    new InputStreamReader(new GZIPInputStream(in)), 8*1024);
-        }
-        else {
-            return new BufferedReader(
-                    new InputStreamReader(in), 8*1024);
+            return new InputStreamReader(new GZIPInputStream(new BufferedInputStream(in)));
+        } else {
+            return new InputStreamReader(new BufferedInputStream(in));
         }
     }
 

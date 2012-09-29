@@ -29,10 +29,6 @@ public class RegionsFragment extends ListFragment
 
         mLocation = UIHelp.getLocation2(getActivity());
 
-        // Create our generic adapter
-        mAdapter = new Adapter(getActivity());
-        setListAdapter(mAdapter);
-
         getLoaderManager().initLoader(0, null, this);
     }
 
@@ -49,6 +45,9 @@ public class RegionsFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<ArrayList<ObaRegion>> loader,
             ArrayList<ObaRegion> results) {
+        // Create our generic adapter
+        mAdapter = new Adapter(getActivity());
+        setListAdapter(mAdapter);
         mAdapter.setData(results);
         if (mLocation != null) {
             mAdapter.sort(mClosest);
@@ -57,7 +56,8 @@ public class RegionsFragment extends ListFragment
 
     @Override
     public void onLoaderReset(Loader<ArrayList<ObaRegion>> arg0) {
-        mAdapter.clear();
+        setListAdapter(null);
+        mAdapter = null;
     }
 
     private Comparator<ObaRegion> mClosest = new Comparator<ObaRegion>() {

@@ -17,23 +17,31 @@ package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
 import android.telephony.TelephonyManager;
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.security.MessageDigest;
 import java.util.UUID;
 
 public class Application extends android.app.Application {
-    //public static final String BUG_REPORT_URL = "http://bugs.joulespersecond.com/bugs/";
     public static final String APP_UID = "app_uid";
 
     @Override
     public void onCreate() {
-        //ExceptionHandler.register(this, BUG_REPORT_URL);
+        // Fix bugs in pre-Froyo
+        disableConnectionReuseIfNecessary();
+        // Enable cookies (GB and beyond)
+        enableCookies();
+
         initOba();
     }
 
@@ -82,5 +90,20 @@ public class Application extends android.app.Application {
             return;
         }
         ObaApi.setAppInfo(appInfo.versionCode, uuid);
+    }
+
+    private void disableConnectionReuseIfNecessary() {
+        // Work around pre-Froyo bugs in HTTP connection reuse.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
+            System.setProperty("http.keepAlive", "false");
+        }
+    }
+
+    @TargetApi(9)
+    private void enableCookies() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            CookieManager manager = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+            CookieHandler.setDefault(manager);
+        }
     }
 }

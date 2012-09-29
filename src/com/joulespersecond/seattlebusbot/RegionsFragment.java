@@ -1,9 +1,13 @@
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.region.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsLoader;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -19,6 +23,7 @@ import java.util.Comparator;
 
 public class RegionsFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ArrayList<ObaRegion>> {
+    private static final String RELOAD = ".reload";
 
     private ArrayAdapter<ObaRegion> mAdapter;
     private Location mLocation;
@@ -27,9 +32,13 @@ public class RegionsFragment extends ListFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        setHasOptionsMenu(true);
+
         mLocation = UIHelp.getLocation2(getActivity());
 
-        getLoaderManager().initLoader(0, null, this);
+        Bundle args = new Bundle();
+        args.putBoolean(RELOAD, false);
+        getLoaderManager().initLoader(0, args, this);
     }
 
     @Override
@@ -38,8 +47,33 @@ public class RegionsFragment extends ListFragment
     }
 
     @Override
-    public Loader<ArrayList<ObaRegion>> onCreateLoader(int arg0, Bundle arg1) {
-        return new ObaRegionsLoader(getActivity());
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.regions_list, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        final int id = item.getItemId();
+        if (id == R.id.refresh) {
+            refresh();
+            return true;
+        }
+        return false;
+    }
+
+    private void refresh() {
+        setListShown(false);
+        setListAdapter(null);
+        mAdapter = null;
+        Bundle args = new Bundle();
+        args.putBoolean(RELOAD, true);
+        getLoaderManager().restartLoader(0, args, this);
+    }
+
+    @Override
+    public Loader<ArrayList<ObaRegion>> onCreateLoader(int id, Bundle args) {
+        boolean refresh = args.getBoolean(RELOAD);
+        return new ObaRegionsLoader(getActivity(), refresh);
     }
 
     @Override
@@ -86,6 +120,7 @@ public class RegionsFragment extends ListFragment
             TextView text2 = (TextView)view.findViewById(android.R.id.text2);
             text1.setText(region.getName());
             Float distance = null;
+            Resources r = getResources();
 
             if (mLocation != null) {
                 distance = region.getDistanceAway(mLocation);
@@ -96,7 +131,9 @@ public class RegionsFragment extends ListFragment
                     ((DecimalFormat)fmt).setMaximumFractionDigits(1);
                 }
                 double miles = distance * 0.000621371;
-                text2.setText(getString(R.string.region_distance, fmt.format(miles)));
+                text2.setText(r.getQuantityString(R.plurals.region_distance,
+                                        (int)miles,
+                                        fmt.format(miles)));
             } else {
                 view.setEnabled(false);
                 text2.setText(R.string.region_unavailable);

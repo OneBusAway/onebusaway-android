@@ -202,8 +202,12 @@
     <string name="report_problem_uservehicle_hint">optional</string>
 
     <!-- Region list -->
-    <string name="region_distance">%1$s miles away</string>
+    <plurals name="region_distance">
+      <item quantity="one">1 mile away</item>
+      <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
+    </plurals>
     <string name="region_unavailable">unavailable</string>
+    <string name="region_option_refresh">Refresh</string>
 
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>

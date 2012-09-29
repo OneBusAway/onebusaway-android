@@ -89,7 +89,7 @@ public class Application extends android.app.Application {
             // Do nothing, perhaps we'll get to show it again? Or never.
             return;
         }
-        ObaApi.setAppInfo(appInfo.versionCode, uuid);
+        ObaApi.getDefaultContext().setAppInfo(appInfo.versionCode, uuid);
     }
 
     private void disableConnectionReuseIfNecessary() {

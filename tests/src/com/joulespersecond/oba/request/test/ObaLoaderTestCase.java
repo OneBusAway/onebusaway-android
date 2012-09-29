@@ -22,12 +22,12 @@ public class ObaLoaderTestCase extends LoaderTestCase {
         if (mMockFactory == null) {
             mMockFactory = new MockConnectionFactory(getContext());
         }
-        mOldFactory = ObaApi.setConnectionFactory(mMockFactory);
+        mOldFactory = ObaApi.getDefaultContext().setConnectionFactory(mMockFactory);
     }
 
     protected void disableMock() {
         if (mOldFactory != null) {
-            ObaApi.setConnectionFactory(mOldFactory);
+            ObaApi.getDefaultContext().setConnectionFactory(mOldFactory);
         }
     }
 }

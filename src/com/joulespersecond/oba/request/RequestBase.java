@@ -21,6 +21,7 @@ import com.joulespersecond.oba.ObaConnection;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -129,14 +130,20 @@ public class RequestBase {
         ObaConnection conn = null;
         try {
             conn = ObaApi.getConnectionFactory().newConnection(mUri);
-            int responseCode = conn.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                return handler.createFromError(cls, responseCode, "");
-            }
             Reader reader;
             if (mPostData != null) {
                 reader = conn.post(mPostData);
             } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                    // Theoretically you can't call ResponseCode before calling
+                    // getInputStream, but you can't read from the input stream
+                    // before you read the response???
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode != HttpURLConnection.HTTP_OK) {
+                        return handler.createFromError(cls, responseCode, "");
+                    }
+                }
+
                 reader = conn.get();
             }
             T t = handler.deserialize(reader, cls);

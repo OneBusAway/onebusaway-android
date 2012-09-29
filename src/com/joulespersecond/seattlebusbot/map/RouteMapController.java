@@ -29,7 +29,7 @@ import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
-import android.app.Activity;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -37,13 +37,13 @@ import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,15 +137,13 @@ class RouteMapController implements MapModeController,
         List<Overlay> overlays = mapView.getOverlays();
 
         if (mLineOverlay == null) {
+            enableHWAccel(mapView, false);
             mLineOverlay = new LineOverlay();
             overlays.add(mLineOverlay);
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            Activity act = mFragment.getActivity();
-            Toast.makeText(act,
-                    act.getString(R.string.main_stop_errors),
-                    Toast.LENGTH_LONG);
+            BaseMapActivity.showMapError(mFragment.getActivity(), response);
             return;
         }
 
@@ -179,12 +177,26 @@ class RouteMapController implements MapModeController,
 
     private void removeOverlay() {
         MapView mapView = mFragment.getMapView();
+        enableHWAccel(mapView, true);
         List<Overlay> overlays = mapView.getOverlays();
         if (mLineOverlay != null) {
             overlays.remove(mLineOverlay);
         }
         mLineOverlay = null;
         mapView.postInvalidate();
+    }
+
+    //
+    // See this bug: http://code.google.com/p/android/issues/detail?id=24023
+    // Large paths and HW acceleration don't mix, so we can disable it
+    // only when this overlay is visible.
+    //
+    @TargetApi(11)
+    private static void enableHWAccel(MapView mapView, boolean enable) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            int type = enable ? View.LAYER_TYPE_HARDWARE : View.LAYER_TYPE_SOFTWARE;
+            mapView.setLayerType(type, null);
+        }
     }
 
     //

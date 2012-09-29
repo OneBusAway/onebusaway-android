@@ -1,13 +1,12 @@
 package com.joulespersecond.oba.serialization.test;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.mock.Resources;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.oba.request.test.ObaTestCase;
 import com.joulespersecond.oba.serialization.JacksonSerializer;
-
-import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 import android.util.Log;
 

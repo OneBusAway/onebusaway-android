@@ -18,8 +18,8 @@
      android:layout_width="fill_parent"
      android:layout_height="fill_parent"
      android:text="@string/main_outofrange"
-     android:textColor="@color/android:white"
+     android:textAppearance="@style/TextAppearance.Sherlock.DialogWindowTitle"
+     android:textSize="18sp"
      android:padding="6dip"
      android:drawableLeft="@drawable/android:ic_dialog_map"
-     android:drawablePadding="10dp"
-     android:textSize="18sp" />
+     android:drawablePadding="10dp" />

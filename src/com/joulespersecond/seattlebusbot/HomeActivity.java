@@ -215,7 +215,7 @@ public class HomeActivity extends BaseMapActivity {
     private Dialog createWhatsNewDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
-        builder.setIcon(R.drawable.icon);
+        builder.setIcon(R.drawable.ic_launcher);
         builder.setMessage(R.string.main_help_whatsnew);
         builder.setNeutralButton(R.string.main_help_close,
                 new DialogInterface.OnClickListener() {

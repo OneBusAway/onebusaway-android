@@ -33,6 +33,18 @@
         <item name="android:actionDropDownStyle">@style/busbot_DropDownNav</item>
         <item name="android:actionBarStyle">@style/busbot_solid_ActionBar</item>
         <item name="android:panelBackground">@drawable/menu_hardkey_panel_busbot</item>
+
+        <!-- From http://android-holo-colors.com/ -->
+        <!-- Color: #60b52b -->
+        <item name="android:editTextBackground">@drawable/edit_text_holo_light</item>
+    	<item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
+    	<item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
+    	<!--
+    	<item name="android:buttonStyle">@style/Buttonbusbot</item>
+    	<item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
+    	<item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
+    	-->
+    	<item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
     </style>
 
     <style name="busbot_solid_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar.Solid">

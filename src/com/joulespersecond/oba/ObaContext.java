@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 
 public class ObaContext {
     private String mApiKey = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
@@ -68,7 +69,7 @@ public class ObaContext {
         SharedPreferences preferences =
                 PreferenceManager.getDefaultSharedPreferences(context);
         String serverName = preferences.getString("preferences_oba_api_servername", null);
-        if (serverName != null) {
+        if (!TextUtils.isEmpty(serverName)) {
             builder.encodedAuthority(serverName);
             builder.scheme("http");
         } else if (mRegion != null) {

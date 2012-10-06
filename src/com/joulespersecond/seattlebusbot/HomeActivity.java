@@ -230,7 +230,7 @@ public class HomeActivity extends BaseMapActivity {
 
     @SuppressWarnings("deprecation")
     private void autoShowWhatsNew() {
-        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
+        SharedPreferences settings = Application.getPrefs();
 
         // Get the current app version.
         PackageManager pm = getPackageManager();
@@ -267,10 +267,7 @@ public class HomeActivity extends BaseMapActivity {
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).
             TripService.scheduleAll(this);
-
-            SharedPreferences.Editor edit = settings.edit();
-            edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
-            edit.commit();
+            PreferenceHelp.saveInt(WHATS_NEW_VER, appInfo.versionCode);
         }
     }
 

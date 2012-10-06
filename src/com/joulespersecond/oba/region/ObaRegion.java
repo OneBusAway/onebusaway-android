@@ -10,7 +10,7 @@ public class ObaRegion {
         private final double mLatSpan;
         private final double mLonSpan;
 
-        Bounds(double lat, double lon, double latSpan, double lonSpan) {
+        public Bounds(double lat, double lon, double latSpan, double lonSpan) {
             mLat = lat;
             mLon = lon;
             mLatSpan = latSpan;
@@ -51,7 +51,7 @@ public class ObaRegion {
     // but no one should really be creating these objects
     // except for the RegionsLoader.
     //
-    ObaRegion(long id,
+    public ObaRegion(long id,
             String name,
             Uri obaBaseUri,
             Uri siriBaseUri,

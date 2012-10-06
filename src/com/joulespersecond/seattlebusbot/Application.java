@@ -16,6 +16,8 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.provider.ObaContract.Regions;
+import com.joulespersecond.oba.region.ObaRegion;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -24,6 +26,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 
 import java.net.CookieHandler;
@@ -35,14 +38,56 @@ import java.util.UUID;
 public class Application extends android.app.Application {
     public static final String APP_UID = "app_uid";
 
+    // Region preference (long id)
+    private static final String REGION_PREF = "preference_region";
+
+    //private static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
+    private SharedPreferences mPrefs;
+
+    private static Application mApp;
+
     @Override
     public void onCreate() {
+        mApp = this;
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         // Fix bugs in pre-Froyo
         disableConnectionReuseIfNecessary();
         // Enable cookies (GB and beyond)
         enableCookies();
 
         initOba();
+        initObaRegion();
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        mApp = null;
+    }
+
+    //
+    // Public helpers
+    //
+    public static Application get() {
+        return mApp;
+    }
+
+    public static SharedPreferences getPrefs() {
+        return get().mPrefs;
+    }
+
+    //
+    // Helper to get/set the regions
+    //
+    public ObaRegion getCurrentRegion() {
+        return ObaApi.getDefaultContext().getRegion();
+    }
+
+    public void setCurrentRegion(ObaRegion region) {
+        // First set it in preferences, then set it in OBA.
+        ObaApi.getDefaultContext().setRegion(region);
+        PreferenceHelp.saveLong(mPrefs, REGION_PREF, region.getId());
     }
 
     private static final String HEXES = "0123456789abcdef";
@@ -63,21 +108,17 @@ public class Application extends android.app.Application {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.update(id.getBytes());
             return getHex(digest.digest());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return UUID.randomUUID().toString();
         }
     }
 
     private void initOba() {
-        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
-        String uuid = settings.getString(APP_UID, null);
+        String uuid = mPrefs.getString(APP_UID, null);
         if (uuid == null) {
             // Generate one and save that.
             uuid = getAppUid();
-            SharedPreferences.Editor edit = settings.edit();
-            edit.putString(APP_UID, uuid);
-            edit.commit();
+            PreferenceHelp.saveString(APP_UID, uuid);
         }
 
         // Get the current app version.
@@ -90,6 +131,21 @@ public class Application extends android.app.Application {
             return;
         }
         ObaApi.getDefaultContext().setAppInfo(appInfo.versionCode, uuid);
+    }
+
+    private void initObaRegion() {
+        // Read the region preference, look it up in the DB, then set the region.
+        long id = mPrefs.getLong(REGION_PREF, -1);
+        if (id < 0) {
+            return;
+        }
+
+        ObaRegion region = Regions.get(this, (int)id);
+        if (region == null) {
+            return;
+        }
+
+        ObaApi.getDefaultContext().setRegion(region);
     }
 
     private void disableConnectionReuseIfNecessary() {

@@ -109,7 +109,11 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
 
             ContentResolver cr = getContext().getContentResolver();
             c = cr.query(Regions.CONTENT_URI, PROJECTION, null, null, Regions._ID);
-            if (c == null || c.getCount() == 0) {
+            if (c == null) {
+                return null;
+            }
+            if (c.getCount() == 0) {
+                c.close();
                 return null;
             }
             ArrayList<ObaRegion> results = new ArrayList<ObaRegion>();
@@ -161,7 +165,11 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
 
             ContentResolver cr = getContext().getContentResolver();
             c = cr.query(RegionBounds.CONTENT_URI, PROJECTION, null, null, null);
-            if (c == null || c.getCount() == 0) {
+            if (c == null) {
+                return results;
+            }
+            if (c.getCount() == 0) {
+                c.close();
                 return results;
             }
             c.moveToFirst();

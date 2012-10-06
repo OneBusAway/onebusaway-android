@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -27,6 +28,8 @@ public class RegionsFragment extends ListFragment
 
     private ArrayAdapter<ObaRegion> mAdapter;
     private Location mLocation;
+    // Current region
+    private ObaRegion mCurrentRegion;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -35,6 +38,7 @@ public class RegionsFragment extends ListFragment
         setHasOptionsMenu(true);
 
         mLocation = UIHelp.getLocation2(getActivity());
+        mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();
         args.putBoolean(RELOAD, false);
@@ -43,7 +47,10 @@ public class RegionsFragment extends ListFragment
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-
+        // Get the region and set this as the default region.
+        ObaRegion region = mAdapter.getItem(position);
+        Application.get().setCurrentRegion(region);
+        getActivity().finish();
     }
 
     @Override
@@ -111,16 +118,24 @@ public class RegionsFragment extends ListFragment
 
     private class Adapter extends ArrayAdapter<ObaRegion> {
         Adapter(Context context) {
-            super(context, android.R.layout.simple_list_item_2);
+            super(context, R.layout.simple_list_item_2_checked);
         }
 
         @Override
         protected void initView(View view, ObaRegion region) {
             TextView text1 = (TextView)view.findViewById(android.R.id.text1);
             TextView text2 = (TextView)view.findViewById(android.R.id.text2);
+            ImageView image = (ImageView)view.findViewById(android.R.id.selectedIcon);
             text1.setText(region.getName());
             Float distance = null;
             Resources r = getResources();
+
+            int regionVis = View.INVISIBLE;
+            if (mCurrentRegion != null && region.getId() == mCurrentRegion.getId()) {
+                regionVis = View.VISIBLE;
+            }
+
+            image.setVisibility(regionVis);
 
             if (mLocation != null) {
                 distance = region.getDistanceAway(mLocation);

@@ -51,8 +51,6 @@ import java.util.List;
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
 
-    public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
-
     public static void setupActionBar(SherlockFragmentActivity activity) {
         setupActionBar(activity.getSupportActionBar());
     }

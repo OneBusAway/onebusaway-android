@@ -895,32 +895,29 @@ public final class ObaContract {
             };
 
             Cursor c = cr.query(buildUri((int)id), PROJECTION, null, null, null);
-
-            if (c == null) {
-                return null;
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    return new ObaRegion(id,   // id
+                            c.getString(1),             // Name
+                            Uri.parse(c.getString(2)),  // OBA Base URL
+                            Uri.parse(c.getString(3)),  // SIRI Base URL
+                            RegionBounds.getRegion(cr, id), // Bounds
+                            c.getString(4),             // Lang
+                            c.getString(5),             // Contact Name
+                            c.getString(6),             // Contact Email
+                            c.getInt(7) > 0,            // Supports Oba Discovery
+                            c.getInt(8) > 0,            // Supports Oba Realtime
+                            c.getInt(9) > 0             // Supports Siri Realtime
+                        );
+                } finally {
+                    c.close();
+                }
             }
-            if (c.getCount() == 0) {
-                c.close();
-                return null;
-            }
-
-            c.moveToFirst();
-
-            ObaRegion result = new ObaRegion(id,   // id
-                c.getString(1),             // Name
-                Uri.parse(c.getString(2)),  // OBA Base URL
-                Uri.parse(c.getString(3)),  // SIRI Base URL
-                RegionBounds.getRegion(cr, id), // Bounds
-                c.getString(4),             // Lang
-                c.getString(5),             // Contact Name
-                c.getString(6),             // Contact Email
-                c.getInt(7) > 0,            // Supports Oba Discovery
-                c.getInt(8) > 0,            // Supports Oba Realtime
-                c.getInt(9) > 0             // Supports Siri Realtime
-            );
-            c.close();
-
-            return result;
+            return null;
         }
     }
 
@@ -955,30 +952,30 @@ public final class ObaContract {
             Cursor c = cr.query(CONTENT_URI, PROJECTION,
                     "(" + RegionBounds.REGION_ID + " = " + regionId + ")",
                     null, null);
-            if (c == null) {
-                return null;
+            if (c != null) {
+                try {
+                    ObaRegion.Bounds[] results = new ObaRegion.Bounds[c.getCount()];
+                    if (c.getCount() == 0) {
+                        return results;
+                    }
+
+                    int i = 0;
+                    c.moveToFirst();
+                    do {
+                        results[i] = new ObaRegion.Bounds(
+                                c.getDouble(0),
+                                c.getDouble(1),
+                                c.getDouble(2),
+                                c.getDouble(3));
+                        i++;
+                    } while (c.moveToNext());
+
+                    return results;
+                } finally {
+                    c.close();
+                }
             }
-            ObaRegion.Bounds[] results = new ObaRegion.Bounds[c.getCount()];
-
-            if (c.getCount() == 0) {
-                c.close();
-                return results;
-            }
-
-            int i = 0;
-            c.moveToFirst();
-            do {
-                ObaRegion.Bounds b = new ObaRegion.Bounds(
-                        c.getDouble(0),
-                        c.getDouble(1),
-                        c.getDouble(2),
-                        c.getDouble(3));
-                results[i] = b;
-                i++;
-            } while (c.moveToNext());
-
-            c.close();
-            return results;
+            return null;
         }
     }
 }

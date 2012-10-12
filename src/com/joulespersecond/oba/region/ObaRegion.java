@@ -156,4 +156,53 @@ public class ObaRegion {
     public Float getDistanceAway(Location loc) {
         return getDistanceAway(loc.getLatitude(), loc.getLongitude());
     }
+
+    /**
+     * Returns the center and lat/lon span for the entire region.
+     * @param results Array to receive results.
+     *              results[0] == latSpan of region
+     *              results[1] == lonSpan of region
+     *              results[2] == lat center of region
+     *              results[3] == lon center of region
+     */
+    public void getRegionSpan(double[] results) {
+        if (results.length < 4) {
+            throw new IllegalArgumentException("Results array is < 4");
+        }
+        double latMin = 90;
+        double latMax = -90;
+        double lonMin = 180;
+        double lonMax = -180;
+
+        // This is fairly simplistic
+        for (Bounds bound: mBounds) {
+            // Get the top bound
+            double lat = bound.getLat();
+            double latSpanHalf = bound.getLatSpan() / 2.0;
+            double lat1 = lat - latSpanHalf;
+            double lat2 = lat + latSpanHalf;
+            if (lat1 < latMin) {
+                latMin = lat1;
+            }
+            if (lat2 > latMax) {
+                latMax = lat2;
+            }
+
+            double lon = bound.getLon();
+            double lonSpanHalf = bound.getLonSpan() / 2.0;
+            double lon1 = lon - lonSpanHalf;
+            double lon2 = lon + lonSpanHalf;
+            if (lon1 < lonMin) {
+                lonMin = lon1;
+            }
+            if (lon2 > lonMax) {
+                lonMax = lon2;
+            }
+        }
+
+        results[0] = latMax - latMin;
+        results[1] = lonMax - lonMin;
+        results[2] = latMin + ((latMax - latMin) / 2.0);
+        results[3] = lonMin + ((lonMax - lonMin) / 2.0);
+    }
 }

@@ -24,10 +24,24 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 
 public class RegionsActivity extends SherlockFragmentActivity {
+    /*
+    public static final String RETURN_MODE = ".Return";
+    public static final String RESULT_LAT = ".lat";
+    public static final String RESULT_LON = ".lon";
+    */
+
     public static void start(Context context) {
         Intent intent = new Intent(context, RegionsActivity.class);
         context.startActivity(intent);
     }
+
+    /*
+    public static void startForResult(Activity activity, int code) {
+        Intent intent = new Intent(activity, AgenciesActivity.class);
+        intent.putExtra(RETURN_MODE, true);
+        activity.startActivityForResult(intent, code);
+    }
+    */
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +53,8 @@ public class RegionsActivity extends SherlockFragmentActivity {
         // Create the list fragment and add it as our sole content.
         if (fm.findFragmentById(android.R.id.content) == null) {
             RegionsFragment list = new RegionsFragment();
+            //list.setArguments(getIntent().getExtras());
+
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
     }

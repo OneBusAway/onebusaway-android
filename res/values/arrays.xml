@@ -74,12 +74,6 @@
         <item>Saturday</item>
         <item>Sunday</item>
     </string-array>
-    <string-array name="agency_locations">
-        <item>Seattle, WA</item>
-        <item>Tacoma, WA</item>
-        <item>Everett, WA</item>
-        <item>Stay where I am</item>
-    </string-array>
     <string-array name="report_stop_problem_code">
         <item>Choose one</item>
         <item>Stop name is wrong</item>

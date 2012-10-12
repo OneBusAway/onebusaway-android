@@ -25,9 +25,12 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegion;
 import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
@@ -42,7 +45,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
@@ -498,36 +500,43 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         return builder.create();
     }
 
-    // This is in lieu of a more complicated map of agencies screen
-    // like on the iPhone app. Eventually that'd be cool, but I don't really
-    // have time right now.
-
-    // This array must be kept in sync with R.array.agency_locations!
-    private static final GeoPoint[] AGENCY_LOCATIONS = new GeoPoint[] {
-        new GeoPoint(47605990, -122331780), // Seattle, WA
-        new GeoPoint(47252090, -122443740), // Tacoma, WA
-        new GeoPoint(47979090, -122201530), // Everett, WA
-    };
-
     @SuppressWarnings("deprecation")
     private Dialog createOutOfRangeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
-                null));
-
-        builder.setItems(R.array.agency_locations,
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+            .setTitle(R.string.main_outofrange_title)
+            .setIcon(android.R.drawable.ic_dialog_map)
+            .setMessage(R.string.main_outofrange)
+            .setPositiveButton(R.string.main_outofrange_yes,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which >= 0 && which < AGENCY_LOCATIONS.length) {
-                            setMyLocation(AGENCY_LOCATIONS[which]);
-                        }
+                        zoomToRegion();
+                        dismissDialog(OUTOFRANGE_DIALOG);
+                    }
+                })
+            .setNegativeButton(R.string.main_outofrange_no,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
                         dismissDialog(OUTOFRANGE_DIALOG);
                         mWarnOutOfRange = false;
                     }
                 });
         return builder.create();
+    }
+
+    void zoomToRegion() {
+        // If we have a region, then zoom to it.
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            double results[] = new double[4];
+            region.getRegionSpan(results);
+            MapController ctrl = mMapView.getController();
+            ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
+            ctrl.zoomToSpan((int)(results[0] * 1E6), (int)(results[1] * 1E6));
+        } else {
+            // If we don't have a region, then prompt to select a region.
+        }
     }
 
     //

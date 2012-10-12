@@ -48,6 +48,20 @@ public final class ObaAgencyWithCoverage implements ObaElement {
     }
 
     /**
+     * @return The latitude center of the coverage bounding box.
+     */
+    public double getLatitude() {
+        return lat;
+    }
+
+    /**
+     * @return The longitude center of the coverage bounding box.
+     */
+    public double getLongitude() {
+        return lon;
+    }
+
+    /**
      * @return The latitude height of the coverage bounding box.
      */
     public double getLatitudeSpan() {

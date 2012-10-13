@@ -175,6 +175,7 @@ public class ArrivalsListFragment extends ListFragment
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
+        List<ObaSituation> situations = null;
 
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
@@ -182,6 +183,7 @@ public class ArrivalsListFragment extends ListFragment
                 addToDB(mStop);
             }
             info = result.getArrivalInfo();
+            situations = result.getSituations();
 
         } else {
             // If there was a last good response, then this is a refresh
@@ -195,6 +197,7 @@ public class ArrivalsListFragment extends ListFragment
                         R.string.generic_comm_error_toast,
                         Toast.LENGTH_LONG).show();
                 info = lastGood.getArrivalInfo();
+                situations = lastGood.getSituations();
 
             } else {
                 setEmptyText(getString(UIHelp.getStopErrorString(getActivity(), result.getCode())));
@@ -204,7 +207,11 @@ public class ArrivalsListFragment extends ListFragment
         mHeader.refresh();
 
         // Convert any stop situations into a list of alerts
-        refreshSituations(result.getSituations());
+        if (situations != null) {
+            refreshSituations(result.getSituations());
+        } else {
+            refreshSituations(new ArrayList<ObaSituation>());
+        }
 
         if (info != null) {
             // Reset the empty text just in case there is no data.

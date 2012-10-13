@@ -197,7 +197,7 @@ public class ArrivalsListFragment extends ListFragment
                 info = lastGood.getArrivalInfo();
 
             } else {
-                setEmptyText(getString(UIHelp.getStopErrorString(result.getCode())));
+                setEmptyText(getString(UIHelp.getStopErrorString(getActivity(), result.getCode())));
             }
         }
 

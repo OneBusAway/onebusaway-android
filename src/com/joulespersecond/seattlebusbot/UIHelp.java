@@ -34,6 +34,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -249,7 +251,10 @@ public final class UIHelp {
         }
     }
 
-    public static final int getRouteErrorString(int code) {
+    public static final int getRouteErrorString(Context context, int code) {
+        if (!isConnected(context)) {
+            return R.string.no_network_error;
+        }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
                 return R.string.internal_error;
@@ -264,7 +269,10 @@ public final class UIHelp {
         }
     }
 
-    public static final int getStopErrorString(int code) {
+    public static final int getStopErrorString(Context context, int code) {
+        if (!isConnected(context)) {
+            return R.string.no_network_error;
+        }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
                 return R.string.internal_error;
@@ -279,7 +287,10 @@ public final class UIHelp {
         }
     }
 
-    public static final int getMapErrorString(int code) {
+    public static final int getMapErrorString(Context context, int code) {
+        if (!isConnected(context)) {
+            return R.string.no_network_error;
+        }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
                 return R.string.internal_error;
@@ -332,6 +343,14 @@ public final class UIHelp {
         if (Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0) {
             Toast.makeText(context, R.string.airplane_mode, Toast.LENGTH_LONG).show();
         }
+    }
+
+    public static boolean isConnected(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return (activeNetwork != null) && activeNetwork.isConnectedOrConnecting();
     }
 
     /**

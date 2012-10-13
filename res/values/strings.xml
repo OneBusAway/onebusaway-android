@@ -205,7 +205,7 @@
     <!--  Bug report -->
     <string name="bug_report_dest">paul@joulespersecond.com</string>
     <string name="bug_report_subject">OneBusAway: Feedback</string>
-    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$d\n</string>
+    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->

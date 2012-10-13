@@ -33,9 +33,14 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class HomeActivity extends BaseMapActivity {
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
@@ -274,6 +279,38 @@ public class HomeActivity extends BaseMapActivity {
         }
     }
 
+    private static String getLocationString(Context context) {
+        LocationManager mgr = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = mgr.getProviders(true);
+        Location last = null;
+        String provider = null;
+        for (Iterator<String> i = providers.iterator(); i.hasNext();) {
+            String p = i.next();
+            Location loc = mgr.getLastKnownLocation(p);
+            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
+                last = loc;
+                provider = p;
+            }
+        }
+
+        if (last == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(provider);
+        sb.append(' ');
+        sb.append(last.getLatitude());
+        sb.append(',');
+        sb.append(last.getLongitude());
+        if (last.hasAccuracy()) {
+            sb.append(' ');
+            sb.append(last.getAccuracy());
+        }
+
+        return sb.toString();
+    }
+
     private static void goToBugReport(Context ctxt) {
         PackageManager pm = ctxt.getPackageManager();
         PackageInfo appInfo = null;
@@ -293,7 +330,8 @@ public class HomeActivity extends BaseMapActivity {
                  appInfo.versionName,
                  Build.MODEL,
                  Build.VERSION.RELEASE,
-                 Build.VERSION.SDK_INT);
+                 Build.VERSION.SDK_INT,
+                 getLocationString(ctxt));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
                 new String[] { ctxt.getString(R.string.bug_report_dest) });

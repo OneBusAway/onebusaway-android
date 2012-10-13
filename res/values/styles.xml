@@ -14,9 +14,9 @@
      limitations under the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-	<style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
-	    <item name="android:windowBackground">@null</item>
-	</style>
+    <style name="Theme.BusBot.NoBackground" parent="@style/Theme.BusBot">
+        <item name="android:windowBackground">@null</item>
+    </style>
 
     <!--  Styles -->
     <style name="HeaderItem">
@@ -38,9 +38,9 @@
         <item name="android:textColor">#000000</item>
     </style>
     <style name="HeaderLink">
-		<item name="android:textSize">20sp</item>
-		<item name="android:background">@drawable/stop_popup_button</item>
-		<item name="android:padding">3sp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:background">@drawable/stop_popup_button</item>
+        <item name="android:padding">3sp</item>
     </style>
     <style name="Line1Text">
         <item name="android:textSize">16sp</item>
@@ -105,6 +105,8 @@
         <item name="android:textColor">#000000</item>
         <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
     </style>
     <style name="RouteInfoAgency">
         <item name="android:textColor">#000000</item>

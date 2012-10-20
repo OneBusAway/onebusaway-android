@@ -19,7 +19,6 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -123,6 +122,8 @@ public class HomeActivity extends BaseMapActivity {
         return myIntent;
     }
 
+    private int mWhatsNewMessage = R.string.main_help_whatsnew;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -221,7 +222,7 @@ public class HomeActivity extends BaseMapActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.drawable.ic_launcher);
-        builder.setMessage(R.string.main_help_whatsnew);
+        builder.setMessage(mWhatsNewMessage);
         builder.setNeutralButton(R.string.main_help_close,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -251,23 +252,14 @@ public class HomeActivity extends BaseMapActivity {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
-        if (oldVer != newVer) {
-            // It's impossible to tell the difference from people updating
-            // from an older version without a What's New dialog and people
-            // with fresh installs just by the settings alone.
-            // So we'll do a heuristic and just check to see if they have
-            // visited any stops -- in most cases that will mean they have
-            // just installed.
-            if (oldVer == 0 && newVer == 7) {
-                Integer count = UIHelp
-                        .intForQuery(this, ObaContract.Stops.CONTENT_URI,
-                                ObaContract.Stops._COUNT);
-                if (count != null && count != 0) {
-                    showDialog(WHATSNEW_DIALOG);
-                }
-            } else if ((oldVer > 0) && (oldVer < newVer)) {
-                showDialog(WHATSNEW_DIALOG);
+        if ((oldVer > 0) && (oldVer < newVer)) {
+            if (oldVer <= 22) {
+                mWhatsNewMessage = R.string.main_help_whatsnew_22;
+            } else {
+                mWhatsNewMessage = R.string.main_help_whatsnew;
             }
+            showDialog(WHATSNEW_DIALOG);
+
             // Updates will remove the alarms. This should put them back.
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).

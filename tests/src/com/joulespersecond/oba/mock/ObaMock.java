@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.oba.request.test;
+package com.joulespersecond.oba.mock;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.mock.ObaMock;
-import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.ObaConnectionFactory;
 
-import android.test.AndroidTestCase;
+import android.content.Context;
 
-public class ObaTestCase extends AndroidTestCase {
-    private ObaMock mMock;
+public class ObaMock {
+    private final MockConnectionFactory mMockFactory;
+    private final ObaConnectionFactory mOldFactory;
 
-    @Override
-    protected void setUp() {
-        mMock = new ObaMock(getContext());
+    public ObaMock(Context context) {
+        mMockFactory = new MockConnectionFactory(context);
+        mOldFactory = ObaApi.setConnectionFactory(mMockFactory);
     }
 
-    @Override
-    protected void tearDown() {
-        mMock.finish();
-    }
-
-    public static void assertOK(ObaResponse response) {
-        assertNotNull(response);
-        assertEquals(ObaApi.OBA_OK, response.getCode());
+    public void finish() {
+        ObaApi.setConnectionFactory(mOldFactory);
     }
 }

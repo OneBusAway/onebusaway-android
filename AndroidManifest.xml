@@ -15,8 +15,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.joulespersecond.seattlebusbot"
-      android:versionCode="26"
-      android:versionName="1.5.3">
+      android:versionCode="27"
+      android:versionName="1.5.4">
     <permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
         android:label="@string/trip_service_perm_label"
         android:description="@string/trip_service_perm_description"
@@ -28,6 +28,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />

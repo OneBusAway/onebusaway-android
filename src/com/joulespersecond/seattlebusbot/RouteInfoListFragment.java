@@ -443,7 +443,7 @@ public class RouteInfoListFragment extends ListFragment {
                 ObaContract.Routes.insertOrUpdate(getActivity(), mRouteInfo.getId(), values, true);
             }
         } else {
-            setEmptyText(getString(UIHelp.getRouteErrorString(routeInfo.getCode())));
+            setEmptyText(getString(UIHelp.getRouteErrorString(getActivity(), routeInfo.getCode())));
         }
     }
 
@@ -453,7 +453,7 @@ public class RouteInfoListFragment extends ListFragment {
         if (code == ObaApi.OBA_OK) {
             setEmptyText("");
         } else {
-            setEmptyText(getString(UIHelp.getRouteErrorString(code)));
+            setEmptyText(getString(UIHelp.getRouteErrorString(getActivity(), code)));
         }
         mAdapter = new SimpleExpandableListAdapter(
             getActivity(),

@@ -86,7 +86,7 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     public void onLoadFinished(Loader<ObaResponse> loader, ObaResponse response) {
         UIHelp.showProgress(this, false);
 
-        if (response.getCode() == ObaApi.OBA_OK) {
+        if ((response != null) && (response.getCode() == ObaApi.OBA_OK)) {
             Toast.makeText(getActivity(), R.string.report_problem_sent, Toast.LENGTH_LONG).show();
             mGoBackHandler.postDelayed(mGoBack, 100);
         } else {

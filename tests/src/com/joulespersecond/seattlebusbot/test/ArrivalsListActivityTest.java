@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,24 @@
  */
 package com.joulespersecond.seattlebusbot.test;
 
-
 /*
+import com.joulespersecond.oba.mock.ObaMock;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.TestHelp;
+
+import android.app.Instrumentation;
+import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
+
+
 public class ArrivalsListActivityTest extends
         ActivityInstrumentationTestCase2<ArrivalsListActivity> {
+    private static final String TAG = "ArrivalsListActivityTest";
 
+    private ObaMock mMock;
     private ArrivalsListActivity mActivity;
 
+    @SuppressWarnings("deprecation")
     public ArrivalsListActivityTest() {
         super("com.joulespersecond.seattlebusbot", ArrivalsListActivity.class);
     }
@@ -29,30 +40,22 @@ public class ArrivalsListActivityTest extends
     @Override
     protected void setUp() throws InterruptedException {
         Instrumentation instr = getInstrumentation();
-        setActivityIntent(ArrivalsListActivity.makeIntent(instr.getContext(), "1_431"));
+        mMock = new ObaMock(instr.getContext());
+        setActivityIntent(ArrivalsListActivity.makeIntent(instr.getContext(), "1_29261"));
         mActivity = getActivity();
-        // Wait for stops
-        Object obj = new Object();
-        synchronized (obj) {
-            mActivity.setStopWait(obj);
-            obj.wait(120*1000);
-        }
     }
 
     @Override
     protected void tearDown() {
+        mMock.finish();
         mActivity.finish();
     }
 
-    //public static Intent makeIntent(Context context, String stopId) {
-    //public static Intent makeIntent(Context context, String stopId, String stopName)
-    //public static Intent makeIntent(Context context,
-    //                    String stopId,
-    //                    String stopName,
-    //                    String stopDir) {
-
-    @UiThreadTest
-    public void testStops() {
+    public void testStops() throws InterruptedException {
+        Instrumentation instr = getInstrumentation();
+        TestHelp.waitForLoadFinished(instr.getContext());
+        Log.d(TAG, "Activity OK");
+        Thread.sleep(5000);
         // TODO: Get the name of the stop
         // Get the list of the stops
         // Access the menu

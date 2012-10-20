@@ -81,9 +81,6 @@ public class ArrivalsListFragment extends ListFragment
     // The list of situation alerts
     private ArrayList<SituationAlert> mSituationAlerts;
 
-    // Used by the test code to signal when we've retrieved stops.
-    private Object mStopWait;
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -226,14 +223,10 @@ public class ArrivalsListFragment extends ListFragment
             setListShownNoAnimation(true);
         }
 
-        if (mStopWait != null) {
-            synchronized (mStopWait) {
-                mStopWait.notifyAll();
-            }
-        }
-
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
+
+        //TestHelp.notifyLoadFinished(getActivity());
     }
 
     @Override
@@ -626,10 +619,6 @@ public class ArrivalsListFragment extends ListFragment
                 c.close();
             }
         }
-    }
-
-    public void setStopWait(Object obj) {
-        mStopWait = obj;
     }
 
     private void addToDB(ObaStop stop) {

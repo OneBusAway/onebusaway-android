@@ -253,7 +253,11 @@ public final class UIHelp {
 
     public static final int getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -271,7 +275,11 @@ public final class UIHelp {
 
     public static final int getStopErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -289,7 +297,11 @@ public final class UIHelp {
 
     public static final int getMapErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -338,11 +350,9 @@ public final class UIHelp {
         return last;
     }
 
-    public static void checkAirplaneMode(Context context) {
+    public static boolean isAirplaneMode(Context context) {
         ContentResolver cr = context.getContentResolver();
-        if (Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0) {
-            Toast.makeText(context, R.string.airplane_mode, Toast.LENGTH_LONG).show();
-        }
+        return Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
     }
 
     public static boolean isConnected(Context context) {

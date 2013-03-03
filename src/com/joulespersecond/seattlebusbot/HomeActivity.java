@@ -133,9 +133,6 @@ public class HomeActivity extends BaseMapActivity {
         UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
-        UIHelp.checkAirplaneMode(this);
-
-
     }
 
     @Override

@@ -31,6 +31,7 @@
     <string name="bad_gateway_error">OneBusAway\'s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
     <string name="no_network_error">You appear to be offline or are not connected to the network.</string>
+    <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane Mode?</string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -42,7 +43,6 @@
     <string name="direction_none"></string>
     <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
-    <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
     <string name="search_hint">Search stops or routes</string>
     <string name="search">Search</string>
 

@@ -119,8 +119,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         // Initialize the StopPopup (hidden)
         mStopPopup = new StopPopup(this, view.findViewById(R.id.stop_info));
 
-        UIHelp.checkAirplaneMode(getActivity());
-
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
         } else {

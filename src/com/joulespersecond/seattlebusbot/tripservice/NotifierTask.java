@@ -146,7 +146,7 @@ public final class NotifierTask implements Runnable {
         final String title = mContext.getString(R.string.app_name);
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
-                ArrivalsListActivity.makeIntent(mContext, stopId),
+                new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         notification.setLatestEventInfo(mContext,

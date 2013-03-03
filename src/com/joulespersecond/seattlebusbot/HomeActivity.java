@@ -172,6 +172,12 @@ public class HomeActivity extends BaseMapActivity {
         } else if (id == R.id.help) {
             showDialog(HELP_DIALOG);
             return true;
+        } else if (id == R.id.preferences) {
+            Intent preferences = new Intent(
+                    HomeActivity.this,
+                    EditPreferencesActivity.class);
+            startActivity(preferences);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -203,13 +209,7 @@ public class HomeActivity extends BaseMapActivity {
                             showDialog(WHATSNEW_DIALOG);
                             break;
                         case 2:
-                            goToBugReport(HomeActivity.this);
-                            break;
-                        case 3:
-                            Intent preferences = new Intent(
-                                    HomeActivity.this,
-                                    EditPreferencesActivity.class);
-                            startActivity(preferences);
+                            goToContactEmail(HomeActivity.this);
                             break;
                         }
                     }
@@ -303,7 +303,7 @@ public class HomeActivity extends BaseMapActivity {
         return sb.toString();
     }
 
-    private static void goToBugReport(Context ctxt) {
+    private static void goToContactEmail(Context ctxt) {
         PackageManager pm = ctxt.getPackageManager();
         PackageInfo appInfo = null;
         try {

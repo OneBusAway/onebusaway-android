@@ -138,9 +138,16 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onResume() {
-        // Make sure you try to reload the query map.
+        // Try to show any old data just in case we're coming out of sleep
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
+            if (lastGood != null) {
+                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations());
+            }
+        }
+
         getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
-        mAdapter.notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
         long lastResponseTime = getArrivalsLoader().getLastResponseTime();
@@ -201,6 +208,22 @@ public class ArrivalsListFragment extends ListFragment
             }
         }
 
+        setResponseData(info, situations);
+
+        // The list should now be shown.
+        if (isResumed()) {
+            setListShown(true);
+        } else {
+            setListShownNoAnimation(true);
+        }
+
+        // Post an update
+        mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
+
+        //TestHelp.notifyLoadFinished(getActivity());
+    }
+
+    private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
         mHeader.refresh();
 
         // Convert any stop situations into a list of alerts
@@ -216,17 +239,6 @@ public class ArrivalsListFragment extends ListFragment
             mAdapter.setData(info, mRoutesFilter);
         }
 
-        // The list should now be shown.
-        if (isResumed()) {
-            setListShown(true);
-        } else {
-            setListShownNoAnimation(true);
-        }
-
-        // Post an update
-        mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
-
-        //TestHelp.notifyLoadFinished(getActivity());
     }
 
     @Override

@@ -41,8 +41,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
     public static class Builder extends RequestBase.PostBuilderBase {
         public Builder(Context context, String stopId) {
-            super(context, getPathWithId("/report-problem-with-stop/", stopId));
-            // The StopID also needs to be included in the post data.
+            super(context, BASE_PATH + "/report-problem-with-stop.json");
             mPostData.appendQueryParameter("stopId", stopId);
         }
 

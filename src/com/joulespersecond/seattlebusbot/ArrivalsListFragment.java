@@ -205,7 +205,7 @@ public class ArrivalsListFragment extends ListFragment
 
         // Convert any stop situations into a list of alerts
         if (situations != null) {
-            refreshSituations(result.getSituations());
+            refreshSituations(situations);
         } else {
             refreshSituations(new ArrayList<ObaSituation>());
         }
@@ -213,7 +213,7 @@ public class ArrivalsListFragment extends ListFragment
         if (info != null) {
             // Reset the empty text just in case there is no data.
             setEmptyText(getString(R.string.stop_info_nodata));
-            mAdapter.setData(result.getArrivalInfo(), mRoutesFilter);
+            mAdapter.setData(info, mRoutesFilter);
         }
 
         // The list should now be shown.

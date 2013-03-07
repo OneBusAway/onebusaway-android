@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 
 
 public class ArrivalsListActivity extends SherlockFragmentActivity {
@@ -87,6 +88,7 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
         new Builder(context, stop).start();
     }
 
+    private boolean mNewFragment = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,8 +102,44 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
         if (fm.findFragmentById(android.R.id.content) == null) {
             ArrivalsListFragment list = new ArrivalsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
-
             fm.beginTransaction().add(android.R.id.content, list).commit();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        //
+        // We can't modify the fragment state here
+        // because the activity manager still thinks we're not saved.
+        // So we have to put it off.
+        //
+        mNewFragment = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        boolean newFrag = mNewFragment;
+        mNewFragment = false;
+        if (newFrag) {
+            FragmentManager fm = getSupportFragmentManager();
+
+            ArrivalsListFragment list = new ArrivalsListFragment();
+            list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
+
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.replace(android.R.id.content, list);
+            // This is a bit of a hack, but if there's a backstack
+            // it means people navigated away from this activity while
+            // in a report problem fragment.
+            // In this case, we *want* to be a part of the backstack;
+            // otherwise we just want to clear everything out.
+            if (fm.getBackStackEntryCount() > 0) {
+                ft.addToBackStack(null);
+            }
+            ft.commit();
         }
     }
 

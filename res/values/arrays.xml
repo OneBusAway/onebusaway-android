@@ -17,8 +17,7 @@
     <string-array name="main_help_options">
         <item>Twitter Feed</item>
         <item>What\'s New?</item>
-        <item>Email the developer</item>
-        <item>Preferences</item>
+        <item>Contact Us</item>
     </string-array>
     <string-array name="stop_item_options">
         <item>Set a reminder</item>

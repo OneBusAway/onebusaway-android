@@ -181,11 +181,13 @@ public class RouteInfoListFragment extends ListFragment {
         if (mStopsForRoute != null) {
             stop = mStopsForRoute.getStopMap().get(stopId);
         }
+        ArrivalsListActivity.Builder b = new ArrivalsListActivity.Builder(getActivity(), stopId);
         if (stop != null) {
-            ArrivalsListActivity.start(getActivity(), stopId, stop.getName(), stop.getDirection());
-        } else {
-            ArrivalsListActivity.start(getActivity(), stopId);
+            b.setStopName(stop.getName());
+            b.setStopDirection(stop.getDirection());
         }
+        b.setUpMode(NavHelp.UP_MODE_BACK);
+        b.start();
     }
 
     private void showOnMap(View v) {

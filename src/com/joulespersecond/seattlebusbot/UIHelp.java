@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,14 +231,7 @@ public final class UIHelp {
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
         Parcelable iconResource = Intent.ShortcutIconResource.fromContext(context, R.drawable.ic_launcher);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
-    }
-
-    public static void goHome(Context context) {
-        Intent intent = new Intent(context, HomeActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        context.startActivity(intent);
     }
 
     public static void goToUrl(Context context, String url) {
@@ -253,7 +246,11 @@ public final class UIHelp {
 
     public static final int getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -271,7 +268,11 @@ public final class UIHelp {
 
     public static final int getStopErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -289,7 +290,11 @@ public final class UIHelp {
 
     public static final int getMapErrorString(Context context, int code) {
         if (!isConnected(context)) {
-            return R.string.no_network_error;
+            if (isAirplaneMode(context)) {
+                return R.string.airplane_mode_error;
+            } else {
+                return R.string.no_network_error;
+            }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
@@ -338,11 +343,9 @@ public final class UIHelp {
         return last;
     }
 
-    public static void checkAirplaneMode(Context context) {
+    public static boolean isAirplaneMode(Context context) {
         ContentResolver cr = context.getContentResolver();
-        if (Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0) {
-            Toast.makeText(context, R.string.airplane_mode, Toast.LENGTH_LONG).show();
-        }
+        return Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
     }
 
     public static boolean isConnected(Context context) {

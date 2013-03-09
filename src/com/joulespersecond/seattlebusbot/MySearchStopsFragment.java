@@ -22,7 +22,6 @@ import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -139,17 +138,14 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         ObaStop stop = (ObaStop)l.getAdapter().getItem(position - l.getHeaderViewsCount());
-        final String stopId = stop.getId();
-        final String stopName = stop.getName();
-        final String stopDir = stop.getDirection();
-        final String shortcutName = stopName;
+        final String shortcutName = stop.getName();
 
+        ArrivalsListActivity.Builder b = new ArrivalsListActivity.Builder(getActivity(), stop);
         if (isShortcutMode()) {
-            Intent intent = ArrivalsListActivity.makeIntent(getActivity(),
-                    stopId, stopName, stopDir);
-            makeShortcut(shortcutName, intent);
+            makeShortcut(shortcutName, b.getIntent());
         } else {
-            ArrivalsListActivity.start(getActivity(), stopId, stopName, stopDir);
+            b.setUpMode(NavHelp.UP_MODE_BACK);
+            b.start();
         }
     }
 

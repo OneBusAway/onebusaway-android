@@ -107,7 +107,10 @@ public class TripInfoActivity extends SherlockFragmentActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            UIHelp.goHome(this);
+            //UIHelp.goHome(this);
+            // Since this screen isn't part of a defined heirarchy, we always
+            // go up from here.
+            finish();
             return true;
         }
         return false;
@@ -272,11 +275,11 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         private void initForm() {
             View view = getView();
-            Spinner s = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
+            final Spinner reminder = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
             ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
                     getActivity(), R.array.reminder_time, android.R.layout.simple_spinner_item);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            s.setAdapter(adapter);
+            reminder.setAdapter(adapter);
 
             //
             // Static (header values)
@@ -296,7 +299,6 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             final TextView tripName = (TextView)view.findViewById(R.id.name);
             tripName.setText(mTripName);
 
-            final Spinner reminder = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
             reminder.setSelection(reminderToSelection(mReminderTime));
 
             final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
@@ -356,13 +358,18 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             if (id == R.id.trip_info_save) {
                 saveTrip();
             } else if (id == R.id.trip_info_delete) {
-                new DeleteDialog().show(getActivity().getSupportFragmentManager(),
-                        TAG_DELETE_DIALOG);
+                Bundle args = new Bundle();
+                args.putParcelable("uri", mTripUri);
+                DeleteDialog dialog = new DeleteDialog();
+                dialog.setArguments(args);
+                dialog.show(getActivity().getSupportFragmentManager(), TAG_DELETE_DIALOG);
             } else if (id == R.id.show_route) {
                 RouteInfoActivity.start(getActivity(), mRouteId);
                 return true;
             } else if (id == R.id.show_stop) {
-                ArrivalsListActivity.start(getActivity(), mStopId, mStopName);
+                new ArrivalsListActivity.Builder(getActivity(), mStopId)
+                    .setStopName(mStopName)
+                    .start();
                 return true;
             }
             return false;
@@ -411,12 +418,6 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             Toast.makeText(getActivity(), R.string.trip_info_saved, Toast.LENGTH_SHORT)
                     .show();
             finish();
-        }
-
-        private void deleteTrip() {
-            ContentResolver cr = getActivity().getContentResolver();
-            cr.delete(mTripUri, null, null);
-            TripService.scheduleAll(getActivity());
         }
 
         void showReminderDaysDialog() {
@@ -477,9 +478,12 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             repeats.setText(getRepeatText(getActivity(), mReminderDays));
         }
 
-        private class DeleteDialog extends DialogFragment {
+        public static class DeleteDialog extends DialogFragment {
             @Override
             public Dialog onCreateDialog(Bundle savedInstanceState) {
+                Bundle args = getArguments();
+                final Uri tripUri = args.getParcelable("uri");
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder
                     .setMessage(R.string.trip_info_delete_trip)
@@ -488,8 +492,10 @@ public class TripInfoActivity extends SherlockFragmentActivity {
                     .setPositiveButton(android.R.string.ok,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    deleteTrip();
-                                    finish();
+                                    ContentResolver cr = getActivity().getContentResolver();
+                                    cr.delete(tripUri, null, null);
+                                    TripService.scheduleAll(getActivity());
+                                    getActivity().finish();
                                 }
                     })
                     .setNegativeButton(android.R.string.cancel,

@@ -45,7 +45,7 @@ public class SearchActivity extends SherlockFragmentActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            UIHelp.goHome(this);
+            NavHelp.goHome(this);
             return true;
         }
         return false;

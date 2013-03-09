@@ -138,9 +138,16 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onResume() {
-        // Make sure you try to reload the query map.
+        // Try to show any old data just in case we're coming out of sleep
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
+            if (lastGood != null) {
+                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations());
+            }
+        }
+
         getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
-        mAdapter.notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
         long lastResponseTime = getArrivalsLoader().getLastResponseTime();
@@ -201,20 +208,7 @@ public class ArrivalsListFragment extends ListFragment
             }
         }
 
-        mHeader.refresh();
-
-        // Convert any stop situations into a list of alerts
-        if (situations != null) {
-            refreshSituations(result.getSituations());
-        } else {
-            refreshSituations(new ArrayList<ObaSituation>());
-        }
-
-        if (info != null) {
-            // Reset the empty text just in case there is no data.
-            setEmptyText(getString(R.string.stop_info_nodata));
-            mAdapter.setData(result.getArrivalInfo(), mRoutesFilter);
-        }
+        setResponseData(info, situations);
 
         // The list should now be shown.
         if (isResumed()) {
@@ -227,6 +221,24 @@ public class ArrivalsListFragment extends ListFragment
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
 
         //TestHelp.notifyLoadFinished(getActivity());
+    }
+
+    private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
+        mHeader.refresh();
+
+        // Convert any stop situations into a list of alerts
+        if (situations != null) {
+            refreshSituations(situations);
+        } else {
+            refreshSituations(new ArrayList<ObaSituation>());
+        }
+
+        if (info != null) {
+            // Reset the empty text just in case there is no data.
+            setEmptyText(getString(R.string.stop_info_nodata));
+            mAdapter.setData(info, mRoutesFilter);
+        }
+
     }
 
     @Override

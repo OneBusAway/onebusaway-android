@@ -60,7 +60,7 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew_22">All new UI!\n\nSave/restore your data!\n\nBetter bug reporting!\n\nMuch more!</string>
-    <string name="main_help_whatsnew">Bug fixes, including fixing stop/trip reporting.</string>
+    <string name="main_help_whatsnew">Bug fixes!\n\nNavigation improvements!</string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>

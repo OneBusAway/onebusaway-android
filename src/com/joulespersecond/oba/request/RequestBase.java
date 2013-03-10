@@ -155,8 +155,7 @@ public class RequestBase {
         ObaConnection conn = null;
         try {
             conn = ObaApi.getDefaultContext().getConnectionFactory().newConnection(mUri);
-            BufferedReader reader;
-            reader = (BufferedReader)conn.post(mPostData);
+            BufferedReader reader = new BufferedReader(conn.post(mPostData), 8*1024);
 
             String line;
             StringBuffer text = new StringBuffer();

@@ -81,9 +81,6 @@ public class ArrivalsListFragment extends ListFragment
     // The list of situation alerts
     private ArrayList<SituationAlert> mSituationAlerts;
 
-    // Used by the test code to signal when we've retrieved stops.
-    private Object mStopWait;
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -141,9 +138,16 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onResume() {
-        // Make sure you try to reload the query map.
+        // Try to show any old data just in case we're coming out of sleep
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
+            if (lastGood != null) {
+                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations());
+            }
+        }
+
         getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
-        mAdapter.notifyDataSetChanged();
 
         // If our timer would have gone off, then refresh.
         long lastResponseTime = getArrivalsLoader().getLastResponseTime();
@@ -175,6 +179,7 @@ public class ArrivalsListFragment extends ListFragment
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
+        List<ObaSituation> situations = null;
 
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
@@ -182,6 +187,7 @@ public class ArrivalsListFragment extends ListFragment
                 addToDB(mStop);
             }
             info = result.getArrivalInfo();
+            situations = result.getSituations();
 
         } else {
             // If there was a last good response, then this is a refresh
@@ -195,22 +201,14 @@ public class ArrivalsListFragment extends ListFragment
                         R.string.generic_comm_error_toast,
                         Toast.LENGTH_LONG).show();
                 info = lastGood.getArrivalInfo();
+                situations = lastGood.getSituations();
 
             } else {
-                setEmptyText(getString(UIHelp.getStopErrorString(result.getCode())));
+                setEmptyText(getString(UIHelp.getStopErrorString(getActivity(), result.getCode())));
             }
         }
 
-        mHeader.refresh();
-
-        // Convert any stop situations into a list of alerts
-        refreshSituations(result.getSituations());
-
-        if (info != null) {
-            // Reset the empty text just in case there is no data.
-            setEmptyText(getString(R.string.stop_info_nodata));
-            mAdapter.setData(result.getArrivalInfo(), mRoutesFilter);
-        }
+        setResponseData(info, situations);
 
         // The list should now be shown.
         if (isResumed()) {
@@ -219,14 +217,28 @@ public class ArrivalsListFragment extends ListFragment
             setListShownNoAnimation(true);
         }
 
-        if (mStopWait != null) {
-            synchronized (mStopWait) {
-                mStopWait.notifyAll();
-            }
-        }
-
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
+
+        //TestHelp.notifyLoadFinished(getActivity());
+    }
+
+    private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
+        mHeader.refresh();
+
+        // Convert any stop situations into a list of alerts
+        if (situations != null) {
+            refreshSituations(situations);
+        } else {
+            refreshSituations(new ArrayList<ObaSituation>());
+        }
+
+        if (info != null) {
+            // Reset the empty text just in case there is no data.
+            setEmptyText(getString(R.string.stop_info_nodata));
+            mAdapter.setData(info, mRoutesFilter);
+        }
+
     }
 
     @Override
@@ -619,10 +631,6 @@ public class ArrivalsListFragment extends ListFragment
                 c.close();
             }
         }
-    }
-
-    public void setStopWait(Object obj) {
-        mStopWait = obj;
     }
 
     private void addToDB(ObaStop stop) {

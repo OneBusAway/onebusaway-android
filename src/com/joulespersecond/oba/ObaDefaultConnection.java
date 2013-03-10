@@ -15,8 +15,11 @@
  */
 package com.joulespersecond.oba;
 
+import com.joulespersecond.seattlebusbot.BuildConfig;
+
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -33,12 +36,12 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 public final class ObaDefaultConnection implements ObaConnection {
-    //private static final String TAG = "ObaHelp";
+    private static final String TAG = "ObaDefaultConnection";
 
     private HttpURLConnection mConnection;
 
     ObaDefaultConnection(Uri uri) throws IOException {
-        //Log.d(TAG, url.toString());
+        if (BuildConfig.DEBUG) { Log.d(TAG, uri.toString()); }
         URL url = new URL(uri.toString());
         mConnection = (HttpURLConnection)url.openConnection();
         mConnection.setReadTimeout(30*1000);

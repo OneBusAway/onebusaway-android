@@ -30,6 +30,8 @@
     <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that request.</string>
     <string name="bad_gateway_error">OneBusAway\'s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
+    <string name="no_network_error">You appear to be offline or are not connected to the network.</string>
+    <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane Mode?</string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -41,7 +43,6 @@
     <string name="direction_none"></string>
     <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
-    <string name="airplane_mode">Please turn off Airplane Mode to use OneBusAway.</string>
     <string name="search_hint">Search stops or routes</string>
     <string name="search">Search</string>
     <string name="checkmark_description">Selection checkmark</string>
@@ -53,12 +54,14 @@
     <string name="main_option_findstop">My Stops</string>
     <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
+    <string name="main_option_preferences">Preferences</string>
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">All new UI!\n\nSave/restore your data!\n\nBetter bug reporting!\n\nMuch more!</string>
+    <string name="main_help_whatsnew_22">All new UI!\n\nSave/restore your data!\n\nBetter bug reporting!\n\nMuch more!</string>
+    <string name="main_help_whatsnew">Bug fixes!\n\nNavigation improvements!</string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
@@ -214,9 +217,9 @@
     <string name="region_option_refresh">Refresh</string>
 
     <!--  Bug report -->
-    <string name="bug_report_dest">paul@joulespersecond.com</string>
+    <string name="bug_report_dest">contact@onebusaway.org</string>
     <string name="bug_report_subject">OneBusAway: Feedback</string>
-    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s\nSDK Version: %4$d\n</string>
+    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->

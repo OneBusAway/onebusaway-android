@@ -48,18 +48,18 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
     public void onListItemClick(ListView l, View v, int position, long id) {
         StopData stopData = getStopData(l, position);
 
+        ArrivalsListActivity.Builder b = stopData.getArrivalsList();
+
         if (isShortcutMode()) {
             final Intent shortcut =
-                UIHelp.makeShortcut(getActivity(), stopData.getUiName(),
-                        ArrivalsListActivity.makeIntent(getActivity(),
-                                stopData.getId(), stopData.getName(), stopData.getDir()));
+                UIHelp.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
 
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut);
             activity.finish();
-        }
-        else {
-            ArrivalsListActivity.start(getActivity(), stopData.id, stopData.name, stopData.dir);
+        } else {
+            b.setUpMode(NavHelp.UP_MODE_BACK);
+            b.start();
         }
     }
 
@@ -103,8 +103,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
             StopData stopData = getStopData(getListView(), info.position);
             final Intent shortcutIntent =
                     UIHelp.makeShortcut(getActivity(), stopData.uiName,
-                            ArrivalsListActivity.makeIntent(getActivity(),
-                                    stopData.id, stopData.name, stopData.dir));
+                            stopData.getArrivalsList().getIntent());
             shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
             shortcutIntent.setFlags(0);
             getActivity().sendBroadcast(shortcutIntent);
@@ -154,6 +153,12 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         public String getUiName() {
             return uiName;
+        }
+
+        public ArrivalsListActivity.Builder getArrivalsList() {
+            return new ArrivalsListActivity.Builder(getActivity(), id)
+                .setStopName(name)
+                .setStopDirection(dir);
         }
     }
 }

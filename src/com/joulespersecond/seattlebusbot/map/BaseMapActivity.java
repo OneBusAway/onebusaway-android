@@ -121,8 +121,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         // Initialize the StopPopup (hidden)
         mStopPopup = new StopPopup(this, view.findViewById(R.id.stop_info));
 
-        UIHelp.checkAirplaneMode(getActivity());
-
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
         } else {
@@ -544,7 +542,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     public static void showMapError(Context context, ObaResponse response) {
         Toast.makeText(context,
-                context.getString(UIHelp.getMapErrorString(response.getCode())),
+                context.getString(UIHelp.getMapErrorString(context, response.getCode())),
                 Toast.LENGTH_LONG).show();
     }
 

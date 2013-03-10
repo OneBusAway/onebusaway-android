@@ -42,8 +42,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
     public static class Builder extends RequestBase.PostBuilderBase {
         public Builder(Context context, String tripId) {
-            super(context, getPathWithId("/report-problem-with-trip/", tripId));
-            // The trip ID must also be included in the POST data
+            super(context, BASE_PATH + "/report-problem-with-trip.json");
             mPostData.appendQueryParameter("tripId", tripId);
         }
 

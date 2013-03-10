@@ -19,7 +19,6 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -33,9 +32,14 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class HomeActivity extends BaseMapActivity {
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
@@ -118,6 +122,8 @@ public class HomeActivity extends BaseMapActivity {
         return myIntent;
     }
 
+    private int mWhatsNewMessage = R.string.main_help_whatsnew;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -127,9 +133,6 @@ public class HomeActivity extends BaseMapActivity {
         UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
-        UIHelp.checkAirplaneMode(this);
-
-
     }
 
     @Override
@@ -149,7 +152,7 @@ public class HomeActivity extends BaseMapActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == android.R.id.home) {
-            UIHelp.goHome(this);
+            NavHelp.goHome(this);
             return true;
         } else if (id == R.id.find_stop) {
             Intent myIntent = new Intent(this, MyStopsActivity.class);
@@ -165,6 +168,12 @@ public class HomeActivity extends BaseMapActivity {
             return true;
         } else if (id == R.id.help) {
             showDialog(HELP_DIALOG);
+            return true;
+        } else if (id == R.id.preferences) {
+            Intent preferences = new Intent(
+                    HomeActivity.this,
+                    PreferencesActivity.class);
+            startActivity(preferences);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -197,13 +206,7 @@ public class HomeActivity extends BaseMapActivity {
                             showDialog(WHATSNEW_DIALOG);
                             break;
                         case 2:
-                            goToBugReport(HomeActivity.this);
-                            break;
-                        case 3:
-                            Intent preferences = new Intent(
-                                    HomeActivity.this,
-                                    PreferencesActivity.class);
-                            startActivity(preferences);
+                            goToContactEmail(HomeActivity.this);
                             break;
                         }
                     }
@@ -216,7 +219,7 @@ public class HomeActivity extends BaseMapActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.drawable.ic_launcher);
-        builder.setMessage(R.string.main_help_whatsnew);
+        builder.setMessage(mWhatsNewMessage);
         builder.setNeutralButton(R.string.main_help_close,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -246,23 +249,14 @@ public class HomeActivity extends BaseMapActivity {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
-        if (oldVer != newVer) {
-            // It's impossible to tell the difference from people updating
-            // from an older version without a What's New dialog and people
-            // with fresh installs just by the settings alone.
-            // So we'll do a heuristic and just check to see if they have
-            // visited any stops -- in most cases that will mean they have
-            // just installed.
-            if (oldVer == 0 && newVer == 7) {
-                Integer count = UIHelp
-                        .intForQuery(this, ObaContract.Stops.CONTENT_URI,
-                                ObaContract.Stops._COUNT);
-                if (count != null && count != 0) {
-                    showDialog(WHATSNEW_DIALOG);
-                }
-            } else if ((oldVer > 0) && (oldVer < newVer)) {
-                showDialog(WHATSNEW_DIALOG);
+        if ((oldVer > 0) && (oldVer < newVer)) {
+            if (oldVer <= 22) {
+                mWhatsNewMessage = R.string.main_help_whatsnew_22;
+            } else {
+                mWhatsNewMessage = R.string.main_help_whatsnew;
             }
+            showDialog(WHATSNEW_DIALOG);
+
             // Updates will remove the alarms. This should put them back.
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).
@@ -271,7 +265,39 @@ public class HomeActivity extends BaseMapActivity {
         }
     }
 
-    private static void goToBugReport(Context ctxt) {
+    private static String getLocationString(Context context) {
+        LocationManager mgr = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = mgr.getProviders(true);
+        Location last = null;
+        String provider = null;
+        for (Iterator<String> i = providers.iterator(); i.hasNext();) {
+            String p = i.next();
+            Location loc = mgr.getLastKnownLocation(p);
+            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
+                last = loc;
+                provider = p;
+            }
+        }
+
+        if (last == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(provider);
+        sb.append(' ');
+        sb.append(last.getLatitude());
+        sb.append(',');
+        sb.append(last.getLongitude());
+        if (last.hasAccuracy()) {
+            sb.append(' ');
+            sb.append(last.getAccuracy());
+        }
+
+        return sb.toString();
+    }
+
+    private static void goToContactEmail(Context ctxt) {
         PackageManager pm = ctxt.getPackageManager();
         PackageInfo appInfo = null;
         try {
@@ -290,7 +316,8 @@ public class HomeActivity extends BaseMapActivity {
                  appInfo.versionName,
                  Build.MODEL,
                  Build.VERSION.RELEASE,
-                 Build.VERSION.SDK_INT);
+                 Build.VERSION.SDK_INT,
+                 getLocationString(ctxt));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
                 new String[] { ctxt.getString(R.string.bug_report_dest) });

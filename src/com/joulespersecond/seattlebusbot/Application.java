@@ -16,10 +16,9 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
-import com.joulespersecond.oba.region.ObaRegion;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -29,9 +28,6 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.security.MessageDigest;
 import java.util.UUID;
 
@@ -53,8 +49,6 @@ public class Application extends android.app.Application {
 
         // Fix bugs in pre-Froyo
         disableConnectionReuseIfNecessary();
-        // Enable cookies (GB and beyond)
-        enableCookies();
 
         initOba();
         initObaRegion();
@@ -152,14 +146,6 @@ public class Application extends android.app.Application {
         // Work around pre-Froyo bugs in HTTP connection reuse.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
             System.setProperty("http.keepAlive", "false");
-        }
-    }
-
-    @TargetApi(9)
-    private void enableCookies() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            CookieManager manager = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
-            CookieHandler.setDefault(manager);
         }
     }
 }

@@ -15,7 +15,8 @@
  */
 package com.joulespersecond.oba.provider;
 
-import com.joulespersecond.oba.region.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRegionElement;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -901,10 +902,11 @@ public final class ObaContract {
                         return null;
                     }
                     c.moveToFirst();
-                    return new ObaRegion(id,   // id
+                    return new ObaRegionElement(id,   // id
                             c.getString(1),             // Name
-                            Uri.parse(c.getString(2)),  // OBA Base URL
-                            Uri.parse(c.getString(3)),  // SIRI Base URL
+                            true,                       // Active
+                            c.getString(2),             // OBA Base URL
+                            c.getString(3),             // SIRI Base URL
                             RegionBounds.getRegion(cr, id), // Bounds
                             c.getString(4),             // Lang
                             c.getString(5),             // Contact Name
@@ -942,7 +944,7 @@ public final class ObaContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static ObaRegion.Bounds[] getRegion(ContentResolver cr, int regionId) {
+        public static ObaRegionElement.Bounds[] getRegion(ContentResolver cr, int regionId) {
             final String[] PROJECTION = {
                 LATITUDE,
                 LONGITUDE,
@@ -954,7 +956,7 @@ public final class ObaContract {
                     null, null);
             if (c != null) {
                 try {
-                    ObaRegion.Bounds[] results = new ObaRegion.Bounds[c.getCount()];
+                    ObaRegionElement.Bounds[] results = new ObaRegionElement.Bounds[c.getCount()];
                     if (c.getCount() == 0) {
                         return results;
                     }
@@ -962,7 +964,7 @@ public final class ObaContract {
                     int i = 0;
                     c.moveToFirst();
                     do {
-                        results[i] = new ObaRegion.Bounds(
+                        results[i] = new ObaRegionElement.Bounds(
                                 c.getDouble(0),
                                 c.getDouble(1),
                                 c.getDouble(2),

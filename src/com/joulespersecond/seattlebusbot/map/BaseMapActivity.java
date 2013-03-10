@@ -27,8 +27,9 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegion;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
@@ -528,7 +529,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         ObaRegion region = Application.get().getCurrentRegion();
         if (region != null) {
             double results[] = new double[4];
-            region.getRegionSpan(results);
+            RegionUtils.getRegionSpan(region, results);
             MapController ctrl = mMapView.getController();
             ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
             ctrl.zoomToSpan((int)(results[0] * 1E6), (int)(results[1] * 1E6));

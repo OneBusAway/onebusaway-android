@@ -18,8 +18,9 @@ package com.joulespersecond.seattlebusbot;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.region.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsLoader;
+import com.joulespersecond.oba.region.RegionUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -119,8 +120,8 @@ public class RegionsFragment extends ListFragment
     private Comparator<ObaRegion> mClosest = new Comparator<ObaRegion>() {
         @Override
         public int compare(ObaRegion r1, ObaRegion r2) {
-            Float r1distance = r1.getDistanceAway(mLocation);
-            Float r2distance = r2.getDistanceAway(mLocation);
+            Float r1distance = RegionUtils.getDistanceAway(r1, mLocation);
+            Float r2distance = RegionUtils.getDistanceAway(r2, mLocation);
             if (r1distance == null) {
                 r1distance = Float.MAX_VALUE;
             }
@@ -153,7 +154,7 @@ public class RegionsFragment extends ListFragment
             image.setVisibility(regionVis);
 
             if (mLocation != null) {
-                distance = region.getDistanceAway(mLocation);
+                distance = RegionUtils.getDistanceAway(region, mLocation);
             }
             if (distance != null) {
                 NumberFormat fmt = NumberFormat.getInstance();

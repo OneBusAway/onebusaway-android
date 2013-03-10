@@ -7,7 +7,6 @@
 	<classpathentry kind="lib" path="libs/jackson-core-2.0.6.jar"/>
 	<classpathentry kind="lib" path="libs/jackson-databind-2.0.6.jar"/>
 	<classpathentry kind="lib" path="libs/jackson-annotations-2.0.6.jar"/>
-	<classpathentry kind="lib" path="libs/opencsv-2.3.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ActionBarSherlock"/>
 	<classpathentry kind="output" path="bin/classes"/>

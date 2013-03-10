@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.oba;
 
-import com.joulespersecond.oba.region.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRegion;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -88,7 +88,7 @@ public class ObaContext {
             builder.encodedAuthority(serverName);
             builder.scheme("http");
         } else if (mRegion != null) {
-            Uri base = mRegion.getObaBaseUri();
+            Uri base = Uri.parse(mRegion.getObaBaseUrl());
             builder.scheme(base.getScheme());
             builder.encodedAuthority(base.getAuthority());
         } else {

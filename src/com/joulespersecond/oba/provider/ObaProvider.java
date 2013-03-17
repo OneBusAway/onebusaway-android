@@ -133,7 +133,6 @@ public class ObaProvider extends ContentProvider {
                             ObaContract.Regions.OBA_BASE_URL    + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.SIRI_BASE_URL   + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.LANGUAGE        + " VARCHAR NOT NULL, " +
-                            ObaContract.Regions.CONTACT_NAME    + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.CONTACT_EMAIL   + " VARCHAR NOT NULL, " +
                             ObaContract.Regions.SUPPORTS_OBA_DISCOVERY  + " INTEGER NOT NULL, " +
                             ObaContract.Regions.SUPPORTS_OBA_REALTIME   + " INTEGER NOT NULL, " +
@@ -316,7 +315,6 @@ public class ObaProvider extends ContentProvider {
         sRegionsProjectionMap.put(ObaContract.Regions.OBA_BASE_URL,     ObaContract.Regions.OBA_BASE_URL);
         sRegionsProjectionMap.put(ObaContract.Regions.SIRI_BASE_URL,    ObaContract.Regions.SIRI_BASE_URL);
         sRegionsProjectionMap.put(ObaContract.Regions.LANGUAGE,         ObaContract.Regions.LANGUAGE);
-        sRegionsProjectionMap.put(ObaContract.Regions.CONTACT_NAME,     ObaContract.Regions.CONTACT_NAME);
         sRegionsProjectionMap.put(ObaContract.Regions.CONTACT_EMAIL,    ObaContract.Regions.CONTACT_EMAIL);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,   ObaContract.Regions.SUPPORTS_OBA_DISCOVERY);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME,    ObaContract.Regions.SUPPORTS_OBA_REALTIME);

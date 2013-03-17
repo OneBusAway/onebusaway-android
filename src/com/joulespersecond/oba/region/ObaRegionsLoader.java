@@ -95,7 +95,6 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                 Regions.OBA_BASE_URL,
                 Regions.SIRI_BASE_URL,
                 Regions.LANGUAGE,
-                Regions.CONTACT_NAME,
                 Regions.CONTACT_EMAIL,
                 Regions.SUPPORTS_OBA_DISCOVERY,
                 Regions.SUPPORTS_OBA_REALTIME,
@@ -128,11 +127,10 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
                     c.getString(3),             // SIRI Base URL
                     bounds2,                    // Bounds
                     c.getString(4),             // Lang
-                    c.getString(5),             // Contact Name
-                    c.getString(6),             // Contact Email
-                    c.getInt(7) > 0,            // Supports Oba Discovery
-                    c.getInt(8) > 0,            // Supports Oba Realtime
-                    c.getInt(9) > 0             // Supports Siri Realtime
+                    c.getString(5),             // Contact Email
+                    c.getInt(6) > 0,            // Supports Oba Discovery
+                    c.getInt(7) > 0,            // Supports Oba Realtime
+                    c.getInt(8) > 0             // Supports Siri Realtime
                 ));
 
             } while (c.moveToNext());
@@ -238,7 +236,6 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
         String siriUrl = region.getSiriBaseUrl();
         values.put(Regions.SIRI_BASE_URL, siriUrl != null ? siriUrl : "");
         values.put(Regions.LANGUAGE, region.getLanguage());
-        values.put(Regions.CONTACT_NAME, region.getContactName());
         values.put(Regions.CONTACT_EMAIL, region.getContactEmail());
         values.put(Regions.SUPPORTS_OBA_DISCOVERY, region.getSupportsObaDiscovery() ? 1 : 0);
         values.put(Regions.SUPPORTS_OBA_REALTIME, region.getSupportsObaRealtime() ? 1 : 0);

@@ -27,10 +27,10 @@ public final class ObaRegionsRequest extends RequestBase implements
     }
 
     //
-    // This currently have a very simple builder because you can't do much with this "API"
+    // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
-        private static final Uri URI = Uri.parse("http://oba-regions.joulespersecond.com/api/where/regions.json");
+        private static final Uri URI = Uri.parse("http://oba-regions.joulespersecond.com/regions.json");
 
         public Builder(Context context) {
             //super(context);

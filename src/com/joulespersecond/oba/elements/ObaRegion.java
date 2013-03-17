@@ -67,11 +67,6 @@ public interface ObaRegion {
     public String getLanguage();
 
     /**
-     * @return The name of the party responsible for this region's OBA server.
-     */
-    public String getContactName();
-
-    /**
      * @return The email of the party responsible for this region's OBA server.
      */
     public String getContactEmail();

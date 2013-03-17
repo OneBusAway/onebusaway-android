@@ -298,14 +298,6 @@ public final class ObaContract {
         public static final String LANGUAGE = "lang";
 
         /**
-         * The name of the person responsible for this server.
-         * <P>
-         * Type: TEXT
-         * </P>
-         */
-        public static final String CONTACT_NAME = "contact_name";
-
-        /**
          * The email of the person responsible for this server.
          * <P>
          * Type: TEXT
@@ -888,7 +880,6 @@ public final class ObaContract {
                 OBA_BASE_URL,
                 SIRI_BASE_URL,
                 LANGUAGE,
-                CONTACT_NAME,
                 CONTACT_EMAIL,
                 SUPPORTS_OBA_DISCOVERY,
                 SUPPORTS_OBA_REALTIME,
@@ -909,11 +900,10 @@ public final class ObaContract {
                             c.getString(3),             // SIRI Base URL
                             RegionBounds.getRegion(cr, id), // Bounds
                             c.getString(4),             // Lang
-                            c.getString(5),             // Contact Name
-                            c.getString(6),             // Contact Email
-                            c.getInt(7) > 0,            // Supports Oba Discovery
-                            c.getInt(8) > 0,            // Supports Oba Realtime
-                            c.getInt(9) > 0             // Supports Siri Realtime
+                            c.getString(5),             // Contact Email
+                            c.getInt(6) > 0,            // Supports Oba Discovery
+                            c.getInt(7) > 0,            // Supports Oba Realtime
+                            c.getInt(8) > 0             // Supports Siri Realtime
                         );
                 } finally {
                     c.close();

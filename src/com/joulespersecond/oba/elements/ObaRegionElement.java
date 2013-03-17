@@ -72,7 +72,6 @@ public class ObaRegionElement implements ObaRegion {
     private final String siriBaseUrl;
     private final Bounds[] bounds;
     private final String language;
-    private final String contact;
     private final String contactEmail;
     private final boolean supportsObaDiscovery;
     private final boolean supportsObaRealtime;
@@ -86,7 +85,6 @@ public class ObaRegionElement implements ObaRegion {
         active = false;
         bounds = Bounds.EMPTY_ARRAY;
         language = "";
-        contact = "";
         contactEmail = "";
         supportsObaDiscovery = false;
         supportsObaRealtime = false;
@@ -100,7 +98,6 @@ public class ObaRegionElement implements ObaRegion {
             String siriBaseUrl,
             Bounds[] bounds,
             String lang,
-            String contactName,
             String contactEmail,
             boolean supportsObaDiscovery,
             boolean supportsObaRealtime,
@@ -112,7 +109,6 @@ public class ObaRegionElement implements ObaRegion {
         this.siriBaseUrl = siriBaseUrl;
         this.bounds = bounds;
         this.language = lang;
-        this.contact = contactName;
         this.contactEmail = contactEmail;
         this.supportsObaDiscovery = supportsObaDiscovery;
         this.supportsObaRealtime = supportsObaRealtime;
@@ -152,11 +148,6 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public String getLanguage() {
         return language;
-    }
-
-    @Override
-    public String getContactName() {
-        return contact;
     }
 
     @Override

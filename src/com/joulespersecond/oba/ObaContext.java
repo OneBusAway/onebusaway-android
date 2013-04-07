@@ -22,8 +22,10 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 public class ObaContext {
+    private static final String TAG = "ObaContext";
     private String mApiKey = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
 
     private int mAppVer = 0;
@@ -78,7 +80,6 @@ public class ObaContext {
         return mConnectionFactory;
     }
 
-
     public void setBaseUrl(Context context, Uri.Builder builder) {
         // If there is a custom preference, then use that.
         SharedPreferences preferences =
@@ -92,6 +93,7 @@ public class ObaContext {
             builder.scheme(base.getScheme());
             builder.encodedAuthority(base.getAuthority());
         } else {
+            Log.e(TAG, "Accessing default fallback...this is wrong!!");
             // Current fallback for existing users?
             builder.scheme("http");
             builder.authority("api.onebusaway.org");

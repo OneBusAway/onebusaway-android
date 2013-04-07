@@ -66,7 +66,7 @@ public class RegionsFragment extends ListFragment
         // Get the region and set this as the default region.
         ObaRegion region = mAdapter.getItem(position);
         Application.get().setCurrentRegion(region);
-        getActivity().finish();
+        NavHelp.goHome(getActivity());
     }
 
     @Override

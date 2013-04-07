@@ -16,6 +16,7 @@
 <resources>
     <string-array name="main_help_options">
         <item>Twitter Feed</item>
+        <item>Supported Agencies</item>
         <item>What\'s New?</item>
         <item>Contact Us</item>
     </string-array>

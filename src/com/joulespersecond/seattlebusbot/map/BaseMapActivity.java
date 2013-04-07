@@ -52,7 +52,6 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -102,7 +101,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        boolean firstRun = firstRunCheck();
+        //boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
         // call this from the subclass? or call an overrideable
         setContentView(getContentView());
@@ -130,9 +129,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             // even if it's empty
             if (args == null) {
                 args = new Bundle();
-            }
-            if (firstRun) {
-                firstRunSetLocation(args);
             }
             initMap(args);
         }
@@ -587,17 +583,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
      * (MapView or MapActivity caches prefs and tiles)
      * This will fail if MapViewActivty never got to onPause
      */
+    /*
     private boolean firstRunCheck() {
         File dir = getFilesDir();
         return (dir.list().length == 0);
     }
-
-    /**
-     * Center on Seattle with a region-level zoom, should
-     * give first-time users better first impression
-     */
-    private void firstRunSetLocation(Bundle args) {
-        args.putDouble(MapParams.CENTER_LAT, 47.605990);
-        args.putDouble(MapParams.CENTER_LON, -122.331780);
-    }
+    */
 }

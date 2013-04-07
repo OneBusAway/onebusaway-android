@@ -19,6 +19,7 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -203,9 +204,12 @@ public class HomeActivity extends BaseMapActivity {
                             UIHelp.goToUrl(HomeActivity.this, TWITTER_URL);
                             break;
                         case 1:
-                            showDialog(WHATSNEW_DIALOG);
+                            AgenciesActivity.start(HomeActivity.this);
                             break;
                         case 2:
+                            showDialog(WHATSNEW_DIALOG);
+                            break;
+                        case 3:
                             goToContactEmail(HomeActivity.this);
                             break;
                         }
@@ -307,6 +311,11 @@ public class HomeActivity extends BaseMapActivity {
             // Do nothing, perhaps we'll get to show it again? Or never.
             return;
         }
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region == null) {
+            return;
+        }
+
         // appInfo.versionName
         // Build.MODEL
         // Build.VERSION.RELEASE
@@ -320,7 +329,7 @@ public class HomeActivity extends BaseMapActivity {
                  getLocationString(ctxt));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
-                new String[] { ctxt.getString(R.string.bug_report_dest) });
+                new String[] { region.getContactEmail() });
         send.putExtra(Intent.EXTRA_SUBJECT,
                 ctxt.getString(R.string.bug_report_subject));
         send.putExtra(Intent.EXTRA_TEXT, body);

@@ -21,19 +21,21 @@ import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 import com.joulespersecond.oba.request.ObaRegionsRequest;
 import com.joulespersecond.oba.request.ObaRegionsResponse;
+import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
-    //private static final String TAG = "ObaRegionsLoader";
+    private static final String TAG = "ObaRegionsLoader";
 
     private ArrayList<ObaRegion> mResults;
     private final boolean mForceReload;
@@ -70,15 +72,20 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
             //
             results = getRegionsFromProvider();
             if (results != null) {
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
                 return results;
             }
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
         }
 
         results = getRegionsFromServer();
         if (results == null) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null."); }
             return null;
         }
 
+        if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+        
         saveToProvider(results);
         return results;
     }
@@ -211,9 +218,11 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
 
         for (ObaRegion region: regions) {
             if (!region.getActive()) {
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is not active, skipping insert..."); }
                 continue;
             }
             cr.insert(Regions.CONTENT_URI, toContentValues(region));
+            if (BuildConfig.DEBUG) { Log.d(TAG, " Saved region '" + region.getName() + "' to provider"); }
             long regionId = region.getId();
             // Bulk insert the bounds
             ObaRegion.Bounds[] bounds = region.getBounds();

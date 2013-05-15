@@ -16,6 +16,7 @@
 package com.joulespersecond.oba;
 
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -88,15 +89,18 @@ public class ObaContext {
         if (!TextUtils.isEmpty(serverName)) {
             builder.encodedAuthority(serverName);
             builder.scheme("http");
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
         } else if (mRegion != null) {
             Uri base = Uri.parse(mRegion.getObaBaseUrl());
             builder.scheme(base.getScheme());
             builder.encodedAuthority(base.getAuthority());
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Using region URL '" + mRegion.getObaBaseUrl() + "'."); }
         } else {
-            Log.e(TAG, "Accessing default fallback...this is wrong!!");
+            String fallBack = "api.onebusaway.org";
+            Log.e(TAG, "Accessing default fallback '" + fallBack + "' ...this is wrong!!");
             // Current fallback for existing users?
             builder.scheme("http");
-            builder.authority("api.onebusaway.org");
+            builder.authority(fallBack);
         }
     }
 

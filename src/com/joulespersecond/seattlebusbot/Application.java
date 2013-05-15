@@ -27,6 +27,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.UUID;
@@ -36,6 +37,8 @@ public class Application extends android.app.Application {
 
     // Region preference (long id)
     private static final String REGION_PREF = "preference_region";
+    
+    private static final String TAG = "Application";
 
     //private static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
     private SharedPreferences mPrefs;
@@ -131,11 +134,13 @@ public class Application extends android.app.Application {
         // Read the region preference, look it up in the DB, then set the region.
         long id = mPrefs.getLong(REGION_PREF, -1);
         if (id < 0) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions preference ID is less than 0, returning..."); }
             return;
         }
 
         ObaRegion region = Regions.get(this, (int)id);
         if (region == null) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions preference is null, returning..."); }
             return;
         }
 

@@ -345,7 +345,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     @Override
     @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
-        if (mWarnOutOfRange) {
+        //Before we trigger the out of range warning, make sure we have region info
+        //Otherwise, its premature since we don't know the device's relationship to
+        //available OBA regions
+        if (mWarnOutOfRange && Application.get().getCurrentRegion() != null) {
             showDialog(OUTOFRANGE_DIALOG);
         }
     }

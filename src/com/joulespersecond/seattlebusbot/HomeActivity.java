@@ -20,6 +20,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -37,6 +38,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
@@ -47,6 +49,8 @@ public class HomeActivity extends BaseMapActivity {
 
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
+    
+    private static final String TAG = "HomeActivity";
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -134,6 +138,8 @@ public class HomeActivity extends BaseMapActivity {
         UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
+        
+        checkRegionStatus();
     }
 
     @Override
@@ -341,5 +347,26 @@ public class HomeActivity extends BaseMapActivity {
             Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
         }
+    }
+    
+    /**
+     * Checks to see if a region has already been selected and exists in the local database
+     * If not, then it uses the ObaRegionsTask to fetch it from the server
+     */
+    private void checkRegionStatus(){
+        //TODO - Below IF statement should also check the delta between current time and last data 
+        //retrieved from the server, so we periodically refresh the regions data
+        if(Application.get().getCurrentRegion() != null){
+            //We already have region info, so return            
+            return;
+        }
+            
+        //Current region is null, which means that Application tried to load it from
+        //the local database and failed.  This occurs either on first app execution after install,
+        //or if the user has cleared the data for the app via the Android platform Application Manager
+        //So, we need to fetch region info from the Regions REST API via an AsyncTask
+        if (BuildConfig.DEBUG) { Log.d(TAG, "No region info locally, so we need to fetch it from the Regions REST API."); }                  
+        ObaRegionsTask task = new ObaRegionsTask(this, true);
+        task.execute();
     }
 }

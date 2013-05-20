@@ -215,6 +215,8 @@
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
+    <string name ="region_detecting_server">Detecting region. Please wait...</string>
+    <string name ="region_choose_region">Choose region</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway: Feedback</string>

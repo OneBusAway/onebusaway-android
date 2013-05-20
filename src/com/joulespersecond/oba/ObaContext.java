@@ -91,7 +91,7 @@ public class ObaContext {
             builder.scheme("http");
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
         } else if (mRegion != null) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Using region URL '" + mRegion.getObaBaseUrl() + "'."); }
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
             Uri base = Uri.parse(mRegion.getObaBaseUrl());
             
             builder.scheme(base.getScheme());

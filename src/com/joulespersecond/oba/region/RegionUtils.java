@@ -76,6 +76,7 @@ public class RegionUtils {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away"); }
             if(distToRegion < minDist){
                 closestRegion = region;
+                minDist = distToRegion;
             }
         }
         

@@ -31,8 +31,7 @@
     <PreferenceCategory android:title="@string/preferences_category_advanced">
         <EditTextPreference
             android:title="@string/preferences_oba_api_servername_title"
-            android:summary="@string/preferences_oba_api_servername_summary"
-            android:defaultValue="@string/preferences_oba_api_servername_default"
+            android:summary="@string/preferences_oba_api_servername_summary"            
             android:key="preferences_oba_api_servername" />
     </PreferenceCategory>
 </PreferenceScreen>

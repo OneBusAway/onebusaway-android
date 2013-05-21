@@ -15,9 +15,17 @@
  */
 package com.joulespersecond.oba.request;
 
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.content.Context;
 import android.net.Uri;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 
 public final class ObaRegionsRequest extends RequestBase implements
@@ -30,10 +38,15 @@ public final class ObaRegionsRequest extends RequestBase implements
     // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
-        private static final Uri URI = Uri.parse("http://regions.onebusaway.org/regions.json");
+        private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions.json");
 
         public Builder(Context context) {
             //super(context);
+        }
+        
+        public Builder(Context context, Uri uri) {
+            //super(context);
+            URI = uri;
         }
 
         public ObaRegionsRequest build() {
@@ -49,10 +62,39 @@ public final class ObaRegionsRequest extends RequestBase implements
     public static ObaRegionsRequest newRequest(Context context) {
         return new Builder(context).build();
     }
+    
+    /**
+     * Helper method for constructing new instances, allowing
+     * the requester to set the URI to retrieve the regions info
+     * from
+     * @param context The package context.
+     * @param uri URI to the regions.json file
+     * @return The new request instance.
+     */
+    public static ObaRegionsRequest newRequest(Context context, Uri uri) {
+        return new Builder(context, uri).build();
+    }
 
     @Override
     public ObaRegionsResponse call() {
-        return call(ObaRegionsResponse.class);
+        ObaRegionsResponse response = null;
+        
+        //If the URI is valid http URL, then use the superclass, otherwise its an Android resource file
+        try{
+            new URL(mUri.toString());
+            //URI is valid HTTP address, so call superclass
+            return call(ObaRegionsResponse.class);
+        }catch(MalformedURLException e){
+            //Use Android resource file
+            InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions);                        
+            ObaApi.SerializationHandler handler = ObaApi.getSerializer(ObaRegionsResponse.class);                           
+            InputStreamReader reader = new InputStreamReader(is);
+            response = handler.deserialize(reader, ObaRegionsResponse.class);
+            if (response == null) {
+                response = handler.createFromError(ObaRegionsResponse.class, ObaApi.OBA_INTERNAL_ERROR, "Json error");
+            }
+        }        
+        return response;
     }
 
     @Override

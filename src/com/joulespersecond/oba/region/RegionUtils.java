@@ -31,8 +31,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
+import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.text.DecimalFormat;
@@ -316,6 +316,27 @@ public class RegionUtils {
 
     public synchronized static ArrayList<ObaRegion> getRegionsFromServer(Context context) {
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context).call();
+        return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
+    }
+    
+    /**
+     * Retrieves region information from a regions.json file bundled within the app APK
+     * 
+     * IMPORTANT - this should be a last resort, and we should always try to pull regions
+     * info from the local provider or Regions REST API instead of from the bundled file.
+     * 
+     * This method is only intended to be a fail-safe in case the Regions REST API goes
+     * offline and a user downloads and installs OBA Android during that period
+     * (i.e., local OBA servers are available, but Regions REST API failure would block initial
+     * execution of the app).  This avoids a potential central point of failure for OBA
+     * Android installations on devices in multiple regions.
+     * 
+     * @param context
+     * @return list of regions retrieved from the regions.json file in app resources
+     */
+    public static ArrayList<ObaRegion> getRegionsFromResources(Context context){
+        Uri uri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.regions);        
+        ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, uri).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }
 

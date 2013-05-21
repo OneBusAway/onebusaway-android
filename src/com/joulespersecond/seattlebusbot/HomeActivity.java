@@ -376,7 +376,7 @@ public class HomeActivity extends BaseMapActivity {
         //or if the user has cleared the data for the app via the Android platform Application Manager
         //So, we need to fetch region info from the Regions REST API via an AsyncTask
         if (BuildConfig.DEBUG) { Log.d(TAG, "No region info locally, so we need to fetch it from the Regions REST API."); }                  
-        ObaRegionsTask task = new ObaRegionsTask(this, true);
+        ObaRegionsTask task = new ObaRegionsTask(this, this, true);
         task.execute();
     }
 }

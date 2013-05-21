@@ -20,13 +20,18 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
@@ -125,7 +130,7 @@ class StopMapController implements MapModeController,
             LoaderManager.LoaderCallbacks<StopsResponse>,
             Loader.OnLoadCompleteListener<StopsResponse>,
             MapWatcher.Listener {
-    //private static final String TAG = "StopMapController";
+    private static final String TAG = "StopMapController";
     private static final int STOPS_LOADER = 5678;
 
     private final Callback mFragment;
@@ -287,6 +292,14 @@ class StopMapController implements MapModeController,
         @Override
         public StopsResponse loadInBackground() {
             StopsRequest req = mRequest;
+            if(Application.get().getCurrentRegion() == null &&
+                    TextUtils.isEmpty(RegionUtils.getCustomApiUrl(mFragment.getActivity()))){
+                //We don't have region info or manually entered API to know what server to contact
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops from server without " +
+                		"OBA REST API endpoint, aborting..."); }
+                return new StopsResponse(req, null);                
+            }
+            //Make OBA REST API call to the server and return result
             ObaStopsForLocationResponse response =
                     new ObaStopsForLocationRequest.Builder(getContext(), req.getCenter())
                                 .setSpan(req.getLatSpan(), req.getLonSpan())

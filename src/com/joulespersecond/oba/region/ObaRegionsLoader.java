@@ -16,23 +16,13 @@
 package com.joulespersecond.oba.region;
 
 import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaRegionElement;
-import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
-import com.joulespersecond.oba.provider.ObaContract.Regions;
-import com.joulespersecond.oba.request.ObaRegionsRequest;
-import com.joulespersecond.oba.request.ObaRegionsResponse;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     private static final String TAG = "ObaRegionsLoader";

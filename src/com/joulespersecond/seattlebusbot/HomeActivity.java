@@ -365,6 +365,9 @@ public class HomeActivity extends BaseMapActivity {
         //was retrieved from the server, so we periodically refresh the regions data
         if(Application.get().getCurrentRegion() != null){
             //We already have region info, so return
+            
+            //TODO - do we want to do a check on startup if the user is still within the same region
+            //as previously detected? (e.g., in other words, did the user roam into another OBA region?)
             return;
         }
         

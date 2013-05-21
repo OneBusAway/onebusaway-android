@@ -21,6 +21,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -38,6 +39,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -354,13 +356,18 @@ public class HomeActivity extends BaseMapActivity {
      * If not, then it uses the ObaRegionsTask to fetch it from the server
      */
     private void checkRegionStatus(){
-        //TODO - Below IF statement should also check the delta between current time and last data 
-        //retrieved from the server, so we periodically refresh the regions data
+        //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API
+        if (!TextUtils.isEmpty(RegionUtils.getCustomApiUrl(this))) {
+            return;
+        }        
+        
+        //TODO - Below IF statement should also check the delta between current time and last time data 
+        //was retrieved from the server, so we periodically refresh the regions data
         if(Application.get().getCurrentRegion() != null){
-            //We already have region info, so return            
+            //We already have region info, so return
             return;
         }
-            
+        
         //Current region is null, which means that Application tried to load it from
         //the local database and failed.  This occurs either on first app execution after install,
         //or if the user has cleared the data for the app via the Android platform Application Manager

@@ -28,8 +28,11 @@ import com.joulespersecond.seattlebusbot.R;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.text.DecimalFormat;
@@ -247,6 +250,18 @@ public class RegionUtils {
                 c.close();
             }
         }
+    }    
+     
+    /**
+     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
+     * 
+     * @param context
+     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
+     */
+    public static String getCustomApiUrl(Context context){
+          SharedPreferences preferences =
+                PreferenceManager.getDefaultSharedPreferences(context);
+        return preferences.getString("preferences_oba_api_servername", null);        
     }
 
     private static HashMap<Long, ArrayList<ObaRegionElement.Bounds>> getBoundsFromProvider(Context context) {

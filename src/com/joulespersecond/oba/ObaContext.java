@@ -16,12 +16,11 @@
 package com.joulespersecond.oba;
 
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -83,13 +82,12 @@ public class ObaContext {
 
     public void setBaseUrl(Context context, Uri.Builder builder) {
         // If there is a custom preference, then use that.
-        SharedPreferences preferences =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        String serverName = preferences.getString("preferences_oba_api_servername", null);
+        String serverName = RegionUtils.getCustomApiUrl(context);
+        
         if (!TextUtils.isEmpty(serverName)) {
             builder.encodedAuthority(serverName);
             builder.scheme("http");
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }                       
         } else if (mRegion != null) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
             Uri base = Uri.parse(mRegion.getObaBaseUrl());
@@ -101,9 +99,7 @@ public class ObaContext {
             //and place it before the REST API method path, which has already been set at this point
             //TODO - is there a better way to do this?
             String tempPath = builder.build().getPath();
-            builder.encodedPath(base.getPath() + tempPath);           
-            
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Built region API URL '" + builder.build().toString() + "'."); }
+            builder.encodedPath(base.getPath() + tempPath);
         } else {
             String fallBack = "api.onebusaway.org";
             Log.e(TAG, "Accessing default fallback '" + fallBack + "' ...this is wrong!!");

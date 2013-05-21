@@ -46,6 +46,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
@@ -346,9 +347,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
         //Before we trigger the out of range warning, make sure we have region info
+        //or have a API URL that was custom set by the user in via Preferences
         //Otherwise, its premature since we don't know the device's relationship to
-        //available OBA regions
-        if (mWarnOutOfRange && Application.get().getCurrentRegion() != null) {
+        //available OBA regions or the manually set API region
+        String serverName = RegionUtils.getCustomApiUrl(this);        
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             showDialog(OUTOFRANGE_DIALOG);
         }
     }

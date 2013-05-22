@@ -72,14 +72,38 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
         }
 
         results = RegionUtils.getRegionsFromServer(mContext);
-        if (results == null) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null."); }
-            return null;
-        }
-
-        if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+        if (results == null || results.isEmpty()) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null or empty."); }
+            
+            if(mForceReload){
+                //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
+                results = RegionUtils.getRegionsFromProvider(mContext);
+                if (results != null) {
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
+                    return results;
+                }else{
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
+                }
+            }
+            
+            //If we reach this point, the call to the Regions REST API failed and no results were
+            //available locally from a prior server request.        
+            //Fetch regions from local resource file as last resort (otherwise user can't use app)
+            results = RegionUtils.getRegionsFromResources(mContext);
+            
+            if(results == null){
+                //This is a complete failure to load region info from all sources, app will be useless
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }                
+                return results;
+            }            
+            
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from local resource file."); }
+        }else{
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+        }       
         
-        RegionUtils.saveToProvider(mContext,results);
+        //If the region info came from the server or local resource file, we need to save it to the local provider
+        RegionUtils.saveToProvider(mContext, results);
         return results;
     }
 }

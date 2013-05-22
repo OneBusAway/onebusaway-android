@@ -350,7 +350,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         //or have a API URL that was custom set by the user in via Preferences
         //Otherwise, its premature since we don't know the device's relationship to
         //available OBA regions or the manually set API region
-        String serverName = RegionUtils.getCustomApiUrl(this);        
+        String serverName = Application.getCustomApiUrl();        
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             showDialog(OUTOFRANGE_DIALOG);
         }

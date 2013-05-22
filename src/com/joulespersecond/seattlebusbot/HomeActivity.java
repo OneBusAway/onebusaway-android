@@ -357,7 +357,7 @@ public class HomeActivity extends BaseMapActivity {
      */
     private void checkRegionStatus(){
         //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API
-        if (!TextUtils.isEmpty(RegionUtils.getCustomApiUrl(this))) {
+        if (!TextUtils.isEmpty(Application.getCustomApiUrl())) {
             return;
         }        
         

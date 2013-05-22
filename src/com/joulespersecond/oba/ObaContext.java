@@ -17,6 +17,7 @@ package com.joulespersecond.oba;
 
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.Context;
@@ -82,7 +83,7 @@ public class ObaContext {
 
     public void setBaseUrl(Context context, Uri.Builder builder) {
         // If there is a custom preference, then use that.
-        String serverName = RegionUtils.getCustomApiUrl(context);
+        String serverName = Application.getCustomApiUrl();
         
         if (!TextUtils.isEmpty(serverName)) {
             builder.encodedAuthority(serverName);

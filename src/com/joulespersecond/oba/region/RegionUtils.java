@@ -22,7 +22,9 @@ import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 import com.joulespersecond.oba.request.ObaRegionsRequest;
 import com.joulespersecond.oba.request.ObaRegionsResponse;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.R;
 
 import android.content.ContentResolver;
@@ -253,19 +255,7 @@ public class RegionUtils {
             }
         }
     }    
-     
-    /**
-     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
-     * 
-     * @param context
-     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
-     */
-    public static String getCustomApiUrl(Context context){
-          SharedPreferences preferences =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        return preferences.getString("preferences_oba_api_servername", null);        
-    }
-
+    
     private static HashMap<Long, ArrayList<ObaRegionElement.Bounds>> getBoundsFromProvider(Context context) {
         // Prefetch the bounds to limit the number of DB calls.
         Cursor c = null;

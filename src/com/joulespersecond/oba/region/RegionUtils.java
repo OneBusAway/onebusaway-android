@@ -35,6 +35,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 
 public class RegionUtils {
 
+    public static final String ANDROID_RESOURCE_SCHEME = "android.resource://";
     private static final String TAG = "ObaContext";
     
     /**
@@ -335,7 +337,7 @@ public class RegionUtils {
      * @return list of regions retrieved from the regions.json file in app resources
      */
     public static ArrayList<ObaRegion> getRegionsFromResources(Context context){
-        Uri uri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.regions);        
+        Uri uri = Uri.parse(ANDROID_RESOURCE_SCHEME + context.getPackageName() + File.separator + R.raw.regions);        
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, uri).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }

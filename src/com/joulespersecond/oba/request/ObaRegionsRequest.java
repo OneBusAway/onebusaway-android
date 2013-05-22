@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.request;
 
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.R;
 
@@ -76,29 +77,30 @@ public final class ObaRegionsRequest extends RequestBase implements
     }
 
     @Override
-    public ObaRegionsResponse call() {
-        ObaRegionsResponse response = null;
-        
-        //If the URI is valid http URL, then use the superclass, otherwise its an Android resource file
-        try{
-            new URL(mUri.toString());
-            //URI is valid HTTP address, so call superclass
-            return call(ObaRegionsResponse.class);
-        }catch(MalformedURLException e){
-            //Use Android resource file
-            InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions);                        
-            ObaApi.SerializationHandler handler = ObaApi.getSerializer(ObaRegionsResponse.class);                           
-            InputStreamReader reader = new InputStreamReader(is);
-            response = handler.deserialize(reader, ObaRegionsResponse.class);
-            if (response == null) {
-                response = handler.createFromError(ObaRegionsResponse.class, ObaApi.OBA_INTERNAL_ERROR, "Json error");
-            }
-        }        
-        return response;
+    public ObaRegionsResponse call() {                
+        //If the URI is for an Android resource then get from resource, otherwise get from Region REST API                
+        if(mUri.toString().startsWith(RegionUtils.ANDROID_RESOURCE_SCHEME)){
+            return getRegionFromResource();
+        }else{
+            return call(ObaRegionsResponse.class); 
+        }
     }
 
     @Override
     public String toString() {
         return "ObaRegionsRequest [mUri=" + mUri + "]";
+    }
+    
+    private ObaRegionsResponse getRegionFromResource(){
+        ObaRegionsResponse response = null;
+        
+        InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions);                        
+        ObaApi.SerializationHandler handler = ObaApi.getSerializer(ObaRegionsResponse.class);
+        response = handler.deserialize(new InputStreamReader(is), ObaRegionsResponse.class);
+        if (response == null) {
+            response = handler.createFromError(ObaRegionsResponse.class, ObaApi.OBA_INTERNAL_ERROR, "Json error");
+        }
+        
+        return response;
     }
 }

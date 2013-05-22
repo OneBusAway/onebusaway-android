@@ -6,13 +6,17 @@ import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 import com.joulespersecond.seattlebusbot.map.MapModeController;
+
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,10 +140,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             //Set region application-wide
             Application.get().setCurrentRegion(closestRegion);
             if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
-            if(mMapController != null){
-                //Map may not have triggered call to OBA REST API, so we force one here
-                mMapController.setMyLocation();
-            }
+            mapControllerCallback();
         }else{
             //We couldn't find any usable regions based on RegionUtil.isRegionUsable() rules, 
             //so ask the user to pick the region                      
@@ -171,21 +172,35 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 for (ObaRegion region : result) {                    
                     if (region.getName().equals(items[item])) {
                         //Set the region application-wide
-                        Application.get().setCurrentRegion(region);                        
+                        Application.get().setCurrentRegion(region);                                                
                         if (BuildConfig.DEBUG) { Log.d(TAG, "User chose region '" + items[item] + "'."); }
-                        if(mMapController != null){
-                          //Map may not have triggered call to OBA REST API, so we force one here
-                          mMapController.setMyLocation();
-                        }
+                        mapControllerCallback();
                         break;
                     }
-                }
-                // TODO - clear custom API url pref here?
+                }                
             }
         });
         
         AlertDialog alert = builder.create();
         alert.show();
     }
-
+    
+    private void mapControllerCallback(){
+        //Do we need this callback?  I think it depends on how fast location is acquired.  If
+        //we get location fast, then it seems that OBA REST API is called twice
+        
+        //If we execute on same thread immediately after setting Region, HomeActivity may try to call
+        //OBA REST API before the new region info is set in Application.  So, pause briefly.
+        final Handler mPauseForCallbackHandler = new Handler();
+        final Runnable mPauseForCallback = new Runnable() {
+            public void run() {         
+                if(mMapController != null){
+                    //Map may not have triggered call to OBA REST API, so we force one here
+                    mMapController.setMyLocation();
+                }
+            }
+        };        
+        mPauseForCallbackHandler.postDelayed(mPauseForCallback,
+                100);
+    }
 }

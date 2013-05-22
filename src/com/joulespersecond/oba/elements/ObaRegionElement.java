@@ -73,9 +73,9 @@ public class ObaRegionElement implements ObaRegion {
     private final Bounds[] bounds;
     private final String language;
     private final String contactEmail;
-    private final boolean supportsObaDiscovery;
-    private final boolean supportsObaRealtime;
-    private final boolean supportsSiriRealtime;
+    private final boolean supportsObaDiscoveryApis;
+    private final boolean supportsObaRealtimeApis;
+    private final boolean supportsSiriRealtimeApis;
 
     ObaRegionElement() {
         id = 0;
@@ -86,9 +86,9 @@ public class ObaRegionElement implements ObaRegion {
         bounds = Bounds.EMPTY_ARRAY;
         language = "";
         contactEmail = "";
-        supportsObaDiscovery = false;
-        supportsObaRealtime = false;
-        supportsSiriRealtime = false;
+        supportsObaDiscoveryApis = false;
+        supportsObaRealtimeApis = false;
+        supportsSiriRealtimeApis = false;
     }
 
     public ObaRegionElement(long id,
@@ -99,9 +99,9 @@ public class ObaRegionElement implements ObaRegion {
             Bounds[] bounds,
             String lang,
             String contactEmail,
-            boolean supportsObaDiscovery,
-            boolean supportsObaRealtime,
-            boolean supportsSiriRealtime) {
+            boolean supportsObaDiscoveryApis,
+            boolean supportsObaRealtimeApis,
+            boolean supportsSiriRealtimeApis) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -110,9 +110,9 @@ public class ObaRegionElement implements ObaRegion {
         this.bounds = bounds;
         this.language = lang;
         this.contactEmail = contactEmail;
-        this.supportsObaDiscovery = supportsObaDiscovery;
-        this.supportsObaRealtime = supportsObaRealtime;
-        this.supportsSiriRealtime = supportsSiriRealtime;
+        this.supportsObaDiscoveryApis = supportsObaDiscoveryApis;
+        this.supportsObaRealtimeApis = supportsObaRealtimeApis;
+        this.supportsSiriRealtimeApis = supportsSiriRealtimeApis;
     }
 
     @Override
@@ -156,17 +156,17 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
-    public boolean getSupportsObaDiscovery() {
-        return supportsObaDiscovery;
+    public boolean getSupportsObaDiscoveryApis() {
+        return supportsObaDiscoveryApis;
     }
 
     @Override
-    public boolean getSupportsObaRealtime() {
-        return supportsObaRealtime;
+    public boolean getSupportsObaRealtimeApis() {
+        return supportsObaRealtimeApis;
     }
 
     @Override
-    public boolean getSupportsSiriRealtime() {
-        return supportsSiriRealtime;
+    public boolean getSupportsSiriRealtimeApis() {
+        return supportsSiriRealtimeApis;
     }
 }

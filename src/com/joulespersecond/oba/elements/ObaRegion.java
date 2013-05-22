@@ -74,15 +74,15 @@ public interface ObaRegion {
     /**
      * @return true if this server supports OBA discovery APIs, false otherwise.
      */
-    public boolean getSupportsObaDiscovery();
+    public boolean getSupportsObaDiscoveryApis();
 
     /**
      * @return true if this server supports OBA real-time APIs, false otherwise.
      */
-    public boolean getSupportsObaRealtime();
+    public boolean getSupportsObaRealtimeApis();
 
     /**
      * @return true if this server supports SIRI real-time APIs, false otherwise.
      */
-    public boolean getSupportsSiriRealtime();
+    public boolean getSupportsSiriRealtimeApis();
 }

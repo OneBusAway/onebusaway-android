@@ -181,16 +181,15 @@ public class RegionUtils {
         if (!region.getActive()) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is not active."); }
             return false;
+        }        
+        if (!region.getSupportsObaDiscoveryApis()) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Discovery APIs."); }
+            return false;
         }
-        //TODO - For some reason all regions are returning false for the below checks??
-//        if (!region.getSupportsObaDiscovery()) {
-//            if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Discovery APIs."); }
-//            return false;
-//        }
-//        if (!region.getSupportsObaRealtime()) {
-//            if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs."); }
-//            return false;
-//        }
+        if (!region.getSupportsObaRealtimeApis()) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs."); }
+            return false;
+        }
         
         return true;
     }
@@ -374,9 +373,9 @@ public class RegionUtils {
         values.put(Regions.SIRI_BASE_URL, siriUrl != null ? siriUrl : "");
         values.put(Regions.LANGUAGE, region.getLanguage());
         values.put(Regions.CONTACT_EMAIL, region.getContactEmail());
-        values.put(Regions.SUPPORTS_OBA_DISCOVERY, region.getSupportsObaDiscovery() ? 1 : 0);
-        values.put(Regions.SUPPORTS_OBA_REALTIME, region.getSupportsObaRealtime() ? 1 : 0);
-        values.put(Regions.SUPPORTS_SIRI_REALTIME, region.getSupportsSiriRealtime() ? 1 : 0);
+        values.put(Regions.SUPPORTS_OBA_DISCOVERY, region.getSupportsObaDiscoveryApis() ? 1 : 0);
+        values.put(Regions.SUPPORTS_OBA_REALTIME, region.getSupportsObaRealtimeApis() ? 1 : 0);
+        values.put(Regions.SUPPORTS_SIRI_REALTIME, region.getSupportsSiriRealtimeApis() ? 1 : 0);
         return values;
     }
 

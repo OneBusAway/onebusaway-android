@@ -28,6 +28,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -37,9 +38,11 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 
 public class RegionsFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ArrayList<ObaRegion>> {
+    private static final String TAG = "RegionsFragment";
     private static final String RELOAD = ".reload";
 
     private ArrayAdapter<ObaRegion> mAdapter;
@@ -105,6 +108,32 @@ public class RegionsFragment extends ListFragment
         // Create our generic adapter
         mAdapter = new Adapter(getActivity());
         setListAdapter(mAdapter);
+        
+        //Remove any regions that aren't usable before setting the adapter.
+        //Loop using an Iterator, since per Oracle Iterator.remove() is the only safe way 
+        //to remove an item from a Collection (including ArrayList) during iteration:
+        //http://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html
+        try{
+            Iterator<ObaRegion> iter = results.iterator();
+            while(iter.hasNext()){
+                ObaRegion r = iter.next();
+                if(!RegionUtils.isRegionUsable(r)){                
+                    iter.remove();
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Removed region '" + r.getName() +"' from adapter."); }
+                }
+            }   
+        }catch(UnsupportedOperationException e){
+            if (BuildConfig.DEBUG) { Log.w(TAG, "Problem removing region from list using iterator: " + e); }
+            //The platform apparently didn't like the "efficient" way to do this, so we'll just 
+            //loop through a copy and remove what we don't want from the original
+            ArrayList<ObaRegion> copy = new ArrayList<ObaRegion>(results);
+            for(ObaRegion r : copy){
+                if(!RegionUtils.isRegionUsable(r)){                
+                    results.remove(r);
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Removed region '" + r.getName() +"' from adapter."); }
+                }
+            }
+        }
         mAdapter.setData(results);
         if (mLocation != null) {
             mAdapter.sort(mClosest);

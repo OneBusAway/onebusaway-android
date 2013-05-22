@@ -87,13 +87,25 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         if (results == null || results.isEmpty()) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null or empty."); }
             
+            if(mForceReload){
+                //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
+                results = RegionUtils.getRegionsFromProvider(mContext);
+                if (results != null) {
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
+                    return results;
+                }else{
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
+                }
+            }
+            
             //If we reach this point, the call to the Regions REST API failed and no results were
             //available locally from a prior server request.        
             //Fetch regions from local resource file as last resort (otherwise user can't use app)
             results = RegionUtils.getRegionsFromResources(mContext);
             
-            if(results == null){                
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }
+            if(results == null){
+                //This is a complete failure to load region info from all sources, app will be useless
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }                
                 return results;
             }            
             
@@ -102,12 +114,18 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
         }       
         
+        //If the region info came from the server or local resource file, we need to save it to the local provider
         RegionUtils.saveToProvider(mContext, results);
         return results;
     }
     
      @Override
     protected void onPostExecute(ArrayList<ObaRegion> results) {
+         if(results == null){
+             //This is a catastrophic failure to load region info from all sources
+             return;
+         }
+         
         //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
         //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
         Location myLocation = UIHelp.getLocation2(mContext);

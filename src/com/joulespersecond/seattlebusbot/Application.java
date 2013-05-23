@@ -33,6 +33,7 @@ public class Application extends android.app.Application {
 
     @Override
     public void onCreate() {
+        super.onCreate();
         //ExceptionHandler.register(this, BUG_REPORT_URL);
         initOba();
     }

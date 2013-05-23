@@ -72,8 +72,8 @@ public class RegionUtils {
         
         if (BuildConfig.DEBUG) { Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude()); }
         
-        for(ObaRegion region : regions){
-            if(!isRegionUsable(region)){
+        for (ObaRegion region : regions) {
+            if (!isRegionUsable(region)) {
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Excluding '" + region.getName() + "' from 'closest region' consideration"); }
                 continue;
             }
@@ -81,7 +81,7 @@ public class RegionUtils {
             distToRegion = getDistanceAway(region, loc.getLatitude(), loc.getLongitude());
             miles = distToRegion * 0.000621371;      
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away"); }
-            if(distToRegion < minDist){
+            if (distToRegion < minDist) {
                 closestRegion = region;
                 minDist = distToRegion;
             }
@@ -342,7 +342,7 @@ public class RegionUtils {
         cr.delete(RegionBounds.CONTENT_URI, null, null);
 
         for (ObaRegion region: regions) {          
-            if(!isRegionUsable(region)){
+            if (!isRegionUsable(region)) {
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Skipping insert of '" + region.getName() + "' to provider..."); }
                 continue;
             }

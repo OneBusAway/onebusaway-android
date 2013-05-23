@@ -88,7 +88,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         if (results == null || results.isEmpty()) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null or empty."); }
             
-            if(mForceReload){
+            if (mForceReload) {
                 //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
                 results = RegionUtils.getRegionsFromProvider(mContext);
                 if (results != null) {
@@ -104,7 +104,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             //Fetch regions from local resource file as last resort (otherwise user can't use app)
             results = RegionUtils.getRegionsFromResources(mContext);
             
-            if(results == null){
+            if (results == null) {
                 //This is a complete failure to load region info from all sources, app will be useless
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }                
                 return results;
@@ -122,7 +122,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     
      @Override
     protected void onPostExecute(ArrayList<ObaRegion> results) {
-         if(results == null){
+         if (results == null) {
              //This is a catastrophic failure to load region info from all sources
              return;
          }
@@ -133,7 +133,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 
         ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation); 
        
-        if(Application.get().getCurrentRegion() == null && closestRegion != null){
+        if (Application.get().getCurrentRegion() == null && closestRegion != null) {
             //Set region application-wide
             Application.get().setCurrentRegion(closestRegion);
             if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }

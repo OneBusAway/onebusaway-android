@@ -113,22 +113,22 @@ public class RegionsFragment extends ListFragment
         //Loop using an Iterator, since per Oracle Iterator.remove() is the only safe way 
         //to remove an item from a Collection (including ArrayList) during iteration:
         //http://docs.oracle.com/javase/tutorial/collections/interfaces/collection.html
-        try{
+        try {
             Iterator<ObaRegion> iter = results.iterator();
-            while(iter.hasNext()){
+            while (iter.hasNext()) {
                 ObaRegion r = iter.next();
-                if(!RegionUtils.isRegionUsable(r)){                
+                if (!RegionUtils.isRegionUsable(r)) {                
                     iter.remove();
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Removed region '" + r.getName() +"' from adapter."); }
                 }
             }   
-        }catch(UnsupportedOperationException e){
+        } catch(UnsupportedOperationException e) {
             if (BuildConfig.DEBUG) { Log.w(TAG, "Problem removing region from list using iterator: " + e); }
             //The platform apparently didn't like the "efficient" way to do this, so we'll just 
             //loop through a copy and remove what we don't want from the original
             ArrayList<ObaRegion> copy = new ArrayList<ObaRegion>(results);
-            for(ObaRegion r : copy){
-                if(!RegionUtils.isRegionUsable(r)){                
+            for (ObaRegion r : copy) {
+                if (!RegionUtils.isRegionUsable(r)) {                
                     results.remove(r);
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Removed region '" + r.getName() +"' from adapter."); }
                 }

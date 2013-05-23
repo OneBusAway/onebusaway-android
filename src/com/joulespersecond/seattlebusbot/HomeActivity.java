@@ -363,7 +363,7 @@ public class HomeActivity extends BaseMapActivity {
         
         //TODO - Below IF statement should also check the delta between current time and last time data 
         //was retrieved from the server, so we periodically refresh the regions data
-        if(Application.get().getCurrentRegion() != null){
+        if (Application.get().getCurrentRegion() != null) {
             //We already have region info, so return
             
             //TODO - do we want to do a check on startup if the user is still within the same region

@@ -292,8 +292,8 @@ class StopMapController implements MapModeController,
         @Override
         public StopsResponse loadInBackground() {
             StopsRequest req = mRequest;
-            if(Application.get().getCurrentRegion() == null &&
-                    TextUtils.isEmpty(Application.getCustomApiUrl())){
+            if (Application.get().getCurrentRegion() == null &&
+                    TextUtils.isEmpty(Application.getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops from server without " +
                 		"OBA REST API endpoint, aborting..."); }

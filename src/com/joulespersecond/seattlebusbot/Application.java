@@ -38,7 +38,7 @@ public class Application extends android.app.Application {
     // Region preference (long id)
     private static final String REGION_PREF = "preference_region";
     
-    private static final String CUSTOM_API_URL_PREF = "preferences_oba_api_servername";
+    private static final String CUSTOM_API_URL_PREF = "preferences_oba_api_url";
     
     private static final String TAG = "Application";
 

@@ -91,16 +91,10 @@ public class ObaContext {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }                       
         } else if (mRegion != null) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
-            Uri base = Uri.parse(mRegion.getObaBaseUrl());
-            
+            Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getEncodedPath());            
             builder.scheme(base.getScheme());
             builder.authority(base.getAuthority());
-            
-            //There is no "prependPath()" function for builder, so we need to get the region URL path
-            //and place it before the REST API method path, which has already been set at this point
-            //TODO - is there a better way to do this?
-            String tempPath = builder.build().getPath();
-            builder.encodedPath(base.getPath() + tempPath);
+            builder.encodedPath(base.getEncodedPath());
         } else {
             String fallBack = "api.onebusaway.org";
             Log.e(TAG, "Accessing default fallback '" + fallBack + "' ...this is wrong!!");

@@ -352,8 +352,8 @@ public class HomeActivity extends BaseMapActivity {
     }
     
     /**
-     * Checks to see if a region has already been selected and exists in the local database
-     * If not, then it uses the ObaRegionsTask to fetch it from the server
+     * Checks region status, which can potentially including forcing a reload of region
+     * info from the server.  Also includes auto-selection of closest region.
      */
     private void checkRegionStatus(){
         //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API

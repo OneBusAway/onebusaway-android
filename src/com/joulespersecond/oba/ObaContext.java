@@ -82,7 +82,7 @@ public class ObaContext {
 
     public void setBaseUrl(Context context, Uri.Builder builder) {
         // If there is a custom preference, then use that.
-        String serverName = Application.getCustomApiUrl();
+        String serverName = Application.get().getCustomApiUrl();
         
         if (!TextUtils.isEmpty(serverName)) {
             builder.encodedAuthority(serverName);

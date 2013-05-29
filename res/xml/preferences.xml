@@ -16,7 +16,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="preferences_root">
     <PreferenceCategory android:title="@string/preferences_category_location">
         <Preference
-            android:key="preference_region"
+            android:key="@string/preference_key_region"
             android:title="@string/preferences_region_title"
             android:summary="@string/preferences_region_summary"/>
     </PreferenceCategory>
@@ -32,6 +32,6 @@
         <EditTextPreference
             android:title="@string/preferences_oba_api_servername_title"
             android:summary="@string/preferences_oba_api_servername_summary"            
-            android:key="preferences_oba_api_url" />
+            android:key="@string/preference_key_oba_api_url" />
     </PreferenceCategory>
 </PreferenceScreen>

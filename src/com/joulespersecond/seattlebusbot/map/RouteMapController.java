@@ -268,7 +268,7 @@ class RouteMapController implements MapModeController,
         @Override
         public ObaStopsForRouteResponse loadInBackground() {
             if (Application.get().getCurrentRegion() == null &&
-                    TextUtils.isEmpty(Application.getCustomApiUrl())) {
+                    TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops for route from server " +
                 		"without OBA REST API endpoint, aborting..."); }

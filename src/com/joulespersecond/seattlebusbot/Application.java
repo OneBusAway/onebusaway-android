@@ -35,12 +35,7 @@ import java.util.UUID;
 public class Application extends android.app.Application {
     public static final String APP_UID = "app_uid";
 
-    // Region preference (long id)
-    private static final String REGION_PREF = "preference_region";
-    private static final String LAST_REGION_UPDATE_PREF = "preference_last_region_update";
-        
-    private static final String CUSTOM_API_URL_PREF = "preferences_oba_api_url";
-    
+    // Region preference (long id)    
     private static final String TAG = "Application";
 
     //private static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
@@ -87,7 +82,7 @@ public class Application extends android.app.Application {
     public void setCurrentRegion(ObaRegion region) {
         // First set it in preferences, then set it in OBA.
         ObaApi.getDefaultContext().setRegion(region);
-        PreferenceHelp.saveLong(mPrefs, REGION_PREF, region.getId());
+        PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
         //We're using a region, so clear the custom API URL preference
         setCustomApiUrl(null);
     }
@@ -99,7 +94,7 @@ public class Application extends android.app.Application {
      */
     public long getLastRegionUpdateDate(){        
         SharedPreferences preferences = getPrefs();
-        return preferences.getLong(LAST_REGION_UPDATE_PREF, 0); 
+        return preferences.getLong(getString(R.string.preference_key_last_region_update), 0); 
     }
     
     /**
@@ -107,7 +102,7 @@ public class Application extends android.app.Application {
      * @param date the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public void setLastRegionUpdateDate(long date){        
-        PreferenceHelp.saveLong(mPrefs, LAST_REGION_UPDATE_PREF, date);
+        PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_last_region_update), date);
     }
     
     /**
@@ -116,17 +111,17 @@ public class Application extends android.app.Application {
      * @param context
      * @return the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
      */
-    public static String getCustomApiUrl(){
+    public String getCustomApiUrl(){
         SharedPreferences preferences = getPrefs();
-        return preferences.getString(CUSTOM_API_URL_PREF, null);        
+        return preferences.getString(getString(R.string.preference_key_oba_api_url), null);        
     }
     
     /**
      * Sets the custom URL used to reach a OBA REST API server that is not available via the Regions REST API
      * @param url the custom URL 
      */
-    private static void setCustomApiUrl(String url){
-        PreferenceHelp.saveString(CUSTOM_API_URL_PREF, url);
+    private void setCustomApiUrl(String url){
+        PreferenceHelp.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 
     private static final String HEXES = "0123456789abcdef";
@@ -174,7 +169,7 @@ public class Application extends android.app.Application {
 
     private void initObaRegion() {
         // Read the region preference, look it up in the DB, then set the region.
-        long id = mPrefs.getLong(REGION_PREF, -1);
+        long id = mPrefs.getLong(getString(R.string.preference_key_region), -1);
         if (id < 0) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Regions preference ID is less than 0, returning..."); }
             return;

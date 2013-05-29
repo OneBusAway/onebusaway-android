@@ -52,6 +52,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     private MapModeController.Callback mMapController;
     
     private final boolean mForceReload;
+    private final boolean mShowProgressDialog;
     
     /** 
      * @param context
@@ -61,26 +62,31 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         this.mContext = context;
         this.mMapController = mapController;
         mForceReload = false;
+        mShowProgressDialog = true;
     }
     
     /** 
      * @param context
      * @param mapController a callback will be made to MapModeController.Callback.setMyLocation() after the task finishes
      * @param force true if the task should be forced to update region info from the server, false if it can return local info
+     * @param showProgressDialog true if a progress dialog should be shown to the user during the task, false if it should not
      */
-    public ObaRegionsTask(Context context, MapModeController.Callback mapController, boolean force) {
+    public ObaRegionsTask(Context context, MapModeController.Callback mapController, boolean force, boolean showProgressDialog) {
         this.mContext = context;
         this.mMapController = mapController;
         mForceReload = force;
+        mShowProgressDialog = showProgressDialog;
     }
     
     @Override
-    protected void onPreExecute() {        
-        mProgressDialog = ProgressDialog.show(mContext, "",
-                mContext.getString(R.string.region_detecting_server), true);
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.show();
+    protected void onPreExecute() {
+        if(mShowProgressDialog){
+            mProgressDialog = ProgressDialog.show(mContext, "",
+                    mContext.getString(R.string.region_detecting_server), true);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.show();
+        }
         
         super.onPreExecute();
     }
@@ -149,18 +155,25 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 
         ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation); 
        
-        if (Application.get().getCurrentRegion() == null && closestRegion != null) {
-            //Set region application-wide
-            Application.get().setCurrentRegion(closestRegion);
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
-            mapControllerCallback();
-        }else{
-            //We couldn't find any usable regions based on RegionUtil.isRegionUsable() rules, 
-            //so ask the user to pick the region                      
-            haveUserChooseRegion(results);
+        if (Application.get().getCurrentRegion() == null) {
+            if(closestRegion != null){
+                //No region has been set, so set region application-wide to closest region
+                Application.get().setCurrentRegion(closestRegion);
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
+                mapControllerCallback();
+            }else{
+                //No region has been set, and we couldn't find a usable regions based on RegionUtil.isRegionUsable()
+                //or we couldn't find a closest a region, so ask the user to pick the region                      
+                haveUserChooseRegion(results);
+            }
+        }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)){
+                //User is closer to a different region than the current region, so change to the closest region
+                Application.get().setCurrentRegion(closestRegion);
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
+                mapControllerCallback();
         }
         
-        if (mProgressDialog.isShowing()) {
+        if (mShowProgressDialog && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
         }
          

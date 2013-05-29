@@ -359,24 +359,21 @@ public class HomeActivity extends BaseMapActivity {
         //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API
         if (!TextUtils.isEmpty(Application.getCustomApiUrl())) {
             return;
-        }        
+        }   
+        
+        boolean forceReload = true;
+        boolean showProgressDialog = true;
         
         //TODO - Below IF statement should also check the delta between current time and last time data 
         //was retrieved from the server, so we periodically refresh the regions data
         if (Application.get().getCurrentRegion() != null) {
-            //We already have region info, so return
-            
-            //TODO - do we want to do a check on startup if the user is still within the same region
-            //as previously detected? (e.g., in other words, did the user roam into another OBA region?)
-            return;
+            //No need to force an update to the server, so just check current region based on known regions quietly in the background
+            forceReload = false;   
+            showProgressDialog = false;
         }
         
-        //Current region is null, which means that Application tried to load it from
-        //the local database and failed.  This occurs either on first app execution after install,
-        //or if the user has cleared the data for the app via the Android platform Application Manager
-        //So, we need to fetch region info from the Regions REST API via an AsyncTask
-        if (BuildConfig.DEBUG) { Log.d(TAG, "No region info locally, so we need to fetch it from the Regions REST API."); }                  
-        ObaRegionsTask task = new ObaRegionsTask(this, this, true);
+        //Check region status, possibly forcing a reload from server and checking current region                          
+        ObaRegionsTask task = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
         task.execute();
     }
 }

@@ -169,4 +169,42 @@ public class ObaRegionElement implements ObaRegion {
     public boolean getSupportsSiriRealtimeApis() {
         return supportsSiriRealtimeApis;
     }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == 0) ? 0 : Long.valueOf(id).hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (!(obj instanceof ObaRegionElement))
+            return false;
+        ObaRegionElement other = (ObaRegionElement)obj;
+        if (id == 0) {
+            if (other.getId() != 0)
+                return false;
+        }
+        else if (id != other.getId())
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ObaRegionElement [id=" + id + ", regionName=" + regionName
+                + ", active=" + active + ", obaBaseUrl=" + obaBaseUrl
+                + ", siriBaseUrl=" + siriBaseUrl + ", language=" + language
+                + ", contactEmail=" + contactEmail 
+                + ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis
+                + ", supportsObaRealtimeApis=" + supportsObaRealtimeApis
+                + ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis
+                + "]";
+    }    
 }

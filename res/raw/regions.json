@@ -21,7 +21,7 @@
         "supportsObaDiscoveryApis": true, 
         "contactEmail": "onebusaway@usf.edu", 
         "active": true, 
-        "obaBaseUrl": "http://onebusaway.forest.usf.edu/api", 
+        "obaBaseUrl": "http://api.tampa.onebusaway.org/api/", 
         "id": 0, 
         "regionName": "Tampa"
       }, 
@@ -174,7 +174,7 @@
         "supportsObaDiscoveryApis": true, 
         "contactEmail": "onebusaway@ce.gatech.edu", 
         "active": true, 
-        "obaBaseUrl": "http://onebusaway.gatech.edu/api", 
+        "obaBaseUrl": "http://onebusaway.gatech.edu/api/", 
         "id": 3, 
         "regionName": "Atlanta"
       }

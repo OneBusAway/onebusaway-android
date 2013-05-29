@@ -327,9 +327,7 @@ public class RegionUtils {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
         builder.authority(context.getPackageName());
-        builder.path(Integer.toString(R.raw.regions));        
-        //Uri uri = Uri.parse(ANDROID_RESOURCE_SCHEME +  + File.separator + R.raw.regions);        
-        //ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, uri).call();
+        builder.path(Integer.toString(R.raw.regions));       
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, builder.build()).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }

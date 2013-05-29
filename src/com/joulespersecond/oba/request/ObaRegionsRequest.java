@@ -38,7 +38,7 @@ public final class ObaRegionsRequest extends RequestBase implements
     // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
-        private static Uri URI = Uri.parse("http://regions.onebusaway.org/test.json");
+        private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions.json");
 
         public Builder(Context context) {
             //super(context);

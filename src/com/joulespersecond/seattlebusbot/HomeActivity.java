@@ -39,8 +39,10 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -50,7 +52,9 @@ public class HomeActivity extends BaseMapActivity {
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
     
-    //private static final String TAG = "HomeActivity";
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;  //One week, in milliseconds
+    
+    private static final String TAG = "HomeActivity";
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -359,18 +363,22 @@ public class HomeActivity extends BaseMapActivity {
             return;
         }   
         
-        boolean forceReload = true;
+        boolean forceReload = false;
         boolean showProgressDialog = true;
         
-        //TODO - Below IF statement should also check the delta between current time and last time data 
-        //was retrieved from the server, so we periodically refresh the regions data
+        //See if enough time has passed since last region info update that we want to contact the server again
+        if (Application.get().getCurrentRegion() == null ||
+                new Date().getTime() - Application.get().getLastRegionUpdateDate() > REGION_UPDATE_THRESHOLD) {            
+            forceReload = true;
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Region info has expired (or does not exist), forcing a reload from the server..."); }
+        }
+        
         if (Application.get().getCurrentRegion() != null) {
-            //No need to force an update to the server, so just check current region based on known regions quietly in the background
-            forceReload = false;   
+            //We already have region info locally, so just check current region status quietly in the background             
             showProgressDialog = false;
         }
         
-        //Check region status, possibly forcing a reload from server and checking current region                          
+        //Check region status, possibly forcing a reload from server and checking proximity to current region                          
         ObaRegionsTask task = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
         task.execute();
     }

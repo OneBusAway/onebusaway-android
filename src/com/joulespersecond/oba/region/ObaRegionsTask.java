@@ -31,6 +31,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -141,6 +142,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from local resource file."); }
         }else{
             if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+            //Update local time for when the last region info was retrieved from the server
+            Application.get().setLastRegionUpdateDate(new Date().getTime());
         }       
         
         //If the region info came from the server or local resource file, we need to save it to the local provider

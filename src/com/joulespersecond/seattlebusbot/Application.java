@@ -37,7 +37,8 @@ public class Application extends android.app.Application {
 
     // Region preference (long id)
     private static final String REGION_PREF = "preference_region";
-    
+    private static final String LAST_REGION_UPDATE_PREF = "preference_last_region_update";
+        
     private static final String CUSTOM_API_URL_PREF = "preferences_oba_api_url";
     
     private static final String TAG = "Application";
@@ -89,6 +90,24 @@ public class Application extends android.app.Application {
         PreferenceHelp.saveLong(mPrefs, REGION_PREF, region.getId());
         //We're using a region, so clear the custom API URL preference
         setCustomApiUrl(null);
+    }
+    
+    /**
+     * Gets the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT
+     * Default value is 0 if the region info has never been updated.
+     * @return the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT.  Default value is 0 if the region info has never been updated.
+     */
+    public long getLastRegionUpdateDate(){        
+        SharedPreferences preferences = getPrefs();
+        return preferences.getLong(LAST_REGION_UPDATE_PREF, 0); 
+    }
+    
+    /**
+     * Sets the date at which the region information was last updated
+     * @param date the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT
+     */
+    public void setLastRegionUpdateDate(long date){        
+        PreferenceHelp.saveLong(mPrefs, LAST_REGION_UPDATE_PREF, date);
     }
     
     /**

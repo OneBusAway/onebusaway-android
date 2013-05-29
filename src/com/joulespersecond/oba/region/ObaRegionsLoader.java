@@ -17,6 +17,7 @@
 package com.joulespersecond.oba.region;
 
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.Context;
@@ -24,6 +25,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     private static final String TAG = "ObaRegionsLoader";
@@ -101,6 +103,8 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from local resource file."); }
         }else{
             if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+            //Update local time for when the last region info was retrieved from the server
+            Application.get().setLastRegionUpdateDate(new Date().getTime());
         }       
         
         //If the region info came from the server or local resource file, we need to save it to the local provider

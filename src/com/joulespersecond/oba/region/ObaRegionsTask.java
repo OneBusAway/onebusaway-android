@@ -21,7 +21,6 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
-import com.joulespersecond.seattlebusbot.map.MapModeController;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -43,37 +42,44 @@ import java.util.List;
  * @author barbeau
  *
  */
-public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion>> {
-
+public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion>> {    
+    public interface Callback {
+        /**
+         * Be aware that if mProgressDialog = true, the user will continue to see
+         * the indeterminate progress bar until the implementing method returns
+         */
+        public void onRegionUpdated();
+    }
+    
     private static final String TAG = "ObaRegionsTask";
     
     private Context mContext;
     private ProgressDialog mProgressDialog;
-    private MapModeController.Callback mMapController;
+    private ObaRegionsTask.Callback mCallback;
     
     private final boolean mForceReload;
     private final boolean mShowProgressDialog;
     
     /** 
      * @param context
-     * @param mapController a callback will be made to MapModeController.Callback.setMyLocation() after the task finishes
+     * @param callback a callback will be made via the interface after the task is complete and a new region has been selected
      */
-    public ObaRegionsTask(Context context, MapModeController.Callback mapController) {
+    public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback) {
         this.mContext = context;
-        this.mMapController = mapController;
+        this.mCallback = callback;
         mForceReload = false;
         mShowProgressDialog = true;
     }
     
     /** 
      * @param context
-     * @param mapController a callback will be made to MapModeController.Callback.setMyLocation() after the task finishes
+     * @param callback a callback will be made via interface after the task is complete and a new region has been selected
      * @param force true if the task should be forced to update region info from the server, false if it can return local info
      * @param showProgressDialog true if a progress dialog should be shown to the user during the task, false if it should not
      */
-    public ObaRegionsTask(Context context, MapModeController.Callback mapController, boolean force, boolean showProgressDialog) {
+    public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback, boolean force, boolean showProgressDialog) {
         this.mContext = context;
-        this.mMapController = mapController;
+        this.mCallback = callback;
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
     }
@@ -160,7 +166,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 //No region has been set, so set region application-wide to closest region
                 Application.get().setCurrentRegion(closestRegion);
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
-                mapControllerCallback();
+                doCallback();
             }else{
                 //No region has been set, and we couldn't find a usable regions based on RegionUtil.isRegionUsable()
                 //or we couldn't find a closest a region, so ask the user to pick the region                      
@@ -170,7 +176,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 //User is closer to a different region than the current region, so change to the closest region
                 Application.get().setCurrentRegion(closestRegion);
                 if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
-                mapControllerCallback();
+                doCallback();
         }
         
         if (mShowProgressDialog && mProgressDialog.isShowing()) {
@@ -200,7 +206,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                         //Set the region application-wide
                         Application.get().setCurrentRegion(region);                                                
                         if (BuildConfig.DEBUG) { Log.d(TAG, "User chose region '" + items[item] + "'."); }
-                        mapControllerCallback();
+                        doCallback();
                         break;
                     }
                 }                
@@ -211,19 +217,15 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         alert.show();
     }
     
-    private void mapControllerCallback(){
-        //Do we need this callback?  I think it depends on how fast location is acquired.  If
-        //we get location fast, then it seems that OBA REST API is called twice
+    private void doCallback(){
         
-        //If we execute on same thread immediately after setting Region, HomeActivity may try to call
+        //If we execute on same thread immediately after setting Region, map UI may try to call
         //OBA REST API before the new region info is set in Application.  So, pause briefly.
         final Handler mPauseForCallbackHandler = new Handler();
         final Runnable mPauseForCallback = new Runnable() {
-            public void run() {         
-                if(mMapController != null){
-                    //Map may not have triggered call to OBA REST API, so we force one here
-                    mMapController.setMyLocation();
-                }
+            public void run() {
+                //Map may not have triggered call to OBA REST API, so we force one here
+                mCallback.onRegionUpdated();            
             }
         };        
         mPauseForCallbackHandler.postDelayed(mPauseForCallback,

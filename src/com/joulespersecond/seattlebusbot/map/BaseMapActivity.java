@@ -30,6 +30,7 @@ import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
@@ -73,7 +74,7 @@ import java.util.List;
  *
  */
 abstract public class BaseMapActivity extends SherlockMapActivity
-            implements MapModeController.Callback {
+            implements MapModeController.Callback, ObaRegionsTask.Callback {
     //private static final String TAG = "BaseMapActivity";
 
     private static final int API_KEY = BuildConfig.DEBUG ? R.string.api_key_debug : R.string.api_key_release;
@@ -354,6 +355,15 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             showDialog(OUTOFRANGE_DIALOG);
         }
+    }
+    
+    //
+    // Region Task Callback
+    //
+    @Override
+    public void onRegionUpdated(){
+        //Update map after a new region has been selected
+        setMyLocation();
     }
 
     //

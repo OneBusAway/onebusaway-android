@@ -21,7 +21,6 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -40,7 +39,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Iterator;
@@ -52,7 +50,7 @@ public class HomeActivity extends BaseMapActivity {
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
     
-    private static final String TAG = "HomeActivity";
+    //private static final String TAG = "HomeActivity";
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of

@@ -17,7 +17,6 @@
 package com.joulespersecond.oba.request;
 
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.R;
 

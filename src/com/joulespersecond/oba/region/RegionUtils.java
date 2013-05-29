@@ -34,7 +34,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
 
-import java.io.File;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;

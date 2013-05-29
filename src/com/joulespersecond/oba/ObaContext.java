@@ -16,7 +16,6 @@
 package com.joulespersecond.oba;
 
 import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 

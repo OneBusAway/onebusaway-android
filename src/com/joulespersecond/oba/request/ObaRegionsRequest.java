@@ -26,8 +26,6 @@ import android.net.Uri;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.Callable;
 
 public final class ObaRegionsRequest extends RequestBase implements

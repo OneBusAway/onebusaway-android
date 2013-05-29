@@ -24,7 +24,6 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.Application;
@@ -261,13 +260,9 @@ class RouteMapController implements MapModeController,
     //
     private static class RoutesLoader extends AsyncTaskLoader<ObaStopsForRouteResponse> {
         private final String mRouteId;
-        //private ObaStopsForRouteResponse mResponse;
-        private Context context;
-
         public RoutesLoader(Context context, String routeId) {
             super(context);
             mRouteId = routeId;
-            this.context = context;
         }
 
         @Override

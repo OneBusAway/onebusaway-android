@@ -20,7 +20,6 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;

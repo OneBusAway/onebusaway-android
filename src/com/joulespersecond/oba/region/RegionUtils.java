@@ -23,19 +23,15 @@ import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 import com.joulespersecond.oba.request.ObaRegionsRequest;
 import com.joulespersecond.oba.request.ObaRegionsResponse;
-import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.R;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.File;

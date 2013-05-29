@@ -42,8 +42,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class RegionUtils {
-
-    public static final String ANDROID_RESOURCE_SCHEME = "android.resource://";
+    
     private static final String TAG = "ObaContext";
     
     /**
@@ -326,8 +325,13 @@ public class RegionUtils {
      * @return list of regions retrieved from the regions.json file in app resources
      */
     public static ArrayList<ObaRegion> getRegionsFromResources(Context context){
-        Uri uri = Uri.parse(ANDROID_RESOURCE_SCHEME + context.getPackageName() + File.separator + R.raw.regions);        
-        ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, uri).call();
+        final Uri.Builder builder = new Uri.Builder();
+        builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
+        builder.authority(context.getPackageName());
+        builder.path(Integer.toString(R.raw.regions));        
+        //Uri uri = Uri.parse(ANDROID_RESOURCE_SCHEME +  + File.separator + R.raw.regions);        
+        //ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, uri).call();
+        ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, builder.build()).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }
 

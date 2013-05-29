@@ -21,6 +21,7 @@ import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.R;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 
@@ -38,7 +39,7 @@ public final class ObaRegionsRequest extends RequestBase implements
     // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
-        private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions.json");
+        private static Uri URI = Uri.parse("http://regions.onebusaway.org/test.json");
 
         public Builder(Context context) {
             //super(context);
@@ -78,7 +79,7 @@ public final class ObaRegionsRequest extends RequestBase implements
     @Override
     public ObaRegionsResponse call() {                
         //If the URI is for an Android resource then get from resource, otherwise get from Region REST API                
-        if(mUri.toString().startsWith(RegionUtils.ANDROID_RESOURCE_SCHEME)){
+        if(mUri.getScheme().equals(ContentResolver.SCHEME_ANDROID_RESOURCE)){
             return getRegionFromResource();
         }else{
             return call(ObaRegionsResponse.class); 

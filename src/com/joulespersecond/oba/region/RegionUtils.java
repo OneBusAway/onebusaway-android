@@ -58,9 +58,12 @@ public class RegionUtils {
      *
      * @param regions list of regions
      * @param loc location 
-     * @return the closest region to the given location from the list of regions
+     * @return the closest region to the given location from the list of regions, or null if a closest region couldn't be found
      */
     public static ObaRegion getClosestRegion(ArrayList<ObaRegion> regions, Location loc){
+        if(loc == null){
+            return null;
+        }
         float minDist = Float.MAX_VALUE;        
         ObaRegion closestRegion = null;        
         float distToRegion;

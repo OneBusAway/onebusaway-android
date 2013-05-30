@@ -71,10 +71,14 @@ public class RegionsFragment extends ListFragment
         ObaRegion region = mAdapter.getItem(position);        
         Application.get().setCurrentRegion(region);
         
-        PreferenceHelp.saveBoolean(getString(R.string.preference_key_auto_select_region), false);        
-        Toast.makeText(this.getActivity(),
-                R.string.region_disabled_auto_selection, Toast.LENGTH_LONG)
-                .show();        
+        //If we're currently auto-selecting regions, disable this so it doesn't override the manual setting
+        if(Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)){
+            PreferenceHelp.saveBoolean(getString(R.string.preference_key_auto_select_region), false);        
+            Toast.makeText(this.getActivity(),
+                    R.string.region_disabled_auto_selection, Toast.LENGTH_LONG)
+                    .show();
+        }        
+                
         if (BuildConfig.DEBUG) { Log.d(TAG, "User manually set region to '" + region.getName() +"'."); }
         
         NavHelp.goHome(getActivity());

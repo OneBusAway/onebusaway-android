@@ -23,6 +23,7 @@ import com.joulespersecond.oba.provider.ObaContract.RegionBounds;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 import com.joulespersecond.oba.request.ObaRegionsRequest;
 import com.joulespersecond.oba.request.ObaRegionsResponse;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 
@@ -38,6 +39,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 
 public class RegionUtils {
@@ -192,7 +194,66 @@ public class RegionUtils {
         return true;
     }
     
-    public static ArrayList<ObaRegion> getRegionsFromProvider(Context context) {
+    /**
+     * Gets regions from either the server, local provider, or if both fails the regions.json file packaged
+     * with the APK.  Includes fail-over logic to prefer sources in above order, with server being the first preference.
+     * @param context
+     * @param forceReload true if a reload from the server should be forced, false if it should not
+     * @return a list of regions from either the server, the local provider, or the packaged resource file
+     */
+    public synchronized static ArrayList<ObaRegion> getRegions(Context context, boolean forceReload){
+        ArrayList<ObaRegion> results;
+        if (!forceReload) {
+            //
+            // Check the DB
+            //
+            results = RegionUtils.getRegionsFromProvider(context);
+            if (results != null) {
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
+                return results;
+            }
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
+        }
+
+        results = RegionUtils.getRegionsFromServer(context);
+        if (results == null || results.isEmpty()) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null or empty."); }
+            
+            if (forceReload) {
+                //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
+                results = RegionUtils.getRegionsFromProvider(context);
+                if (results != null) {
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
+                    return results;
+                }else{
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
+                }
+            }
+            
+            //If we reach this point, the call to the Regions REST API failed and no results were
+            //available locally from a prior server request.        
+            //Fetch regions from local resource file as last resort (otherwise user can't use app)
+            results = RegionUtils.getRegionsFromResources(context);
+            
+            if (results == null) {
+                //This is a complete failure to load region info from all sources, app will be useless
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }                
+                return results;
+            }            
+            
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from local resource file."); }
+        }else{
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
+            //Update local time for when the last region info was retrieved from the server
+            Application.get().setLastRegionUpdateDate(new Date().getTime());
+        }       
+        
+        //If the region info came from the server or local resource file, we need to save it to the local provider
+        RegionUtils.saveToProvider(context, results);
+        return results;
+    }
+    
+    private static ArrayList<ObaRegion> getRegionsFromProvider(Context context) {
         // Prefetch the bounds to limit the number of DB calls.
         HashMap<Long, ArrayList<ObaRegionElement.Bounds>> allBounds = getBoundsFromProvider(context);
 
@@ -303,7 +364,7 @@ public class RegionUtils {
         }
     }
 
-    public synchronized static ArrayList<ObaRegion> getRegionsFromServer(Context context) {
+    private synchronized static ArrayList<ObaRegion> getRegionsFromServer(Context context) {
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }
@@ -323,7 +384,7 @@ public class RegionUtils {
      * @param context
      * @return list of regions retrieved from the regions.json file in app resources
      */
-    public static ArrayList<ObaRegion> getRegionsFromResources(Context context){
+    private static ArrayList<ObaRegion> getRegionsFromResources(Context context){
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
         builder.authority(context.getPackageName());
@@ -335,7 +396,7 @@ public class RegionUtils {
     //
     // Saving
     //
-    public synchronized static void saveToProvider(Context context, ArrayList<ObaRegion> regions) {
+    private synchronized static void saveToProvider(Context context, ArrayList<ObaRegion> regions) {
         // Delete all the existing regions
         ContentResolver cr = context.getContentResolver();
         cr.delete(Regions.CONTENT_URI, null, null);

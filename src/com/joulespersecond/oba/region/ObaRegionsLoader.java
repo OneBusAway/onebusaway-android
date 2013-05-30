@@ -17,18 +17,14 @@
 package com.joulespersecond.oba.region;
 
 import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
 
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
-    private static final String TAG = "ObaRegionsLoader";
+    //private static final String TAG = "ObaRegionsLoader";
 
     private Context mContext;
     private ArrayList<ObaRegion> mResults;
@@ -61,54 +57,6 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
 
     @Override
     public ArrayList<ObaRegion> loadInBackground() {
-        ArrayList<ObaRegion> results;
-        if (!mForceReload) {
-            //
-            // Check the DB
-            //
-            results = RegionUtils.getRegionsFromProvider(mContext);
-            if (results != null) {
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
-                return results;
-            }
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
-        }
-
-        results = RegionUtils.getRegionsFromServer(mContext);
-        if (results == null || results.isEmpty()) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from server was null or empty."); }
-            
-            if (mForceReload) {
-                //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
-                results = RegionUtils.getRegionsFromProvider(mContext);
-                if (results != null) {
-                    if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
-                    return results;
-                }else{
-                    if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
-                }
-            }
-            
-            //If we reach this point, the call to the Regions REST API failed and no results were
-            //available locally from a prior server request.        
-            //Fetch regions from local resource file as last resort (otherwise user can't use app)
-            results = RegionUtils.getRegionsFromResources(mContext);
-            
-            if (results == null) {
-                //This is a complete failure to load region info from all sources, app will be useless
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from local resource file was null."); }                
-                return results;
-            }            
-            
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from local resource file."); }
-        }else{
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions list from server."); }
-            //Update local time for when the last region info was retrieved from the server
-            Application.get().setLastRegionUpdateDate(new Date().getTime());
-        }       
-        
-        //If the region info came from the server or local resource file, we need to save it to the local provider
-        RegionUtils.saveToProvider(mContext, results);
-        return results;
+        return RegionUtils.getRegions(mContext, mForceReload);
     }
 }

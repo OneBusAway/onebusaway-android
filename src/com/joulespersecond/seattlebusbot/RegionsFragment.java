@@ -33,6 +33,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -67,8 +68,15 @@ public class RegionsFragment extends ListFragment
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Get the region and set this as the default region.
-        ObaRegion region = mAdapter.getItem(position);
-        Application.get().setCurrentRegion(region);        
+        ObaRegion region = mAdapter.getItem(position);        
+        Application.get().setCurrentRegion(region);
+        
+        PreferenceHelp.saveBoolean(getString(R.string.preference_key_auto_select_region), false);        
+        Toast.makeText(this.getActivity(),
+                R.string.region_disabled_auto_selection, Toast.LENGTH_LONG)
+                .show();        
+        if (BuildConfig.DEBUG) { Log.d(TAG, "User manually set region to '" + region.getName() +"'."); }
+        
         NavHelp.goHome(getActivity());
     }
 

@@ -67,4 +67,20 @@ public class PreferenceHelp {
     public static void saveLong(String key, long value) {
         saveLong(Application.getPrefs(), key, value);
     }
+    
+    @TargetApi(9)
+    public static void saveBoolean(SharedPreferences prefs, String key, boolean value) {
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putBoolean(key, value);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        } else {
+            edit.commit();
+        }
+    }
+
+    public static void saveBoolean(String key, boolean value) {
+        saveBoolean(Application.getPrefs(), key, value);
+    }
 }

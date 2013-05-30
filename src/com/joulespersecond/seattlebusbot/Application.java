@@ -75,11 +75,11 @@ public class Application extends android.app.Application {
     //
     // Helper to get/set the regions
     //
-    public ObaRegion getCurrentRegion() {
+    public synchronized ObaRegion getCurrentRegion() {
         return ObaApi.getDefaultContext().getRegion();
     }
 
-    public void setCurrentRegion(ObaRegion region) {
+    public synchronized void setCurrentRegion(ObaRegion region) {
         // First set it in preferences, then set it in OBA.
         ObaApi.getDefaultContext().setRegion(region);
         PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());

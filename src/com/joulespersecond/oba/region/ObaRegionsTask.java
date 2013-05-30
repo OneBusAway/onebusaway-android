@@ -114,7 +114,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 
         SharedPreferences settings = Application.getPrefs();
         
-        if(settings.getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)){                     
+        if (settings.getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)) {                     
             //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
             //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
             //Or, use new Location Services from Google Play Services SDK
@@ -123,7 +123,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation); 
            
             if (Application.get().getCurrentRegion() == null) {
-                if(closestRegion != null){
+                if (closestRegion != null) {
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
@@ -133,14 +133,14 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     //or we couldn't find a closest a region, so ask the user to pick the region                      
                     haveUserChooseRegion(results);
                 }
-            }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)){
+            }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)) {
                     //User is closer to a different region than the current region, so change to the closest region
                     Application.get().setCurrentRegion(closestRegion);
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
                     doCallback();
             }        
         }else{            
-            if(Application.get().getCurrentRegion() == null){
+            if (Application.get().getCurrentRegion() == null) {
                 //We don't have a region selected, and the user chose not to auto-select one, so make them pick one
                 haveUserChooseRegion(results);
             }
@@ -153,7 +153,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         super.onPostExecute(results);
     }
      
-    private void haveUserChooseRegion(final ArrayList<ObaRegion> result){
+    private void haveUserChooseRegion(final ArrayList<ObaRegion> result) {
         // Create dialog for user to choose
         List<String> serverNames = new ArrayList<String>();
         for (ObaRegion region : result) {
@@ -184,8 +184,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         alert.show();
     }
     
-    private void doCallback(){
-        
+    private void doCallback() {        
         //If we execute on same thread immediately after setting Region, map UI may try to call
         //OBA REST API before the new region info is set in Application.  So, pause briefly.
         final Handler mPauseForCallbackHandler = new Handler();

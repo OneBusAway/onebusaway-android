@@ -56,8 +56,8 @@ public class RegionUtils {
      * @param loc location 
      * @return the closest region to the given location from the list of regions, or null if a closest region couldn't be found
      */
-    public static ObaRegion getClosestRegion(ArrayList<ObaRegion> regions, Location loc){
-        if(loc == null){
+    public static ObaRegion getClosestRegion(ArrayList<ObaRegion> regions, Location loc) {
+        if (loc == null) {
             return null;
         }
         float minDist = Float.MAX_VALUE;        
@@ -177,7 +177,7 @@ public class RegionUtils {
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
      */
-    public static boolean isRegionUsable(ObaRegion region){
+    public static boolean isRegionUsable(ObaRegion region) {
         if (!region.getActive()) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is not active."); }
             return false;
@@ -201,7 +201,7 @@ public class RegionUtils {
      * @param forceReload true if a reload from the server should be forced, false if it should not
      * @return a list of regions from either the server, the local provider, or the packaged resource file
      */
-    public synchronized static ArrayList<ObaRegion> getRegions(Context context, boolean forceReload){
+    public synchronized static ArrayList<ObaRegion> getRegions(Context context, boolean forceReload) {
         ArrayList<ObaRegion> results;
         if (!forceReload) {
             //
@@ -384,7 +384,7 @@ public class RegionUtils {
      * @param context
      * @return list of regions retrieved from the regions.json file in app resources
      */
-    private static ArrayList<ObaRegion> getRegionsFromResources(Context context){
+    private static ArrayList<ObaRegion> getRegionsFromResources(Context context) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
         builder.authority(context.getPackageName());

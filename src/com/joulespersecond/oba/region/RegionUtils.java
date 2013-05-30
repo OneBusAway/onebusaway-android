@@ -44,7 +44,7 @@ import java.util.HashMap;
 
 public class RegionUtils {
     
-    private static final String TAG = "ObaContext";
+    private static final String TAG = "RegionUtils";
     
     /**
      * Get the closest region from a list of regions and a given location

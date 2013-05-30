@@ -366,9 +366,14 @@ public class HomeActivity extends BaseMapActivity {
         boolean forceReload = false;
         boolean showProgressDialog = true;
         
-        //See if enough time has passed since last region info update that we want to contact the server again
+        SharedPreferences settings = Application.getPrefs();
+                
+        //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh, 
+        //force contacting the server again
         if (Application.get().getCurrentRegion() == null ||
-                new Date().getTime() - Application.get().getLastRegionUpdateDate() > REGION_UPDATE_THRESHOLD) {            
+                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true) &&
+                new Date().getTime() - Application.get().getLastRegionUpdateDate() > REGION_UPDATE_THRESHOLD)
+                        ) {            
             forceReload = true;
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region info has expired (or does not exist), forcing a reload from the server..."); }
         }

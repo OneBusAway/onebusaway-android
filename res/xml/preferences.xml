@@ -19,6 +19,16 @@
             android:key="@string/preference_key_region"
             android:title="@string/preferences_region_title"
             android:summary="@string/preferences_region_summary"/>
+        <CheckBoxPreference    		
+    		android:key="@string/preference_key_auto_select_region"
+    		android:title="@string/preferences_auto_select_region_title" 
+    		android:summary="@string/preferences_auto_select_region_summary"
+    		android:defaultValue="true"/>
+        <CheckBoxPreference    		
+    		android:key="@string/preference_key_auto_refresh_regions"
+    		android:title="@string/preferences_auto_refresh_regions_title" 
+    		android:summary="@string/preferences_auto_refresh_regions_summary"
+    		android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
         <com.joulespersecond.seattlebusbot.backup.SavePreference

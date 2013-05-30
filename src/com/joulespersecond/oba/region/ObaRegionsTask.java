@@ -26,6 +26,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -153,33 +154,43 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     
      @Override
     protected void onPostExecute(ArrayList<ObaRegion> results) {
-         if (results == null) {
-             //This is a catastrophic failure to load region info from all sources
-             return;
-         }
-         
-        //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
-        //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
-        Location myLocation = UIHelp.getLocation2(mContext);
+        if (results == null) {
+            //This is a catastrophic failure to load region info from all sources
+            return;
+        }
                 
-        ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation); 
-       
-        if (Application.get().getCurrentRegion() == null) {
-            if(closestRegion != null){
-                //No region has been set, so set region application-wide to closest region
-                Application.get().setCurrentRegion(closestRegion);
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
-                doCallback();
-            }else{
-                //No region has been set, and we couldn't find a usable regions based on RegionUtil.isRegionUsable()
-                //or we couldn't find a closest a region, so ask the user to pick the region                      
+        SharedPreferences settings = Application.getPrefs();
+        
+        if(settings.getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)){                     
+            //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
+            //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
+            //Or, use new Location Services from Google Play Services SDK
+            Location myLocation = UIHelp.getLocation2(mContext);
+                    
+            ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation); 
+           
+            if (Application.get().getCurrentRegion() == null) {
+                if(closestRegion != null){
+                    //No region has been set, so set region application-wide to closest region
+                    Application.get().setCurrentRegion(closestRegion);
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
+                    doCallback();
+                }else{
+                    //No region has been set, and we couldn't find a usable regions based on RegionUtil.isRegionUsable()
+                    //or we couldn't find a closest a region, so ask the user to pick the region                      
+                    haveUserChooseRegion(results);
+                }
+            }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)){
+                    //User is closer to a different region than the current region, so change to the closest region
+                    Application.get().setCurrentRegion(closestRegion);
+                    if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
+                    doCallback();
+            }        
+        }else{            
+            if(Application.get().getCurrentRegion() == null){
+                //We don't have a region selected, and the user chose not to auto-select one, so make them pick one
                 haveUserChooseRegion(results);
             }
-        }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)){
-                //User is closer to a different region than the current region, so change to the closest region
-                Application.get().setCurrentRegion(closestRegion);
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
-                doCallback();
         }
         
         if (mShowProgressDialog && mProgressDialog.isShowing()) {

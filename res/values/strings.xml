@@ -230,6 +230,11 @@
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_region_title">Your location</string>
     <string name="preferences_region_summary">The transit region used by the app.</string>
+    <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
+    <string name="preferences_auto_refresh_regions_summary">Automatically updates region info weekly</string>
+    <string name="preferences_auto_select_region_title">Auto-select region</string>
+    <string name="preferences_auto_select_region_summary">Automatically selects the closest region on startup</string>
+    
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
     <string name="preferences_save_title">Save to SD card</string>

@@ -216,7 +216,7 @@
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
-    <string name ="region_detecting_server">Detecting region. Please wait...</string>
+    <string name ="region_detecting_server">Detecting region. Please wait&#8230;</string>
     <string name ="region_choose_region">Choose region</string>
     <string name ="region_disabled_auto_selection">Disabled region auto-selection.  Re-enable in Preferences if desired.</string>
 

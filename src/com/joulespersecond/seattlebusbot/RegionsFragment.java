@@ -72,7 +72,7 @@ public class RegionsFragment extends ListFragment
         Application.get().setCurrentRegion(region);
         
         //If we're currently auto-selecting regions, disable this so it doesn't override the manual setting
-        if(Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)){
+        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)) {
             PreferenceHelp.saveBoolean(getString(R.string.preference_key_auto_select_region), false);        
             Toast.makeText(this.getActivity(),
                     R.string.region_disabled_auto_selection, Toast.LENGTH_LONG)

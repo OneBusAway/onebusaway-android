@@ -20,11 +20,14 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.UIHelp;
 
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -232,7 +235,20 @@ class StopMapController implements MapModeController,
             mFragment.notifyOutOfRange();
             return;
         }
-
+        
+        //Workaround for https://github.com/OneBusAway/onebusaway-application-modules/issues/59
+        //where outOfRange response element is false even if the location was out of range
+        //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
+        //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
+        //versions below the version number in which this is fixed.
+        Location myLocation = UIHelp.getLocation2(mFragment.getActivity());
+        if (myLocation != null  && !RegionUtils.isLocationWithinRegion(myLocation, Application.get().getCurrentRegion()) 
+                && Arrays.asList(response.getStops()).isEmpty()) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Device location is outside region range, notifying..."); }
+            mFragment.notifyOutOfRange();
+            return;
+        }
+        
         List<ObaStop> stops = Arrays.asList(response.getStops());
         mFragment.showStops(stops, response);
     }

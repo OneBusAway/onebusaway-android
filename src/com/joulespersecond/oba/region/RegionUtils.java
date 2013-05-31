@@ -169,6 +169,56 @@ public class RegionUtils {
     }
     
     /**
+     * Determines if the provided location is within the provided region span
+     * 
+     * Note: This does not handle cases when the region span crosses the
+     * International Date Line properly
+     * 
+     * @param location that will be compared to the provided regionSpan
+     * @param regionSpan span information for the region
+     *              regionSpan[0] == latSpan of region
+     *              regionSpan[1] == lonSpan of region
+     *              regionSpan[2] == lat center of region
+     *              regionSpan[3] == lon center of region 
+     * @return true if the location is within the region span, false if it is not
+     * @throws IllegalArgumentException if location is not valid or regionSpan does not provide the correct input
+     */
+    public static boolean isLocationWithinRegion(Location location, double[] regionSpan) throws IllegalArgumentException {
+        if (regionSpan == null || regionSpan.length < 4) {
+            throw new IllegalArgumentException("regionSpan is null or has length < 4");
+        }
+        
+        if (location == null || location.getLongitude() > 180.0 || location.getLongitude() < -180.0 ||
+                location.getLatitude() > 90 || location.getLatitude() < -90) {
+            throw new IllegalArgumentException("Location must be a valid location");
+        }
+        
+        double minLat = regionSpan[2] - (regionSpan[0]/2);
+        double minLon = regionSpan[3] - (regionSpan[1]/2);
+        double maxLat = regionSpan[2] + (regionSpan[0]/2);
+        double maxLon = regionSpan[3] + (regionSpan[1]/2);
+        
+        return minLat <= location.getLatitude() && location.getLatitude() <= maxLat && minLon <= location.getLongitude() && location.getLongitude() <= maxLon;
+    }
+    
+    /**
+     * Determines if the provided location is within the provided region
+     * 
+     * Note: This does not handle cases when the region span crosses the
+     * International Date Line properly
+     * 
+     * @param location that will be compared to the provided region
+     * @param region provided region
+     * @return true if the location is within the region, false if it is not
+     * @throws IllegalArgumentException if location is not valid
+     */
+    public static boolean isLocationWithinRegion(Location location, ObaRegion region) throws IllegalArgumentException {
+        double[] regionSpan = new double[4];
+        getRegionSpan(region, regionSpan);        
+        return isLocationWithinRegion(location, regionSpan);
+    }
+    
+    /**
      * Checks if the given region is usable by the app, based on what this app supports
      * - Is the region active?
      * - Does the region support the OBA Discovery APIs?

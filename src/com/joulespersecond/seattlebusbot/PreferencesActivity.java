@@ -30,7 +30,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         UIHelp.setupActionBar(getSupportActionBar());
         addPreferencesFromResource(R.xml.preferences);
 
-        Preference pref = findPreference("preference_region");
+        Preference pref = findPreference(getString(R.string.preference_key_region));
         pref.setOnPreferenceClickListener(this);
     }
 

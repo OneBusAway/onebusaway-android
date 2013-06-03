@@ -80,11 +80,17 @@ public class Application extends android.app.Application {
     }
 
     public synchronized void setCurrentRegion(ObaRegion region) {
-        // First set it in preferences, then set it in OBA.
-        ObaApi.getDefaultContext().setRegion(region);
-        PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
-        //We're using a region, so clear the custom API URL preference
-        setCustomApiUrl(null);
+        if(region != null){
+            // First set it in preferences, then set it in OBA.
+            ObaApi.getDefaultContext().setRegion(region);
+            PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
+            //We're using a region, so clear the custom API URL preference
+            setCustomApiUrl(null);
+        }else{
+            //User must have just entered a custom API URL via Preferences, so clear the region info
+            ObaApi.getDefaultContext().setRegion(null);
+            PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
+        }
     }
     
     /**

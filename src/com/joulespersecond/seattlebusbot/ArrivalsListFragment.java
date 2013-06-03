@@ -643,7 +643,9 @@ public class ArrivalsListFragment extends ListFragment
         values.put(ObaContract.Stops.DIRECTION, stop.getDirection());
         values.put(ObaContract.Stops.LATITUDE, stop.getLatitude());
         values.put(ObaContract.Stops.LONGITUDE, stop.getLongitude());
-        values.put(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
+        if(Application.get().getCurrentRegion() != null){
+            values.put(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
+        }
         ObaContract.Stops.insertOrUpdate(getActivity(), stop.getId(), values, true);
     }
 

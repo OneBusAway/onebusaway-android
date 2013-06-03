@@ -44,10 +44,12 @@ final class QueryUtils {
         Uri limit = uri.buildUpon().appendQueryParameter("limit", "20").build();
         
         String regionWhere = "";
-        if(projection.equals(QueryUtils.StopList.Columns.PROJECTION)){
-            regionWhere = " AND " + StopList.getRegionWhere();
-        }else if(projection.equals(QueryUtils.RouteList.Columns.PROJECTION)){
-            regionWhere = " AND " + RouteList.getRegionWhere();
+        if(Application.get().getCurrentRegion() != null){
+            if(projection.equals(QueryUtils.StopList.Columns.PROJECTION) ){
+                regionWhere = " AND " + StopList.getRegionWhere();
+            }else if(projection.equals(QueryUtils.RouteList.Columns.PROJECTION)){
+                regionWhere = " AND " + RouteList.getRegionWhere();
+            }
         }
        
         return new CursorLoader(context,
@@ -107,9 +109,9 @@ final class QueryUtils {
             return c.getString(Columns.COL_URL);
         }
         
-        static protected String getRegionWhere(){
-            return "(" + ObaContract.Routes.REGION_ID + "=" + Application.get().getCurrentRegion().getId() +
-                    " OR " + ObaContract.Routes.REGION_ID + " IS NULL)";
+        static protected String getRegionWhere(){            
+            return Application.get().getCurrentRegion() == null ? "" :
+                QueryUtils.getRegionWhere(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
         }
     }
 
@@ -178,9 +180,13 @@ final class QueryUtils {
         }
         
         static protected String getRegionWhere(){
-            return "(" + ObaContract.Stops.REGION_ID + "=" + Application.get().getCurrentRegion().getId() +
-                    " OR " + ObaContract.Stops.REGION_ID + " IS NULL)";
+            return Application.get().getCurrentRegion() == null ? "" :
+                QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
         }
     }
-
+    
+    public static String getRegionWhere(String regionFieldName, long regionId){
+        return "(" + regionFieldName + "=" + regionId +
+            " OR " + regionFieldName + " IS NULL)";
+    }
 }

@@ -126,10 +126,14 @@ public class RegionUtils {
      *              results[1] == lonSpan of region
      *              results[2] == lat center of region
      *              results[3] == lon center of region
+     * @throws IllegalArgumentException if the length of the results input array is less than 4, or if region is null
      */
-    public static void getRegionSpan(ObaRegion region, double[] results) {
+    public static void getRegionSpan(ObaRegion region, double[] results) throws IllegalArgumentException {
         if (results.length < 4) {
             throw new IllegalArgumentException("Results array is < 4");
+        }
+        if (region == null) {
+            throw new IllegalArgumentException("Region is null");
         }
         double latMin = 90;
         double latMax = -90;

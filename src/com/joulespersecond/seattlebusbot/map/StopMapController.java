@@ -242,7 +242,7 @@ class StopMapController implements MapModeController,
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
         Location myLocation = UIHelp.getLocation2(mFragment.getActivity());
-        if (myLocation != null  && !RegionUtils.isLocationWithinRegion(myLocation, Application.get().getCurrentRegion()) 
+        if (myLocation != null  && Application.get().getCurrentRegion() != null && !RegionUtils.isLocationWithinRegion(myLocation, Application.get().getCurrentRegion()) 
                 && Arrays.asList(response.getStops()).isEmpty()) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Device location is outside region range, notifying..."); }
             mFragment.notifyOutOfRange();

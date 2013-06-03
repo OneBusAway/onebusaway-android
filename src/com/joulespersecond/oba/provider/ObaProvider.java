@@ -155,6 +155,13 @@ public class ObaProvider extends ContentProvider {
                                 " WHERE " + ObaContract.RegionBounds.REGION_ID + " = old." + ObaContract.Regions._ID +
                                   ";" +
                         "END");
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.Stops.PATH +
+                            " ADD COLUMN " + ObaContract.Stops.REGION_ID + " INTEGER");
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.Routes.PATH +
+                            " ADD COLUMN " + ObaContract.Routes.REGION_ID + " INTEGER");
+                
             }
         }
 

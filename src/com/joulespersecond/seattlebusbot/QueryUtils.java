@@ -42,13 +42,21 @@ final class QueryUtils {
         // "Recently" means seven days in the past
         final long last = System.currentTimeMillis() - 7*DateUtils.DAY_IN_MILLIS;
         Uri limit = uri.buildUpon().appendQueryParameter("limit", "20").build();
+        
+        String regionWhere = "";
+        if(projection.equals(QueryUtils.StopList.Columns.PROJECTION)){
+            regionWhere = " AND " + StopList.getRegionWhere();
+        }else if(projection.equals(QueryUtils.RouteList.Columns.PROJECTION)){
+            regionWhere = " AND " + RouteList.getRegionWhere();
+        }
+       
         return new CursorLoader(context,
                 limit,
                 projection,
-                "(" +
+                "((" +
                     accessTime + " IS NOT NULL AND " +
                     accessTime + " > " + last +
-                ") OR (" + useCount + " > 0)",
+                ") OR (" + useCount + " > 0))" + regionWhere,
                 null,
                 accessTime + " desc, " +
                 useCount + " desc");
@@ -97,6 +105,11 @@ final class QueryUtils {
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_URL);
+        }
+        
+        static protected String getRegionWhere(){
+            return "(" + ObaContract.Routes.REGION_ID + "=" + Application.get().getCurrentRegion().getId() +
+                    " OR " + ObaContract.Routes.REGION_ID + " IS NULL)";
         }
     }
 
@@ -162,6 +175,11 @@ final class QueryUtils {
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_ID);
+        }
+        
+        static protected String getRegionWhere(){
+            return "(" + ObaContract.Stops.REGION_ID + "=" + Application.get().getCurrentRegion().getId() +
+                    " OR " + ObaContract.Stops.REGION_ID + " IS NULL)";
         }
     }
 

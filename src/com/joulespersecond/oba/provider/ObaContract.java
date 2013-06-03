@@ -83,6 +83,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String LONGITUDE = "longitude";
+        
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
     }
 
     protected interface RoutesColumns {
@@ -109,6 +117,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String URL = "url";
+        
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
     }
 
     protected interface StopRouteKeyColumns {

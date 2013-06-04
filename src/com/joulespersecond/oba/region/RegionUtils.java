@@ -279,7 +279,7 @@ public class RegionUtils {
                 if (results != null) {
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Retrieved regions from database."); }
                     return results;
-                }else{
+                } else {
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Regions list retrieved from database was null."); }
                 }
             }

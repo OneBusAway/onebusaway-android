@@ -16,7 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
-
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -25,9 +25,13 @@ import android.util.Log;
 
 public class PreferencesActivity extends SherlockPreferenceActivity
             implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener {
+    private static final String TAG = "PreferencesActivity";
     
     Preference regionPref;
     Preference customApiUrlpref;
+    Preference autoSelectRegion;
+    
+    boolean autoSelectInitialValue;  //Save initial value so we can compare to current value in onDestroy()
     
     // Soo... we can use SherlockPreferenceActivity to display the
     // action bar, but we can't use a PreferenceFragment?
@@ -42,6 +46,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         
         customApiUrlpref = findPreference(getString(R.string.preference_key_oba_api_url));
         customApiUrlpref.setOnPreferenceChangeListener(this);
+                                
+        SharedPreferences settings = Application.getPrefs();        
+        autoSelectInitialValue = settings.getBoolean(getString(R.string.preference_key_auto_select_region), true);         
     }
 
     @Override
@@ -56,14 +63,31 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (preference.equals(customApiUrlpref) && newValue instanceof String) {
             String apiUrl = (String) newValue;
-            if (BuildConfig.DEBUG) { Log.d("PreferenceActivity", "User set a custom API URL"); }
-                        
+                                    
             if(!TextUtils.isEmpty(apiUrl)){
                 //User entered a custom API Url, so set the region info to null
                 Application.get().setCurrentRegion(null);
-                if (BuildConfig.DEBUG) { Log.d("PreferenceActivity", "Set region to null."); }
+                if (BuildConfig.DEBUG) { Log.d(TAG, "User entered new API URL, set region to null."); }
+            }else{
+                //User cleared the API URL preference value, so re-initialize regions
+                if (BuildConfig.DEBUG) { Log.d(TAG, "User entered blank API URL, re-initializing regions..."); }
+                NavHelp.goHome(this);
             }
         }  
         return true;
+    }
+    
+    @Override
+    protected void onDestroy() {
+        SharedPreferences settings = Application.getPrefs();        
+        boolean currentValue = settings.getBoolean(getString(R.string.preference_key_auto_select_region), true);
+        
+        //If the use has selected to auto-select region, and the previous state of the setting was false, 
+        //then run the auto-select by going to HomeActivity
+        if (currentValue && !autoSelectInitialValue) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "User re-enabled auto-select regions pref, auto-selecting via Home Activity..."); }
+            NavHelp.goHome(this);
+        }        
+        super.onDestroy();
     }
 }

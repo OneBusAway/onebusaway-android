@@ -126,9 +126,8 @@ public class RegionUtils {
      *              results[1] == lonSpan of region
      *              results[2] == lat center of region
      *              results[3] == lon center of region
-     * @throws IllegalArgumentException if the length of the results input array is less than 4, or if region is null
      */
-    public static void getRegionSpan(ObaRegion region, double[] results) throws IllegalArgumentException {
+    public static void getRegionSpan(ObaRegion region, double[] results) {
         if (results.length < 4) {
             throw new IllegalArgumentException("Results array is < 4");
         }
@@ -185,9 +184,8 @@ public class RegionUtils {
      *              regionSpan[2] == lat center of region
      *              regionSpan[3] == lon center of region 
      * @return true if the location is within the region span, false if it is not
-     * @throws IllegalArgumentException if location is not valid or regionSpan does not provide the correct input
      */
-    public static boolean isLocationWithinRegion(Location location, double[] regionSpan) throws IllegalArgumentException {
+    public static boolean isLocationWithinRegion(Location location, double[] regionSpan) {
         if (regionSpan == null || regionSpan.length < 4) {
             throw new IllegalArgumentException("regionSpan is null or has length < 4");
         }
@@ -214,9 +212,8 @@ public class RegionUtils {
      * @param location that will be compared to the provided region
      * @param region provided region
      * @return true if the location is within the region, false if it is not
-     * @throws IllegalArgumentException if location is not valid
      */
-    public static boolean isLocationWithinRegion(Location location, ObaRegion region) throws IllegalArgumentException {
+    public static boolean isLocationWithinRegion(Location location, ObaRegion region) {
         double[] regionSpan = new double[4];
         getRegionSpan(region, regionSpan);        
         return isLocationWithinRegion(location, regionSpan);

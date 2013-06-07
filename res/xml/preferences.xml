@@ -24,11 +24,15 @@
     		android:title="@string/preferences_auto_select_region_title" 
     		android:summary="@string/preferences_auto_select_region_summary"
     		android:defaultValue="true"/>
+        <!-- Per discussion in Pull Request #57, 
+        	 https://github.com/OneBusAway/onebusaway-android/pull/57#issuecomment-19115619
+        	 we are hiding this preference for now
         <CheckBoxPreference    		
     		android:key="@string/preference_key_auto_refresh_regions"
     		android:title="@string/preferences_auto_refresh_regions_title" 
     		android:summary="@string/preferences_auto_refresh_regions_summary"
     		android:defaultValue="true"/>
+    		 -->
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
         <com.joulespersecond.seattlebusbot.backup.SavePreference

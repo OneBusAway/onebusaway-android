@@ -1,0 +1,4 @@
+Region,OBA_Base_URL,SIRI_Base_URL,Bounds,Language,Contact,Contact_Email,Supports_OBA_Discovery_APIs?,Supports_OBA_Realtime_APIs?,Supports_SIRI_Realtime_APIs?
+Tampa,http://onebusaway.forest.usf.edu/onebusaway-api-webapp/,,27.976910500000002:82.445851:0.5424609999999994:0.576357999999999,en_US,Sean Barbeau,barbeau@cutr.usf.edu,TRUE,TRUE,FALSE
+Puget Sound,http://api.onebusaway.org/,,47.221315000000004:-122.4051325:0.3370399999999947:0.4404830000000004|47.5607395:-122.1462785:0.7432510000000008:0.720901000000012|47.556288:-122.4013255:0.09069399999999916:0.12679299999999216,en_US,Scott M. Rose,,TRUE,TRUE,FALSE
+MTA New York,,http://bustime.mta.info/api/,,en_US,Mike Frumin,,FALSE,FALSE,TRUE

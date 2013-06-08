@@ -19,6 +19,8 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
@@ -36,8 +38,11 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,6 +51,10 @@ public class HomeActivity extends BaseMapActivity {
 
     private static final int HELP_DIALOG = 1;
     private static final int WHATSNEW_DIALOG = 2;
+
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;  //One week, in milliseconds
+
+    private static final String TAG = "HomeActivity";
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -133,6 +142,8 @@ public class HomeActivity extends BaseMapActivity {
         UIHelp.setupActionBar(getSupportActionBar());
 
         autoShowWhatsNew();
+
+        checkRegionStatus();
     }
 
     @Override
@@ -172,7 +183,7 @@ public class HomeActivity extends BaseMapActivity {
         } else if (id == R.id.preferences) {
             Intent preferences = new Intent(
                     HomeActivity.this,
-                    EditPreferencesActivity.class);
+                    PreferencesActivity.class);
             startActivity(preferences);
             return true;
         }
@@ -203,9 +214,12 @@ public class HomeActivity extends BaseMapActivity {
                             UIHelp.goToUrl(HomeActivity.this, TWITTER_URL);
                             break;
                         case 1:
-                            showDialog(WHATSNEW_DIALOG);
+                            AgenciesActivity.start(HomeActivity.this);
                             break;
                         case 2:
+                            showDialog(WHATSNEW_DIALOG);
+                            break;
+                        case 3:
                             goToContactEmail(HomeActivity.this);
                             break;
                         }
@@ -233,7 +247,7 @@ public class HomeActivity extends BaseMapActivity {
 
     @SuppressWarnings("deprecation")
     private void autoShowWhatsNew() {
-        SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
+        SharedPreferences settings = Application.getPrefs();
 
         // Get the current app version.
         PackageManager pm = getPackageManager();
@@ -261,10 +275,7 @@ public class HomeActivity extends BaseMapActivity {
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).
             TripService.scheduleAll(this);
-
-            SharedPreferences.Editor edit = settings.edit();
-            edit.putInt(WHATS_NEW_VER, appInfo.versionCode);
-            edit.commit();
+            PreferenceHelp.saveInt(WHATS_NEW_VER, appInfo.versionCode);
         }
     }
 
@@ -310,6 +321,11 @@ public class HomeActivity extends BaseMapActivity {
             // Do nothing, perhaps we'll get to show it again? Or never.
             return;
         }
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region == null) {
+            return;
+        }
+
         // appInfo.versionName
         // Build.MODEL
         // Build.VERSION.RELEASE
@@ -323,7 +339,7 @@ public class HomeActivity extends BaseMapActivity {
                  getLocationString(ctxt));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
-                new String[] { ctxt.getString(R.string.bug_report_dest) });
+                new String[] { region.getContactEmail() });
         send.putExtra(Intent.EXTRA_SUBJECT,
                 ctxt.getString(R.string.bug_report_subject));
         send.putExtra(Intent.EXTRA_TEXT, body);
@@ -335,5 +351,40 @@ public class HomeActivity extends BaseMapActivity {
             Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
         }
+    }
+
+    /**
+     * Checks region status, which can potentially including forcing a reload of region
+     * info from the server.  Also includes auto-selection of closest region.
+     */
+    private void checkRegionStatus(){
+        //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API
+        if (!TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
+            return;
+        }
+
+        boolean forceReload = false;
+        boolean showProgressDialog = true;
+
+        SharedPreferences settings = Application.getPrefs();
+
+        //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh,
+        //force contacting the server again
+        if (Application.get().getCurrentRegion() == null ||
+                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true) &&
+                new Date().getTime() - Application.get().getLastRegionUpdateDate() > REGION_UPDATE_THRESHOLD)
+                        ) {
+            forceReload = true;
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Region info has expired (or does not exist), forcing a reload from the server..."); }
+        }
+
+        if (Application.get().getCurrentRegion() != null) {
+            //We already have region info locally, so just check current region status quietly in the background
+            showProgressDialog = false;
+        }
+
+        //Check region status, possibly forcing a reload from server and checking proximity to current region
+        ObaRegionsTask task = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
+        task.execute();
     }
 }

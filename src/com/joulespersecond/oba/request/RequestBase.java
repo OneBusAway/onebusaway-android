@@ -17,12 +17,11 @@ package com.joulespersecond.oba.request;
 
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaConnection;
+import com.joulespersecond.oba.ObaContext;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -52,24 +51,22 @@ public class RequestBase {
         mPostData = postData;
     }
 
-    private static String getServer(Context context) {
-        SharedPreferences preferences =
-                PreferenceManager.getDefaultSharedPreferences(context);
-        return preferences.getString("preferences_oba_api_servername",
-                "api.onebusaway.org");
-    }
-
     public static class BuilderBase {
-        private static final String API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
-        protected static final String BASE_PATH = "/api/where";
+        protected static final String BASE_PATH = "api/where";
 
         protected final Uri.Builder mBuilder;
-        private String mApiKey = API_KEY;
+        protected ObaContext mObaContext;
+        protected Context mContext;
 
         protected BuilderBase(Context context, String path) {
-            mBuilder = Uri.parse("http://"+getServer(context)+path).buildUpon();
-            mBuilder.appendQueryParameter("version", "2");
-            ObaApi.setAppInfo(mBuilder);
+            this(context, null, path);
+        }
+
+        protected BuilderBase(Context context, ObaContext obaContext, String path) {
+            mContext = context;
+            mObaContext = obaContext;
+            mBuilder = new Uri.Builder();
+            mBuilder.path(path);
         }
 
         protected static String getPathWithId(String pathElement, String id) {
@@ -81,30 +78,19 @@ public class RequestBase {
         }
 
         protected Uri buildUri() {
-            mBuilder.appendQueryParameter("key", mApiKey);
+            ObaContext context = (mObaContext != null) ? mObaContext : ObaApi.getDefaultContext();
+            context.setBaseUrl(mContext, mBuilder);
+            context.setAppInfo(mBuilder);
+            mBuilder.appendQueryParameter("version", "2");
+            mBuilder.appendQueryParameter("key", context.getApiKey());
             return mBuilder.build();
         }
 
-        /**
-         * Allows the caller to assign a different server for a specific request.
-         * Useful for unit-testing against specific servers (for instance, soak-api
-         * when some new APIs haven't been released to production).
-         *
-         * Because this is implemented in the base class, it can't return 'this'
-         * to use the standard builder pattern. Oh well, it's only for test.
-         */
-        public void setServer(String server) {
-            mBuilder.authority(server);
-        }
-
-        /**
-         * Allows the caller to assign a different API key for a specific request.
-         *
-         * Because this is implemented in the base class, it can't return 'this'
-         * to use the standard builder pattern. Oh well, it's only for test.
-         */
-        public void setApiKey(String key) {
-            mApiKey = key;
+        public ObaContext getObaContext() {
+            if (mObaContext == null) {
+                mObaContext = ObaApi.getDefaultContext().clone();
+            }
+            return mObaContext;
         }
     }
 
@@ -129,7 +115,7 @@ public class RequestBase {
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
         ObaConnection conn = null;
         try {
-            conn = ObaApi.getConnectionFactory().newConnection(mUri);
+            conn = ObaApi.getDefaultContext().getConnectionFactory().newConnection(mUri);
             Reader reader;
             if (mPostData != null) {
                 reader = conn.post(mPostData);
@@ -168,7 +154,7 @@ public class RequestBase {
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(cls);
         ObaConnection conn = null;
         try {
-            conn = ObaApi.getConnectionFactory().newConnection(mUri);
+            conn = ObaApi.getDefaultContext().getConnectionFactory().newConnection(mUri);
             BufferedReader reader = new BufferedReader(conn.post(mPostData), 8*1024);
 
             String line;

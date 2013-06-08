@@ -18,8 +18,6 @@ package com.joulespersecond.oba;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.serialization.JacksonSerializer;
 
-import android.net.Uri;
-
 import java.io.Reader;
 
 public final class ObaApi {
@@ -39,24 +37,11 @@ public final class ObaApi {
     public static final String VERSION1 = "1";
     public static final String VERSION2 = "2";
 
-    private static int mAppVer = 0;
-    private static String mAppUid = null;
-    private static ObaConnectionFactory mConnectionFactory = ObaDefaultConnectionFactory.getInstance();
+    private static final ObaContext mDefaultContext = new ObaContext();
 
-    public static void setAppInfo(int version, String uuid) {
-        mAppVer = version;
-        mAppUid = uuid;
+    public static ObaContext getDefaultContext() {
+        return mDefaultContext;
     }
-
-    public static void setAppInfo(Uri.Builder builder) {
-        if (mAppVer != 0) {
-            builder.appendQueryParameter("app_ver", String.valueOf(mAppVer));
-        }
-        if (mAppUid != null) {
-            builder.appendQueryParameter("app_uid", mAppUid);
-        }
-    }
-
 
     /**
      * Converts a latitude/longitude to a GeoPoint.
@@ -66,26 +51,6 @@ public final class ObaApi {
      */
     public static final GeoPoint makeGeoPoint(double lat, double lon) {
         return new GeoPoint((int)(lat*1E6), (int)(lon*1E6));
-    }
-
-    /**
-     * Connection factory
-     */
-    public static ObaConnectionFactory setConnectionFactory(ObaConnectionFactory factory) {
-        ObaConnectionFactory prev = mConnectionFactory;
-        mConnectionFactory = factory;
-        return prev;
-    }
-
-    public static ObaConnectionFactory getConnectionFactory() {
-        return mConnectionFactory;
-    }
-
-    /**
-     * Clears the object cache for low memory situations.
-     */
-    public static final void clearCache() {
-        // TODO: is there anything we can do to clear Jackson cache?
     }
 
     public interface SerializationHandler {

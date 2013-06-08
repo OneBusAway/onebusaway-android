@@ -118,7 +118,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".EditPreferencesActivity"/>
+        <activity android:name=".PreferencesActivity"/>
+        <activity android:name=".RegionsActivity"/>
+        <activity android:name=".AgenciesActivity"/>
 
         <provider
             android:name="com.joulespersecond.oba.provider.ObaProvider"

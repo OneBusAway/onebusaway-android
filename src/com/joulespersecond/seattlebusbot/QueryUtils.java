@@ -42,13 +42,23 @@ final class QueryUtils {
         // "Recently" means seven days in the past
         final long last = System.currentTimeMillis() - 7*DateUtils.DAY_IN_MILLIS;
         Uri limit = uri.buildUpon().appendQueryParameter("limit", "20").build();
+        
+        String regionWhere = "";
+        if(Application.get().getCurrentRegion() != null){
+            if(projection.equals(QueryUtils.StopList.Columns.PROJECTION) ){
+                regionWhere = " AND " + StopList.getRegionWhere();
+            }else if(projection.equals(QueryUtils.RouteList.Columns.PROJECTION)){
+                regionWhere = " AND " + RouteList.getRegionWhere();
+            }
+        }
+       
         return new CursorLoader(context,
                 limit,
                 projection,
-                "(" +
+                "((" +
                     accessTime + " IS NOT NULL AND " +
                     accessTime + " > " + last +
-                ") OR (" + useCount + " > 0)",
+                ") OR (" + useCount + " > 0))" + regionWhere,
                 null,
                 accessTime + " desc, " +
                 useCount + " desc");
@@ -97,6 +107,11 @@ final class QueryUtils {
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_URL);
+        }
+        
+        static protected String getRegionWhere(){            
+            return Application.get().getCurrentRegion() == null ? "" :
+                QueryUtils.getRegionWhere(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
         }
     }
 
@@ -163,6 +178,15 @@ final class QueryUtils {
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_ID);
         }
+        
+        static protected String getRegionWhere(){
+            return Application.get().getCurrentRegion() == null ? "" :
+                QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
+        }
     }
-
+    
+    public static String getRegionWhere(String regionFieldName, long regionId){
+        return "(" + regionFieldName + "=" + regionId +
+            " OR " + regionFieldName + " IS NULL)";
+    }
 }

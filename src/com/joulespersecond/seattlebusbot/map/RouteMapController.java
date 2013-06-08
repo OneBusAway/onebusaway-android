@@ -26,6 +26,8 @@ import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
@@ -42,6 +44,8 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -51,7 +55,7 @@ import java.util.List;
 class RouteMapController implements MapModeController,
             LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse>,
             Loader.OnLoadCompleteListener<ObaStopsForRouteResponse>{
-    //private static final String TAG = "RouteMapController";
+    private static final String TAG = "RouteMapController";
     private static final int ROUTES_LOADER = 5677;
 
     private final Callback mFragment;
@@ -256,8 +260,6 @@ class RouteMapController implements MapModeController,
     //
     private static class RoutesLoader extends AsyncTaskLoader<ObaStopsForRouteResponse> {
         private final String mRouteId;
-        //private ObaStopsForRouteResponse mResponse;
-
         public RoutesLoader(Context context, String routeId) {
             super(context);
             mRouteId = routeId;
@@ -265,6 +267,14 @@ class RouteMapController implements MapModeController,
 
         @Override
         public ObaStopsForRouteResponse loadInBackground() {
+            if (Application.get().getCurrentRegion() == null &&
+                    TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
+                //We don't have region info or manually entered API to know what server to contact
+                if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops for route from server " +
+                		"without OBA REST API endpoint, aborting..."); }
+                return null;                
+            }
+            //Make OBA REST API call to the server and return result
             return new ObaStopsForRouteRequest.Builder(getContext(), mRouteId)
                 .setIncludeShapes(true)
                 .build()

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
+	and individual contributors
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -45,6 +46,7 @@
     <string name="browser_error">Unable to launch browser.</string>
     <string name="search_hint">Search stops or routes</string>
     <string name="search">Search</string>
+    <string name="checkmark_description">Selection checkmark</string>
 
     <!--  Option strings -->
     <string name="map_option_mylocation">My Location</string>
@@ -66,7 +68,10 @@
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
-    <string name="main_outofrange">You are out of OneBusAway\'s service area.\nGo there now?</string>
+    <string name="main_outofrange_title">Out of range</string>
+    <string name="main_outofrange">You are out of OneBusAway\'s service area.\n\nGo there now?</string>
+    <string name="main_outofrange_yes">Take me there</string>
+    <string name="main_outofrange_no">Stay where I am</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">On time</string>
@@ -204,16 +209,35 @@
     <string name="report_problem_vehiclenumber_bus">Bus number</string>
     <string name="report_problem_uservehicle_hint">optional</string>
 
+    <!-- Region list -->
+    <plurals name="region_distance">
+      <item quantity="one">1 mile away</item>
+      <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
+    </plurals>
+    <string name="region_unavailable">unavailable</string>
+    <string name="region_option_refresh">Refresh</string>
+    <string name ="region_detecting_server">Detecting region. Please wait&#8230;</string>
+    <string name ="region_choose_region">Choose region</string>
+    <string name ="region_disabled_auto_selection">Disabled region auto-selection.  Re-enable in Preferences if desired.</string>
+
     <!--  Bug report -->
-    <string name="bug_report_dest">contact@onebusaway.org</string>
     <string name="bug_report_subject">OneBusAway: Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s</string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
 
     <!-- Application Preferences -->
+    <string name="preferences_category_location">Location</string>
+    <string name="preferences_category_backup">Backup</string>
+    <string name="preferences_category_advanced">Advanced</string>
+    <string name="preferences_region_title">Your location</string>
+    <string name="preferences_region_summary">The transit region used by the app.</string>
+    <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
+    <string name="preferences_auto_refresh_regions_summary">Automatically updates region info weekly</string>
+    <string name="preferences_auto_select_region_title">Auto-select region</string>
+    <string name="preferences_auto_select_region_summary">Automatically selects the closest region on startup</string>
+    
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
-    <string name="preferences_oba_api_servername_default">api.onebusaway.org</string>
     <string name="preferences_save_title">Save to SD card</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from SD card</string>

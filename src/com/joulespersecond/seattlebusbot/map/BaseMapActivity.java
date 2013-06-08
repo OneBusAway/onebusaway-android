@@ -25,9 +25,14 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
@@ -42,14 +47,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.view.LayoutInflater;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -70,7 +74,7 @@ import java.util.List;
  *
  */
 abstract public class BaseMapActivity extends SherlockMapActivity
-            implements MapModeController.Callback {
+            implements MapModeController.Callback, ObaRegionsTask.Callback {
     //private static final String TAG = "BaseMapActivity";
 
     private static final int API_KEY = BuildConfig.DEBUG ? R.string.api_key_debug : R.string.api_key_release;
@@ -99,7 +103,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        boolean firstRun = firstRunCheck();
+        //boolean firstRun = firstRunCheck();
         super.onCreate(savedInstanceState);
         // call this from the subclass? or call an overrideable
         setContentView(getContentView());
@@ -127,9 +131,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             // even if it's empty
             if (args == null) {
                 args = new Bundle();
-            }
-            if (firstRun) {
-                firstRunSetLocation(args);
             }
             initMap(args);
         }
@@ -346,9 +347,23 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     @Override
     @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
-        if (mWarnOutOfRange) {
+        //Before we trigger the out of range warning, make sure we have region info
+        //or have a API URL that was custom set by the user in via Preferences
+        //Otherwise, its premature since we don't know the device's relationship to
+        //available OBA regions or the manually set API region
+        String serverName = Application.get().getCustomApiUrl();
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
             showDialog(OUTOFRANGE_DIALOG);
         }
+    }
+
+    //
+    // Region Task Callback
+    //
+    @Override
+    public void onRegionUpdated(){
+        //Update map after a new region has been selected
+        setMyLocation();
     }
 
     //
@@ -496,36 +511,43 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         return builder.create();
     }
 
-    // This is in lieu of a more complicated map of agencies screen
-    // like on the iPhone app. Eventually that'd be cool, but I don't really
-    // have time right now.
-
-    // This array must be kept in sync with R.array.agency_locations!
-    private static final GeoPoint[] AGENCY_LOCATIONS = new GeoPoint[] {
-        new GeoPoint(47605990, -122331780), // Seattle, WA
-        new GeoPoint(47252090, -122443740), // Tacoma, WA
-        new GeoPoint(47979090, -122201530), // Everett, WA
-    };
-
     @SuppressWarnings("deprecation")
     private Dialog createOutOfRangeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        builder.setCustomTitle(inflater.inflate(R.layout.main_outofrange_title,
-                null));
-
-        builder.setItems(R.array.agency_locations,
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+            .setTitle(R.string.main_outofrange_title)
+            .setIcon(android.R.drawable.ic_dialog_map)
+            .setMessage(R.string.main_outofrange)
+            .setPositiveButton(R.string.main_outofrange_yes,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which >= 0 && which < AGENCY_LOCATIONS.length) {
-                            setMyLocation(AGENCY_LOCATIONS[which]);
-                        }
+                        zoomToRegion();
+                        dismissDialog(OUTOFRANGE_DIALOG);
+                    }
+                })
+            .setNegativeButton(R.string.main_outofrange_no,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
                         dismissDialog(OUTOFRANGE_DIALOG);
                         mWarnOutOfRange = false;
                     }
                 });
         return builder.create();
+    }
+
+    void zoomToRegion() {
+        // If we have a region, then zoom to it.
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            double results[] = new double[4];
+            RegionUtils.getRegionSpan(region, results);
+            MapController ctrl = mMapView.getController();
+            ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
+            ctrl.zoomToSpan((int)(results[0] * 1E6), (int)(results[1] * 1E6));
+        } else {
+            // If we don't have a region, then prompt to select a region.
+        }
     }
 
     //
@@ -577,17 +599,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
      * (MapView or MapActivity caches prefs and tiles)
      * This will fail if MapViewActivty never got to onPause
      */
+    /*
     private boolean firstRunCheck() {
         File dir = getFilesDir();
         return (dir.list().length == 0);
     }
-
-    /**
-     * Center on Seattle with a region-level zoom, should
-     * give first-time users better first impression
-     */
-    private void firstRunSetLocation(Bundle args) {
-        args.putDouble(MapParams.CENTER_LAT, 47.605990);
-        args.putDouble(MapParams.CENTER_LON, -122.331780);
-    }
+    */
 }

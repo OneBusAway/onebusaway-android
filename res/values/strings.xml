@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
-	and individual contributors
+    and individual contributors
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -216,9 +216,9 @@
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
-    <string name ="region_detecting_server">Detecting region. Please wait&#8230;</string>
+    <string name ="region_detecting_server">Finding your transit services&#8230;</string>
     <string name ="region_choose_region">Choose region</string>
-    <string name ="region_disabled_auto_selection">Disabled region auto-selection.  Re-enable in Preferences if desired.</string>
+    <string name ="region_disabled_auto_selection">Disabled automatic region selection. You can enable in Preferences.</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway: Feedback</string>
@@ -229,13 +229,13 @@
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
-    <string name="preferences_region_title">Your location</string>
-    <string name="preferences_region_summary">The transit region used by the app.</string>
+    <string name="preferences_region_title">Your region</string>
+    <string name="preferences_region_summary">The transit region used by the app</string>
     <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
     <string name="preferences_auto_refresh_regions_summary">Automatically updates region info weekly</string>
-    <string name="preferences_auto_select_region_title">Auto-select region</string>
-    <string name="preferences_auto_select_region_summary">Automatically selects the closest region on startup</string>
-    
+    <string name="preferences_auto_select_region_title">Automatic region</string>
+    <string name="preferences_auto_select_region_summary">Set your current transit region based on your current location</string>
+
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
     <string name="preferences_save_title">Save to SD card</string>

@@ -2,4 +2,6 @@
 <resources>
     <string name="api_key_debug">0W3nbkGPaUZFzyVHmRRcGn0GuFCGVIwQXx9qygg</string>
     <string name="api_key_release">0FyPlkxcKszF8iaMAcqUt6_Jrv7g_d8GAyfszYA</string>
+    <string name="apiv2_key_debug">AIzaSyBcmbc3bj_AsM_kw4slV9yVj97SJUNdqaQ</string>
+    <string name="apiv2_key_release">AIzaSyBxVM57hZ2WLRgtixDs_G5BGbK90mM5S5U</string>
 </resources>

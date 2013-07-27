@@ -15,17 +15,17 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaArrivalInfo.Frequency;
+
+import android.content.Context;
+import android.content.res.Resources;
+
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-
-import android.content.Context;
-import android.content.res.Resources;
-
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaArrivalInfo.Frequency;
 
 final class ArrivalInfo {
     final static class InfoComparator implements Comparator<ArrivalInfo> {

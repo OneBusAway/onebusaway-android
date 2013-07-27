@@ -37,8 +37,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(),
                 ObaContract.Stops.CONTENT_URI,
-                QueryUtils.StopList.Columns.PROJECTION,
-                ObaContract.Stops.FAVORITE + "=1",
+                QueryUtils.StopList.Columns.PROJECTION,                
+                ObaContract.Stops.FAVORITE + "=1" +
+                (Application.get().getCurrentRegion() == null ? "" : " AND " + 
+                        QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId())),
                 null,
                 ObaContract.Stops.USE_COUNT + " desc");
     }

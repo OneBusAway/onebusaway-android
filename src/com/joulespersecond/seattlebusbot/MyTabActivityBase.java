@@ -67,11 +67,9 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     public void onDestroy() {
         // If there was a tab in the intent, don't save it
         if (mDefaultTab == null) {
-            SharedPreferences.Editor settings = getSharedPreferences(UIHelp.PREFS_NAME, 0).edit();
             final ActionBar bar = getSupportActionBar();
             final ActionBar.Tab tab = bar.getSelectedTab();
-            settings.putString(getLastTabPref(), (String)tab.getTag());
-            settings.commit();
+            PreferenceHelp.saveString(getLastTabPref(), (String)tab.getTag());
         }
 
         super.onDestroy();
@@ -90,9 +88,8 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         final String def;
         if (mDefaultTab != null) {
             def = mDefaultTab;
-        }
-        else {
-            SharedPreferences settings = getSharedPreferences(UIHelp.PREFS_NAME, 0);
+        } else {
+            SharedPreferences settings = Application.getPrefs();
             def = settings.getString(getLastTabPref(), null);
         }
         if (def != null) {

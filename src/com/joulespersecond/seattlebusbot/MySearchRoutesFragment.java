@@ -229,7 +229,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                     .build()
                     .call();
             // If there is no results from the user-centered query,
-            // open a wider next in some "default" Seattle/Bellevue location
+            // open a wider next in some "default" location
             //Log.d(TAG, "Server returns: " + response.getCode());
             if (response.getCode() == ObaApi.OBA_OK) {
                 ObaRoute[] routes = response.getRoutes();
@@ -238,11 +238,15 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 }
             }
 
-            return new ObaRoutesForLocationRequest.Builder(getContext(), UIHelp.DEFAULT_SEARCH_CENTER)
-                    .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
-                    .setQuery(mQueryText)
-                    .build()
-                    .call();
+            GeoPoint center = UIHelp.getDefaultSearchCenter();
+            if (center != null) {
+                return new ObaRoutesForLocationRequest.Builder(getContext(), center)
+                        .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
+                        .setQuery(mQueryText)
+                        .build()
+                        .call();
+            }
+            return response;
         }
     }
 }

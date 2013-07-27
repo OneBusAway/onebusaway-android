@@ -21,8 +21,10 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.region.RegionUtils;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -52,8 +54,6 @@ import java.util.List;
 
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
-
-    public static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
 
     public static void setupActionBar(SherlockFragmentActivity activity) {
         setupActionBar(activity.getSupportActionBar());
@@ -308,7 +308,16 @@ public final class UIHelp {
         }
     }
 
-    public static final GeoPoint DEFAULT_SEARCH_CENTER = ObaApi.makeGeoPoint(47.612181, -122.22908);
+    public static GeoPoint getDefaultSearchCenter() {
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            double results[] = new double[4];
+            RegionUtils.getRegionSpan(region, results);
+            return ObaApi.makeGeoPoint(results[2], results[3]);
+        } else {
+            return null;
+        }
+    }
 
     public static final int DEFAULT_SEARCH_RADIUS = 15000;
 
@@ -321,9 +330,7 @@ public final class UIHelp {
         if (last != null) {
             return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
         } else {
-            // Make up a fake "Seattle" location.
-            // ll=47.620975,-122.347355
-            return ObaApi.makeGeoPoint(47.620975, -122.347355);
+            return getDefaultSearchCenter();
         }
     }
 

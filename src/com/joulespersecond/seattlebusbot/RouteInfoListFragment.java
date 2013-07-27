@@ -442,6 +442,9 @@ public class RouteInfoListFragment extends ListFragment {
                 values.put(ObaContract.Routes.SHORTNAME, shortName);
                 values.put(ObaContract.Routes.LONGNAME, longName);
                 values.put(ObaContract.Routes.URL, url);
+                if(Application.get().getCurrentRegion() != null){
+                    values.put(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
+                }
                 ObaContract.Routes.insertOrUpdate(getActivity(), mRouteInfo.getId(), values, true);
             }
         } else {

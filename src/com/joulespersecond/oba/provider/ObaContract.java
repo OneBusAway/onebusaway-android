@@ -15,15 +15,19 @@
  */
 package com.joulespersecond.oba.provider;
 
-import java.util.ArrayList;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRegionElement;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
+
+import java.util.ArrayList;
 
 /**
  * The contract between clients and the ObaProvider.
@@ -79,6 +83,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String LONGITUDE = "longitude";
+
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
     }
 
     protected interface RoutesColumns {
@@ -105,6 +117,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String URL = "url";
+
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
     }
 
     protected interface StopRouteKeyColumns {
@@ -258,6 +278,115 @@ public final class ObaContract {
          * </P>
          */
         public static final String MARKED_READ_TIME = "marked_read_time";
+    }
+
+    protected interface RegionsColumns {
+        /**
+         * The name of the region.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String NAME = "name";
+
+        /**
+         * The base OBA URL.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String OBA_BASE_URL = "oba_base_url";
+
+        /**
+         * The base SIRI URL.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String SIRI_BASE_URL = "siri_base_url";
+
+        /**
+         * The locale of the API server.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String LANGUAGE = "lang";
+
+        /**
+         * The email of the person responsible for this server.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String CONTACT_EMAIL = "contact_email";
+
+        /**
+         * Whether or not the server supports OBA discovery APIs.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_OBA_DISCOVERY = "supports_api_discovery";
+
+        /**
+         * Whether or not the server supports OBA realtime APIs.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_OBA_REALTIME = "supports_api_realtime";
+
+        /**
+         * Whether or not the server supports SIRI realtime APIs.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_SIRI_REALTIME = "supports_siri_realtime";
+    }
+
+    protected interface RegionBoundsColumns {
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
+
+        /**
+         * The latitude center of the agencies coverage area
+         * <P>
+         * Type: REAL
+         * </P>
+         */
+        public static final String LATITUDE = "lat";
+
+        /**
+         * The longitude center of the agencies coverage area
+         * <P>
+         * Type: REAL
+         * </P>
+         */
+        public static final String LONGITUDE = "lon";
+
+        /**
+         * The height of the agencies bounding box
+         * <P>
+         * Type: REAL
+         * </P>
+         */
+        public static final String LAT_SPAN = "lat_span";
+
+        /**
+         * The width of the agencies bounding box
+         * <P>
+         * Type: REAL
+         * </P>
+         */
+        public static final String LON_SPAN = "lon_span";
+
     }
 
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
@@ -707,6 +836,154 @@ public final class ObaContract {
                 c.close();
             }
             return result;
+        }
+    }
+
+    public static class Regions implements BaseColumns, RegionsColumns {
+        // Cannot be instantiated
+        private Regions() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "regions";
+        /**
+         * The content:// style URI for this table URI is of the form
+         * content://<authority>/regions/<id>
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.item/com.joulespersecond.oba.region";
+        public static final String CONTENT_DIR_TYPE = "vnd.android.dir/com.joulespersecond.oba.region";
+
+        public static final Uri buildUri(int id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri insertOrUpdate(Context context,
+                int id,
+                ContentValues values) {
+            return insertOrUpdate(context.getContentResolver(), id, values);
+        }
+
+        public static Uri insertOrUpdate(ContentResolver cr,
+                int id,
+                ContentValues values) {
+            final Uri uri = Uri.withAppendedPath(CONTENT_URI, String.valueOf(id));
+            Cursor c = cr.query(uri, new String[] {}, null, null, null);
+            Uri result;
+            if (c != null && c.getCount() > 0) {
+                cr.update(uri, values, null, null);
+                result = uri;
+            } else {
+                values.put(_ID, id);
+                result = cr.insert(CONTENT_URI, values);
+            }
+            if (c != null) {
+                c.close();
+            }
+            return result;
+        }
+
+        public static ObaRegion get(Context context, int id) {
+            return get(context.getContentResolver(), id);
+        }
+
+        public static ObaRegion get(ContentResolver cr, int id) {
+            final String[] PROJECTION = {
+                _ID,
+                NAME,
+                OBA_BASE_URL,
+                SIRI_BASE_URL,
+                LANGUAGE,
+                CONTACT_EMAIL,
+                SUPPORTS_OBA_DISCOVERY,
+                SUPPORTS_OBA_REALTIME,
+                SUPPORTS_SIRI_REALTIME
+            };
+
+            Cursor c = cr.query(buildUri((int)id), PROJECTION, null, null, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    return new ObaRegionElement(id,   // id
+                            c.getString(1),             // Name
+                            true,                       // Active
+                            c.getString(2),             // OBA Base URL
+                            c.getString(3),             // SIRI Base URL
+                            RegionBounds.getRegion(cr, id), // Bounds
+                            c.getString(4),             // Lang
+                            c.getString(5),             // Contact Email
+                            c.getInt(6) > 0,            // Supports Oba Discovery
+                            c.getInt(7) > 0,            // Supports Oba Realtime
+                            c.getInt(8) > 0             // Supports Siri Realtime
+                        );
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
+        }
+    }
+
+    public static class RegionBounds implements BaseColumns, RegionBoundsColumns {
+        // Cannot be instantiated
+        private RegionBounds() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "region_bounds";
+        /**
+         * The content:// style URI for this table URI is of the form
+         * content://<authority>/region_bounds/<id>
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.item/com.joulespersecond.oba.region_bounds";
+        public static final String CONTENT_DIR_TYPE = "vnd.android.dir/com.joulespersecond.oba.region_bounds";
+
+        public static final Uri buildUri(int id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static ObaRegionElement.Bounds[] getRegion(ContentResolver cr, int regionId) {
+            final String[] PROJECTION = {
+                LATITUDE,
+                LONGITUDE,
+                LAT_SPAN,
+                LON_SPAN
+            };
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,
+                    "(" + RegionBounds.REGION_ID + " = " + regionId + ")",
+                    null, null);
+            if (c != null) {
+                try {
+                    ObaRegionElement.Bounds[] results = new ObaRegionElement.Bounds[c.getCount()];
+                    if (c.getCount() == 0) {
+                        return results;
+                    }
+
+                    int i = 0;
+                    c.moveToFirst();
+                    do {
+                        results[i] = new ObaRegionElement.Bounds(
+                                c.getDouble(0),
+                                c.getDouble(1),
+                                c.getDouble(2),
+                                c.getDouble(3));
+                        i++;
+                    } while (c.moveToNext());
+
+                    return results;
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
     }
 }

@@ -211,7 +211,12 @@ public class HomeActivity extends BaseMapActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                         case 0:
-                            UIHelp.goToUrl(HomeActivity.this, TWITTER_URL);
+                            String twitterUrl = TWITTER_URL;                            
+                            if (Application.get().getCurrentRegion() != null &&
+                                    !TextUtils.isEmpty(Application.get().getCurrentRegion().getTwitterUrl())) {
+                                twitterUrl = Application.get().getCurrentRegion().getTwitterUrl();
+                            }
+                            UIHelp.goToUrl(HomeActivity.this, twitterUrl);
                             break;
                         case 1:
                             AgenciesActivity.start(HomeActivity.this);

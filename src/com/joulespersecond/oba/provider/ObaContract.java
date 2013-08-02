@@ -344,6 +344,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String SUPPORTS_SIRI_REALTIME = "supports_siri_realtime";
+        
+        /**
+         * The Twitter URL for the region.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String TWITTER_URL = "twitter_url";
     }
 
     protected interface RegionBoundsColumns {
@@ -899,7 +907,8 @@ public final class ObaContract {
                 CONTACT_EMAIL,
                 SUPPORTS_OBA_DISCOVERY,
                 SUPPORTS_OBA_REALTIME,
-                SUPPORTS_SIRI_REALTIME
+                SUPPORTS_SIRI_REALTIME,
+                TWITTER_URL
             };
 
             Cursor c = cr.query(buildUri((int)id), PROJECTION, null, null, null);
@@ -919,7 +928,8 @@ public final class ObaContract {
                             c.getString(5),             // Contact Email
                             c.getInt(6) > 0,            // Supports Oba Discovery
                             c.getInt(7) > 0,            // Supports Oba Realtime
-                            c.getInt(8) > 0             // Supports Siri Realtime
+                            c.getInt(8) > 0,            // Supports Siri Realtime
+                            c.getString(9)              // Twitter URL
                         );
                 } finally {
                     c.close();

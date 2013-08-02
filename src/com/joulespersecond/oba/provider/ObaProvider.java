@@ -35,7 +35,7 @@ public class ObaProvider extends ContentProvider {
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
 
     private class OpenHelper extends SQLiteOpenHelper {
-        private static final int DATABASE_VERSION = 18;
+        private static final int DATABASE_VERSION = 19;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -161,7 +161,12 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Routes.PATH +
                             " ADD COLUMN " + ObaContract.Routes.REGION_ID + " INTEGER");
-                
+                ++oldVersion;
+            }            
+            if (oldVersion == 18) {
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.Regions.PATH +
+                            " ADD COLUMN " + ObaContract.Regions.TWITTER_URL + " VARCHAR");
             }
         }
 
@@ -326,6 +331,7 @@ public class ObaProvider extends ContentProvider {
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,   ObaContract.Regions.SUPPORTS_OBA_DISCOVERY);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_OBA_REALTIME,    ObaContract.Regions.SUPPORTS_OBA_REALTIME);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,   ObaContract.Regions.SUPPORTS_SIRI_REALTIME);
+        sRegionsProjectionMap.put(ObaContract.Regions.TWITTER_URL,   ObaContract.Regions.TWITTER_URL);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID,       ObaContract.RegionBounds._ID);

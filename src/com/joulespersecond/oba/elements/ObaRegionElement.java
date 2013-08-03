@@ -76,6 +76,7 @@ public class ObaRegionElement implements ObaRegion {
     private final boolean supportsObaDiscoveryApis;
     private final boolean supportsObaRealtimeApis;
     private final boolean supportsSiriRealtimeApis;
+    private final String twitterUrl;
 
     ObaRegionElement() {
         id = 0;
@@ -89,6 +90,7 @@ public class ObaRegionElement implements ObaRegion {
         supportsObaDiscoveryApis = false;
         supportsObaRealtimeApis = false;
         supportsSiriRealtimeApis = false;
+        twitterUrl = "";
     }
 
     public ObaRegionElement(long id,
@@ -101,7 +103,8 @@ public class ObaRegionElement implements ObaRegion {
             String contactEmail,
             boolean supportsObaDiscoveryApis,
             boolean supportsObaRealtimeApis,
-            boolean supportsSiriRealtimeApis) {
+            boolean supportsSiriRealtimeApis,
+            String twitterUrl) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -113,6 +116,7 @@ public class ObaRegionElement implements ObaRegion {
         this.supportsObaDiscoveryApis = supportsObaDiscoveryApis;
         this.supportsObaRealtimeApis = supportsObaRealtimeApis;
         this.supportsSiriRealtimeApis = supportsSiriRealtimeApis;
+        this.twitterUrl = twitterUrl;
     }
 
     @Override
@@ -171,6 +175,11 @@ public class ObaRegionElement implements ObaRegion {
     }
     
     @Override
+    public String getTwitterUrl() {        
+        return twitterUrl;
+    }
+    
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -205,6 +214,7 @@ public class ObaRegionElement implements ObaRegion {
                 + ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis
                 + ", supportsObaRealtimeApis=" + supportsObaRealtimeApis
                 + ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis
+                + ", twitterUrl=" + twitterUrl
                 + "]";
-    }    
+    }      
 }

@@ -85,4 +85,9 @@ public interface ObaRegion {
      * @return true if this server supports SIRI real-time APIs, false otherwise.
      */
     public boolean getSupportsSiriRealtimeApis();
+    
+    /**
+     * @return The Twitter URL for the region
+     */
+    public String getTwitterUrl();
 }

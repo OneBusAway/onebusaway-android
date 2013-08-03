@@ -98,6 +98,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
+    private boolean mRunning = false;
 
     private MapModeController mController;
 
@@ -184,11 +185,13 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             mController.onPause();
         }
 
+        mRunning = false;
         super.onPause();
     }
 
     @Override
     public void onResume() {
+        mRunning = true;
         mLocationOverlay.enableMyLocation();
 
         //Log.d(TAG, "onResume: " + mStopUserMap);
@@ -353,7 +356,9 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         //available OBA regions or the manually set API region
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
-            showDialog(OUTOFRANGE_DIALOG);
+            if (mRunning) {
+                showDialog(OUTOFRANGE_DIALOG);
+            }
         }
     }
 

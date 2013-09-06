@@ -62,7 +62,7 @@ public class RegionUtils {
         }
         float minDist = Float.MAX_VALUE;        
         ObaRegion closestRegion = null;        
-        float distToRegion;
+        Float distToRegion;
         
         NumberFormat fmt = NumberFormat.getInstance();
         if (fmt instanceof DecimalFormat) {
@@ -79,6 +79,10 @@ public class RegionUtils {
             }
             
             distToRegion = getDistanceAway(region, loc.getLatitude(), loc.getLongitude());
+            if (distToRegion == null) {
+                Log.e(TAG, "Couldn't measure distance to region '" + region.getName() + "'");
+                continue;
+            }
             miles = distToRegion * 0.000621371;      
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away"); }
             if (distToRegion < minDist) {

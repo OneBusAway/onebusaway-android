@@ -103,7 +103,7 @@
     <string name="stop_info_option_addstar">Add Star</string>
     <string name="stop_info_option_removestar">Remove Star</string>
     <string name="stop_info_option_reportproblem">Report Problem</string>
-    <string name="stop_info_nodata">There are no upcoming arrivals at this stop.</string>
+    <string name="stop_info_nodata">No arrivals in the next 35 minutes.</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
     <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>

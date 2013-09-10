@@ -86,10 +86,17 @@ public class ObaContext {
         
         if (!TextUtils.isEmpty(serverName)) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
-            Uri base = Uri.parse("http://" + serverName + builder.build().getPath());
-            builder.authority(base.getAuthority());
-            builder.scheme(base.getScheme());
-            builder.encodedPath(base.getEncodedPath());
+            // Since the user-entered serverName might contain a partial path, we need to parse it
+            Uri userEntered = Uri.parse("http://" + serverName);
+            
+            // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
+            Uri.Builder fullUrl = userEntered.buildUpon();
+            fullUrl.appendEncodedPath(builder.build().getPath());
+            
+            // Finally, overwrite builder that was passed in with the full URL, including path from user-entered API
+            builder.authority(fullUrl.build().getAuthority());
+            builder.scheme(fullUrl.build().getScheme());
+            builder.encodedPath(fullUrl.build().getEncodedPath());
         } else if (mRegion != null) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
             Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getPath());            

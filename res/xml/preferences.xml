@@ -46,6 +46,7 @@
         <EditTextPreference
             android:title="@string/preferences_oba_api_servername_title"
             android:summary="@string/preferences_oba_api_servername_summary"            
+            android:inputType="text|textNoSuggestions"
             android:key="@string/preference_key_oba_api_url" />
     </PreferenceCategory>
 </PreferenceScreen>

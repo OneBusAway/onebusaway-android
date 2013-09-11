@@ -237,7 +237,8 @@
     <string name="preferences_auto_select_region_summary">Set your current transit region based on your current location</string>
 
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
-    <string name="preferences_oba_api_servername_summary">Determines the server name used in OneBusAway API calls</string>
+    <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway API calls</string>
+    <string name="preferences_oba_api_servername_hint">example.onebusaway.org/api</string>
     <string name="preferences_save_title">Save to SD card</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from SD card</string>

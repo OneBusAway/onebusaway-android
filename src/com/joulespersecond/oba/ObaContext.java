@@ -86,13 +86,29 @@ public class ObaContext {
         
         if (!TextUtils.isEmpty(serverName)) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
-            Uri base = Uri.parse("http://" + serverName + builder.build().getPath());
-            builder.authority(base.getAuthority());
-            builder.scheme(base.getScheme());
-            builder.encodedPath(base.getEncodedPath());
+            // Since the user-entered serverName might contain a partial path, we need to parse it
+            Uri userEntered;
+            if (Uri.parse(serverName).getScheme() == null) {
+                // Add the scheme before parsing if one doesn't exist, since without a scheme the Uri won't parse the authority
+                userEntered = Uri.parse("http://" + serverName);
+            } else {
+                userEntered = Uri.parse(serverName);
+            }
+            
+            // Copy partial path that the user entered
+            Uri.Builder path = new Uri.Builder();
+            path.encodedPath(userEntered.getEncodedPath());
+            
+            // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
+            path.appendEncodedPath(builder.build().getPath());
+                        
+            // Finally, overwrite builder that was passed in with the full URL
+            builder.scheme(userEntered.getScheme());
+            builder.authority(userEntered.getAuthority());
+            builder.encodedPath(path.build().getEncodedPath());
         } else if (mRegion != null) {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
-            Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getPath());            
+            Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getPath());
             builder.scheme(base.getScheme());
             builder.authority(base.getAuthority());
             builder.encodedPath(base.getEncodedPath());

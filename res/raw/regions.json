@@ -6,9 +6,10 @@
     "list": [
       {
         "siriBaseUrl": null, 
-        "obaVersionInfo": "1.0.8-SNAPSHOT|1|0|8|SNAPSHOT|677fd69e95aa20551bfa5e13c11bd02a2558ffe3", 
+        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
         "supportsSiriRealtimeApis": false, 
         "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
           {
@@ -19,7 +20,8 @@
           }
         ], 
         "supportsObaDiscoveryApis": true, 
-        "contactEmail": "onebusaway@usf.edu", 
+        "contactEmail": "onebusaway@gohart.org", 
+        "facebookUrl": "", 
         "active": true, 
         "obaBaseUrl": "http://api.tampa.onebusaway.org/api/", 
         "id": 0, 
@@ -27,9 +29,10 @@
       }, 
       {
         "siriBaseUrl": null, 
-        "obaVersionInfo": "", 
+        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
         "supportsSiriRealtimeApis": false, 
         "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
           {
@@ -88,7 +91,8 @@
           }
         ], 
         "supportsObaDiscoveryApis": true, 
-        "contactEmail": "contact@onebusaway.org", 
+        "contactEmail": "onebusaway@soundtransit.org", 
+        "facebookUrl": "https://www.facebook.com/pages/OneBusAway/216091804930", 
         "active": true, 
         "obaBaseUrl": "http://api.pugetsound.onebusaway.org/", 
         "id": 1, 
@@ -99,6 +103,7 @@
         "obaVersionInfo": "", 
         "supportsSiriRealtimeApis": true, 
         "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
         "supportsObaRealtimeApis": false, 
         "bounds": [
           {
@@ -116,6 +121,7 @@
         ], 
         "supportsObaDiscoveryApis": true, 
         "contactEmail": "MTABusTime@mtahq.org", 
+        "facebookUrl": "https://www.facebook.com/pages/MTA-New-York-City-Transit/232635164606", 
         "active": true, 
         "obaBaseUrl": "http://bustime.mta.info/", 
         "id": 2, 
@@ -126,6 +132,7 @@
         "obaVersionInfo": "1.1.8-SNAPSHOT|1|1|8|SNAPSHOT|877d870ac5c5f64607113d08d6d362925839719e", 
         "supportsSiriRealtimeApis": false, 
         "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
           {
@@ -173,6 +180,7 @@
         ], 
         "supportsObaDiscoveryApis": true, 
         "contactEmail": "onebusaway@ce.gatech.edu", 
+        "facebookUrl": "https://www.facebook.com/pages/ObaAtlanta/136662306506627", 
         "active": true, 
         "obaBaseUrl": "http://onebusaway.gatech.edu/api/", 
         "id": 3, 

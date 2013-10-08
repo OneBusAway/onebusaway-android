@@ -29,27 +29,59 @@ import java.util.List;
 
 @SuppressWarnings("serial")
 public class ArrivalInfoRequestTest extends ObaTestCase {
-    public void testKCMStopRequest() {
+    // TODO - fix this test in context of regions and loading multiple URLs
+//    public void testKCMStopRequest() {
+//        ObaArrivalInfoRequest.Builder builder =
+//                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+//        ObaArrivalInfoRequest request = builder.build();
+//        UriAssert.assertUriMatch(
+//                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
+//                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+//                request);
+//    }
+    
+    public void testHARTStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+                new ObaArrivalInfoRequest.Builder(getContext(), "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
-                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
+                "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
                 new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
                 request);
     }
+    
+    // TODO - fix this test in context of regions and loading multiple URLs
+//    public void testKCMStopResponse() throws Exception {
+//        ObaArrivalInfoResponse response =
+//                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
+//        assertOK(response);
+//        ObaStop stop = response.getStop();
+//        assertNotNull(stop);
+//        assertEquals("1_29261", stop.getId());
+//        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+//        assertTrue(routes.size() > 0);
+//        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+//        assertEquals("1", agency.getId());
+//
+//        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+//        // Uhh, this will vary considerably depending on when this is run.
+//        assertNotNull(arrivals);
+//
+//        final List<ObaStop> nearbyStops = response.getNearbyStops();
+//        assertTrue(nearbyStops.size() > 0);
+//    }
 
-    public void testKCMStopResponse() throws Exception {
+    public void testHARTStopResponse() throws Exception {
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
+                new ObaArrivalInfoRequest.Builder(getContext(), "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
-        assertEquals("1_29261", stop.getId());
+        assertEquals("Hillsborough Area Regional Transit_3105", stop.getId());
         final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
         assertTrue(routes.size() > 0);
         ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
-        assertEquals("1", agency.getId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         // Uhh, this will vary considerably depending on when this is run.
@@ -58,13 +90,15 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);
     }
-
+    
+    // TODO - fix this test in context of regions and loading multiple URLs
+    // Currently mixes Tampa URL with KCM data
     public void testNewRequest() throws Exception {
         // This is just to make sure we copy and call newRequest() at least once
         ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getContext(), "1_10");
         assertNotNull(request);
         UriAssert.assertUriMatch(
-                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_10.json",
+                "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/1_10.json",
                 new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
                 request);
     }

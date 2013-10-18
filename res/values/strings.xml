@@ -103,7 +103,17 @@
     <string name="stop_info_option_addstar">Add Star</string>
     <string name="stop_info_option_removestar">Remove Star</string>
     <string name="stop_info_option_reportproblem">Report Problem</string>
-    <string name="stop_info_nodata">No arrivals in the next 35 minutes.</string>
+    <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
+    <plurals name="stop_info_nodata_hours_minutes">
+      <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
+      <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.</string>
+    <plurals name="stop_info_no_additional_data_hours_minutes">
+      <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
+      <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+    </plurals>
+    <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
     <string name="stop_info_filter_title">Show only these routes</string>
     <string name="stop_info_filter_header">Showing %1$d of %2$d routes</string>

@@ -45,7 +45,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -66,12 +68,17 @@ public class ArrivalsListFragment extends ListFragment
 
     private ArrivalsListAdapter mAdapter;
     private ArrivalsListHeader mHeader;
+    private View mFooter;
+    private View mEmptyList;
     private AlertList mAlertList;
 
     private ObaStop mStop;
     private String mStopId;
     private Uri mStopUri;
     private ArrayList<String> mRoutesFilter;
+    private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites 
+                                         // encapsulated info before onLoadFinished() is called
+    private boolean mLoadedMoreArrivals = false;
 
     private boolean mFavorite = false;
     private String mStopUserName;
@@ -84,9 +91,11 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        setEmptyText(getString(R.string.stop_info_nodata));
-
+        
+        // Set and add the view that is shown if no arrival information is returned by the REST API
+        getListView().setEmptyView(mEmptyList);
+        ((ViewGroup) getListView().getParent()).addView(mEmptyList);
+        
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
 
@@ -97,7 +106,26 @@ public class ArrivalsListFragment extends ListFragment
         View header = getView().findViewById(R.id.arrivals_list_header);
         mHeader.initView(header);
         mHeader.refresh();
-
+        
+        // Setup list footer button to load more arrivals (when arrivals are shown)
+        Button loadMoreArrivals = (Button)mFooter.findViewById(R.id.load_more_arrivals);
+        loadMoreArrivals.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadMoreArrivals();
+            }
+        });
+        getListView().addFooterView(mFooter);
+        
+        // Repeat for the load more arrivals button in the empty list view
+        Button loadMoreArrivalsEmptyList = (Button)mEmptyList.findViewById(R.id.load_more_arrivals);
+        loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadMoreArrivals();
+            }
+        });
+        
         // This sets the stopId and uri
         setStopId();
         setUserInfo();
@@ -117,6 +145,9 @@ public class ArrivalsListFragment extends ListFragment
 
         mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
         mgr.initLoader(ARRIVALS_LIST_LOADER, getArguments(), this);
+        
+        // Set initial minutesAfter value in the empty list view
+        setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), false));
     }
 
     @Override
@@ -127,6 +158,8 @@ public class ArrivalsListFragment extends ListFragment
             // reason to create our view.
             return null;
         }
+        mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
+        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 
@@ -188,7 +221,6 @@ public class ArrivalsListFragment extends ListFragment
             }
             info = result.getArrivalInfo();
             situations = result.getSituations();
-
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -202,7 +234,6 @@ public class ArrivalsListFragment extends ListFragment
                         Toast.LENGTH_LONG).show();
                 info = lastGood.getArrivalInfo();
                 situations = lastGood.getSituations();
-
             } else {
                 setEmptyText(getString(UIHelp.getStopErrorString(getActivity(), result.getCode())));
             }
@@ -219,7 +250,24 @@ public class ArrivalsListFragment extends ListFragment
 
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
-
+        
+        // If the user just tried to load more arrivals, determine if we 
+        // should show a Toast in the case where no additional arrivals were loaded
+        if (mLoadedMoreArrivals) {
+            if (info.length == 0 || mLastResponseLength != info.length) {
+                // Don't show the toast at all, since no records were returned
+                // (and empty list message is already shown)
+                // or more arrivals were actually loaded
+                mLoadedMoreArrivals = false;  
+            } else if (mLastResponseLength == info.length) {
+                // No additional arrivals were included in the response, show a toast
+                Toast.makeText(getActivity(),
+                        UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), true),
+                        Toast.LENGTH_LONG).show();
+                mLoadedMoreArrivals = false;  // Only show the toast once
+            }
+        }
+        
         //TestHelp.notifyLoadFinished(getActivity());
     }
 
@@ -235,10 +283,9 @@ public class ArrivalsListFragment extends ListFragment
 
         if (info != null) {
             // Reset the empty text just in case there is no data.
-            setEmptyText(getString(R.string.stop_info_nodata));
+            setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), false));
             mAdapter.setData(info, mRoutesFilter);
         }
-
     }
 
     @Override
@@ -584,6 +631,18 @@ public class ArrivalsListFragment extends ListFragment
                 getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
         return (ArrivalsListLoader)l;
     }
+    
+    @Override
+    public void setEmptyText(CharSequence text) {
+        TextView noArrivals = (TextView)mEmptyList.findViewById(R.id.noArrivals);
+        noArrivals.setText(text);
+    }
+    
+    private void loadMoreArrivals() {
+        getArrivalsLoader().incrementMinutesAfter();
+        mLoadedMoreArrivals = true;
+        refresh();
+    }
 
     //
     // Refreshing!
@@ -591,6 +650,13 @@ public class ArrivalsListFragment extends ListFragment
     private void refresh() {
         if (isAdded()) {
             UIHelp.showProgress(this, true);
+            // Get last response length now, since its overwritten within
+            // ArrivalsListLoader before onLoadFinished() is called
+            ObaArrivalInfoResponse lastGood =
+                    getArrivalsLoader().getLastGoodResponse();
+            if (lastGood != null) {
+                mLastResponseLength = lastGood.getArrivalInfo().length;            
+            }
             getArrivalsLoader().onContentChanged();
         }
     }

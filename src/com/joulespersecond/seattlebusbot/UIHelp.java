@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
+ * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -399,5 +400,34 @@ public final class UIHelp {
             }
         }
         return null;
+    }
+    
+    public static final int MINUTES_IN_HOUR = 60;
+    
+    /**
+     * Takes the number of minutes, and returns a user-readable string
+     * saying the number of minutes in which no arrivals are coming,
+     * or the number of hours and minutes if minutes if minutes > 60
+     * @param minutes number of minutes for which there are no upcoming arrivals
+     * @param additionalArrivals true if the response should include the word additional, false if it should not
+     * @return a user-readable string saying the number of minutes in which no arrivals are coming,
+     * or the number of hours and minutes if minutes > 60
+     */
+    public static String getNoArrivalsMessage(Context context, int minutes, boolean additionalArrivals) {
+        if (minutes <= MINUTES_IN_HOUR) {
+            // Return just minutes
+            if (additionalArrivals) {
+                return context.getString(R.string.stop_info_no_additional_data_minutes, minutes);
+            } else {
+                return context.getString(R.string.stop_info_nodata_minutes, minutes);
+            }
+        } else {
+            // Return hours and minutes
+            if (additionalArrivals) {
+                return context.getResources().getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes, minutes/60, minutes%60, minutes/60);
+            } else {
+                return context.getResources().getQuantityString(R.plurals.stop_info_nodata_hours_minutes, minutes/60, minutes%60, minutes/60);                
+            }
+        }
     }
 }

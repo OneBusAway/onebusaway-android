@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
+ * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +32,11 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
         public Builder(Context context, String stopId) {
             super(context, getPathWithId("/arrivals-and-departures-for-stop/", stopId));
         }
+        
+        public Builder(Context context, String stopId, int minutesAfter) {
+            super(context, getPathWithId("/arrivals-and-departures-for-stop/", stopId));
+            mBuilder.appendQueryParameter("minutesAfter", String.valueOf(minutesAfter));
+        }
 
         public ObaArrivalInfoRequest build() {
             return new ObaArrivalInfoRequest(buildUri());
@@ -40,11 +46,22 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
     /**
      * Helper method for constructing new instances.
      * @param context The package context.
-     * @param routeId The stop Id to request.
+     * @param stopId The stop Id to request.
      * @return The new request instance.
      */
     public static ObaArrivalInfoRequest newRequest(Context context, String stopId) {
         return new Builder(context, stopId).build();
+    }
+    
+    /**
+     * Helper method for constructing new instances.
+     * @param context The package context.
+     * @param stopId The stop Id to request.
+     * @param minutesAfter includes vehicles arriving or departing in the next minutesAfter minutes
+     * @return The new request instance.
+     */
+    public static ObaArrivalInfoRequest newRequest(Context context, String stopId, int minutesAfter) {
+        return new Builder(context, stopId, minutesAfter).build();
     }
 
     @Override

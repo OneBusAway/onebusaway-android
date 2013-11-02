@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +29,9 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
     private ObaArrivalInfoResponse mLastGoodResponse;
     private long mLastResponseTime = 0;
     private long mLastGoodResponseTime = 0;
+    private int mMinutesAfter = 35; // includes vehicles arriving or departing in the next minutesAfter minutes
+    
+    private static final int MINUTES_INCREMENT = 30; // minutes
 
     public ArrivalsListLoader(Context context, String stopId) {
         super(context);
@@ -36,7 +40,7 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     @Override
     public ObaArrivalInfoResponse loadInBackground() {
-        return ObaArrivalInfoRequest.newRequest(getContext(), mStopId).call();
+        return ObaArrivalInfoRequest.newRequest(getContext(), mStopId, mMinutesAfter).call();
     }
 
     @Override
@@ -59,6 +63,14 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     public long getLastGoodResponseTime() {
         return mLastGoodResponseTime;
+    }
+    
+    public void incrementMinutesAfter() {
+        mMinutesAfter = mMinutesAfter + MINUTES_INCREMENT;
+    }
+    
+    public int getMinutesAfter() {
+        return mMinutesAfter;
     }
 
     /**

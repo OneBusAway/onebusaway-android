@@ -5,7 +5,7 @@ import json
 import urllib
 import urlparse
 
-RAWPATH = 'tests/res/raw'
+RAWPATH = 'onebusaway-android\src\instrumentTest\res\raw'
 URIMAP = os.path.join(RAWPATH, 'urimap.json')
 API_HOST = 'api.onebusaway.org'
 API_PARAMS = [('key', 'TEST'), ('version', '2')]
@@ -35,7 +35,7 @@ def main():
     print """
 -----
 Responses updated with the latest server data.
-Go back to Eclipse, refresh the SeattleBusBotTests project and re-run the unit tests.
+Go back to Android Studio, refresh the onebusaway-android project and re-run the unit tests.
 -----
     """
 

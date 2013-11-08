@@ -14,35 +14,47 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 
 ## Build Setup
 
-### Building in Eclipse
+### Prerequisites for both Android Studio and Gradle
 
-OneBusAway requires ActionBarSherlock: http://actionbarsherlock.com/
+1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html).  Make sure to install the Google APIs for your API level (e.g., 17), and the Android Support Repository and Google Repository.
+2. Set the "ANDROID_HOME" environmental variable to your Android SDK location.
+3. Set the "JAVA_HOME" environmental variables to point to your JDK folder (e.g., "C:\Program Files\Java\jdk1.6.0_27")
 
-Luckily, the version that we use is already included for you in this repository. You just need to
-import the SeattleBusBot/ActionBarSherlock project as an existing project. If you have trouble 
-building, make sure you have the latest version of the Android SDK and Android ADT. It never hurts to
-restart Eclipse and clean the project. If you still have trouble building, 
-let me know at paulcwatts@gmail.com.
+### Building in Android Studio
 
-### Building in Ant
+1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
+2. In Android Studio, choose "Import Project" at the welcome screen.
+3. Browse to the location of the project, and double-click on the **"settings.gradle"** file in the root (**NOT** the project directory).
+4. Check "Use auto-import", and select "Use default gradle wrapper (recommended)".  Click "Ok".
+5. Click the green play button (or 'Shift->F10') to run the project!
 
-This should just be as simple as using <code>ant debug</code> in the project root path.
+### Building from the command line using Gradle
+
+1. To build and push the app to the device, run `gradlew installDebug` from the command line at the root of the project
+2. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/.HomeActivity` (alternately, you can manually start the app)
 
 ## Troubleshooting
 
-### I don't get any map tiles!
+### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."
 
-The Google Maps API requires an API key that's tied to your keystore. If the API key doesn't match,
-there won't be any map files. If you're using the develop branch, you'll want to download this 
-and replace your existing debug keystore:
+When importing, please be sure to select the "settings.gradle" file in the root, **NOT** the project directory.
+You will get the above error if you select the project directory / name of the project.
 
-https://raw.github.com/OneBusAway/onebusaway-android/develop/seattlebusbot3.debug.keystore
+### I get build errors for the Android Support libraries or Google APIs
 
-This will work for develop. If you are using the master branch, that uses the production key generated
-from my private keystore. You'll want to use a different key. Luckily you can easily modify 
-one file to add your own API key (or use the debug key): 
+Open Android SDK Manager, and under the "Extras" category make sure you've installed both the
+"Android Support Repository" (in addition to the "Android Support library") as well as the
+ "Google Repository".  Also, make sure you have the Google API installed for the API level that you're working with in the "/build.gradle" file.
 
-https://github.com/OneBusAway/onebusaway-android/blob/master/res/values/maps_api_key.xml
+### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
+
+Make sure that you're consistently using the same Android SDK throughout Android Studio and your environmental variables.
+Android Studio comes bundled with an Android SDK, and can get confused if you're pointing to this SDK within Android Studio
+but have your environmental variables pointed elsewhere.  Click "File->Project Structure", and then under "Android SDK"
+make sure you "Android SDK Location" is the correct location of your Android SDK.
+
+Also, make sure you've set the "ANDROID_HOME" environmental variable to your Android SDK location and
+the "JAVA_HOME" environmental variables to point to your JDK folder.
 
 ## OneBusAway Project
 

@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) 2013 University of South Florida (sjbarbeau@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.6.+'
+    }
+}
+apply plugin: 'android'
+
+repositories {
+    mavenCentral()
+}
+
+android {
+    compileSdkVersion "Google Inc.:Google APIs:17"
+    buildToolsVersion "17.0.0"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 17
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("seattlebusbot3.debug.keystore")
+        }
+
+        release {
+            // Add the below parameter values to your environment
+            // variables to read the release key info from your local computer
+            /* Still need to figure this out, getting an error when values aren't
+            in the environmental variables that prevents a normal debug build
+            from finishing - see http://stackoverflow.com/a/19130098/937715
+            storeFile file(System.getenv("KEYSTORE_PATH"))
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+             */
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
+    compile 'com.android.support:support-v4:18.0.+'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.2.3'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    compile 'commons-io:commons-io:2.4'
+}

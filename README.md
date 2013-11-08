@@ -24,8 +24,8 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 2. In Android Studio, choose "Import Project" at the welcome screen.
-3. Browse to the location of the project, and double-click on the "settings.gradle" file in the root.
-4. Check "Use auto-import", and select "Use default gradle wrapper (recommended).  Click "Ok".
+3. Browse to the location of the project, and double-click on the **"settings.gradle"** file in the root (**NOT** the project directory).
+4. Check "Use auto-import", and select "Use default gradle wrapper (recommended)".  Click "Ok".
 5. Click the green play button (or 'Shift->F10') to run the project!
 
 ### Building from the command line using Gradle
@@ -35,12 +35,16 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 
 ## Troubleshooting
 
+### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."
+
+When importing, please be sure to select the "settings.gradle" file in the root, **NOT** the project directory.
+You will get the above error if you select the project directory / name of the project.
+
 ### I get build errors for the Android Support libraries or Google APIs
 
 Open Android SDK Manager, and under the "Extras" category make sure you've installed both the
 "Android Support Repository" (in addition to the "Android Support library") as well as the
  "Google Repository".  Also, make sure you have the Google API installed for the API level that you're working with in the "/build.gradle" file.
-
 
 ### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
 

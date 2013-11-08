@@ -48,8 +48,9 @@ Open Android SDK Manager, and under the "Extras" category make sure you've insta
 
 ### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
 
-Make sure that Android Studio is using the Android SDK you have installed, and not the SDK version
-that is bundled with Android Studio.  Click "File->Project Structure", and then under "Android SDK"
+Make sure that you're consistently using the same Android SDK throughout Android Studio and your environmental variables.
+Android Studio comes bundled with an Android SDK, and can get confused if you're pointing to this SDK within Android Studio
+but have your environmental variables pointed elsewhere.  Click "File->Project Structure", and then under "Android SDK"
 make sure you "Android SDK Location" is the correct location of your Android SDK.
 
 Also, make sure you've set the "ANDROID_HOME" environmental variable to your Android SDK location and

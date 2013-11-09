@@ -37,22 +37,33 @@ android {
         targetSdkVersion 17
     }
 
-    signingConfigs {
-        debug {
-            storeFile file("seattlebusbot3.debug.keystore")
-        }
+    if (project.hasProperty("secure.properties")
+            && new File(project.property("secure.properties")).exists()) {
 
-        release {
-            // Add the below parameter values to your environment
-            // variables to read the release key info from your local computer
-            /* Still need to figure this out, getting an error when values aren't
-            in the environmental variables that prevents a normal debug build
-            from finishing - see http://stackoverflow.com/a/19130098/937715
-            storeFile file(System.getenv("KEYSTORE_PATH"))
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
-             */
+        Properties props = new Properties()
+        props.load(new FileInputStream(file(project.property("secure.properties"))))
+
+        signingConfigs {
+            debug {
+                storeFile file("seattlebusbot3.debug.keystore")
+            }
+
+            release {
+                storeFile file(props['key.store'])
+                keyAlias props['key.alias']
+                storePassword "askmelater"
+                keyPassword "askmelater"
+            }
+        }
+    } else {
+        signingConfigs {
+            debug {
+                storeFile file("seattlebusbot3.debug.keystore")
+            }
+
+            release {
+                // Nothing here
+            }
         }
     }
 
@@ -60,6 +71,22 @@ android {
         release {
             signingConfig signingConfigs.release
         }
+    }
+}
+
+task askForPasswords << {
+    // Must create String because System.readPassword() returns char[]
+    // (and assigning that below fails silently)
+    def storePw = new String(System.console().readPassword("\nKeystore password: "))
+    def keyPw  = new String(System.console().readPassword("Key password: "))
+
+    android.signingConfigs.release.storePassword = storePw
+    android.signingConfigs.release.keyPassword = keyPw
+}
+
+tasks.whenTaskAdded { theTask ->
+    if (theTask.name.equals("packageRelease")) {
+        theTask.dependsOn "askForPasswords"
     }
 }
 

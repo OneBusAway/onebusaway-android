@@ -269,11 +269,7 @@ public class HomeActivity extends BaseMapActivity {
         final int newVer = appInfo.versionCode;
 
         if ((oldVer > 0) && (oldVer < newVer)) {
-            if (oldVer <= 22) {
-                mWhatsNewMessage = R.string.main_help_whatsnew_22;
-            } else {
-                mWhatsNewMessage = R.string.main_help_whatsnew;
-            }
+            mWhatsNewMessage = R.string.main_help_whatsnew;
             showDialog(WHATSNEW_DIALOG);
 
             // Updates will remove the alarms. This should put them back.

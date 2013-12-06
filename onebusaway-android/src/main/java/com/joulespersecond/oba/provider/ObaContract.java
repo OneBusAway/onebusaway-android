@@ -352,6 +352,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String TWITTER_URL = "twitter_url";
+
+        /**
+         * Whether or not the server is experimental (i.e., not production).
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String EXPERIMENTAL = "experimental";
     }
 
     protected interface RegionBoundsColumns {
@@ -908,7 +916,8 @@ public final class ObaContract {
                 SUPPORTS_OBA_DISCOVERY,
                 SUPPORTS_OBA_REALTIME,
                 SUPPORTS_SIRI_REALTIME,
-                TWITTER_URL
+                TWITTER_URL,
+                EXPERIMENTAL
             };
 
             Cursor c = cr.query(buildUri((int)id), PROJECTION, null, null, null);
@@ -929,7 +938,8 @@ public final class ObaContract {
                             c.getInt(6) > 0,            // Supports Oba Discovery
                             c.getInt(7) > 0,            // Supports Oba Realtime
                             c.getInt(8) > 0,            // Supports Siri Realtime
-                            c.getString(9)              // Twitter URL
+                            c.getString(9),              // Twitter URL
+                            c.getInt(10) > 0               // Experimental
                         );
                 } finally {
                     c.close();

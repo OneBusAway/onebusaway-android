@@ -90,4 +90,9 @@ public interface ObaRegion {
      * @return The Twitter URL for the region
      */
     public String getTwitterUrl();
+
+    /**
+     * @return true if this server is experimental, false if its production.
+     */
+    public boolean getExperimental();
 }

@@ -228,6 +228,7 @@ public class RegionUtils {
      * - Is the region active?
      * - Does the region support the OBA Discovery APIs?
      * - Does the region support the OBA Realtime APIs?
+     * - Is the region experimental, and if so, did the user opt-in via preferences?
      * 
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
@@ -245,12 +246,16 @@ public class RegionUtils {
             if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs."); }
             return false;
         }
-        
+        if (region.getExperimental() && !Application.getPrefs().getBoolean(Application.get().getString(R.string.preference_key_experimental_regions), false)) {
+            if (BuildConfig.DEBUG) { Log.d(TAG, "Region '" + region.getName() + "' is experimental and user hasn't opted in."); }
+            return false;
+        }
+
         return true;
     }
     
     /**
-     * Gets regions from either the server, local provider, or if both fails the regions.json file packaged
+     * Gets regions from either the server, local provider, or if both fails the regions file packaged
      * with the APK.  Includes fail-over logic to prefer sources in above order, with server being the first preference.
      * @param context
      * @param forceReload true if a reload from the server should be forced, false if it should not
@@ -324,7 +329,8 @@ public class RegionUtils {
                 Regions.SUPPORTS_OBA_DISCOVERY,
                 Regions.SUPPORTS_OBA_REALTIME,
                 Regions.SUPPORTS_SIRI_REALTIME,
-                Regions.TWITTER_URL
+                Regions.TWITTER_URL,
+                Regions.EXPERIMENTAL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -357,7 +363,8 @@ public class RegionUtils {
                     c.getInt(6) > 0,            // Supports Oba Discovery
                     c.getInt(7) > 0,            // Supports Oba Realtime
                     c.getInt(8) > 0,            // Supports Siri Realtime
-                    c.getString(9)              // Twitter URL
+                    c.getString(9),              // Twitter URL
+                    c.getInt(10) > 0            // Experimental
                 ));
 
             } while (c.moveToNext());
@@ -427,7 +434,7 @@ public class RegionUtils {
     }
     
     /**
-     * Retrieves region information from a regions.json file bundled within the app APK
+     * Retrieves region information from a regions file bundled within the app APK
      * 
      * IMPORTANT - this should be a last resort, and we should always try to pull regions
      * info from the local provider or Regions REST API instead of from the bundled file.
@@ -439,13 +446,13 @@ public class RegionUtils {
      * Android installations on devices in multiple regions.
      * 
      * @param context
-     * @return list of regions retrieved from the regions.json file in app resources
+     * @return list of regions retrieved from the regions file in app resources
      */
     private static ArrayList<ObaRegion> getRegionsFromResources(Context context) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
         builder.authority(context.getPackageName());
-        builder.path(Integer.toString(R.raw.regions));       
+        builder.path(Integer.toString(R.raw.regions_v3));
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context, builder.build()).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }
@@ -496,6 +503,7 @@ public class RegionUtils {
         values.put(Regions.SUPPORTS_OBA_REALTIME, region.getSupportsObaRealtimeApis() ? 1 : 0);
         values.put(Regions.SUPPORTS_SIRI_REALTIME, region.getSupportsSiriRealtimeApis() ? 1 : 0);
         values.put(Regions.TWITTER_URL, region.getTwitterUrl());
+        values.put(Regions.EXPERIMENTAL, region.getExperimental());
         return values;
     }
 

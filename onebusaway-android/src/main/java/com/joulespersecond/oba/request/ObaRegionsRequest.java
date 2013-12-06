@@ -38,14 +38,11 @@ public final class ObaRegionsRequest extends RequestBase implements
     // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
-        private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions.json");
+        private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions-v3.json");
 
-        public Builder(Context context) {
-            //super(context);
-        }
+        public Builder(Context context) {}
         
         public Builder(Context context, Uri uri) {
-            //super(context);
             URI = uri;
         }
 
@@ -68,7 +65,7 @@ public final class ObaRegionsRequest extends RequestBase implements
      * the requester to set the URI to retrieve the regions info
      * from
      * @param context The package context.
-     * @param uri URI to the regions.json file
+     * @param uri URI to the regions file
      * @return The new request instance.
      */
     public static ObaRegionsRequest newRequest(Context context, Uri uri) {
@@ -93,7 +90,7 @@ public final class ObaRegionsRequest extends RequestBase implements
     private ObaRegionsResponse getRegionFromResource(){
         ObaRegionsResponse response = null;
         
-        InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions);                        
+        InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions_v3);
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(ObaRegionsResponse.class);
         response = handler.deserialize(new InputStreamReader(is), ObaRegionsResponse.class);
         if (response == null) {

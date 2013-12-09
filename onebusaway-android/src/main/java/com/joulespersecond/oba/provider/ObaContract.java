@@ -657,8 +657,7 @@ public final class ObaContract {
         /**
          * Converts a boolean[] array to a DB compatible days bitmask
          *
-         * @param A
-         *            boolean array as returned by daysToArray
+         * @param days boolean array as returned by daysToArray
          * @return A DB compatible days bitmask
          */
         public static int arrayToDays(boolean[] days) {

@@ -1,0 +1,296 @@
+{
+  "code": 200, 
+  "text": "OK", 
+  "version": 3, 
+  "data": {
+    "list": [
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 27.976910500000002, 
+            "latSpan": 0.5424609999999994, 
+            "lon": -82.445851, 
+            "lonSpan": 0.576357999999999
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "onebusaway@gohart.org", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://api.tampa.onebusaway.org/api/", 
+        "id": 0, 
+        "experimental": false, 
+        "regionName": "Tampa"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 47.221315, 
+            "latSpan": 0.33704, 
+            "lon": -122.4051325, 
+            "lonSpan": 0.440483
+          }, 
+          {
+            "lat": 47.5607395, 
+            "latSpan": 0.743251, 
+            "lon": -122.1462785, 
+            "lonSpan": 0.720901
+          }, 
+          {
+            "lat": 47.556288, 
+            "latSpan": 0.090694, 
+            "lon": -122.4013255, 
+            "lonSpan": 0.126793
+          }, 
+          {
+            "lat": 47.093563, 
+            "latSpan": 0.320892, 
+            "lon": -122.701637, 
+            "lonSpan": 0.55098
+          }, 
+          {
+            "lat": 47.5346090123, 
+            "latSpan": 0.889378024643, 
+            "lon": -122.3294835, 
+            "lonSpan": 0.621109
+          }, 
+          {
+            "lat": 47.9747595, 
+            "latSpan": 1.336481, 
+            "lon": -122.8512, 
+            "lonSpan": 1.0904
+          }, 
+          {
+            "lat": 47.6204755, 
+            "latSpan": 0.014397, 
+            "lon": -122.335392, 
+            "lonSpan": 0.00635600000001
+          }, 
+          {
+            "lat": 47.64585, 
+            "latSpan": 0.0669, 
+            "lon": -122.2963, 
+            "lonSpan": 0.0802
+          }, 
+          {
+            "lat": 47.9347358907, 
+            "latSpan": 0.68796117128, 
+            "lon": -121.993246104, 
+            "lonSpan": 0.784555996061
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "onebusaway@soundtransit.org", 
+        "stopInfoUrl": "http://stopinfo.pugetsound.onebusaway.org", 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/pages/OneBusAway/216091804930", 
+        "obaBaseUrl": "http://api.pugetsound.onebusaway.org/", 
+        "id": 1, 
+        "experimental": false, 
+        "regionName": "Puget Sound"
+      }, 
+      {
+        "siriBaseUrl": "http://bustime.mta.info/api/", 
+        "obaVersionInfo": "", 
+        "supportsSiriRealtimeApis": true, 
+        "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
+        "supportsObaRealtimeApis": false, 
+        "bounds": [
+          {
+            "lat": 40.707678, 
+            "latSpan": 0.4093900000000019, 
+            "lon": -74.01768100000001, 
+            "lonSpan": 0.4686659999999989
+          }, 
+          {
+            "lat": 40.8192825, 
+            "latSpan": 0.228707, 
+            "lon": -73.89908199999999, 
+            "lonSpan": 0.23146799999999246
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "MTABusTime@mtahq.org", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/pages/MTA-New-York-City-Transit/232635164606", 
+        "obaBaseUrl": "http://bustime.mta.info/", 
+        "id": 2, 
+        "experimental": false, 
+        "regionName": "MTA New York"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.8-SNAPSHOT|1|1|8|SNAPSHOT|877d870ac5c5f64607113d08d6d362925839719e", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 33.7901797681045, 
+            "latSpan": 0.002537628406997783, 
+            "lon": -84.39483216212469, 
+            "lonSpan": 0.016058977126604645
+          }, 
+          {
+            "lat": 33.84859251766493, 
+            "latSpan": 0.006806584025866869, 
+            "lon": -84.36189486914657, 
+            "lonSpan": 0.035245473959491846
+          }, 
+          {
+            "lat": 34.22444908498577, 
+            "latSpan": 0.06626826841780087, 
+            "lon": -84.48419886031866, 
+            "lonSpan": 0.051677923063323306
+          }, 
+          {
+            "lat": 33.78784752284655, 
+            "latSpan": 0.026695928046905237, 
+            "lon": -84.31082746240949, 
+            "lonSpan": 0.028927748099008
+          }, 
+          {
+            "lat": 33.8079649176, 
+            "latSpan": 0.8443565223999983, 
+            "lon": -84.34070523855, 
+            "lonSpan": 0.8666740198999889
+          }, 
+          {
+            "lat": 33.7842061834795, 
+            "latSpan": 0.030916824823002287, 
+            "lon": -84.36385552465549, 
+            "lonSpan": 0.08416295068897739
+          }, 
+          {
+            "lat": 33.8105225, 
+            "latSpan": 0.5874290000000002, 
+            "lon": -84.37966800000001, 
+            "lonSpan": 0.5820399999999921
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "onebusaway@ce.gatech.edu", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/pages/ObaAtlanta/136662306506627", 
+        "obaBaseUrl": "http://onebusaway.gatech.edu/api/", 
+        "id": 3, 
+        "experimental": false, 
+        "regionName": "Atlanta"
+      }, 
+      {
+        "siriBaseUrl": "http://oba.mobilitylab.org/nextgen/api/", 
+        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|70fe470458e6b54078e567e0f008a161938a7468", 
+        "supportsSiriRealtimeApis": true, 
+        "language": "en_US", 
+        "twitterUrl": "http://mobile.twitter.com/mobilitylabteam", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 39.1922654372773, 
+            "latSpan": 0.19698666650759833, 
+            "lon": -76.7851586402455, 
+            "lonSpan": 0.23177524413500805
+          }, 
+          {
+            "lat": 37.187614999999994, 
+            "latSpan": 0.13692999999999955, 
+            "lon": -80.41169, 
+            "lonSpan": 0.08337999999999113
+          }, 
+          {
+            "lat": 38.8941925, 
+            "latSpan": 0.06883300000000503, 
+            "lon": -77.0180425, 
+            "lonSpan": 0.10683699999999874
+          }, 
+          {
+            "lat": 39.0963510360948, 
+            "latSpan": 0.23640594282640137, 
+            "lon": -76.7502984250321, 
+            "lonSpan": 0.35456249746140145
+          }, 
+          {
+            "lat": 39.406371749910775, 
+            "latSpan": 0.23433081571348424, 
+            "lon": -77.80964031815529, 
+            "lonSpan": 0.36454707384109497
+          }, 
+          {
+            "lat": 38.882281, 
+            "latSpan": 0.08580200000000104, 
+            "lon": -77.107778, 
+            "lonSpan": 0.1089900000000057
+          }, 
+          {
+            "lat": 38.7269105, 
+            "latSpan": 0.4100249999999974, 
+            "lon": -77.29476, 
+            "lonSpan": 0.6090959999999939
+          }, 
+          {
+            "lat": 38.960672, 
+            "latSpan": 1.2862760000000009, 
+            "lon": -77.0174175, 
+            "lonSpan": 1.8884749999999997
+          }, 
+          {
+            "lat": 38.895090499999995, 
+            "latSpan": 0.5927969999999974, 
+            "lon": -77.059198, 
+            "lonSpan": 0.7805180000000007
+          }, 
+          {
+            "lat": 39.1120985, 
+            "latSpan": 0.35281899999999666, 
+            "lon": -77.17786100000001, 
+            "lonSpan": 0.48159600000001035
+          }, 
+          {
+            "lat": 38.852059, 
+            "latSpan": 0.32038200000000217, 
+            "lon": -77.257233, 
+            "lonSpan": 0.4162059999999883
+          }, 
+          {
+            "lat": 39.4302745, 
+            "latSpan": 0.10931300000000022, 
+            "lon": -77.40370949999999, 
+            "lonSpan": 0.12437899999999047
+          }, 
+          {
+            "lat": 38.598434499999996, 
+            "latSpan": 0.5997209999999953, 
+            "lon": -77.2656675, 
+            "lonSpan": 0.5209109999999981
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "paul.mackie@mobilitylab.org", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/218056428212495", 
+        "obaBaseUrl": "http://oba.mobilitylab.org/", 
+        "id": 4, 
+        "experimental": true, 
+        "regionName": "Washington, D.C. (beta)"
+      }
+    ]
+  }
+}

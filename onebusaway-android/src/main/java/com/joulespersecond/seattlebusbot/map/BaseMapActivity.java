@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com) and individual contributors.
+ * Copyright (C) 2011-2013 Paul Watts (paulcwatts@gmail.com)
+ * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -366,9 +367,18 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     // Region Task Callback
     //
     @Override
-    public void onRegionUpdated(){
-        //Update map after a new region has been selected
+    public void onTaskFinished(boolean currentRegionChanged){
+        // Update map after a new region has been selected
         setMyLocation();
+
+        // If region changed and was auto-selected, show user what region we're using
+        if (currentRegionChanged
+                && Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)
+                && Application.get().getCurrentRegion() != null) {
+            Toast.makeText(this,
+                    getString(R.string.region_region_found,Application.get().getCurrentRegion().getName()),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     //
@@ -521,7 +531,9 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
             .setTitle(R.string.main_outofrange_title)
             .setIcon(android.R.drawable.ic_dialog_map)
-            .setMessage(R.string.main_outofrange)
+            .setMessage(getString(R.string.main_outofrange,
+                    Application.get().getCurrentRegion() != null ?
+                            Application.get().getCurrentRegion().getName():""))
             .setPositiveButton(R.string.main_outofrange_yes,
                 new DialogInterface.OnClickListener() {
                     @Override

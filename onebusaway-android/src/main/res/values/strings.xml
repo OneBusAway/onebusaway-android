@@ -68,7 +68,7 @@
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>
-    <string name="main_outofrange">You are out of OneBusAway\'s service area.\n\nGo there now?</string>
+    <string name="main_outofrange">You are out of the %1$s service area.\n\nGo there now?</string>
     <string name="main_outofrange_yes">Take me there</string>
     <string name="main_outofrange_no">Stay where I am</string>
 
@@ -228,6 +228,7 @@
     <string name ="region_detecting_server">Finding your transit services&#8230;</string>
     <string name ="region_choose_region">Choose region</string>
     <string name ="region_disabled_auto_selection">Disabled automatic region selection. You can enable in Preferences.</string>
+    <string name ="region_region_found">Found %1$s region</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway: Feedback</string>
@@ -239,7 +240,8 @@
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_region_title">Your region</string>
-    <string name="preferences_region_summary">The transit region used by the app</string>
+    <string name="preferences_region_summary">%1$s is currently selected</string>
+    <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
     <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
     <string name="preferences_auto_refresh_regions_summary">Automatically updates region info weekly</string>
     <string name="preferences_auto_select_region_title">Automatic region</string>
@@ -257,4 +259,9 @@
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?</string>
     <string name="preferences_db_restored">Restore successful! Please restart OneBusAway.</string>
     <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
+
+    <string name="preferences_experimental_regions_title">Experimental Regions</string>
+    <string name="preferences_experimental_regions_summary">Enables regions that may be unstable</string>
+    <string name="preferences_experimental_regions_enable_warning">Experimental regions may be unstable and without real-time info! Go ahead?</string>
+    <string name="preferences_experimental_regions_disable_warning">Your current experimental region won\'t be available! Go ahead?</string>
 </resources>

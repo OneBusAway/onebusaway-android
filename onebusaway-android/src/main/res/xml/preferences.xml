@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Brian Ferris (bdferris@onebusaway.org)
+<!-- Copyright (C) 2010-2013 Brian Ferris (bdferris@onebusaway.org)
+     and individual contributors
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -43,6 +44,9 @@
             android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
+        <com.joulespersecond.oba.region.ExperimentalRegionsPreference
+            android:title="@string/preferences_experimental_regions_title"
+            android:summary="@string/preferences_experimental_regions_summary" />
         <EditTextPreference
             android:title="@string/preferences_oba_api_servername_title"
             android:summary="@string/preferences_oba_api_servername_summary"            

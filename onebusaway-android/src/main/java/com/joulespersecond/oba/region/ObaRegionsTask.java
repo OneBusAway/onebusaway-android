@@ -16,12 +16,6 @@
  */
 package com.joulespersecond.oba.region;
 
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -32,7 +26,14 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.UIHelp;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,10 +48,11 @@ import java.util.List;
 public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion>> {    
     public interface Callback {
         /**
-         * Be aware that if mProgressDialog = true, the user will continue to see
-         * the indeterminate progress bar until the implementing method returns
+         * Called when the ObaRegionsTask is complete
+         * @param currentRegionChanged true if the current region changed as a result of the task,
+         *                      false if it didn't change
          */
-        public void onRegionUpdated();
+        public void onTaskFinished(boolean currentRegionChanged);
     }
     
     private static final String TAG = "ObaRegionsTask";
@@ -65,7 +67,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     
     /** 
      * @param context
-     * @param callback a callback will be made via the interface after the task is complete and a new region has been selected
+     * @param callback a callback will be made via this interface after the task is complete
+     *                 (null if no callback is requested)
      */
     public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback) {
         this.mContext = context;
@@ -76,7 +79,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     
     /** 
      * @param context
-     * @param callback a callback will be made via interface after the task is complete and a new region has been selected
+     * @param callback a callback will be made via this interface after the task is complete
+     *                 (null if no callback is requested)
      * @param force true if the task should be forced to update region info from the server, false if it can return local info
      * @param showProgressDialog true if a progress dialog should be shown to the user during the task, false if it should not
      */
@@ -89,7 +93,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     
     @Override
     protected void onPreExecute() {
-        if(mShowProgressDialog){
+        if (mShowProgressDialog) {
             mProgressDialog = ProgressDialog.show(mContext, "",
                     mContext.getString(R.string.region_detecting_server), true);
             mProgressDialog.setIndeterminate(true);
@@ -111,6 +115,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             //This is a catastrophic failure to load region info from all sources
             return;
         }
+
+        // Dismiss the dialog before calling the callbacks to avoid errors referencing the dialog later
+        if (mShowProgressDialog && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
                 
         SharedPreferences settings = Application.getPrefs();
         
@@ -127,27 +136,27 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'"); }
-                    doCallback();
+                    doCallback(true);
                 }else{
-                    //No region has been set, and we couldn't find a usable regions based on RegionUtil.isRegionUsable()
-                    //or we couldn't find a closest a region, so ask the user to pick the region                      
+                    //No region has been set, and we couldn't find a usable region based on RegionUtil.isRegionUsable()
+                    //or we couldn't find a closest a region, so ask the user to pick the region
                     haveUserChooseRegion(results);
                 }
-            }else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)) {
+            } else if (Application.get().getCurrentRegion() != null && closestRegion != null && !Application.get().getCurrentRegion().equals(closestRegion)) {
                     //User is closer to a different region than the current region, so change to the closest region
                     Application.get().setCurrentRegion(closestRegion);
                     if (BuildConfig.DEBUG) { Log.d(TAG, "Detected closer region '" + closestRegion.getName() + "', changed to this region."); }
-                    doCallback();
-            }        
-        }else{            
+                    doCallback(true);
+            } else {
+                doCallback(false);
+            }
+        } else {
             if (Application.get().getCurrentRegion() == null) {
                 //We don't have a region selected, and the user chose not to auto-select one, so make them pick one
                 haveUserChooseRegion(results);
+            } else {
+                doCallback(false);
             }
-        }
-        
-        if (mShowProgressDialog && mProgressDialog.isShowing()) {
-            mProgressDialog.dismiss();
         }
          
         super.onPostExecute(results);
@@ -157,8 +166,12 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         // Create dialog for user to choose
         List<String> serverNames = new ArrayList<String>();
         for (ObaRegion region : result) {
-            serverNames.add(region.getName());
+            if (RegionUtils.isRegionUsable(region)) {
+                serverNames.add(region.getName());
+            }
         }
+
+        Collections.sort(serverNames);
 
         final CharSequence[] items = serverNames
                 .toArray(new CharSequence[serverNames.size()]);
@@ -174,7 +187,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                         //Set the region application-wide
                         Application.get().setCurrentRegion(region);                                                
                         if (BuildConfig.DEBUG) { Log.d(TAG, "User chose region '" + items[item] + "'."); }
-                        doCallback();
+                        doCallback(true);
                         break;
                     }
                 }                
@@ -185,14 +198,16 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         alert.show();
     }
     
-    private void doCallback() {        
+    private void doCallback(final boolean currentRegionChanged) {
         //If we execute on same thread immediately after setting Region, map UI may try to call
         //OBA REST API before the new region info is set in Application.  So, pause briefly.
         final Handler mPauseForCallbackHandler = new Handler();
         final Runnable mPauseForCallback = new Runnable() {
             public void run() {
                 //Map may not have triggered call to OBA REST API, so we force one here
-                mCallback.onRegionUpdated();            
+                if (mCallback != null) {
+                    mCallback.onTaskFinished(currentRegionChanged);
+                }
             }
         };        
         mPauseForCallbackHandler.postDelayed(mPauseForCallback,

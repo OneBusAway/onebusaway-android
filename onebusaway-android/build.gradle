@@ -19,7 +19,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.6.+'
+        classpath 'com.android.tools.build:gradle:0.7.1+'
     }
 }
 apply plugin: 'android'
@@ -35,6 +35,12 @@ android {
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 17
+    }
+
+    // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
     }
 
     if (project.hasProperty("secure.properties")

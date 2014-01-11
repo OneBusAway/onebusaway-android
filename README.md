@@ -33,6 +33,23 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 1. To build and push the app to the device, run `gradlew installDebug` from the command line at the root of the project
 2. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/.HomeActivity` (alternately, you can manually start the app)
 
+### Release builds
+
+To build a release build, you need to create a "gradle.properties" file that points to a "secure.properties" file, and a "secure.properties" file that points to your keystore and alias. The `gradlew assembleRelease` command will prompt for your keystore passphrase.
+
+The "gradle.properties" file is located in the onebusaway-android directory and has the contents:
+```
+secure.properties=<full_path_to_secure_properties_file>
+```
+
+The "secure.properties" file (in the location specified in gradle.properties) has the contents:
+```
+key.store=<full_path_to_keystore_file>
+key.alias=<key_alias_name>
+```
+
+Note that the paths in these files always use the Unix path separator  `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
+
 ## Troubleshooting
 
 ### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."

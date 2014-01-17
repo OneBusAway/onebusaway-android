@@ -255,11 +255,14 @@ public class ArrivalsListFragment extends ListFragment
         // If the user just tried to load more arrivals, determine if we 
         // should show a Toast in the case where no additional arrivals were loaded
         if (mLoadedMoreArrivals) {
-            if (info.length == 0 || mLastResponseLength != info.length) {
-                // Don't show the toast at all, since no records were returned
-                // (and empty list message is already shown)
-                // or more arrivals were actually loaded
-                mLoadedMoreArrivals = false;  
+            if (info == null || info.length == 0 || mLastResponseLength != info.length) {
+                /*
+                Don't show the toast, since:
+                 1) an error occurred (and user has already seen the error message),
+                 2) no records were returned (and empty list message is already shown), or
+                 3) more arrivals were actually loaded
+                */
+                mLoadedMoreArrivals = false;
             } else if (mLastResponseLength == info.length) {
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),

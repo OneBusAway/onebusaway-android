@@ -262,6 +262,6 @@
 
     <string name="preferences_experimental_regions_title">Experimental regions</string>
     <string name="preferences_experimental_regions_summary">Enables regions that may be unstable</string>
-    <string name="preferences_experimental_regions_enable_warning">Experimental regions may be unstable and without real-time info! Go ahead?</string>
-    <string name="preferences_experimental_regions_disable_warning">Your current experimental region won\'t be available! Go ahead?</string>
+    <string name="preferences_experimental_regions_enable_warning">Experimental regions may be unstable and without real-time information! Enable experimental regions?</string>
+    <string name="preferences_experimental_regions_disable_warning">You are currently using an experimental region. Proceeding will remove that region and change your region to the geographically closest stable region. Proceed anyways?</string>
 </resources>

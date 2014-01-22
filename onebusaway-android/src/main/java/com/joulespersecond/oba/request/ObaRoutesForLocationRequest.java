@@ -30,19 +30,22 @@ import java.util.concurrent.Callable;
  */
 public final class ObaRoutesForLocationRequest extends RequestBase
         implements Callable<ObaRoutesForLocationResponse> {
+
     protected ObaRoutesForLocationRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, GeoPoint location) {
             super(context, BASE_PATH + "/routes-for-location.json");
-            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitudeE6()/1E6));
-            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitudeE6()/1E6));
+            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitudeE6() / 1E6));
+            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitudeE6() / 1E6));
         }
 
         /**
          * Sets the optional search radius.
+         *
          * @param radius The search radius, in meters.
          */
         public Builder setRadius(int radius) {
@@ -52,6 +55,7 @@ public final class ObaRoutesForLocationRequest extends RequestBase
 
         /**
          * An alternative to {@link #setRadius(int)} to set the search bounding box
+         *
          * @param latSpan The latitude span of the bounding box.
          * @param lonSpan The longitude span of the bounding box.
          */
@@ -63,17 +67,19 @@ public final class ObaRoutesForLocationRequest extends RequestBase
 
         /**
          * An alternative to {@link #setRadius(int)} to set the search bounding box
+         *
          * @param latSpan The latitude span of the bounding box in microdegrees.
          * @param lonSpan The longitude span of the bounding box in microdegrees.
          */
         public Builder setSpan(int latSpan, int lonSpan) {
-            mBuilder.appendQueryParameter("latSpan", String.valueOf(latSpan/1E6));
-            mBuilder.appendQueryParameter("lonSpan", String.valueOf(lonSpan/1E6));
+            mBuilder.appendQueryParameter("latSpan", String.valueOf(latSpan / 1E6));
+            mBuilder.appendQueryParameter("lonSpan", String.valueOf(lonSpan / 1E6));
             return this;
         }
 
         /**
          * A specific route short name to search for.
+         *
          * @param query The short name query string.
          */
         public Builder setQuery(String query) {

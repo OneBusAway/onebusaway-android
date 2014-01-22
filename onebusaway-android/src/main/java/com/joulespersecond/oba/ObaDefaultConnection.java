@@ -36,15 +36,18 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 public final class ObaDefaultConnection implements ObaConnection {
+
     private static final String TAG = "ObaDefaultConnection";
 
     private HttpURLConnection mConnection;
 
     ObaDefaultConnection(Uri uri) throws IOException {
-        if (BuildConfig.DEBUG) { Log.d(TAG, uri.toString()); }
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, uri.toString());
+        }
         URL url = new URL(uri.toString());
-        mConnection = (HttpURLConnection)url.openConnection();
-        mConnection.setReadTimeout(30*1000);
+        mConnection = (HttpURLConnection) url.openConnection();
+        mConnection.setReadTimeout(30 * 1000);
     }
 
     @Override
@@ -75,14 +78,16 @@ public final class ObaDefaultConnection implements ObaConnection {
         stream.flush();
         stream.close();
 
-        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream(), 8*1024));
+        return new InputStreamReader(
+                new BufferedInputStream(mConnection.getInputStream(), 8 * 1024));
     }
 
     //
     // Gingerbread and above support Gzip natively.
     //
     private Reader get_Gingerbread() throws IOException {
-        return new InputStreamReader(new BufferedInputStream(mConnection.getInputStream(), 8*1024));
+        return new InputStreamReader(
+                new BufferedInputStream(mConnection.getInputStream(), 8 * 1024));
     }
 
     private Reader get_Froyo() throws IOException {
@@ -91,12 +96,12 @@ public final class ObaDefaultConnection implements ObaConnection {
 
         InputStream in = mConnection.getInputStream();
 
-        final Map<String,List<String>> headers = mConnection.getHeaderFields();
+        final Map<String, List<String>> headers = mConnection.getHeaderFields();
         // This is a map, but we can't assume the key we're looking for
         // is in normal casing. So it's really not a good map, is it?
-        final Set<Map.Entry<String,List<String>>> set = headers.entrySet();
-        for (Iterator<Map.Entry<String,List<String>>> i = set.iterator(); i.hasNext(); ) {
-            Map.Entry<String,List<String>> entry = i.next();
+        final Set<Map.Entry<String, List<String>>> set = headers.entrySet();
+        for (Iterator<Map.Entry<String, List<String>>> i = set.iterator(); i.hasNext(); ) {
+            Map.Entry<String, List<String>> entry = i.next();
             if ("Content-Encoding".equalsIgnoreCase(entry.getKey())) {
                 for (Iterator<String> j = entry.getValue().iterator(); j.hasNext(); ) {
                     String str = j.next();
@@ -113,9 +118,10 @@ public final class ObaDefaultConnection implements ObaConnection {
         }
 
         if (useGzip) {
-            return new InputStreamReader(new BufferedInputStream(new GZIPInputStream(in), 8*1024));
+            return new InputStreamReader(
+                    new BufferedInputStream(new GZIPInputStream(in), 8 * 1024));
         } else {
-            return new InputStreamReader(new BufferedInputStream(in, 8*1024));
+            return new InputStreamReader(new BufferedInputStream(in, 8 * 1024));
         }
     }
 

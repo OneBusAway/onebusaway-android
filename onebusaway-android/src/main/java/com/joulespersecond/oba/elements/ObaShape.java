@@ -20,6 +20,7 @@ import com.google.android.maps.GeoPoint;
 import java.util.List;
 
 public interface ObaShape {
+
     /**
      * Returns the number of points in the line.
      *

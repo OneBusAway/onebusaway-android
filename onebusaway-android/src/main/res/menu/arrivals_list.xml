@@ -17,21 +17,21 @@
     <item android:id="@+id/refresh"
           android:title="@string/stop_info_option_refresh"
           android:icon="@drawable/ic_action_refresh"
-          android:showAsAction="ifRoom" />
+          android:showAsAction="ifRoom"/>
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap"
           android:icon="@drawable/ic_action_map"
-          android:showAsAction="ifRoom" />
+          android:showAsAction="ifRoom"/>
     <item android:id="@+id/filter"
           android:title="@string/stop_info_option_filter"
-          android:icon="@drawable/ic_menu_trip" />
+          android:icon="@drawable/ic_menu_trip"/>
     <item android:id="@+id/edit_name"
           android:title="@string/stop_info_option_editname"
-          android:icon="@drawable/android:ic_menu_edit" />
+          android:icon="@drawable/android:ic_menu_edit"/>
     <item android:id="@+id/toggle_favorite"
           android:title="@string/stop_info_option_addstar"
-          android:icon="@drawable/ic_menu_star" />
+          android:icon="@drawable/ic_menu_star"/>
     <item android:id="@+id/report_problem"
           android:title="@string/stop_info_option_reportproblem"
-          android:icon="@drawable/ic_menu_report_problem" />
+          android:icon="@drawable/ic_menu_report_problem"/>
 </menu>

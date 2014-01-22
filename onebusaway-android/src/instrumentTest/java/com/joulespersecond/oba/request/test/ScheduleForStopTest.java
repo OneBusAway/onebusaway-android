@@ -27,23 +27,27 @@ import java.util.HashMap;
 
 @SuppressWarnings("serial")
 public class ScheduleForStopTest extends ObaTestCase {
+
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testKCMStopRequest() {
         ObaScheduleForStopRequest request =
                 new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
-                    .build();
+                        .build();
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/schedule-for-stop/1_75403.json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 
     public void testKCMStop() {
         ObaScheduleForStopResponse response =
-            new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
-                .build()
-                .call();
+                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                        .build()
+                        .call();
         // This is just to ensure we can call it, but since we don't
         // know the day we can't really assume very much.
         assertOK(response);
@@ -66,9 +70,9 @@ public class ScheduleForStopTest extends ObaTestCase {
         time.month = 6;
         time.monthDay = 30;
         ObaScheduleForStopRequest request =
-            new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
-                .setDate(time)
-                .build();
+                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                        .setDate(time)
+                        .build();
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
@@ -85,9 +89,9 @@ public class ScheduleForStopTest extends ObaTestCase {
         time.month = 6;
         time.monthDay = 30;
         ObaScheduleForStopRequest request =
-            new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
-                .setDate(time)
-                .build();
+                new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
+                        .setDate(time)
+                        .build();
         ObaScheduleForStopResponse response = request.call();
         assertOK(response);
         final ObaStop stop = response.getStop();

@@ -18,9 +18,11 @@ package com.joulespersecond.oba.elements;
 /**
  * Interface for a Trip element
  * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_TripElementV2}
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public interface ObaTrip extends ObaElement {
+
     public static final int DIRECTION_OUTBOUND = 0;
     public static final int DIRECTION_INBOUND = 1;
 

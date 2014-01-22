@@ -29,10 +29,11 @@ import android.widget.TextView;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists
- * @author paulw
  *
+ * @author paulw
  */
 final class QueryUtils {
+
     static protected CursorLoader newRecentQuery(
             final Context context,
             final Uri uri,
@@ -40,37 +41,39 @@ final class QueryUtils {
             final String accessTime,
             final String useCount) {
         // "Recently" means seven days in the past
-        final long last = System.currentTimeMillis() - 7*DateUtils.DAY_IN_MILLIS;
+        final long last = System.currentTimeMillis() - 7 * DateUtils.DAY_IN_MILLIS;
         Uri limit = uri.buildUpon().appendQueryParameter("limit", "20").build();
-        
+
         String regionWhere = "";
-        if(Application.get().getCurrentRegion() != null){
-            if(projection.equals(QueryUtils.StopList.Columns.PROJECTION) ){
+        if (Application.get().getCurrentRegion() != null) {
+            if (projection.equals(QueryUtils.StopList.Columns.PROJECTION)) {
                 regionWhere = " AND " + StopList.getRegionWhere();
-            }else if(projection.equals(QueryUtils.RouteList.Columns.PROJECTION)){
+            } else if (projection.equals(QueryUtils.RouteList.Columns.PROJECTION)) {
                 regionWhere = " AND " + RouteList.getRegionWhere();
             }
         }
-       
+
         return new CursorLoader(context,
                 limit,
                 projection,
                 "((" +
-                    accessTime + " IS NOT NULL AND " +
-                    accessTime + " > " + last +
-                ") OR (" + useCount + " > 0))" + regionWhere,
+                        accessTime + " IS NOT NULL AND " +
+                        accessTime + " > " + last +
+                        ") OR (" + useCount + " > 0))" + regionWhere,
                 null,
                 accessTime + " desc, " +
-                useCount + " desc");
+                        useCount + " desc");
     }
 
     static final class RouteList {
+
         public interface Columns {
+
             public static final String[] PROJECTION = {
-                ObaContract.Routes._ID,
-                ObaContract.Routes.SHORTNAME,
-                ObaContract.Routes.LONGNAME,
-                ObaContract.Routes.URL
+                    ObaContract.Routes._ID,
+                    ObaContract.Routes.SHORTNAME,
+                    ObaContract.Routes.LONGNAME,
+                    ObaContract.Routes.URL
             };
             public static final int COL_ID = 0;
             public static final int COL_SHORTNAME = 1;
@@ -95,7 +98,7 @@ final class QueryUtils {
 
         static protected String getId(ListView l, int position) {
             // Get the cursor and fetch the stop ID from that.
-            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_ID);
@@ -103,28 +106,31 @@ final class QueryUtils {
 
         static protected String getUrl(ListView l, int position) {
             // Get the cursor and fetch the stop ID from that.
-            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_URL);
         }
-        
-        static protected String getRegionWhere(){            
+
+        static protected String getRegionWhere() {
             return Application.get().getCurrentRegion() == null ? "" :
-                QueryUtils.getRegionWhere(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
+                    QueryUtils.getRegionWhere(ObaContract.Routes.REGION_ID,
+                            Application.get().getCurrentRegion().getId());
         }
     }
 
     static final class StopList {
+
         public interface Columns {
+
             public static final String[] PROJECTION = {
-                ObaContract.Stops._ID,
-                ObaContract.Stops.UI_NAME,
-                ObaContract.Stops.DIRECTION,
-                ObaContract.Stops.LATITUDE,
-                ObaContract.Stops.LONGITUDE,
-                ObaContract.Stops.UI_NAME,
-                ObaContract.Stops.FAVORITE
+                    ObaContract.Stops._ID,
+                    ObaContract.Stops.UI_NAME,
+                    ObaContract.Stops.DIRECTION,
+                    ObaContract.Stops.LATITUDE,
+                    ObaContract.Stops.LONGITUDE,
+                    ObaContract.Stops.UI_NAME,
+                    ObaContract.Stops.FAVORITE
             };
             public static final int COL_ID = 0;
             public static final int COL_NAME = 1;
@@ -136,30 +142,29 @@ final class QueryUtils {
         }
 
         public static SimpleCursorAdapter newAdapter(Context context) {
-            String[] from = new String[] {
+            String[] from = new String[]{
                     ObaContract.Stops.UI_NAME,
                     ObaContract.Stops.DIRECTION,
                     ObaContract.Stops.FAVORITE
             };
-            int[] to = new int[] {
+            int[] to = new int[]{
                     R.id.stop_name,
                     R.id.direction,
                     R.id.stop_name
             };
             SimpleCursorAdapter simpleAdapter =
-                new SimpleCursorAdapter(context, R.layout.stop_list_item, null, from, to, 0);
+                    new SimpleCursorAdapter(context, R.layout.stop_list_item, null, from, to, 0);
 
             // We need to convert the direction text (N/NW/E/etc)
             // to user level text (North/Northwest/etc..)
             simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                 public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                     if (columnIndex == Columns.COL_FAVORITE) {
-                        TextView favorite = (TextView)view.findViewById(R.id.stop_name);
+                        TextView favorite = (TextView) view.findViewById(R.id.stop_name);
                         int icon = (cursor.getInt(columnIndex) == 1) ? R.drawable.star_on : 0;
                         favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
                         return true;
-                    }
-                    else if (columnIndex == Columns.COL_DIRECTION) {
+                    } else if (columnIndex == Columns.COL_DIRECTION) {
                         UIHelp.setStopDirection(view.findViewById(R.id.direction),
                                 cursor.getString(columnIndex),
                                 true);
@@ -173,20 +178,21 @@ final class QueryUtils {
 
         static protected String getId(ListView l, int position) {
             // Get the cursor and fetch the stop ID from that.
-            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_ID);
         }
-        
-        static protected String getRegionWhere(){
+
+        static protected String getRegionWhere() {
             return Application.get().getCurrentRegion() == null ? "" :
-                QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
+                    QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
+                            Application.get().getCurrentRegion().getId());
         }
     }
-    
-    public static String getRegionWhere(String regionFieldName, long regionId){
+
+    public static String getRegionWhere(String regionFieldName, long regionId) {
         return "(" + regionFieldName + "=" + regionId +
-            " OR " + regionFieldName + " IS NULL)";
+                " OR " + regionFieldName + " IS NULL)";
     }
 }

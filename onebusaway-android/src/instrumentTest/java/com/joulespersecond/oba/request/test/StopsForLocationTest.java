@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.request.test;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -25,6 +26,7 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 
 public class StopsForLocationTest extends ObaTestCase {
+
     public void testDowntownSeattle1() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.610980, -122.33845);
 
@@ -52,10 +54,10 @@ public class StopsForLocationTest extends ObaTestCase {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
-            new ObaStopsForLocationRequest.Builder(getContext(), pt)
-                .setQuery("26")
-                .build()
-                .call();
+                new ObaStopsForLocationRequest.Builder(getContext(), pt)
+                        .setQuery("26")
+                        .build()
+                        .call();
         assertOK(response);
         final ObaStop[] list = response.getStops();
         assertTrue(list.length > 0);
@@ -73,10 +75,10 @@ public class StopsForLocationTest extends ObaTestCase {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
-            new ObaStopsForLocationRequest.Builder(getContext(), pt)
-                .setQuery("112423")
-                .build()
-                .call();
+                new ObaStopsForLocationRequest.Builder(getContext(), pt)
+                        .setQuery("112423")
+                        .build()
+                        .call();
         assertOK(response);
         final ObaStop[] list = response.getStops();
         assertEquals(0, list.length);

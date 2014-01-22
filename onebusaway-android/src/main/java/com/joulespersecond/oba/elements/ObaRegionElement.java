@@ -17,14 +17,19 @@ package com.joulespersecond.oba.elements;
 
 
 public class ObaRegionElement implements ObaRegion {
-    public static final ObaRegionElement[] EMPTY_ARRAY = new ObaRegionElement[] {};
+
+    public static final ObaRegionElement[] EMPTY_ARRAY = new ObaRegionElement[]{};
 
     public static class Bounds implements ObaRegion.Bounds {
-        public static final Bounds[] EMPTY_ARRAY = new Bounds[] {};
+
+        public static final Bounds[] EMPTY_ARRAY = new Bounds[]{};
 
         private final double lat;
+
         private final double lon;
+
         private final double latSpan;
+
         private final double lonSpan;
 
         Bounds() {
@@ -66,17 +71,29 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     private final long id;
+
     private final String regionName;
+
     private final boolean active;
+
     private final String obaBaseUrl;
+
     private final String siriBaseUrl;
+
     private final Bounds[] bounds;
+
     private final String language;
+
     private final String contactEmail;
+
     private final boolean supportsObaDiscoveryApis;
+
     private final boolean supportsObaRealtimeApis;
+
     private final boolean supportsSiriRealtimeApis;
+
     private final String twitterUrl;
+
     private final boolean experimental;
 
     ObaRegionElement() {
@@ -177,14 +194,16 @@ public class ObaRegionElement implements ObaRegion {
     public boolean getSupportsSiriRealtimeApis() {
         return supportsSiriRealtimeApis;
     }
-    
+
     @Override
-    public String getTwitterUrl() {        
+    public String getTwitterUrl() {
         return twitterUrl;
     }
 
     @Override
-    public boolean getExperimental() { return experimental; }
+    public boolean getExperimental() {
+        return experimental;
+    }
 
     @Override
     public int hashCode() {
@@ -196,19 +215,23 @@ public class ObaRegionElement implements ObaRegion {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof ObaRegionElement))
-            return false;
-        ObaRegionElement other = (ObaRegionElement)obj;
-        if (id == 0) {
-            if (other.getId() != 0)
-                return false;
         }
-        else if (id != other.getId())
+        if (obj == null) {
             return false;
+        }
+        if (!(obj instanceof ObaRegionElement)) {
+            return false;
+        }
+        ObaRegionElement other = (ObaRegionElement) obj;
+        if (id == 0) {
+            if (other.getId() != 0) {
+                return false;
+            }
+        } else if (id != other.getId()) {
+            return false;
+        }
         return true;
     }
 
@@ -217,12 +240,12 @@ public class ObaRegionElement implements ObaRegion {
         return "ObaRegionElement [id=" + id + ", regionName=" + regionName
                 + ", active=" + active + ", obaBaseUrl=" + obaBaseUrl
                 + ", siriBaseUrl=" + siriBaseUrl + ", language=" + language
-                + ", contactEmail=" + contactEmail 
+                + ", contactEmail=" + contactEmail
                 + ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis
                 + ", supportsObaRealtimeApis=" + supportsObaRealtimeApis
                 + ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis
                 + ", twitterUrl=" + twitterUrl
                 + ", experimental=" + experimental
                 + "]";
-    }      
+    }
 }

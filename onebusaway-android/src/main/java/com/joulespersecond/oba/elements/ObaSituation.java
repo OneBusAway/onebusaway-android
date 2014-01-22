@@ -18,9 +18,12 @@ package com.joulespersecond.oba.elements;
 import java.util.List;
 
 public interface ObaSituation extends ObaElement {
+
     public interface AllAffects {
+
         /**
          * The list of affected direction IDs.
+         *
          * @return The affected direction ID, if any.
          */
         public String getDirectionId();
@@ -52,6 +55,7 @@ public interface ObaSituation extends ObaElement {
     }
 
     public interface ConditionDetails {
+
         /**
          * @return For diversion conditions, this specifies the stop IDs
          * that are diverted.
@@ -66,6 +70,7 @@ public interface ObaSituation extends ObaElement {
     }
 
     public interface Consequence {
+
         public static final String CONDITION_DIVERSION = "diversion";
         public static final String CONDITION_ALTERED = "altered";
 

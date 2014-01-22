@@ -24,6 +24,7 @@ import com.google.android.maps.GeoPoint;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public interface ObaStop extends ObaElement {
+
     public static final int LOCATION_STOP = 0;
     public static final int LOCATION_STATION = 1;
 

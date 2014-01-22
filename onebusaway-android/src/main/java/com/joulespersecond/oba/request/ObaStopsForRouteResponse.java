@@ -28,19 +28,25 @@ import java.util.List;
 
 /**
  * Response object for ObaStopForRouteRequest requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
+
     private static final class Entry {
+
         private static final Entry EMPTY_OBJECT = new Entry();
 
         private final String routeId;
+
         private final String[] stopIds;
+
         private final ObaStopGrouping[] stopGroupings;
+
         private final ObaShapeElement[] polylines;
 
         Entry() {
-            stopIds = new String[] {};
+            stopIds = new String[]{};
             stopGroupings = ObaStopGrouping.EMPTY_ARRAY;
             polylines = ObaShapeElement.EMPTY_ARRAY;
             routeId = null;
@@ -48,11 +54,14 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
     }
 
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final Entry entry = Entry.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaStopsForRouteResponse() {
@@ -89,7 +98,7 @@ public final class ObaStopsForRouteResponse extends ObaResponseWithRefs {
 
     /**
      * Search for a stop within the stop groups
-     * @param stopId
+     *
      * @return Returns the first ObaStopGroup that contains the specified stop
      */
     public ObaStopGroup getGroupForStop(String stopId) {

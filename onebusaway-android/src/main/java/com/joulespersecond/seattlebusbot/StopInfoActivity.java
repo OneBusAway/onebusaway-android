@@ -27,10 +27,10 @@ import android.util.Log;
  * because it is used by existing shortcuts.
  *
  * @author paulw
-
  */
 @Deprecated
 public class StopInfoActivity extends Activity {
+
     private static final String TAG = "StopInfoActivity";
 
     @Override

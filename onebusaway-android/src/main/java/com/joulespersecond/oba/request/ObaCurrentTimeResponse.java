@@ -17,10 +17,13 @@ package com.joulespersecond.oba.request;
 
 
 public final class ObaCurrentTimeResponse extends ObaResponse {
+
     private static final class Entry {
+
         private static final Entry EMPTY_OBJECT = new Entry();
 
         private final long time;
+
         private final String readableTime;
 
         private Entry() {
@@ -30,6 +33,7 @@ public final class ObaCurrentTimeResponse extends ObaResponse {
     }
 
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final Entry entry;
@@ -38,6 +42,7 @@ public final class ObaCurrentTimeResponse extends ObaResponse {
             entry = Entry.EMPTY_OBJECT;
         }
     }
+
     private final Data data;
 
     private ObaCurrentTimeResponse() {

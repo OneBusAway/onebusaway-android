@@ -16,6 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.view.SearchView;
 
 import android.app.Activity;
@@ -33,10 +34,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 abstract class MySearchFragmentBase extends ListFragment
-            implements SearchView.OnQueryTextListener, MyListConstants {
+        implements SearchView.OnQueryTextListener, MyListConstants {
     //private static final String TAG = "MySearchFragmentBase";
 
     private Timer mSearchTimer;
+
     private SearchView mSearchView;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
@@ -47,7 +49,7 @@ abstract class MySearchFragmentBase extends ListFragment
 
         registerForContextMenu(getListView());
 
-        TextView empty = (TextView)getView().findViewById(android.R.id.empty);
+        TextView empty = (TextView) getView().findViewById(android.R.id.empty);
         empty.setMovementMethod(LinkMovementMethod.getInstance());
         // Set empty text
         setEmptyText(getHintText());
@@ -60,7 +62,7 @@ abstract class MySearchFragmentBase extends ListFragment
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mSearchView = (SearchView)getView().findViewById(R.id.search);
+        mSearchView = (SearchView) getView().findViewById(R.id.search);
     }
 
     @Override
@@ -71,11 +73,11 @@ abstract class MySearchFragmentBase extends ListFragment
 
     @Override
     public void setEmptyText(CharSequence seq) {
-        TextView empty = (TextView)getView().findViewById(R.id.internalEmpty);
+        TextView empty = (TextView) getView().findViewById(R.id.internalEmpty);
         if (empty != null) {
             empty.setText(seq, BufferType.SPANNABLE);
         }
-        empty = (TextView)getView().findViewById(android.R.id.empty);
+        empty = (TextView) getView().findViewById(android.R.id.empty);
         if (empty != null) {
             empty.setText(seq, BufferType.SPANNABLE);
         }
@@ -99,7 +101,7 @@ abstract class MySearchFragmentBase extends ListFragment
         final Runnable doSearch = new Runnable() {
             public void run() {
                 doSearch(query);
-           }
+            }
         };
         mSearchTimer = new Timer();
         mSearchTimer.schedule(new TimerTask() {
@@ -110,6 +112,7 @@ abstract class MySearchFragmentBase extends ListFragment
         }, DELAYED_SEARCH_TIMEOUT);
         return true;
     }
+
     final Handler mSearchHandler = new Handler();
 
     @Override
@@ -141,7 +144,8 @@ abstract class MySearchFragmentBase extends ListFragment
 
     /**
      * Default implementation for creating a shortcut when in shortcut mode.
-     * @param name The name of the shortcut.
+     *
+     * @param name       The name of the shortcut.
      * @param destIntent The destination intent.
      */
     protected final void makeShortcut(String name, Intent destIntent) {
@@ -155,7 +159,7 @@ abstract class MySearchFragmentBase extends ListFragment
     protected boolean isShortcutMode() {
         Activity act = getActivity();
         if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase)act;
+            MyTabActivityBase base = (MyTabActivityBase) act;
             return base.isShortcutMode();
         }
         return false;
@@ -165,7 +169,7 @@ abstract class MySearchFragmentBase extends ListFragment
         Activity act = getActivity();
         GeoPoint result = null;
         if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase)act;
+            MyTabActivityBase base = (MyTabActivityBase) act;
             result = base.getSearchCenter();
         }
         if (result == null) {
@@ -174,7 +178,8 @@ abstract class MySearchFragmentBase extends ListFragment
         return result;
     }
 
-    private final OnFocusChangeListener mOnQueryTextFocusChangeListener = new OnFocusChangeListener() {
+    private final OnFocusChangeListener mOnQueryTextFocusChangeListener
+            = new OnFocusChangeListener() {
         @Override
         public void onFocusChange(View view, boolean hasFocus) {
             if (hasFocus) {

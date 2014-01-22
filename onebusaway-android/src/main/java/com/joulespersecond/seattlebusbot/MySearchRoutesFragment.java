@@ -17,6 +17,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
@@ -42,7 +43,8 @@ import android.widget.TextView;
 import java.util.Arrays;
 
 public class MySearchRoutesFragment extends MySearchFragmentBase
-            implements LoaderManager.LoaderCallbacks<ObaRoutesForLocationResponse> {
+        implements LoaderManager.LoaderCallbacks<ObaRoutesForLocationResponse> {
+
     //private static final String TAG = "MySearchRoutesActivity";
     private static final String QUERY_TEXT = "query_text";
 
@@ -78,7 +80,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     @Override
     public void onLoadFinished(Loader<ObaRoutesForLocationResponse> loader,
-                        ObaRoutesForLocationResponse response) {
+            ObaRoutesForLocationResponse response) {
         UIHelp.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
@@ -132,7 +134,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Get the adapter (this may or may not be a SimpleCursorAdapter)
         ListAdapter adapter = l.getAdapter();
-        ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
+        ObaRoute route = (ObaRoute) adapter.getItem(position - l.getHeaderViewsCount());
         final String routeId = route.getId();
         final String routeName = UIHelp.getRouteDisplayName(route);
 
@@ -148,8 +150,8 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView.findViewById(R.id.short_name);
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+        final TextView text = (TextView) info.targetView.findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
@@ -165,7 +167,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
             case CONTEXT_MENU_DEFAULT:
                 // Fake a click
@@ -184,13 +186,13 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     private String getId(ListView l, int position) {
         ListAdapter adapter = l.getAdapter();
-        ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
+        ObaRoute route = (ObaRoute) adapter.getItem(position - l.getHeaderViewsCount());
         return route.getId();
     }
 
     private String getUrl(ListView l, int position) {
         ListAdapter adapter = l.getAdapter();
-        ObaRoute route = (ObaRoute)adapter.getItem(position - l.getHeaderViewsCount());
+        ObaRoute route = (ObaRoute) adapter.getItem(position - l.getHeaderViewsCount());
         return route.getUrl();
     }
 
@@ -198,6 +200,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     // Adapter
     //
     private static final class MyAdapter extends ArrayAdapter<ObaRoute> {
+
         public MyAdapter(Context context) {
             super(context, R.layout.route_list_item);
         }
@@ -212,7 +215,9 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     // Loader
     //
     private static final class MyLoader extends AsyncTaskLoader<ObaRoutesForLocationResponse> {
+
         private final String mQueryText;
+
         private final GeoPoint mCenter;
 
         public MyLoader(Context context, String query, GeoPoint center) {
@@ -224,10 +229,10 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         @Override
         public ObaRoutesForLocationResponse loadInBackground() {
             ObaRoutesForLocationResponse response =
-                new ObaRoutesForLocationRequest.Builder(getContext(), mCenter)
-                    .setQuery(mQueryText)
-                    .build()
-                    .call();
+                    new ObaRoutesForLocationRequest.Builder(getContext(), mCenter)
+                            .setQuery(mQueryText)
+                            .build()
+                            .call();
             // If there is no results from the user-centered query,
             // open a wider next in some "default" location
             //Log.d(TAG, "Server returns: " + response.getCode());

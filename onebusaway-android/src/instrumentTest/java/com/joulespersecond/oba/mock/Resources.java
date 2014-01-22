@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 public class Resources {
+
     private static final Uri TEST_RAW_URI =
             Uri.parse("android.resource://com.joulespersecond.seattlebusbot.test/raw/");
 

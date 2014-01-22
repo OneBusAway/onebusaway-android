@@ -19,18 +19,21 @@ package com.joulespersecond.oba.request;
 public final class ObaRouteIdsForAgencyResponse extends ObaResponse {
 
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         // At this point this can have references, but never does.
         //private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
         private final String[] list;
+
         private boolean limitExceeded;
 
         private Data() {
-            list = new String[] {};
+            list = new String[]{};
             limitExceeded = false;
         }
     }
+
     private final Data data;
 
     private ObaRouteIdsForAgencyResponse() {

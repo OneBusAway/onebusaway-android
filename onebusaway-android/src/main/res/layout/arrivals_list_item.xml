@@ -14,58 +14,58 @@
      limitations under the License.
 -->
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:stretchColumns="2"
-    android:shrinkColumns="1">
+             android:layout_width="fill_parent"
+             android:layout_height="wrap_content"
+             android:stretchColumns="2"
+             android:shrinkColumns="1">
     <TableRow
-        android:gravity="center_vertical">
-       <TextView
-            android:layout_column="0"
-            android:id="@+id/route"
-            android:layout_width="90sp"
-            android:gravity="center"
-            style="@style/StopInfoRoute">
+            android:gravity="center_vertical">
+        <TextView
+                android:layout_column="0"
+                android:id="@+id/route"
+                android:layout_width="90sp"
+                android:gravity="center"
+                style="@style/StopInfoRoute">
         </TextView>
         <LinearLayout
-            android:orientation="vertical"
-            android:layout_column="1"
-            android:gravity="left">
+                android:orientation="vertical"
+                android:layout_column="1"
+                android:gravity="left">
             <TextView
-                 android:id="@+id/trip_info"
-                 android:drawableLeft="@drawable/ic_notification_list_icon"
-                 android:visibility="gone"
-                 style="@style/StopInfoDestination"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content"
-                 android:layout_gravity="center_vertical">
+                    android:id="@+id/trip_info"
+                    android:drawableLeft="@drawable/ic_notification_list_icon"
+                    android:visibility="gone"
+                    style="@style/StopInfoDestination"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical">
             </TextView>
             <TextView
-                 android:id="@+id/destination"
-                 style="@style/StopInfoDestination"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content">
+                    android:id="@+id/destination"
+                    style="@style/StopInfoDestination"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
             </TextView>
             <TextView
-                 android:id="@+id/time"
-                 style="@style/StopInfoTime"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content">
+                    android:id="@+id/time"
+                    style="@style/StopInfoTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
             </TextView>
             <TextView
-                 android:id="@+id/status"
-                 style="@style/StopInfoStatus"
-                 android:layout_width="wrap_content"
-                 android:layout_height="wrap_content">
+                    android:id="@+id/status"
+                    style="@style/StopInfoStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
             </TextView>
         </LinearLayout>
         <TextView
-            android:layout_column="2"
-            android:id="@+id/eta"
-            style="@style/StopInfoEta"
-            android:maxLines="1"
-            android:gravity="right"
-            android:paddingRight="10sp">
+                android:layout_column="2"
+                android:id="@+id/eta"
+                style="@style/StopInfoEta"
+                android:maxLines="1"
+                android:gravity="right"
+                android:paddingRight="10sp">
         </TextView>
     </TableRow>
 </TableLayout>

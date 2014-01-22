@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 public class MyRecentRoutesActivity extends Activity {
+
     //
     // The only thing this is used for anymore is to create
     // a shortcut to the recent routes list.
@@ -39,8 +40,8 @@ public class MyRecentRoutesActivity extends Activity {
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentRoutesFragment.TAB_NAME);
         return UIHelp.makeShortcut(this,
-                    getString(R.string.recent_routes_shortcut),
-                    new Intent(this, MyRoutesActivity.class)
+                getString(R.string.recent_routes_shortcut),
+                new Intent(this, MyRoutesActivity.class)
                         .setData(uri));
     }
 }

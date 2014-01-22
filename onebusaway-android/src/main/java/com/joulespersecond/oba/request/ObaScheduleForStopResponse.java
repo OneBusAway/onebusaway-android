@@ -24,16 +24,21 @@ import com.joulespersecond.oba.elements.ObaStopScheduleElement;
 
 /**
  * Response object for ObaScheduleForStopRequest requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaScheduleForStopResponse extends ObaResponseWithRefs
         implements ObaStopSchedule {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final ObaStopScheduleElement entry = ObaStopScheduleElement.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaScheduleForStopResponse() {

@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/pin_state" />
-    <item android:drawable="@drawable/stop_type_bus" />
-    <item android:drawable="@drawable/dir_ne" />
+    <item android:drawable="@drawable/pin_state"/>
+    <item android:drawable="@drawable/stop_type_bus"/>
+    <item android:drawable="@drawable/dir_ne"/>
 </layer-list>

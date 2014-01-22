@@ -15,6 +15,10 @@
  */
 package com.joulespersecond.oba.region;
 
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,10 +28,6 @@ import android.os.Parcelable;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.util.AttributeSet;
-
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.R;
 
 /**
  * Custom preference to handle enabling and disabling experimental
@@ -44,6 +44,7 @@ import com.joulespersecond.seattlebusbot.R;
 public class ExperimentalRegionsPreference extends CheckBoxPreference {
 
     private boolean mCurrentValue;
+
     private final boolean DEFAULT_VALUE = false;
 
     //
@@ -64,8 +65,10 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
         initCheckedState();
     }
 
-    protected void initCheckedState(){
-        setChecked(Application.getPrefs().getBoolean(getContext().getString(R.string.preference_key_experimental_regions), DEFAULT_VALUE));
+    protected void initCheckedState() {
+        setChecked(Application.getPrefs()
+                .getBoolean(getContext().getString(R.string.preference_key_experimental_regions),
+                        DEFAULT_VALUE));
     }
 
     @Override
@@ -89,12 +92,13 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
                             setValue(true);
                         }
                     })
-                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    })
+                    .setNegativeButton(android.R.string.cancel,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
                     .create();
             dialog.show();
         } else {
@@ -103,21 +107,23 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
                 // If the user is currently using an experimental region, warn that it won't be available
                 AlertDialog dialog = new AlertDialog.Builder(getContext())
                         .setMessage(R.string.preferences_experimental_regions_disable_warning)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                                // Set the region info to null, so we no longer use the current experimental region
-                                Application.get().setCurrentRegion(null);
-                                setValue(false);
-                            }
-                        })
-                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
+                        .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        // Set the region info to null, so we no longer use the current experimental region
+                                        Application.get().setCurrentRegion(null);
+                                        setValue(false);
+                                    }
+                                })
+                        .setNegativeButton(android.R.string.cancel,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                })
                         .create();
                 dialog.show();
             } else {
@@ -127,13 +133,18 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
     }
 
     /**
-     * Sets the experimental regions preference (both user interface and shared preference value) to the input value
-     * @param newValue true if the preference should be set to true, false if it should be set to false
+     * Sets the experimental regions preference (both user interface and shared preference value) to
+     * the input value
+     *
+     * @param newValue true if the preference should be set to true, false if it should be set to
+     *                 false
      */
     public void setValue(boolean newValue) {
         mCurrentValue = newValue;
         setChecked(newValue);
-        PreferenceHelp.saveBoolean(getContext().getString(R.string.preference_key_experimental_regions), newValue);
+        PreferenceHelp
+                .saveBoolean(getContext().getString(R.string.preference_key_experimental_regions),
+                        newValue);
     }
 
     @Override
@@ -186,6 +197,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
      * at http://developer.android.com/guide/topics/ui/settings.html
      */
     private static class SavedState extends Preference.BaseSavedState {
+
         // Member that holds the setting's value
         boolean value;
 

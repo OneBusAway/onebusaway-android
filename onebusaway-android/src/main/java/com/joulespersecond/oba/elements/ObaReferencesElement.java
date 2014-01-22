@@ -19,12 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ObaReferencesElement implements ObaReferences {
+
     public static final ObaReferencesElement EMPTY_OBJECT = new ObaReferencesElement();
 
     private final ObaStopElement[] stops;
+
     private final ObaRouteElement[] routes;
+
     private final ObaTripElement[] trips;
+
     private final ObaAgencyElement[] agencies;
+
     private final ObaSituationElement[] situations;
 
     public ObaReferencesElement() {
@@ -90,7 +95,7 @@ public final class ObaReferencesElement implements ObaReferences {
     //
     private static <T extends ObaElement> T findById(T[] objects, String id) {
         final int len = objects.length;
-        for (int i=0; i < len; ++i) {
+        for (int i = 0; i < len; ++i) {
             final T obj = objects[i];
             if (obj.getId().equals(id)) {
                 return obj;
@@ -98,11 +103,12 @@ public final class ObaReferencesElement implements ObaReferences {
         }
         return null;
     }
+
     private static <E extends ObaElement, T extends E> List<E> findList(
             Class<E> cls, T[] objects, String[] ids) {
         ArrayList<E> result = new ArrayList<E>();
         final int len = ids.length;
-        for (int i=0; i < len; ++i) {
+        for (int i = 0; i < len; ++i) {
             final String id = ids[i];
             final T obj = findById(objects, id);
             if (obj != null) {

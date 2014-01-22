@@ -15,13 +15,13 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.List;
-
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.elements.ObaStopGrouping;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+
+import java.util.List;
 
 public class StopsForRouteRequestTest extends ObaTestCase {
 
@@ -47,10 +47,10 @@ public class StopsForRouteRequestTest extends ObaTestCase {
 
     public void testNoShapes() {
         ObaStopsForRouteResponse response =
-            new ObaStopsForRouteRequest.Builder(getContext(), "1_44")
-                .setIncludeShapes(false)
-                .build()
-                .call();
+                new ObaStopsForRouteRequest.Builder(getContext(), "1_44")
+                        .setIncludeShapes(false)
+                        .build()
+                        .call();
         assertOK(response);
         final ObaShape[] shapes = response.getShapes();
         assertNotNull(shapes);

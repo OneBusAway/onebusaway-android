@@ -15,34 +15,39 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.concurrent.Callable;
-
-import android.content.Context;
-import android.net.Uri;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.oba.request.ObaStopRequest;
 import com.joulespersecond.oba.request.ObaStopResponse;
 import com.joulespersecond.oba.request.RequestBase;
 
+import android.content.Context;
+import android.net.Uri;
+
+import java.util.concurrent.Callable;
+
 public class FailTest extends ObaTestCase {
+
     //
     // We can create our own test request that points to an invalid path.
     //
     private static class BadResponse extends ObaResponse {
+
     }
 
     private static class BadRequest extends RequestBase
             implements Callable<BadResponse> {
+
         protected BadRequest(Uri uri) {
             super(uri);
         }
 
         static class Builder extends RequestBase.BuilderBase {
+
             public Builder(Context context, String path) {
                 super(context, BASE_PATH + path);
             }
+
             public BadRequest build() {
                 return new BadRequest(buildUri());
             }
@@ -64,14 +69,14 @@ public class FailTest extends ObaTestCase {
     // This is a real 404
     public void test404_2() {
         BadResponse response =
-            new BadRequest.Builder(getContext(), "/foo/1_29261.json").build().call();
+                new BadRequest.Builder(getContext(), "/foo/1_29261.json").build().call();
         assertNotNull(response);
         assertEquals(ObaApi.OBA_NOT_FOUND, response.getCode());
     }
 
     public void testBadJson() {
         BadResponse response =
-            new BadRequest.Builder(getContext(), "/stop/1_29261.xml").build().call();
+                new BadRequest.Builder(getContext(), "/stop/1_29261.xml").build().call();
         assertNotNull(response);
         assertEquals(ObaApi.OBA_INTERNAL_ERROR, response.getCode());
     }

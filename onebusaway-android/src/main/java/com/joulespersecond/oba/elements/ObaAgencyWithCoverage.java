@@ -16,15 +16,21 @@
 package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 
 public final class ObaAgencyWithCoverage implements ObaElement {
+
     public static final ObaAgencyWithCoverage[] EMPTY_ARRAY = new ObaAgencyWithCoverage[]{};
 
     private final String agencyId;
+
     private final double lat;
+
     private final double lon;
+
     private final double latSpan;
+
     private final double lonSpan;
 
     public ObaAgencyWithCoverage() {
@@ -86,19 +92,23 @@ public final class ObaAgencyWithCoverage implements ObaElement {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof ObaAgencyWithCoverage))
-            return false;
-        ObaAgencyWithCoverage other = (ObaAgencyWithCoverage)obj;
-        if (agencyId == null) {
-            if (other.agencyId != null)
-                return false;
         }
-        else if (!agencyId.equals(other.agencyId))
+        if (obj == null) {
             return false;
+        }
+        if (!(obj instanceof ObaAgencyWithCoverage)) {
+            return false;
+        }
+        ObaAgencyWithCoverage other = (ObaAgencyWithCoverage) obj;
+        if (agencyId == null) {
+            if (other.agencyId != null) {
+                return false;
+            }
+        } else if (!agencyId.equals(other.agencyId)) {
+            return false;
+        }
         return true;
     }
 

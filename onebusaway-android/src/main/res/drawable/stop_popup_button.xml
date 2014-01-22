@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/light_gray" />
-    <item android:drawable="@drawable/ab_transparent_busbot" />
-    <item android:drawable="@drawable/tab_indicator_ab_busbot" />
+    <item android:drawable="@color/light_gray"/>
+    <item android:drawable="@drawable/ab_transparent_busbot"/>
+    <item android:drawable="@drawable/tab_indicator_ab_busbot"/>
 </layer-list>

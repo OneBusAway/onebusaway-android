@@ -21,11 +21,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ObaShapeElement implements ObaShape {
+
     public static final ObaShapeElement EMPTY_OBJECT = new ObaShapeElement();
-    public static final ObaShapeElement[] EMPTY_ARRAY = new ObaShapeElement[] {};
+
+    public static final ObaShapeElement[] EMPTY_ARRAY = new ObaShapeElement[]{};
 
     private final String points;
+
     private final int length;
+
     private final String levels;
 
     private ObaShapeElement() {
@@ -65,14 +69,14 @@ public final class ObaShapeElement implements ObaShape {
      * For the exact algorithm:
      * http://code.google.com/apis/maps/documentation/polylinealgorithm.html
      *
-     * @param encoded The encoded string.
+     * @param encoded   The encoded string.
      * @param numPoints The number of points. This is purely used as a hint
-     *      to allocate memory; the function will always return the number
-     *      of points that are contained in the encoded string.
+     *                  to allocate memory; the function will always return the number
+     *                  of points that are contained in the encoded string.
      * @return A list of points from the encoded string.
      */
     public static List<GeoPoint> decodeLine(String encoded, int numPoints) {
-        assert(numPoints >= 0);
+        assert (numPoints >= 0);
         ArrayList<GeoPoint> array = new ArrayList<GeoPoint>(numPoints);
 
         final int len = encoded.length();
@@ -83,7 +87,7 @@ public final class ObaShapeElement implements ObaShape {
             int shift = 0;
             int result = 0;
 
-            int a,b;
+            int a, b;
             do {
                 a = encoded.charAt(i);
                 b = a - 63;
@@ -109,7 +113,7 @@ public final class ObaShapeElement implements ObaShape {
             lon += dlon;
 
             // The polyline encodes in degrees * 1E5, we need degrees * 1E6
-            array.add(new GeoPoint(lat*10, lon*10));
+            array.add(new GeoPoint(lat * 10, lon * 10));
         }
 
         return array;
@@ -119,14 +123,14 @@ public final class ObaShapeElement implements ObaShape {
      * Decodes encoded levels according to:
      * http://code.google.com/apis/maps/documentation/polylinealgorithm.html
      *
-     * @param encoded The encoded string.
+     * @param encoded   The encoded string.
      * @param numPoints The number of points. This is purely used as a hint
-     *      to allocate memory; the function will always return the number
-     *      of points that are contained in the encoded string.
+     *                  to allocate memory; the function will always return the number
+     *                  of points that are contained in the encoded string.
      * @return A list of levels from the encoded string.
      */
     public static List<Integer> decodeLevels(String encoded, int numPoints) {
-        assert(numPoints >= 0);
+        assert (numPoints >= 0);
         ArrayList<Integer> array = new ArrayList<Integer>(numPoints);
 
         final int len = encoded.length();
@@ -135,7 +139,7 @@ public final class ObaShapeElement implements ObaShape {
             int shift = 0;
             int result = 0;
 
-            int a,b;
+            int a, b;
             do {
                 a = encoded.charAt(i);
                 b = a - 63;

@@ -17,19 +17,23 @@ package com.joulespersecond.oba.elements;
 
 
 public interface ObaStopSchedule {
+
     /**
      * Element that lists out all the days that a particular stop has service.
      */
     public static final class CalendarDay {
-        public static final CalendarDay[] EMPTY_ARRAY = new CalendarDay[] {};
+
+        public static final CalendarDay[] EMPTY_ARRAY = new CalendarDay[]{};
 
         private final long date;
+
         private final long group;
 
         CalendarDay() {
             date = 0;
             group = 0;
         }
+
         /**
          * @return The date of service in milliseconds since the epoch.
          */

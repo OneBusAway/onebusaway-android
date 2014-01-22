@@ -29,10 +29,11 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String stopId) {
             super(context, getPathWithId("/arrivals-and-departures-for-stop/", stopId));
         }
-        
+
         public Builder(Context context, String stopId, int minutesAfter) {
             super(context, getPathWithId("/arrivals-and-departures-for-stop/", stopId));
             mBuilder.appendQueryParameter("minutesAfter", String.valueOf(minutesAfter));
@@ -45,22 +46,25 @@ public final class ObaArrivalInfoRequest extends RequestBase implements
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
-     * @param stopId The stop Id to request.
+     * @param stopId  The stop Id to request.
      * @return The new request instance.
      */
     public static ObaArrivalInfoRequest newRequest(Context context, String stopId) {
         return new Builder(context, stopId).build();
     }
-    
+
     /**
      * Helper method for constructing new instances.
-     * @param context The package context.
-     * @param stopId The stop Id to request.
+     *
+     * @param context      The package context.
+     * @param stopId       The stop Id to request.
      * @param minutesAfter includes vehicles arriving or departing in the next minutesAfter minutes
      * @return The new request instance.
      */
-    public static ObaArrivalInfoRequest newRequest(Context context, String stopId, int minutesAfter) {
+    public static ObaArrivalInfoRequest newRequest(Context context, String stopId,
+            int minutesAfter) {
         return new Builder(context, stopId, minutesAfter).build();
     }
 

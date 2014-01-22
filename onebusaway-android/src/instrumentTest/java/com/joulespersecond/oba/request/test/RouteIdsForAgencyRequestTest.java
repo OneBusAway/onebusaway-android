@@ -20,9 +20,10 @@ import com.joulespersecond.oba.request.ObaRouteIdsForAgencyResponse;
 
 
 public class RouteIdsForAgencyRequestTest extends ObaTestCase {
+
     public void testST() {
         ObaRouteIdsForAgencyRequest.Builder builder =
-            new ObaRouteIdsForAgencyRequest.Builder(getContext(), "40");
+                new ObaRouteIdsForAgencyRequest.Builder(getContext(), "40");
         ObaRouteIdsForAgencyRequest request = builder.build();
         ObaRouteIdsForAgencyResponse response = request.call();
         assertOK(response);
@@ -36,7 +37,7 @@ public class RouteIdsForAgencyRequestTest extends ObaTestCase {
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaRouteIdsForAgencyRequest request =
-            ObaRouteIdsForAgencyRequest.newRequest(getContext(), "40");
+                ObaRouteIdsForAgencyRequest.newRequest(getContext(), "40");
         assertNotNull(request);
     }
 }

@@ -30,6 +30,7 @@ import java.util.concurrent.Callable;
 
 public final class ObaRegionsRequest extends RequestBase implements
         Callable<ObaRegionsResponse> {
+
     protected ObaRegionsRequest(Uri uri) {
         super(uri);
     }
@@ -38,10 +39,12 @@ public final class ObaRegionsRequest extends RequestBase implements
     // This currently has a very simple builder because you can't do much with this "API"
     //
     public static class Builder {
+
         private static Uri URI = Uri.parse("http://regions.onebusaway.org/regions-v3.json");
 
-        public Builder(Context context) {}
-        
+        public Builder(Context context) {
+        }
+
         public Builder(Context context, Uri uri) {
             URI = uri;
         }
@@ -53,19 +56,21 @@ public final class ObaRegionsRequest extends RequestBase implements
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
      * @return The new request instance.
      */
     public static ObaRegionsRequest newRequest(Context context) {
         return new Builder(context).build();
     }
-    
+
     /**
      * Helper method for constructing new instances, allowing
      * the requester to set the URI to retrieve the regions info
      * from
+     *
      * @param context The package context.
-     * @param uri URI to the regions file
+     * @param uri     URI to the regions file
      * @return The new request instance.
      */
     public static ObaRegionsRequest newRequest(Context context, Uri uri) {
@@ -73,12 +78,12 @@ public final class ObaRegionsRequest extends RequestBase implements
     }
 
     @Override
-    public ObaRegionsResponse call() {                
+    public ObaRegionsResponse call() {
         //If the URI is for an Android resource then get from resource, otherwise get from Region REST API                
-        if(mUri.getScheme().equals(ContentResolver.SCHEME_ANDROID_RESOURCE)){
+        if (mUri.getScheme().equals(ContentResolver.SCHEME_ANDROID_RESOURCE)) {
             return getRegionFromResource();
-        }else{
-            return call(ObaRegionsResponse.class); 
+        } else {
+            return call(ObaRegionsResponse.class);
         }
     }
 
@@ -86,17 +91,19 @@ public final class ObaRegionsRequest extends RequestBase implements
     public String toString() {
         return "ObaRegionsRequest [mUri=" + mUri + "]";
     }
-    
-    private ObaRegionsResponse getRegionFromResource(){
+
+    private ObaRegionsResponse getRegionFromResource() {
         ObaRegionsResponse response = null;
-        
-        InputStream is = Application.get().getApplicationContext().getResources().openRawResource(R.raw.regions_v3);
+
+        InputStream is = Application.get().getApplicationContext().getResources()
+                .openRawResource(R.raw.regions_v3);
         ObaApi.SerializationHandler handler = ObaApi.getSerializer(ObaRegionsResponse.class);
         response = handler.deserialize(new InputStreamReader(is), ObaRegionsResponse.class);
         if (response == null) {
-            response = handler.createFromError(ObaRegionsResponse.class, ObaApi.OBA_INTERNAL_ERROR, "Json error");
+            response = handler.createFromError(ObaRegionsResponse.class, ObaApi.OBA_INTERNAL_ERROR,
+                    "Json error");
         }
-        
+
         return response;
     }
 }

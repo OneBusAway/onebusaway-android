@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 
 /**
@@ -25,17 +26,27 @@ import com.joulespersecond.oba.ObaApi;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaStopElement implements ObaStop {
+
     public static final ObaStopElement EMPTY_OBJECT = new ObaStopElement();
-    public static final ObaStopElement[] EMPTY_ARRAY = new ObaStopElement[] {};
-    public static final String[] EMPTY_ROUTES = new String[] {};
+
+    public static final ObaStopElement[] EMPTY_ARRAY = new ObaStopElement[]{};
+
+    public static final String[] EMPTY_ROUTES = new String[]{};
 
     private final String id;
+
     private final double lat;
+
     private final double lon;
+
     private final String direction;
+
     private final int locationType;
+
     private final String name;
+
     private final String code;
+
     private final String[] routeIds;
 
     public ObaStopElement() {
@@ -95,19 +106,23 @@ public final class ObaStopElement implements ObaStop {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof ObaStopElement))
-            return false;
-        ObaStopElement other = (ObaStopElement)obj;
-        if (id == null) {
-            if (other.id != null)
-                return false;
         }
-        else if (!id.equals(other.id))
+        if (obj == null) {
             return false;
+        }
+        if (!(obj instanceof ObaStopElement)) {
+            return false;
+        }
+        ObaStopElement other = (ObaStopElement) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
         return true;
     }
 

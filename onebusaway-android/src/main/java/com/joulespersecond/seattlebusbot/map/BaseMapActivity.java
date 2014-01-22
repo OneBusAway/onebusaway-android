@@ -16,8 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.actionbarsherlock.app.SherlockMapActivity;
-import com.actionbarsherlock.view.MenuItem;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
@@ -26,13 +24,16 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
+
+import com.actionbarsherlock.app.SherlockMapActivity;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
@@ -72,33 +73,39 @@ import java.util.List;
  * MapFragmentController instance.
  *
  * @author paulw
- *
  */
 abstract public class BaseMapActivity extends SherlockMapActivity
-            implements MapModeController.Callback, ObaRegionsTask.Callback {
+        implements MapModeController.Callback, ObaRegionsTask.Callback {
     //private static final String TAG = "BaseMapActivity";
 
-    private static final int API_KEY = BuildConfig.DEBUG ? R.string.api_key_debug : R.string.api_key_release;
+    private static final int API_KEY = BuildConfig.DEBUG ? R.string.api_key_debug
+            : R.string.api_key_release;
 
     private static final int NOLOCATION_DIALOG = 103;
+
     private static final int OUTOFRANGE_DIALOG = 104;
 
     private static final int REQUEST_NO_LOCATION = 41;
 
     private MapView mMapView;
+
     private UIHelp.StopUserInfoMap mStopUserMap;
+
     private String mFocusStopId;
 
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
     private StopOverlay mStopOverlay;
+
     StopPopup mStopPopup;
 
     private MyLocationOverlay mLocationOverlay;
+
     private ZoomControls mZoomControls;
 
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
+
     private boolean mRunning = false;
 
     private MapModeController mController;
@@ -113,7 +120,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         View view = getView();
         mMapView = createMap(view);
 
-        mZoomControls = (ZoomControls)view.findViewById(R.id.zoom_controls);
+        mZoomControls = (ZoomControls) view.findViewById(R.id.zoom_controls);
         mZoomControls.setOnZoomInClickListener(mOnZoomIn);
         mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
 
@@ -144,9 +151,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         map.setClickable(true);
         map.setFocusableInTouchMode(true);
 
-        RelativeLayout mainLayout = (RelativeLayout)view.findViewById(R.id.mainlayout);
+        RelativeLayout mainLayout = (RelativeLayout) view.findViewById(R.id.mainlayout);
         RelativeLayout.LayoutParams lp =
-                new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,
+                        LayoutParams.MATCH_PARENT);
         mainLayout.addView(map, 0, lp);
 
         return map;
@@ -244,11 +252,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
-        case NOLOCATION_DIALOG:
-            return createNoLocationDialog();
+            case NOLOCATION_DIALOG:
+                return createNoLocationDialog();
 
-        case OUTOFRANGE_DIALOG:
-            return createOutOfRangeDialog();
+            case OUTOFRANGE_DIALOG:
+                return createOutOfRangeDialog();
         }
         return null;
     }
@@ -257,10 +265,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-        case REQUEST_NO_LOCATION:
-            // Clear the map center so we can get the user's location again
-            setMyLocation();
-            break;
+            case REQUEST_NO_LOCATION:
+                // Clear the map center so we can get the user's location again
+                setMyLocation();
+                break;
         }
     }
 
@@ -356,7 +364,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         //Otherwise, its premature since we don't know the device's relationship to
         //available OBA regions or the manually set API region
         String serverName = Application.get().getCustomApiUrl();
-        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils.isEmpty(serverName))) {
+        if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
+                .isEmpty(serverName))) {
             if (mRunning) {
                 showDialog(OUTOFRANGE_DIALOG);
             }
@@ -367,16 +376,18 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     // Region Task Callback
     //
     @Override
-    public void onTaskFinished(boolean currentRegionChanged){
+    public void onTaskFinished(boolean currentRegionChanged) {
         // Update map after a new region has been selected
         setMyLocation();
 
         // If region changed and was auto-selected, show user what region we're using
         if (currentRegionChanged
-                && Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)
+                && Application.getPrefs()
+                .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                 && Application.get().getCurrentRegion() != null) {
             Toast.makeText(this,
-                    getString(R.string.region_region_found,Application.get().getCurrentRegion().getName()),
+                    getString(R.string.region_region_found,
+                            Application.get().getCurrentRegion().getName()),
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -392,7 +403,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             mStopChangedHandler.post(new Runnable() {
                 public void run() {
                     if (newFocus != null) {
-                        final StopOverlay.StopOverlayItem item = (StopOverlayItem)newFocus;
+                        final StopOverlay.StopOverlayItem item = (StopOverlayItem) newFocus;
                         final ObaStop stop = item.getStop();
                         mFocusStopId = stop.getId();
                         //Log.d(TAG, "Show stop popup");
@@ -413,11 +424,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     final Handler mSetMyLocationHandler = new Handler();
 
     final Runnable mSetMyLocation = new Runnable() {
-         public void run() {
-             if (mLocationOverlay != null) {
-                 setMyLocation(mLocationOverlay.getMyLocation());
-             }
-         }
+        public void run() {
+            if (mLocationOverlay != null) {
+                setMyLocation(mLocationOverlay.getMyLocation());
+            }
+        }
     };
 
     //
@@ -529,27 +540,27 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     @SuppressWarnings("deprecation")
     private Dialog createOutOfRangeDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
-            .setTitle(R.string.main_outofrange_title)
-            .setIcon(android.R.drawable.ic_dialog_map)
-            .setMessage(getString(R.string.main_outofrange,
-                    Application.get().getCurrentRegion() != null ?
-                            Application.get().getCurrentRegion().getName():""))
-            .setPositiveButton(R.string.main_outofrange_yes,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        zoomToRegion();
-                        dismissDialog(OUTOFRANGE_DIALOG);
-                    }
-                })
-            .setNegativeButton(R.string.main_outofrange_no,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dismissDialog(OUTOFRANGE_DIALOG);
-                        mWarnOutOfRange = false;
-                    }
-                });
+                .setTitle(R.string.main_outofrange_title)
+                .setIcon(android.R.drawable.ic_dialog_map)
+                .setMessage(getString(R.string.main_outofrange,
+                        Application.get().getCurrentRegion() != null ?
+                                Application.get().getCurrentRegion().getName() : ""))
+                .setPositiveButton(R.string.main_outofrange_yes,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                zoomToRegion();
+                                dismissDialog(OUTOFRANGE_DIALOG);
+                            }
+                        })
+                .setNegativeButton(R.string.main_outofrange_no,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dismissDialog(OUTOFRANGE_DIALOG);
+                                mWarnOutOfRange = false;
+                            }
+                        });
         return builder.create();
     }
 
@@ -561,7 +572,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             RegionUtils.getRegionSpan(region, results);
             MapController ctrl = mMapView.getController();
             ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
-            ctrl.zoomToSpan((int)(results[0] * 1E6), (int)(results[1] * 1E6));
+            ctrl.zoomToSpan((int) (results[0] * 1E6), (int) (results[1] * 1E6));
         } else {
             // If we don't have a region, then prompt to select a region.
         }
@@ -580,6 +591,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     // Zoom help
     //
     static final int MAX_ZOOM = 21;
+
     static final int MIN_ZOOM = 1;
 
     void enableZoom() {
@@ -609,7 +621,6 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             }
         }
     };
-
 
     /**
      * Returns true if no files in private directory

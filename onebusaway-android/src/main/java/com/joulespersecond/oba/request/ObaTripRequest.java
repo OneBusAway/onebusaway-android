@@ -27,11 +27,13 @@ import java.util.concurrent.Callable;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaTripRequest extends RequestBase implements Callable<ObaTripResponse> {
+
     protected ObaTripRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String tripId) {
             super(context, getPathWithId("/trip/", tripId));
         }
@@ -43,8 +45,9 @@ public final class ObaTripRequest extends RequestBase implements Callable<ObaTri
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
-     * @param tripId The tripId to request.
+     * @param tripId  The tripId to request.
      * @return The new request instance.
      */
     public static ObaTripRequest newRequest(Context context, String tripId) {

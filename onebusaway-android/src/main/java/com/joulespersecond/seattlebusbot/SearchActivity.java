@@ -72,7 +72,8 @@ public class SearchActivity extends SherlockFragmentActivity {
         // Find both tabs and start a search for them...
         FragmentManager fm = getSupportFragmentManager();
 
-        SearchResultsFragment list = (SearchResultsFragment)fm.findFragmentById(android.R.id.content);
+        SearchResultsFragment list = (SearchResultsFragment) fm
+                .findFragmentById(android.R.id.content);
         FragmentTransaction ft = fm.beginTransaction();
         // Create the list fragment and add it as our sole content.
         if (list != null) {

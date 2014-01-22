@@ -30,6 +30,7 @@ import android.widget.TextView;
 public class SituationFragment extends SherlockFragment {
 
     private static final String TITLE = ".Title";
+
     private static final String DESCRIPTION = ".Description";
 
     static void show(SherlockFragmentActivity activity, ObaSituation situation) {
@@ -65,10 +66,10 @@ public class SituationFragment extends SherlockFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        TextView title = (TextView)view.findViewById(R.id.alert_title);
+        TextView title = (TextView) view.findViewById(R.id.alert_title);
         title.setText(args.getString(TITLE));
 
-        TextView desc = (TextView)view.findViewById(R.id.alert_description);
+        TextView desc = (TextView) view.findViewById(R.id.alert_description);
         desc.setText(args.getString(DESCRIPTION));
     }
 }

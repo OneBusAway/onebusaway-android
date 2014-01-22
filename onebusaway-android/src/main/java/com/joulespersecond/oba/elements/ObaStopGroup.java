@@ -18,28 +18,37 @@ package com.joulespersecond.oba.elements;
 import com.joulespersecond.oba.ObaApi;
 
 public final class ObaStopGroup {
+
     public static final ObaStopGroup EMPTY_OBJECT = new ObaStopGroup();
-    public static final ObaStopGroup[] EMPTY_ARRAY = new ObaStopGroup[] {};
+
+    public static final ObaStopGroup[] EMPTY_ARRAY = new ObaStopGroup[]{};
 
     private static final class StopGroupName {
+
         private static final StopGroupName EMPTY_OBJECT = new StopGroupName();
 
         private final String type;
+
         private final String[] names;
 
         private StopGroupName() {
             type = "";
-            names = new String[] {};
+            names = new String[]{};
         }
+
         String getType() {
             return type;
         }
+
         String[] getNames() {
             return names;
         }
     }
+
     private final String[] stopIds;
+
     private final ObaShapeElement[] polylines;
+
     private final StopGroupName name;
 
     public static final String TYPE_DESTINATION = "destination";
@@ -48,7 +57,7 @@ public final class ObaStopGroup {
      * Constructor.
      */
     ObaStopGroup() {
-        stopIds = new String[] {};
+        stopIds = new String[]{};
         polylines = ObaShapeElement.EMPTY_ARRAY;
         name = StopGroupName.EMPTY_OBJECT;
     }

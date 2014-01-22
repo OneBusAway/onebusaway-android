@@ -19,6 +19,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
+
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
@@ -34,6 +35,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     //private static final String TAG = "StopOverlay";
 
     private final List<ObaStop> mStops;
+
     private final Activity mActivity;
 
     private static final int getResourceIdForDirection(String direction) {
@@ -59,12 +61,14 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     }
 
     public class StopOverlayItem extends OverlayItem {
+
         private final ObaStop mStop;
 
         public StopOverlayItem(ObaStop stop) {
             super(stop.getLocation(), stop.getName(), "");
             mStop = stop;
         }
+
         public ObaStop getStop() {
             return mStop;
         }
@@ -77,6 +81,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         mActivity = activity;
         populate();
     }
+
     @Override
     protected OverlayItem
     createItem(int i) {
@@ -87,10 +92,12 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         item.setMarker(boundCenterBottom(marker));
         return item;
     }
+
     @Override
     public int size() {
         return mStops.size();
     }
+
     @Override
     public boolean onTrackballEvent(MotionEvent event, MapView view) {
         final int action = event.getAction();
@@ -120,40 +127,40 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
                 setFocus(next);
                 view.postInvalidate();
             }
-        }
-        else if (action == MotionEvent.ACTION_UP) {
+        } else if (action == MotionEvent.ACTION_UP) {
             final OverlayItem focus = getFocus();
             if (focus != null) {
-                ArrivalsListActivity.start(mActivity, ((StopOverlayItem)focus).getStop());
+                ArrivalsListActivity.start(mActivity, ((StopOverlayItem) focus).getStop());
             }
         }
         return true;
     }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event, MapView view) {
         //Log.d(TAG, "KeyEvent: " + event);
         OverlayItem next = null;
         switch (keyCode) {
-        case KeyEvent.KEYCODE_DPAD_UP:
-            next = findNext(getFocus(), true, true);
-            break;
-        case KeyEvent.KEYCODE_DPAD_DOWN:
-            next = findNext(getFocus(), true, false);
-            break;
-        case KeyEvent.KEYCODE_DPAD_RIGHT:
-            next = findNext(getFocus(), false, true);
-            break;
-        case KeyEvent.KEYCODE_DPAD_LEFT:
-            next = findNext(getFocus(), false, false);
-            break;
-        case KeyEvent.KEYCODE_DPAD_CENTER:
-            final OverlayItem focus = getFocus();
-            if (focus != null) {
-                ArrivalsListActivity.start(mActivity, ((StopOverlayItem)focus).getStop());
-            }
-            break;
-        default:
-            return false;
+            case KeyEvent.KEYCODE_DPAD_UP:
+                next = findNext(getFocus(), true, true);
+                break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                next = findNext(getFocus(), true, false);
+                break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                next = findNext(getFocus(), false, true);
+                break;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                next = findNext(getFocus(), false, false);
+                break;
+            case KeyEvent.KEYCODE_DPAD_CENTER:
+                final OverlayItem focus = getFocus();
+                if (focus != null) {
+                    ArrivalsListActivity.start(mActivity, ((StopOverlayItem) focus).getStop());
+                }
+                break;
+            default:
+                return false;
         }
         if (next != null) {
             setFocus(next);
@@ -164,8 +171,8 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 
     boolean setFocusById(String id) {
         final int size = size();
-        for (int i=0; i < size; ++i) {
-            StopOverlayItem item = (StopOverlayItem)getItem(i);
+        for (int i = 0; i < size; ++i) {
+            StopOverlayItem item = (StopOverlayItem) getItem(i);
             if (id.equals(item.getStop().getId())) {
                 setFocus(item);
                 return true;
@@ -177,10 +184,11 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
     String getFocusedId() {
         final OverlayItem focus = getFocus();
         if (focus != null) {
-            return ((StopOverlayItem)focus).getStop().getId();
+            return ((StopOverlayItem) focus).getStop().getId();
         }
         return null;
     }
+
     /*
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event, MapView view) {
@@ -194,8 +202,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         if (item.equals(getFocus())) {
             ObaStop stop = mStops.get(index);
             ArrivalsListActivity.start(mActivity, stop);
-        }
-        else {
+        } else {
             setFocus(item);
             // fix odd behavior where previously selected item is not re-highlighted
             setLastFocusedIndex(-1);
@@ -214,11 +221,11 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         OverlayItem min = initial;
         int minDist = Integer.MAX_VALUE;
 
-        for (int i=0; i < size; ++i) {
+        for (int i = 0; i < size; ++i) {
             OverlayItem item = getItem(i);
             GeoPoint point = item.getPoint();
             final int distX = point.getLongitudeE6() - initialPoint.getLongitudeE6();
-            final int distY = point.getLatitudeE6()  - initialPoint.getLatitudeE6();
+            final int distY = point.getLatitudeE6() - initialPoint.getLatitudeE6();
 
             // We have to eliminate anything that's going in the wrong direction,
             // or doesn't change in the correct axis (including the initial point)
@@ -233,8 +240,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
                 else if (distY >= 0) {
                     continue;
                 }
-            }
-            else {
+            } else {
                 if (positive) {
                     // Distance must be positive
                     if (distX <= 0) {
@@ -247,7 +253,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
                 }
             }
 
-            final int distSq = distX*distX + distY*distY;
+            final int distSq = distX * distX + distY * distY;
 
             if (distSq < minDist) {
                 min = item;

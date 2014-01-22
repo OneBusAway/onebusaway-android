@@ -60,28 +60,41 @@ import java.util.List;
 //
 public class ArrivalsListFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>,
-                   ArrivalsListHeader.Controller {
+        ArrivalsListHeader.Controller {
+
     private static final String TAG = "ArrivalsListFragment";
+
     private static final long RefreshPeriod = 60 * 1000;
 
     private static int TRIPS_FOR_STOP_LOADER = 1;
+
     private static int ARRIVALS_LIST_LOADER = 2;
 
     private ArrivalsListAdapter mAdapter;
+
     private ArrivalsListHeader mHeader;
+
     private View mFooter;
+
     private View mEmptyList;
+
     private AlertList mAlertList;
 
     private ObaStop mStop;
+
     private String mStopId;
+
     private Uri mStopUri;
+
     private ArrayList<String> mRoutesFilter;
-    private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites 
-                                         // encapsulated info before onLoadFinished() is called
+
+    private int mLastResponseLength = -1; // Keep copy locally, since loader overwrites
+
+    // encapsulated info before onLoadFinished() is called
     private boolean mLoadedMoreArrivals = false;
 
     private boolean mFavorite = false;
+
     private String mStopUserName;
 
     private TripsForStopCallback mTripsForStopCallback;
@@ -92,11 +105,11 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        
+
         // Set and add the view that is shown if no arrival information is returned by the REST API
         getListView().setEmptyView(mEmptyList);
         ((ViewGroup) getListView().getParent()).addView(mEmptyList);
-        
+
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
 
@@ -107,9 +120,9 @@ public class ArrivalsListFragment extends ListFragment
         View header = getView().findViewById(R.id.arrivals_list_header);
         mHeader.initView(header);
         mHeader.refresh();
-        
+
         // Setup list footer button to load more arrivals (when arrivals are shown)
-        Button loadMoreArrivals = (Button)mFooter.findViewById(R.id.load_more_arrivals);
+        Button loadMoreArrivals = (Button) mFooter.findViewById(R.id.load_more_arrivals);
         loadMoreArrivals.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,16 +130,17 @@ public class ArrivalsListFragment extends ListFragment
             }
         });
         getListView().addFooterView(mFooter);
-        
+
         // Repeat for the load more arrivals button in the empty list view
-        Button loadMoreArrivalsEmptyList = (Button)mEmptyList.findViewById(R.id.load_more_arrivals);
+        Button loadMoreArrivalsEmptyList = (Button) mEmptyList
+                .findViewById(R.id.load_more_arrivals);
         loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 loadMoreArrivals();
             }
         });
-        
+
         // This sets the stopId and uri
         setStopId();
         setUserInfo();
@@ -146,9 +160,11 @@ public class ArrivalsListFragment extends ListFragment
 
         mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
         mgr.initLoader(ARRIVALS_LIST_LOADER, getArguments(), this);
-        
+
         // Set initial minutesAfter value in the empty list view
-        setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), false));
+        setEmptyText(
+                UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
+                        false));
     }
 
     @Override
@@ -251,7 +267,7 @@ public class ArrivalsListFragment extends ListFragment
 
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
-        
+
         // If the user just tried to load more arrivals, determine if we 
         // should show a Toast in the case where no additional arrivals were loaded
         if (mLoadedMoreArrivals) {
@@ -266,12 +282,13 @@ public class ArrivalsListFragment extends ListFragment
             } else if (mLastResponseLength == info.length) {
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),
-                        UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), true),
+                        UIHelp.getNoArrivalsMessage(getActivity(),
+                                getArrivalsLoader().getMinutesAfter(), true),
                         Toast.LENGTH_LONG).show();
                 mLoadedMoreArrivals = false;  // Only show the toast once
             }
         }
-        
+
         //TestHelp.notifyLoadFinished(getActivity());
     }
 
@@ -287,7 +304,8 @@ public class ArrivalsListFragment extends ListFragment
 
         if (info != null) {
             // Reset the empty text just in case there is no data.
-            setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(), false));
+            setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(),
+                    getArrivalsLoader().getMinutesAfter(), false));
             mAdapter.setData(info, mRoutesFilter);
         }
     }
@@ -312,8 +330,8 @@ public class ArrivalsListFragment extends ListFragment
                 getString(R.string.stop_info_option_removestar) :
                 getString(R.string.stop_info_option_addstar);
         menu.findItem(R.id.toggle_favorite)
-            .setTitle(title)
-            .setTitleCondensed(title);
+                .setTitle(title)
+                .setTitleCondensed(title);
     }
 
     @Override
@@ -349,7 +367,7 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        final ArrivalInfo stop = (ArrivalInfo)getListView().getItemAtPosition(position);
+        final ArrivalInfo stop = (ArrivalInfo) getListView().getItemAtPosition(position);
         if (stop == null) {
             return;
         }
@@ -538,10 +556,12 @@ public class ArrivalsListFragment extends ListFragment
 
     public static class RoutesFilterDialog extends DialogFragment
             implements DialogInterface.OnMultiChoiceClickListener,
-                       DialogInterface.OnClickListener {
+            DialogInterface.OnClickListener {
 
         static final String ITEMS = ".items";
+
         static final String CHECKS = ".checks";
+
         private boolean[] mChecks;
 
         @Override
@@ -555,10 +575,10 @@ public class ArrivalsListFragment extends ListFragment
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             return builder.setTitle(R.string.stop_info_filter_title)
-                          .setMultiChoiceItems(items, mChecks, this)
-                          .setPositiveButton(R.string.stop_info_save, this)
-                          .setNegativeButton(R.string.stop_info_cancel, null)
-                          .create();
+                    .setMultiChoiceItems(items, mChecks, this)
+                    .setPositiveButton(R.string.stop_info_save, this)
+                    .setNegativeButton(R.string.stop_info_cancel, null)
+                    .create();
         }
 
         @Override
@@ -568,7 +588,7 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            ArrivalsListActivity act = (ArrivalsListActivity)getActivity();
+            ArrivalsListActivity act = (ArrivalsListActivity) getActivity();
             // Get the fragment we want...
             ArrivalsListFragment frag = act.getArrivalsListFragment();
             frag.setRoutesFilter(mChecks);
@@ -588,7 +608,7 @@ public class ArrivalsListFragment extends ListFragment
         ObaArrivalInfoResponse response =
                 getArrivalsLoader().getLastGoodResponse();
         final List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
-        assert(routes.size() == len);
+        assert (routes.size() == len);
 
         for (int i = 0; i < len; ++i) {
             final ObaRoute route = routes.get(i);
@@ -633,15 +653,15 @@ public class ArrivalsListFragment extends ListFragment
     private ArrivalsListLoader getArrivalsLoader() {
         Loader<ObaArrivalInfoResponse> l =
                 getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
-        return (ArrivalsListLoader)l;
+        return (ArrivalsListLoader) l;
     }
-    
+
     @Override
     public void setEmptyText(CharSequence text) {
-        TextView noArrivals = (TextView)mEmptyList.findViewById(R.id.noArrivals);
+        TextView noArrivals = (TextView) mEmptyList.findViewById(R.id.noArrivals);
         noArrivals.setText(text);
     }
-    
+
     private void loadMoreArrivals() {
         getArrivalsLoader().incrementMinutesAfter();
         mLoadedMoreArrivals = true;
@@ -659,7 +679,7 @@ public class ArrivalsListFragment extends ListFragment
             ObaArrivalInfoResponse lastGood =
                     getArrivalsLoader().getLastGoodResponse();
             if (lastGood != null) {
-                mLastResponseLength = lastGood.getArrivalInfo().length;            
+                mLastResponseLength = lastGood.getArrivalInfo().length;
             }
             getArrivalsLoader().onContentChanged();
         }
@@ -674,7 +694,7 @@ public class ArrivalsListFragment extends ListFragment
     };
 
     private void setStopId() {
-        Uri uri = (Uri)getArguments().getParcelable(FragmentUtils.URI);
+        Uri uri = (Uri) getArguments().getParcelable(FragmentUtils.URI);
         if (uri == null) {
             Log.e(TAG, "No URI in arguments");
             return;
@@ -684,8 +704,8 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     private static final String[] USER_PROJECTION = {
-        ObaContract.Stops.FAVORITE,
-        ObaContract.Stops.USER_NAME
+            ObaContract.Stops.FAVORITE,
+            ObaContract.Stops.USER_NAME
     };
 
     private void setUserInfo() {
@@ -713,14 +733,14 @@ public class ArrivalsListFragment extends ListFragment
         values.put(ObaContract.Stops.DIRECTION, stop.getDirection());
         values.put(ObaContract.Stops.LATITUDE, stop.getLatitude());
         values.put(ObaContract.Stops.LONGITUDE, stop.getLongitude());
-        if(Application.get().getCurrentRegion() != null){
+        if (Application.get().getCurrentRegion() != null) {
             values.put(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
         }
         ObaContract.Stops.insertOrUpdate(getActivity(), stop.getId(), values, true);
     }
 
     private static final String[] TRIPS_PROJECTION = {
-        ObaContract.Trips._ID, ObaContract.Trips.NAME
+            ObaContract.Trips._ID, ObaContract.Trips.NAME
     };
 
     //
@@ -732,11 +752,11 @@ public class ArrivalsListFragment extends ListFragment
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new CursorLoader(getActivity(),
-                            ObaContract.Trips.CONTENT_URI,
-                            TRIPS_PROJECTION,
-                            ObaContract.Trips.STOP_ID + "=?",
-                            new String[] { mStopId },
-                            null);
+                    ObaContract.Trips.CONTENT_URI,
+                    TRIPS_PROJECTION,
+                    ObaContract.Trips.STOP_ID + "=?",
+                    new String[]{mStopId},
+                    null);
         }
 
         @Override
@@ -756,6 +776,7 @@ public class ArrivalsListFragment extends ListFragment
     // Situations
     //
     private class SituationAlert implements AlertList.Alert {
+
         private final ObaSituation mSituation;
 
         SituationAlert(ObaSituation situation) {
@@ -800,15 +821,19 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
-            SituationAlert other = (SituationAlert)obj;
-            if (!getId().equals(other.getId()))
+            }
+            SituationAlert other = (SituationAlert) obj;
+            if (!getId().equals(other.getId())) {
                 return false;
+            }
             return true;
         }
     }

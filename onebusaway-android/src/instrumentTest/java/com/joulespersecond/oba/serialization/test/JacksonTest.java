@@ -28,12 +28,15 @@ import android.util.Log;
 import java.io.Reader;
 
 public class JacksonTest extends ObaTestCase {
+
     protected JacksonSerializer mSerializer;
+
     private static final int mCode = 47421;
+
     private static final String mErrText = "Here is an error";
 
     public void testPrimitive() {
-        mSerializer = (JacksonSerializer)JacksonSerializer.getInstance();
+        mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         String test = mSerializer.toJson("abc");
         assertEquals("\"abc\"", test);
 
@@ -42,34 +45,41 @@ public class JacksonTest extends ObaTestCase {
     }
 
     public void testError() {
-        mSerializer = (JacksonSerializer)JacksonSerializer.getInstance();
+        mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         ObaResponse response = mSerializer.createFromError(ObaResponse.class, mCode, mErrText);
         assertEquals(mCode, response.getCode());
         assertEquals(mErrText, response.getText());
     }
 
     public void testSerialization() {
-        mSerializer = (JacksonSerializer)JacksonSerializer.getInstance();
+        mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();
         String errJson = mSerializer.serialize(new MockResponse());
         Log.d("*** test", errJson);
-        String expected = String.format("{\"code\":%d,\"version\":\"2\",\"text\":\"%s\"}", mCode, mErrText);
+        String expected = String
+                .format("{\"code\":%d,\"version\":\"2\",\"text\":\"%s\"}", mCode, mErrText);
         Log.d("*** expect", expected);
         assertEquals(expected, errJson);
     }
 
     public void testStopsForLocation() throws Exception {
-        Reader reader = Resources.read(getContext(), Resources.getTestUri("stops_for_location_downtown_seattle"));
-        ObaApi.SerializationHandler serializer = ObaApi.getSerializer(ObaStopsForLocationResponse.class);
-        ObaStopsForLocationResponse response = serializer.deserialize(reader, ObaStopsForLocationResponse.class);
+        Reader reader = Resources
+                .read(getContext(), Resources.getTestUri("stops_for_location_downtown_seattle"));
+        ObaApi.SerializationHandler serializer = ObaApi
+                .getSerializer(ObaStopsForLocationResponse.class);
+        ObaStopsForLocationResponse response = serializer
+                .deserialize(reader, ObaStopsForLocationResponse.class);
         assertNotNull(response);
     }
 
-    @JsonPropertyOrder(value={"code", "version", "text"})
+    @JsonPropertyOrder(value = {"code", "version", "text"})
     public class MockResponse {
+
         @SuppressWarnings("unused")
         private final String version;
+
         @SuppressWarnings("unused")
         private final int code;
+
         @SuppressWarnings("unused")
         private final String text;
 

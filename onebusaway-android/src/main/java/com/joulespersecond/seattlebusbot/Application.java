@@ -33,6 +33,7 @@ import java.security.MessageDigest;
 import java.util.UUID;
 
 public class Application extends android.app.Application {
+
     public static final String APP_UID = "app_uid";
 
     // Region preference (long id)
@@ -83,13 +84,14 @@ public class Application extends android.app.Application {
     }
 
     public synchronized void setCurrentRegion(ObaRegion region) {
-        if(region != null){
+        if (region != null) {
             // First set it in preferences, then set it in OBA.
             ObaApi.getDefaultContext().setRegion(region);
-            PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
+            PreferenceHelp
+                    .saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
             //We're using a region, so clear the custom API URL preference
             setCustomApiUrl(null);
-        }else{
+        } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
             ObaApi.getDefaultContext().setRegion(null);
             PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
@@ -97,48 +99,59 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * Gets the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT
+     * Gets the date at which the region information was last updated, in the number of milliseconds
+     * since January 1, 1970, 00:00:00 GMT
      * Default value is 0 if the region info has never been updated.
-     * @return the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT.  Default value is 0 if the region info has never been updated.
+     *
+     * @return the date at which the region information was last updated, in the number of
+     * milliseconds since January 1, 1970, 00:00:00 GMT.  Default value is 0 if the region info has
+     * never been updated.
      */
-    public long getLastRegionUpdateDate(){
+    public long getLastRegionUpdateDate() {
         SharedPreferences preferences = getPrefs();
         return preferences.getLong(getString(R.string.preference_key_last_region_update), 0);
     }
 
     /**
      * Sets the date at which the region information was last updated
-     * @param date the date at which the region information was last updated, in the number of milliseconds since January 1, 1970, 00:00:00 GMT
+     *
+     * @param date the date at which the region information was last updated, in the number of
+     *             milliseconds since January 1, 1970, 00:00:00 GMT
      */
-    public void setLastRegionUpdateDate(long date){
-        PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_last_region_update), date);
+    public void setLastRegionUpdateDate(long date) {
+        PreferenceHelp
+                .saveLong(mPrefs, getString(R.string.preference_key_last_region_update), date);
     }
 
     /**
-     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
+     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or null
+     * if it has not been set
      *
-     * @param context
-     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null if it has not been set
+     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null
+     * if it has not been set
      */
-    public String getCustomApiUrl(){
+    public String getCustomApiUrl() {
         SharedPreferences preferences = getPrefs();
         return preferences.getString(getString(R.string.preference_key_oba_api_url), null);
     }
 
     /**
-     * Sets the custom URL used to reach a OBA REST API server that is not available via the Regions REST API
+     * Sets the custom URL used to reach a OBA REST API server that is not available via the Regions
+     * REST API
+     *
      * @param url the custom URL
      */
-    private void setCustomApiUrl(String url){
+    private void setCustomApiUrl(String url) {
         PreferenceHelp.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 
     private static final String HEXES = "0123456789abcdef";
+
     private static String getHex(byte[] raw) {
-        final StringBuilder hex = new StringBuilder(2*raw.length);
+        final StringBuilder hex = new StringBuilder(2 * raw.length);
         for (byte b : raw) {
             hex.append(HEXES.charAt((b & 0xF0) >> 4))
-               .append(HEXES.charAt((b & 0x0F)));
+                    .append(HEXES.charAt((b & 0x0F)));
         }
         return hex.toString();
     }
@@ -146,7 +159,7 @@ public class Application extends android.app.Application {
     private String getAppUid() {
         try {
             final TelephonyManager telephony =
-                (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+                    (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
             final String id = telephony.getDeviceId();
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.update(id.getBytes());
@@ -180,13 +193,17 @@ public class Application extends android.app.Application {
         // Read the region preference, look it up in the DB, then set the region.
         long id = mPrefs.getLong(getString(R.string.preference_key_region), -1);
         if (id < 0) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions preference ID is less than 0, returning..."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Regions preference ID is less than 0, returning...");
+            }
             return;
         }
 
-        ObaRegion region = Regions.get(this, (int)id);
+        ObaRegion region = Regions.get(this, (int) id);
         if (region == null) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Regions preference is null, returning..."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Regions preference is null, returning...");
+            }
             return;
         }
 

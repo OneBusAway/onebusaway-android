@@ -20,6 +20,7 @@ import com.joulespersecond.oba.request.ObaCurrentTimeResponse;
 
 
 public class CurrentTimeRequestTest extends ObaTestCase {
+
     public void testCurrentTime() {
         ObaCurrentTimeRequest.Builder builder = new ObaCurrentTimeRequest.Builder(getContext());
         ObaCurrentTimeRequest request = builder.build();

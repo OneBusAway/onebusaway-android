@@ -14,25 +14,25 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-         android:orientation="vertical"
-         android:layout_width="fill_parent"
-         android:layout_height="fill_parent">
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent">
 
-    <include layout="@layout/route_info_head" />
-    <include layout="@layout/loading" />
+    <include layout="@layout/route_info_head"/>
+    <include layout="@layout/loading"/>
 
     <FrameLayout
-        android:id="@+id/listContainer"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-        <ExpandableListView android:id="@id/android:list"
-            style="@style/HeaderList"
+            android:id="@+id/listContainer"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
+            android:layout_height="fill_parent">
+        <ExpandableListView android:id="@id/android:list"
+                            style="@style/HeaderList"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"/>
 
         <TextView android:id="@+id/internalEmpty"
-            style="@style/ListHintText"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" />
+                  style="@style/ListHintText"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"/>
     </FrameLayout>
 </LinearLayout>

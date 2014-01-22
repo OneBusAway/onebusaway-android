@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-     <item android:id="@+id/clear_starred"
-         android:title="@string/my_option_clear_starred_stops"
-         android:icon="@drawable/android:ic_menu_close_clear_cancel" />
+    <item android:id="@+id/clear_starred"
+          android:title="@string/my_option_clear_starred_stops"
+          android:icon="@drawable/android:ic_menu_close_clear_cancel"/>
 </menu>

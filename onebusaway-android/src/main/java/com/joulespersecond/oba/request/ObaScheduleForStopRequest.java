@@ -29,17 +29,20 @@ import java.util.concurrent.Callable;
  */
 public final class ObaScheduleForStopRequest extends RequestBase
         implements Callable<ObaScheduleForStopResponse> {
+
     protected ObaScheduleForStopRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String stopId) {
             super(context, getPathWithId("/schedule-for-stop/", stopId));
         }
 
         /**
          * Sets the requested date. Defaults to the current date.
+         *
          * @param date The requested date.
          * @return This object.
          */

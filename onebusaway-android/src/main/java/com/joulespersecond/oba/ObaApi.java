@@ -16,25 +16,37 @@
 package com.joulespersecond.oba;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.serialization.JacksonSerializer;
 
 import java.io.Reader;
 
 public final class ObaApi {
+
     //private static final String TAG = "ObaApi";
     // Uninstantiatable
-    private ObaApi() { throw new AssertionError(); }
+    private ObaApi() {
+        throw new AssertionError();
+    }
 
     public static final int OBA_OK = 200;
+
     public static final int OBA_BAD_REQUEST = 400;
+
     public static final int OBA_UNAUTHORIZED = 401;
+
     public static final int OBA_NOT_FOUND = 404;
+
     public static final int OBA_INTERNAL_ERROR = 500;
+
     public static final int OBA_BAD_GATEWAY = 502;
+
     public static final int OBA_OUT_OF_MEMORY = 666;
+
     public static final int OBA_IO_EXCEPTION = 700;
 
     public static final String VERSION1 = "1";
+
     public static final String VERSION2 = "2";
 
     private static final ObaContext mDefaultContext = new ObaContext();
@@ -45,16 +57,19 @@ public final class ObaApi {
 
     /**
      * Converts a latitude/longitude to a GeoPoint.
+     *
      * @param lat The latitude.
      * @param lon The longitude.
      * @return A GeoPoint representing this latitude/longitude.
      */
     public static final GeoPoint makeGeoPoint(double lat, double lon) {
-        return new GeoPoint((int)(lat*1E6), (int)(lon*1E6));
+        return new GeoPoint((int) (lat * 1E6), (int) (lon * 1E6));
     }
 
     public interface SerializationHandler {
+
         <T> T deserialize(Reader reader, Class<T> cls);
+
         String serialize(Object obj);
 
         <T> T createFromError(Class<T> cls, int code, String error);

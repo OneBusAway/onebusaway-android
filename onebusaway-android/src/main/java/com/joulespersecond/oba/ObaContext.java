@@ -25,11 +25,15 @@ import android.text.TextUtils;
 import android.util.Log;
 
 public class ObaContext {
+
     private static final String TAG = "ObaContext";
+
     private String mApiKey = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=";
 
     private int mAppVer = 0;
+
     private String mAppUid = null;
+
     private ObaConnectionFactory mConnectionFactory = ObaDefaultConnectionFactory.getInstance();
 
     private ObaRegion mRegion;
@@ -83,9 +87,11 @@ public class ObaContext {
     public void setBaseUrl(Context context, Uri.Builder builder) {
         // If there is a custom preference, then use that.
         String serverName = Application.get().getCustomApiUrl();
-        
+
         if (!TextUtils.isEmpty(serverName)) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Using custom API URL set by user '" + serverName + "'."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
+            }
             // Since the user-entered serverName might contain a partial path, we need to parse it
             Uri userEntered;
             if (Uri.parse(serverName).getScheme() == null) {
@@ -94,20 +100,22 @@ public class ObaContext {
             } else {
                 userEntered = Uri.parse(serverName);
             }
-            
+
             // Copy partial path that the user entered
             Uri.Builder path = new Uri.Builder();
             path.encodedPath(userEntered.getEncodedPath());
-            
+
             // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
             path.appendEncodedPath(builder.build().getPath());
-                        
+
             // Finally, overwrite builder that was passed in with the full URL
             builder.scheme(userEntered.getScheme());
             builder.authority(userEntered.getAuthority());
             builder.encodedPath(path.build().getEncodedPath());
         } else if (mRegion != null) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
+            }
             Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getPath());
             builder.scheme(base.getScheme());
             builder.authority(base.getAuthority());

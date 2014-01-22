@@ -20,14 +20,19 @@ import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaReferencesElement;
 
 public final class ObaAgenciesWithCoverageResponse extends ObaResponseWithRefs {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final ObaAgencyWithCoverage[] list = ObaAgencyWithCoverage.EMPTY_ARRAY;
+
         private final boolean limitExceeded = false;
 
     }
+
     private final Data data;
 
     private ObaAgenciesWithCoverageResponse() {

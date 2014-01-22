@@ -33,10 +33,13 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static final String STOP_NAME = ".StopName";
+
     public static final String STOP_DIRECTION = ".StopDir";
 
     public static class Builder {
+
         private Context mContext;
+
         private Intent mIntent;
 
         public Builder(Context context, String stopId) {
@@ -154,6 +157,6 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
 
     public ArrivalsListFragment getArrivalsListFragment() {
         FragmentManager fm = getSupportFragmentManager();
-        return (ArrivalsListFragment)fm.findFragmentById(android.R.id.content);
+        return (ArrivalsListFragment) fm.findFragmentById(android.R.id.content);
     }
 }

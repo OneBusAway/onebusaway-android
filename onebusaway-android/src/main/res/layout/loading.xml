@@ -14,21 +14,21 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/loading"
-    android:orientation="horizontal"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:gravity="center"
-    android:visibility="gone">
+              android:id="@+id/loading"
+              android:orientation="horizontal"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:gravity="center"
+              android:visibility="gone">
     <ProgressBar android:id="@+android:id/progress_small"
-        style="@style/LoadingProgress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="5dp" />
+                 style="@style/LoadingProgress"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:paddingLeft="5dp"/>
     <TextView
-        android:id="@+id/loading_text"
-        android:text="@string/loading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/LoadingText" />
+            android:id="@+id/loading_text"
+            android:text="@string/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/LoadingText"/>
 </LinearLayout>

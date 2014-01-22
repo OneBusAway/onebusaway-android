@@ -20,5 +20,6 @@ import android.net.Uri;
 import java.io.IOException;
 
 public interface ObaConnectionFactory {
+
     public ObaConnection newConnection(Uri uri) throws IOException;
 }

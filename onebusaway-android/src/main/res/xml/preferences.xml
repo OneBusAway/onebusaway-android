@@ -14,17 +14,18 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="preferences_root">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:key="preferences_root">
     <PreferenceCategory android:title="@string/preferences_category_location">
         <Preference
-            android:key="@string/preference_key_region"
-            android:title="@string/preferences_region_title"
-            android:summary="@string/preferences_region_summary"/>
-        <CheckBoxPreference    		
-    		android:key="@string/preference_key_auto_select_region"
-    		android:title="@string/preferences_auto_select_region_title" 
-    		android:summary="@string/preferences_auto_select_region_summary"
-    		android:defaultValue="true"/>
+                android:key="@string/preference_key_region"
+                android:title="@string/preferences_region_title"
+                android:summary="@string/preferences_region_summary"/>
+        <CheckBoxPreference
+                android:key="@string/preference_key_auto_select_region"
+                android:title="@string/preferences_auto_select_region_title"
+                android:summary="@string/preferences_auto_select_region_summary"
+                android:defaultValue="true"/>
         <!-- Per discussion in Pull Request #57, 
         	 https://github.com/OneBusAway/onebusaway-android/pull/57#issuecomment-19115619
         	 we are hiding this preference for now
@@ -37,21 +38,21 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
         <com.joulespersecond.seattlebusbot.backup.SavePreference
-            android:title="@string/preferences_save_title"
-            android:summary="@string/preferences_save_summary"/>
+                android:title="@string/preferences_save_title"
+                android:summary="@string/preferences_save_summary"/>
         <com.joulespersecond.seattlebusbot.backup.RestorePreference
-            android:title="@string/preferences_restore_title"
-            android:summary="@string/preferences_restore_summary"/>
+                android:title="@string/preferences_restore_title"
+                android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
         <com.joulespersecond.oba.region.ExperimentalRegionsPreference
-            android:title="@string/preferences_experimental_regions_title"
-            android:summary="@string/preferences_experimental_regions_summary" />
+                android:title="@string/preferences_experimental_regions_title"
+                android:summary="@string/preferences_experimental_regions_summary"/>
         <EditTextPreference
-            android:title="@string/preferences_oba_api_servername_title"
-            android:summary="@string/preferences_oba_api_servername_summary"            
-            android:inputType="text|textNoSuggestions"
-            android:hint="@string/preferences_oba_api_servername_hint"
-            android:key="@string/preference_key_oba_api_url" />
+                android:title="@string/preferences_oba_api_servername_title"
+                android:summary="@string/preferences_oba_api_servername_summary"
+                android:inputType="text|textNoSuggestions"
+                android:hint="@string/preferences_oba_api_servername_hint"
+                android:key="@string/preference_key_oba_api_url"/>
     </PreferenceCategory>
 </PreferenceScreen>

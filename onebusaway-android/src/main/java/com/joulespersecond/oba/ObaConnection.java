@@ -25,12 +25,16 @@ import java.io.Reader;
  * Under normal circumstances this is always implemented by
  * the ObaDefaultConnection class. In the unit tests, it is
  * replaced by the ObaMockConnection class.
- * @author paulw
  *
+ * @author paulw
  */
 public interface ObaConnection {
+
     public void disconnect();
+
     public Reader get() throws IOException;
+
     public Reader post(String string) throws IOException;
+
     public int getResponseCode() throws IOException;
 }

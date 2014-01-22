@@ -16,6 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
@@ -39,13 +40,15 @@ import android.widget.TextView;
 import java.util.Arrays;
 
 public class MySearchStopsFragment extends MySearchFragmentBase
-            implements LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse> {
+        implements LoaderManager.LoaderCallbacks<ObaStopsForLocationResponse> {
+
     //private static final String TAG = "MySearchStopsFragment";
     private static final String QUERY_TEXT = "query_text";
 
     public static final String TAB_NAME = "search";
 
     private UIHelp.StopUserInfoMap mStopUserMap;
+
     private MyAdapter mAdapter;
 
     @Override
@@ -85,7 +88,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
-                        ObaStopsForLocationResponse response) {
+            ObaStopsForLocationResponse response) {
         UIHelp.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
@@ -137,7 +140,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        ObaStop stop = (ObaStop)l.getAdapter().getItem(position - l.getHeaderViewsCount());
+        ObaStop stop = (ObaStop) l.getAdapter().getItem(position - l.getHeaderViewsCount());
         final String shortcutName = stop.getName();
 
         ArrivalsListActivity.Builder b = new ArrivalsListActivity.Builder(getActivity(), stop);
@@ -153,8 +156,8 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView.findViewById(R.id.stop_name);
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+        final TextView text = (TextView) info.targetView.findViewById(R.id.stop_name);
         menu.setHeaderTitle(text.getText());
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
@@ -166,22 +169,22 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DEFAULT:
-            // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position, info.id);
-            return true;
-        case CONTEXT_MENU_SHOW_ON_MAP:
-            showOnMap(getListView(), info.position);
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DEFAULT:
+                // Fake a click
+                onListItemClick(getListView(), info.targetView, info.position, info.id);
+                return true;
+            case CONTEXT_MENU_SHOW_ON_MAP:
+                showOnMap(getListView(), info.position);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
     private void showOnMap(ListView l, int position) {
-        ObaStop stop = (ObaStop)l.getAdapter().getItem(position - l.getHeaderViewsCount());
+        ObaStop stop = (ObaStop) l.getAdapter().getItem(position - l.getHeaderViewsCount());
         final String stopId = stop.getId();
         final double lat = stop.getLatitude();
         final double lon = stop.getLongitude();
@@ -193,6 +196,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     // Adapter
     //
     private final class MyAdapter extends ArrayAdapter<ObaStop> {
+
         public MyAdapter() {
             super(getActivity(), R.layout.stop_list_item);
         }
@@ -210,7 +214,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     // Loader
     //
     private static final class MyLoader extends AsyncTaskLoader<ObaStopsForLocationResponse> {
+
         private final String mQueryText;
+
         private final GeoPoint mCenter;
 
         public MyLoader(Context context, String query, GeoPoint center) {
@@ -222,9 +228,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
         @Override
         public ObaStopsForLocationResponse loadInBackground() {
             return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
-                .setQuery(mQueryText)
-                .build()
-                .call();
+                    .setQuery(mQueryText)
+                    .build()
+                    .call();
         }
     }
 }

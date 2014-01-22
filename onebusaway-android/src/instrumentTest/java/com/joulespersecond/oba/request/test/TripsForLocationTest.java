@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.request.test;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.request.ObaTripsForLocationRequest;
@@ -23,6 +24,7 @@ import com.joulespersecond.oba.request.ObaTripsForLocationResponse;
 
 
 public class TripsForLocationTest extends ObaTestCase {
+
     public void test1() {
         final GeoPoint pt = ObaApi.makeGeoPoint(47.653, -122.307);
 

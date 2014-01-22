@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 public class MyRecentStopsActivity extends Activity {
+
     //
     // The only thing this is used for anymore is to create
     // a shortcut to the recent stops list.
@@ -39,8 +40,8 @@ public class MyRecentStopsActivity extends Activity {
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentStopsFragment.TAB_NAME);
         return UIHelp.makeShortcut(this,
-                    getString(R.string.recent_stops_shortcut),
-                    new Intent(this, MyStopsActivity.class)
+                getString(R.string.recent_stops_shortcut),
+                new Intent(this, MyStopsActivity.class)
                         .setData(uri));
     }
 }

@@ -28,11 +28,13 @@ import java.util.concurrent.Callable;
  */
 public final class ObaStopIdsForAgencyRequest extends RequestBase
         implements Callable<ObaStopIdsForAgencyResponse> {
+
     protected ObaStopIdsForAgencyRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String agencyId) {
             super(context, getPathWithId("/stop-ids-for-agency/", agencyId));
         }
@@ -44,7 +46,8 @@ public final class ObaStopIdsForAgencyRequest extends RequestBase
 
     /**
      * Helper method for constructing new instances.
-     * @param context The package context.
+     *
+     * @param context  The package context.
      * @param agencyId The agencyId to request.
      * @return The new request instance.
      */

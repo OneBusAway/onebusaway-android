@@ -32,6 +32,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * it easy to assert that the Loader returns the expected result.
  */
 public class LoaderTestCase extends AndroidTestCase {
+
     static {
         // Force class loading of AsyncTask on the main thread so that it's handlers are tied to
         // the main thread and responses from the worker thread get delivered on the main thread.
@@ -40,9 +41,13 @@ public class LoaderTestCase extends AndroidTestCase {
         // results come in via the event loop.
         new AsyncTask<Void, Void, Void>() {
             @Override
-            protected Void doInBackground(Void... args) {return null;}
+            protected Void doInBackground(Void... args) {
+                return null;
+            }
+
             @Override
-            protected void onPostExecute(Void result) {}
+            protected void onPostExecute(Void result) {
+            }
         };
     }
 

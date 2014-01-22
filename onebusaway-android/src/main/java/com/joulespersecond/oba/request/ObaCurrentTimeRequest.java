@@ -28,11 +28,13 @@ import java.util.concurrent.Callable;
  */
 public final class ObaCurrentTimeRequest extends RequestBase
         implements Callable<ObaCurrentTimeResponse> {
+
     protected ObaCurrentTimeRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context) {
             super(context, BASE_PATH + "/current-time.json");
         }
@@ -44,6 +46,7 @@ public final class ObaCurrentTimeRequest extends RequestBase
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
      * @return The new request instance.
      */

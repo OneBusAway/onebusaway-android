@@ -36,14 +36,21 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     //private static final String TAG = "ReportStopProblemFragment";
 
     private static final String TRIP_ID = ".TripId";
+
     private static final String STOP_ID = ".StopId";
+
     private static final String TRIP_NAME = ".TripName";
+
     private static final String TRIP_SERVICE_DATE = ".ServiceDate";
+
     private static final String TRIP_VEHICLE_ID = ".VehicleId";
 
     private static final String CODE = ".Code";
+
     private static final String USER_COMMENT = ".UserComment";
+
     private static final String USER_ON_VEHICLE = ".UserOnVehicle";
+
     private static final String USER_VEHICLE_NUM = ".UserVehicleNum";
 
     static void show(SherlockFragmentActivity activity, ObaArrivalInfo arrival) {
@@ -68,8 +75,11 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     }
 
     private Spinner mCodeView;
+
     private TextView mUserComment;
+
     private CheckBox mUserOnVehicle;
+
     private TextView mUserVehicle;
 
     @Override
@@ -81,7 +91,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        final TextView tripName = (TextView)view.findViewById(R.id.trip_name);
+        final TextView tripName = (TextView) view.findViewById(R.id.trip_name);
         tripName.setText(MyTextUtils.toTitleCase(args.getString(TRIP_NAME)));
 
         // TODO: Switch this based on the trip mode
@@ -97,12 +107,12 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         mCodeView.setAdapter(adapter);
 
         // Comment
-        mUserComment = (TextView)view.findViewById(R.id.report_problem_comment);
+        mUserComment = (TextView) view.findViewById(R.id.report_problem_comment);
 
         // On vehicle
-        mUserOnVehicle = (CheckBox)view.findViewById(R.id.report_problem_onvehicle);
+        mUserOnVehicle = (CheckBox) view.findViewById(R.id.report_problem_onvehicle);
         final View label = view.findViewById(R.id.report_problem_uservehicle_label);
-        mUserVehicle = (TextView)view.findViewById(R.id.report_problem_uservehicle);
+        mUserVehicle = (TextView) view.findViewById(R.id.report_problem_uservehicle);
         // Disabled by default
         label.setEnabled(false);
         mUserVehicle.setEnabled(false);
@@ -144,20 +154,20 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     @Override
     protected void sendReport() {
         // Hide the soft keyboard.
-        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
         super.sendReport();
     }
 
-    private static final String[] SPINNER_TO_CODE = new String[] {
-        null,
-        ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
-        ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
-        ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
-        ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
-        ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
-        ObaReportProblemWithTripRequest.OTHER
+    private static final String[] SPINNER_TO_CODE = new String[]{
+            null,
+            ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
+            ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
+            ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
+            ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
+            ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
+            ObaReportProblemWithTripRequest.OTHER
     };
 
     @Override
@@ -189,7 +199,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {
-                builder.setUserLocationAccuracy((int)location.getAccuracy());
+                builder.setUserLocationAccuracy((int) location.getAccuracy());
             }
         }
 

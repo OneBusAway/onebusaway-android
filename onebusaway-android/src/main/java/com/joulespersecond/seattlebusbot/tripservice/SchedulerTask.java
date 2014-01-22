@@ -31,30 +31,38 @@ import android.text.format.Time;
  * It can schedule one or many trips, depending on the URI.
  *
  * @author paulw
- *
  */
 public final class SchedulerTask implements Runnable {
     //private static final String TAG = "SchedulerTask";
 
     private static final long ONE_MINUTE = 60 * 1000;
+
     private static final long LOOKAHEAD_DURATION_MS = 5 * ONE_MINUTE;
 
     private static final String[] PROJECTION = {
-        ObaContract.Trips._ID,
-        ObaContract.Trips.STOP_ID,
-        ObaContract.Trips.REMINDER,
-        ObaContract.Trips.DEPARTURE,
-        ObaContract.Trips.DAYS
+            ObaContract.Trips._ID,
+            ObaContract.Trips.STOP_ID,
+            ObaContract.Trips.REMINDER,
+            ObaContract.Trips.DEPARTURE,
+            ObaContract.Trips.DAYS
     };
+
     private static final int COL_ID = 0;
+
     private static final int COL_STOP_ID = 1;
+
     private static final int COL_REMINDER = 2;
+
     private static final int COL_DEPARTURE = 3;
+
     private static final int COL_DAYS = 4;
 
     private final Context mContext;
+
     private final ContentResolver mCR;
+
     private final TaskContext mTaskContext;
+
     private final Uri mUri;
 
     public SchedulerTask(Context context, TaskContext taskContext, Uri uri) {
@@ -149,12 +157,12 @@ public final class SchedulerTask implements Runnable {
         Uri alertUri = null;
 
         Cursor cAlert = mCR.query(TripAlerts.CONTENT_URI,
-                new String[] { TripAlerts._ID, TripAlerts.STATE },
+                new String[]{TripAlerts._ID, TripAlerts.STATE},
                 String.format("%s=? AND %s=? AND %s=?",
                         TripAlerts.TRIP_ID,
                         TripAlerts.STOP_ID,
                         TripAlerts.START_TIME),
-                new String[] { tripId, stopId, String.valueOf(triggerTime) },
+                new String[]{tripId, stopId, String.valueOf(triggerTime)},
                 null);
 
         if (cAlert != null) {

@@ -24,7 +24,9 @@ import android.widget.TextView;
 import java.util.Collection;
 
 class AlertList {
+
     interface Alert {
+
         public static final int TYPE_ERROR = 1;
         public static final int TYPE_WARNING = 2;
         public static final int TYPE_INFO = 3;
@@ -34,7 +36,9 @@ class AlertList {
         public static final int FLAG_HASMORE = 0x1;
 
         String getId();
+
         int getType();
+
         int getFlags();
 
         CharSequence getString();
@@ -46,13 +50,14 @@ class AlertList {
     // Adapter
     //
     private static class Adapter extends ArrayAdapter<Alert> {
+
         public Adapter(Context context) {
             super(context, R.layout.alert_item);
         }
 
         @Override
         protected void initView(View view, final Alert alert) {
-            TextView text = (TextView)view.findViewById(android.R.id.text1);
+            TextView text = (TextView) view.findViewById(android.R.id.text1);
             text.setText(alert.getString());
             int drawableLeft = 0; //R.drawable.ic_action_alert_error;
             int bg = R.color.alert_error;
@@ -60,25 +65,25 @@ class AlertList {
             int type = alert.getType();
 
             switch (type) {
-            case Alert.TYPE_ERROR:
-                //drawableLeft = R.drawable.ic_action_alert_error;
-                bg = R.color.alert_error;
-                break;
-            case Alert.TYPE_WARNING:
-                //drawableLeft = R.drawable.ic_action_alert_error;
-                bg = R.color.alert_warning;
-                break;
-            case Alert.TYPE_INFO:
-            default:
-                //drawableLeft = R.drawable.ic_action_alert_error;
-                bg = R.color.alert_info;
-                break;
+                case Alert.TYPE_ERROR:
+                    //drawableLeft = R.drawable.ic_action_alert_error;
+                    bg = R.color.alert_error;
+                    break;
+                case Alert.TYPE_WARNING:
+                    //drawableLeft = R.drawable.ic_action_alert_error;
+                    bg = R.color.alert_warning;
+                    break;
+                case Alert.TYPE_INFO:
+                default:
+                    //drawableLeft = R.drawable.ic_action_alert_error;
+                    bg = R.color.alert_info;
+                    break;
             }
             view.setBackgroundResource(bg);
 
             int drawableRight = clickable ? R.drawable.ic_action_alert_more : 0;
             text.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, 0,
-                                                         drawableRight, 0);
+                    drawableRight, 0);
 
             // Even if we don't think it's clickable, we still need to
             // reset the onclick listener because we could be reusing this view.
@@ -103,7 +108,7 @@ class AlertList {
     }
 
     void initView(View view) {
-        mView = (ListView)view;
+        mView = (ListView) view;
         mView.setAdapter(mAdapter);
     }
 
@@ -118,7 +123,7 @@ class AlertList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             mAdapter.addAll(alerts);
         } else {
-            for (Alert a: alerts) {
+            for (Alert a : alerts) {
                 mAdapter.add(a);
             }
         }

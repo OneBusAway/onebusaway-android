@@ -25,7 +25,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class UriCompat {
-    @TargetApi(value=11)
+
+    @TargetApi(value = 11)
     public static Set<String> getQueryParameterNames(Uri uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             return uri.getQueryParameterNames();

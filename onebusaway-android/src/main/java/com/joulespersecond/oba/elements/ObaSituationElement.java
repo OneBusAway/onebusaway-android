@@ -19,10 +19,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class ObaSituationElement implements ObaSituation {
+
     public static final ObaSituationElement EMPTY_OBJECT = new ObaSituationElement();
-    public static final ObaSituationElement[] EMPTY_ARRAY = new ObaSituationElement[] {};
+
+    public static final ObaSituationElement[] EMPTY_ARRAY = new ObaSituationElement[]{};
 
     public static final class Text {
+
         private final String value;
         //private final String lang;
 
@@ -37,14 +40,21 @@ public final class ObaSituationElement implements ObaSituation {
     }
 
     public static final class AllAffectsElement implements AllAffects {
+
         public static final AllAffectsElement EMPTY_OBJECT = new AllAffectsElement();
-        public static final AllAffectsElement[] EMPTY_ARRAY = new AllAffectsElement[] {};
+
+        public static final AllAffectsElement[] EMPTY_ARRAY = new AllAffectsElement[]{};
 
         private final String directionId;
+
         private final String stopId;
+
         private final String tripId;
+
         private final String applicationId;
+
         private final String routeId;
+
         private final String agencyId;
 
         AllAffectsElement() {
@@ -91,6 +101,7 @@ public final class ObaSituationElement implements ObaSituation {
             implements ConditionDetails {
 
         private final String[] diversionStopIds;
+
         private final ObaShapeElement diversionPath;
 
         ConditionDetailsElement() {
@@ -111,9 +122,11 @@ public final class ObaSituationElement implements ObaSituation {
     }
 
     public static final class ConsequenceElement implements Consequence {
-        public static final ConsequenceElement[] EMPTY_ARRAY = new ConsequenceElement[] {};
+
+        public static final ConsequenceElement[] EMPTY_ARRAY = new ConsequenceElement[]{};
 
         private final String condition;
+
         private final ConditionDetailsElement conditionDetails;
 
         ConsequenceElement() {
@@ -134,14 +147,22 @@ public final class ObaSituationElement implements ObaSituation {
 
 
     private final String id;
+
     private final Text summary;
+
     private final Text description;
+
     private final Text advice;
+
     private final String reason;
+
     //private final String securityAlert;
     private final long creationTime;
+
     private final AllAffectsElement[] allAffects;
+
     private final ConsequenceElement[] consequences;
+
     private final String severity;
 
     ObaSituationElement() {

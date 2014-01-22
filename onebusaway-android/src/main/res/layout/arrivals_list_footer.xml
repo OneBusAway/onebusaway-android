@@ -14,16 +14,16 @@
      limitations under the License.
 -->
 <RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"    
-    android:id="@+id/arrivals_list_footer"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
-
-	<Button
-	    android:id="@+id/load_more_arrivals"     
-	    android:text="@string/stop_info_load_more_arrivals"
-	    style="@style/LoadMoreArrivals"	            
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/arrivals_list_footer"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
+        android:layout_height="wrap_content">
+
+    <Button
+            android:id="@+id/load_more_arrivals"
+            android:text="@string/stop_info_load_more_arrivals"
+            style="@style/LoadMoreArrivals"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"/>
 </RelativeLayout>

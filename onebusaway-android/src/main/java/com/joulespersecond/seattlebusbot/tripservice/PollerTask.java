@@ -37,21 +37,29 @@ public final class PollerTask implements Runnable {
     private static final long ONE_MINUTE = 60 * 1000;
 
     private static final String[] ALERT_PROJECTION = {
-        ObaContract.TripAlerts._ID,
-        ObaContract.TripAlerts.TRIP_ID,
-        ObaContract.TripAlerts.STOP_ID,
-        ObaContract.TripAlerts.START_TIME,
-        ObaContract.TripAlerts.STATE,
+            ObaContract.TripAlerts._ID,
+            ObaContract.TripAlerts.TRIP_ID,
+            ObaContract.TripAlerts.STOP_ID,
+            ObaContract.TripAlerts.START_TIME,
+            ObaContract.TripAlerts.STATE,
     };
+
     private static final int COL_ID = 0;
+
     private static final int COL_TRIP_ID = 1;
+
     private static final int COL_STOP_ID = 2;
+
     private static final int COL_START_TIME = 3;
+
     private static final int COL_STATE = 4;
 
     private final Context mContext;
+
     private final ContentResolver mCR;
+
     private final TaskContext mTaskContext;
+
     private final Uri mUri;
 
     public PollerTask(Context context, TaskContext taskContext, Uri uri) {
@@ -132,7 +140,7 @@ public final class PollerTask implements Runnable {
 
     private long getReminderMS(String tripId, String stopId) {
         final Uri uri = Trips.buildUri(tripId, stopId);
-        return (long)UIHelp.intForQuery(mContext, uri, Trips.REMINDER) * ONE_MINUTE;
+        return (long) UIHelp.intForQuery(mContext, uri, Trips.REMINDER) * ONE_MINUTE;
     }
 
     //

@@ -34,38 +34,55 @@ import java.util.ArrayList;
 // out of the Fragment itself.
 //
 class ArrivalsListHeader {
+
     interface Controller {
+
         String getStopName();
+
         String getStopDirection();
 
         String getUserStopName();
+
         void setUserStopName(String userName);
 
         long getLastGoodResponseTime();
 
         ArrayList<String> getRoutesFilter();
+
         void setRoutesFilter(ArrayList<String> filter);
+
         int getNumRoutes();
 
         boolean isFavorite();
+
         boolean setFavorite(boolean favorite);
 
         AlertList getAlertList();
     }
 
     private Controller mController;
+
     private Context mContext;
+
     //
     // Cached views
     //
     private View mView;
+
     private View mNameContainerView;
+
     private View mEditNameContainerView;
+
     private TextView mNameView;
+
     private EditText mEditNameView;
+
     private ImageButton mFavoriteView;
+
     private View mDirectionView;
+
     private View mFilterGroup;
+
     private boolean mInNameEdit = false;
 
     ArrivalsListHeader(Context context, Controller controller) {
@@ -77,9 +94,9 @@ class ArrivalsListHeader {
         mView = view;
         mNameContainerView = mView.findViewById(R.id.name_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
-        mNameView = (TextView)mView.findViewById(R.id.stop_name);
-        mEditNameView = (EditText)mView.findViewById(R.id.edit_name);
-        mFavoriteView = (ImageButton)mView.findViewById(R.id.stop_favorite);
+        mNameView = (TextView) mView.findViewById(R.id.stop_name);
+        mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
+        mFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
@@ -170,7 +187,7 @@ class ArrivalsListHeader {
         String direction = mController.getStopDirection();
         if (direction != null) {
             final int directionText = UIHelp.getStopDirectionText(direction);
-            ((TextView)mDirectionView).setText(directionText);
+            ((TextView) mDirectionView).setText(directionText);
             if (directionText != R.string.direction_none && !mInNameEdit) {
                 mDirectionView.setVisibility(View.VISIBLE);
             } else {
@@ -186,7 +203,7 @@ class ArrivalsListHeader {
     }
 
     private void refreshFilter() {
-        TextView v = (TextView)mView.findViewById(R.id.filter);
+        TextView v = (TextView) mView.findViewById(R.id.filter);
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
         if (num > 0) {
@@ -200,6 +217,7 @@ class ArrivalsListHeader {
     }
 
     private static class ResponseError implements AlertList.Alert {
+
         private final CharSequence mString;
 
         ResponseError(CharSequence seq) {
@@ -237,15 +255,19 @@ class ArrivalsListHeader {
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
-            ResponseError other = (ResponseError)obj;
-            if (!getId().equals(other.getId()))
+            }
+            ResponseError other = (ResponseError) obj;
+            if (!getId().equals(other.getId())) {
                 return false;
+            }
             return true;
         }
     }
@@ -264,12 +286,12 @@ class ArrivalsListHeader {
         if ((responseTime) != 0 &&
                 ((now - responseTime) >= 2 * DateUtils.MINUTE_IN_MILLIS)) {
             CharSequence relativeTime =
-                DateUtils.getRelativeTimeSpanString(responseTime,
-                        now,
-                        DateUtils.MINUTE_IN_MILLIS,
-                        0);
+                    DateUtils.getRelativeTimeSpanString(responseTime,
+                            now,
+                            DateUtils.MINUTE_IN_MILLIS,
+                            0);
             CharSequence s = mContext.getString(R.string.stop_info_old_data,
-                                                relativeTime);
+                    relativeTime);
             mResponseError = new ResponseError(s);
             alerts.insert(mResponseError, 0);
         }
@@ -295,7 +317,7 @@ class ArrivalsListHeader {
         mDirectionView.setVisibility(View.VISIBLE);
         //setFilterHeader();
         InputMethodManager imm =
-                (InputMethodManager)mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+                (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
         refreshName();
     }

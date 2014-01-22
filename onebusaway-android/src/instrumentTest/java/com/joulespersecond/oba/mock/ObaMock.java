@@ -21,7 +21,9 @@ import com.joulespersecond.oba.ObaConnectionFactory;
 import android.content.Context;
 
 public class ObaMock {
+
     private final MockConnectionFactory mMockFactory;
+
     private final ObaConnectionFactory mOldFactory;
 
     public ObaMock(Context context) {

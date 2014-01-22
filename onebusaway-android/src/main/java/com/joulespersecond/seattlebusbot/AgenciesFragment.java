@@ -21,6 +21,7 @@ public class AgenciesFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {
 
     private Adapter mAdapter;
+
     private ObaAgenciesWithCoverageResponse mResponse;
 
     @Override
@@ -63,7 +64,9 @@ public class AgenciesFragment extends ListFragment
     //
     // Loader
     //
-    private final static class AgenciesLoader extends AsyncTaskLoader<ObaAgenciesWithCoverageResponse> {
+    private final static class AgenciesLoader
+            extends AsyncTaskLoader<ObaAgenciesWithCoverageResponse> {
+
         AgenciesLoader(Context context) {
             super(context);
         }
@@ -83,14 +86,15 @@ public class AgenciesFragment extends ListFragment
     // Adapter
     //
     private class Adapter extends ArrayAdapter<ObaAgencyWithCoverage> {
+
         Adapter(Context context) {
             super(context, android.R.layout.simple_list_item_2);
         }
 
         @Override
         protected void initView(View view, ObaAgencyWithCoverage coverage) {
-            TextView text1 = (TextView)view.findViewById(android.R.id.text1);
-            TextView text2 = (TextView)view.findViewById(android.R.id.text2);
+            TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+            TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 
             ObaAgency agency = mResponse.getAgency(coverage.getId());
             text1.setText(agency.getName());

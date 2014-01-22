@@ -16,16 +16,23 @@
 package com.joulespersecond.oba.elements;
 
 public final class ObaRouteSchedule {
+
     public static final ObaRouteSchedule EMPTY_OBJECT = new ObaRouteSchedule();
-    public static final ObaRouteSchedule[] EMPTY_ARRAY = new ObaRouteSchedule[] {};
+
+    public static final ObaRouteSchedule[] EMPTY_ARRAY = new ObaRouteSchedule[]{};
 
     public static final class Time {
-        private static final Time[] EMPTY_ARRAY = new Time[] {};
+
+        private static final Time[] EMPTY_ARRAY = new Time[]{};
 
         private final String tripId;
+
         private final String serviceId;
+
         private final String stopHeadsign;
+
         private final long arrivalTime;
+
         private final long departureTime;
 
         Time() {
@@ -75,9 +82,11 @@ public final class ObaRouteSchedule {
     }
 
     public static final class Direction {
-        private static final Direction[] EMPTY_ARRAY = new Direction[] {};
+
+        private static final Direction[] EMPTY_ARRAY = new Direction[]{};
 
         private final String tripHeadsign;
+
         private final Time[] scheduleStopTimes;
 
         Direction() {
@@ -101,6 +110,7 @@ public final class ObaRouteSchedule {
     }
 
     private final String routeId;
+
     private final Direction stopRouteDirectionSchedules[];
 
     private ObaRouteSchedule() {

@@ -15,15 +15,15 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-      <layer-list>
-        <item>
-        <shape>
-         <solid android:color="@color/focus"/>
-         <corners android:radius="2dp" />
-        </shape>
-        </item>
-        <item android:drawable="@drawable/star_off" />
-      </layer-list>
+        <layer-list>
+            <item>
+                <shape>
+                    <solid android:color="@color/focus"/>
+                    <corners android:radius="2dp"/>
+                </shape>
+            </item>
+            <item android:drawable="@drawable/star_off"/>
+        </layer-list>
     </item>
-    <item android:drawable="@drawable/star_off" />
+    <item android:drawable="@drawable/star_off"/>
 </selector>

@@ -16,6 +16,7 @@
 package com.joulespersecond.seattlebusbot.map;
 
 import com.google.android.maps.MapView;
+
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaStop;
 
@@ -26,6 +27,7 @@ import android.view.View;
 import java.util.List;
 
 public interface MapModeController {
+
     /**
      * Controllers should make every attempt to communicate through
      * the Callback interface rather than accessing the MapFragment
@@ -33,11 +35,12 @@ public interface MapModeController {
      * just to keep the separation between them clean.
      *
      * @author paulw
-     *
      */
     interface Callback {
+
         // Used by the controller to tell the Fragment what to do.
         Activity getActivity();
+
         View getView();
 
         // Can't use a LoaderManager with a SherlockMapActivity
@@ -46,6 +49,7 @@ public interface MapModeController {
         void showProgress(boolean show);
 
         String getMapMode();
+
         void setMapMode(String mode, Bundle args);
 
         MapView getMapView();
@@ -53,15 +57,18 @@ public interface MapModeController {
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
         void setMyLocation();
+
         void notifyOutOfRange();
     }
 
     String getMode();
 
     void setState(Bundle args);
+
     void destroy();
 
     void onPause();
+
     void onResume();
 
     void onSaveInstanceState(Bundle outState);

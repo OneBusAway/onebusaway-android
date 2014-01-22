@@ -32,7 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 abstract class MyRouteListFragmentBase extends MyListFragmentBase
-            implements QueryUtils.RouteList.Columns {
+        implements QueryUtils.RouteList.Columns {
     // private static final String TAG = "MyRouteListActivity";
 
     @Override
@@ -49,7 +49,7 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
     public void onListItemClick(ListView l, View v, int position, long id) {
 
         // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
         Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
         final String routeId = c.getString(COL_ID);
@@ -73,8 +73,8 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
             View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+        final TextView text = (TextView) info.targetView
                 .findViewById(R.id.short_name);
         menu.setHeaderTitle(getString(R.string.route_name, text.getText()));
         if (isShortcutMode()) {
@@ -94,24 +94,24 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
                 .getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DEFAULT:
-            // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position,
-                    info.id);
-            return true;
-        case CONTEXT_MENU_SHOW_ON_MAP:
-            HomeActivity.start(getActivity(),
-                    QueryUtils.RouteList.getId(getListView(), info.position));
-            return true;
-        case CONTEXT_MENU_SHOW_URL:
-            UIHelp.goToUrl(getActivity(),
-                    QueryUtils.RouteList.getUrl(getListView(), info.position));
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DEFAULT:
+                // Fake a click
+                onListItemClick(getListView(), info.targetView, info.position,
+                        info.id);
+                return true;
+            case CONTEXT_MENU_SHOW_ON_MAP:
+                HomeActivity.start(getActivity(),
+                        QueryUtils.RouteList.getId(getListView(), info.position));
+                return true;
+            case CONTEXT_MENU_SHOW_URL:
+                UIHelp.goToUrl(getActivity(),
+                        QueryUtils.RouteList.getUrl(getListView(), info.position));
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 

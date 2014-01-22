@@ -40,19 +40,21 @@ import java.io.Reader;
 import java.io.StringWriter;
 
 public class JacksonSerializer implements ObaApi.SerializationHandler {
+
     private static final String TAG = "JacksonSerializer";
 
     private static class SingletonHolder {
+
         public static final JacksonSerializer INSTANCE = new JacksonSerializer();
     }
 
     private static final ObjectMapper mMapper = new ObjectMapper();
 
     static {
-        mMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
+        mMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mMapper.setVisibilityChecker(
                 VisibilityChecker.Std.defaultInstance()
-                .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+                        .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
     }
 
     private JacksonSerializer() { /* singleton */ }

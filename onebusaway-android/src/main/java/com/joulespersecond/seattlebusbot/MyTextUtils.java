@@ -16,12 +16,12 @@
 package com.joulespersecond.seattlebusbot;
 
 public final class MyTextUtils {
+
     /**
      * Converts a string to title casing.
-     * @param str
-     *      The string to convert.
-     * @return
-     *      The converted string.
+     *
+     * @param str The string to convert.
+     * @return The converted string.
      */
     public static String toTitleCase(String str) {
         if (str == null) {
@@ -32,7 +32,7 @@ public final class MyTextUtils {
         StringBuilder builder = new StringBuilder(str);
         final int len = builder.length();
 
-        for (int i=0; i < len; ++i) {
+        for (int i = 0; i < len; ++i) {
             char c = builder.charAt(i);
             if (isSeparator) {
                 if (Character.isLetterOrDigit(c)) {

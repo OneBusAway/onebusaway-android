@@ -42,29 +42,35 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TripService extends Service {
+
     public static final String TAG = "TripService";
 
     // Actions
     public static final String ACTION_SCHEDULE =
-        "com.joulespersecond.seattlebusbot.action.SCHEDULE";
+            "com.joulespersecond.seattlebusbot.action.SCHEDULE";
+
     public static final String ACTION_POLL =
-        "com.joulespersecond.seattlebusbot.action.POLL";
+            "com.joulespersecond.seattlebusbot.action.POLL";
+
     public static final String ACTION_NOTIFY =
-        "com.joulespersecond.seattlebusbot.action.NOTIFY";
+            "com.joulespersecond.seattlebusbot.action.NOTIFY";
+
     public static final String ACTION_CANCEL =
-        "com.joulespersecond.seattlebusbot.action.CANCEL";
+            "com.joulespersecond.seattlebusbot.action.CANCEL";
 
     private static final String EXTRA_TIMEDIFF = ".timeDiff";
 
     private ExecutorService mThreadPool;
+
     private NotificationManager mNM;
-    private ConcurrentHashMap<Integer,Notification> mNotifications;
+
+    private ConcurrentHashMap<Integer, Notification> mNotifications;
 
     @Override
     public void onCreate() {
         mThreadPool = Executors.newSingleThreadExecutor();
-        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        mNotifications = new ConcurrentHashMap<Integer,Notification>();
+        mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mNotifications = new ConcurrentHashMap<Integer, Notification>();
     }
 
     @Override
@@ -92,6 +98,7 @@ public class TripService extends Service {
     }
 
     private final class TaskContextImpl implements TaskContext {
+
         private final int mStartId;
 
         public TaskContextImpl(int startId) {
@@ -199,7 +206,7 @@ public class TripService extends Service {
                 intent, PendingIntent.FLAG_ONE_SHOT);
 
         AlarmManager alarm =
-            (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
     }
 

@@ -25,12 +25,18 @@ import android.support.v4.content.AsyncTaskLoader;
 
 
 class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
+
     private final String mStopId;
+
     private ObaArrivalInfoResponse mLastGoodResponse;
+
     private long mLastResponseTime = 0;
+
     private long mLastGoodResponseTime = 0;
-    private int mMinutesAfter = 35; // includes vehicles arriving or departing in the next minutesAfter minutes
-    
+
+    private int mMinutesAfter = 35;
+            // includes vehicles arriving or departing in the next minutesAfter minutes
+
     private static final int MINUTES_INCREMENT = 30; // minutes
 
     public ArrivalsListLoader(Context context, String stopId) {
@@ -64,11 +70,11 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
     public long getLastGoodResponseTime() {
         return mLastGoodResponseTime;
     }
-    
+
     public void incrementMinutesAfter() {
         mMinutesAfter = mMinutesAfter + MINUTES_INCREMENT;
     }
-    
+
     public int getMinutesAfter() {
         return mMinutesAfter;
     }

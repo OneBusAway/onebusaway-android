@@ -27,15 +27,19 @@ import android.support.v4.app.FragmentTransaction;
 
 /**
  * Copied from APIDemos and ported to the Sherlock
- * @author paulw
  *
- * @param <T>
+ * @author paulw
  */
 public class TabListener<T extends Fragment> implements ActionBar.TabListener {
+
     private final FragmentActivity mActivity;
+
     private final String mTag;
+
     private final Class<T> mClass;
+
     private final Bundle mArgs;
+
     private Fragment mFragment;
 
     public TabListener(FragmentActivity activity, String tag, Class<T> clz) {

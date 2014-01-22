@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.request;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaShapeElement;
 
@@ -23,15 +24,19 @@ import java.util.List;
 
 /**
  * Response object for ObaShapeRequest requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaShapeResponse extends ObaResponse implements ObaShape {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         //private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
         private final ObaShapeElement entry = ObaShapeElement.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaShapeResponse() {

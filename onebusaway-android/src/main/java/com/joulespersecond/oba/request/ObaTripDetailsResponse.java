@@ -24,16 +24,21 @@ import com.joulespersecond.oba.elements.ObaTripStatus;
 
 /**
  * Response object for ObaStopRequest requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaTripDetailsResponse extends ObaResponseWithRefs
-    implements ObaTripDetails {
+        implements ObaTripDetails {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final ObaTripDetailsElement entry = ObaTripDetailsElement.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaTripDetailsResponse() {

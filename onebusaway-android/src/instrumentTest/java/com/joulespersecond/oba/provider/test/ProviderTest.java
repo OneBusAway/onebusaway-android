@@ -15,16 +15,17 @@
  */
 package com.joulespersecond.oba.provider.test;
 
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.provider.ObaProvider;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
 
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.provider.ObaProvider;
-
 public class ProviderTest extends ProviderTestCase2<ObaProvider> {
+
     public ProviderTest() {
         super(ObaProvider.class, ObaContract.AUTHORITY);
     }
@@ -60,7 +61,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         // Read
         //
         Cursor c = cr.query(ObaContract.Stops.CONTENT_URI,
-                new String[] { ObaContract.Stops._ID, ObaContract.Stops.DIRECTION },
+                new String[]{ObaContract.Stops._ID, ObaContract.Stops.DIRECTION},
                 null, null, null);
         assertNotNull(c);
         assertTrue(c.getCount() == 1);
@@ -70,7 +71,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
 
         // Test counting
         c = cr.query(ObaContract.Stops.CONTENT_URI,
-                new String[] { ObaContract.Stops._COUNT },
+                new String[]{ObaContract.Stops._COUNT},
                 null, null, null);
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
@@ -78,7 +79,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertTrue(c.getInt(0) == 1);
         c.close();
         // Get the one that we care about
-        c = cr.query(uri, new String[] { ObaContract.Stops.CODE }, null, null, null);
+        c = cr.query(uri, new String[]{ObaContract.Stops.CODE}, null, null, null);
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
         c.moveToNext();
@@ -126,7 +127,7 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         assertNotNull(uri);
 
         Cursor c = cr.query(ObaContract.Stops.CONTENT_URI,
-                new String[] { ObaContract.Stops._COUNT },
+                new String[]{ObaContract.Stops._COUNT},
                 null, null, null);
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
@@ -135,10 +136,10 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         c.close();
 
         c = cr.query(ObaContract.Stops.CONTENT_URI
-                        .buildUpon()
-                        .appendQueryParameter("limit", "1")
-                        .build(),
-                new String[] { ObaContract.Stops._ID },
+                .buildUpon()
+                .appendQueryParameter("limit", "1")
+                .build(),
+                new String[]{ObaContract.Stops._ID},
                 null, null, null);
         assertNotNull(c);
         assertEquals(c.getCount(), 1);

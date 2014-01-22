@@ -16,11 +16,15 @@
 package com.joulespersecond.oba.elements;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 
 public interface ObaTripStatus {
+
     public static final class Position {
+
         private final double lat = 0;
+
         private final double lon = 0;
 
         public double getLat() {
@@ -69,9 +73,9 @@ public interface ObaTripStatus {
 
     /**
      * @return The time offset, in seconds, from the closest stop to the current
-     *  position of the transit vehicle among the stop times of the current trip.
-     *  If the number is positive, the stop is coming up. If negative, the stop
-     *  has already been passed.
+     * position of the transit vehicle among the stop times of the current trip.
+     * If the number is positive, the stop is coming up. If negative, the stop
+     * has already been passed.
      */
     public long getClosestStopTimeOffset();
 

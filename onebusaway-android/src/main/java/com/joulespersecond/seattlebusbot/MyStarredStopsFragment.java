@@ -31,16 +31,18 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MyStarredStopsFragment extends MyStopListFragmentBase {
+
     public static final String TAB_NAME = "starred";
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(),
                 ObaContract.Stops.CONTENT_URI,
-                QueryUtils.StopList.Columns.PROJECTION,                
+                QueryUtils.StopList.Columns.PROJECTION,
                 ObaContract.Stops.FAVORITE + "=1" +
-                (Application.get().getCurrentRegion() == null ? "" : " AND " + 
-                        QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId())),
+                        (Application.get().getCurrentRegion() == null ? "" : " AND " +
+                                QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
+                                        Application.get().getCurrentRegion().getId())),
                 null,
                 ObaContract.Stops.USE_COUNT + " desc");
     }
@@ -60,15 +62,15 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
     @Override
     public boolean onContextItemSelected(android.view.MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-        case MyListConstants.CONTEXT_MENU_DELETE:
-            final String id = QueryUtils.StopList.getId(getListView(), info.position);
-            final Uri uri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id);
-            ObaContract.Stops.markAsFavorite(getActivity(), uri, false);
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case MyListConstants.CONTEXT_MENU_DELETE:
+                final String id = QueryUtils.StopList.getId(getListView(), info.position);
+                final Uri uri = Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, id);
+                ObaContract.Stops.markAsFavorite(getActivity(), uri, false);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
@@ -80,7 +82,8 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_starred) {
-            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
+            new ClearDialog()
+                    .show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
             return true;
         }
         return false;
@@ -92,6 +95,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     private static class ClearDialog extends ClearConfirmDialog {
+
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);

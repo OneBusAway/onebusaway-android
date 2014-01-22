@@ -18,27 +18,47 @@ package com.joulespersecond.oba.elements;
 import com.google.android.maps.GeoPoint;
 
 public final class ObaTripStatusElement implements ObaTripStatus {
+
     protected static final ObaTripStatusElement EMPTY_OBJECT = new ObaTripStatusElement();
 
     private final long serviceDate;
+
     private final boolean predicted;
+
     private final long scheduleDeviation;
+
     private final String vehicleId;
+
     private final String closestStop;
+
     private final long closestStopTimeOffset;
+
     private final Position position;
+
     private final String activeTripId;
+
     private final Double distanceAlongTrip;
+
     private final Double scheduledDistanceAlongTrip;
+
     private final Double totalDistanceAlongTrip;
+
     private final Double orientation;
+
     private final String nextStop;
+
     private final long nextStopTimeOffset;
+
     private final String phase;
+
     private final String status;
+
     private final Long lastUpdateTime;
+
     private final Position lastKnownLocation;
+
     private final Double lastKnownOrientation;
+
     private final int blockTripSequence;
 
     ObaTripStatusElement() {

@@ -34,15 +34,18 @@ public class TripRequestTest extends ObaTestCase {
         ObaTripRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/trip/" + TEST_TRIP_ID + ".json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 
     public void testKCMTripResponse() throws Exception {
         ObaTripResponse response =
                 new ObaTripRequest.Builder(getContext(), TEST_TRIP_ID)
-                    .build()
-                    .call();
+                        .build()
+                        .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
         assertEquals("1_65", response.getRouteId());
@@ -60,7 +63,10 @@ public class TripRequestTest extends ObaTestCase {
         ObaTripRequest request = ObaTripRequest.newRequest(getContext(), TEST_TRIP_ID);
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/trip/" + TEST_TRIP_ID + ".json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 }

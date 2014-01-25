@@ -20,7 +20,9 @@ import com.joulespersecond.oba.ObaConnectionFactory;
 import com.joulespersecond.oba.mock.MockConnectionFactory;
 
 public class ObaLoaderTestCase extends LoaderTestCase {
+
     private MockConnectionFactory mMockFactory = null;
+
     private ObaConnectionFactory mOldFactory = null;
 
     @Override

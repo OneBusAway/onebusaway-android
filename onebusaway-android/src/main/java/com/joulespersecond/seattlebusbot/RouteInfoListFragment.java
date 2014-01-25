@@ -52,16 +52,23 @@ import java.util.List;
 import java.util.Map;
 
 public class RouteInfoListFragment extends ListFragment {
+
     private static final String TAG = "RouteInfoListFragment";
+
     private static final int ROUTE_INFO_LOADER = 0;
+
     private static final int ROUTE_STOPS_LOADER = 1;
 
     private String mRouteId;
+
     private ObaRouteResponse mRouteInfo;
+
     private StopsForRouteInfo mStopsForRoute;
 
     private SimpleExpandableListAdapter mAdapter;
+
     private final RouteLoaderCallback mRouteCallback = new RouteLoaderCallback();
+
     private final StopsLoaderCallback mStopsCallback = new StopsLoaderCallback();
 
     @Override
@@ -76,11 +83,11 @@ public class RouteInfoListFragment extends ListFragment {
         setListShown(false);
 
         // Initialize the expandable list
-        ExpandableListView list = (ExpandableListView)getListView();
+        ExpandableListView list = (ExpandableListView) getListView();
         list.setOnChildClickListener(mChildClick);
 
         // Get the route ID from the "uri" argument
-        Uri uri = (Uri)getArguments().getParcelable(FragmentUtils.URI);
+        Uri uri = (Uri) getArguments().getParcelable(FragmentUtils.URI);
         if (uri == null) {
             Log.e(TAG, "No URI in arguments");
             return;
@@ -130,29 +137,32 @@ public class RouteInfoListFragment extends ListFragment {
     }
 
     private final ExpandableListView.OnChildClickListener mChildClick =
-        new ExpandableListView.OnChildClickListener() {
-            @Override
-            public boolean onChildClick(ExpandableListView parent,
-                    View v,
-                    int groupPosition,
-                    int childPosition,
-                    long id) {
-                showArrivals(v);
-                return true;
-            }
-        };
+            new ExpandableListView.OnChildClickListener() {
+                @Override
+                public boolean onChildClick(ExpandableListView parent,
+                        View v,
+                        int groupPosition,
+                        int childPosition,
+                        long id) {
+                    showArrivals(v);
+                    return true;
+                }
+            };
 
     private static final int CONTEXT_MENU_DEFAULT = 1;
+
     private static final int CONTEXT_MENU_SHOWONMAP = 2;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        ExpandableListView.ExpandableListContextMenuInfo info = (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
-        if (ExpandableListView.getPackedPositionType(info.packedPosition) != ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+        ExpandableListView.ExpandableListContextMenuInfo info
+                = (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
+        if (ExpandableListView.getPackedPositionType(info.packedPosition)
+                != ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
             return;
         }
-        final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+        final TextView text = (TextView) info.targetView.findViewById(R.id.name);
         menu.setHeaderTitle(text.getText());
         menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.route_info_context_get_stop_info);
         menu.add(0, CONTEXT_MENU_SHOWONMAP, 0, R.string.route_info_context_showonmap);
@@ -160,23 +170,24 @@ public class RouteInfoListFragment extends ListFragment {
 
     @Override
     public boolean onContextItemSelected(android.view.MenuItem item) {
-        ExpandableListView.ExpandableListContextMenuInfo info = (ExpandableListView.ExpandableListContextMenuInfo) item
+        ExpandableListView.ExpandableListContextMenuInfo info
+                = (ExpandableListView.ExpandableListContextMenuInfo) item
                 .getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DEFAULT:
-            showArrivals(info.targetView);
-            return true;
-        case CONTEXT_MENU_SHOWONMAP:
-            showOnMap(info.targetView);
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DEFAULT:
+                showArrivals(info.targetView);
+                return true;
+            case CONTEXT_MENU_SHOWONMAP:
+                showOnMap(info.targetView);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
     private void showArrivals(View v) {
-        final TextView text = (TextView)v.findViewById(R.id.stop_id);
-        final String stopId = (String)text.getText();
+        final TextView text = (TextView) v.findViewById(R.id.stop_id);
+        final String stopId = (String) text.getText();
         ObaStop stop = null;
         if (mStopsForRoute != null) {
             stop = mStopsForRoute.getStopMap().get(stopId);
@@ -191,8 +202,8 @@ public class RouteInfoListFragment extends ListFragment {
     }
 
     private void showOnMap(View v) {
-        final TextView text = (TextView)v.findViewById(R.id.stop_id);
-        final String stopId = (String)text.getText();
+        final TextView text = (TextView) v.findViewById(R.id.stop_id);
+        final String stopId = (String) text.getText();
         // we need to find this route in the response because
         // we need to know it's lat/lon
         ObaStop stop = mStopsForRoute.getStopMap().get(stopId);
@@ -253,6 +264,7 @@ public class RouteInfoListFragment extends ListFragment {
     // Loader
     //
     private final static class RouteInfoLoader extends AsyncTaskLoader<ObaRouteResponse> {
+
         private final String mRouteId;
 
         RouteInfoLoader(Context context, String routeId) {
@@ -272,6 +284,7 @@ public class RouteInfoListFragment extends ListFragment {
     }
 
     private final static class StopsForRouteLoader extends AsyncTaskLoader<StopsForRouteInfo> {
+
         private final String mRouteId;
 
         StopsForRouteLoader(Context context, String routeId) {
@@ -287,18 +300,22 @@ public class RouteInfoListFragment extends ListFragment {
         @Override
         public StopsForRouteInfo loadInBackground() {
             final ObaStopsForRouteResponse response =
-                new ObaStopsForRouteRequest.Builder(getContext(), mRouteId)
-                    .setIncludeShapes(false)
-                    .build()
-                    .call();
+                    new ObaStopsForRouteRequest.Builder(getContext(), mRouteId)
+                            .setIncludeShapes(false)
+                            .build()
+                            .call();
             return new StopsForRouteInfo(getContext(), response);
         }
     }
 
     private final static class StopsForRouteInfo {
+
         private final int mResultCode;
+
         private final ArrayList<HashMap<String, String>> mStopGroups;
+
         private final ArrayList<ArrayList<HashMap<String, String>>> mStops;
+
         private final HashMap<String, ObaStop> mStopMap;
 
         public StopsForRouteInfo(Context cxt, ObaStopsForRouteResponse response) {
@@ -364,7 +381,8 @@ public class RouteInfoListFragment extends ListFragment {
                         final String[] stopIds = group.getStopIds();
                         final int stopIdLen = stopIds.length;
 
-                        final ArrayList<HashMap<String, String>> childList = new ArrayList<HashMap<String, String>>(
+                        final ArrayList<HashMap<String, String>> childList
+                                = new ArrayList<HashMap<String, String>>(
                                 stopIdLen);
 
                         for (int j = 0; j < stopIdLen; ++j) {
@@ -418,9 +436,9 @@ public class RouteInfoListFragment extends ListFragment {
         View view = getView();
 
         if (routeInfo.getCode() == ObaApi.OBA_OK) {
-            TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
-            TextView longNameText = (TextView)view.findViewById(R.id.long_name);
-            TextView agencyText = (TextView)view.findViewById(R.id.agency);
+            TextView shortNameText = (TextView) view.findViewById(R.id.short_name);
+            TextView longNameText = (TextView) view.findViewById(R.id.long_name);
+            TextView agencyText = (TextView) view.findViewById(R.id.agency);
             String url = mRouteInfo.getUrl();
 
             String shortName = routeInfo.getShortName();
@@ -442,8 +460,9 @@ public class RouteInfoListFragment extends ListFragment {
                 values.put(ObaContract.Routes.SHORTNAME, shortName);
                 values.put(ObaContract.Routes.LONGNAME, longName);
                 values.put(ObaContract.Routes.URL, url);
-                if(Application.get().getCurrentRegion() != null){
-                    values.put(ObaContract.Routes.REGION_ID, Application.get().getCurrentRegion().getId());
+                if (Application.get().getCurrentRegion() != null) {
+                    values.put(ObaContract.Routes.REGION_ID,
+                            Application.get().getCurrentRegion().getId());
                 }
                 ObaContract.Routes.insertOrUpdate(getActivity(), mRouteInfo.getId(), values, true);
             }
@@ -461,21 +480,21 @@ public class RouteInfoListFragment extends ListFragment {
             setEmptyText(getString(UIHelp.getRouteErrorString(getActivity(), code)));
         }
         mAdapter = new SimpleExpandableListAdapter(
-            getActivity(),
-            result.getStopGroups(),
-            android.R.layout.simple_expandable_list_item_1,
-            new String[] { "name" },
-            new int[] { android.R.id.text1 },
-            result.getStops(),
-            R.layout.route_info_listitem,
-            new String[] { "name", "direction", "id" },
-            new int[] { R.id.name, R.id.direction, R.id.stop_id }
+                getActivity(),
+                result.getStopGroups(),
+                android.R.layout.simple_expandable_list_item_1,
+                new String[]{"name"},
+                new int[]{android.R.id.text1},
+                result.getStops(),
+                R.layout.route_info_listitem,
+                new String[]{"name", "direction", "id"},
+                new int[]{R.id.name, R.id.direction, R.id.stop_id}
         );
         setListAdapter(mAdapter);
     }
 
     public void setListAdapter(SimpleExpandableListAdapter adapter) {
-        ExpandableListView list = (ExpandableListView)getListView();
+        ExpandableListView list = (ExpandableListView) getListView();
 
         if (list != null) {
             list.setAdapter(adapter);

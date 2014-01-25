@@ -31,7 +31,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 abstract class MyStopListFragmentBase extends MyListFragmentBase
-            implements QueryUtils.StopList.Columns {
+        implements QueryUtils.StopList.Columns {
     //private static final String TAG = "MyStopListActivity";
 
     @Override
@@ -52,7 +52,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         if (isShortcutMode()) {
             final Intent shortcut =
-                UIHelp.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
+                    UIHelp.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
 
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut);
@@ -65,7 +65,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
     protected StopData getStopData(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
         return new StopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());
     }
 
@@ -73,49 +73,48 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
     public void onCreateContextMenu(ContextMenu menu, View v,
             ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-        final TextView text = (TextView)info.targetView.findViewById(R.id.stop_name);
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+        final TextView text = (TextView) info.targetView.findViewById(R.id.stop_name);
         menu.setHeaderTitle(text.getText());
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
-        }
-        else {
+        } else {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_get_stop_info);
         }
         menu.add(0, CONTEXT_MENU_SHOW_ON_MAP, 0, R.string.my_context_showonmap);
-        if (!isShortcutMode()){
+        if (!isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0, R.string.my_context_create_shortcut);
         }
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DEFAULT:
-            // Fake a click
-            onListItemClick(getListView(), info.targetView, info.position, info.id);
-            return true;
-        case CONTEXT_MENU_SHOW_ON_MAP:
-            showOnMap(getListView(), info.position);
-            return true;
-        case CONTEXT_MENU_CREATE_SHORTCUT:
-            StopData stopData = getStopData(getListView(), info.position);
-            final Intent shortcutIntent =
-                    UIHelp.makeShortcut(getActivity(), stopData.uiName,
-                            stopData.getArrivalsList().getIntent());
-            shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
-            shortcutIntent.setFlags(0);
-            getActivity().sendBroadcast(shortcutIntent);
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DEFAULT:
+                // Fake a click
+                onListItemClick(getListView(), info.targetView, info.position, info.id);
+                return true;
+            case CONTEXT_MENU_SHOW_ON_MAP:
+                showOnMap(getListView(), info.position);
+                return true;
+            case CONTEXT_MENU_CREATE_SHORTCUT:
+                StopData stopData = getStopData(getListView(), info.position);
+                final Intent shortcutIntent =
+                        UIHelp.makeShortcut(getActivity(), stopData.uiName,
+                                stopData.getArrivalsList().getIntent());
+                shortcutIntent.setAction(MyListConstants.INSTALL_SHORTCUT);
+                shortcutIntent.setFlags(0);
+                getActivity().sendBroadcast(shortcutIntent);
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
     private void showOnMap(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
-        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+        SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
         Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());
         final String stopId = c.getString(COL_ID);
@@ -126,12 +125,16 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
     }
 
     protected class StopData {
+
         private final String id;
+
         private final String name;
+
         private final String dir;
+
         private final String uiName;
 
-        public StopData(Cursor c, int row){
+        public StopData(Cursor c, int row) {
             c.moveToPosition(row);
             id = c.getString(COL_ID);
             name = c.getString(COL_NAME);
@@ -157,8 +160,8 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         public ArrivalsListActivity.Builder getArrivalsList() {
             return new ArrivalsListActivity.Builder(getActivity(), id)
-                .setStopName(name)
-                .setStopDirection(dir);
+                    .setStopName(name)
+                    .setStopDirection(dir);
         }
     }
 }

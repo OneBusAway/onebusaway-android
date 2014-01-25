@@ -26,12 +26,16 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
     // The stop name in OneBusAway differs from the actual stop name.
     public static final String NAME_WRONG = "stop_name_wrong";
+
     // The stop number in OneBusAway differs from the actual stop number.
     public static final String NUMBER_WRONG = "stop_number_wrong";
+
     // The stop location in OneBusAway differs from the action location.
     public static final String LOCATION_WRONG = "stop_location_wrong";
+
     // An expected route or trip is missing from the stop.
     public static final String ROUTE_OR_TRIP_MISSING = "route_or_trip_missing";
+
     // Other
     public static final String OTHER = "other";
 
@@ -40,6 +44,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
     }
 
     public static class Builder extends RequestBase.PostBuilderBase {
+
         public Builder(Context context, String stopId) {
             super(context, BASE_PATH + "/report-problem-with-stop.json");
             mPostData.appendQueryParameter("stopId", stopId);
@@ -47,6 +52,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
         /**
          * Sets the optional problem code.
+         *
          * @param code The problem code.
          */
         public Builder setCode(String code) {
@@ -59,6 +65,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
         /**
          * Sets the optional user comment.
+         *
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
@@ -68,6 +75,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
         /**
          * Sets the optional user location.
+         *
          * @param lat The user's current location.
          * @param lon The user's current location.
          */
@@ -79,6 +87,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
 
         /**
          * Sets the optional user's location accuracy, in meters.
+         *
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {

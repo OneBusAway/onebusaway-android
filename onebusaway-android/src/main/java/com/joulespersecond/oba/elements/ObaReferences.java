@@ -19,11 +19,14 @@ import java.util.List;
 
 /**
  * Interface representing the <references> object in responses.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public interface ObaReferences {
+
     /**
      * Dereferences a stop by its ID.
+     *
      * @param id The stop ID.
      * @return The ObaStop if it exists, or null if it doesn't.
      */
@@ -31,6 +34,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a list of stop IDs.
+     *
      * @param ids A list of stops to convert.
      * @return The list of converted stop.
      */
@@ -38,6 +42,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a route by its ID.
+     *
      * @param id The route ID.
      * @return The ObaRoute if it exists, or null if it doesn't.
      */
@@ -45,6 +50,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a list of route IDs.
+     *
      * @param ids A list of routes to convert.
      * @return The list of converted routes.
      */
@@ -52,6 +58,7 @@ public interface ObaReferences {
 
     /**
      * References a trip by its ID.
+     *
      * @param id The trip ID.
      * @return The ObaTrip if it exists, or null if it doesn't.
      */
@@ -59,6 +66,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a list of trip IDs.
+     *
      * @param ids A list of trips to convert.
      * @return The list of converted trips.
      */
@@ -66,6 +74,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences an agency by its ID.
+     *
      * @param id The agency ID.
      * @return The ObaAgency if it exists, or null if it doesn't.
      */
@@ -73,6 +82,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a list of agency IDs.
+     *
      * @param ids A list of agency IDs to convert.
      * @return The list of converted agencies.
      */
@@ -80,6 +90,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a situation by ID.
+     *
      * @param id The situation ID.
      * @return The ObaSituation if it exists, or null if it doesn't.
      */
@@ -87,6 +98,7 @@ public interface ObaReferences {
 
     /**
      * Dereferences a list of situation IDs.
+     *
      * @param ids A list of situation IDs to convert.
      * @return The list of converted situations.
      */

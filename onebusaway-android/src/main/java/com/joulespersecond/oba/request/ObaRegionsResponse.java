@@ -19,12 +19,15 @@ import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRegionElement;
 
 public class ObaRegionsResponse extends ObaResponse {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaRegionElement[] list = ObaRegionElement.EMPTY_ARRAY;
 
     }
+
     private final Data data;
 
     private ObaRegionsResponse() {

@@ -2,6 +2,17 @@
 
 This guide details how to use issues and pull requests (for new code) to improve OneBusAway for Android.
 
+## Code Style and Template
+
+We use the [Android Open-Source Project (AOSP](http://source.android.com/source/code-style.html) Code Style Guidelines.
+
+We strongly suggest that you use the `AndroidStyle.xml` template file, included in this repository, in Android Studio to format your code:
+
+1. Place `AndroidStyle.xml` in your Android Studio `/codestyles` directory (e.g., `C:\Users\barbeau\.AndroidStudioPreview\config\codestyles`)
+2. Restart Android Studio.
+3. Go to "File->Settings->Code Style", and under "Scheme" select "AndroidStyle" and click "Ok".
+4. Right-click on the files that contain your contributions and select "Reformat Code", check "Optimize imports", and select "Run".
+
 ## Closing policy for issues and pull requests
 
 OneBusAway for Android is a popular project and the capacity to deal with issues and pull requests is limited. Out of respect for our volunteers, issues and pull requests not in line with the guidelines listed in this document may be closed without notice.
@@ -37,10 +48,11 @@ If you can, please submit a pull request with the fix or improvements including 
 1. Fork the project on GitHub
 2. Create a feature branch
 3. Write tests and code
-4. If you have multiple commits please combine them into one commit by [squashing them](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits)
-5. Push the commit to your fork
-6. Submit a pull request with a motive for your change and the method you used to achieve it
-7. [Search for issues](https://github.com/OneBusAway/onebusaway-android/search?q=&ref=cmdform&type=Issues) related to your pull request and mention them in the pull request description or comments
+4. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
+5. If you have multiple commits please combine them into one commit by [squashing them](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits)
+6. Push the commit to your fork
+7. Submit a pull request with a motive for your change and the method you used to achieve it
+8. [Search for issues](https://github.com/OneBusAway/onebusaway-android/search?q=&ref=cmdform&type=Issues) related to your pull request and mention them in the pull request description or comments
 
 We will accept pull requests if:
 

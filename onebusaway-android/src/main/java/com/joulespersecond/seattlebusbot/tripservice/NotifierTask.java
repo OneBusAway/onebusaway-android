@@ -33,9 +33,7 @@ import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 
 /**
- *
  * @author paulw
- *
  */
 public final class NotifierTask implements Runnable {
     //private static final String TAG = "NotifierTask";
@@ -43,20 +41,28 @@ public final class NotifierTask implements Runnable {
     private static final long ONE_MINUTE = 60 * 1000;
 
     private static final String[] ALERT_PROJECTION = {
-        ObaContract.TripAlerts._ID,
-        ObaContract.TripAlerts.TRIP_ID,
-        ObaContract.TripAlerts.STOP_ID,
-        ObaContract.TripAlerts.STATE,
+            ObaContract.TripAlerts._ID,
+            ObaContract.TripAlerts.TRIP_ID,
+            ObaContract.TripAlerts.STOP_ID,
+            ObaContract.TripAlerts.STATE,
     };
+
     private static final int COL_ID = 0;
+
     private static final int COL_TRIP_ID = 1;
+
     private static final int COL_STOP_ID = 2;
+
     private static final int COL_STATE = 3;
 
     private final Context mContext;
+
     private final TaskContext mTaskContext;
+
     private final ContentResolver mCR;
+
     private final Uri mUri;
+
     private long mTimeDiff;
 
     public NotifierTask(Context context,
@@ -128,14 +134,14 @@ public final class NotifierTask implements Runnable {
         deleteIntent.setData(alertUri);
 
         return new NotificationCompat.Builder(mContext)
-            .setSmallIcon(R.drawable.ic_stat_notification)
-            .setDefaults(Notification.DEFAULT_ALL)
-            .setOnlyAlertOnce(true)
-             //.setLights(0xFF00FF00, 1000, 1000)
-             //.setVibrate(VIBRATE_PATTERN)
-            .setDeleteIntent(PendingIntent.getService(mContext, 0,
-                    deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT))
-            .getNotification();
+                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setOnlyAlertOnce(true)
+                        //.setLights(0xFF00FF00, 1000, 1000)
+                        //.setVibrate(VIBRATE_PATTERN)
+                .setDeleteIntent(PendingIntent.getService(mContext, 0,
+                        deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT))
+                .getNotification();
     }
 
     @SuppressWarnings("deprecation")
@@ -166,7 +172,7 @@ public final class NotifierTask implements Runnable {
             return mContext.getString(R.string.trip_stat_one, routeName);
         } else {
             return mContext.getString(R.string.trip_stat, routeName,
-                    (int)(timeDiff / ONE_MINUTE));
+                    (int) (timeDiff / ONE_MINUTE));
         }
     }
 }

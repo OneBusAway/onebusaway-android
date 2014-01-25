@@ -28,9 +28,11 @@ import java.util.Comparator;
 import java.util.Date;
 
 final class ArrivalInfo {
+
     final static class InfoComparator implements Comparator<ArrivalInfo> {
+
         public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
-            return (int)(lhs.mEta - rhs.mEta);
+            return (int) (lhs.mEta - rhs.mEta);
         }
     }
 
@@ -59,9 +61,13 @@ final class ArrivalInfo {
     }
 
     private final ObaArrivalInfo mInfo;
+
     private final long mEta;
+
     private final long mDisplayTime;
+
     private final String mStatusText;
+
     private final int mColor;
 
     private static final int ms_in_mins = 60 * 1000;
@@ -133,7 +139,7 @@ final class ArrivalInfo {
 
         if (frequency != null) {
 
-            int headwayAsMinutes = (int)(frequency.getHeadway() / 60);
+            int headwayAsMinutes = (int) (frequency.getHeadway() / 60);
             DateFormat formatter = DateFormat.getTimeInstance(DateFormat.SHORT);
 
             int statusLabelId = -1;
@@ -160,7 +166,7 @@ final class ArrivalInfo {
                 if (delay > 0) {
                     // Arriving delayed
                     return res.getQuantityString(
-                            R.plurals.stop_info_arrive_delayed, (int)delay,
+                            R.plurals.stop_info_arrive_delayed, (int) delay,
                             delay);
                 } else if (delay < 0) {
                     // Arriving early
@@ -168,7 +174,7 @@ final class ArrivalInfo {
                     return res
                             .getQuantityString(
                                     R.plurals.stop_info_arrive_early,
-                                    (int)delay, delay);
+                                    (int) delay, delay);
                 } else {
                     // Arriving on time
                     return context.getString(R.string.stop_info_ontime);
@@ -178,7 +184,7 @@ final class ArrivalInfo {
                 if (delay > 0) {
                     // Departing delayed
                     return res.getQuantityString(
-                            R.plurals.stop_info_depart_delayed, (int)delay,
+                            R.plurals.stop_info_depart_delayed, (int) delay,
                             delay);
                 } else if (delay < 0) {
                     // Departing early
@@ -186,7 +192,7 @@ final class ArrivalInfo {
                     return res
                             .getQuantityString(
                                     R.plurals.stop_info_depart_early,
-                                    (int)delay, delay);
+                                    (int) delay, delay);
                 } else {
                     // Departing on time
                     return context.getString(R.string.stop_info_ontime);

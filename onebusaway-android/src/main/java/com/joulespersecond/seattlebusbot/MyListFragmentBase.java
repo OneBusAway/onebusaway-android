@@ -34,18 +34,19 @@ import android.support.v4.widget.SimpleCursorAdapter;
  * Base class for the stop/route list fragments.
  * Immediate base class for MyStopListFragmentBase/MyRouteListFragmentBase
  * Ancestor of:
- *      MyRecentRoutesFragment
- *      MyRecentStopsFragment
- *      MyStarredStopsFragment
+ * MyRecentRoutesFragment
+ * MyRecentStopsFragment
+ * MyStarredStopsFragment
  *
  * @author paulw
- *
  */
 abstract class MyListFragmentBase extends ListFragment
         implements LoaderManager.LoaderCallbacks<Cursor>, MyListConstants {
+
     private static final Handler mHandler = new Handler();
 
     private class Observer extends ContentObserver {
+
         Observer() {
             super(mHandler);
         }
@@ -63,6 +64,7 @@ abstract class MyListFragmentBase extends ListFragment
     }
 
     private SimpleCursorAdapter mAdapter;
+
     private Observer mObserver;
 
     @Override
@@ -107,34 +109,35 @@ abstract class MyListFragmentBase extends ListFragment
     protected boolean isShortcutMode() {
         Activity act = getActivity();
         if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase)act;
+            MyTabActivityBase base = (MyTabActivityBase) act;
             return base.isShortcutMode();
         }
         return false;
     }
 
     protected static abstract class ClearConfirmDialog extends DialogFragment {
+
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             return new AlertDialog.Builder(getActivity())
-                .setMessage(R.string.my_option_clear_confirm)
-                .setTitle(R.string.my_option_clear_confirm_title)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton(android.R.string.yes,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                doClear();
-                            }
-                        })
-                 .setNegativeButton(android.R.string.no,
-                         new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
-                 .create();
+                    .setMessage(R.string.my_option_clear_confirm)
+                    .setTitle(R.string.my_option_clear_confirm_title)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    doClear();
+                                }
+                            })
+                    .setNegativeButton(android.R.string.no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                    .create();
         }
 
         abstract protected void doClear();

@@ -20,19 +20,33 @@
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
-    <string name="trip_service_perm_description">Allows the application to implement reminders for upcoming buses.</string>
+    <string name="trip_service_perm_description">Allows the application to implement reminders for
+        upcoming buses.
+    </string>
 
     <!-- Generic -->
-    <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this information. Try again and it might work.</string>
+    <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this
+        information. Try again and it might work.
+    </string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
-    <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
-    <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a shortcut, it\'s possible your link is out of date.</string>
+    <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a
+        shortcut, it\'s possible your link is out of date.
+    </string>
+    <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a
+        shortcut, it\'s possible your link is out of date.
+    </string>
     <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
-    <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that request.</string>
-    <string name="bad_gateway_error">OneBusAway\'s servers are overloaded. Please excuse us!</string>
+    <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that
+        request.
+    </string>
+    <string name="bad_gateway_error">OneBusAway\'s servers are overloaded. Please excuse us!
+    </string>
     <string name="map_generic_error">Unable to get stops.</string>
-    <string name="no_network_error">You appear to be offline or are not connected to the network.</string>
-    <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane Mode?</string>
+    <string name="no_network_error">You appear to be offline or are not connected to the network.
+    </string>
+    <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane
+        Mode?
+    </string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -61,10 +75,14 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Added the ability to check for arrivals longer than 30 minutes away.</string>
+    <string name="main_help_whatsnew">Added the ability to check for arrivals longer than 30 minutes
+        away.
+    </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
-    <string name="main_nolocation">OneBusAway would like your location, do you want to enable it now?</string>
+    <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
+        now?
+    </string>
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>
@@ -75,20 +93,32 @@
     <!--  Stop Info -->
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
-      <item quantity="one">1 minute delay</item>
-      <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes delay</item>
+        <item quantity="one">1 minute delay</item>
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            minutes delay
+        </item>
     </plurals>
     <plurals name="stop_info_arrive_early">
-      <item quantity="one">1 minute early</item>
-      <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes early</item>
+        <item quantity="one">1 minute early</item>
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            minutes early
+        </item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
-      <item quantity="one">Departed 1 minute late</item>
-      <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes late</item>
+        <item quantity="one">Departed 1 minute late</item>
+        <item quantity="other">Departed
+            <xliff:g id="count">%d</xliff:g>
+            minutes late
+        </item>
     </plurals>
     <plurals name="stop_info_depart_early">
-      <item quantity="one">Departed 1 minute early</item>
-      <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes early</item>
+        <item quantity="one">Departed 1 minute early</item>
+        <item quantity="other">Departed
+            <xliff:g id="count">%d</xliff:g>
+            minutes early
+        </item>
     </plurals>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
@@ -104,13 +134,21 @@
     <string name="stop_info_option_reportproblem">Report Problem</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
     <plurals name="stop_info_nodata_hours_minutes">
-      <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
-      <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+        <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
+        <item quantity="other">No arrivals in the next
+            <xliff:g id="count">%2$d</xliff:g>
+            hours and %1$d minutes.
+        </item>
     </plurals>
-    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.</string>
+    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d
+        minutes.
+    </string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
-      <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
-      <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+        <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
+        <item quantity="other">No additional arrivals in the next
+            <xliff:g id="count">%2$d</xliff:g>
+            hours and %1$d minutes.
+        </item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
@@ -133,7 +171,9 @@
     <string name="my_starred_title">Starred</string>
     <string name="my_search_title">Search</string>
     <string name="my_no_recent_stops">You have no recent stops.</string>
-    <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on the arrivals screen.</string>
+    <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on
+        the arrivals screen.
+    </string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
 
@@ -153,8 +193,12 @@
     <string name="my_context_show_schedule">Show schedule</string>
 
     <!-- Find -->
-    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.</string>
-    <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in the search box.</string>
+    <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search
+        box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.
+    </string>
+    <string name="find_hint_nofavoriteroutes">Find a route by entering its route name or number in
+        the search box.
+    </string>
     <string name="find_hint_noresults">There are no results that match your search.</string>
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
@@ -190,7 +234,9 @@
     <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->
-    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by tapping on an arriving bus at your stop.</string>
+    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by
+        tapping on an arriving bus at your stop.
+    </string>
     <string name="trip_list_context_edit">Edit trip</string>
     <string name="trip_list_context_delete">Delete trip</string>
     <string name="trip_list_context_showstop">Show stop</string>
@@ -220,20 +266,28 @@
 
     <!-- Region list -->
     <plurals name="region_distance">
-      <item quantity="one">1 mile away</item>
-      <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
+        <item quantity="one">1 mile away</item>
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            miles away
+        </item>
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
-    <string name ="region_detecting_server">Finding your transit services&#8230;</string>
-    <string name ="region_choose_region">Choose region</string>
-    <string name ="region_disabled_auto_selection">Disabled automatic region selection. You can enable in Preferences.</string>
-    <string name ="region_region_found">Found %1$s region</string>
+    <string name="region_detecting_server">Finding your transit services&#8230;</string>
+    <string name="region_choose_region">Choose region</string>
+    <string name="region_disabled_auto_selection">Disabled automatic region selection. You can
+        enable in Preferences.
+    </string>
+    <string name="region_region_found">Found %1$s region</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway: Feedback</string>
-    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version: %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s</string>
-    <string name="bug_report_error">Unable to send the bug report: no suitable application found.</string>
+    <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
+    </string>
+    <string name="bug_report_error">Unable to send the bug report: no suitable application found.
+    </string>
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
@@ -243,12 +297,18 @@
     <string name="preferences_region_summary">%1$s is currently selected</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
     <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
-    <string name="preferences_auto_refresh_regions_summary">Automatically updates region info weekly</string>
+    <string name="preferences_auto_refresh_regions_summary">Automatically updates region info
+        weekly
+    </string>
     <string name="preferences_auto_select_region_title">Automatic region</string>
-    <string name="preferences_auto_select_region_summary">Set your current transit region based on your current location</string>
+    <string name="preferences_auto_select_region_summary">Set your current transit region based on
+        your current location
+    </string>
 
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
-    <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway API calls</string>
+    <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway
+        API calls
+    </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org/api</string>
     <string name="preferences_save_title">Save to SD card</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
@@ -256,12 +316,18 @@
     <string name="preferences_restore_summary">Restores from previous save</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
-    <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?</string>
+    <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
+    </string>
     <string name="preferences_db_restored">Restore successful! Please restart OneBusAway.</string>
     <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
 
     <string name="preferences_experimental_regions_title">Experimental regions</string>
-    <string name="preferences_experimental_regions_summary">Enables regions that may be unstable</string>
-    <string name="preferences_experimental_regions_enable_warning">Experimental regions may be unstable and without real-time info! Go ahead?</string>
-    <string name="preferences_experimental_regions_disable_warning">Your current experimental region won\'t be available! Go ahead?</string>
+    <string name="preferences_experimental_regions_summary">Enables regions that may be unstable
+    </string>
+    <string name="preferences_experimental_regions_enable_warning">Experimental regions may be
+        unstable and without real-time info! Go ahead?
+    </string>
+    <string name="preferences_experimental_regions_disable_warning">Your current experimental region
+        won\'t be available! Go ahead?
+    </string>
 </resources>

@@ -15,15 +15,16 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.graphics.Color;
-
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRouteRequest;
 import com.joulespersecond.oba.request.ObaRouteResponse;
 
+import android.graphics.Color;
+
 
 public class RouteRequestTest extends ObaTestCase {
+
     public void testKCMRoute() {
         ObaRouteRequest.Builder builder = new ObaRouteRequest.Builder(getContext(), "1_10");
         ObaRouteRequest request = builder.build();

@@ -30,6 +30,7 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
+
     public static final String TAB_NAME = "recent";
 
     @Override
@@ -58,15 +59,15 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
 
     @Override
     public boolean onContextItemSelected(android.view.MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DELETE:
-            ObaContract.Routes.markAsUnused(getActivity(),
-                    Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                            QueryUtils.RouteList.getId(getListView(), info.position)));
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DELETE:
+                ObaContract.Routes.markAsUnused(getActivity(),
+                        Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                                QueryUtils.RouteList.getId(getListView(), info.position)));
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
@@ -78,7 +79,8 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
-            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_routes");
+            new ClearDialog()
+                    .show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_routes");
             return true;
         }
         return false;
@@ -90,6 +92,7 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+
         @Override
         protected void doClear() {
             ObaContract.Routes.markAsUnused(getActivity(), ObaContract.Routes.CONTENT_URI);

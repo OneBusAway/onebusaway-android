@@ -20,10 +20,14 @@ import android.net.Uri;
 import java.io.IOException;
 
 public class ObaDefaultConnectionFactory implements ObaConnectionFactory {
-    private ObaDefaultConnectionFactory() { }
+
+    private ObaDefaultConnectionFactory() {
+    }
 
     private static class SingletonHolder {
-        public static final ObaDefaultConnectionFactory INSTANCE = new ObaDefaultConnectionFactory();
+
+        public static final ObaDefaultConnectionFactory INSTANCE
+                = new ObaDefaultConnectionFactory();
     }
 
     public static ObaDefaultConnectionFactory getInstance() {

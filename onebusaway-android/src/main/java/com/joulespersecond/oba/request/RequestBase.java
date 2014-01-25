@@ -33,12 +33,15 @@ import java.net.HttpURLConnection;
 
 /**
  * The base class for Oba requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public class RequestBase {
+
     private static final String TAG = "RequestBase";
 
     protected final Uri mUri;
+
     protected final String mPostData;
 
     protected RequestBase(Uri uri) {
@@ -52,10 +55,13 @@ public class RequestBase {
     }
 
     public static class BuilderBase {
+
         protected static final String BASE_PATH = "api/where";
 
         protected final Uri.Builder mBuilder;
+
         protected ObaContext mObaContext;
+
         protected Context mContext;
 
         protected BuilderBase(Context context, String path) {
@@ -96,9 +102,11 @@ public class RequestBase {
 
     /**
      * Subclass for BuilderBase that can handle post data as well.
+     *
      * @author paulw
      */
     public static class PostBuilderBase extends BuilderBase {
+
         protected final Uri.Builder mPostData;
 
         protected PostBuilderBase(Context context, String path) {
@@ -155,7 +163,7 @@ public class RequestBase {
         ObaConnection conn = null;
         try {
             conn = ObaApi.getDefaultContext().getConnectionFactory().newConnection(mUri);
-            BufferedReader reader = new BufferedReader(conn.post(mPostData), 8*1024);
+            BufferedReader reader = new BufferedReader(conn.post(mPostData), 8 * 1024);
 
             String line;
             StringBuffer text = new StringBuffer();

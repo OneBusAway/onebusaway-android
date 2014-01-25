@@ -37,14 +37,14 @@
         <!-- From http://android-holo-colors.com/ -->
         <!-- Color: #60b52b -->
         <item name="android:editTextBackground">@drawable/edit_text_holo_light</item>
-    	<item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
-    	<item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
-    	<!--
-    	<item name="android:buttonStyle">@style/Buttonbusbot</item>
-    	<item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
-    	<item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
-    	-->
-    	<item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
+        <item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
+        <item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
+        <!--
+        <item name="android:buttonStyle">@style/Buttonbusbot</item>
+        <item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
+        <item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
+        -->
+        <item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
     </style>
 
     <style name="busbot_solid_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar.Solid">
@@ -81,7 +81,8 @@
         <item name="android:background">@drawable/tab_indicator_ab_busbot</item>
     </style>
 
-    <style name="busbot_DropDownNav" parent="@style/Widget.Sherlock.Light.Spinner.DropDown.ActionBar">
+    <style name="busbot_DropDownNav"
+           parent="@style/Widget.Sherlock.Light.Spinner.DropDown.ActionBar">
         <item name="background">@drawable/spinner_background_ab_busbot</item>
 
         <item name="android:background">@drawable/spinner_background_ab_busbot</item>

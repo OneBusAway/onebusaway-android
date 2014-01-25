@@ -100,6 +100,7 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     }
 
     final Handler mGoBackHandler = new Handler();
+
     final Runnable mGoBack = new Runnable() {
         public void run() {
             getActivity().getSupportFragmentManager().popBackStack();
@@ -110,6 +111,7 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     // Report loader
     //
     protected static final class ReportLoader extends AsyncTaskLoader<ObaResponse> {
+
         private final Callable<? extends ObaResponse> mRequest;
 
         public ReportLoader(Context context, Callable<? extends ObaResponse> request) {

@@ -25,31 +25,40 @@ import java.util.List;
 
 /**
  * Response object for ObaArrivalInfoRequest requests.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
+
     private static final class Entry {
+
         private static final Entry EMPTY_OBJECT = new Entry();
 
         private final String stopId;
+
         private final ObaArrivalInfo[] arrivalsAndDepartures;
+
         private final String[] nearbyStopIds;
+
         private final String[] situationIds;
 
         private Entry() {
             stopId = "";
             arrivalsAndDepartures = ObaArrivalInfo.EMPTY_ARRAY;
-            nearbyStopIds = new String[] {};
-            situationIds = new String[] {};
+            nearbyStopIds = new String[]{};
+            situationIds = new String[]{};
         }
     }
 
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final Entry entry = Entry.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     ObaArrivalInfoResponse() {

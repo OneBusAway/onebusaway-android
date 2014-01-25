@@ -27,7 +27,9 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
     //private static final String TAG = "ObaRegionsLoader";
 
     private Context mContext;
+
     private ArrayList<ObaRegion> mResults;
+
     private final boolean mForceReload;
 
     public ObaRegionsLoader(Context context) {
@@ -38,7 +40,7 @@ public class ObaRegionsLoader extends AsyncTaskLoader<ArrayList<ObaRegion>> {
 
     /**
      * @param context The context.
-     * @param force Forces loading the regions from the remote repository.
+     * @param force   Forces loading the regions from the remote repository.
      */
     public ObaRegionsLoader(Context context, boolean force) {
         super(context);

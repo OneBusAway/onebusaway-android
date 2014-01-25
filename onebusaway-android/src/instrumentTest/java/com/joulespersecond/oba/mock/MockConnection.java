@@ -27,11 +27,15 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 
 public class MockConnection implements ObaConnection {
+
     private static final String TAG = "MockConnection";
 
     private final MockConnectionFactory.UriMap mUriMap;
+
     private final Context mContext;
+
     private final Uri mUri;
+
     private int mResponseCode = HttpURLConnection.HTTP_OK;
 
     MockConnection(Context context,

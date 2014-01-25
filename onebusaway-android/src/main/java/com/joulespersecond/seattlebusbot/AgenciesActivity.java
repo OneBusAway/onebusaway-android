@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 
 public class AgenciesActivity extends SherlockFragmentActivity {
+
     public static void start(Context context) {
         Intent intent = new Intent(context, AgenciesActivity.class);
         context.startActivity(intent);

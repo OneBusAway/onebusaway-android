@@ -28,11 +28,13 @@ import java.util.concurrent.Callable;
  */
 public final class ObaTripDetailsRequest extends RequestBase
         implements Callable<ObaTripDetailsResponse> {
+
     protected ObaTripDetailsRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String tripId) {
             super(context, getPathWithId("/trip-details/", tripId));
         }
@@ -40,6 +42,7 @@ public final class ObaTripDetailsRequest extends RequestBase
         /**
          * Determines whether the full trip element is included in the references.
          * Defaults to 'true'
+         *
          * @return This object.
          */
         public Builder setIncludeTrip(boolean includeTrip) {
@@ -50,6 +53,7 @@ public final class ObaTripDetailsRequest extends RequestBase
         /**
          * Determines whether the schedule element is included.
          * Defaults to 'true'
+         *
          * @return This object.
          */
         public Builder setIncludeSchedule(boolean includeSchedule) {
@@ -60,6 +64,7 @@ public final class ObaTripDetailsRequest extends RequestBase
         /**
          * Determines whether the status element is included.
          * Defaults to 'true'
+         *
          * @return This object.
          */
         public Builder setIncludeStatus(boolean includeStatus) {
@@ -74,8 +79,9 @@ public final class ObaTripDetailsRequest extends RequestBase
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
-     * @param tripId The tripId to request.
+     * @param tripId  The tripId to request.
      * @return The new request instance.
      */
     public static ObaTripDetailsRequest newRequest(Context context, String tripId) {

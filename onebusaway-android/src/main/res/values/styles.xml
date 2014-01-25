@@ -97,7 +97,7 @@
     </style>
     <style name="LoadMoreArrivals">
         <item name="android:textSize">18sp</item>
-        <item name="android:background">@drawable/load_more_arrivals_button</item>        
+        <item name="android:background">@drawable/load_more_arrivals_button</item>
     </style>
 
     <!--  RouteInfo -->

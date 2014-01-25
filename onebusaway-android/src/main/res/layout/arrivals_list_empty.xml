@@ -14,26 +14,26 @@
      limitations under the License.
 -->
 <LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"    
-    android:id="@+id/arrivals_list_empty"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/arrivals_list_empty"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
     <TextView android:id="@+id/noArrivals"
-        style="@style/ListHintText"
-        android:paddingBottom="15sp"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />	
+              style="@style/ListHintText"
+              android:paddingBottom="15sp"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"/>
     <View android:layout_width="fill_parent"
-	    android:layout_height="1dp"
-	    android:id="@+id/separator_top"
-	    android:visibility="visible"
-	    android:background="@drawable/abs__list_divider_holo_light"/>    
-	<include layout="@layout/arrivals_list_footer"/>
-	<View android:layout_width="fill_parent"
-	    android:layout_height="1dp"
-	    android:id="@+id/separator_bottom"
-	    android:visibility="visible"
-	    android:background="@drawable/abs__list_divider_holo_light"/>
+          android:layout_height="1dp"
+          android:id="@+id/separator_top"
+          android:visibility="visible"
+          android:background="@drawable/abs__list_divider_holo_light"/>
+    <include layout="@layout/arrivals_list_footer"/>
+    <View android:layout_width="fill_parent"
+          android:layout_height="1dp"
+          android:id="@+id/separator_bottom"
+          android:visibility="visible"
+          android:background="@drawable/abs__list_divider_holo_light"/>
 </LinearLayout>

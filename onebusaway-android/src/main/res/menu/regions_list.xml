@@ -17,5 +17,5 @@
     <item android:id="@+id/refresh"
           android:title="@string/region_option_refresh"
           android:icon="@drawable/ic_action_refresh"
-          android:showAsAction="ifRoom" />
+          android:showAsAction="ifRoom"/>
 </menu>

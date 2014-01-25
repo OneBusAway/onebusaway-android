@@ -27,11 +27,13 @@ import java.util.concurrent.Callable;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaShapeRequest extends RequestBase implements Callable<ObaShapeResponse> {
+
     protected ObaShapeRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String shapeId) {
             super(context, getPathWithId("/shape/", shapeId));
         }
@@ -43,6 +45,7 @@ public final class ObaShapeRequest extends RequestBase implements Callable<ObaSh
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
      * @param shapeId The shapeId to request.
      * @return The new request instance.

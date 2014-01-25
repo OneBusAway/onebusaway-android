@@ -25,14 +25,19 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
     // What is says.
     public static final String VEHICLE_NEVER_CAME = "vehicle_never_came";
+
     // The vehicle arrived earlier than predicted
     public static final String VEHICLE_CAME_EARLY = "vehicle_came_early";
+
     // The vehicle arrived later than predicted
     public static final String VEHICLE_CAME_LATE = "vehicle_came_late";
+
     // The headsign reported by OneBusAway differed from the vehicles actual headsign.
     public static final String WRONG_HEADSIGN = "wrong_headsign";
+
     // The trip in question does not actually service the indicated stop.
     public static final String VEHICLE_DOES_NOT_STOP_HERE = "vehicle_does_not_stop_here";
+
     // Other
     public static final String OTHER = "other";
 
@@ -41,6 +46,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
     }
 
     public static class Builder extends RequestBase.PostBuilderBase {
+
         public Builder(Context context, String tripId) {
             super(context, BASE_PATH + "/report-problem-with-trip.json");
             mPostData.appendQueryParameter("tripId", tripId);
@@ -49,6 +55,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
         /**
          * Sets the optional stop ID indicating the stop where
          * the user is experiencing the problem.
+         *
          * @param stopId The stop ID.
          */
         public Builder setStopId(String stopId) {
@@ -58,6 +65,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional service date of the trip.
+         *
          * @param serviceDate The service date.
          */
         public Builder setServiceDate(long serviceDate) {
@@ -67,6 +75,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional vehicle actively serving the trip.
+         *
          * @param vehicleId The vehicle actively serving the trip.
          */
         public Builder setVehicleId(String vehicleId) {
@@ -76,6 +85,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional problem code.
+         *
          * @param code The problem code.
          */
         public Builder setCode(String code) {
@@ -88,6 +98,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional user comment.
+         *
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
@@ -97,6 +108,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional user location.
+         *
          * @param lat The user's current location.
          * @param lon The user's current location.
          */
@@ -108,6 +120,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Sets the optional user's location accuracy, in meters.
+         *
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {
@@ -117,7 +130,9 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
 
         /**
-         * Sets true/false to indicate if the user is on the transit vehicle experiencing the problem.
+         * Sets true/false to indicate if the user is on the transit vehicle experiencing the
+         * problem.
+         *
          * @param onVehicle If the user is on the vehicle.
          */
         public Builder setUserOnVehicle(boolean onVehicle) {
@@ -127,6 +142,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
 
         /**
          * Set the vehicle number, as reported by the user.
+         *
          * @param vehicleNumber The vehicle as reported by the user.
          */
         public Builder setUserVehicleNumber(String vehicleNumber) {

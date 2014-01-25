@@ -14,21 +14,21 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-         android:orientation="vertical"
-         android:layout_width="fill_parent"
-         android:layout_height="fill_parent"
-         android:gravity="top">
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:gravity="top">
 
     <com.joulespersecond.view.SearchView
-        android:id="@+id/search"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+            android:id="@+id/search"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"/>
 
     <ListView android:id="@id/android:list"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"/>
     <TextView android:id="@id/android:empty"
-        style="@style/ListHintText"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+              style="@style/ListHintText"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"/>
 </LinearLayout>

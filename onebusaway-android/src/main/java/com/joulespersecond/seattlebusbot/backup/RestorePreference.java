@@ -56,7 +56,7 @@ public class RestorePreference extends Preference {
         // Also, this is only enabled if there's a backup file
         return Backup.isBackupEnabled() &&
                 (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state) ||
-                Environment.MEDIA_MOUNTED.equals(state)) &&
+                        Environment.MEDIA_MOUNTED.equals(state)) &&
                 Backup.isRestoreAvailable(getContext());
     }
 

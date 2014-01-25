@@ -33,25 +33,25 @@
         <!-- From http://android-holo-colors.com/ -->
         <!-- Color: #60b52b -->
         <item name="android:editTextBackground">@drawable/edit_text_holo_light</item>
-    	<item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
-    	<item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
-    	<item name="android:buttonStyle">@style/Buttonbusbot</item>
-    	<item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
-    	<item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
-    	<item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
+        <item name="android:listChoiceIndicatorMultiple">@drawable/btn_check_holo_light</item>
+        <item name="android:listChoiceIndicatorSingle">@drawable/btn_radio_holo_light</item>
+        <item name="android:buttonStyle">@style/Buttonbusbot</item>
+        <item name="android:imageButtonStyle">@style/ImageButtonbusbot</item>
+        <item name="android:dropDownSpinnerStyle">@style/Spinnerbusbot</item>
+        <item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
     </style>
 
     <!-- From http://android-holo-colors.com/ -->
     <!-- Color: #60b52b -->
     <style name="Buttonbusbot" parent="android:Widget.Holo.Light.Button">
-	    <item name="android:background">@drawable/btn_default_holo_light</item>
-  	</style>
+        <item name="android:background">@drawable/btn_default_holo_light</item>
+    </style>
 
-  	<style name="ImageButtonbusbot" parent="android:Widget.Holo.Light.ImageButton">
-	  	<item name="android:background">@drawable/btn_default_holo_light</item>
-  	</style>
+    <style name="ImageButtonbusbot" parent="android:Widget.Holo.Light.ImageButton">
+        <item name="android:background">@drawable/btn_default_holo_light</item>
+    </style>
 
-  	<style name="Spinnerbusbot" parent="android:Widget.Holo.Light.Spinner">
-      	<item name="android:background">@drawable/spinner_background_holo_light</item>
-  	</style>
+    <style name="Spinnerbusbot" parent="android:Widget.Holo.Light.Spinner">
+        <item name="android:background">@drawable/spinner_background_holo_light</item>
+    </style>
 </resources>

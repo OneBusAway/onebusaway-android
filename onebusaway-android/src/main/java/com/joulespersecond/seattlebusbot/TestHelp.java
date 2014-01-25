@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class TestHelp {
+
     static String CATEGORY_TEST = "com.joulespersecond.seattlebusbot.category.TEST";
 
     static String ACTION_LOAD_FINISHED = "com.joulespersecond.seattlebusbot.LOAD_FINISHED";
@@ -46,7 +47,8 @@ public class TestHelp {
         waitForBroadcast(context, ACTION_LOAD_FINISHED, CATEGORY_TEST);
     }
 
-    public static void waitForBroadcast(Context context, String action, String category) throws InterruptedException {
+    public static void waitForBroadcast(Context context, String action, String category)
+            throws InterruptedException {
         final CountDownLatch signal = new CountDownLatch(1);
 
         IntentFilter intentFilter = new IntentFilter(action);

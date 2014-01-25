@@ -15,12 +15,13 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.List;
+import com.google.android.maps.GeoPoint;
+
+import com.joulespersecond.oba.elements.ObaShapeElement;
 
 import android.test.AndroidTestCase;
 
-import com.google.android.maps.GeoPoint;
-import com.joulespersecond.oba.elements.ObaShapeElement;
+import java.util.List;
 
 public class ShapeTest extends AndroidTestCase {
 
@@ -49,20 +50,21 @@ public class ShapeTest extends AndroidTestCase {
         assertEquals(43252000, pt.getLatitudeE6());
         assertEquals(-126453000, pt.getLongitudeE6());
     }
+
     public void testDecodeLevels() {
         List<Integer> list = ObaShapeElement.decodeLevels("mD", 1);
         assertNotNull(list);
         assertEquals(1, list.size());
         Integer i = list.get(0);
-        assertEquals(174, (int)i);
+        assertEquals(174, (int) i);
 
         list = ObaShapeElement.decodeLevels("BBBB", 4);
         assertNotNull(list);
         assertEquals(4, list.size());
-        assertEquals(3, (int)list.get(0));
-        assertEquals(3, (int)list.get(1));
-        assertEquals(3, (int)list.get(2));
-        assertEquals(3, (int)list.get(3));
+        assertEquals(3, (int) list.get(0));
+        assertEquals(3, (int) list.get(1));
+        assertEquals(3, (int) list.get(2));
+        assertEquals(3, (int) list.get(3));
 
     }
 }

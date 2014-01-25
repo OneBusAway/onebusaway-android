@@ -25,6 +25,7 @@ import com.joulespersecond.oba.elements.ObaTrip;
 import java.util.List;
 
 public abstract class ObaResponseWithRefs extends ObaResponse implements ObaReferences {
+
     @Override
     public ObaStop getStop(String id) {
         return getRefs().getStop(id);

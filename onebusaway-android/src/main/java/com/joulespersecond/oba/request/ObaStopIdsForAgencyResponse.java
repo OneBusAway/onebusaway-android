@@ -18,21 +18,26 @@ package com.joulespersecond.oba.request;
 
 /**
  * Response object for ObaStopIdsForAgencyRequest request.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaStopIdsForAgencyResponse extends ObaResponse {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         //private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
         private final String[] list;
+
         private final boolean limitExceeded;
 
         Data() {
-            list = new String[] {};
+            list = new String[]{};
             limitExceeded = false;
         }
     }
+
     private final Data data;
 
     private ObaStopIdsForAgencyResponse() {

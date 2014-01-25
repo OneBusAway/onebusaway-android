@@ -31,6 +31,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 
 public class MyRecentStopsFragment extends MyStopListFragmentBase {
+
     public static final String TAB_NAME = "recent";
 
     @Override
@@ -60,15 +61,15 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
 
     @Override
     public boolean onContextItemSelected(android.view.MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
-        case CONTEXT_MENU_DELETE:
-            ObaContract.Stops.markAsUnused(getActivity(),
-                    Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI,
-                            QueryUtils.StopList.getId(getListView(), info.position)));
-            return true;
-        default:
-            return super.onContextItemSelected(item);
+            case CONTEXT_MENU_DELETE:
+                ObaContract.Stops.markAsUnused(getActivity(),
+                        Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI,
+                                QueryUtils.StopList.getId(getListView(), info.position)));
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 
@@ -80,7 +81,8 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
-            new ClearDialog().show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_stops");
+            new ClearDialog()
+                    .show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_stops");
             return true;
         }
         return false;
@@ -92,6 +94,7 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     }
 
     public static class ClearDialog extends ClearConfirmDialog {
+
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsUnused(getActivity(), ObaContract.Stops.CONTENT_URI);

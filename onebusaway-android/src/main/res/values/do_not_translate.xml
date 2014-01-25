@@ -13,14 +13,14 @@
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      See the License for the specific language governing permissions and
      limitations under the License.
-	-->  	
+	-->
 <resources>
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
-    
+
     <!-- Preference keys -->
     <string name="preference_key_region">preference_region</string>
     <string name="preference_key_oba_api_url">preferences_oba_api_url</string>
-    <string name="preference_key_last_region_update">preference_last_region_update</string>  
+    <string name="preference_key_last_region_update">preference_last_region_update</string>
     <string name="preference_key_auto_refresh_regions">preference_auto_refresh_regions</string>
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>

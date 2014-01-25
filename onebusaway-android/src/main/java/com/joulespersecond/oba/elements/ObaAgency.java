@@ -23,6 +23,7 @@ package com.joulespersecond.oba.elements;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public interface ObaAgency extends ObaElement {
+
     /**
      * @return The name of the agency.
      */

@@ -14,10 +14,10 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mainlayout"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+                android:id="@+id/mainlayout"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
 
     <!--
     <com.google.android.maps.MapView
@@ -31,27 +31,28 @@
     -->
 
     <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
 
         <LinearLayout
-            android:id="@+id/route_info"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="gone">
-                <include layout="@layout/route_info_head" />
-        </LinearLayout><!-- ROUTE MODE -->
+                android:id="@+id/route_info"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+            <include layout="@layout/route_info_head"/>
+        </LinearLayout>
+        <!-- ROUTE MODE -->
 
         <!-- STOP INFO -->
         <LinearLayout
-            android:id="@+id/stop_info"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/ab_stacked_solid_busbot"
-            android:visibility="gone">
+                android:id="@+id/stop_info"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/ab_stacked_solid_busbot"
+                android:visibility="gone">
 
             <LinearLayout
                     android:layout_width="fill_parent"
@@ -63,49 +64,51 @@
                         style="@style/HeaderText"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:maxLines="3" />
+                        android:maxLines="3"/>
                 <TextView android:id="@+id/direction"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content" />
+                          android:layout_width="fill_parent"
+                          android:layout_height="wrap_content"/>
             </LinearLayout>
 
             <!--  STOP LINKS -->
             <LinearLayout
-               android:layout_width="fill_parent"
-               android:layout_height="wrap_content"
-               android:orientation="horizontal">
-               <Button
-                    android:id="@+id/show_arrival_info"
-                    android:text="@string/main_arrival_info"
-                    style="@style/HeaderLink"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content" />
-               <Button
-                    android:id="@+id/show_routes"
-                    android:text="@string/main_show_routes"
-                    style="@style/HeaderLink"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content" />
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                <Button
+                        android:id="@+id/show_arrival_info"
+                        android:text="@string/main_arrival_info"
+                        style="@style/HeaderLink"
+                        android:layout_width="0dip"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"/>
+                <Button
+                        android:id="@+id/show_routes"
+                        android:text="@string/main_show_routes"
+                        style="@style/HeaderLink"
+                        android:layout_width="0dip"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"/>
             </LinearLayout>
             <GridView
-                android:id="@+id/route_list"
-                android:visibility="gone"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:numColumns="auto_fit"
-                android:columnWidth="@dimen/route_button_width"
-                android:padding="0dip"
-                android:verticalSpacing="0dp"
-                android:horizontalSpacing="0dp" />
-        </LinearLayout><!-- STOP INFO -->
-    </LinearLayout><!--  POPUP CONTAINER -->
+                    android:id="@+id/route_list"
+                    android:visibility="gone"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:numColumns="auto_fit"
+                    android:columnWidth="@dimen/route_button_width"
+                    android:padding="0dip"
+                    android:verticalSpacing="0dp"
+                    android:horizontalSpacing="0dp"/>
+        </LinearLayout>
+        <!-- STOP INFO -->
+    </LinearLayout>
+    <!--  POPUP CONTAINER -->
 
     <ZoomControls android:id="@+id/zoom_controls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true" />
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_alignParentBottom="true"
+                  android:layout_alignParentRight="true"/>
 </RelativeLayout>
 

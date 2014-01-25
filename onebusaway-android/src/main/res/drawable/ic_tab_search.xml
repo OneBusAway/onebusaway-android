@@ -14,6 +14,7 @@
      limitations under the License.
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-  <item android:drawable="@drawable/ic_tab_search_selected" android:state_selected="true" android:state_pressed="false" />
-  <item android:drawable="@drawable/ic_tab_search_unselected" />
+    <item android:drawable="@drawable/ic_tab_search_selected" android:state_selected="true"
+          android:state_pressed="false"/>
+    <item android:drawable="@drawable/ic_tab_search_unselected"/>
 </selector>

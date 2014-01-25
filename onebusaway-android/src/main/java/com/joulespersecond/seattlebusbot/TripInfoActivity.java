@@ -52,16 +52,24 @@ import android.widget.Toast;
 import java.util.List;
 
 public class TripInfoActivity extends SherlockFragmentActivity {
+
     private static final String TAG = "TripInfoActivity";
 
     private static final String ROUTE_ID = ".RouteId";
+
     private static final String ROUTE_NAME = ".RouteName";
+
     private static final String STOP_NAME = ".StopName";
+
     private static final String HEADSIGN = ".Headsign";
+
     private static final String DEPARTURE_TIME = ".Depart";
+
     // Save/restore values
     private static final String TRIP_NAME = ".TripName";
+
     private static final String REMINDER_TIME = ".ReminderTime";
+
     private static final String REMINDER_DAYS = ".ReminderDays";
 
     public static void start(Context context, String tripId, String stopId) {
@@ -118,7 +126,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
     TripInfoFragment getTripInfoFragment() {
         FragmentManager fm = getSupportFragmentManager();
-        return (TripInfoFragment)fm.findFragmentById(android.R.id.content);
+        return (TripInfoFragment) fm.findFragmentById(android.R.id.content);
     }
 
     public static final class TripInfoFragment extends SherlockFragment
@@ -127,31 +135,48 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         private static final String TAG_DELETE_DIALOG = ".DeleteDialog";
 
         private static final String[] PROJECTION = {
-            ObaContract.Trips.NAME,
-            ObaContract.Trips.REMINDER,
-            ObaContract.Trips.DAYS,
-            ObaContract.Trips.ROUTE_ID,
-            ObaContract.Trips.HEADSIGN,
-            ObaContract.Trips.DEPARTURE
+                ObaContract.Trips.NAME,
+                ObaContract.Trips.REMINDER,
+                ObaContract.Trips.DAYS,
+                ObaContract.Trips.ROUTE_ID,
+                ObaContract.Trips.HEADSIGN,
+                ObaContract.Trips.DEPARTURE
         };
+
         private static final int COL_NAME = 0;
+
         private static final int COL_REMINDER = 1;
+
         private static final int COL_DAYS = 2;
+
         private static final int COL_ROUTE_ID = 3;
+
         private static final int COL_HEADSIGN = 4;
+
         private static final int COL_DEPARTURE = 5;
 
         private Uri mTripUri;
+
         private String mTripId;
+
         private String mRouteId;
+
         private String mRouteName;
+
         private String mStopId;
+
         private String mStopName;
+
         private String mHeadsign;
+
         private String mTripName;
+
         private long mDepartTime;
+
         private int mReminderTime; // DB Value, not selection value
+
         private int mReminderDays;
+
         private boolean mNewTrip = true;
 
 
@@ -284,24 +309,24 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             //
             // Static (header values)
             //
-            final TextView stopName = (TextView)view.findViewById(R.id.stop_name);
+            final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
             stopName.setText(MyTextUtils.toTitleCase(mStopName));
 
-            final TextView routeName = (TextView)view.findViewById(R.id.route_name);
+            final TextView routeName = (TextView) view.findViewById(R.id.route_name);
             routeName.setText(getString(R.string.trip_info_route, mRouteName));
 
-            final TextView headsign = (TextView)view.findViewById(R.id.headsign);
+            final TextView headsign = (TextView) view.findViewById(R.id.headsign);
             headsign.setText(MyTextUtils.toTitleCase(mHeadsign));
 
-            final TextView departText = (TextView)view.findViewById(R.id.departure_time);
+            final TextView departText = (TextView) view.findViewById(R.id.departure_time);
             departText.setText(getDepartureTime(getActivity(), mDepartTime));
 
-            final TextView tripName = (TextView)view.findViewById(R.id.name);
+            final TextView tripName = (TextView) view.findViewById(R.id.name);
             tripName.setText(mTripName);
 
             reminder.setSelection(reminderToSelection(mReminderTime));
 
-            final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
+            final Button repeats = (Button) view.findViewById(R.id.trip_info_reminder_days);
             repeats.setText(getRepeatText(getActivity(), mReminderDays));
             //
             // Buttons
@@ -332,8 +357,8 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             outState.putLong(DEPARTURE_TIME, mDepartTime);
 
             View view = getView();
-            Spinner reminderView = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
-            TextView nameView = (TextView)view.findViewById(R.id.name);
+            Spinner reminderView = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
+            TextView nameView = (TextView) view.findViewById(R.id.name);
 
             final int reminder = selectionToReminder(reminderView
                     .getSelectedItemPosition());
@@ -368,8 +393,8 @@ public class TripInfoActivity extends SherlockFragmentActivity {
                 return true;
             } else if (id == R.id.show_stop) {
                 new ArrivalsListActivity.Builder(getActivity(), mStopId)
-                    .setStopName(mStopName)
-                    .start();
+                        .setStopName(mStopName)
+                        .start();
                 return true;
             }
             return false;
@@ -383,8 +408,8 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             // Repeats
             //
             View view = getView();
-            final Spinner reminderView = (Spinner)view.findViewById(R.id.trip_info_reminder_time);
-            final TextView nameView = (TextView)view.findViewById(R.id.name);
+            final Spinner reminderView = (Spinner) view.findViewById(R.id.trip_info_reminder_time);
+            final TextView nameView = (TextView) view.findViewById(R.id.name);
 
             final int reminder = selectionToReminder(reminderView
                     .getSelectedItemPosition());
@@ -400,7 +425,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
             // Insert or update?
             ContentResolver cr = getActivity().getContentResolver();
-            Cursor c = cr.query(mTripUri, new String[] { ObaContract.Trips._ID },
+            Cursor c = cr.query(mTripUri, new String[]{ObaContract.Trips._ID},
                     null, null, null);
             if (c != null && c.getCount() > 0) {
                 // Update
@@ -431,8 +456,10 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         public static class ReminderDaysDialog extends DialogFragment
                 implements DialogInterface.OnMultiChoiceClickListener,
-                           DialogInterface.OnClickListener {
+                DialogInterface.OnClickListener {
+
             static final String CHECKS = ".checks";
+
             private boolean[] mChecks;
 
             @Override
@@ -445,10 +472,10 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 return builder.setTitle(R.string.trip_info_reminder_repeat)
-                              .setMultiChoiceItems(R.array.reminder_days, mChecks, this)
-                              .setPositiveButton(R.string.trip_info_save, this)
-                              .setNegativeButton(R.string.trip_info_dismiss, null)
-                              .create();
+                        .setMultiChoiceItems(R.array.reminder_days, mChecks, this)
+                        .setPositiveButton(R.string.trip_info_save, this)
+                        .setNegativeButton(R.string.trip_info_dismiss, null)
+                        .create();
             }
 
             @Override
@@ -458,7 +485,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                TripInfoActivity act = (TripInfoActivity)getActivity();
+                TripInfoActivity act = (TripInfoActivity) getActivity();
                 // Get the fragment we want...
                 TripInfoFragment frag = act.getTripInfoFragment();
                 frag.setReminderDays(mChecks);
@@ -474,11 +501,12 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         private void setReminderDays(boolean[] checks) {
             View view = getView();
             mReminderDays = ObaContract.Trips.arrayToDays(checks);
-            final Button repeats = (Button)view.findViewById(R.id.trip_info_reminder_days);
+            final Button repeats = (Button) view.findViewById(R.id.trip_info_reminder_days);
             repeats.setText(getRepeatText(getActivity(), mReminderDays));
         }
 
         public static class DeleteDialog extends DialogFragment {
+
             @Override
             public Dialog onCreateDialog(Bundle savedInstanceState) {
                 Bundle args = getArguments();
@@ -486,24 +514,24 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder
-                    .setMessage(R.string.trip_info_delete_trip)
-                    .setTitle(R.string.trip_info_delete)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setPositiveButton(android.R.string.ok,
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    ContentResolver cr = getActivity().getContentResolver();
-                                    cr.delete(tripUri, null, null);
-                                    TripService.scheduleAll(getActivity());
-                                    getActivity().finish();
-                                }
-                    })
-                    .setNegativeButton(android.R.string.cancel,
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                    });
+                        .setMessage(R.string.trip_info_delete_trip)
+                        .setTitle(R.string.trip_info_delete)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        ContentResolver cr = getActivity().getContentResolver();
+                                        cr.delete(tripUri, null, null);
+                                        TripService.scheduleAll(getActivity());
+                                        getActivity().finish();
+                                    }
+                                })
+                        .setNegativeButton(android.R.string.cancel,
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
                 return builder.create();
             }
         }
@@ -511,35 +539,53 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         // This converts what's in the database to what can be displayed in the spinner.
         private static int reminderToSelection(int reminder) {
             switch (reminder) {
-            case 0:     return 0;
-            case 1:     return 1;
-            case 3:     return 2;
-            case 5:     return 3;
-            case 10:    return 4;
-            case 15:    return 5;
-            case 20:    return 6;
-            case 25:    return 7;
-            case 30:    return 8;
-            default:
-                Log.e(TAG, "Invalid reminder value in DB: " + reminder);
-                return 0;
+                case 0:
+                    return 0;
+                case 1:
+                    return 1;
+                case 3:
+                    return 2;
+                case 5:
+                    return 3;
+                case 10:
+                    return 4;
+                case 15:
+                    return 5;
+                case 20:
+                    return 6;
+                case 25:
+                    return 7;
+                case 30:
+                    return 8;
+                default:
+                    Log.e(TAG, "Invalid reminder value in DB: " + reminder);
+                    return 0;
             }
         }
 
         private static int selectionToReminder(int selection) {
             switch (selection) {
-            case 0:     return 0;
-            case 1:     return 1;
-            case 2:     return 3;
-            case 3:     return 5;
-            case 4:     return 10;
-            case 5:     return 15;
-            case 6:     return 20;
-            case 7:     return 25;
-            case 8:     return 30;
-            default:
-                Log.e(TAG, "Invalid selection: " + selection);
-                return 0;
+                case 0:
+                    return 0;
+                case 1:
+                    return 1;
+                case 2:
+                    return 3;
+                case 3:
+                    return 5;
+                case 4:
+                    return 10;
+                case 5:
+                    return 15;
+                case 6:
+                    return 20;
+                case 7:
+                    return 25;
+                case 8:
+                    return 30;
+                default:
+                    Log.e(TAG, "Invalid selection: " + selection);
+                    return 0;
             }
         }
     }
@@ -547,10 +593,10 @@ public class TripInfoActivity extends SherlockFragmentActivity {
     static String getDepartureTime(Context ctx, long departure) {
         return ctx.getString(R.string.trip_info_depart,
                 DateUtils.formatDateTime(ctx,
-                    departure,
-                    DateUtils.FORMAT_SHOW_TIME|
-                    DateUtils.FORMAT_NO_NOON|
-                    DateUtils.FORMAT_NO_MIDNIGHT));
+                        departure,
+                        DateUtils.FORMAT_SHOW_TIME |
+                                DateUtils.FORMAT_NO_NOON |
+                                DateUtils.FORMAT_NO_MIDNIGHT));
     }
 
     static String getRepeatText(Context ctx, int days) {

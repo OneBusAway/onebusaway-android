@@ -20,6 +20,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 public class PreferenceHelp {
+
     @TargetApi(9)
     public static void saveString(SharedPreferences prefs, String key, String value) {
         SharedPreferences.Editor edit = prefs.edit();
@@ -67,7 +68,7 @@ public class PreferenceHelp {
     public static void saveLong(String key, long value) {
         saveLong(Application.getPrefs(), key, value);
     }
-    
+
     @TargetApi(9)
     public static void saveBoolean(SharedPreferences prefs, String key, boolean value) {
         SharedPreferences.Editor edit = prefs.edit();

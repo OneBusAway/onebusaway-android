@@ -36,11 +36,13 @@ import java.io.IOException;
  * If that becomes an issue, I would rather just dump everything
  * into a CSV file, since we know that reading/writing to the
  * ContentProvider interface is going to be threadsafe.
- * @author paulw
  *
+ * @author paulw
  */
 public final class Backup {
+
     private static final String BACKUP_TYPE = "OBABackups";
+
     private static final String BACKUP_NAME = "db.backup";
 
     public static boolean isBackupEnabled() {
@@ -62,21 +64,22 @@ public final class Backup {
 
     /**
      * Performs a backup to the SD card.
-     * @param listener The listener to call when the backup is complete.
-     * @throws IOException
+     *
+     * @param context
      */
     public static String backup(Context context) throws IOException {
         // We need two things:
         // 1. The path to the database;
         // 2. The path on the SD card to the backup file.
         File backupPath = getBackup(context);
-        FileUtils.copyFile(getDB(context),  backupPath);
+        FileUtils.copyFile(getDB(context), backupPath);
         return backupPath.getAbsolutePath();
     }
 
     /**
      * Performs a restore from the SD card.
-     * @param listener The listener to call when the restore is complete.
+     *
+     * @param context
      */
     public static void restore(Context context) throws IOException {
         File dbPath = getDB(context);
@@ -86,8 +89,8 @@ public final class Backup {
         ContentProviderClient client = null;
         try {
             client = context.getContentResolver()
-                            .acquireContentProviderClient(ObaContract.AUTHORITY);
-            ObaProvider provider = (ObaProvider)client.getLocalContentProvider();
+                    .acquireContentProviderClient(ObaContract.AUTHORITY);
+            ObaProvider provider = (ObaProvider) client.getLocalContentProvider();
             provider.closeDB();
 
             FileUtils.copyFile(backupPath, dbPath);

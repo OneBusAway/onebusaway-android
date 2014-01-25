@@ -24,11 +24,14 @@ import com.joulespersecond.oba.elements.ObaAgencyElement;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaAgencyResponse extends ObaResponse implements ObaAgency {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaAgencyElement entry = ObaAgencyElement.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaAgencyResponse() {

@@ -18,15 +18,19 @@ package com.joulespersecond.oba.elements;
 /**
  * Extended information for a specific trip
  * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_TripDetails}
- * @author Paul Watts (paulcwatts@gmail.com)
  *
+ * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaTripDetailsElement implements ObaTripDetails {
+
     public static final ObaTripDetailsElement EMPTY_OBJECT = new ObaTripDetailsElement();
-    public static final ObaTripDetailsElement[] EMPTY_ARRAY = new ObaTripDetailsElement[] {};
+
+    public static final ObaTripDetailsElement[] EMPTY_ARRAY = new ObaTripDetailsElement[]{};
 
     private final String tripId;
+
     private final ObaTripSchedule schedule;
+
     private final ObaTripStatusElement status;
 
     private ObaTripDetailsElement() {

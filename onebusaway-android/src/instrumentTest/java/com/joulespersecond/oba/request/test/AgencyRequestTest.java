@@ -20,6 +20,7 @@ import com.joulespersecond.oba.request.ObaAgencyResponse;
 
 
 public class AgencyRequestTest extends ObaTestCase {
+
     public void testKCMAgency() {
         ObaAgencyRequest.Builder builder = new ObaAgencyRequest.Builder(getContext(), "1");
         ObaAgencyRequest request = builder.build();

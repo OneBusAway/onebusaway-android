@@ -40,6 +40,7 @@ import android.widget.TextView;
  * good switching code is helpful.
  */
 public class ListFragment extends SherlockFragment {
+
     final private Handler mHandler = new Handler();
 
     final private Runnable mRequestFocus = new Runnable() {
@@ -51,17 +52,24 @@ public class ListFragment extends SherlockFragment {
     final private AdapterView.OnItemClickListener mOnClickListener
             = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-            onListItemClick((ListView)parent, v, position, id);
+            onListItemClick((ListView) parent, v, position, id);
         }
     };
 
     ListAdapter mAdapter;
+
     ListView mList;
+
     View mEmptyView;
+
     TextView mStandardEmptyView;
+
     View mProgressContainer;
+
     View mListContainer;
+
     CharSequence mEmptyText;
+
     boolean mListShown;
 
     public ListFragment() {
@@ -161,10 +169,10 @@ public class ListFragment extends SherlockFragment {
      * getListView().getItemAtPosition(position) if they need to access the
      * data associated with the selected item.
      *
-     * @param l The ListView where the click happened
-     * @param v The view that was clicked within the ListView
+     * @param l        The ListView where the click happened
+     * @param v        The view that was clicked within the ListView
      * @param position The position of the view in the list
-     * @param id The row id of the item that was clicked
+     * @param id       The row id of the item that was clicked
      */
     public void onListItemClick(ListView l, View v, int position, long id) {
     }
@@ -188,8 +196,6 @@ public class ListFragment extends SherlockFragment {
     /**
      * Set the currently selected list item to the specified
      * position with the adapter's data
-     *
-     * @param position
      */
     public void setSelection(int position) {
         ensureList();
@@ -249,7 +255,7 @@ public class ListFragment extends SherlockFragment {
      * it will be do without the user ever seeing the hidden state.
      *
      * @param shown If true, the list view is shown; if false, the progress
-     * indicator.  The initial value is true.
+     *              indicator.  The initial value is true.
      */
     public void setListShown(boolean shown) {
         setListShown(shown, true);
@@ -268,10 +274,10 @@ public class ListFragment extends SherlockFragment {
      * displayed if you are waiting for the initial data to show in it.  During
      * this time an indeterminant progress indicator will be shown instead.
      *
-     * @param shown If true, the list view is shown; if false, the progress
-     * indicator.  The initial value is true.
+     * @param shown   If true, the list view is shown; if false, the progress
+     *                indicator.  The initial value is true.
      * @param animate If true, an animation will be used to transition to the
-     * new state.
+     *                new state.
      */
     private void setListShown(boolean shown, boolean animate) {
         ensureList();
@@ -325,9 +331,9 @@ public class ListFragment extends SherlockFragment {
             throw new IllegalStateException("Content view not yet created");
         }
         if (root instanceof ListView) {
-            mList = (ListView)root;
+            mList = (ListView) root;
         } else {
-            mStandardEmptyView = (TextView)root.findViewById(R.id.internalEmpty);
+            mStandardEmptyView = (TextView) root.findViewById(R.id.internalEmpty);
             if (mStandardEmptyView == null) {
                 mEmptyView = root.findViewById(android.R.id.empty);
             } else {
@@ -340,13 +346,13 @@ public class ListFragment extends SherlockFragment {
                 if (rawListView == null) {
                     throw new RuntimeException(
                             "Your content must have a ListView whose id attribute is " +
-                            "'android.R.id.list'");
+                                    "'android.R.id.list'");
                 }
                 throw new RuntimeException(
                         "Content has view with id attribute 'android.R.id.list' "
-                        + "that is not a ListView class");
+                                + "that is not a ListView class");
             }
-            mList = (ListView)rawListView;
+            mList = (ListView) rawListView;
             if (mEmptyView != null) {
                 mList.setEmptyView(mEmptyView);
             } else if (mEmptyText != null) {

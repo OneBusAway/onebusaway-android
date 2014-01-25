@@ -22,6 +22,7 @@ import com.joulespersecond.oba.request.ObaResponse;
 import android.test.AndroidTestCase;
 
 public class ObaTestCase extends AndroidTestCase {
+
     private ObaMock mMock;
 
     @Override

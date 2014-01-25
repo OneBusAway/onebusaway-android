@@ -22,7 +22,7 @@ public class StopIdsForAgencyRequestTest extends ObaTestCase {
 
     public void testST() {
         ObaStopIdsForAgencyRequest.Builder builder =
-            new ObaStopIdsForAgencyRequest.Builder(getContext(), "40");
+                new ObaStopIdsForAgencyRequest.Builder(getContext(), "40");
         ObaStopIdsForAgencyRequest request = builder.build();
         ObaStopIdsForAgencyResponse response = request.call();
         assertOK(response);
@@ -35,7 +35,7 @@ public class StopIdsForAgencyRequestTest extends ObaTestCase {
     public void testNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaStopIdsForAgencyRequest request =
-            ObaStopIdsForAgencyRequest.newRequest(getContext(), "40");
+                ObaStopIdsForAgencyRequest.newRequest(getContext(), "40");
         assertNotNull(request);
     }
 }

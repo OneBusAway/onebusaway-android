@@ -22,9 +22,10 @@ import com.joulespersecond.oba.request.ObaAgenciesWithCoverageResponse;
 
 
 public class AgenciesWithCoverageTest extends ObaTestCase {
+
     public void testRequest() {
         ObaAgenciesWithCoverageRequest request =
-            ObaAgenciesWithCoverageRequest.newRequest(getContext());
+                ObaAgenciesWithCoverageRequest.newRequest(getContext());
         ObaAgenciesWithCoverageResponse response = request.call();
         assertOK(response);
         final ObaAgencyWithCoverage[] list = response.getAgencies();
@@ -37,7 +38,7 @@ public class AgenciesWithCoverageTest extends ObaTestCase {
 
     public void testBuilder() {
         ObaAgenciesWithCoverageRequest.Builder builder =
-            new ObaAgenciesWithCoverageRequest.Builder(getContext());
+                new ObaAgenciesWithCoverageRequest.Builder(getContext());
         ObaAgenciesWithCoverageRequest request = builder.build();
         assertNotNull(request);
     }

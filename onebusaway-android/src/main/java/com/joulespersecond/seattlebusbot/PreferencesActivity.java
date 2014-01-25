@@ -29,15 +29,18 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class PreferencesActivity extends SherlockPreferenceActivity
-            implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
-            SharedPreferences.OnSharedPreferenceChangeListener, ObaRegionsTask.Callback {
+        implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
+        SharedPreferences.OnSharedPreferenceChangeListener, ObaRegionsTask.Callback {
+
     private static final String TAG = "PreferencesActivity";
-    
+
     Preference regionPref;
+
     Preference customApiUrlPref;
 
-    boolean autoSelectInitialValue;  //Save initial value so we can compare to current value in onDestroy()
-    
+    boolean autoSelectInitialValue;
+            //Save initial value so we can compare to current value in onDestroy()
+
     // Soo... we can use SherlockPreferenceActivity to display the
     // action bar, but we can't use a PreferenceFragment?
     @SuppressWarnings("deprecation")
@@ -51,12 +54,13 @@ public class PreferencesActivity extends SherlockPreferenceActivity
 
         regionPref = findPreference(getString(R.string.preference_key_region));
         regionPref.setOnPreferenceClickListener(this);
-        
+
         customApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
         customApiUrlPref.setOnPreferenceChangeListener(this);
 
         SharedPreferences settings = Application.getPrefs();
-        autoSelectInitialValue = settings.getBoolean(getString(R.string.preference_key_auto_select_region), true);
+        autoSelectInitialValue = settings
+                .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
         settings.registerOnSharedPreferenceChangeListener(this);
     }
@@ -69,14 +73,18 @@ public class PreferencesActivity extends SherlockPreferenceActivity
 
     /**
      * Changes the summary of a preference based on a given preference key
+     *
      * @param preferenceKey preference key that triggers a change in summary
      */
     private void changePreferenceSummary(String preferenceKey) {
         // Change the current region summary and server API URL summary
-        if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_region)) || preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_oba_api_url))) {
+        if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_region))
+                || preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_oba_api_url))) {
             if (Application.get().getCurrentRegion() != null) {
-                regionPref.setSummary(getString(R.string.preferences_region_summary, Application.get().getCurrentRegion().getName()));
-                customApiUrlPref.setSummary(getString(R.string.preferences_oba_api_servername_summary));
+                regionPref.setSummary(getString(R.string.preferences_region_summary,
+                        Application.get().getCurrentRegion().getName()));
+                customApiUrlPref
+                        .setSummary(getString(R.string.preferences_oba_api_servername_summary));
             } else {
                 regionPref.setSummary(getString(R.string.preferences_region_summary_custom_api));
                 customApiUrlPref.setSummary(Application.get().getCustomApiUrl());
@@ -88,7 +96,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     public boolean onPreferenceClick(Preference pref) {
         if (pref.equals(regionPref)) {
             RegionsActivity.start(this);
-        }        
+        }
         return true;
     }
 
@@ -96,31 +104,39 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (preference.equals(customApiUrlPref) && newValue instanceof String) {
             String apiUrl = (String) newValue;
-                                    
-            if(!TextUtils.isEmpty(apiUrl)){
+
+            if (!TextUtils.isEmpty(apiUrl)) {
                 //User entered a custom API Url, so set the region info to null
                 Application.get().setCurrentRegion(null);
-                if (BuildConfig.DEBUG) { Log.d(TAG, "User entered new API URL, set region to null."); }
-            }else{
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "User entered new API URL, set region to null.");
+                }
+            } else {
                 //User cleared the API URL preference value, so re-initialize regions
-                if (BuildConfig.DEBUG) { Log.d(TAG, "User entered blank API URL, re-initializing regions..."); }
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "User entered blank API URL, re-initializing regions...");
+                }
                 NavHelp.goHome(this);
             }
         }
         return true;
     }
-    
+
     @Override
     protected void onDestroy() {
-        SharedPreferences settings = Application.getPrefs();        
-        boolean currentValue = settings.getBoolean(getString(R.string.preference_key_auto_select_region), true);
-        
+        SharedPreferences settings = Application.getPrefs();
+        boolean currentValue = settings
+                .getBoolean(getString(R.string.preference_key_auto_select_region), true);
+
         //If the use has selected to auto-select region, and the previous state of the setting was false, 
         //then run the auto-select by going to HomeActivity
         if (currentValue && !autoSelectInitialValue) {
-            if (BuildConfig.DEBUG) { Log.d(TAG, "User re-enabled auto-select regions pref, auto-selecting via Home Activity..."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG,
+                        "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
+            }
             NavHelp.goHome(this);
-        }        
+        }
         super.onDestroy();
     }
 
@@ -129,8 +145,12 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         SharedPreferences settings = Application.getPrefs();
         // Listening to changes to a custom Preference doesn't seem to work, so we can listen to changes to the shared pref value instead
         if (key.equals(getString(R.string.preference_key_experimental_regions))) {
-            boolean experimentalServers = settings.getBoolean(getString(R.string.preference_key_experimental_regions), false);
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Experimental regions shared preference changed to " + experimentalServers); }
+            boolean experimentalServers = settings
+                    .getBoolean(getString(R.string.preference_key_experimental_regions), false);
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG,
+                        "Experimental regions shared preference changed to " + experimentalServers);
+            }
 
             /*
             Force a refresh of the regions list, but don't using blocking progress dialog
@@ -157,10 +177,12 @@ public class PreferencesActivity extends SherlockPreferenceActivity
 
         if (currentRegionChanged) {
             // If region was auto-selected, show user the region we're using
-            if (Application.getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region), true)
+            if (Application.getPrefs()
+                    .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                     && Application.get().getCurrentRegion() != null) {
                 Toast.makeText(this,
-                        getString(R.string.region_region_found, Application.get().getCurrentRegion().getName()),
+                        getString(R.string.region_region_found,
+                                Application.get().getCurrentRegion().getName()),
                         Toast.LENGTH_LONG).show();
             }
 

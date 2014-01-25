@@ -16,8 +16,8 @@
 package com.joulespersecond.oba.provider.test;
 
 import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.provider.ObaProvider;
 import com.joulespersecond.oba.provider.ObaContract.TripAlerts;
+import com.joulespersecond.oba.provider.ObaProvider;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -25,6 +25,7 @@ import android.net.Uri;
 import android.test.ProviderTestCase2;
 
 public class TripAlertsTest extends ProviderTestCase2<ObaProvider> {
+
     public TripAlertsTest() {
         super(ObaProvider.class, ObaContract.AUTHORITY);
     }
@@ -43,7 +44,7 @@ public class TripAlertsTest extends ProviderTestCase2<ObaProvider> {
         assertNotNull(uri1);
 
         Cursor c1 = cr.query(ObaContract.TripAlerts.CONTENT_URI,
-                new String[] { ObaContract.TripAlerts._ID },
+                new String[]{ObaContract.TripAlerts._ID},
                 null, null, null);
         assertNotNull(c1);
         assertEquals(1, c1.getCount());
@@ -53,7 +54,7 @@ public class TripAlertsTest extends ProviderTestCase2<ObaProvider> {
         c1.close();
 
         Cursor c2 = cr.query(ObaContract.TripAlerts.CONTENT_URI,
-                new String[] { ObaContract.TripAlerts._ID },
+                new String[]{ObaContract.TripAlerts._ID},
                 null, null, null);
         assertNotNull(c2);
         assertEquals(1, c2.getCount());
@@ -69,7 +70,7 @@ public class TripAlertsTest extends ProviderTestCase2<ObaProvider> {
         final Uri uri = TripAlerts.insertIfNotExists(cr, "1_12345", "1_STOP", 1000);
         assertNotNull(uri);
 
-        final String[] PROJECTION = { TripAlerts.STATE };
+        final String[] PROJECTION = {TripAlerts.STATE};
 
         // Ensure it's created with a *scheduled* state
         Cursor c = cr.query(uri, PROJECTION, null, null, null);

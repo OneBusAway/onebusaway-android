@@ -22,15 +22,23 @@ package com.joulespersecond.oba.elements;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaAgencyElement implements ObaAgency {
+
     public static final ObaAgencyElement EMPTY_OBJECT = new ObaAgencyElement();
-    public static final ObaAgencyElement[] EMPTY_ARRAY = new ObaAgencyElement[] {};
+
+    public static final ObaAgencyElement[] EMPTY_ARRAY = new ObaAgencyElement[]{};
 
     private final String id;
+
     private final String name;
+
     private final String url;
+
     private final String timezone;
+
     private final String lang;
+
     private final String phone;
+
     private final String disclaimer;
 
     public ObaAgencyElement() {
@@ -88,19 +96,23 @@ public final class ObaAgencyElement implements ObaAgency {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof ObaAgencyElement))
-            return false;
-        ObaAgencyElement other = (ObaAgencyElement)obj;
-        if (id == null) {
-            if (other.id != null)
-                return false;
         }
-        else if (!id.equals(other.id))
+        if (obj == null) {
             return false;
+        }
+        if (!(obj instanceof ObaAgencyElement)) {
+            return false;
+        }
+        ObaAgencyElement other = (ObaAgencyElement) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
         return true;
     }
 

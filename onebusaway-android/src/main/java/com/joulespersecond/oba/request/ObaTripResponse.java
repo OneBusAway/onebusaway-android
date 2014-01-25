@@ -25,11 +25,14 @@ public final class ObaTripResponse extends ObaResponseWithRefs implements
         ObaTrip {
 
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references = ObaReferencesElement.EMPTY_OBJECT;
+
         private final ObaTripElement entry = ObaTripElement.EMPTY_OBJECT;
     }
+
     private final Data data;
 
     private ObaTripResponse() {

@@ -24,17 +24,27 @@ import android.graphics.Color;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaRouteElement implements ObaRoute {
+
     public static final ObaRouteElement EMPTY_OBJECT = new ObaRouteElement();
-    public static final ObaRouteElement[] EMPTY_ARRAY = new ObaRouteElement[] {};
+
+    public static final ObaRouteElement[] EMPTY_ARRAY = new ObaRouteElement[]{};
 
     private final String id;
+
     private final String shortName;
+
     private final String longName;
+
     private final String description;
+
     private final int type;
+
     private final String url;
+
     private final String color;
+
     private final String textColor;
+
     private final String agencyId;
 
     public ObaRouteElement() {
@@ -119,19 +129,23 @@ public final class ObaRouteElement implements ObaRoute {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
-            return false;
-        if (!(obj instanceof ObaRouteElement))
-            return false;
-        ObaRouteElement other = (ObaRouteElement)obj;
-        if (id == null) {
-            if (other.id != null)
-                return false;
         }
-        else if (!id.equals(other.id))
+        if (obj == null) {
             return false;
+        }
+        if (!(obj instanceof ObaRouteElement)) {
+            return false;
+        }
+        ObaRouteElement other = (ObaRouteElement) obj;
+        if (id == null) {
+            if (other.id != null) {
+                return false;
+            }
+        } else if (!id.equals(other.id)) {
+            return false;
+        }
         return true;
     }
 

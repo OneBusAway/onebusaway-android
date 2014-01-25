@@ -16,16 +16,25 @@
 package com.joulespersecond.oba.elements;
 
 public final class ObaTripElement implements ObaTrip {
+
     public static final ObaTripElement EMPTY_OBJECT = new ObaTripElement();
-    public static final ObaTripElement[] EMPTY_ARRAY = new ObaTripElement[] {};
+
+    public static final ObaTripElement[] EMPTY_ARRAY = new ObaTripElement[]{};
 
     private final String id;
+
     private final String tripShortName;
+
     private final String shapeId;
+
     private final String directionId;
+
     private final String serviceId;
+
     private final String tripHeadsign;
+
     private final String timeZone;
+
     private final String routeId;
 
     private ObaTripElement() {

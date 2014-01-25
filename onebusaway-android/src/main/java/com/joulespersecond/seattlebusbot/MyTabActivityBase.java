@@ -15,11 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
+
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
-import com.google.android.maps.GeoPoint;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,13 +29,17 @@ import android.os.Bundle;
 
 
 abstract class MyTabActivityBase extends SherlockFragmentActivity {
+
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
+
     public static final String EXTRA_SEARCHCENTER = ".SearchCenter"; //int[]
 
     public static final String RESULT_ROUTE_ID = ".RouteId";
 
     protected boolean mShortcutMode;
+
     protected GeoPoint mSearchCenter;
+
     private String mDefaultTab;
 
     @Override
@@ -69,7 +74,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         if (mDefaultTab == null) {
             final ActionBar bar = getSupportActionBar();
             final ActionBar.Tab tab = bar.getSelectedTab();
-            PreferenceHelp.saveString(getLastTabPref(), (String)tab.getTag());
+            PreferenceHelp.saveString(getLastTabPref(), (String) tab.getTag());
         }
 
         super.onDestroy();
@@ -95,7 +100,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         if (def != null) {
             // Find this tab...
             final ActionBar bar = getSupportActionBar();
-            for (int i=0; i < bar.getTabCount(); ++i) {
+            for (int i = 0; i < bar.getTabCount(); ++i) {
                 ActionBar.Tab tab = bar.getTabAt(i);
                 if (def.equals(tab.getTag())) {
                     tab.select();
@@ -123,6 +128,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     public static final Uri getDefaultTabUri(String tab) {
         return Uri.fromParts(TAB_SCHEME, tab, null);
     }
+
     public static String getDefaultTabFromUri(Uri uri) {
         if (TAB_SCHEME.equals(uri.getScheme())) {
             return uri.getSchemeSpecificPart();
@@ -137,7 +143,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     //
     public static final Intent putSearchCenter(Intent intent, GeoPoint pt) {
         if (pt != null) {
-            int[] p = { pt.getLatitudeE6(), pt.getLongitudeE6() };
+            int[] p = {pt.getLatitudeE6(), pt.getLongitudeE6()};
             intent.putExtra(EXTRA_SEARCHCENTER, p);
         }
         return intent;

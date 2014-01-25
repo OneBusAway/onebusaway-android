@@ -17,10 +17,11 @@
 
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.maps.GeoPoint;
+
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.google.android.maps.GeoPoint;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -73,17 +74,17 @@ public final class UIHelp {
     }
 
     public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
-        TextView v = (TextView)parent.findViewById(id);
+        TextView v = (TextView) parent.findViewById(id);
         setClickable(v, span);
     }
 
     public static void setChildClickable(View parent, int id, ClickableSpan span) {
-        TextView v = (TextView)parent.findViewById(id);
+        TextView v = (TextView) parent.findViewById(id);
         setClickable(v, span);
     }
 
     public static void setClickable(TextView v, ClickableSpan span) {
-        Spannable text = (Spannable)v.getText();
+        Spannable text = (Spannable) v.getText();
         text.setSpan(span, 0, text.length(), 0);
         v.setMovementMethod(LinkMovementMethod.getInstance());
     }
@@ -139,7 +140,7 @@ public final class UIHelp {
     // Shows or hides the view, depending on whether or not the direction is
     // available.
     public static final void setStopDirection(View v, String direction, boolean show) {
-        final TextView text = (TextView)v;
+        final TextView text = (TextView) v;
         final int directionText = UIHelp.getStopDirectionText(direction);
         if ((directionText != R.string.direction_none) || show) {
             text.setText(directionText);
@@ -151,8 +152,8 @@ public final class UIHelp {
 
     // Common code to set a route list item view
     public static final void setRouteView(View view, ObaRoute route) {
-        TextView shortNameText = (TextView)view.findViewById(R.id.short_name);
-        TextView longNameText = (TextView)view.findViewById(R.id.long_name);
+        TextView shortNameText = (TextView) view.findViewById(R.id.short_name);
+        TextView longNameText = (TextView) view.findViewById(R.id.long_name);
 
         String shortName = route.getShortName();
         String longName = MyTextUtils.toTitleCase(route.getLongName());
@@ -169,12 +170,13 @@ public final class UIHelp {
     }
 
     private static final String[] STOP_USER_PROJECTION = {
-        ObaContract.Stops._ID,
-        ObaContract.Stops.FAVORITE,
-        ObaContract.Stops.USER_NAME
+            ObaContract.Stops._ID,
+            ObaContract.Stops.FAVORITE,
+            ObaContract.Stops.USER_NAME
     };
 
     public static class StopUserInfoMap {
+
         private final ContentQueryMap mMap;
 
         public StopUserInfoMap(Context context) {
@@ -194,7 +196,7 @@ public final class UIHelp {
         }
 
         public void setView(View stopRoot, String stopId, String stopName) {
-            TextView nameView = (TextView)stopRoot.findViewById(R.id.stop_name);
+            TextView nameView = (TextView) stopRoot.findViewById(R.id.stop_name);
             setView2(nameView, stopId, stopName, true);
         }
 
@@ -222,7 +224,7 @@ public final class UIHelp {
     /**
      * Default implementation for creating a shortcut when in shortcut mode.
      *
-     * @param name The name of the shortcut.
+     * @param name       The name of the shortcut.
      * @param destIntent The destination intent.
      */
     public static final Intent makeShortcut(Context context, String name, Intent destIntent) {
@@ -230,7 +232,8 @@ public final class UIHelp {
         Intent intent = new Intent();
         intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
-        Parcelable iconResource = Intent.ShortcutIconResource.fromContext(context, R.drawable.ic_launcher);
+        Parcelable iconResource = Intent.ShortcutIconResource
+                .fromContext(context, R.drawable.ic_launcher);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
         return intent;
     }
@@ -339,7 +342,7 @@ public final class UIHelp {
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext();) {
+        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
             Location loc = mgr.getLastKnownLocation(i.next());
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
@@ -358,7 +361,7 @@ public final class UIHelp {
 
     public static boolean isConnected(Context context) {
         ConnectivityManager cm =
-                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return (activeNetwork != null) && activeNetwork.isConnectedOrConnecting();
@@ -366,15 +369,10 @@ public final class UIHelp {
 
     /**
      * Returns the first string for the query URI.
-     *
-     * @param context
-     * @param uri
-     * @param column
-     * @return
      */
     public static String stringForQuery(Context context, Uri uri, String column) {
         ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(uri, new String[] { column }, null, null, null);
+        Cursor c = cr.query(uri, new String[]{column}, null, null, null);
         if (c != null) {
             try {
                 if (c.moveToFirst()) {
@@ -389,7 +387,7 @@ public final class UIHelp {
 
     public static Integer intForQuery(Context context, Uri uri, String column) {
         ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(uri, new String[] { column }, null, null, null);
+        Cursor c = cr.query(uri, new String[]{column}, null, null, null);
         if (c != null) {
             try {
                 if (c.moveToFirst()) {
@@ -401,19 +399,22 @@ public final class UIHelp {
         }
         return null;
     }
-    
+
     public static final int MINUTES_IN_HOUR = 60;
-    
+
     /**
      * Takes the number of minutes, and returns a user-readable string
      * saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes if minutes > 60
-     * @param minutes number of minutes for which there are no upcoming arrivals
-     * @param additionalArrivals true if the response should include the word additional, false if it should not
+     *
+     * @param minutes            number of minutes for which there are no upcoming arrivals
+     * @param additionalArrivals true if the response should include the word additional, false if
+     *                           it should not
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
-    public static String getNoArrivalsMessage(Context context, int minutes, boolean additionalArrivals) {
+    public static String getNoArrivalsMessage(Context context, int minutes,
+            boolean additionalArrivals) {
         if (minutes <= MINUTES_IN_HOUR) {
             // Return just minutes
             if (additionalArrivals) {
@@ -424,9 +425,13 @@ public final class UIHelp {
         } else {
             // Return hours and minutes
             if (additionalArrivals) {
-                return context.getResources().getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes, minutes/60, minutes%60, minutes/60);
+                return context.getResources()
+                        .getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes,
+                                minutes / 60, minutes % 60, minutes / 60);
             } else {
-                return context.getResources().getQuantityString(R.plurals.stop_info_nodata_hours_minutes, minutes/60, minutes%60, minutes/60);                
+                return context.getResources()
+                        .getQuantityString(R.plurals.stop_info_nodata_hours_minutes, minutes / 60,
+                                minutes % 60, minutes / 60);
             }
         }
     }

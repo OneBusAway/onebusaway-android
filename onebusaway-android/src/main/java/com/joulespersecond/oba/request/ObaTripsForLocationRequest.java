@@ -30,19 +30,22 @@ import java.util.concurrent.Callable;
  */
 public final class ObaTripsForLocationRequest extends RequestBase
         implements Callable<ObaTripsForLocationResponse> {
+
     protected ObaTripsForLocationRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, GeoPoint location) {
             super(context, BASE_PATH + "/trips-for-location.json");
-            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitudeE6()/1E6));
-            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitudeE6()/1E6));
+            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitudeE6() / 1E6));
+            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitudeE6() / 1E6));
         }
 
         /**
          * An alternative to {@link #setRadius(int)} to set the search bounding box
+         *
          * @param latSpan The latitude span of the bounding box.
          * @param lonSpan The longitude span of the bounding box.
          */
@@ -55,6 +58,7 @@ public final class ObaTripsForLocationRequest extends RequestBase
         /**
          * Determines whether the full trip element is included in the references.
          * Defaults to 'false'
+         *
          * @return This object.
          */
         public Builder setIncludeTrips(boolean includeTrips) {
@@ -65,6 +69,7 @@ public final class ObaTripsForLocationRequest extends RequestBase
         /**
          * Determines whether the schedule element is included in the result list.
          * Defaults to 'false'
+         *
          * @return This object.
          */
         public Builder setIncludeSchedules(boolean includeSchedules) {

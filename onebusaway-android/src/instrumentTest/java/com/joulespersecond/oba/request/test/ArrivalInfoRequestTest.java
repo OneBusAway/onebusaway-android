@@ -39,17 +39,21 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 //                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
 //                request);
 //    }
-    
+
     public void testHARTStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
-                new ObaArrivalInfoRequest.Builder(getContext(), "Hillsborough Area Regional Transit_3105");
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_3105");
         ObaArrivalInfoRequest request = builder.build();
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
-    
+
     // TODO - fix this test in context of regions and loading multiple URLs
 //    public void testKCMStopResponse() throws Exception {
 //        ObaArrivalInfoResponse response =
@@ -73,7 +77,8 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
 
     public void testHARTStopResponse() throws Exception {
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "Hillsborough Area Regional Transit_3105").build().call();
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_3105").build().call();
         assertOK(response);
         ObaStop stop = response.getStop();
         assertNotNull(stop);
@@ -90,7 +95,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);
     }
-    
+
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testNewRequest() throws Exception {
@@ -99,7 +104,10 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertNotNull(request);
         UriAssert.assertUriMatch(
                 "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/1_10.json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 

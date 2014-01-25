@@ -47,12 +47,15 @@ import java.util.Iterator;
 import java.util.List;
 
 public class HomeActivity extends BaseMapActivity {
+
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
     private static final int HELP_DIALOG = 1;
+
     private static final int WHATSNEW_DIALOG = 2;
 
-    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;  //One week, in milliseconds
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
+            //One week, in milliseconds
 
     private static final String TAG = "HomeActivity";
 
@@ -60,14 +63,10 @@ public class HomeActivity extends BaseMapActivity {
      * Starts the MapActivity with a particular stop focused with the center of
      * the map at a particular point.
      *
-     * @param context
-     *            The context of the activity.
-     * @param focusId
-     *            The stop to focus.
-     * @param lat
-     *            The latitude of the map center.
-     * @param lon
-     *            The longitude of the map center.
+     * @param context The context of the activity.
+     * @param focusId The stop to focus.
+     * @param lat     The latitude of the map center.
+     * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
             String focusId,
@@ -80,10 +79,8 @@ public class HomeActivity extends BaseMapActivity {
      * Starts the MapActivity in "RouteMode", which shows stops along a route,
      * and does not get new stops when the user pans the map.
      *
-     * @param context
-     *            The context of the activity.
-     * @param routeId
-     *            The route to show.
+     * @param context The context of the activity.
+     * @param routeId The route to show.
      */
     public static final void start(Context context, String routeId) {
         context.startActivity(makeIntent(context, routeId));
@@ -93,14 +90,10 @@ public class HomeActivity extends BaseMapActivity {
      * Returns an intent that will start the MapActivity with a particular stop
      * focused with the center of the map at a particular point.
      *
-     * @param context
-     *            The context of the activity.
-     * @param focusId
-     *            The stop to focus.
-     * @param lat
-     *            The latitude of the map center.
-     * @param lon
-     *            The longitude of the map center.
+     * @param context The context of the activity.
+     * @param focusId The stop to focus.
+     * @param lat     The latitude of the map center.
+     * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
             String focusId,
@@ -118,10 +111,8 @@ public class HomeActivity extends BaseMapActivity {
      * stops along a route, and does not get new stops when the user pans the
      * map.
      *
-     * @param context
-     *            The context of the activity.
-     * @param routeId
-     *            The route to show.
+     * @param context The context of the activity.
+     * @param routeId The route to show.
      */
     public static final Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, HomeActivity.class);
@@ -193,11 +184,11 @@ public class HomeActivity extends BaseMapActivity {
     @Override
     protected Dialog onCreateDialog(int id) {
         switch (id) {
-        case HELP_DIALOG:
-            return createHelpDialog();
+            case HELP_DIALOG:
+                return createHelpDialog();
 
-        case WHATSNEW_DIALOG:
-            return createWhatsNewDialog();
+            case WHATSNEW_DIALOG:
+                return createWhatsNewDialog();
         }
         return super.onCreateDialog(id);
     }
@@ -210,23 +201,25 @@ public class HomeActivity extends BaseMapActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
-                        case 0:
-                            String twitterUrl = TWITTER_URL;                            
-                            if (Application.get().getCurrentRegion() != null &&
-                                    !TextUtils.isEmpty(Application.get().getCurrentRegion().getTwitterUrl())) {
-                                twitterUrl = Application.get().getCurrentRegion().getTwitterUrl();
-                            }
-                            UIHelp.goToUrl(HomeActivity.this, twitterUrl);
-                            break;
-                        case 1:
-                            AgenciesActivity.start(HomeActivity.this);
-                            break;
-                        case 2:
-                            showDialog(WHATSNEW_DIALOG);
-                            break;
-                        case 3:
-                            goToContactEmail(HomeActivity.this);
-                            break;
+                            case 0:
+                                String twitterUrl = TWITTER_URL;
+                                if (Application.get().getCurrentRegion() != null &&
+                                        !TextUtils.isEmpty(Application.get().getCurrentRegion()
+                                                .getTwitterUrl())) {
+                                    twitterUrl = Application.get().getCurrentRegion()
+                                            .getTwitterUrl();
+                                }
+                                UIHelp.goToUrl(HomeActivity.this, twitterUrl);
+                                break;
+                            case 1:
+                                AgenciesActivity.start(HomeActivity.this);
+                                break;
+                            case 2:
+                                showDialog(WHATSNEW_DIALOG);
+                                break;
+                            case 3:
+                                goToContactEmail(HomeActivity.this);
+                                break;
                         }
                     }
                 });
@@ -285,7 +278,7 @@ public class HomeActivity extends BaseMapActivity {
         List<String> providers = mgr.getProviders(true);
         Location last = null;
         String provider = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext();) {
+        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
             String p = i.next();
             Location loc = mgr.getLastKnownLocation(p);
             if (loc != null && (last == null || loc.getTime() > last.getTime())) {
@@ -333,14 +326,14 @@ public class HomeActivity extends BaseMapActivity {
         // Build.VERSION.SDK
         // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
         final String body = ctxt.getString(R.string.bug_report_body,
-                 appInfo.versionName,
-                 Build.MODEL,
-                 Build.VERSION.RELEASE,
-                 Build.VERSION.SDK_INT,
-                 getLocationString(ctxt));
+                appInfo.versionName,
+                Build.MODEL,
+                Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT,
+                getLocationString(ctxt));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
-                new String[] { region.getContactEmail() });
+                new String[]{region.getContactEmail()});
         send.putExtra(Intent.EXTRA_SUBJECT,
                 ctxt.getString(R.string.bug_report_subject));
         send.putExtra(Intent.EXTRA_TEXT, body);
@@ -358,7 +351,7 @@ public class HomeActivity extends BaseMapActivity {
      * Checks region status, which can potentially including forcing a reload of region
      * info from the server.  Also includes auto-selection of closest region.
      */
-    private void checkRegionStatus(){
+    private void checkRegionStatus() {
         //First check for custom API URL set by user via Preferences, since if that is set we don't need region info from the REST API
         if (!TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
             return;
@@ -372,11 +365,16 @@ public class HomeActivity extends BaseMapActivity {
         //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh,
         //force contacting the server again
         if (Application.get().getCurrentRegion() == null ||
-                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true) &&
-                new Date().getTime() - Application.get().getLastRegionUpdateDate() > REGION_UPDATE_THRESHOLD)
-                        ) {
+                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true)
+                        &&
+                        new Date().getTime() - Application.get().getLastRegionUpdateDate()
+                                > REGION_UPDATE_THRESHOLD)
+                ) {
             forceReload = true;
-            if (BuildConfig.DEBUG) { Log.d(TAG, "Region info has expired (or does not exist), forcing a reload from the server..."); }
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG,
+                        "Region info has expired (or does not exist), forcing a reload from the server...");
+            }
         }
 
         if (Application.get().getCurrentRegion() != null) {

@@ -19,13 +19,17 @@ import com.joulespersecond.oba.ObaApi;
 
 
 public final class ObaStopGrouping {
+
     public static final ObaStopGrouping EMPTY_OBJECT = new ObaStopGrouping();
-    public static final ObaStopGrouping[] EMPTY_ARRAY = new ObaStopGrouping[] {};
+
+    public static final ObaStopGrouping[] EMPTY_ARRAY = new ObaStopGrouping[]{};
 
     public static final String TYPE_DIRECTION = "direction";
 
     private final boolean ordered;
+
     private final String type;
+
     private final ObaStopGroup[] stopGroups;
 
     /**
@@ -39,6 +43,7 @@ public final class ObaStopGrouping {
 
     /**
      * Returns whether or not this grouping is ordered.
+     *
      * @return A boolean indicating whether this grouping is ordered.
      */
     public boolean getOrdered() {
@@ -47,6 +52,7 @@ public final class ObaStopGrouping {
 
     /**
      * Returns the type of ordering.
+     *
      * @return The type of ordering.
      */
     public String getType() {

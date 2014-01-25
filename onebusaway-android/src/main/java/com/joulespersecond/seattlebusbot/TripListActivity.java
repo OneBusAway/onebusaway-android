@@ -67,22 +67,30 @@ public class TripListActivity extends SherlockFragmentActivity {
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String[] PROJECTION = {
-            ObaContract.Trips._ID,
-            ObaContract.Trips.NAME,
-            ObaContract.Trips.HEADSIGN,
-            ObaContract.Trips.DEPARTURE,
-            ObaContract.Trips.ROUTE_ID,
-            ObaContract.Trips.STOP_ID
+                ObaContract.Trips._ID,
+                ObaContract.Trips.NAME,
+                ObaContract.Trips.HEADSIGN,
+                ObaContract.Trips.DEPARTURE,
+                ObaContract.Trips.ROUTE_ID,
+                ObaContract.Trips.STOP_ID
         };
+
         private static final int COL_ID = 0;
+
         private static final int COL_NAME = 1;
+
         private static final int COL_HEADSIGN = 2;
+
         private static final int COL_DEPARTURE = 3;
+
         private static final int COL_ROUTE_ID = 4;
+
         private static final int COL_STOP_ID = 5;
 
         private static final Handler mHandler = new Handler();
+
         private class Observer extends ContentObserver {
+
             Observer() {
                 super(mHandler);
             }
@@ -100,6 +108,7 @@ public class TripListActivity extends SherlockFragmentActivity {
         }
 
         private SimpleCursorAdapter mAdapter;
+
         private Observer mObserver;
 
         @Override
@@ -134,11 +143,11 @@ public class TripListActivity extends SherlockFragmentActivity {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new CursorLoader(getActivity(),
-                                ObaContract.Trips.CONTENT_URI,
-                                PROJECTION,
-                                null,
-                                null,
-                                ObaContract.Trips.NAME + " asc");
+                    ObaContract.Trips.CONTENT_URI,
+                    PROJECTION,
+                    null,
+                    null,
+                    ObaContract.Trips.NAME + " asc");
         }
 
         @Override
@@ -166,14 +175,15 @@ public class TripListActivity extends SherlockFragmentActivity {
                     R.id.route_name
             };
             SimpleCursorAdapter simpleAdapter =
-                new SimpleCursorAdapter(getActivity(), R.layout.trip_list_listitem, null, from, to, 0);
+                    new SimpleCursorAdapter(getActivity(), R.layout.trip_list_listitem, null, from,
+                            to, 0);
 
             simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                 public boolean setViewValue(View view,
                         Cursor cursor,
                         int columnIndex) {
                     if (columnIndex == COL_NAME) {
-                        TextView text = (TextView)view;
+                        TextView text = (TextView) view;
                         String name = cursor.getString(columnIndex);
                         if (name.length() == 0) {
                             name = getString(R.string.trip_info_noname);
@@ -182,11 +192,11 @@ public class TripListActivity extends SherlockFragmentActivity {
                         return true;
                     } else if (columnIndex == COL_HEADSIGN) {
                         String headSign = cursor.getString(columnIndex);
-                        TextView text = (TextView)view;
+                        TextView text = (TextView) view;
                         text.setText(MyTextUtils.toTitleCase(headSign));
                         return true;
                     } else if (columnIndex == COL_DEPARTURE) {
-                        TextView text = (TextView)view;
+                        TextView text = (TextView) view;
                         text.setText(TripInfoActivity.getDepartureTime(
                                 getActivity(),
                                 ObaContract.Trips.convertDBToTime(cursor
@@ -197,7 +207,7 @@ public class TripListActivity extends SherlockFragmentActivity {
                         // Translate the Route ID into the Route Name by looking
                         // it up in the Routes table.
                         //
-                        TextView text = (TextView)view;
+                        TextView text = (TextView) view;
                         final String routeId = cursor.getString(columnIndex);
                         final String routeName = TripService.getRouteShortName(
                                 getActivity(), routeId);
@@ -221,8 +231,11 @@ public class TripListActivity extends SherlockFragmentActivity {
         }
 
         private static final int CONTEXT_MENU_DEFAULT = 1;
+
         private static final int CONTEXT_MENU_DELETE = 2;
+
         private static final int CONTEXT_MENU_SHOWSTOP = 3;
+
         private static final int CONTEXT_MENU_SHOWROUTE = 4;
 
         @Override
@@ -230,8 +243,8 @@ public class TripListActivity extends SherlockFragmentActivity {
                 View v,
                 ContextMenuInfo menuInfo) {
             super.onCreateContextMenu(menu, v, menuInfo);
-            AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-            final TextView text = (TextView)info.targetView.findViewById(R.id.name);
+            AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+            final TextView text = (TextView) info.targetView.findViewById(R.id.name);
             menu.setHeaderTitle(text.getText());
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.trip_list_context_edit);
             menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.trip_list_context_delete);
@@ -243,25 +256,25 @@ public class TripListActivity extends SherlockFragmentActivity {
 
         @Override
         public boolean onContextItemSelected(android.view.MenuItem item) {
-            AdapterContextMenuInfo info = (AdapterContextMenuInfo)item
+            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
                     .getMenuInfo();
             switch (item.getItemId()) {
-            case CONTEXT_MENU_DEFAULT:
-                // Fake a click
-                onListItemClick(getListView(), info.targetView, info.position,
-                        info.id);
-                return true;
-            case CONTEXT_MENU_DELETE:
-                deleteTrip(getListView(), info.position);
-                return true;
-            case CONTEXT_MENU_SHOWSTOP:
-                goToStop(getListView(), info.position);
-                return true;
-            case CONTEXT_MENU_SHOWROUTE:
-                goToRoute(getListView(), info.position);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+                case CONTEXT_MENU_DEFAULT:
+                    // Fake a click
+                    onListItemClick(getListView(), info.targetView, info.position,
+                            info.id);
+                    return true;
+                case CONTEXT_MENU_DELETE:
+                    deleteTrip(getListView(), info.position);
+                    return true;
+                case CONTEXT_MENU_SHOWSTOP:
+                    goToStop(getListView(), info.position);
+                    return true;
+                case CONTEXT_MENU_SHOWROUTE:
+                    goToRoute(getListView(), info.position);
+                    return true;
+                default:
+                    return super.onContextItemSelected(item);
             }
         }
 
@@ -288,10 +301,10 @@ public class TripListActivity extends SherlockFragmentActivity {
 
         private String[] getIds(ListView l, int position) {
             // Get the cursor and fetch the stop ID from that.
-            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter)l.getAdapter();
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             final Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
-            final String[] result = new String[] {
+            final String[] result = new String[]{
                     c.getString(COL_ID),
                     c.getString(COL_STOP_ID),
                     c.getString(COL_ROUTE_ID)

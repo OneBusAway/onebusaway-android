@@ -17,5 +17,5 @@
     <item android:id="@+id/report_problem_send"
           android:title="@string/report_problem_send"
           android:icon="@drawable/ic_action_send"
-          android:showAsAction="always|withText" />
+          android:showAsAction="always|withText"/>
 </menu>

@@ -18,6 +18,7 @@ package com.joulespersecond.seattlebusbot.map;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -39,9 +40,13 @@ import java.util.Arrays;
 import java.util.List;
 
 final class StopsRequest {
+
     private final GeoPoint mCenter;
+
     private final int mLatSpan;
+
     private final int mLonSpan;
+
     private final int mZoomLevel;
 
     StopsRequest(MapView view) {
@@ -69,7 +74,9 @@ final class StopsRequest {
 }
 
 final class StopsResponse {
+
     private final StopsRequest mRequest;
+
     private final ObaStopsForLocationResponse mResponse;
 
     StopsResponse(StopsRequest req, ObaStopsForLocationResponse response) {
@@ -87,8 +94,6 @@ final class StopsResponse {
 
     /**
      * Returns true if newReq also fulfills response.
-     * @param newReq
-     * @return
      */
     boolean fulfills(StopsRequest newReq) {
         if (mRequest.getCenter() == null) {
@@ -104,8 +109,7 @@ final class StopsResponse {
                     mResponse.getLimitExceeded()) {
                 //Log.d(TAG, "Zooming in -- limit exceeded");
                 return false;
-            }
-            else if (newReq.getZoomLevel() < mRequest.getZoomLevel()) {
+            } else if (newReq.getZoomLevel() < mRequest.getZoomLevel()) {
                 //Log.d(TAG, "Zooming out");
                 return false;
             }
@@ -129,13 +133,16 @@ final class StopsResponse {
 }
 
 class StopMapController implements MapModeController,
-            LoaderManager.LoaderCallbacks<StopsResponse>,
-            Loader.OnLoadCompleteListener<StopsResponse>,
-            MapWatcher.Listener {
+        LoaderManager.LoaderCallbacks<StopsResponse>,
+        Loader.OnLoadCompleteListener<StopsResponse>,
+        MapWatcher.Listener {
+
     private static final String TAG = "StopMapController";
+
     private static final int STOPS_LOADER = 5678;
 
     private final Callback mFragment;
+
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
     private Loader<StopsResponse> mLoader;
@@ -242,17 +249,21 @@ class StopMapController implements MapModeController,
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
         Location myLocation = UIHelp.getLocation2(mFragment.getActivity());
-        if (myLocation != null  && Application.get().getCurrentRegion() != null) {
+        if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {
-                inRegion = RegionUtils.isLocationWithinRegion(myLocation, Application.get().getCurrentRegion());
+                inRegion = RegionUtils
+                        .isLocationWithinRegion(myLocation, Application.get().getCurrentRegion());
             } catch (IllegalArgumentException e) {
                 // Issue #69 - some devices are providing invalid lat/long coordinates
-                Log.e(TAG, "Invalid latitude or longitude - lat = " + myLocation.getLatitude() + ", long = " + myLocation.getLongitude());
+                Log.e(TAG, "Invalid latitude or longitude - lat = " + myLocation.getLatitude()
+                        + ", long = " + myLocation.getLongitude());
             }
-            
+
             if (!inRegion && Arrays.asList(response.getStops()).isEmpty()) {
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Device location is outside region range, notifying..."); }
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Device location is outside region range, notifying...");
+                }
                 mFragment.notifyOutOfRange();
                 return;
             }
@@ -282,7 +293,7 @@ class StopMapController implements MapModeController,
         //Loader<ObaStopsForLocationResponse> l =
         //        mFragment.getLoaderManager().getLoader(STOPS_LOADER);
         //return (StopsLoader)l;
-        return (StopsLoader)mLoader;
+        return (StopsLoader) mLoader;
     }
 
     private void refresh() {
@@ -304,8 +315,11 @@ class StopMapController implements MapModeController,
     // Loader
     //
     private static class StopsLoader extends AsyncTaskLoader<StopsResponse> {
+
         private final Callback mFragment;
+
         private StopsRequest mRequest;
+
         private StopsResponse mResponse;
 
         public StopsLoader(Callback fragment) {
@@ -319,16 +333,18 @@ class StopMapController implements MapModeController,
             if (Application.get().getCurrentRegion() == null &&
                     TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops from server without " +
-                        "OBA REST API endpoint, aborting..."); }
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Trying to load stops from server without " +
+                            "OBA REST API endpoint, aborting...");
+                }
                 return new StopsResponse(req, null);
             }
             //Make OBA REST API call to the server and return result
             ObaStopsForLocationResponse response =
                     new ObaStopsForLocationRequest.Builder(getContext(), req.getCenter())
-                                .setSpan(req.getLatSpan(), req.getLonSpan())
-                                .build()
-                                .call();
+                            .setSpan(req.getLatSpan(), req.getLonSpan())
+                            .build()
+                            .call();
             return new StopsResponse(req, response);
         }
 
@@ -364,12 +380,14 @@ class StopMapController implements MapModeController,
     //
     private void watchMap(boolean watch) {
         if (watch) {
-            if (mMapWatcher == null)
+            if (mMapWatcher == null) {
                 mMapWatcher = new MapWatcher(mFragment.getMapView(), this);
+            }
             mMapWatcher.start();
         } else {
-            if (mMapWatcher != null)
+            if (mMapWatcher != null) {
                 mMapWatcher.stop();
+            }
             mMapWatcher = null;
         }
     }

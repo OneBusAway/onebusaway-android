@@ -32,10 +32,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 public class ReportStopProblemFragment extends ReportProblemFragmentBase {
+
     private static final String STOP_ID = ".StopId";
+
     private static final String STOP_NAME = ".StopName";
 
     private static final String CODE = ".Code";
+
     private static final String USER_COMMENT = ".UserComment";
 
     static void show(SherlockFragmentActivity activity, ObaStop stop) {
@@ -57,6 +60,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     }
 
     private Spinner mCodeView;
+
     private TextView mUserComment;
 
     @Override
@@ -68,7 +72,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        final TextView stopName = (TextView)view.findViewById(R.id.stop_name);
+        final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
         stopName.setText(MyTextUtils.toTitleCase(args.getString(STOP_NAME)));
 
         //
@@ -76,12 +80,13 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         //
         mCodeView = (Spinner) view.findViewById(R.id.report_problem_code);
         ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
-                getActivity(), R.array.report_stop_problem_code, android.R.layout.simple_spinner_item);
+                getActivity(), R.array.report_stop_problem_code,
+                android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mCodeView.setAdapter(adapter);
 
         // Comment
-        mUserComment = (TextView)view.findViewById(R.id.report_problem_comment);
+        mUserComment = (TextView) view.findViewById(R.id.report_problem_comment);
 
         if (savedInstanceState != null) {
             int position = savedInstanceState.getInt(CODE);
@@ -102,19 +107,19 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     @Override
     protected void sendReport() {
         // Hide the soft keyboard.
-        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
         super.sendReport();
     }
 
-    private static final String[] SPINNER_TO_CODE = new String[] {
-        null,
-        ObaReportProblemWithStopRequest.NAME_WRONG,
-        ObaReportProblemWithStopRequest.NUMBER_WRONG,
-        ObaReportProblemWithStopRequest.LOCATION_WRONG,
-        ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
-        ObaReportProblemWithStopRequest.OTHER
+    private static final String[] SPINNER_TO_CODE = new String[]{
+            null,
+            ObaReportProblemWithStopRequest.NAME_WRONG,
+            ObaReportProblemWithStopRequest.NUMBER_WRONG,
+            ObaReportProblemWithStopRequest.LOCATION_WRONG,
+            ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
+            ObaReportProblemWithStopRequest.OTHER
     };
 
     @Override
@@ -141,7 +146,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {
-                builder.setUserLocationAccuracy((int)location.getAccuracy());
+                builder.setUserLocationAccuracy((int) location.getAccuracy());
             }
         }
 

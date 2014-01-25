@@ -16,18 +16,22 @@
 package com.joulespersecond.oba.elements;
 
 
-
 /**
  * Specifies a region in the OneBusAway multi-region system.
  */
 public interface ObaRegion {
+
     /**
      * Specifies a single bound rectangle within this region.
      */
     public interface Bounds {
+
         public double getLat();
+
         public double getLon();
+
         public double getLatSpan();
+
         public double getLonSpan();
     }
 
@@ -42,7 +46,8 @@ public interface ObaRegion {
     public String getName();
 
     /**
-     * @return true if this server is active and should be presented in a list of working servers, false otherwise.
+     * @return true if this server is active and should be presented in a list of working servers,
+     * false otherwise.
      */
     public boolean getActive();
 
@@ -85,7 +90,7 @@ public interface ObaRegion {
      * @return true if this server supports SIRI real-time APIs, false otherwise.
      */
     public boolean getSupportsSiriRealtimeApis();
-    
+
     /**
      * @return The Twitter URL for the region
      */

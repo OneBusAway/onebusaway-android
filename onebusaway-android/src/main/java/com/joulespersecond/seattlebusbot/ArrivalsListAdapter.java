@@ -29,6 +29,7 @@ import java.util.ArrayList;
 
 
 public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
+
     private ContentQueryMap mTripsForStop;
 
     public ArrivalsListAdapter(Context context) {
@@ -53,11 +54,11 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
 
     @Override
     protected void initView(View view, ArrivalInfo stopInfo) {
-        TextView route = (TextView)view.findViewById(R.id.route);
-        TextView destination = (TextView)view.findViewById(R.id.destination);
-        TextView time = (TextView)view.findViewById(R.id.time);
-        TextView status = (TextView)view.findViewById(R.id.status);
-        TextView etaView = (TextView)view.findViewById(R.id.eta);
+        TextView route = (TextView) view.findViewById(R.id.route);
+        TextView destination = (TextView) view.findViewById(R.id.destination);
+        TextView time = (TextView) view.findViewById(R.id.time);
+        TextView status = (TextView) view.findViewById(R.id.status);
+        TextView etaView = (TextView) view.findViewById(R.id.eta);
 
         final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
         final Context context = getContext();
@@ -79,9 +80,9 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
 
         time.setText(DateUtils.formatDateTime(context,
                 stopInfo.getDisplayTime(),
-                DateUtils.FORMAT_SHOW_TIME|
-                DateUtils.FORMAT_NO_NOON|
-                DateUtils.FORMAT_NO_MIDNIGHT));
+                DateUtils.FORMAT_SHOW_TIME |
+                        DateUtils.FORMAT_NO_NOON |
+                        DateUtils.FORMAT_NO_MIDNIGHT));
 
         ContentValues values = null;
         if (mTripsForStop != null) {
@@ -90,7 +91,7 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         if (values != null) {
             String tripName = values.getAsString(ObaContract.Trips.NAME);
 
-            TextView tripInfo = (TextView)view.findViewById(R.id.trip_info);
+            TextView tripInfo = (TextView) view.findViewById(R.id.trip_info);
             if (tripName.length() == 0) {
                 tripName = context.getString(R.string.trip_info_noname);
             }

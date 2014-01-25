@@ -27,11 +27,13 @@ import java.util.concurrent.Callable;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaRouteRequest extends RequestBase implements Callable<ObaRouteResponse> {
+
     protected ObaRouteRequest(Uri uri) {
         super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context, String routeId) {
             super(context, getPathWithId("/route/", routeId));
         }
@@ -43,6 +45,7 @@ public final class ObaRouteRequest extends RequestBase implements Callable<ObaRo
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
      * @param routeId The route Id to request.
      * @return The new request instance.

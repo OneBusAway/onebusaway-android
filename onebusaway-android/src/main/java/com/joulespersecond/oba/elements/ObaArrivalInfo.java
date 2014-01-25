@@ -16,12 +16,17 @@
 package com.joulespersecond.oba.elements;
 
 public final class ObaArrivalInfo {
+
     public static final ObaArrivalInfo EMPTY_OBJECT = new ObaArrivalInfo();
-    public static final ObaArrivalInfo[] EMPTY_ARRAY = new ObaArrivalInfo[] {};
+
+    public static final ObaArrivalInfo[] EMPTY_ARRAY = new ObaArrivalInfo[]{};
 
     public static final class Frequency {
+
         private final long startTime;
+
         private final long endTime;
+
         private final long headway;
 
         Frequency() {
@@ -44,28 +49,51 @@ public final class ObaArrivalInfo {
     }
 
     private final String routeId;
+
     private final String routeShortName;
+
     private final String routeLongName;
+
     private final String tripId;
+
     private final String tripHeadsign;
+
     private final String stopId;
+
     private final long predictedArrivalTime;
+
     private final long scheduledArrivalTime;
+
     private final long predictedDepartureTime;
+
     private final long scheduledDepartureTime;
+
     private final String status;
+
     private final Frequency frequency;
+
     private final String vehicleId;
+
     private final Double distanceFromStop;
+
     private final Integer numberOfStopsAway;
+
     private final long serviceDate;
+
     private final long lastUpdateTime;
+
     private final Boolean predicted;
+
     private final ObaTripStatusElement tripStatus;
+
     private final String[] situationIds;
+
     private final boolean arrivalEnabled;
+
     private final boolean departureEnabled;
+
     private final int stopSequence;
+
     private final int blockTripSequence;
 
     ObaArrivalInfo() {
@@ -174,7 +202,7 @@ public final class ObaArrivalInfo {
 
     /**
      * @return The frequency of the trip, for frequency-based scheduling. For
-     *         time-based schedules, this is null.
+     * time-based schedules, this is null.
      */
     public Frequency getFrequency() {
         return frequency;
@@ -256,7 +284,7 @@ public final class ObaArrivalInfo {
 
     /**
      * @return The index of the stop into the sequence of stops that
-     *          make up the trip for this arrival.
+     * make up the trip for this arrival.
      */
     public int getStopSequence() {
         return stopSequence;
@@ -264,7 +292,8 @@ public final class ObaArrivalInfo {
 
     /**
      * @return The index of this arrival's trip into the sequence of trips for the active block.
-     * Compare to blockTripSequence in the TripStatus element to determine where the arrival-and-departure
+     * Compare to blockTripSequence in the TripStatus element to determine where the
+     * arrival-and-departure
      * is on the block in comparison to the active block location.
      */
     public int getBlockTripSequence() {

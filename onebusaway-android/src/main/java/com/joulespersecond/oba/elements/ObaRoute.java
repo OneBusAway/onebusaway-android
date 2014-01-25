@@ -22,6 +22,7 @@ package com.joulespersecond.oba.elements;
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public interface ObaRoute extends ObaElement {
+
     public static final int TYPE_TRAM = 0;
     public static final int TYPE_SUBWAY = 1;
     public static final int TYPE_RAIL = 2;
@@ -47,7 +48,6 @@ public interface ObaRoute extends ObaElement {
 
     /**
      * Returns the description of the route.
-     *
      */
     public String getDescription();
 
@@ -58,6 +58,7 @@ public interface ObaRoute extends ObaElement {
 
     /**
      * Returns the Url to the route schedule.
+     *
      * @return The url to the route schedule.
      */
     public String getUrl();

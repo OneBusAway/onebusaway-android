@@ -41,31 +41,40 @@ import java.util.List;
 
 /**
  * This class handles most of the display and UI for the Map Popup
- * @author paulw
  *
+ * @author paulw
  */
 class StopPopup {
+
     private static final String TAG = "StopPopup";
 
     private final BaseMapActivity mFragment;
+
     private final Context mContext;
+
     private final View mView;
+
     private final TextView mNameView;
+
     private final TextView mDirection;
+
     private final GridView mRoutesView;
+
     private final RoutesAdapter mRoutesAdapter;
 
     private ObaStop mStop;
+
     private ObaReferences mReferences;
+
     private UIHelp.StopUserInfoMap mStopUserMap;
 
     StopPopup(BaseMapActivity fragment, View view) {
         mFragment = fragment;
         mContext = fragment.getActivity();
         mView = view;
-        mNameView = (TextView)view.findViewById(R.id.stop_name);
-        mDirection = (TextView)view.findViewById(R.id.direction);
-        mRoutesView = (GridView)view.findViewById(R.id.route_list);
+        mNameView = (TextView) view.findViewById(R.id.stop_name);
+        mDirection = (TextView) view.findViewById(R.id.direction);
+        mRoutesView = (GridView) view.findViewById(R.id.route_list);
         mRoutesAdapter = new RoutesAdapter(mContext);
         mRoutesView.setAdapter(mRoutesAdapter);
         // Make sure clicks on the popup don't leak to the map.
@@ -132,13 +141,13 @@ class StopPopup {
     private final View.OnClickListener mOnShowRoutes = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            toggleShowRoutes((TextView)v);
+            toggleShowRoutes((TextView) v);
         }
     };
 
     private void toggleShowRoutes(TextView text) {
         if (text == null) {
-            text = (TextView)mView.findViewById(R.id.show_routes);
+            text = (TextView) mView.findViewById(R.id.show_routes);
         }
         if (!mRoutesView.isShown() && mStop != null) {
             // Update the routes
@@ -154,11 +163,12 @@ class StopPopup {
     }
 
     private class RoutesAdapter extends ArrayAdapter<ObaRoute> {
+
         private final LayoutInflater mInflater;
 
         public RoutesAdapter(Context context) {
             super(context, R.layout.main_popup_route_item);
-            mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
 
         @TargetApi(11)
@@ -168,7 +178,7 @@ class StopPopup {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                     addAll(data);
                 } else {
-                    for (ObaRoute info: data) {
+                    for (ObaRoute info : data) {
                         add(info);
                     }
                 }
@@ -186,7 +196,7 @@ class StopPopup {
             }
 
             final ObaRoute route = getItem(position);
-            TextView shortName = (TextView)view.findViewById(R.id.short_name);
+            TextView shortName = (TextView) view.findViewById(R.id.short_name);
             shortName.setText(UIHelp.getRouteDisplayName(route));
             view.setOnClickListener(new OnClickListener() {
                 @Override

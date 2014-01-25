@@ -20,6 +20,7 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.Projection;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
@@ -53,18 +54,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 class RouteMapController implements MapModeController,
-            LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse>,
-            Loader.OnLoadCompleteListener<ObaStopsForRouteResponse>{
+        LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse>,
+        Loader.OnLoadCompleteListener<ObaStopsForRouteResponse> {
+
     private static final String TAG = "RouteMapController";
+
     private static final int ROUTES_LOADER = 5677;
 
     private final Callback mFragment;
 
     private String mRouteId;
+
     private LineOverlay mLineOverlay;
+
     private boolean mZoomToRoute;
+
     private final int mLineOverlayColor;
+
     private RoutePopup mRoutePopup;
+
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
     private Loader<ObaStopsForRouteResponse> mLoader;
@@ -72,14 +80,14 @@ class RouteMapController implements MapModeController,
     RouteMapController(Callback callback) {
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
-                                .getResources()
-                                .getColor(R.color.route_overlay_line);
+                .getResources()
+                .getColor(R.color.route_overlay_line);
         mRoutePopup = new RoutePopup();
     }
 
     @Override
     public void setState(Bundle args) {
-        assert(args != null);
+        assert (args != null);
         String routeId = args.getString(MapParams.ROUTE_ID);
         mZoomToRoute = args.getBoolean(MapParams.ZOOM_TO_ROUTE, false);
         if (!routeId.equals(mRouteId)) {
@@ -207,17 +215,20 @@ class RouteMapController implements MapModeController,
     // Map popup
     //
     private class RoutePopup {
+
         //private final Context mContext;
         private final View mView;
+
         private final TextView mRouteShortName;
+
         private final TextView mRouteLongName;
 
         RoutePopup() {
             //mContext = fragment.getActivity();
             mView = mFragment.getView().findViewById(R.id.route_info);
-            mRouteShortName = (TextView)mView.findViewById(R.id.short_name);
-            mRouteLongName = (TextView)mView.findViewById(R.id.long_name);
-            TextView agency = (TextView)mView.findViewById(R.id.agency);
+            mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
+            mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
+            TextView agency = (TextView) mView.findViewById(R.id.agency);
             agency.setVisibility(View.GONE);
             // Make sure the cancel button is shown
             View cancel = mView.findViewById(R.id.cancel_route_mode);
@@ -259,7 +270,9 @@ class RouteMapController implements MapModeController,
     // Loader
     //
     private static class RoutesLoader extends AsyncTaskLoader<ObaStopsForRouteResponse> {
+
         private final String mRouteId;
+
         public RoutesLoader(Context context, String routeId) {
             super(context);
             mRouteId = routeId;
@@ -270,15 +283,17 @@ class RouteMapController implements MapModeController,
             if (Application.get().getCurrentRegion() == null &&
                     TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
-                if (BuildConfig.DEBUG) { Log.d(TAG, "Trying to load stops for route from server " +
-                		"without OBA REST API endpoint, aborting..."); }
-                return null;                
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Trying to load stops for route from server " +
+                            "without OBA REST API endpoint, aborting...");
+                }
+                return null;
             }
             //Make OBA REST API call to the server and return result
             return new ObaStopsForRouteRequest.Builder(getContext(), mRouteId)
-                .setIncludeShapes(true)
-                .build()
-                .call();
+                    .setIncludeShapes(true)
+                    .build()
+                    .call();
         }
 
         @Override
@@ -299,7 +314,9 @@ class RouteMapController implements MapModeController,
     public static class LineOverlay extends Overlay {
 
         public static final class Line {
+
             private final List<GeoPoint> mPoints;
+
             private final Paint mPaint;
 
             public Line(int color, List<GeoPoint> points) {
@@ -312,9 +329,11 @@ class RouteMapController implements MapModeController,
                 mPaint.setStrokeJoin(Join.ROUND);
                 mPaint.setStyle(Paint.Style.STROKE);
             }
+
             public List<GeoPoint> getPoints() {
                 return mPoints;
             }
+
             public Paint getPaint() {
                 return mPaint;
             }
@@ -332,12 +351,14 @@ class RouteMapController implements MapModeController,
             mLines.add(new Line(color, points));
             // TODO: Invalidate
         }
+
         public void addLines(int color, ObaShape[] lines) {
             final int len = lines.length;
-            for (int i=0; i < len; ++i) {
+            for (int i = 0; i < len; ++i) {
                 addLine(color, lines[i]);
             }
         }
+
         public void setLines(int color, ObaShape[] lines) {
             mLines.clear();
             addLines(color, lines);
@@ -361,14 +382,14 @@ class RouteMapController implements MapModeController,
             // Log.d(TAG, String.format("Drawing %d line(s)", len));
 
             Path path = new Path();
-            for (int i=0; i < len; ++i) {
+            for (int i = 0; i < len; ++i) {
                 final Line line = mLines.get(i);
                 final List<GeoPoint> geoPoints = line.getPoints();
                 int numPts = geoPoints.size();
                 projection.toPixels(geoPoints.get(0), pt);
                 path.moveTo(pt.x, pt.y);
 
-                int j=1;
+                int j = 1;
                 for (; j < numPts; ++j) {
                     projection.toPixels(geoPoints.get(j), pt);
                     path.lineTo(pt.x, pt.y);
@@ -390,8 +411,8 @@ class RouteMapController implements MapModeController,
 
             for (Line line : mLines) {
                 for (GeoPoint item : line.mPoints) {
-                    int lat = (int)(item.getLatitudeE6());
-                    int lon = (int)(item.getLongitudeE6());
+                    int lat = (int) (item.getLatitudeE6());
+                    int lon = (int) (item.getLongitudeE6());
 
                     maxLat = Math.max(lat, maxLat);
                     minLat = Math.min(lat, minLat);

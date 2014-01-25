@@ -17,6 +17,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaElement;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -46,10 +47,13 @@ import java.util.List;
 
 /**
  * This implements the response that returns both stops and routes in one list.
+ *
  * @author paulw
  */
 final class SearchResponse {
+
     private final int mCode;
+
     private final List<ObaElement> mResults;
 
     SearchResponse(int code, List<ObaElement> r) {
@@ -67,7 +71,8 @@ final class SearchResponse {
 }
 
 public class SearchResultsFragment extends ListFragment
-            implements LoaderManager.LoaderCallbacks<SearchResponse> {
+        implements LoaderManager.LoaderCallbacks<SearchResponse> {
+
     //private static final String TAG = "SearchResultsFragment";
     public static final String QUERY_TEXT = "query_text";
 
@@ -98,7 +103,7 @@ public class SearchResultsFragment extends ListFragment
 
     @Override
     public void onLoadFinished(Loader<SearchResponse> loader,
-                SearchResponse response) {
+            SearchResponse response) {
         UIHelp.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
@@ -125,11 +130,11 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         ListAdapter adapter = l.getAdapter();
-        ObaElement e = (ObaElement)adapter.getItem(position - l.getHeaderViewsCount());
+        ObaElement e = (ObaElement) adapter.getItem(position - l.getHeaderViewsCount());
         if (e instanceof ObaRoute) {
-            clickRoute((ObaRoute)e);
+            clickRoute((ObaRoute) e);
         } else if (e instanceof ObaStop) {
-            clickStop((ObaStop)e);
+            clickStop((ObaStop) e);
         }
     }
 
@@ -187,6 +192,7 @@ public class SearchResultsFragment extends ListFragment
     // Adapter
     //
     private static final class MyAdapter extends ArrayAdapter<ObaElement> {
+
         public MyAdapter(Context context) {
             super(context, R.layout.route_list_item);
         }
@@ -201,10 +207,10 @@ public class SearchResultsFragment extends ListFragment
             // so unfortunately we can't actually re-use views...
             if (elem instanceof ObaRoute) {
                 view = inflater.inflate(R.layout.route_list_item, parent, false);
-                UIHelp.setRouteView(view, (ObaRoute)elem);
+                UIHelp.setRouteView(view, (ObaRoute) elem);
             } else if (elem instanceof ObaStop) {
                 view = inflater.inflate(R.layout.stop_list_item, parent, false);
-                initStop(view, (ObaStop)elem);
+                initStop(view, (ObaStop) elem);
             } else {
                 view = null;
             }
@@ -212,7 +218,7 @@ public class SearchResultsFragment extends ListFragment
         }
 
         private void initStop(View view, ObaStop stop) {
-            TextView nameView = (TextView)view.findViewById(R.id.stop_name);
+            TextView nameView = (TextView) view.findViewById(R.id.stop_name);
             nameView.setText(MyTextUtils.toTitleCase(stop.getName()));
 
             UIHelp.setStopDirection(view.findViewById(R.id.direction),
@@ -230,7 +236,9 @@ public class SearchResultsFragment extends ListFragment
     // Loader
     //
     private static final class MyLoader extends AsyncTaskLoader<SearchResponse> {
+
         private final String mQueryText;
+
         private final GeoPoint mCenter;
 
         public MyLoader(Context context, String query, GeoPoint center) {
@@ -242,36 +250,36 @@ public class SearchResultsFragment extends ListFragment
         private ObaRoutesForLocationResponse getRoutes() {
             ObaRoutesForLocationResponse response =
                     new ObaRoutesForLocationRequest.Builder(getContext(), mCenter)
-                        .setQuery(mQueryText)
-                        .build()
-                        .call();
-                // If there is no results from the user-centered query,
-                // open a wider next in some "default" location
-                //Log.d(TAG, "Server returns: " + response.getCode());
-                if (response.getCode() == ObaApi.OBA_OK) {
-                    ObaRoute[] routes = response.getRoutes();
-                    if (routes.length != 0) {
-                        return response;
-                    }
-                }
-                GeoPoint center = UIHelp.getDefaultSearchCenter();
-                if (center != null) {
-                    return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                            .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
                             .setQuery(mQueryText)
                             .build()
                             .call();
+            // If there is no results from the user-centered query,
+            // open a wider next in some "default" location
+            //Log.d(TAG, "Server returns: " + response.getCode());
+            if (response.getCode() == ObaApi.OBA_OK) {
+                ObaRoute[] routes = response.getRoutes();
+                if (routes.length != 0) {
+                    return response;
                 }
-                // I suppose we just return what was there...
-                return response;
+            }
+            GeoPoint center = UIHelp.getDefaultSearchCenter();
+            if (center != null) {
+                return new ObaRoutesForLocationRequest.Builder(getContext(), center)
+                        .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
+                        .setQuery(mQueryText)
+                        .build()
+                        .call();
+            }
+            // I suppose we just return what was there...
+            return response;
 
         }
 
         private ObaStopsForLocationResponse getStops() {
             return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
-                .setQuery(mQueryText)
-                .build()
-                .call();
+                    .setQuery(mQueryText)
+                    .build()
+                    .call();
         }
 
         @Override

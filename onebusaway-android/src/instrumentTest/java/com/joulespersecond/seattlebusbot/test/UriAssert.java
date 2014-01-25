@@ -17,23 +17,26 @@ package com.joulespersecond.seattlebusbot.test;
 
 import com.joulespersecond.oba.request.RequestBase;
 
+import junit.framework.Assert;
+
 import android.net.Uri;
 
 import java.lang.reflect.Field;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 public class UriAssert extends Assert {
 
     /**
      * Check request for matching Uri.
-     * @param expectedUri The Uri the test should expect (query values are ignored, use expectedQuery)
+     *
+     * @param expectedUri   The Uri the test should expect (query values are ignored, use
+     *                      expectedQuery)
      * @param expectedQuery A Map of query key/values required to be in the Uri.
-     *  Use asterisk to require key, but ignore value. Order is irrelevant.
-     *  The list is not exhaustive, extra key/values are ignored.
+     *                      Use asterisk to require key, but ignore value. Order is irrelevant.
+     *                      The list is not exhaustive, extra key/values are ignored.
      */
-    public static void assertUriMatch(Uri expectedUri, Map<String, String> expectedQuery, Uri actualUri) {
+    public static void assertUriMatch(Uri expectedUri, Map<String, String> expectedQuery,
+            Uri actualUri) {
         assertEquals(expectedUri.getHost(), actualUri.getHost());
         assertEquals(expectedUri.getScheme(), actualUri.getScheme());
         assertEquals(expectedUri.getPath(), actualUri.getPath());
@@ -45,9 +48,9 @@ public class UriAssert extends Assert {
                     assertNotNull("URI missing key \"" + entry.getKey() + "\"", actualValue);
                 } else {
                     assertEquals(
-                        "URI mismatch on query key \"" + entry.getKey() + "\"",
-                        expectedValue,
-                        actualValue);
+                            "URI mismatch on query key \"" + entry.getKey() + "\"",
+                            expectedValue,
+                            actualValue);
                 }
             }
         }
@@ -55,12 +58,15 @@ public class UriAssert extends Assert {
 
     /**
      * Check request for matching Uri.
-     * @param expectedUri The Uri the test should expect (query values are ignored, use expectedQuery)
+     *
+     * @param expectedUri   The Uri the test should expect (query values are ignored, use
+     *                      expectedQuery)
      * @param expectedQuery A Map of query key/values required to be in the Uri.
-     *  Use asterisk to require key, but ignore value. Order is irrelevant.
-     *  The list is not exhaustive, extra key/values are ignored.
+     *                      Use asterisk to require key, but ignore value. Order is irrelevant.
+     *                      The list is not exhaustive, extra key/values are ignored.
      */
-    public static void assertUriMatch(Uri expectedUri, Map<String, String> expectedQuery, RequestBase actualRequest) {
+    public static void assertUriMatch(Uri expectedUri, Map<String, String> expectedQuery,
+            RequestBase actualRequest) {
         Uri actualUri;
         try {
             actualUri = getUriFromRequest(actualRequest);
@@ -73,7 +79,9 @@ public class UriAssert extends Assert {
 
     /**
      * Check request for matching Uri.
-     * @param expectedUri The Uri the test should expect (query values are ignored, use expectedQuery)
+     *
+     * @param expectedUri The Uri the test should expect (query values are ignored, use
+     *                    expectedQuery)
      */
     public static void assertUriMatch(Uri expectedUri, RequestBase actualRequest) {
         assertUriMatch(expectedUri, null, actualRequest);
@@ -81,7 +89,9 @@ public class UriAssert extends Assert {
 
     /**
      * Check request for matching Uri.
-     * @param expectedUri The Uri the test should expect (query values are ignored, use expectedQuery)
+     *
+     * @param expectedUri The Uri the test should expect (query values are ignored, use
+     *                    expectedQuery)
      */
     public static void assertUriMatch(String expectedUriString, RequestBase actualRequest) {
         assertUriMatch(Uri.parse(expectedUriString), null, actualRequest);
@@ -89,20 +99,24 @@ public class UriAssert extends Assert {
 
     /**
      * Check request for matching Uri.
-     * @param expectedUri The Uri the test should expect (query values are ignored, use expectedQuery)
+     *
+     * @param expectedUri   The Uri the test should expect (query values are ignored, use
+     *                      expectedQuery)
      * @param expectedQuery A Map of query key/values required to be in the Uri.
-     *  Use asterisk to require key, but ignore value. Order is irrelevant.
-     *  The list is not exhaustive, extra key/values are ignored.
+     *                      Use asterisk to require key, but ignore value. Order is irrelevant.
+     *                      The list is not exhaustive, extra key/values are ignored.
      */
-    public static void assertUriMatch(String expectedUriString, Map<String, String> expectedQuery, RequestBase actualRequest) {
+    public static void assertUriMatch(String expectedUriString, Map<String, String> expectedQuery,
+            RequestBase actualRequest) {
         assertUriMatch(Uri.parse(expectedUriString), expectedQuery, actualRequest);
     }
 
     // read private field of request (if name changes, we'll throw)
-    protected static Uri getUriFromRequest(RequestBase actualRequest) throws NoSuchFieldException, IllegalAccessException {
+    protected static Uri getUriFromRequest(RequestBase actualRequest)
+            throws NoSuchFieldException, IllegalAccessException {
         Field uriField = RequestBase.class.getDeclaredField("mUri");
         uriField.setAccessible(true);
-        Uri actualUri = (Uri)uriField.get(actualRequest);
+        Uri actualUri = (Uri) uriField.get(actualRequest);
         return actualUri;
     }
 

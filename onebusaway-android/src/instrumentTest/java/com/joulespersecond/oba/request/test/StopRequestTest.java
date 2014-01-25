@@ -15,15 +15,15 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.Arrays;
-import java.util.List;
-
-import android.test.MoreAsserts;
-
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopRequest;
 import com.joulespersecond.oba.request.ObaStopResponse;
+
+import android.test.MoreAsserts;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class StopRequestTest extends ObaTestCase {
 

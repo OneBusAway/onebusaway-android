@@ -29,17 +29,17 @@ import java.util.List;
  * and provides an addAll() on non-Honeycomb.
  *
  * @author paulw
- *
- * @param <T>
  */
 public abstract class ArrayAdapter<T> extends android.widget.ArrayAdapter<T> {
+
     private final LayoutInflater mInflater;
+
     private final int mLayoutId;
 
     public ArrayAdapter(Context context, int layout) {
         super(context, layout);
         mLayoutId = layout;
-        mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @TargetApi(11)
@@ -49,7 +49,7 @@ public abstract class ArrayAdapter<T> extends android.widget.ArrayAdapter<T> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 addAll(data);
             } else {
-                for (T info: data) {
+                for (T info : data) {
                     add(info);
                 }
             }

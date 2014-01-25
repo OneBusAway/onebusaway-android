@@ -25,26 +25,36 @@ import android.os.Handler;
  * center or zoom is changed, we have our own watcher for it.
  *
  * @author paulw
- *
  */
 public class MapWatcher {
+
     public interface Listener {
+
         public void onMapCenterChanging();
+
         public void onMapCenterChanged();
+
         public void onMapZoomChanging();
+
         public void onMapZoomChanged();
     }
 
     private static final int WAIT_TIME = 1000;
+
     private static final int POLL_TIME = 250;
 
     private final MapView mMapView;
+
     private final Handler mHandler;
+
     private final Listener mListener;
 
     private GeoPoint mCurrentCenter;
+
     private long mCurrentCenterMillis;
+
     private int mCurrentZoom;
+
     private long mCurrentZoomMillis;
 
     private final Runnable mChecker = new Runnable() {
@@ -63,8 +73,7 @@ public class MapWatcher {
                 mCurrentCenterMillis = now;
                 mListener.onMapCenterChanging();
                 mCurrentCenter = newCenter;
-            }
-            else if (mCurrentCenterMillis != 0 && (now-mCurrentCenterMillis) > WAIT_TIME) {
+            } else if (mCurrentCenterMillis != 0 && (now - mCurrentCenterMillis) > WAIT_TIME) {
                 mListener.onMapCenterChanged();
                 mCurrentCenterMillis = 0;
             }
@@ -72,8 +81,7 @@ public class MapWatcher {
                 mCurrentZoomMillis = now;
                 mListener.onMapZoomChanging();
                 mCurrentZoom = newZoom;
-            }
-            else if (mCurrentZoomMillis != 0 && (now-mCurrentZoomMillis) > WAIT_TIME) {
+            } else if (mCurrentZoomMillis != 0 && (now - mCurrentZoomMillis) > WAIT_TIME) {
                 mListener.onMapZoomChanged();
                 mCurrentZoomMillis = 0;
             }
@@ -95,12 +103,14 @@ public class MapWatcher {
         mCurrentZoom = mMapView.getZoomLevel();
         mHandler.postDelayed(mChecker, POLL_TIME);
     }
+
     /**
      * Stop watching.
      */
     public void stop() {
         mHandler.removeCallbacks(mChecker);
     }
+
     /**
      * Check to see if anything changed now.
      * Fires the listener events if so.

@@ -15,11 +15,12 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import java.util.List;
-
 import com.google.android.maps.GeoPoint;
+
 import com.joulespersecond.oba.request.ObaShapeRequest;
 import com.joulespersecond.oba.request.ObaShapeResponse;
+
+import java.util.List;
 
 public class ShapeRequestTest extends ObaTestCase {
 

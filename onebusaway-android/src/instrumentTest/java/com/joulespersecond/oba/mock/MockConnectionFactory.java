@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.TreeSet;
 
 public class MockConnectionFactory implements ObaConnectionFactory {
+
     private final Context mContext;
 
     public static class UriMap {
+
         private HashMap<String, String> uris;
 
         public String getUri(Uri uri) {
@@ -58,7 +60,7 @@ public class MockConnectionFactory implements ObaConnectionFactory {
 
         private String normalizeUri(Uri uri) {
             Uri.Builder builder = new Uri.Builder()
-                .encodedPath(uri.getEncodedPath());
+                    .encodedPath(uri.getEncodedPath());
             // getQueryParameterNames returns an unmodifiable set.
             // In any case, we need the parameters in sorted order
             TreeSet<String> params = new TreeSet<String>(UriCompat.getQueryParameterNames(uri));
@@ -70,6 +72,7 @@ public class MockConnectionFactory implements ObaConnectionFactory {
             return builder.build().toString();
         }
     }
+
     private final UriMap mUriMap;
 
     public MockConnectionFactory(Context context) {

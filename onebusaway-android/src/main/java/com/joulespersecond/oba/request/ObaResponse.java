@@ -19,12 +19,17 @@ import com.joulespersecond.oba.ObaApi;
 
 /**
  * Base class for response objects.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public class ObaResponse {
+
     private final String version;
+
     private final int code;
+
     private final long currentTime;
+
     private final String text;
 
     protected ObaResponse() {

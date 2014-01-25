@@ -27,7 +27,9 @@ import android.net.Uri;
 public final class CancelNotifyTask implements Runnable {
 
     private final Context mContext;
+
     private final TaskContext mTaskContext;
+
     private final Uri mUri;
 
     public CancelNotifyTask(Context context, TaskContext taskContext, Uri uri) {
@@ -41,7 +43,7 @@ public final class CancelNotifyTask implements Runnable {
         try {
             // Get the notification from the alert ID.
             long alertId = ContentUris.parseId(mUri);
-            mTaskContext.cancelNotification((int)alertId);
+            mTaskContext.cancelNotification((int) alertId);
 
             ContentResolver cr = mContext.getContentResolver();
             ContentValues values = new ContentValues();

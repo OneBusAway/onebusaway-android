@@ -16,6 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 interface MyListConstants {
+
     static final String INSTALL_SHORTCUT = "com.android.launcher.action.INSTALL_SHORTCUT";
 
     static final int CONTEXT_MENU_DEFAULT = 1;

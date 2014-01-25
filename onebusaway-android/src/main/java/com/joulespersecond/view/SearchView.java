@@ -38,11 +38,15 @@ import android.widget.TextView.OnEditorActionListener;
  * @author paulw
  */
 public class SearchView extends LinearLayout {
+
     private OnQueryTextListener mOnQueryChangeListener;
+
     private OnFocusChangeListener mOnQueryTextFocusChangeListener;
 
     private View mSearchButton;
+
     private EditText mQueryTextView;
+
     private CharSequence mQueryHint;
 
     private CharSequence mOldQueryText;
@@ -61,7 +65,6 @@ public class SearchView extends LinearLayout {
          * let the SearchView handle the submission by launching any associated intent.
          *
          * @param query the query text that is to be submitted
-         *
          * @return true if the query has been handled by the listener, false to let the
          * SearchView perform the default action.
          */
@@ -71,7 +74,6 @@ public class SearchView extends LinearLayout {
          * Called when the query text is changed by the user.
          *
          * @param newText the new content of the query text field.
-         *
          * @return false if the SearchView should perform the default action of showing any
          * suggestions if available, true if the action was handled by the listener.
          */
@@ -90,7 +92,7 @@ public class SearchView extends LinearLayout {
         inflater.inflate(R.layout.search_box, this, true);
 
         mSearchButton = findViewById(R.id.search_button);
-        mQueryTextView = (EditText)findViewById(R.id.search_text);
+        mQueryTextView = (EditText) findViewById(R.id.search_text);
 
         mSearchButton.setOnClickListener(mOnClickListener);
         mQueryTextView.setOnClickListener(mOnClickListener);
@@ -115,7 +117,7 @@ public class SearchView extends LinearLayout {
      * Sets a listener for user actions within the SearchView.
      *
      * @param listener the listener object that receives callbacks when the user performs
-     * actions in the SearchView such as clicking on buttons or typing a query.
+     *                 actions in the SearchView such as clicking on buttons or typing a query.
      */
     public void setOnQueryTextListener(OnQueryTextListener listener) {
         mOnQueryChangeListener = listener;
@@ -142,10 +144,10 @@ public class SearchView extends LinearLayout {
     /**
      * Sets a query string in the text field and optionally submits the query as well.
      *
-     * @param query the query string. This replaces any query text already present in the
-     * text field.
+     * @param query  the query string. This replaces any query text already present in the
+     *               text field.
      * @param submit whether to submit the query right now or only update the contents of
-     * text field.
+     *               text field.
      */
     public void setQuery(CharSequence query, boolean submit) {
         mQueryTextView.setText(query);
@@ -165,7 +167,6 @@ public class SearchView extends LinearLayout {
      * in the SearchableInfo.
      *
      * @param hint the hint text to display
-     *
      * @attr ref android.R.styleable#SearchView_queryHint
      */
     public void setQueryHint(CharSequence hint) {
@@ -178,7 +179,8 @@ public class SearchView extends LinearLayout {
      */
     private TextWatcher mTextWatcher = new TextWatcher() {
 
-        public void beforeTextChanged(CharSequence s, int start, int before, int after) { }
+        public void beforeTextChanged(CharSequence s, int start, int before, int after) {
+        }
 
         public void onTextChanged(CharSequence s, int start,
                 int before, int after) {

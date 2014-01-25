@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 final class NavHelp {
+
     //
     // Up mode. This controls whether or not the logo (Up) button
     // goes back or goes home. Activity support is required:

@@ -22,15 +22,21 @@ import com.joulespersecond.oba.elements.ObaStopElement;
 
 /**
  * Response object for ObaStopsForLocation objects.
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaStopsForLocationResponse extends ObaResponseWithRefs {
+
     private static final class Data {
+
         private static final Data EMPTY_OBJECT = new Data();
 
         private final ObaReferencesElement references;
+
         private final ObaStopElement[] list;
+
         private final boolean outOfRange;
+
         private final boolean limitExceeded;
 
         private Data() {
@@ -40,6 +46,7 @@ public final class ObaStopsForLocationResponse extends ObaResponseWithRefs {
             limitExceeded = false;
         }
     }
+
     private final Data data;
 
     private ObaStopsForLocationResponse() {

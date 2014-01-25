@@ -36,16 +36,20 @@ public class TripDetailsRequest extends ObaTestCase {
                 new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID);
         ObaTripDetailsRequest request = builder.build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID + ".json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID
+                        + ".json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 
     public void testKCMTripResponse() throws Exception {
         ObaTripDetailsResponse response =
                 new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
-                    .build()
-                    .call();
+                        .build()
+                        .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 
@@ -63,15 +67,18 @@ public class TripDetailsRequest extends ObaTestCase {
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testNoTripsRequest() {
-        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(),
+                TEST_TRIP_ID)
                 .setIncludeTrip(false)
                 .build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID + ".json",
+                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID
+                        + ".json",
                 new HashMap<String, String>() {{
                     put("includeTrip", "false");
                     put("key", "*");
-                    put("version", "2"); }},
+                    put("version", "2");
+                }},
                 request);
     }
 
@@ -79,9 +86,9 @@ public class TripDetailsRequest extends ObaTestCase {
     public void testNoTripsResponse() throws Exception {
         ObaTripDetailsResponse response =
                 new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
-                    .setIncludeTrip(false)
-                    .build()
-                    .call();
+                        .setIncludeTrip(false)
+                        .build()
+                        .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
         // Make sure the trip exists
@@ -92,24 +99,27 @@ public class TripDetailsRequest extends ObaTestCase {
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testNoScheduleRequest() {
-        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+        ObaTripDetailsRequest request = new ObaTripDetailsRequest.Builder(getContext(),
+                TEST_TRIP_ID)
                 .setIncludeSchedule(false)
                 .build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID + ".json",
+                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID
+                        + ".json",
                 new HashMap<String, String>() {{
                     put("includeSchedule", "false");
                     put("key", "*");
-                    put("version", "2"); }},
+                    put("version", "2");
+                }},
                 request);
     }
 
     public void testNoScheduleResponse() throws Exception {
         ObaTripDetailsResponse response =
                 new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
-                    .setIncludeSchedule(false)
-                    .build()
-                    .call();
+                        .setIncludeSchedule(false)
+                        .build()
+                        .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 
@@ -121,24 +131,26 @@ public class TripDetailsRequest extends ObaTestCase {
     // Currently mixes Tampa URL with KCM data
     public void testNoStatusRequest() {
         ObaTripDetailsRequest request =
-            new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
-                .setIncludeStatus(false)
-                .build();
+                new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
+                        .setIncludeStatus(false)
+                        .build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID + ".json",
+                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID
+                        + ".json",
                 new HashMap<String, String>() {{
                     put("includeStatus", "false");
                     put("key", "*");
-                    put("version", "2"); }},
+                    put("version", "2");
+                }},
                 request);
     }
 
     public void testNoStatus() throws Exception {
         ObaTripDetailsResponse response =
                 new ObaTripDetailsRequest.Builder(getContext(), TEST_TRIP_ID)
-                    .setIncludeStatus(false)
-                    .build()
-                    .call();
+                        .setIncludeStatus(false)
+                        .build()
+                        .call();
         assertOK(response);
         assertEquals(TEST_TRIP_ID, response.getId());
 
@@ -153,8 +165,12 @@ public class TripDetailsRequest extends ObaTestCase {
         ObaTripDetailsRequest request =
                 ObaTripDetailsRequest.newRequest(getContext(), TEST_TRIP_ID);
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID + ".json",
-                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
+                "http://api.tampa.onebusaway.org/api/api/where/trip-details/" + TEST_TRIP_ID
+                        + ".json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
                 request);
     }
 }

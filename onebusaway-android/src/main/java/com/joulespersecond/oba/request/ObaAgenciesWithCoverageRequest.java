@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 /**
  * List all supported agencies along with the center of their coverage area.
  * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_AgenciesWithCoverage}
+ *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
 public final class ObaAgenciesWithCoverageRequest extends RequestBase implements
@@ -33,6 +34,7 @@ public final class ObaAgenciesWithCoverageRequest extends RequestBase implements
     }
 
     public static class Builder extends RequestBase.BuilderBase {
+
         public Builder(Context context) {
             super(context, BASE_PATH + "/agencies-with-coverage.json");
         }
@@ -44,6 +46,7 @@ public final class ObaAgenciesWithCoverageRequest extends RequestBase implements
 
     /**
      * Helper method for constructing new instances.
+     *
      * @param context The package context.
      * @return The new request instance.
      */

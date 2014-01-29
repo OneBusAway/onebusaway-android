@@ -130,8 +130,7 @@
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
     </plurals>
-    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.
-    </string>
+    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.</string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
         <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->

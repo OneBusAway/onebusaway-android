@@ -94,31 +94,23 @@
     <string name="stop_info_ontime">On time</string>
     <plurals name="stop_info_arrive_delayed">
         <item quantity="one">1 minute delay</item>
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            minutes delay
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes delay</item>
     </plurals>
     <plurals name="stop_info_arrive_early">
         <item quantity="one">1 minute early</item>
-        <item quantity="other">
-            <xliff:g id="count">%d</xliff:g>
-            minutes early
-        </item>
+        <!-- Below element should remain on same line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes early</item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
         <item quantity="one">Departed 1 minute late</item>
-        <item quantity="other">Departed
-            <xliff:g id="count">%d</xliff:g>
-            minutes late
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes late</item>
     </plurals>
     <plurals name="stop_info_depart_early">
         <item quantity="one">Departed 1 minute early</item>
-        <item quantity="other">Departed
-            <xliff:g id="count">%d</xliff:g>
-            minutes early
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes early</item>
     </plurals>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
@@ -135,20 +127,15 @@
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
     <plurals name="stop_info_nodata_hours_minutes">
         <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
-        <item quantity="other">No arrivals in the next
-            <xliff:g id="count">%2$d</xliff:g>
-            hours and %1$d minutes.
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
     </plurals>
-    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d
-        minutes.
+    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.
     </string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
         <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
-        <item quantity="other">No additional arrivals in the next
-            <xliff:g id="count">%2$d</xliff:g>
-            hours and %1$d minutes.
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
@@ -267,10 +254,8 @@
     <!-- Region list -->
     <plurals name="region_distance">
         <item quantity="one">1 mile away</item>
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            miles away
-        </item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>

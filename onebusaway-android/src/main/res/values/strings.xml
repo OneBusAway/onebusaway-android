@@ -75,8 +75,8 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">Added the ability to check for arrivals longer than 30 minutes
-        away.
+    <string name="main_help_whatsnew">Bug fixes!\n\nAdded the ability to check for arrivals longer
+        than 30 minutes away.
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>

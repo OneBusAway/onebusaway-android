@@ -266,7 +266,7 @@
     <string name="region_region_found">Found %1$s region</string>
 
     <!--  Bug report -->
-    <string name="bug_report_subject">OneBusAway: Feedback</string>
+    <string name="bug_report_subject">OneBusAway Android: Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
     </string>

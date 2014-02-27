@@ -16,7 +16,7 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 
 ### Prerequisites for both Android Studio and Gradle
 
-1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html).  Make sure to install the Google APIs for your API level (e.g., 17), and the Android Support Repository and Google Repository.
+1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html).  Make sure to install the Google APIs for your API level (e.g., 17), the Android SDK Build-tools version for your `buildToolsVersion` version, and the Android Support Repository and Google Repository.
 2. Set the "ANDROID_HOME" environmental variable to your Android SDK location.
 3. Set the "JAVA_HOME" environmental variables to point to your JDK folder (e.g., "C:\Program Files\Java\jdk1.6.0_27")
 
@@ -24,8 +24,8 @@ It's available on the Play Store: https://play.google.com/store/apps/details?id=
 
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 2. In Android Studio, choose "Import Project" at the welcome screen.
-3. Browse to the location of the project, and double-click on the **"settings.gradle"** file in the root (**NOT** the project directory).
-4. Check "Use auto-import", and select "Use default gradle wrapper (recommended)".  Click "Ok".
+3. Browse to the location of the project, and double-click on the project directory.
+4. If prompted with options, check "Use auto-import", and select "Use default gradle wrapper (recommended)".  Click "Ok".
 5. Click the green play button (or 'Shift->F10') to run the project!
 
 ### Building from the command line using Gradle
@@ -58,7 +58,7 @@ We welcome contributions to the project!  Please see our [Contributing Guide](ht
 
 ### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."
 
-When importing, please be sure to select the "settings.gradle" file in the root, **NOT** the project directory.
+If you're using Android Studio v0.4.2 or lower, when importing, please be sure to select the "settings.gradle" file in the root, **NOT** the project directory.
 You will get the above error if you select the project directory / name of the project.
 
 ### I get build errors for the Android Support libraries or Google APIs

@@ -32,7 +32,7 @@ public class AgenciesActivity extends SherlockFragmentActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            NavHelp.goHome(this);
+            // NavHelp.goHome(this);
             return true;
         }
         return false;

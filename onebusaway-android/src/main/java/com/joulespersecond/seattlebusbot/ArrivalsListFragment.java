@@ -339,10 +339,10 @@ public class ArrivalsListFragment extends ListFragment
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
             if (mStop != null) {
-                HomeActivity.start(getActivity(),
-                        mStop.getId(),
-                        mStop.getLatitude(),
-                        mStop.getLongitude());
+//                HomeActivity.start(getActivity(),
+//                        mStop.getId(),
+//                        mStop.getLatitude(),
+//                        mStop.getLongitude());
             }
             return true;
         } else if (id == R.id.refresh) {

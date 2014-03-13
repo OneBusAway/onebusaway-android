@@ -127,7 +127,7 @@ public class RouteInfoListFragment extends ListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
-            HomeActivity.start(getActivity(), mRouteId);
+            // HomeActivity.start(getActivity(), mRouteId);
             return true;
         } else if (id == R.id.goto_url) {
             UIHelp.goToUrl(getActivity(), mRouteInfo.getUrl());
@@ -210,7 +210,7 @@ public class RouteInfoListFragment extends ListFragment {
         if (stop == null) {
             return;
         }
-        HomeActivity.start(getActivity(), stopId, stop.getLatitude(), stop.getLongitude());
+        // HomeActivity.start(getActivity(), stopId, stop.getLatitude(), stop.getLongitude());
     }
 
     //

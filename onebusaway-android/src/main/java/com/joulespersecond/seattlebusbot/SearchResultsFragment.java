@@ -153,7 +153,7 @@ public class SearchResultsFragment extends ListFragment
                         break;
                     case 1:
                         // Show on map
-                        HomeActivity.start(getActivity(), routeId);
+                        // HomeActivity.start(getActivity(), routeId);
                         break;
                 }
             }
@@ -174,10 +174,10 @@ public class SearchResultsFragment extends ListFragment
                         ArrivalsListActivity.start(getActivity(), stop);
                         break;
                     case 1:
-                        HomeActivity.start(getActivity(),
-                                stop.getId(),
-                                stop.getLatitude(),
-                                stop.getLongitude());
+                        // HomeActivity.start(getActivity(),
+//                                stop.getId(),
+//                                stop.getLatitude(),
+//                                stop.getLongitude());
                         break;
                 }
             }

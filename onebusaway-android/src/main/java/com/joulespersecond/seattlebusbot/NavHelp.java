@@ -21,13 +21,13 @@ final class NavHelp {
         if (UP_MODE_BACK.equals(mode)) {
             activity.finish();
         } else {
-            goHome(activity);
+            // goHome(activity);
         }
     }
 
-    public static void goHome(Context context) {
-        Intent intent = new Intent(context, HomeActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        context.startActivity(intent);
-    }
+//    public static void goHome(Context context) {
+//        Intent intent = new Intent(context, HomeActivity.class);
+//        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        context.startActivity(intent);
+//    }
 }

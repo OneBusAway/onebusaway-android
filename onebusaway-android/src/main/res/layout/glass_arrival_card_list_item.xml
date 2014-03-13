@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" android:id="@+id/row1">
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5"
+            android:id="@+id/route" android:layout_gravity="left" android:enabled="true"
+            android:layout_alignParentLeft="true"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" - "
+            android:id="@+id/txtHyphen" android:layout_toRightOf="@+id/txtRouteId"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="N. to University Area TC"
+            android:id="@+id/destination" android:layout_gravity="right" android:enabled="true"
+            android:layout_toRightOf="@+id/txtHyphen"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="in 5 min"
+            android:id="@+id/eta" android:gravity="right"
+            android:layout_alignParentRight="true"/>
+</RelativeLayout>

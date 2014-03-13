@@ -103,8 +103,8 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
                         info.id);
                 return true;
             case CONTEXT_MENU_SHOW_ON_MAP:
-                HomeActivity.start(getActivity(),
-                        QueryUtils.RouteList.getId(getListView(), info.position));
+//                HomeActivity.start(getActivity(),
+//                        QueryUtils.RouteList.getId(getListView(), info.position));
                 return true;
             case CONTEXT_MENU_SHOW_URL:
                 UIHelp.goToUrl(getActivity(),

@@ -116,7 +116,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "User entered blank API URL, re-initializing regions...");
                 }
-                NavHelp.goHome(this);
+                // NavHelp.goHome(this);
             }
         }
         return true;
@@ -135,7 +135,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 Log.d(TAG,
                         "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
             }
-            NavHelp.goHome(this);
+            // NavHelp.goHome(this);
         }
         super.onDestroy();
     }
@@ -190,7 +190,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
             changePreferenceSummary(getString(R.string.preference_key_region));
 
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
-            NavHelp.goHome(this);
+            // NavHelp.goHome(this);
         }
     }
 }

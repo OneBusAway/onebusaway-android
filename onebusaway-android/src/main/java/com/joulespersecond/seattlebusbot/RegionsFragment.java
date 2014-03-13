@@ -89,7 +89,7 @@ public class RegionsFragment extends ListFragment
             Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
         }
 
-        NavHelp.goHome(getActivity());
+        // NavHelp.goHome(getActivity());
     }
 
     @Override

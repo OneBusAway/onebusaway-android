@@ -91,4 +91,27 @@
         <item>The bus doesn\'t stop here</item>
         <item>Something else</item>
     </string-array>
+
+    <!-- Glass -->
+    <string name="spoken_heading_format">%1$d degrees %2$s</string>
+    <string name="spoken_heading_format_one">%1$d degree %2$s</string>
+    <string name="place_text_format">%1$s (%2$s km)</string>
+    <string-array name="spoken_directions">
+        <item>north</item>
+        <item>north north east</item>
+        <item>north east</item>
+        <item>east north east</item>
+        <item>east</item>
+        <item>east south east</item>
+        <item>south east</item>
+        <item>south south east</item>
+        <item>south</item>
+        <item>south south west</item>
+        <item>south west</item>
+        <item>west south west</item>
+        <item>west</item>
+        <item>west north west</item>
+        <item>north west</item>
+        <item>north north west</item>
+    </string-array>
 </resources>

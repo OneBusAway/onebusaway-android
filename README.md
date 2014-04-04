@@ -1,4 +1,4 @@
-# OneBusAway for Android
+# OneBusAway for Android [![Build Status](https://travis-ci.org/OneBusAway/onebusaway-android.svg?branch=master)](https://travis-ci.org/OneBusAway/onebusaway-android)
 
 This is the official Android app for OneBusAway!
 

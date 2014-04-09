@@ -16,16 +16,10 @@
 package com.joulespersecond.seattlebusbot;
 
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.ArrayAdapter;
-import com.joulespersecond.seattlebusbot.ArrivalInfo;
-import com.joulespersecond.seattlebusbot.MyTextUtils;
-import com.joulespersecond.seattlebusbot.R;
 
 import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
-import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -68,14 +62,16 @@ public class GlassArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         final Context context = getContext();
 
         route.setText(arrivalInfo.getShortName());
-        destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
+
+        destination
+                .setText(MyTextUtils.toTitleCase(abbreviateDirections(arrivalInfo.getHeadsign())));
 //        status.setText(stopInfo.getStatusText());
 
         long eta = stopInfo.getEta();
         if (eta == 0) {
             etaView.setText(R.string.stop_info_eta_now);
         } else {
-            etaView.setText(String.valueOf(eta));
+            etaView.setText(expandEta(eta));
         }
 
         int color = context.getResources().getColor(stopInfo.getColor());
@@ -92,20 +88,42 @@ public class GlassArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         if (mTripsForStop != null) {
             values = mTripsForStop.getValues(arrivalInfo.getTripId());
         }
-        if (values != null) {
-            String tripName = values.getAsString(ObaContract.Trips.NAME);
+//        if (values != null) {
+//            String tripName = values.getAsString(ObaContract.Trips.NAME);
+//
+//            TextView tripInfo = (TextView) view.findViewById(R.id.trip_info);
+//            if (tripName.length() == 0) {
+//                tripName = context.getString(R.string.trip_info_noname);
+//            }
+//            tripInfo.setText(tripName);
+//            tripInfo.setVisibility(View.VISIBLE);
+//        } else {
+//            // Explicitly set this to invisible because we might be reusing
+//            // this view.
+//            View tripInfo = view.findViewById(R.id.trip_info);
+//            tripInfo.setVisibility(View.GONE);
+//        }
+    }
 
-            TextView tripInfo = (TextView) view.findViewById(R.id.trip_info);
-            if (tripName.length() == 0) {
-                tripName = context.getString(R.string.trip_info_noname);
-            }
-            tripInfo.setText(tripName);
-            tripInfo.setVisibility(View.VISIBLE);
-        } else {
-            // Explicitly set this to invisible because we might be reusing
-            // this view.
-            View tripInfo = view.findViewById(R.id.trip_info);
-            tripInfo.setVisibility(View.GONE);
-        }
+    /**
+     * Abbreviates the full direction words to a single letter (e.g., "North" to "N.") within a
+     * string, and returns
+     * a string will all included directions abbreviated
+     *
+     * @return a string will all included directions abbreviated
+     */
+    private String abbreviateDirections(String input) {
+        return input.replaceAll("North", "N.").replaceAll("South", "S.").replaceAll("East", "E.")
+                .replaceAll("West", "W.");
+    }
+
+    /**
+     * Adds "in X min" to the ETA (which is just a number)
+     *
+     * @param eta numeric ETA (e.g., 5)
+     * @return text representation of ETA ("in 5 min")
+     */
+    private String expandEta(long eta) {
+        return "in " + String.valueOf(eta) + " min";
     }
 }

@@ -19,34 +19,51 @@ package com.joulespersecond.oba.glass;
 import com.google.android.glass.timeline.LiveCard;
 import com.google.android.glass.timeline.TimelineManager;
 
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.GlassArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.widget.RemoteViews;
+
+import java.util.Date;
 
 /**
  * The main application service that manages the lifetime of the compass live card and the objects
  * that help out with orientation tracking and landmarks.
  */
-public class ObaGlassService extends Service implements ObaRegionsTask.Callback {
+public class ObaGlassService extends Service
+        implements ObaRegionsTask.Callback, ObaStopsForLocationTask.Callback {
 
     private static final String LIVE_CARD_ID = "onebusaway";
+
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
+    //One week, in milliseconds
+
+    private static final String TAG = "ObaGlassService";
 
     /**
      * A binder that gives other components access to the speech capabilities provided by the
      * service.
      */
     public class GlassBinder extends Binder {
+
         /**
          * Read the current heading aloud using the text-to-speech engine.
          */
@@ -75,6 +92,7 @@ public class ObaGlassService extends Service implements ObaRegionsTask.Callback 
     private TextToSpeech mSpeech;
 
     private TimelineManager mTimelineManager;
+
     private LiveCard mLiveCard;
 
     @Override
@@ -111,7 +129,35 @@ public class ObaGlassService extends Service implements ObaRegionsTask.Callback 
     public int onStartCommand(Intent intent, int flags, int startId) {
         publishCard(this);
 
-        new ObaRegionsTask(this, this, true, false).execute();
+        boolean forceReload = false;
+        boolean showProgressDialog = true;
+
+        SharedPreferences settings = Application.getPrefs();
+
+        //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh,
+        //force contacting the server again
+        if (Application.get().getCurrentRegion() == null ||
+                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true)
+                        &&
+                        new Date().getTime() - Application.get().getLastRegionUpdateDate()
+                                > REGION_UPDATE_THRESHOLD)
+                ) {
+            forceReload = true;
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG,
+                        "Region info has expired (or does not exist), forcing a reload from the server...");
+            }
+        }
+
+        if (Application.get().getCurrentRegion() != null) {
+            //We already have region info locally, so just check current region status quietly in the background
+            showProgressDialog = false;
+        }
+
+        //Check region status, possibly forcing a reload from server and checking proximity to current region
+        //Normal progress dialog doesn't work, so hard-code false as last argument
+        ObaRegionsTask task = new ObaRegionsTask(this, this, true, false);
+        task.execute();
 
         return START_STICKY;
     }
@@ -153,11 +199,31 @@ public class ObaGlassService extends Service implements ObaRegionsTask.Callback 
         }
     }
 
+    /*
+     * Callbacks
+     */
+
+    // For Oba Regions Task
     @Override
     public void onTaskFinished(boolean currentRegionChanged) {
+        Log.d(TAG, "Got regions, now looking for stops...");
         // Find the closest stops
+        new ObaStopsForLocationTask(this, this).execute();
+    }
 
-        // Initial load of initial stop info
+    // For StopsForLocation Request
+    @Override
+    public void onTaskFinished(ObaStopsForLocationResponse response) {
+        Log.d(TAG, "Found stops.");
+        // Find closest stop
+        ObaStop closestStop = UIHelp.getClosestStop(this, response.getStops());
+
+        if (closestStop != null) {
+            Log.d(TAG, "Closest stop is: " + closestStop.getName());
+            GlassArrivalsListActivity.start(this, closestStop);
+        } else {
+            Log.d(TAG, "No stops returned");
+        }
 
         // Show stop info on screen
         //mLiveCard.setViews()

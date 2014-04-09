@@ -20,19 +20,17 @@
 
     <!-- <include layout="@layout/arrivals_list_header"/> -->
 
-    <include layout="@layout/loading"/>
+    <!-- <include layout="@layout/loading"/> -->
 
     <FrameLayout
             android:id="@+id/listContainer"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
         <ListView android:id="@id/android:list"
-                  style="@style/HeaderList"
                   android:layout_width="fill_parent"
                   android:layout_height="fill_parent"/>
 
         <TextView android:id="@+id/internalEmpty"
-                  style="@style/ListHintText"
                   android:layout_width="fill_parent"
                   android:layout_height="wrap_content"/>
     </FrameLayout>

@@ -10,11 +10,13 @@
             android:layout_height="fill_parent"
             android:id="@+id/row1">
 
-    <TextView
+        <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Please wait..."
-                android:id="@+id/pleaseWait" android:layout_gravity="left" android:enabled="true"
+                android:text="@string/region_detecting_server"
+                android:id="@+id/pleaseWait"
+                android:layout_gravity="left"
+                android:enabled="true"
                 android:layout_centerInParent="true"/>
 
     </RelativeLayout>

@@ -25,6 +25,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.region.RegionUtils;
 
@@ -434,5 +435,33 @@ public final class UIHelp {
                                 minutes % 60, minutes / 60);
             }
         }
+    }
+
+    /**
+     * Returns the ObaStop closest to the user's real-time location
+     *
+     * @return the ObaStop closest to the user's real-time location, or null if stops is an empty
+     * list
+     */
+    public static ObaStop getClosestStop(Context context, ObaStop[] stops) {
+        Location myLoc = getLocation2(context);
+        Location stop = new Location("temp");
+        ObaStop closestStop = null;
+
+        float minDist = Float.MAX_VALUE;
+        float dist;
+
+        for (int i = 0; i < stops.length; i++) {
+            stop.setLatitude(stops[i].getLatitude());
+            stop.setLongitude(stops[i].getLongitude());
+            dist = myLoc.distanceTo(stop);
+
+            if (dist < minDist) {
+                minDist = dist;
+                closestStop = stops[i];
+            }
+        }
+
+        return closestStop;
     }
 }

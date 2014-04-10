@@ -264,7 +264,7 @@ public class RegionUtils {
             return false;
         }
         if (region.getExperimental() && !Application.getPrefs().getBoolean(
-                Application.get().getString(R.string.preference_key_experimental_regions), false)) {
+                Application.get().getString(R.string.preference_key_experimental_regions), true)) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Region '" + region.getName()
                         + "' is experimental and user hasn't opted in.");

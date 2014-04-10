@@ -45,7 +45,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
 
     private boolean mCurrentValue;
 
-    private final boolean DEFAULT_VALUE = false;
+    private final boolean DEFAULT_VALUE = true;
 
     //
     // Needed constructors.

@@ -106,7 +106,7 @@ public class GlassArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
     }
 
     /**
-     * Abbreviates the full direction words to a single letter (e.g., "North" to "N.") within a
+     * Abbreviates direction words to a shorter version (e.g., "North" to "N.") within a
      * string, and returns
      * a string will all included directions abbreviated
      *
@@ -114,7 +114,7 @@ public class GlassArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
      */
     private String abbreviateDirections(String input) {
         return input.replaceAll("North", "N.").replaceAll("South", "S.").replaceAll("East", "E.")
-                .replaceAll("West", "W.");
+                .replaceAll("West", "W.").replaceAll("Downtown", "DWTN.");
     }
 
     /**
@@ -124,6 +124,6 @@ public class GlassArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
      * @return text representation of ETA ("in 5 min")
      */
     private String expandEta(long eta) {
-        return "in " + String.valueOf(eta) + " min";
+        return String.valueOf(eta) + " min";
     }
 }

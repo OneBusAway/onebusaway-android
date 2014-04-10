@@ -38,6 +38,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -225,6 +226,9 @@ public class GlassArrivalsListActivity extends ListActivity
         }
 
         setResponseData(info, situations);
+
+        TextView stopName = (TextView) findViewById(R.id.stop_name_footer);
+        stopName.setText(mStop.getName());
 
         // The list should now be shown.
 //        if (isResumed()) {

@@ -86,6 +86,11 @@ public class ObaStopsForLocationTask extends AsyncTask<Void, Integer, ObaStopsFo
     @Override
     protected ObaStopsForLocationResponse doInBackground(Void... params) {
         return new ObaGlassStopsForLocationRequest.Builder(mContext, UIHelp.getLocation2(mContext))
+                // Temp hard coded location of transit center for testing multiple stops with layouts
+//        Location loc = new Location("temp");
+//        loc.setLatitude(28.066380);
+//        loc.setLongitude(-82.429886);
+//        return new ObaGlassStopsForLocationRequest.Builder(mContext, loc)
                 .build()
                 .call();
     }

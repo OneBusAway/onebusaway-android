@@ -58,6 +58,10 @@ public class ObaGlassService extends Service
 
     private static final String TAG = "ObaGlassService";
 
+    ObaRegionsTask mObaRegionsTask;
+
+    ObaStopsForLocationTask mObaStopsForLocationTask;
+
     /**
      * A binder that gives other components access to the speech capabilities provided by the
      * service.
@@ -152,12 +156,16 @@ public class ObaGlassService extends Service
         if (Application.get().getCurrentRegion() != null) {
             //We already have region info locally, so just check current region status quietly in the background
             showProgressDialog = false;
+
+            //Get stop information
+            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this);
+            mObaStopsForLocationTask.execute();
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
         //Normal progress dialog doesn't work, so hard-code false as last argument
-        ObaRegionsTask task = new ObaRegionsTask(this, this, true, false);
-        task.execute();
+        mObaRegionsTask = new ObaRegionsTask(this, this, true, false);
+        mObaRegionsTask.execute();
 
         return START_STICKY;
     }
@@ -207,8 +215,17 @@ public class ObaGlassService extends Service
     @Override
     public void onTaskFinished(boolean currentRegionChanged) {
         Log.d(TAG, "Got regions, now looking for stops...");
-        // Find the closest stops
-        new ObaStopsForLocationTask(this, this).execute();
+        if (currentRegionChanged) {
+            // The current region has changed since last startup, so abort any existing stop
+            // request in progress (which would be using the previous region API) and start a new one
+            if (mObaStopsForLocationTask != null) {
+                mObaStopsForLocationTask.cancel(true);
+            }
+
+            // Find the closest stops
+            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this);
+            mObaStopsForLocationTask.execute();
+        }
     }
 
     // For StopsForLocation Request

@@ -445,6 +445,11 @@ public final class UIHelp {
      */
     public static ObaStop getClosestStop(Context context, ObaStop[] stops) {
         Location myLoc = getLocation2(context);
+        // Temp UATC location for testing multiple stops with layouts
+//        Location myLoc = new Location("temp");
+//        myLoc.setLatitude(28.066380);
+//        myLoc.setLongitude(-82.429886);
+
         Location stop = new Location("temp");
         ObaStop closestStop = null;
 

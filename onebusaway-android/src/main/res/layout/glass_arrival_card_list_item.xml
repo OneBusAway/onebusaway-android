@@ -5,14 +5,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:id="@+id/row1"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp">
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
-    <TextView
+<TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="5"
-            android:textSize="25dp"
             android:textStyle="bold"
             android:id="@+id/route" android:layout_gravity="left" android:enabled="true"
             android:layout_centerVertical="true"/>
@@ -36,7 +35,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="in 5 min"
-            android:textSize="25dp"
             android:textStyle="bold"
             android:layout_centerVertical="true"
             android:id="@+id/eta" android:gravity="right"

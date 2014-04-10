@@ -13,25 +13,44 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:paddingTop="10dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp">
 
-    <!-- <include layout="@layout/arrivals_list_header"/> -->
-
-    <!-- <include layout="@layout/loading"/> -->
-
-    <FrameLayout
-            android:id="@+id/listContainer"
+    <RelativeLayout
+            android:id="@+id/glass_list_footer"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-        <ListView android:id="@id/android:list"
-                  android:layout_width="fill_parent"
-                  android:layout_height="fill_parent"/>
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="2dp"
+            android:layout_alignParentBottom="true">
 
-        <TextView android:id="@+id/internalEmpty"
-                  android:layout_width="fill_parent"
-                  android:layout_height="wrap_content"/>
-    </FrameLayout>
-</LinearLayout>
+        <ImageView
+                android:id="@+id/bus_icon_footer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingRight="15dp"
+                android:src="@drawable/ic_bus"/>
+
+        <TextView
+                android:id="@+id/stop_name_footer"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@id/bus_icon_footer"/>
+    </RelativeLayout>
+
+    <ListView
+            android:id="@id/android:list"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/glass_list_footer"
+            android:layout_alignParentTop="true"/>
+</RelativeLayout>

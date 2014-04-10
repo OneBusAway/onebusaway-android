@@ -73,8 +73,11 @@
         <activity
                 android:name=".GlassArrivalsListActivity"
                 android:launchMode="singleTop"
-                android:theme="@android:style/Theme.DeviceDefault">
-            <intent-filter>
+                android:icon="@drawable/ic_launcher_glass"
+                android:label="@string/app_name"
+                android:theme="@android:style/Theme.DeviceDefault"
+                android:immersive="true">
+        <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="OverlayText">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:shadowColor">@android:color/black</item>
+
+    </style>
+    <!-- <item name="android:shadowDx">1.0</item>
+            <item name="android:shadowDy">1.0</item>
+            <item name="android:shadowRadius">1.0</item> -->
+    <style name="LargeOverlayText" parent="@style/OverlayText">
+        <item name="android:textSize">@dimen/large_text_size</item>
+    </style>
+
+    <style name="MediumOverlayText" parent="@style/OverlayText">
+        <item name="android:textSize">@dimen/medium_text_size</item>
+    </style>
+
+    <style name="SmallOverlayText" parent="@style/OverlayText">
+        <item name="android:textSize">@dimen/small_text_size</item>
+    </style>
+
+    <style name="ContextualDialog">
+        <item name="android:windowEnterAnimation">@anim/show_contextual</item>
+        <item name="android:windowExitAnimation">@anim/hide_contextual</item>
+    </style>
+
+    <style name="ContextualDialogTheme">
+        <item name="android:backgroundDimAmount">@dimen/background_dim_amount</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@style/ContextualDialog</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:colorBackgroundCacheHint">@android:color/transparent</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
+
+    <style name="ContextualDialogTheme.NoAnimation" parent="@style/ContextualDialogTheme">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
+</resources>

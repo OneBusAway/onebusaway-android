@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="slider_bar_height">12.0px</dimen>
+    <dimen name="large_text_size">70.0px</dimen>
+    <dimen name="medium_text_size">40.0px</dimen>
+    <dimen name="small_text_size">26.0px</dimen>
+    <item type="dimen" name="background_dim_amount">0.8</item>
+
+</resources>

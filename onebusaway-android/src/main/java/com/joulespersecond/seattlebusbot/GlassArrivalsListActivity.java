@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.glass.widget.SliderView;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
@@ -37,6 +39,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -87,6 +90,8 @@ public class GlassArrivalsListActivity extends ListActivity
     private boolean mFavorite = false;
 
     private String mStopUserName;
+
+    private SliderView mIndeterm;
 
     public static class Builder {
 
@@ -153,6 +158,18 @@ public class GlassArrivalsListActivity extends ListActivity
 
         setContentView(R.layout.glass_arrival_card_list);
 
+        // Setup progress bar shown while we're loading the list
+        mEmptyList = getLayoutInflater().inflate(R.layout.glass_arrivals_list_empty, null);
+        ((ViewGroup) getListView().getParent()).addView(mEmptyList);
+
+        /* Following line causes the ListView to lose focus on Glass,
+           and we can't scroll after that (or seem to regain focus)
+           So, we manually turn the progress bar on and off instead
+        getListView().setEmptyView(mEmptyList);
+        */
+        mIndeterm = (SliderView) mEmptyList.findViewById(R.id.indeterm_slider);
+        mIndeterm.startIndeterminate();
+
         // This sets the stopId and uri
         setStopId();
         //setUserInfo();
@@ -179,8 +196,6 @@ public class GlassArrivalsListActivity extends ListActivity
                 UIHelp.getNoArrivalsMessage(this, getArrivalsLoader().getMinutesAfter(),
                         false)
         );
-
-
     }
 
     @Override
@@ -195,7 +210,8 @@ public class GlassArrivalsListActivity extends ListActivity
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
-        //UIHelp.showProgress(this, false);
+//        UIHelp.showProgress(this, false);
+        mEmptyList.setVisibility(View.GONE);
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;

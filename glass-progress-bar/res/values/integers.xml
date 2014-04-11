@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="activity_animation_duration_ms">200</integer>
+    <integer name="infos_error_duration_ms">3000</integer>
+    <integer name="infos_success_duration_ms">1000</integer>
+    <integer name="horizontal_scroll_deferred_load_animation_duration_ms">200</integer>
+    <integer name="horizontal_scroll_deferred_sizing_animation_duration_ms">50</integer>
+    <integer name="sys_storage_threshold_percentage">5</integer>
+    <integer name="sys_storage_threshold_bytes">209715200</integer>
+</resources>

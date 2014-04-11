@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Binder;
 import android.os.IBinder;
@@ -157,9 +158,15 @@ public class ObaGlassService extends Service
             //We already have region info locally, so just check current region status quietly in the background
             showProgressDialog = false;
 
-            //Get stop information
-            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this);
-            mObaStopsForLocationTask.execute();
+            Location myLoc = getMyLocation();
+            if (myLoc != null) {
+                // Find the closest stops
+                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
+                mObaStopsForLocationTask.execute();
+            } else {
+                //TODO - listen to location updates, and then try again when we have a location
+                Log.e(TAG, "Couldn't get users location to find nearby stops");
+            }
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
@@ -222,9 +229,16 @@ public class ObaGlassService extends Service
                 mObaStopsForLocationTask.cancel(true);
             }
 
-            // Find the closest stops
-            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this);
-            mObaStopsForLocationTask.execute();
+            Location myLoc = getMyLocation();
+            if (myLoc != null) {
+                // Find the closest stops
+                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
+                mObaStopsForLocationTask.execute();
+            } else {
+                //TODO - listen to location updates, and then try again when we have a location
+                Log.e(TAG, "Couldn't get users location to find nearby stops");
+                return;
+            }
         }
     }
 
@@ -233,13 +247,22 @@ public class ObaGlassService extends Service
     public void onTaskFinished(ObaStopsForLocationResponse response) {
         Log.d(TAG, "Found stops.");
         // Find closest stop
-        ObaStop closestStop = UIHelp.getClosestStop(this, response.getStops());
+
+        Location myLoc = getMyLocation();
+        ObaStop closestStop = null;
+        if (myLoc != null) {
+            closestStop = UIHelp.getClosestStop(this, response.getStops(), myLoc);
+        } else {
+            //TODO - listen to location updates, and then try again when we have a location
+            Log.e(TAG, "Couldn't get users location to find closest stop");
+            return;
+        }
 
         if (closestStop != null) {
             Log.d(TAG, "Closest stop is: " + closestStop.getName());
             GlassArrivalsListActivity.start(this, closestStop);
         } else {
-            Log.d(TAG, "No stops returned");
+            Log.e(TAG, "No stops returned");
         }
 
         // Show stop info on screen
@@ -247,5 +270,14 @@ public class ObaGlassService extends Service
 
         // Set up options menu showing next 5 closest stops, ordered by distance
 
+    }
+
+    private Location getMyLocation() {
+        return UIHelp.getLocation2(this);
+        // Temp UATC location for testing multiple stops with layouts
+//        Location fakeLoc = new Location("temp");
+//        fakeLoc.setLatitude(28.066380);
+//        fakeLoc.setLongitude(-82.429886);
+//        return fakeLoc;
     }
 }

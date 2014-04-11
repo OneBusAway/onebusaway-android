@@ -439,17 +439,13 @@ public final class UIHelp {
 
     /**
      * Returns the ObaStop closest to the user's real-time location
-     *
-     * @return the ObaStop closest to the user's real-time location, or null if stops is an empty
-     * list
+     * @param context
+     * @param stops list of stops to check distance to
+     * @param location location compared against location of given stops
+     * @return the ObaStop closest to the given location, or null if stops is an empty
+     * list or location is null
      */
-    public static ObaStop getClosestStop(Context context, ObaStop[] stops) {
-        Location myLoc = getLocation2(context);
-        // Temp UATC location for testing multiple stops with layouts
-//        Location myLoc = new Location("temp");
-//        myLoc.setLatitude(28.066380);
-//        myLoc.setLongitude(-82.429886);
-
+    public static ObaStop getClosestStop(Context context, ObaStop[] stops, Location location) {
         Location stop = new Location("temp");
         ObaStop closestStop = null;
 
@@ -459,7 +455,7 @@ public final class UIHelp {
         for (int i = 0; i < stops.length; i++) {
             stop.setLatitude(stops[i].getLatitude());
             stop.setLongitude(stops[i].getLongitude());
-            dist = myLoc.distanceTo(stop);
+            dist = location.distanceTo(stop);
 
             if (dist < minDist) {
                 minDist = dist;

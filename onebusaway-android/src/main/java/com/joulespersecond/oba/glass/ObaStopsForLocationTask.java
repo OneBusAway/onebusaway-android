@@ -17,10 +17,10 @@
 package com.joulespersecond.oba.glass;
 
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.location.Location;
 import android.os.AsyncTask;
 
 /**
@@ -53,29 +53,17 @@ public class ObaStopsForLocationTask extends AsyncTask<Void, Integer, ObaStopsFo
 
     private ObaStopsForLocationTask.Callback mCallback;
 
+    private Location location;
+
     /**
      * @param callback a callback will be made via this interface after the task is complete
      *                 (null if no callback is requested)
      */
-    public ObaStopsForLocationTask(Context context, ObaStopsForLocationTask.Callback callback) {
-        this.mContext = context;
-        this.mCallback = callback;
-    }
-
-    /**
-     * @param callback           a callback will be made via this interface after the task is
-     *                           complete
-     *                           (null if no callback is requested)
-     * @param force              true if the task should be forced to update region info from the
-     *                           server, false if it can return local info
-     * @param showProgressDialog true if a progress dialog should be shown to the user during the
-     *                           task, false if it should not
-     */
     public ObaStopsForLocationTask(Context context, ObaStopsForLocationTask.Callback callback,
-            boolean force,
-            boolean showProgressDialog) {
+            Location location) {
         this.mContext = context;
         this.mCallback = callback;
+        this.location = location;
     }
 
     @Override
@@ -85,12 +73,7 @@ public class ObaStopsForLocationTask extends AsyncTask<Void, Integer, ObaStopsFo
 
     @Override
     protected ObaStopsForLocationResponse doInBackground(Void... params) {
-        return new ObaGlassStopsForLocationRequest.Builder(mContext, UIHelp.getLocation2(mContext))
-                // Temp hard coded location of transit center for testing multiple stops with layouts
-//        Location loc = new Location("temp");
-//        loc.setLatitude(28.066380);
-//        loc.setLongitude(-82.429886);
-//        return new ObaGlassStopsForLocationRequest.Builder(mContext, loc)
+        return new ObaGlassStopsForLocationRequest.Builder(mContext, location)
                 .build()
                 .call();
     }

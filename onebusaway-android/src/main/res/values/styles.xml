@@ -137,6 +137,6 @@
         <!--
             For no list selector (selected item blends into background
         <item name="android:listChoiceBackgroundIndicator">@color/abs__bright_foreground_holo_light</item> -->
-        <item name="android:listChoiceBackgroundIndicator">@color/pressed_busbot</item>
+        <item name="android:listChoiceBackgroundIndicator">@android:color/holo_green_dark</item>
     </style>
 </resources>

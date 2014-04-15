@@ -343,6 +343,8 @@ public class GlassArrivalsListActivity extends ListActivity
                 UIHelp.getNoArrivalsMessage(this, getArrivalsLoader().getMinutesAfter(),
                         false)
         );
+
+        getArrivalsLoader().onContentChanged();
     }
 
     //

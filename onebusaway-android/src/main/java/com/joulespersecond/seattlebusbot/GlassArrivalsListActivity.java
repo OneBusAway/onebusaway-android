@@ -21,8 +21,11 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 import android.app.ListActivity;
 import android.app.LoaderManager;
@@ -32,7 +35,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,18 +50,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
 public class GlassArrivalsListActivity extends ListActivity
-        implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse> {
-    //private static final String TAG = "ArrivalInfoActivity";
+        implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ObaRegionsTask.Callback,
+        ObaStopsForLocationTask.Callback {
 
     public static final String STOP_NAME = ".StopName";
 
     public static final String STOP_DIRECTION = ".StopDir";
 
-    private static final String TAG = "ArrivalsListFragment";
+    private static final String TAG = "GlassArrivalsListActivity";
 
     private static final long RefreshPeriod = 60 * 1000;
 
@@ -92,6 +98,14 @@ public class GlassArrivalsListActivity extends ListActivity
     private String mStopUserName;
 
     private SliderView mIndeterm;
+
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
+
+    ObaRegionsTask mObaRegionsTask;
+
+    ObaStopsForLocationTask mObaStopsForLocationTask;
+
+    TextView mProgressMessage;
 
     public static class Builder {
 
@@ -170,32 +184,13 @@ public class GlassArrivalsListActivity extends ListActivity
         mIndeterm = (SliderView) mEmptyList.findViewById(R.id.indeterm_slider);
         mIndeterm.startIndeterminate();
 
-        // This sets the stopId and uri
-        setStopId();
-        //setUserInfo();
+        mProgressMessage = (TextView) mEmptyList.findViewById(R.id.progress_message);
 
         // Create an empty adapter we will use to display the loaded data.
         mAdapter = new GlassArrivalsListAdapter(this);
         setListAdapter(mAdapter);
 
-        // Start out with a progress indicator.
-        //setListShown(false);
-        Log.d(TAG, "Selected stopID = " + mStopId);
-        Log.d(TAG, "Selected stop name = " + getIntent().getStringExtra(STOP_NAME));
-
-        mRoutesFilter = ObaContract.StopRouteFilters.get(this, mStopId);
-
-        //LoaderManager.enableDebugLogging(true);
-        LoaderManager mgr = getLoaderManager();
-
-        //mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
-        mgr.initLoader(ARRIVALS_LIST_LOADER, savedInstanceState, this);
-
-        // Set initial minutesAfter value in the empty list view
-        setEmptyText(
-                UIHelp.getNoArrivalsMessage(this, getArrivalsLoader().getMinutesAfter(),
-                        false)
-        );
+        checkRegions();
     }
 
     @Override
@@ -319,6 +314,29 @@ public class GlassArrivalsListActivity extends ListActivity
 //        noArrivals.setText(text);
     }
 
+    private void initLoader(Bundle bundle) {
+        // This sets the stopId and uri
+        setStopId();
+        //setUserInfo();
+
+        Log.d(TAG, "Selected stopID = " + mStopId);
+        Log.d(TAG, "Selected stop name = " + getIntent().getStringExtra(STOP_NAME));
+
+        mRoutesFilter = ObaContract.StopRouteFilters.get(this, mStopId);
+
+        //LoaderManager.enableDebugLogging(true);
+        LoaderManager mgr = getLoaderManager();
+
+        //mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
+        mgr.initLoader(ARRIVALS_LIST_LOADER, bundle, this);
+
+        // Set initial minutesAfter value in the empty list view
+        setEmptyText(
+                UIHelp.getNoArrivalsMessage(this, getArrivalsLoader().getMinutesAfter(),
+                        false)
+        );
+    }
+
     //
     // Refreshing!
     //
@@ -409,20 +427,17 @@ public class GlassArrivalsListActivity extends ListActivity
             if (lastGood != null) {
                 setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations());
             }
-        }
 
-        //getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
-
-        // If our timer would have gone off, then refresh.
-        long lastResponseTime = getArrivalsLoader().getLastResponseTime();
-        long newPeriod = Math.min(RefreshPeriod, (lastResponseTime + RefreshPeriod)
-                - System.currentTimeMillis());
-        // Wait at least one second at least, and the full minute at most.
-        //Log.d(TAG, "Refresh period:" + newPeriod);
-        if (newPeriod <= 0) {
-            refresh();
-        } else {
-            mRefreshHandler.postDelayed(mRefresh, newPeriod);
+            long lastResponseTime = loader.getLastResponseTime();
+            long newPeriod = Math.min(RefreshPeriod, (lastResponseTime + RefreshPeriod)
+                    - System.currentTimeMillis());
+            // Wait at least one second at least, and the full minute at most.
+            //Log.d(TAG, "Refresh period:" + newPeriod);
+            if (newPeriod <= 0) {
+                refresh();
+            } else {
+                mRefreshHandler.postDelayed(mRefresh, newPeriod);
+            }
         }
 
         super.onResume();
@@ -439,5 +454,118 @@ public class GlassArrivalsListActivity extends ListActivity
         return false;
     }
 
+    private void checkRegions() {
+        boolean forceReload = false;
+        boolean showProgressDialog = true;
 
+        SharedPreferences settings = Application.getPrefs();
+
+        //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh,
+        //force contacting the server again
+        if (Application.get().getCurrentRegion() == null ||
+                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true)
+                        &&
+                        new Date().getTime() - Application.get().getLastRegionUpdateDate()
+                                > REGION_UPDATE_THRESHOLD)
+                ) {
+            forceReload = true;
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG,
+                        "Region info has expired (or does not exist), forcing a reload from the server...");
+            }
+        }
+
+        if (Application.get().getCurrentRegion() != null) {
+            Log.d(TAG, "Using previous region: " + Application.get().getCurrentRegion().getName());
+            //We already have region info locally, so just check current region status quietly in the background
+            showProgressDialog = false;
+
+            Location myLoc = getMyLocation();
+            if (myLoc != null) {
+                // Update progress message
+                mProgressMessage.setText(getString(R.string.finding_closest_stop));
+
+                // Find the closest stops
+                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
+                mObaStopsForLocationTask.execute();
+            } else {
+                //TODO - listen to location updates, and then try again when we have a location
+                Log.e(TAG, "Couldn't get users location to find nearby stops");
+            }
+        }
+
+        //Check region status, possibly forcing a reload from server and checking proximity to current region
+        //Normal progress dialog doesn't work, so hard-code false as last argument
+        mObaRegionsTask = new ObaRegionsTask(this, this, true, false);
+        mObaRegionsTask.execute();
+    }
+
+    private Location getMyLocation() {
+        return UIHelp.getLocation2(this);
+        // Temp UATC location for testing multiple stops with layouts
+//        Location fakeLoc = new Location("temp");
+//        fakeLoc.setLatitude(28.066380);
+//        fakeLoc.setLongitude(-82.429886);
+//        return fakeLoc;
+    }
+
+    /*
+     * Callbacks
+     */
+
+    // For Oba Regions Task
+    @Override
+    public void onTaskFinished(boolean currentRegionChanged) {
+        if (currentRegionChanged) {
+            Log.d(TAG, "New region selected - now finding stops...");
+            // The current region has changed since last startup, so abort any existing stop
+            // request in progress (which would be using the previous region API) and start a new one
+            if (mObaStopsForLocationTask != null) {
+                mObaStopsForLocationTask.cancel(true);
+            }
+
+            Location myLoc = getMyLocation();
+            if (myLoc != null) {
+                // Update progress message
+                mProgressMessage.setText(getString(R.string.finding_closest_stop));
+
+                // Find the closest stops
+                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
+                mObaStopsForLocationTask.execute();
+            } else {
+                //TODO - listen to location updates, and then try again when we have a location
+                Log.e(TAG, "Couldn't get users location to find nearby stops");
+                return;
+            }
+        }
+    }
+
+    // For StopsForLocation Request
+    @Override
+    public void onTaskFinished(ObaStopsForLocationResponse response) {
+        Log.d(TAG, "Found stops.");
+        // Find closest stop
+
+        Location myLoc = getMyLocation();
+        ObaStop closestStop = null;
+        if (myLoc != null) {
+            closestStop = UIHelp.getClosestStop(this, response.getStops(), myLoc);
+        } else {
+            //TODO - listen to location updates, and then try again when we have a location
+            Log.e(TAG, "Couldn't get users location to find closest stop");
+            return;
+        }
+
+        if (closestStop != null) {
+            Log.d(TAG, "Closest stop is: " + closestStop.getName());
+            mProgressMessage.setText(getString(R.string.getting_arrival_times));
+            Intent i = new Builder(this, closestStop).getIntent();
+            this.setIntent(i);
+            initLoader(i.getExtras());
+        } else {
+            Log.e(TAG, "No stops returned");
+        }
+
+        // Set up options menu showing next 5 closest stops, ordered by distance
+    }
 }

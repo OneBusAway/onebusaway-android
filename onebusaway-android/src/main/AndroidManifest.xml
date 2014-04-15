@@ -77,9 +77,13 @@
                 android:label="@string/app_name"
                 android:theme="@style/GlassListTheme"
                 android:immersive="true">
-        <intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.glass.action.VOICE_TRIGGER"/>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
+            <meta-data
+                    android:name="com.google.android.glass.VoiceTrigger"
+                    android:resource="@xml/find_my_bus"/>
         </activity>
         <activity android:name=".StopInfoActivity">
             <intent-filter>
@@ -166,23 +170,6 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
         </receiver>
-
-        <activity
-                android:name="com.joulespersecond.oba.glass.GlassMenuActivity"
-                android:theme="@style/GlassMenuTheme"/>
-
-        <service
-                android:name="com.joulespersecond.oba.glass.ObaGlassService"
-                android:label="@string/app_name"
-                android:icon="@drawable/ic_bus"
-                android:enabled="true">
-            <intent-filter>
-                <action android:name="com.google.android.glass.action.VOICE_TRIGGER"/>
-            </intent-filter>
-            <meta-data
-                    android:name="com.google.android.glass.VoiceTrigger"
-                    android:resource="@xml/find_my_bus"/>
-        </service>
 
         <uses-library android:name="com.google.android.maps"/>
         <uses-library

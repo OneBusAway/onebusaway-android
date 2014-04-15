@@ -504,7 +504,7 @@ public class GlassArrivalsListActivity extends ListActivity
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
         //Normal progress dialog doesn't work, so hard-code false as last argument
-        mObaRegionsTask = new ObaRegionsTask(this, this, true, false);
+        mObaRegionsTask = new ObaRegionsTask(this, this, forceReload, false);
         mObaRegionsTask.execute();
     }
 

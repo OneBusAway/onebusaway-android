@@ -46,6 +46,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -190,6 +191,9 @@ public class GlassArrivalsListActivity extends ListActivity
         mAdapter = new GlassArrivalsListAdapter(this);
         setListAdapter(mAdapter);
 
+        // Set up the LoaderManager now
+        getLoaderManager();
+
         checkRegions();
     }
 
@@ -207,6 +211,10 @@ public class GlassArrivalsListActivity extends ListActivity
             ObaArrivalInfoResponse result) {
 //        UIHelp.showProgress(this, false);
         mEmptyList.setVisibility(View.GONE);
+
+        // Set the bus stop icon
+        ImageView imageView = (ImageView) findViewById(R.id.bus_icon_footer);
+        imageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_bus));
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;

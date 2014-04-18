@@ -172,7 +172,8 @@
             </intent-filter>
         </receiver>
 
-        <uses-library android:name="com.google.android.maps"/>
+        <uses-library android:name="com.google.android.maps"
+                      android:required="false"/>
         <uses-library
                 android:name="com.google.android.glass"
                 android:required="true"/>

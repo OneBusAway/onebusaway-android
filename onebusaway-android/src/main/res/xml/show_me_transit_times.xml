@@ -14,4 +14,4 @@
      limitations under the License.
 -->
 
-<trigger keyword="@string/find_my_bus_voice_trigger"/>
+<trigger keyword="@string/show_me_transit_times_voice_trigger"/>

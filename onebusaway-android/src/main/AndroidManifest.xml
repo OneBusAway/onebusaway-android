@@ -84,7 +84,7 @@
             </intent-filter>
             <meta-data
                     android:name="com.google.android.glass.VoiceTrigger"
-                    android:resource="@xml/find_my_bus"/>
+                    android:resource="@xml/show_me_transit_times"/>
         </activity>
         <activity android:name=".StopInfoActivity">
             <intent-filter>

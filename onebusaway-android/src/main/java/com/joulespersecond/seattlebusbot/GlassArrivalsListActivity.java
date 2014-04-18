@@ -219,6 +219,8 @@ public class GlassArrivalsListActivity extends ListActivity
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
 //        UIHelp.showProgress(this, false);
+        mIndeterm.stopIndeterminate();
+        mIndeterm.stopProgress();
         mEmptyList.setVisibility(View.GONE);
 
         // Set the bus stop icon
@@ -305,8 +307,10 @@ public class GlassArrivalsListActivity extends ListActivity
 
         if (info != null) {
             // Reset the empty text just in case there is no data.
-            setEmptyText(UIHelp.getNoArrivalsMessage(this,
-                    getArrivalsLoader().getMinutesAfter(), false));
+            if (info.length == 0) {
+                setEmptyText(UIHelp.getNoArrivalsMessage(this,
+                        getArrivalsLoader().getMinutesAfter(), false));
+            }
             mAdapter.setData(info, mRoutesFilter);
         }
     }
@@ -329,6 +333,8 @@ public class GlassArrivalsListActivity extends ListActivity
     public void setEmptyText(CharSequence text) {
 //        TextView noArrivals = (TextView) mEmptyList.findViewById(R.id.noArrivals);
 //        noArrivals.setText(text);
+        mEmptyList.setVisibility(View.VISIBLE);
+        mProgressMessage.setText(text);
     }
 
     private void initLoader(Bundle bundle) {
@@ -346,12 +352,6 @@ public class GlassArrivalsListActivity extends ListActivity
 
         //mgr.initLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
         mgr.initLoader(ARRIVALS_LIST_LOADER, bundle, this);
-
-        // Set initial minutesAfter value in the empty list view
-        setEmptyText(
-                UIHelp.getNoArrivalsMessage(this, getArrivalsLoader().getMinutesAfter(),
-                        false)
-        );
 
         getArrivalsLoader().onContentChanged();
     }
@@ -480,6 +480,10 @@ public class GlassArrivalsListActivity extends ListActivity
 //        mLastKnownLocation = new Location("temp");
 //        mLastKnownLocation.setLatitude(28.066380);
 //        mLastKnownLocation.setLongitude(-82.429886);
+        // Temp location for testing "no arrivals in next X minutes"
+//        mLastKnownLocation = new Location("temp");
+//        mLastKnownLocation.setLatitude(27.9884);
+//        mLastKnownLocation.setLongitude(-82.3024);
 
         if (mLastKnownLocation == null) {
             // Start a LocationListener to force a refresh of location
@@ -546,7 +550,7 @@ public class GlassArrivalsListActivity extends ListActivity
     }
 
     /*
-     * Callbacks
+     * Callbacks from tasks
      */
 
     // For Oba Regions Task

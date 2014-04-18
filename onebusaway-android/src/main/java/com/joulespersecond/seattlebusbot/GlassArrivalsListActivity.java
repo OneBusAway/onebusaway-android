@@ -38,6 +38,8 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,12 +54,13 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 
 public class GlassArrivalsListActivity extends ListActivity
         implements LoaderManager.LoaderCallbacks<ObaArrivalInfoResponse>, ObaRegionsTask.Callback,
-        ObaStopsForLocationTask.Callback {
+        ObaStopsForLocationTask.Callback, LocationListener {
 
     public static final String STOP_NAME = ".StopName";
 
@@ -107,6 +110,10 @@ public class GlassArrivalsListActivity extends ListActivity
     ObaStopsForLocationTask mObaStopsForLocationTask;
 
     TextView mProgressMessage;
+
+    Location mLastKnownLocation;
+
+    LocationManager mLocationManager;
 
     public static class Builder {
 
@@ -194,7 +201,9 @@ public class GlassArrivalsListActivity extends ListActivity
         // Set up the LoaderManager now
         getLoaderManager();
 
-        checkRegions();
+        initLocation();
+
+        initRegions();
     }
 
     @Override
@@ -464,9 +473,27 @@ public class GlassArrivalsListActivity extends ListActivity
         return false;
     }
 
-    private void checkRegions() {
+    private void initLocation() {
+        mLastKnownLocation = UIHelp.getLocation2(this);
+
+        // Temp UATC location for testing multiple stops with layouts
+//        mLastKnownLocation = new Location("temp");
+//        mLastKnownLocation.setLatitude(28.066380);
+//        mLastKnownLocation.setLongitude(-82.429886);
+
+        if (mLastKnownLocation == null) {
+            // Start a LocationListener to force a refresh of location
+            mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            List<String> providers = mLocationManager.getProviders(true);
+            for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+                mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
+            }
+        }
+    }
+
+    private void initRegions() {
         boolean forceReload = false;
-        boolean showProgressDialog = true;
+        boolean showProgressDialog = false;
 
         SharedPreferences settings = Application.getPrefs();
 
@@ -487,36 +514,35 @@ public class GlassArrivalsListActivity extends ListActivity
 
         if (Application.get().getCurrentRegion() != null) {
             Log.d(TAG, "Using previous region: " + Application.get().getCurrentRegion().getName());
-            //We already have region info locally, so just check current region status quietly in the background
-            showProgressDialog = false;
 
-            Location myLoc = getMyLocation();
-            if (myLoc != null) {
-                // Update progress message
-                mProgressMessage.setText(getString(R.string.finding_closest_stop));
-
-                // Find the closest stops
-                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
-                mObaStopsForLocationTask.execute();
+            if (mLastKnownLocation != null) {
+                getClosestStops(mLastKnownLocation);
             } else {
-                //TODO - listen to location updates, and then try again when we have a location
-                Log.e(TAG, "Couldn't get users location to find nearby stops");
+                Log.d(TAG,
+                        "Couldn't get user's location to find nearby stops - will wait for location");
+                return;
             }
         }
 
-        //Check region status, possibly forcing a reload from server and checking proximity to current region
-        //Normal progress dialog doesn't work, so hard-code false as last argument
-        mObaRegionsTask = new ObaRegionsTask(this, this, forceReload, false);
-        mObaRegionsTask.execute();
+        if (mLastKnownLocation != null) {
+            //Check region status, possibly forcing a reload from server and checking proximity to current region
+            //Normal progress dialog doesn't work, so hard-code false as last argument
+            mObaRegionsTask = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
+            mObaRegionsTask.execute();
+        } else {
+            Log.d(TAG,
+                    "Couldn't get user's location to find closest region - will wait for location");
+            return;
+        }
     }
 
-    private Location getMyLocation() {
-        return UIHelp.getLocation2(this);
-        // Temp UATC location for testing multiple stops with layouts
-//        Location fakeLoc = new Location("temp");
-//        fakeLoc.setLatitude(28.066380);
-//        fakeLoc.setLongitude(-82.429886);
-//        return fakeLoc;
+    private void getClosestStops(Location location) {
+        // Update progress message
+        mProgressMessage.setText(getString(R.string.finding_closest_stop));
+
+        // Find the closest stops
+        mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, location);
+        mObaStopsForLocationTask.execute();
     }
 
     /*
@@ -534,19 +560,12 @@ public class GlassArrivalsListActivity extends ListActivity
                 mObaStopsForLocationTask.cancel(true);
             }
 
-            Location myLoc = getMyLocation();
-            if (myLoc != null) {
-                // Update progress message
-                mProgressMessage.setText(getString(R.string.finding_closest_stop));
+            // Update progress message
+            mProgressMessage.setText(getString(R.string.finding_closest_stop));
 
-                // Find the closest stops
-                mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, myLoc);
-                mObaStopsForLocationTask.execute();
-            } else {
-                //TODO - listen to location updates, and then try again when we have a location
-                Log.e(TAG, "Couldn't get users location to find nearby stops");
-                return;
-            }
+            // Find the closest stops
+            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, mLastKnownLocation);
+            mObaStopsForLocationTask.execute();
         }
     }
 
@@ -555,16 +574,8 @@ public class GlassArrivalsListActivity extends ListActivity
     public void onTaskFinished(ObaStopsForLocationResponse response) {
         Log.d(TAG, "Found stops.");
         // Find closest stop
-
-        Location myLoc = getMyLocation();
-        ObaStop closestStop = null;
-        if (myLoc != null) {
-            closestStop = UIHelp.getClosestStop(this, response.getStops(), myLoc);
-        } else {
-            //TODO - listen to location updates, and then try again when we have a location
-            Log.e(TAG, "Couldn't get users location to find closest stop");
-            return;
-        }
+        ObaStop closestStop;
+        closestStop = UIHelp.getClosestStop(this, response.getStops(), mLastKnownLocation);
 
         if (closestStop != null) {
             Log.d(TAG, "Closest stop is: " + closestStop.getName());
@@ -576,6 +587,49 @@ public class GlassArrivalsListActivity extends ListActivity
             Log.e(TAG, "No stops returned");
         }
 
-        // Set up options menu showing next 5 closest stops, ordered by distance
+        // TODO - Set up options menu showing next 5 closest stops, ordered by distance
+    }
+
+    /*
+     * Location Updates - a workaround for XE16, which seems to return null locations often
+     * from getLastKnownLocation()
+     */
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (mLastKnownLocation == null) {
+            Log.d(TAG, "Got new location update from listener.");
+            // At least one location should be available now - get the best one
+            mLastKnownLocation = UIHelp.getLocation2(this);
+
+            if (mLastKnownLocation == null) {
+                // This shouldn't happen, but if it does, use the location that was just passed in
+                mLastKnownLocation = location;
+            }
+
+            // Stop listening for updates
+            mLocationManager.removeUpdates(this);
+
+            if (Application.get().getCurrentRegion() == null) {
+                // Still need to figure out what region we're in
+                mObaRegionsTask = new ObaRegionsTask(this, this, true, false);
+                mObaRegionsTask.execute();
+            } else {
+                // We already know our region, so go straight to finding closest stops
+                getClosestStops(mLastKnownLocation);
+            }
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
     }
 }

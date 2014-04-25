@@ -16,4 +16,25 @@
 <resources>
     <dimen name="route_button_width">48sp</dimen>
     <dimen name="arrivals_header_pad_left">30dp</dimen>
+
+    <!-- Google Glass -->
+    <!-- The recommended margin for the top, left, and right edges of a card. -->
+    <dimen name="glass_card_margin">40px</dimen>
+
+    <!-- The recommended margin between the bottom of the card and the footer. This is
+         an adjusted value so that the baseline of the text in the footer sits 40px
+         from the bottom of the card, matching the other margins. -->
+    <dimen name="glass_card_footer_margin">33px</dimen>
+
+    <!-- The recommended margin for the left column of the two-column card. -->
+    <dimen name="glass_card_two_column_margin">30px</dimen>
+
+    <!-- The maximum height of the body content inside a card. -->
+    <dimen name="glass_card_body_height">240px</dimen>
+
+    <!-- The width of the left column in the two-column layout. -->
+    <dimen name="glass_card_left_column_width">240px</dimen>
+
+    <!-- Text size used for list elements -->
+    <dimen name="glass_card_list_element_text_size">35px</dimen>
 </resources>

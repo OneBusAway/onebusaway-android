@@ -8,11 +8,14 @@
         android:paddingTop="6dp"
         android:paddingBottom="6dp">
 
-<TextView
+    <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="5"
             android:textStyle="bold"
+            android:textSize="@dimen/glass_card_list_element_text_size"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:id="@+id/route" android:layout_gravity="left" android:enabled="true"
             android:layout_centerVertical="true"/>
 
@@ -22,20 +25,29 @@
             android:text=" - "
             android:layout_centerVertical="true"
             android:id="@+id/txtHyphen"
+            android:textSize="@dimen/glass_card_list_element_text_size"
             android:layout_toRightOf="@+id/route"/>
 
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="N. to University Area TC"
-            android:id="@+id/destination" android:layout_gravity="right" android:enabled="true"
+            android:textSize="@dimen/glass_card_list_element_text_size"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:id="@+id/destination"
             android:layout_centerVertical="true"
-            android:layout_toRightOf="@+id/txtHyphen"/>
+            android:layout_toRightOf="@+id/txtHyphen"
+            android:layout_toLeftOf="@+id/eta"/>
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="in 5 min"
+            android:textSize="@dimen/glass_card_list_element_text_size"
             android:textStyle="bold"
+            android:layout_marginLeft="15px"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:layout_centerVertical="true"
             android:id="@+id/eta" android:gravity="right"
             android:layout_alignParentRight="true"/>

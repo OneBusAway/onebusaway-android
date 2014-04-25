@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.glass.touchpad.GestureDetector;
 import com.google.glass.widget.SliderView;
 
 import com.joulespersecond.oba.ObaApi;
@@ -22,6 +23,7 @@ import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
+import com.joulespersecond.oba.glass.SensorListController;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
@@ -45,10 +47,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -114,6 +118,12 @@ public class GlassArrivalsListActivity extends ListActivity
     Location mLastKnownLocation;
 
     LocationManager mLocationManager;
+
+    ListView mListView;
+
+    SensorListController mListController;
+
+    GestureDetector mGestureDetector;
 
     public static class Builder {
 
@@ -200,6 +210,8 @@ public class GlassArrivalsListActivity extends ListActivity
 
         // Set up the LoaderManager now
         getLoaderManager();
+
+        initListController();
 
         initLocation();
 
@@ -321,6 +333,15 @@ public class GlassArrivalsListActivity extends ListActivity
         mAdapter.setData(null, mRoutesFilter);
     }
 
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        // We need to pass events through to the list controller
+        if (mListController != null) {
+            return mListController.onMotionEvent(event);
+        }
+        return false;
+    }
+
     //
     // Helpers
     //
@@ -335,6 +356,15 @@ public class GlassArrivalsListActivity extends ListActivity
 //        noArrivals.setText(text);
         mEmptyList.setVisibility(View.VISIBLE);
         mProgressMessage.setText(text);
+    }
+
+    private void initListController() {
+        mListView = getListView();
+        mListView.setChoiceMode(ListView.CHOICE_MODE_NONE);
+        mListView.setSelector(android.R.color.transparent);
+        mListView.setClickable(true);
+
+        mListController = new SensorListController(this, mListView);
     }
 
     private void initLoader(Bundle bundle) {
@@ -459,12 +489,15 @@ public class GlassArrivalsListActivity extends ListActivity
             }
         }
 
+        mListController.onResume();
+
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
+        mListController.onPause();
         super.onPause();
     }
 

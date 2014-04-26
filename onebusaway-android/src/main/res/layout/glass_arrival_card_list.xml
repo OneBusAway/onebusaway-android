@@ -43,8 +43,8 @@
                 android:layout_toRightOf="@id/bus_icon_footer"/>
         <com.joulespersecond.oba.glass.ArrowView
                 android:id="@+id/arrow"
-                android:layout_width="20px"
-                android:layout_height="fill_parent"
+                android:layout_width="50px"
+                android:layout_height="50px"
                 android:layout_alignParentRight="true"/>
     </RelativeLayout>
 

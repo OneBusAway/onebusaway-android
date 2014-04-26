@@ -231,18 +231,19 @@ public class GlassArrivalsListActivity extends ListActivity
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
             ObaArrivalInfoResponse result) {
 //        UIHelp.showProgress(this, false);
-        mIndeterm.stopIndeterminate();
-        mIndeterm.stopProgress();
-        mEmptyList.setVisibility(View.GONE);
-
-        // Set the bus stop icon
-        ImageView imageView = (ImageView) findViewById(R.id.bus_icon_footer);
-        imageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_bus));
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;
 
         if (result.getCode() == ObaApi.OBA_OK) {
+            mIndeterm.stopIndeterminate();
+            mIndeterm.stopProgress();
+            mEmptyList.setVisibility(View.GONE);
+
+            // Set the bus stop icon
+            ImageView imageView = (ImageView) findViewById(R.id.bus_icon_footer);
+            imageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_bus));
+
             if (mStop == null) {
                 mStop = result.getStop();
                 addToDB(mStop);
@@ -263,14 +264,16 @@ public class GlassArrivalsListActivity extends ListActivity
                 info = lastGood.getArrivalInfo();
                 situations = lastGood.getSituations();
             } else {
-                setEmptyText(getString(UIHelp.getStopErrorString(this, result.getCode())));
+                showErrorMessage(getString(UIHelp.getStopErrorString(this, result.getCode())));
             }
         }
 
         setResponseData(info, situations);
 
         TextView stopName = (TextView) findViewById(R.id.stop_name_footer);
-        stopName.setText(mStop.getName());
+        if (mStop != null) {
+            stopName.setText(mStop.getName());
+        }
 
         // The list should now be shown.
 //        if (isResumed()) {
@@ -582,6 +585,12 @@ public class GlassArrivalsListActivity extends ListActivity
         mObaStopsForLocationTask.execute();
     }
 
+    private void showErrorMessage(String errorMessage) {
+        mProgressMessage.setText(errorMessage);
+        mIndeterm.stopIndeterminate();
+        mIndeterm.stopProgress();
+    }
+
     /*
      * Callbacks from tasks
      */
@@ -609,6 +618,11 @@ public class GlassArrivalsListActivity extends ListActivity
     // For StopsForLocation Request
     @Override
     public void onTaskFinished(ObaStopsForLocationResponse response) {
+        if (response.getCode() != ObaApi.OBA_OK) {
+            showErrorMessage(getString(UIHelp.getStopErrorString(this, response.getCode())));
+            return;
+        }
+
         Log.d(TAG, "Found stops.");
         // Find closest stop
         ObaStop closestStop;

@@ -16,7 +16,6 @@
 package com.joulespersecond.oba.glass;
 
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.Application;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -25,19 +24,14 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.View;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * View that draws an arrow that points towards the given bus mStop
  */
-public class ArrowView extends View implements OrientationHelper.Listener, LocationListener {
+public class ArrowView extends View implements OrientationHelper.Listener, LocationHelper.Listener {
 
     private float mHeading;
 
@@ -49,7 +43,7 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     private Location mLastLocation;
 
-    ObaStop mStop;
+    ObaStop mObaStop;
 
     public ArrowView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -69,29 +63,14 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
     }
 
     public void setObaStop(ObaStop stop) {
-        this.mStop = stop;
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        // Listen for location
-        mLocationManager = (LocationManager) Application.get().getBaseContext()
-                .getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mLocationManager.getProviders(true);
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
-        }
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        mLocationManager.removeUpdates(this);
+        mObaStop = stop;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (mObaStop == null || mLastLocation == null) {
+            return;
+        }
         drawArrow(canvas);
     }
 
@@ -103,28 +82,7 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     @Override
     public void onLocationChanged(Location location) {
-        final float ACC_THRESHOLD = 50f;
-        // If the new location is the first location, or has an accuracy better than 50m and
-        // is newer than the last location, save it
-        if (mLastLocation == null || (mLastLocation.getAccuracy() < ACC_THRESHOLD
-                && location.getTime() > mLastLocation.getTime())) {
-            mLastLocation = location;
-        }
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
+        mLastLocation = location;
     }
 
     private void drawArrow(Canvas c) {

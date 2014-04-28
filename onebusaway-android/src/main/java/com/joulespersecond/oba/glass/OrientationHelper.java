@@ -24,7 +24,7 @@ import android.hardware.SensorManager;
 import java.util.ArrayList;
 
 /**
- * Implements a sensor-based orientation manager for Glass, which allows listeners to receive
+ * Implements a sensor-based orientation helper for Glass, which allows listeners to receive
  * orientation updates
  */
 public class OrientationHelper implements SensorEventListener {
@@ -42,9 +42,9 @@ public class OrientationHelper implements SensorEventListener {
 
     static final String TAG = "OrientationHelper";
 
-    static Context mContext;
+    Context mContext;
 
-    static SensorManager mSensorManager;
+    SensorManager mSensorManager;
 
     private float[] mRotationMatrix = new float[16];
 

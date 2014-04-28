@@ -23,7 +23,9 @@ import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.glass.ArrowView;
+import com.joulespersecond.oba.glass.DistanceToStopView;
 import com.joulespersecond.oba.glass.ListController;
+import com.joulespersecond.oba.glass.LocationHelper;
 import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
 import com.joulespersecond.oba.glass.OrientationHelper;
 import com.joulespersecond.oba.provider.ObaContract;
@@ -131,6 +133,10 @@ public class GlassArrivalsListActivity extends ListActivity
 
     ArrowView mArrowView;
 
+    LocationHelper mLocationHelper;
+
+    DistanceToStopView mDistanceToStopView;
+
     public static class Builder {
 
         private Context mContext;
@@ -215,6 +221,7 @@ public class GlassArrivalsListActivity extends ListActivity
         setListAdapter(mAdapter);
 
         mOrientationHelper = new OrientationHelper(this);
+        mLocationHelper = new LocationHelper(this);
 
         // Set up the LoaderManager now
         getLoaderManager();
@@ -222,6 +229,8 @@ public class GlassArrivalsListActivity extends ListActivity
         initListController();
 
         initArrowView();
+
+        initDistanceToStopView();
 
         initLocation();
 
@@ -383,11 +392,13 @@ public class GlassArrivalsListActivity extends ListActivity
 
     private void initArrowView() {
         mArrowView = (ArrowView) findViewById(R.id.arrow);
-        if (mArrowView == null) {
-            Log.d(TAG, "Arrow view is null");
-        } else {
-            mOrientationHelper.registerListener(mArrowView);
-        }
+        mOrientationHelper.registerListener(mArrowView);
+        mLocationHelper.registerListener(mArrowView);
+    }
+
+    private void initDistanceToStopView() {
+        mDistanceToStopView = (DistanceToStopView) findViewById(R.id.dist_to_stop);
+        mLocationHelper.registerListener(mDistanceToStopView);
     }
 
     private void initLoader(Bundle bundle) {
@@ -513,6 +524,7 @@ public class GlassArrivalsListActivity extends ListActivity
         }
 
         mOrientationHelper.onResume();
+        mLocationHelper.onResume();
 
         super.onResume();
     }
@@ -521,6 +533,7 @@ public class GlassArrivalsListActivity extends ListActivity
     protected void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
         mOrientationHelper.onPause();
+        mLocationHelper.onPause();
         super.onPause();
     }
 
@@ -606,6 +619,9 @@ public class GlassArrivalsListActivity extends ListActivity
     }
 
     private void showErrorMessage(String errorMessage) {
+        mDistanceToStopView.setVisibility(View.GONE);
+        mArrowView.setVisibility(View.GONE);
+
         mProgressMessage.setText(errorMessage);
         mIndeterm.stopIndeterminate();
         mIndeterm.stopProgress();
@@ -650,6 +666,8 @@ public class GlassArrivalsListActivity extends ListActivity
 
         if (closestStop != null) {
             Log.d(TAG, "Closest stop is: " + closestStop.getName());
+            mDistanceToStopView.setObaStop(closestStop);
+            mArrowView.setObaStop(closestStop);
             mProgressMessage.setText(getString(R.string.getting_arrival_times));
             Intent i = new Builder(this, closestStop).getIntent();
             this.setIntent(i);

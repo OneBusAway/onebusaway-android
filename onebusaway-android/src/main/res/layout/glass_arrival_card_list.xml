@@ -45,10 +45,9 @@
                 android:layout_toRightOf="@id/bus_icon_footer"
                 android:layout_toLeftOf="@+id/dist_to_stop"/>
 
-        <TextView
+        <com.joulespersecond.oba.glass.DistanceToStopView
                 android:id="@+id/dist_to_stop"
                 android:textSize="14dp"
-                android:text="54 ft"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10px"

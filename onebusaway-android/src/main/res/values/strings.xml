@@ -321,4 +321,6 @@
     <string name="read_aloud">Read aloud</string>
     <string name="finding_closest_stop">Finding closest stop…</string>
     <string name="getting_arrival_times">Getting arrival times…</string>
+    <string name="feet_abbreviation">ft</string>
+    <string name="miles_abbreviation">mi</string>
 </resources>

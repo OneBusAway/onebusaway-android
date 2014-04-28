@@ -24,10 +24,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -41,17 +37,11 @@ import java.util.List;
 /**
  * View that draws an arrow that points towards the given bus mStop
  */
-public class ArrowView extends View implements SensorEventListener, LocationListener {
+public class ArrowView extends View implements OrientationManager.Listener, LocationListener {
 
-    SensorManager mSensorManager;
-
-    private float[] mRotationMatrix = new float[16];
-
-    private float[] mOrientation = new float[9];
+    OrientationManager mOrientationManager;
 
     private float mHeading;
-
-    private float mPitch;
 
     private Paint mArrowPaint;
 
@@ -77,6 +67,9 @@ public class ArrowView extends View implements SensorEventListener, LocationList
         mArrowFillPaint.setStyle(Paint.Style.FILL);
         mArrowFillPaint.setStrokeWidth(4.0f);
         mArrowFillPaint.setAntiAlias(true);
+
+        mOrientationManager = OrientationManager.getInstance(context);
+        mOrientationManager.registerListener(this);
     }
 
     public void setObaStop(ObaStop stop) {
@@ -86,12 +79,6 @@ public class ArrowView extends View implements SensorEventListener, LocationList
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        // Listen for sensor data
-        mSensorManager = (SensorManager) Application.get().getBaseContext()
-                .getSystemService(Context.SENSOR_SERVICE);
-        mSensorManager.registerListener(this,
-                mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
-                SensorManager.SENSOR_DELAY_UI);
         // Listen for location
         mLocationManager = (LocationManager) Application.get().getBaseContext()
                 .getSystemService(Context.LOCATION_SERVICE);
@@ -104,7 +91,6 @@ public class ArrowView extends View implements SensorEventListener, LocationList
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        mSensorManager.unregisterListener(this);
         mLocationManager.removeUpdates(this);
     }
 
@@ -114,23 +100,9 @@ public class ArrowView extends View implements SensorEventListener, LocationList
     }
 
     @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
-            SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
-            SensorManager.remapCoordinateSystem(mRotationMatrix, SensorManager.AXIS_X,
-                    SensorManager.AXIS_Z, mRotationMatrix);
-            SensorManager.getOrientation(mRotationMatrix, mOrientation);
-
-            mHeading = (float) Math.toDegrees(mOrientation[0]);
-            mPitch = (float) Math.toDegrees(mOrientation[1]);
-
+    public void onOrientationChanged(float heading, float pitch, float xDelta, float yDelta) {
+        mHeading = heading;
             invalidate();
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 
     @Override
@@ -163,26 +135,31 @@ public class ArrowView extends View implements SensorEventListener, LocationList
         int height = getHeight();
         int width = getWidth();
 
-//        final float ARROW_HEIGHT_SCALE = 1f;
-//        final float ARROW_WIDTH_SCALE = 0.5f;
+        final float BUFFER = width / 8;
+        final float CUTOUT_HEIGHT = getHeight() / 5;
 
         float x1, y1;  // Tip of arrow
         x1 = width / 2;
-        y1 = 0;
+        y1 = BUFFER;
 
-        float x2, y2;
-        x2 = 0;
-        y2 = 0;
+        float x2, y2;  // lower left
+        x2 = BUFFER;
+        y2 = height - BUFFER;
 
-        float x3, y3;
-        x3 = width;
-        y3 = height;
+        float x3, y3; // cutout in arrow bottom
+        x3 = width / 2;
+        y3 = height - CUTOUT_HEIGHT - BUFFER;
+
+        float x4, y4; // lower right
+        x4 = width - BUFFER;
+        y4 = height - BUFFER;
 
         Path path = new Path();
         path.setFillType(Path.FillType.EVEN_ODD);
         path.moveTo(x1, y1);
         path.lineTo(x2, y2);
         path.lineTo(x3, y3);
+        path.lineTo(x4, y4);
         path.lineTo(x1, y1);
         path.close();
 

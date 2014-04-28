@@ -22,8 +22,9 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.glass.ListController;
 import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
-import com.joulespersecond.oba.glass.SensorListController;
+import com.joulespersecond.oba.glass.OrientationManager;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
@@ -121,7 +122,7 @@ public class GlassArrivalsListActivity extends ListActivity
 
     ListView mListView;
 
-    SensorListController mListController;
+    ListController mListController;
 
     GestureDetector mGestureDetector;
 
@@ -367,7 +368,7 @@ public class GlassArrivalsListActivity extends ListActivity
         mListView.setSelector(android.R.color.transparent);
         mListView.setClickable(true);
 
-        mListController = new SensorListController(this, mListView);
+        mListController = new ListController(this, mListView);
     }
 
     private void initLoader(Bundle bundle) {
@@ -492,16 +493,19 @@ public class GlassArrivalsListActivity extends ListActivity
             }
         }
 
-        mListController.onResume();
-
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
-        mListController.onPause();
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        OrientationManager.getInstance(this).destroy();
+        super.onDestroy();
     }
 
     @Override

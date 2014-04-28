@@ -57,7 +57,7 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
                         .getString(R.string.miles_abbreviation));
             } else {
                 int feet = (int) (distance * METERS_TO_FEET);
-                setText(feet + mContext.getString(R.string.feet_abbreviation));
+                setText(feet + " " + mContext.getString(R.string.feet_abbreviation));
             }
         } else {
             // Clear current text

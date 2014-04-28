@@ -113,6 +113,12 @@ public class OrientationHelper implements SensorEventListener {
             history[0] = mHeading;
             history[1] = mPitch;
 
+            // Use magnetic field to compute true (geographic) north, if data is available
+            Float magneticDeclination = LocationHelper.getMagneticDeclination();
+            if (magneticDeclination != null) {
+                mHeading += magneticDeclination;
+            }
+
             for (Listener l : mListeners) {
                 l.onOrientationChanged(mHeading, mPitch, xDelta, yDelta);
             }

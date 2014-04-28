@@ -24,7 +24,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.location.Location;
-import android.location.LocationManager;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -39,11 +38,13 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     private Paint mArrowFillPaint;
 
-    LocationManager mLocationManager;
-
     private Location mLastLocation;
 
+    Location mStopLocation = new Location("stopLocation");
+
     ObaStop mObaStop;
+
+    float bearingToStop;
 
     public ArrowView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -83,6 +84,17 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
+        if (mObaStop != null) {
+            mStopLocation.setLatitude(mObaStop.getLocation().getLatitudeE6() / 1e6);
+            mStopLocation.setLongitude(mObaStop.getLocation().getLongitudeE6() / 1e6);
+            bearingToStop = location.bearingTo(mStopLocation);
+
+            // Result of bearingTo() can be from -180 to 180. If negative, convert to 181-360 range
+            // See http://stackoverflow.com/a/8043485/937715
+            if (bearingToStop < 0) {
+                bearingToStop += 360;
+            }
+        }
     }
 
     private void drawArrow(Canvas c) {
@@ -117,9 +129,15 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
         path.lineTo(x1, y1);
         path.close();
 
+        float direction = mHeading - bearingToStop;
+        // Convert negative values
+        if (direction < 0) {
+            direction += 360;
+        }
+
         // Rotate arrow around center point
         Matrix matrix = new Matrix();
-        matrix.postRotate((float) -mHeading, width / 2, height / 2);
+        matrix.postRotate((float) -direction, width / 2, height / 2);
         path.transform(matrix);
 
         c.drawPath(path, mArrowPaint);

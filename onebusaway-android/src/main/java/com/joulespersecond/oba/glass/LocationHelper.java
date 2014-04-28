@@ -18,6 +18,7 @@ package com.joulespersecond.oba.glass;
 import com.joulespersecond.seattlebusbot.Application;
 
 import android.content.Context;
+import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -48,6 +49,8 @@ public class LocationHelper implements LocationListener {
     LocationManager mLocationManager;
 
     Location mLastLocation;
+
+    static GeomagneticField mGeomagneticField;
 
     ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
@@ -96,6 +99,12 @@ public class LocationHelper implements LocationListener {
                 && location.getTime() > mLastLocation.getTime())) {
             mLastLocation = location;
 
+            mGeomagneticField = new GeomagneticField(
+                    (float) location.getLatitude(),
+                    (float) location.getLongitude(),
+                    (float) location.getAltitude(),
+                    System.currentTimeMillis());
+
             for (Listener l : mListeners) {
                 l.onLocationChanged(mLastLocation);
             }
@@ -115,6 +124,22 @@ public class LocationHelper implements LocationListener {
     @Override
     public void onProviderDisabled(String provider) {
 
+    }
+
+    /**
+     * Returns the declination of the horizontal component of the magnetic field from true north, in
+     * degrees (i.e. positive means the magnetic field is rotated east that much from true north).
+     *
+     * @return declination of the horizontal component of the magnetic field from true north, in
+     * degrees (i.e. positive means the magnetic field is rotated east that much from true north),
+     * or null if its not available
+     */
+    public static Float getMagneticDeclination() {
+        if (mGeomagneticField != null) {
+            return mGeomagneticField.getDeclination();
+        } else {
+            return null;
+        }
     }
 
     private void registerAllProviders() {

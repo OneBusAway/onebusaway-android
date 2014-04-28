@@ -52,7 +52,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Iterator;
 import java.util.List;
 
 public final class UIHelp {
@@ -343,15 +342,20 @@ public final class UIHelp {
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
-            // If this provider has a last location, and either:
-            // 1. We don't have a last location,
-            // 2. Our last location is older than this location.
-            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
-                last = loc;
-            }
-        }
+//        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+//            Location loc = mgr.getLastKnownLocation(i.next());
+//            // If this provider has a last location, and either:
+//            // 1. We don't have a last location,
+//            // 2. Our last location is older than this location.
+//            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
+//                last = loc;
+//            }
+//        }
+
+        // Atlanta, GA transit center
+        last = new Location("temp");
+        last.setLatitude(33.753921);
+        last.setLongitude(-84.391526);
         return last;
     }
 

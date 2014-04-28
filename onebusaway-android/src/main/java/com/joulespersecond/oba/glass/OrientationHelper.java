@@ -27,7 +27,7 @@ import java.util.ArrayList;
  * Implements a sensor-based orientation manager for Glass, which allows listeners to receive
  * orientation updates
  */
-public class OrientationManager implements SensorEventListener {
+public class OrientationHelper implements SensorEventListener {
 
     public interface Listener {
 
@@ -40,7 +40,7 @@ public class OrientationManager implements SensorEventListener {
         void onOrientationChanged(float heading, float pitch, float deltaHeading, float deltaPitch);
     }
 
-    static final String TAG = "OrientationManager";
+    static final String TAG = "OrientationHelper";
 
     static Context mContext;
 
@@ -58,7 +58,7 @@ public class OrientationManager implements SensorEventListener {
 
     ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
-    public OrientationManager(Context context) {
+    public OrientationHelper(Context context) {
         mContext = context;
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
     }

@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * View that draws an arrow that points towards the given bus mStop
  */
-public class ArrowView extends View implements OrientationManager.Listener, LocationListener {
+public class ArrowView extends View implements OrientationHelper.Listener, LocationListener {
 
     private float mHeading;
 

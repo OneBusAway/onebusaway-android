@@ -25,7 +25,7 @@ import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.glass.ArrowView;
 import com.joulespersecond.oba.glass.ListController;
 import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
-import com.joulespersecond.oba.glass.OrientationManager;
+import com.joulespersecond.oba.glass.OrientationHelper;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
@@ -127,7 +127,7 @@ public class GlassArrivalsListActivity extends ListActivity
 
     GestureDetector mGestureDetector;
 
-    OrientationManager mOrientationManager;
+    OrientationHelper mOrientationHelper;
 
     ArrowView mArrowView;
 
@@ -214,7 +214,7 @@ public class GlassArrivalsListActivity extends ListActivity
         mAdapter = new GlassArrivalsListAdapter(this);
         setListAdapter(mAdapter);
 
-        mOrientationManager = new OrientationManager(this);
+        mOrientationHelper = new OrientationHelper(this);
 
         // Set up the LoaderManager now
         getLoaderManager();
@@ -378,7 +378,7 @@ public class GlassArrivalsListActivity extends ListActivity
         mListView.setClickable(true);
 
         mListController = new ListController(this, mListView);
-        mOrientationManager.registerListener(mListController);
+        mOrientationHelper.registerListener(mListController);
     }
 
     private void initArrowView() {
@@ -386,7 +386,7 @@ public class GlassArrivalsListActivity extends ListActivity
         if (mArrowView == null) {
             Log.d(TAG, "Arrow view is null");
         } else {
-            mOrientationManager.registerListener(mArrowView);
+            mOrientationHelper.registerListener(mArrowView);
         }
     }
 
@@ -512,7 +512,7 @@ public class GlassArrivalsListActivity extends ListActivity
             }
         }
 
-        mOrientationManager.onResume();
+        mOrientationHelper.onResume();
 
         super.onResume();
     }
@@ -520,7 +520,7 @@ public class GlassArrivalsListActivity extends ListActivity
     @Override
     protected void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
-        mOrientationManager.onPause();
+        mOrientationHelper.onPause();
         super.onPause();
     }
 

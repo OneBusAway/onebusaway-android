@@ -27,7 +27,7 @@ import android.widget.ListView;
 /**
  * Implements sensor-based scrolling of a ListView
  */
-public class ListController implements GestureDetector.BaseListener, OrientationManager.Listener {
+public class ListController implements GestureDetector.BaseListener, OrientationHelper.Listener {
 
     static final String TAG = "ListController";
 

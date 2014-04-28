@@ -22,6 +22,7 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.glass.ArrowView;
 import com.joulespersecond.oba.glass.ListController;
 import com.joulespersecond.oba.glass.ObaStopsForLocationTask;
 import com.joulespersecond.oba.glass.OrientationManager;
@@ -126,6 +127,10 @@ public class GlassArrivalsListActivity extends ListActivity
 
     GestureDetector mGestureDetector;
 
+    OrientationManager mOrientationManager;
+
+    ArrowView mArrowView;
+
     public static class Builder {
 
         private Context mContext;
@@ -209,10 +214,14 @@ public class GlassArrivalsListActivity extends ListActivity
         mAdapter = new GlassArrivalsListAdapter(this);
         setListAdapter(mAdapter);
 
+        mOrientationManager = new OrientationManager(this);
+
         // Set up the LoaderManager now
         getLoaderManager();
 
         initListController();
+
+        initArrowView();
 
         initLocation();
 
@@ -369,6 +378,16 @@ public class GlassArrivalsListActivity extends ListActivity
         mListView.setClickable(true);
 
         mListController = new ListController(this, mListView);
+        mOrientationManager.registerListener(mListController);
+    }
+
+    private void initArrowView() {
+        mArrowView = (ArrowView) findViewById(R.id.arrow);
+        if (mArrowView == null) {
+            Log.d(TAG, "Arrow view is null");
+        } else {
+            mOrientationManager.registerListener(mArrowView);
+        }
     }
 
     private void initLoader(Bundle bundle) {
@@ -493,19 +512,16 @@ public class GlassArrivalsListActivity extends ListActivity
             }
         }
 
+        mOrientationManager.onResume();
+
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
+        mOrientationManager.onPause();
         super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        OrientationManager.getInstance(this).destroy();
-        super.onDestroy();
     }
 
     @Override

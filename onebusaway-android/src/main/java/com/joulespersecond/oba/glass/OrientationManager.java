@@ -58,34 +58,42 @@ public class OrientationManager implements SensorEventListener {
 
     ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
-    static OrientationManager mOrientationManager;
-
-    public synchronized static OrientationManager getInstance(Context context) {
-        if (mOrientationManager == null) {
-            mContext = context;
-            mOrientationManager = new OrientationManager();
-            mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
-            mSensorManager.registerListener(mOrientationManager,
-                    mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
-                    SensorManager.SENSOR_DELAY_UI);
-        }
-        return mOrientationManager;
+    public OrientationManager(Context context) {
+        mContext = context;
+        mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
     }
 
     public synchronized void registerListener(Listener listener) {
         if (!mListeners.contains(listener)) {
             mListeners.add(listener);
         }
-    }
 
-    public synchronized void removeListener(Listener listener) {
-        if (mListeners.contains(listener)) {
-            mListeners.remove(listener);
+        // If this is the first listener, make sure we're monitoring the sensors to provide updates
+        if (mListeners.size() == 1) {
+            mSensorManager.registerListener(this,
+                    mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
+                    SensorManager.SENSOR_DELAY_UI);
         }
     }
 
-    public synchronized void destroy() {
-        mSensorManager.unregisterListener(mOrientationManager);
+    public synchronized void unregisterListener(Listener listener) {
+        if (mListeners.contains(listener)) {
+            mListeners.remove(listener);
+        }
+
+        if (mListeners.size() == 0) {
+            mSensorManager.unregisterListener(this);
+        }
+    }
+
+    public synchronized void onResume() {
+        mSensorManager.registerListener(this,
+                mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
+                SensorManager.SENSOR_DELAY_UI);
+    }
+
+    public synchronized void onPause() {
+        mSensorManager.unregisterListener(this);
     }
 
     @Override

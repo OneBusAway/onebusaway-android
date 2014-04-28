@@ -39,13 +39,9 @@ public class ListController implements GestureDetector.BaseListener, Orientation
 
     GestureDetector mGestureDetector;
 
-    OrientationManager mOrientationManager;
-
     public ListController(Context context, ListView list) {
         this.mContext = context;
         this.mList = list;
-        mOrientationManager = OrientationManager.getInstance(context);
-        mOrientationManager.registerListener(this);
         mGestureDetector = new GestureDetector(mContext);
         mGestureDetector.setBaseListener(this);
     }

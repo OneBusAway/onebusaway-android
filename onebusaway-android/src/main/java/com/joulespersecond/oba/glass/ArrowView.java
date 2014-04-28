@@ -39,8 +39,6 @@ import java.util.List;
  */
 public class ArrowView extends View implements OrientationManager.Listener, LocationListener {
 
-    OrientationManager mOrientationManager;
-
     private float mHeading;
 
     private Paint mArrowPaint;
@@ -68,8 +66,6 @@ public class ArrowView extends View implements OrientationManager.Listener, Loca
         mArrowFillPaint.setStrokeWidth(4.0f);
         mArrowFillPaint.setAntiAlias(true);
 
-        mOrientationManager = OrientationManager.getInstance(context);
-        mOrientationManager.registerListener(this);
     }
 
     public void setObaStop(ObaStop stop) {
@@ -102,7 +98,7 @@ public class ArrowView extends View implements OrientationManager.Listener, Loca
     @Override
     public void onOrientationChanged(float heading, float pitch, float xDelta, float yDelta) {
         mHeading = heading;
-            invalidate();
+        invalidate();
     }
 
     @Override

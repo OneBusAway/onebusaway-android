@@ -95,7 +95,7 @@
     <plurals name="stop_info_arrive_delayed">
         <item quantity="one">1 minute delay</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes delay</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minute delay</item>
     </plurals>
     <plurals name="stop_info_arrive_early">
         <item quantity="one">1 minute early</item>

@@ -94,6 +94,7 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
             if (bearingToStop < 0) {
                 bearingToStop += 360;
             }
+            invalidate();
         }
     }
 
@@ -130,10 +131,8 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
         path.close();
 
         float direction = mHeading - bearingToStop;
-        // Convert negative values
-        if (direction < 0) {
-            direction += 360;
-        }
+        // Make sure value is between 0-360
+        direction = MathUtils.mod(direction, 360.0f);
 
         // Rotate arrow around center point
         Matrix matrix = new Matrix();

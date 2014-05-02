@@ -119,6 +119,9 @@ public class OrientationHelper implements SensorEventListener {
                 mHeading += magneticDeclination;
             }
 
+            // Make sure value is between 0-360
+            mHeading = MathUtils.mod(mHeading, 360.0f);
+
             for (Listener l : mListeners) {
                 l.onOrientationChanged(mHeading, mPitch, xDelta, yDelta);
             }

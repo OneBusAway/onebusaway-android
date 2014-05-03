@@ -642,12 +642,7 @@ public class GlassArrivalsListActivity extends ListActivity
                 mObaStopsForLocationTask.cancel(true);
             }
 
-            // Update progress message
-            mProgressMessage.setText(getString(R.string.finding_closest_stop));
-
-            // Find the closest stops
-            mObaStopsForLocationTask = new ObaStopsForLocationTask(this, this, mLastKnownLocation);
-            mObaStopsForLocationTask.execute();
+            getClosestStops(mLastKnownLocation);
         }
     }
 

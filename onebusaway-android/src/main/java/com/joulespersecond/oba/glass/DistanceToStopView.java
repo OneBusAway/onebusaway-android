@@ -53,7 +53,7 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
             // If the distance is greater than a quarter mile, show in miles, else show in feet
             if (distance > METERS_IN_QUARTER_MILE) {
                 float miles = distance * MILES_TO_METERS;
-                setText(mNumberFormat.format(miles) + mContext
+                setText(mNumberFormat.format(miles) + " " + mContext
                         .getString(R.string.miles_abbreviation));
             } else {
                 int feet = (int) (distance * METERS_TO_FEET);

@@ -7,9 +7,5 @@ android:
     # For Google Maps API v1
     - addon-google_apis-google-17
 
-install:
-  # Prevent `gradle assemble` from being invoked by overriding with no-op
-  - true
-
 script:
     - TERM=dumb ./gradlew assembleDebug -PdisablePreDex

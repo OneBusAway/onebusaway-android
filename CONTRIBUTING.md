@@ -6,7 +6,7 @@ This guide details how to use issues and pull requests (for new code) to improve
 
 We use the [Android Open-Source Project (AOSP) Code Style Guidelines](http://source.android.com/source/code-style.html).
 
-We strongly suggest that you use the `AndroidStyle.xml` template file, included in this repository, in Android Studio to format your code:
+We strongly suggest that you use the [`AndroidStyle.xml`](/AndroidStyle.xml) template file, included in this repository, in Android Studio to format your code:
 
 1. Place `AndroidStyle.xml` in your Android Studio `/codestyles` directory (e.g., `C:\Users\barbeau\.AndroidStudioPreview\config\codestyles`)
 2. Restart Android Studio.

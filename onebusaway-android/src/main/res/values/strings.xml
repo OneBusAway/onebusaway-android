@@ -314,4 +314,7 @@
     <string name="preferences_experimental_regions_disable_warning">Your current experimental region
         won\'t be available! Go ahead?
     </string>
+    <!-- ActionBar stuff -->
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
 </resources>

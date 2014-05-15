@@ -24,6 +24,9 @@ import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.app.ActionBarDrawerToggle;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -40,6 +43,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.Date;
@@ -123,6 +129,10 @@ public class HomeActivity extends BaseMapActivity {
     }
 
     private int mWhatsNewMessage = R.string.main_help_whatsnew;
+    private MenuListAdapter mMenuAdapter;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle mToggle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,14 +142,76 @@ public class HomeActivity extends BaseMapActivity {
 
         UIHelp.setupActionBar(getSupportActionBar());
 
+
         autoShowWhatsNew();
 
         checkRegionStatus();
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        String[] title = new String[]{
+                getString(R.string.main_option_findroute),
+                getString(R.string.main_option_findstop),
+                getString(R.string.main_option_viewtrips),
+                getString(R.string.main_option_preferences),
+                getString(R.string.main_option_help)
+        };
+        int[] icon = new int[]{
+                R.drawable.ic_menu_star,
+                R.drawable.ic_menu_stop,
+                R.drawable.ic_menu_trip,
+                android.R.drawable.ic_menu_preferences,
+                android.R.drawable.ic_menu_help,
+        };
+        mMenuAdapter = new MenuListAdapter(HomeActivity.this, title, icon);
+        mDrawerList.setAdapter(mMenuAdapter);
+        mDrawerList.setOnItemClickListener(new ListView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent,
+                                    View view,
+                                    int position,
+                                    long id) {
+
+                Intent myIntent;
+                switch (position) {
+                    case 0:
+                        myIntent = new Intent(HomeActivity.this, MyRoutesActivity.class);
+                        startActivity(myIntent);
+                        break;
+                    case 1:
+                        myIntent = new Intent(HomeActivity.this, MyStopsActivity.class);
+                        startActivity(myIntent);
+                        break;
+                    case 2:
+                        myIntent = new Intent(HomeActivity.this, TripListActivity.class);
+                        startActivity(myIntent);
+                        break;
+                    case 3:
+                        Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
+                        startActivity(preferences);
+                        break;
+                    case 4:
+                        showDialog(HELP_DIALOG);
+                        break;
+
+                }
+                mDrawerLayout.closeDrawer(mDrawerList);
+            }
+        });
+        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close);
+        mDrawerLayout.setDrawerListener(mToggle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mToggle.syncState();
+
     }
 
     @Override
     protected int getContentView() {
-        return R.layout.main;
+        return R.layout.main2;
     }
 
     @Override
@@ -154,28 +226,11 @@ public class HomeActivity extends BaseMapActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == android.R.id.home) {
-            NavHelp.goHome(this);
-            return true;
-        } else if (id == R.id.find_stop) {
-            Intent myIntent = new Intent(this, MyStopsActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.find_route) {
-            Intent myIntent = new Intent(this, MyRoutesActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.view_trips) {
-            Intent myIntent = new Intent(this, TripListActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.help) {
-            showDialog(HELP_DIALOG);
-            return true;
-        } else if (id == R.id.preferences) {
-            Intent preferences = new Intent(
-                    HomeActivity.this,
-                    PreferencesActivity.class);
-            startActivity(preferences);
+            if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
+                mDrawerLayout.closeDrawer(mDrawerList);
+            } else {
+                mDrawerLayout.openDrawer(mDrawerList);
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

@@ -8,4 +8,4 @@ android:
     - addon-google_apis-google-17
 
 script:
-    - TERM=dumb ./gradlew assembleDebug -PdisablePreDex
+    - ./gradlew assembleDebug -PdisablePreDex

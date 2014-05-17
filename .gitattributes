@@ -1,0 +1,22 @@
+# These files are text and should be normalized (Convert crlf => lf)
+*.gitignore     text
+*.yml           text
+*.xml           text
+*.md            text
+CONTRIBUTORS    text
+LICENSE         text
+*.gradle        text
+gradlew         text
+*.bat           text
+*.txt           text
+*.cfg           text
+*.py            text
+*.properties    text
+*.java          text
+*.csv           text
+*.json          text
+
+# These files are binary and should be left untouched
+# (binary is a macro for -text -diff)
+*.png           binary
+*.jar           binary

@@ -24,6 +24,9 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 public class ObaContext {
 
     private static final String TAG = "ObaContext";
@@ -94,12 +97,15 @@ public class ObaContext {
             }
             // Since the user-entered serverName might contain a partial path, we need to parse it
             Uri userEntered;
-            if (Uri.parse(serverName).getScheme() == null) {
-                // Add the scheme before parsing if one doesn't exist, since without a scheme the Uri won't parse the authority
-                userEntered = Uri.parse("http://" + serverName);
-            } else {
-                userEntered = Uri.parse(serverName);
+            try {
+                // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+                URL url = new URL(serverName);
+            } catch (MalformedURLException e) {
+                // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+                serverName = "http://" + serverName;
             }
+
+            userEntered = Uri.parse(serverName);
 
             // Copy partial path that the user entered
             Uri.Builder path = new Uri.Builder();
@@ -110,7 +116,7 @@ public class ObaContext {
 
             // Finally, overwrite builder that was passed in with the full URL
             builder.scheme(userEntered.getScheme());
-            builder.authority(userEntered.getAuthority());
+            builder.encodedAuthority(userEntered.getEncodedAuthority());
             builder.encodedPath(path.build().getEncodedPath());
         } else if (mRegion != null) {
             if (BuildConfig.DEBUG) {

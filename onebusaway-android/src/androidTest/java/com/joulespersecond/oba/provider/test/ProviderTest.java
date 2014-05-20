@@ -136,11 +136,12 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         c.close();
 
         c = cr.query(ObaContract.Stops.CONTENT_URI
-                .buildUpon()
-                .appendQueryParameter("limit", "1")
-                .build(),
+                        .buildUpon()
+                        .appendQueryParameter("limit", "1")
+                        .build(),
                 new String[]{ObaContract.Stops._ID},
-                null, null, null);
+                null, null, null
+        );
         assertNotNull(c);
         assertEquals(c.getCount(), 1);
         c.close();

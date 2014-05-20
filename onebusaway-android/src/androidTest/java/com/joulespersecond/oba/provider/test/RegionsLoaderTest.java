@@ -15,12 +15,14 @@
  */
 package com.joulespersecond.oba.provider.test;
 
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.test.ObaLoaderTestCase;
 
+import java.util.ArrayList;
+
 public class RegionsLoaderTest extends ObaLoaderTestCase {
-    // This currently doesn't work anymore because we can't use
-    // the OBA (Mock) connection to get this in production.
-    /*
+
     private void assertBounds(ObaRegion.Bounds bound,
             double lat, double lon, double latSpan, double lonSpan) {
         assertEquals(lat, bound.getLat());
@@ -30,7 +32,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
     }
 
     private void _assertTampa(ObaRegion tampa) {
-        assertEquals(1, tampa.getId());
+        assertEquals(0, tampa.getId());
         assertEquals("Tampa", tampa.getName());
         ObaRegion.Bounds[] bounds = tampa.getBounds();
         assertNotNull(bounds);
@@ -38,52 +40,74 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // 27.976910500000002:82.445851:0.5424609999999994:0.576357999999999
         assertBounds(bounds[0],
                 27.976910500000002,
-                82.445851,
+                -82.445851,
                 0.5424609999999994,
                 0.576357999999999);
     }
 
     private void _assertPugetSound(ObaRegion ps) {
-        assertEquals(2, ps.getId());
+        assertEquals(1, ps.getId());
         assertEquals("Puget Sound", ps.getName());
         ObaRegion.Bounds[] bounds = ps.getBounds();
         assertNotNull(bounds);
-        assertEquals(3, bounds.length);
-        // 47.221315000000004:-122.4051325:0.3370399999999947:0.4404830000000004
+        assertEquals(9, bounds.length);
+        // 47.221315:-122.4051325:0.33704:0.440483
         assertBounds(bounds[0],
-                47.221315000000004,
+                47.221315,
                 -122.4051325,
-                0.3370399999999947,
-                0.4404830000000004);
-        // 47.5607395:-122.1462785:0.7432510000000008:0.720901000000012
+                0.33704,
+                0.440483);
+        // 47.5607395:-122.1462785:0.743251:0.720901
         assertBounds(bounds[1],
                 47.5607395,
                 -122.1462785,
-                0.7432510000000008,
-                0.720901000000012);
-        // 47.556288:-122.4013255:0.09069399999999916:0.12679299999999216
+                0.743251,
+                0.720901);
+        // 47.556288:-122.4013255:0.090694:0.126793
         assertBounds(bounds[2],
                 47.556288,
                 -122.4013255,
-                0.09069399999999916,
-                0.12679299999999216);
+                0.090694,
+                0.126793);
+    }
+
+    private void _assertAtlanta(ObaRegion at) {
+        assertEquals(3, at.getId());
+        assertEquals("Atlanta", at.getName());
+        ObaRegion.Bounds[] bounds = at.getBounds();
+        assertNotNull(bounds);
+        assertEquals(7, bounds.length);
+        // 33.7901797681045:-84.39483216212469:0.002537628406997783:0.016058977126604645
+        assertBounds(bounds[0],
+                33.7901797681045,
+                -84.39483216212469,
+                0.002537628406997783,
+                0.016058977126604645);
+        // 33.84859251766493:-84.36189486914657:0.006806584025866869:0.035245473959491846
+        assertBounds(bounds[1],
+                33.84859251766493,
+                -84.36189486914657,
+                0.006806584025866869,
+                0.035245473959491846);
     }
 
     public void testLoader() throws InterruptedException {
-        ObaRegionsLoader loader = new ObaRegionsLoader(getContext(), true);
-        ArrayList<ObaRegion> regions = getLoaderResultSynchronously(loader);
-        assertNotNull(regions);
-        assertEquals(3, regions.size());
-        _assertTampa(regions.get(0));
-        _assertPugetSound(regions.get(1));
+        // Load regions from resources
+        ArrayList<ObaRegion> regionsFromResources = RegionUtils
+                .getRegionsFromResources(getContext());
 
-        // Now do this again so we can test getting it from the DB.
-        loader = new ObaRegionsLoader(getContext());
-        regions = getLoaderResultSynchronously(loader);
+        // Save to provider
+        RegionUtils.saveToProvider(getContext(), regionsFromResources);
+
+        // Retrieve from provider
+        ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getContext());
         assertNotNull(regions);
-        assertEquals(3, regions.size());
+        assertEquals(3, regions.size());  // Number of production regions
+
+        // Production regions
         _assertTampa(regions.get(0));
         _assertPugetSound(regions.get(1));
+        _assertAtlanta(regions.get(2));
     }
-    */
+
 }

@@ -29,11 +29,11 @@ import java.io.Reader;
 
 public class JacksonTest extends ObaTestCase {
 
-    protected JacksonSerializer mSerializer;
-
     private static final int mCode = 47421;
 
     private static final String mErrText = "Here is an error";
+
+    protected JacksonSerializer mSerializer;
 
     public void testPrimitive() {
         mSerializer = (JacksonSerializer) JacksonSerializer.getInstance();

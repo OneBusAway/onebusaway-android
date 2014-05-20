@@ -17,6 +17,8 @@ package com.joulespersecond.oba.mock;
 
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.ObaConnectionFactory;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
 
 import android.content.Context;
 
@@ -26,12 +28,40 @@ public class ObaMock {
 
     private final ObaConnectionFactory mOldFactory;
 
+    private ObaRegion mOldRegion = null;
+
+    private String mOldCustomApiUrl = null;
+
     public ObaMock(Context context) {
         mMockFactory = new MockConnectionFactory(context);
         mOldFactory = ObaApi.getDefaultContext().setConnectionFactory(mMockFactory);
+
+        // Save the current region or custom API URL
+        if (Application.get().getCurrentRegion() != null) {
+            mOldRegion = Application.get().getCurrentRegion();
+        } else {
+            mOldCustomApiUrl = Application.get().getCustomApiUrl();
+        }
     }
 
     public void finish() {
         ObaApi.getDefaultContext().setConnectionFactory(mOldFactory);
+
+        /*
+         * Restore the previous region or custom API URL
+         */
+        if (mOldRegion == null && mOldCustomApiUrl == null) {
+            // Both were previously blank (e.g., on build server), so clear both
+            Application.get().setCustomApiUrl(null);
+            Application.get().setCurrentRegion(null);
+            return;
+        }
+
+        // A region or a custom API was previously saved
+        if (mOldRegion != null) {
+            Application.get().setCurrentRegion(mOldRegion);
+        } else {
+            Application.get().setCustomApiUrl(mOldCustomApiUrl);
+        }
     }
 }

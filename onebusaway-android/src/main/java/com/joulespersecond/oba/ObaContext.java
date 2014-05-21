@@ -91,43 +91,43 @@ public class ObaContext {
         // If there is a custom preference, then use that.
         String serverName = Application.get().getCustomApiUrl();
 
-        if (!TextUtils.isEmpty(serverName)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
-            }
-            // Since the user-entered serverName might contain a partial path, we need to parse it
-            Uri userEntered;
-            try {
-                // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
-                URL url = new URL(serverName);
-            } catch (MalformedURLException e) {
-                // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                serverName = "http://" + serverName;
+        if (!TextUtils.isEmpty(serverName) || mRegion != null) {
+            Uri baseUrl = null;
+            if (!TextUtils.isEmpty(serverName)) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
+                }
+
+                try {
+                    // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+                    URL url = new URL(serverName);
+                } catch (MalformedURLException e) {
+                    // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+                    serverName = "http://" + serverName;
+                }
+
+                baseUrl = Uri.parse(serverName);
+            } else if (mRegion != null) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
+                }
+
+                baseUrl = Uri.parse(mRegion.getObaBaseUrl());
             }
 
-            userEntered = Uri.parse(serverName);
-
-            // Copy partial path that the user entered
+            // Copy partial path (if one exists) from the base URL
             Uri.Builder path = new Uri.Builder();
-            path.encodedPath(userEntered.getEncodedPath());
+            path.encodedPath(baseUrl.getEncodedPath());
 
             // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
             path.appendEncodedPath(builder.build().getPath());
 
             // Finally, overwrite builder that was passed in with the full URL
-            builder.scheme(userEntered.getScheme());
-            builder.encodedAuthority(userEntered.getEncodedAuthority());
+            builder.scheme(baseUrl.getScheme());
+            builder.encodedAuthority(baseUrl.getEncodedAuthority());
             builder.encodedPath(path.build().getEncodedPath());
-        } else if (mRegion != null) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
-            }
-            Uri base = Uri.parse(mRegion.getObaBaseUrl() + builder.build().getPath());
-            builder.scheme(base.getScheme());
-            builder.authority(base.getAuthority());
-            builder.encodedPath(base.getEncodedPath());
         } else {
-            String fallBack = "api.onebusaway.org";
+            String fallBack = "api.pugetsound.onebusaway.org";
             Log.e(TAG, "Accessing default fallback '" + fallBack + "' ...this is wrong!!");
             // Current fallback for existing users?
             builder.scheme("http");

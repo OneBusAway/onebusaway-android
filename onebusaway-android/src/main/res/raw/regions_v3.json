@@ -290,6 +290,56 @@
         "id": 4, 
         "experimental": true, 
         "regionName": "Washington, D.C. (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_CA", 
+        "twitterUrl": "https://mobile.twitter.com/YRTViva", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 44.0248945, 
+            "latSpan": 0.6089630000000028, 
+            "lon": -79.43752, 
+            "lonSpan": 0.49329600000000084
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "transitinfo@york.ca", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/198178906967045", 
+        "obaBaseUrl": "http://oba.yrt.ca/", 
+        "id": 5, 
+        "experimental": true, 
+        "regionName": "York (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "https://mobile.twitter.com/CalParking", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 37.8917275, 
+            "latSpan": 0.0492929999999987, 
+            "lon": -122.28957750000001, 
+            "lonSpan": 0.10181500000000199
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "bear-transit@v-a.io", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "https://www.facebook.com/pages/Bear-Transit/109669175726418", 
+        "obaBaseUrl": "http://bt.v-a.io/onebusaway/", 
+        "id": 6, 
+        "experimental": true, 
+        "regionName": "Bear Transit (beta)"
       }
     ]
   }

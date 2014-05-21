@@ -20,13 +20,6 @@ public class MockRegion {
 
     private static final int ATLANTA_REGION_ID = 3;
 
-    // Test regions
-    private static final int NO_PATH_SEPARATOR_REGION_ID = 0;
-
-    private static final int PORT_AND_PATH_REGION_ID = 1;
-
-    private static final int PORT_REGION_ID = 2;
-
     public static ObaRegion getTampa(Context context) {
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
         for (ObaRegion r : regions) {

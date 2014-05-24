@@ -15,10 +15,13 @@
  */
 package com.joulespersecond.oba.request.test;
 
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRouteSchedule;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.mock.MockRegion;
 import com.joulespersecond.oba.request.ObaScheduleForStopRequest;
 import com.joulespersecond.oba.request.ObaScheduleForStopResponse;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.test.UriAssert;
 
 import android.text.format.Time;
@@ -31,16 +34,29 @@ public class ScheduleForStopTest extends ObaTestCase {
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testKCMStopRequest() {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        callKCMStopRequest();
+
+        // Test by setting region
+        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        assertNotNull(ps);
+        Application.get().setCurrentRegion(ps);
+        callKCMStopRequest();
+    }
+
+    private void callKCMStopRequest() {
         ObaScheduleForStopRequest request =
                 new ObaScheduleForStopRequest.Builder(getContext(), "1_75403")
                         .build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/schedule-for-stop/1_75403.json",
+                "http://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
                     put("key", "*");
                     put("version", "2");
                 }},
-                request);
+                request
+        );
     }
 
     public void testKCMStop() {
@@ -65,6 +81,18 @@ public class ScheduleForStopTest extends ObaTestCase {
     // TODO - fix this test in context of regions and loading multiple URLs
     // Currently mixes Tampa URL with KCM data
     public void testKCMStopRequestWithDate() {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        callKCMStopRequestWithDate();
+
+        // Test by setting region
+        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        assertNotNull(ps);
+        Application.get().setCurrentRegion(ps);
+        callKCMStopRequestWithDate();
+    }
+
+    private void callKCMStopRequestWithDate() {
         Time time = new Time();
         time.year = 2012;
         time.month = 6;
@@ -74,13 +102,14 @@ public class ScheduleForStopTest extends ObaTestCase {
                         .setDate(time)
                         .build();
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/schedule-for-stop/1_75403.json",
+                "http://api.pugetsound.onebusaway.org/api/where/schedule-for-stop/1_75403.json",
                 new HashMap<String, String>() {{
                     put("date", "2012-07-30");
                     put("key", "*");
                     put("version", "2");
                 }},
-                request);
+                request
+        );
     }
 
     public void testKCMStopResponseWithDate() throws Exception {

@@ -354,7 +354,7 @@ public class RegionUtils {
         return results;
     }
 
-    private static ArrayList<ObaRegion> getRegionsFromProvider(Context context) {
+    public static ArrayList<ObaRegion> getRegionsFromProvider(Context context) {
         // Prefetch the bounds to limit the number of DB calls.
         HashMap<Long, ArrayList<ObaRegionElement.Bounds>> allBounds = getBoundsFromProvider(
                 context);
@@ -491,7 +491,7 @@ public class RegionUtils {
      *
      * @return list of regions retrieved from the regions file in app resources
      */
-    private static ArrayList<ObaRegion> getRegionsFromResources(Context context) {
+    public static ArrayList<ObaRegion> getRegionsFromResources(Context context) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(ContentResolver.SCHEME_ANDROID_RESOURCE);
         builder.authority(context.getPackageName());
@@ -503,7 +503,7 @@ public class RegionUtils {
     //
     // Saving
     //
-    private synchronized static void saveToProvider(Context context, ArrayList<ObaRegion> regions) {
+    public synchronized static void saveToProvider(Context context, ArrayList<ObaRegion> regions) {
         // Delete all the existing regions
         ContentResolver cr = context.getContentResolver();
         cr.delete(Regions.CONTENT_URI, null, null);

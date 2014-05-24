@@ -18,6 +18,7 @@ package com.joulespersecond.oba.request.test;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.mock.ObaMock;
 import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.seattlebusbot.Application;
 
 import android.test.AndroidTestCase;
 
@@ -25,18 +26,25 @@ public class ObaTestCase extends AndroidTestCase {
 
     private ObaMock mMock;
 
+    public static void assertOK(ObaResponse response) {
+        assertNotNull(response);
+        assertEquals(ObaApi.OBA_OK, response.getCode());
+    }
+
     @Override
     protected void setUp() {
         mMock = new ObaMock(getContext());
+
+        /*
+         * Assume Puget Sound API, mainly for backwards compatibility with older tests
+         * that were written before multi-region functionality. This is overwritten in some
+         * subclasses so multiple regions / APIs can be tested.
+         */
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
     }
 
     @Override
     protected void tearDown() {
         mMock.finish();
-    }
-
-    public static void assertOK(ObaResponse response) {
-        assertNotNull(response);
-        assertEquals(ObaApi.OBA_OK, response.getCode());
     }
 }

@@ -17,11 +17,14 @@ package com.joulespersecond.oba.request.test;
 
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.mock.MockRegion;
 import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.test.UriAssert;
 
 import java.util.HashMap;
@@ -29,18 +32,50 @@ import java.util.List;
 
 @SuppressWarnings("serial")
 public class ArrivalInfoRequestTest extends ObaTestCase {
-    // TODO - fix this test in context of regions and loading multiple URLs
-//    public void testKCMStopRequest() {
-//        ObaArrivalInfoRequest.Builder builder =
-//                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
-//        ObaArrivalInfoRequest request = builder.build();
-//        UriAssert.assertUriMatch(
-//                "http://api.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
-//                new HashMap<String, String>() {{ put("key", "*"); put("version", "2"); }},
-//                request);
-//    }
 
-    public void testHARTStopRequest() {
+    public void testKCMStopRequestUsingCustomUrl() {
+        // Test by setting URL directly
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        _assertKCMStopRequest();
+    }
+
+    public void testKCMStopRequestUsingRegion() {
+        // Test by setting region
+        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        assertNotNull(ps);
+        Application.get().setCurrentRegion(ps);
+        _assertKCMStopRequest();
+    }
+
+    private void _assertKCMStopRequest() {
+        ObaArrivalInfoRequest.Builder builder =
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261");
+        ObaArrivalInfoRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_29261.json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
+    public void testHARTStopRequestUsingCustomUrl() {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
+        _assertHARTStopRequest();
+    }
+
+    public void testHARTStopRequestUsingRegion() {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        _assertHARTStopRequest();
+    }
+
+    private void _assertHARTStopRequest() {
         ObaArrivalInfoRequest.Builder builder =
                 new ObaArrivalInfoRequest.Builder(getContext(),
                         "Hillsborough Area Regional Transit_3105");
@@ -51,31 +86,59 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
                     put("key", "*");
                     put("version", "2");
                 }},
-                request);
+                request
+        );
     }
 
-    // TODO - fix this test in context of regions and loading multiple URLs
-//    public void testKCMStopResponse() throws Exception {
-//        ObaArrivalInfoResponse response =
-//                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
-//        assertOK(response);
-//        ObaStop stop = response.getStop();
-//        assertNotNull(stop);
-//        assertEquals("1_29261", stop.getId());
-//        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
-//        assertTrue(routes.size() > 0);
-//        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
-//        assertEquals("1", agency.getId());
-//
-//        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
-//        // Uhh, this will vary considerably depending on when this is run.
-//        assertNotNull(arrivals);
-//
-//        final List<ObaStop> nearbyStops = response.getNearbyStops();
-//        assertTrue(nearbyStops.size() > 0);
-//    }
+    public void testKCMStopResponseUsingCustomUrl() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        _assertKCMStopResponse();
+    }
 
-    public void testHARTStopResponse() throws Exception {
+    public void testKCMStopResponseUsingRegion() throws Exception {
+        // Test by setting region
+        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        assertNotNull(ps);
+        Application.get().setCurrentRegion(ps);
+        _assertKCMStopResponse();
+    }
+
+    private void _assertKCMStopResponse() {
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "1_29261").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("1_29261", stop.getId());
+        final List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("1", agency.getId());
+
+        final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        // Uhh, this will vary considerably depending on when this is run.
+        assertNotNull(arrivals);
+
+        final List<ObaStop> nearbyStops = response.getNearbyStops();
+        assertTrue(nearbyStops.size() > 0);
+    }
+
+    public void testHARTStopResponseUsingCustomUrl() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
+        _assertHARTStopResponse();
+    }
+
+    public void testHARTStopResponseUsingRegion() throws Exception {
+        // Test by setting region
+        ObaRegion tampa = MockRegion.getTampa(getContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+        _assertHARTStopResponse();
+    }
+
+    private void _assertHARTStopResponse() {
         ObaArrivalInfoResponse response =
                 new ObaArrivalInfoRequest.Builder(getContext(),
                         "Hillsborough Area Regional Transit_3105").build().call();
@@ -96,19 +159,32 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(nearbyStops.size() > 0);
     }
 
-    // TODO - fix this test in context of regions and loading multiple URLs
-    // Currently mixes Tampa URL with KCM data
-    public void testNewRequest() throws Exception {
+    public void testNewRequestUsingCustomUrl() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        _assertNewRequest();
+    }
+
+    public void testNewRequestUsingRegion() throws Exception {
+        // Test by setting region
+        ObaRegion ps = MockRegion.getPugetSound(getContext());
+        assertNotNull(ps);
+        Application.get().setCurrentRegion(ps);
+        _assertNewRequest();
+    }
+
+    private void _assertNewRequest() {
         // This is just to make sure we copy and call newRequest() at least once
         ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(getContext(), "1_10");
         assertNotNull(request);
         UriAssert.assertUriMatch(
-                "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/1_10.json",
+                "http://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/1_10.json",
                 new HashMap<String, String>() {{
                     put("key", "*");
                     put("version", "2");
                 }},
-                request);
+                request
+        );
     }
 
     // TODO: get/create situation response (not much of a test, otherwise)

@@ -99,7 +99,8 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * Gets the date at which the region information was last updated, in the number of milliseconds
+     * Gets the date at which the region information was last updated, in the number of
+     * milliseconds
      * since January 1, 1970, 00:00:00 GMT
      * Default value is 0 if the region info has never been updated.
      *
@@ -124,7 +125,8 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or null
+     * Returns the custom URL if the user has set a custom API URL manually via Preferences, or
+     * null
      * if it has not been set
      *
      * @return the custom URL if the user has set a custom API URL manually via Preferences, or null
@@ -136,12 +138,13 @@ public class Application extends android.app.Application {
     }
 
     /**
-     * Sets the custom URL used to reach a OBA REST API server that is not available via the Regions
+     * Sets the custom URL used to reach a OBA REST API server that is not available via the
+     * Regions
      * REST API
      *
      * @param url the custom URL
      */
-    private void setCustomApiUrl(String url) {
+    public void setCustomApiUrl(String url) {
         PreferenceHelp.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 

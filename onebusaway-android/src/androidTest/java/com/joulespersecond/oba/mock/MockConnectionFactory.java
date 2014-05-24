@@ -31,7 +31,34 @@ public class MockConnectionFactory implements ObaConnectionFactory {
 
     private final Context mContext;
 
+    private final UriMap mUriMap;
+
+    public MockConnectionFactory(Context context) {
+        mContext = context;
+        try {
+            mUriMap = Resources.readAs(mContext, Resources.getTestUri("urimap"), UriMap.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Unable to read urimap: " + e);
+        }
+    }
+
+    @Override
+    public ObaConnection newConnection(Uri uri) throws IOException {
+        return new MockConnection(mContext, mUriMap, uri);
+    }
+
     public static class UriMap {
+
+        //
+        // Normalize request URI.
+        // This removes the scheme, host and port,
+        // It removes any query parameters we know don't matter to the request
+        // like the version, API key and so forth.
+        // Then sort the remaining query parameters.
+        //
+        private static final List<String> PARAMS_LIST =
+                Arrays.asList("version", "key", "app_ver", "app_uid");
 
         private HashMap<String, String> uris;
 
@@ -48,16 +75,6 @@ public class MockConnectionFactory implements ObaConnectionFactory {
             return result;
         }
 
-        //
-        // Normalize request URI.
-        // This removes the scheme, host and port,
-        // It removes any query parameters we know don't matter to the request
-        // like the version, API key and so forth.
-        // Then sort the remaining query parameters.
-        //
-        private static final List<String> PARAMS_LIST =
-                Arrays.asList("version", "key", "app_ver", "app_uid");
-
         private String normalizeUri(Uri uri) {
             Uri.Builder builder = new Uri.Builder()
                     .encodedPath(uri.getEncodedPath());
@@ -71,22 +88,5 @@ public class MockConnectionFactory implements ObaConnectionFactory {
 
             return builder.build().toString();
         }
-    }
-
-    private final UriMap mUriMap;
-
-    public MockConnectionFactory(Context context) {
-        mContext = context;
-        try {
-            mUriMap = Resources.readAs(mContext, Resources.getTestUri("urimap"), UriMap.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Unable to read urimap: " + e);
-        }
-    }
-
-    @Override
-    public ObaConnection newConnection(Uri uri) throws IOException {
-        return new MockConnection(mContext, mUriMap, uri);
     }
 }

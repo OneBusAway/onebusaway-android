@@ -28,37 +28,6 @@ import java.util.concurrent.Callable;
 
 public class FailTest extends ObaTestCase {
 
-    //
-    // We can create our own test request that points to an invalid path.
-    //
-    private static class BadResponse extends ObaResponse {
-
-    }
-
-    private static class BadRequest extends RequestBase
-            implements Callable<BadResponse> {
-
-        protected BadRequest(Uri uri) {
-            super(uri);
-        }
-
-        static class Builder extends RequestBase.BuilderBase {
-
-            public Builder(Context context, String path) {
-                super(context, BASE_PATH + path);
-            }
-
-            public BadRequest build() {
-                return new BadRequest(buildUri());
-            }
-        }
-
-        @Override
-        public BadResponse call() {
-            return call(BadResponse.class);
-        }
-    }
-
     public void test404_1() {
         ObaStopResponse response = ObaStopRequest.newRequest(getContext(), "404test").call();
         assertNotNull(response);
@@ -79,6 +48,37 @@ public class FailTest extends ObaTestCase {
                 new BadRequest.Builder(getContext(), "/stop/1_29261.xml").build().call();
         assertNotNull(response);
         assertEquals(ObaApi.OBA_INTERNAL_ERROR, response.getCode());
+    }
+
+    //
+    // We can create our own test request that points to an invalid path.
+    //
+    private static class BadResponse extends ObaResponse {
+
+    }
+
+    private static class BadRequest extends RequestBase
+            implements Callable<BadResponse> {
+
+        protected BadRequest(Uri uri) {
+            super(uri);
+        }
+
+        @Override
+        public BadResponse call() {
+            return call(BadResponse.class);
+        }
+
+        static class Builder extends RequestBase.BuilderBase {
+
+            public Builder(Context context, String path) {
+                super(context, BASE_PATH + path);
+            }
+
+            public BadRequest build() {
+                return new BadRequest(buildUri());
+            }
+        }
     }
 
 }

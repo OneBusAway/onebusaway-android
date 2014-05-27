@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Used for Travis CI
+# Used for Travis CI
 
 bootanim=""
 failcounter=0

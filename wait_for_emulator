@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Used for Travis CI
-
 bootanim=""
 failcounter=0
 until [[ "$bootanim" =~ "stopped" ]]; do

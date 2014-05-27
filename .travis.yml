@@ -1,9 +1,10 @@
 language: android
 jdk: oraclejdk7
 env:
-  - ANDROID_API_LEVEL=17
-  - ANDROID_TARGET="Google Inc.:Google APIs:"$ANDROID_API_LEVEL
-  - ANDROID_ABI=armeabi-v7a
+  global:
+    - ANDROID_API_LEVEL=17
+    - ANDROID_TARGET="Google Inc.:Google APIs:"$ANDROID_API_LEVEL
+    - ANDROID_ABI=armeabi-v7a
 
 android:
   components:

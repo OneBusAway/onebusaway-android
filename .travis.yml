@@ -3,7 +3,6 @@ jdk: oraclejdk7
 env:
   global:
     - ANDROID_API_LEVEL=19
-    - ANDROID_ABI=x86
 
 android:
   components:
@@ -13,8 +12,8 @@ android:
 
 before_script:
   # Create and start emulator
-  - echo no | android create avd --force -n test -t "Google Inc.:Google APIs (x86 System Image):"$ANDROID_API_LEVEL --abi $ANDROID_ABI
-  - emulator64 -avd test -no-skin -no-audio -no-window &
+  - echo no | android create avd --force -n test -t "Google Inc.:Google APIs (x86 System Image):"$ANDROID_API_LEVEL
+  - emulator -avd test -no-skin -no-audio -no-window &
 
 script:
   - ./wait_for_emulator

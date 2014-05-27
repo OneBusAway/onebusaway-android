@@ -1,11 +1,22 @@
 language: android
 jdk: oraclejdk7
+env:
+  - ANDROID_API_LEVEL=17
+  - ANDROID_TARGET="Google Inc.:Google APIs:"$ANDROID_API_LEVEL
+  - ANDROID_ABI=armeabi-v7a
 
 android:
   components:
     - build-tools-19.0.3
     # For Google Maps API v1
-    - addon-google_apis-google-17
+    - addon-google_apis-google-$ANDROID_API_LEVEL
+
+before_script:
+  # Create and start emulator
+  - echo no | android create avd --force -n test -t "$ANDROID_TARGET" --abi $ANDROID_ABI
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - adb wait-for-device
+  - adb shell input keyevent 82 &
 
 script:
-    - ./gradlew assembleDebug -PdisablePreDex
+    - ./gradlew connectedCheck -PdisablePreDex

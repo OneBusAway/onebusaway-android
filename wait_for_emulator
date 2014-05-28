@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Waits for emulator to completely boot to lock screen
+# Used to run tests on Travis CI (#137)
+# Recommended by Travis docs - http://docs.travis-ci.com/user/languages/android/#How-to-Create-and-Start-an-Emulator
+# Source (under Apache 2.0) - https://github.com/andrewhr/rxjava-android-example/blob/master/ci/wait_for_emulator
+
+bootanim=""
+failcounter=0
+until [[ "$bootanim" =~ "stopped" ]]; do
+   bootanim=`adb -e shell getprop init.svc.bootanim 2>&1`
+   echo "$bootanim"
+   if [[ "$bootanim" =~ "not found" ]]; then
+      let "failcounter += 1"
+      if [[ $failcounter -gt 3 ]]; then
+        echo "Failed to start emulator"
+        exit 1
+      fi
+   fi
+   sleep 1
+done
+echo "Done"

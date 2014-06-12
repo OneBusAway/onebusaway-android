@@ -7,7 +7,7 @@ env:
 
 android:
   components:
-    - build-tools-19.0.3
+    - build-tools-19.1.0
     # For Google Maps API v1
     - addon-google_apis-google-$ANDROID_API_LEVEL
 

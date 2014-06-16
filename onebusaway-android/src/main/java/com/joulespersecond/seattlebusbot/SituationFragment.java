@@ -72,4 +72,11 @@ public class SituationFragment extends SherlockFragment {
         TextView desc = (TextView) view.findViewById(R.id.alert_description);
         desc.setText(args.getString(DESCRIPTION));
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().reportScreenView(this);
+    }
 }

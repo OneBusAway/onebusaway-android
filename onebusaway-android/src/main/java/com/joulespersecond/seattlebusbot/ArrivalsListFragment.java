@@ -246,6 +246,7 @@ public class ArrivalsListFragment extends ListFragment
                     getArrivalsLoader().getLastGoodResponse();
             if (lastGood != null) {
                 // Refresh error
+                Application.getAnalytics().reportEvent("error", "network", "Refresh error");
                 Toast.makeText(getActivity(),
                         R.string.generic_comm_error_toast,
                         Toast.LENGTH_LONG).show();
@@ -338,6 +339,8 @@ public class ArrivalsListFragment extends ListFragment
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Show stop on map");
+
             if (mStop != null) {
                 HomeActivity.start(getActivity(),
                         mStop.getId(),
@@ -346,18 +349,35 @@ public class ArrivalsListFragment extends ListFragment
             }
             return true;
         } else if (id == R.id.refresh) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press",
+                    "Refresh stop arrivals");
+
             refresh();
             return true;
         } else if (id == R.id.filter) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Filter routes");
+
             if (mStop != null) {
                 showRoutesFilterDialog();
             }
         } else if (id == R.id.edit_name) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Edit stop name");
+
             mHeader.beginNameEdit(null);
         } else if (id == R.id.toggle_favorite) {
+            if(mFavorite) {
+                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                        "Remove bookmark");
+            } else {
+                Application.getAnalytics().reportEvent("ui_action", "button_press", "Add bookmark");
+            }
+
             setFavorite(!mFavorite);
             mHeader.refresh();
         } else if (id == R.id.report_problem) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press",
+                    "Report stop problem");
+
             if (mStop != null) {
                 ReportStopProblemFragment.show(getSherlockActivity(), mStop);
             }
@@ -371,6 +391,9 @@ public class ArrivalsListFragment extends ListFragment
         if (stop == null) {
             return;
         }
+
+        Application.getAnalytics().reportEvent("ui_action", "button_press", "Route");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.stop_info_item_options_title);
 
@@ -397,17 +420,34 @@ public class ArrivalsListFragment extends ListFragment
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Set a reminder");
+
                     goToTrip(stop);
                 } else if (which == 1) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Show route information");
+
                     goToRoute(stop);
                 } else if (which == 2) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Show only this route");
+
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(stop.getInfo().getRouteId());
                     setRoutesFilter(routes);
                     mHeader.refresh();
                 } else if (hasUrl && which == 3) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Route schedule");
+                    Application.getAnalytics().reportEvent("ui_action", "app_switch",
+                            "Loaded route schedule via Web");
+
                     UIHelp.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Report route/trip problem");
+
                     ReportTripProblemFragment.show(getSherlockActivity(), stop.getInfo());
                 }
             }
@@ -663,6 +703,8 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     private void loadMoreArrivals() {
+        Application.getAnalytics().reportEvent("ui_action", "button_press", "Load more arrivals");
+
         getArrivalsLoader().incrementMinutesAfter();
         mLoadedMoreArrivals = true;
         refresh();

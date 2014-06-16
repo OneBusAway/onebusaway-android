@@ -144,6 +144,15 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
             }
             ft.commit();
         }
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
     }
 
     @Override

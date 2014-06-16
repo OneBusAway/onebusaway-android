@@ -62,6 +62,20 @@ public class MyStopsActivity extends MyTabActivityBase {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
+
+    @Override
     protected String getLastTabPref() {
         return "MyStopsActivity.LastTab";
     }

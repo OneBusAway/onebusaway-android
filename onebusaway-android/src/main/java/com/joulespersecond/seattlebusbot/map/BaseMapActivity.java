@@ -222,9 +222,14 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "My Location");
+
             setMyLocation();
             return true;
         } else if (id == R.id.search) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Search");
+            Application.getAnalytics().reportEvent("ui_action", "textbox_select", "Search");
+
             onSearchRequested();
             return true;
         }
@@ -510,6 +515,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     @SuppressWarnings("deprecation")
     private Dialog createNoLocationDialog() {
+        Application.getAnalytics().reportEvent("ui_action", "show_dialog", "Location not enabled");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_nolocation_title);
         builder.setIcon(android.R.drawable.ic_dialog_map);
@@ -539,6 +546,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @SuppressWarnings("deprecation")
     private Dialog createOutOfRangeDialog() {
+        Application.getAnalytics().reportEvent("ui_action", "show_dialog", "Out of range");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.main_outofrange_title)
                 .setIcon(android.R.drawable.ic_dialog_map)

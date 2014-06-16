@@ -38,6 +38,20 @@ public class SearchActivity extends SherlockFragmentActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
+
+    @Override
     public void onNewIntent(Intent intent) {
         handleIntent(intent);
     }

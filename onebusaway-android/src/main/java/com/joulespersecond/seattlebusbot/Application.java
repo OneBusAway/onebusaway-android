@@ -44,10 +44,14 @@ public class Application extends android.app.Application {
 
     private static Application mApp;
 
+    private static Analytics analytics;
+
     @Override
     public void onCreate() {
         super.onCreate();
         //ExceptionHandler.register(this, BUG_REPORT_URL);
+
+        analytics = new Analytics(this);
 
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -57,6 +61,22 @@ public class Application extends android.app.Application {
 
         initOba();
         initObaRegion();
+
+        if(get().getCustomApiUrl() == null || get().getCustomApiUrl() == ""){
+            getAnalytics().reportEvent("app_settings", "configured_region",
+                    "API Region: " + get().getCurrentRegion().getName());
+        }else{
+            Application.getAnalytics().reportEvent("app_settings", "configured_region",
+                    "API Region: " + get().getCustomApiUrl());
+        }
+        /*Application.getAnalytics().reportEvent("app_settings", "general",
+                "Set Region Automatically: " +  Application.getPrefs()
+                        .getBoolean(getString(R.string.preference_key_auto_select_region), false)
+                        ? "YES" : "NO");
+        Application.getAnalytics().reportEvent("app_settings", "general",
+                "Show Experimental Regions: " +  Application.getPrefs()
+                        .getBoolean(getString(R.string.preference_key_experimental_regions), false)
+                        ? "YES" : "NO");*/
     }
 
     @Override
@@ -74,6 +94,10 @@ public class Application extends android.app.Application {
 
     public static SharedPreferences getPrefs() {
         return get().mPrefs;
+    }
+
+    public static Analytics getAnalytics() {
+        return analytics;
     }
 
     //

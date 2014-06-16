@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <!-- <string name="ga_trackingId">UA-2423527-17</string> --> <!-- production tracking ID -->
+    <string name="ga_trackingId">UA-51315430-1</string> <!-- debug tracking ID -->
+
+    <string name="ga_dispatchPeriod">120</string> <!-- set to match iOS implementation -->
+    <bool name="ga_autoActivityTracking">false</bool> <!-- not supported on < Android 4.0 -->
+    <bool name="ga_reportUncaughtExceptions">true</bool>
+</resources>

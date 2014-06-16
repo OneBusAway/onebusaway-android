@@ -33,7 +33,7 @@ android {
     buildToolsVersion "19.1.0"
 
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 9
         targetSdkVersion 17
     }
 
@@ -104,4 +104,5 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
     compile 'commons-io:commons-io:2.4'
+    compile 'com.google.android.gms:play-services:4.4.52'
 }

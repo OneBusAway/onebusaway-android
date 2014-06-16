@@ -66,9 +66,18 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     }
 
     @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         changePreferenceSummary(getString(R.string.preference_key_region));
+
+        Application.getAnalytics().activityStart(this);
     }
 
     /**
@@ -151,6 +160,8 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 Log.d(TAG,
                         "Experimental regions shared preference changed to " + experimentalServers);
             }
+            Application.getAnalytics().reportEvent("ui_action", "set_region",
+                    "Set region automatically: " + experimentalServers);
 
             /*
             Force a refresh of the regions list, but don't using blocking progress dialog

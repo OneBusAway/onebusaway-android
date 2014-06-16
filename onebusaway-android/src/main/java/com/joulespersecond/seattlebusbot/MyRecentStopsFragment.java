@@ -81,6 +81,9 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_recent) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press",
+                    "Clear recent stops");
+
             new ClearDialog()
                     .show(getActivity().getSupportFragmentManager(), "confirm_clear_recent_stops");
             return true;

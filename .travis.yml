@@ -7,14 +7,15 @@ env:
 
 android:
   components:
+    - platform-tools
     - build-tools-19.1.0
-    # For Google Maps API v1
+    - android-$ANDROID_API_LEVEL
+    - sysimg-$ANDROID_API_LEVEL
     - addon-google_apis-google-$ANDROID_API_LEVEL
-    # For Google Analytics
-    - extra-android-support
-    - extra-google-m2repository
     - extra-android-m2repository
+    - extra-android-support
     - extra-google-google_play_services
+    - extra-google-m2repository
 
 before_script:
   # Create and start emulator

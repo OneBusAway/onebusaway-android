@@ -12,6 +12,8 @@ android:
     - addon-google_apis-google-$ANDROID_API_LEVEL
     # For Google Analytics
     - extra-android-support
+    - extra-google-m2repository
+    - extra-android-m2repository
     - extra-google-google_play_services
 
 before_script:

@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.google.android.maps.GeoPoint;
+import android.location.Location;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ public interface ObaShape {
      *
      * @return The list of points in this line.
      */
-    public List<GeoPoint> getPoints();
+    public List<Location> getPoints();
 
     /**
      * Returns the string encoding of the points in this line.

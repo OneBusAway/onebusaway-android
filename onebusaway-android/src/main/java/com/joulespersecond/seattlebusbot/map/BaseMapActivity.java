@@ -27,7 +27,6 @@ import com.google.android.maps.OverlayItem;
 
 import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -571,7 +570,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             double results[] = new double[4];
             RegionUtils.getRegionSpan(region, results);
             MapController ctrl = mMapView.getController();
-            ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
+            ctrl.setCenter(MapHelp.makeGeoPoint(results[2], results[3]));
             ctrl.zoomToSpan((int) (results[0] * 1E6), (int) (results[1] * 1E6));
         } else {
             // If we don't have a region, then prompt to select a region.

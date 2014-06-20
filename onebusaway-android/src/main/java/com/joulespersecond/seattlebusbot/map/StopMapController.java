@@ -26,7 +26,7 @@ import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.UIHelp;
+import com.joulespersecond.seattlebusbot.LocationHelp;
 
 import android.location.Location;
 import android.os.Bundle;
@@ -166,7 +166,7 @@ class StopMapController implements MapModeController,
             double lat = args.getDouble(MapParams.CENTER_LAT);
             double lon = args.getDouble(MapParams.CENTER_LON);
             if (lat != 0.0 && lon != 0.0) {
-                center = ObaApi.makeGeoPoint(lat, lon);
+                center = MapHelp.makeGeoPoint(lat, lon);
             }
             MapController mapCtrl = mFragment.getMapView().getController();
             mapCtrl.setZoom(mapZoom);
@@ -248,7 +248,7 @@ class StopMapController implements MapModeController,
         //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
-        Location myLocation = UIHelp.getLocation2(mFragment.getActivity());
+        Location myLocation = LocationHelp.getLocation2(mFragment.getActivity());
         if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {
@@ -341,7 +341,8 @@ class StopMapController implements MapModeController,
             }
             //Make OBA REST API call to the server and return result
             ObaStopsForLocationResponse response =
-                    new ObaStopsForLocationRequest.Builder(getContext(), req.getCenter())
+                    new ObaStopsForLocationRequest.Builder(getContext(),
+                            MapHelp.makeLocation(req.getCenter()))
                             .setSpan(req.getLatSpan(), req.getLonSpan())
                             .build()
                             .call();

@@ -61,7 +61,7 @@ public class RegionsFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
-        mLocation = UIHelp.getLocation2(getActivity());
+        mLocation = LocationHelp.getLocation2(getActivity());
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();

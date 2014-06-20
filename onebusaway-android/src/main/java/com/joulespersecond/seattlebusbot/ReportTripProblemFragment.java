@@ -195,7 +195,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         }
 
         // Location / Location accuracy
-        Location location = UIHelp.getLocation2(getActivity());
+        Location location = LocationHelp.getLocation2(getActivity());
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {

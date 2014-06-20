@@ -15,9 +15,8 @@
  */
 package com.joulespersecond.oba.request;
 
-import com.google.android.maps.GeoPoint;
-
 import android.content.Context;
+import android.location.Location;
 import android.net.Uri;
 
 import java.util.concurrent.Callable;
@@ -37,10 +36,10 @@ public final class ObaStopsForLocationRequest extends RequestBase
 
     public static class Builder extends RequestBase.BuilderBase {
 
-        public Builder(Context context, GeoPoint location) {
+        public Builder(Context context, Location location) {
             super(context, BASE_PATH + "/stops-for-location.json");
-            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitudeE6() / 1E6));
-            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitudeE6() / 1E6));
+            mBuilder.appendQueryParameter("lat", String.valueOf(location.getLatitude()));
+            mBuilder.appendQueryParameter("lon", String.valueOf(location.getLongitude()));
         }
 
         /**

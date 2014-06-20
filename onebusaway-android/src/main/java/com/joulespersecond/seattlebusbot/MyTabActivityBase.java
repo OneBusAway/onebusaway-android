@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
@@ -24,6 +22,7 @@ import com.actionbarsherlock.view.Window;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -38,7 +37,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
 
     protected boolean mShortcutMode;
 
-    protected GeoPoint mSearchCenter;
+    protected Location mSearchCenter;
 
     private String mDefaultTab;
 
@@ -116,7 +115,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
         return mShortcutMode;
     }
 
-    GeoPoint getSearchCenter() {
+    Location getSearchCenter() {
         return mSearchCenter;
     }
 
@@ -141,18 +140,18 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     //
     // Helper for getting the search center from the intent
     //
-    public static final Intent putSearchCenter(Intent intent, GeoPoint pt) {
+    public static final Intent putSearchCenter(Intent intent, Location pt) {
         if (pt != null) {
-            int[] p = {pt.getLatitudeE6(), pt.getLongitudeE6()};
+            double[] p = {pt.getLatitude(), pt.getLongitude()};
             intent.putExtra(EXTRA_SEARCHCENTER, p);
         }
         return intent;
     }
 
-    private static final GeoPoint getSearchCenter(Intent intent) {
-        int[] p = intent.getIntArrayExtra(EXTRA_SEARCHCENTER);
+    private static final Location getSearchCenter(Intent intent) {
+        double[] p = intent.getDoubleArrayExtra(EXTRA_SEARCHCENTER);
         if (p != null && p.length == 2) {
-            return new GeoPoint(p[0], p[1]);
+            return LocationHelp.makeLocation(p[0], p[1]);
         }
         return null;
     }

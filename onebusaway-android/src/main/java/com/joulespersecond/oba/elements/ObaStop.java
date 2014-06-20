@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.google.android.maps.GeoPoint;
+import android.location.Location;
 
 /**
  * Interface defining a Stop element.
@@ -45,9 +45,9 @@ public interface ObaStop extends ObaElement {
     /**
      * Returns the location of the stop.
      *
-     * @return The location of the stop, or null if it can't be converted to a GeoPoint.
+     * @return The location of the stop, or null if it can't be converted to a Location.
      */
-    public GeoPoint getLocation();
+    public Location getLocation();
 
     /**
      * Returns the latitude of the stop as a double.

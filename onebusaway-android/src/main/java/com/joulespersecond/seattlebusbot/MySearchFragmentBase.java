@@ -15,12 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.view.SearchView;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.LinkMovementMethod;
@@ -165,15 +164,15 @@ abstract class MySearchFragmentBase extends ListFragment
         return false;
     }
 
-    protected final GeoPoint getSearchCenter() {
+    protected final Location getSearchCenter() {
         Activity act = getActivity();
-        GeoPoint result = null;
+        Location result = null;
         if (act instanceof MyTabActivityBase) {
             MyTabActivityBase base = (MyTabActivityBase) act;
             result = base.getSearchCenter();
         }
         if (result == null) {
-            result = UIHelp.getLocation(act);
+            result = LocationHelp.getLocation(act);
         }
         return result;
     }

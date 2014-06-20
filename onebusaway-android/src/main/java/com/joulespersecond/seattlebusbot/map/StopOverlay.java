@@ -65,7 +65,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         private final ObaStop mStop;
 
         public StopOverlayItem(ObaStop stop) {
-            super(stop.getLocation(), stop.getName(), "");
+            super(MapHelp.makeGeoPoint(stop.getLocation()), stop.getName(), "");
             mStop = stop;
         }
 

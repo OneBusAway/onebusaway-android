@@ -15,10 +15,10 @@
  */
 package com.joulespersecond.oba.request;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaShapeElement;
+
+import android.location.Location;
 
 import java.util.List;
 
@@ -54,7 +54,7 @@ public final class ObaShapeResponse extends ObaResponse implements ObaShape {
     }
 
     @Override
-    public List<GeoPoint> getPoints() {
+    public List<Location> getPoints() {
         return data.entry.getPoints();
     }
 

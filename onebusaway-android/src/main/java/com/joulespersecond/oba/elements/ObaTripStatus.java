@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.google.android.maps.GeoPoint;
+import com.joulespersecond.seattlebusbot.LocationHelp;
 
-import com.joulespersecond.oba.ObaApi;
+import android.location.Location;
 
 public interface ObaTripStatus {
 
@@ -35,8 +35,8 @@ public interface ObaTripStatus {
             return lon;
         }
 
-        public GeoPoint getPoint() {
-            return ObaApi.makeGeoPoint(lat, lon);
+        public Location getLocation() {
+            return LocationHelp.makeLocation(lat, lon);
         }
     }
 
@@ -85,7 +85,7 @@ public interface ObaTripStatus {
      * If real-time arrival data is available, the position will take that into account,
      * otherwise the position reflects the scheduled position of the vehicle.
      */
-    public GeoPoint getPosition();
+    public Location getPosition();
 
     /**
      * @return The trip ID of the trip the vehicle is actively serving.
@@ -148,7 +148,7 @@ public interface ObaTripStatus {
      * This differs from the position, in that the position is potentially
      * extrapolated forward from the last known position and other data.
      */
-    public GeoPoint getLastKnownLocation();
+    public Location getLastKnownLocation();
 
     /**
      * @return The last known orientation value received in real-time from the transit vehicle.

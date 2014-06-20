@@ -15,7 +15,7 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.google.android.maps.GeoPoint;
+import android.location.Location;
 
 public final class ObaTripStatusElement implements ObaTripStatus {
 
@@ -115,8 +115,8 @@ public final class ObaTripStatusElement implements ObaTripStatus {
     }
 
     @Override
-    public GeoPoint getPosition() {
-        return (position != null) ? position.getPoint() : null;
+    public Location getPosition() {
+        return (position != null) ? position.getLocation() : null;
     }
 
     @Override
@@ -170,8 +170,8 @@ public final class ObaTripStatusElement implements ObaTripStatus {
     }
 
     @Override
-    public GeoPoint getLastKnownLocation() {
-        return (lastKnownLocation != null) ? lastKnownLocation.getPoint() : null;
+    public Location getLastKnownLocation() {
+        return (lastKnownLocation != null) ? lastKnownLocation.getLocation() : null;
     }
 
     @Override

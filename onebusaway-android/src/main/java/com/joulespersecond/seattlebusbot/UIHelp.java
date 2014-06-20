@@ -17,16 +17,12 @@
 
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.region.RegionUtils;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -36,8 +32,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Location;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -50,9 +44,6 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Iterator;
-import java.util.List;
 
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
@@ -310,48 +301,6 @@ public final class UIHelp {
             default:
                 return R.string.map_generic_error;
         }
-    }
-
-    public static GeoPoint getDefaultSearchCenter() {
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region != null) {
-            double results[] = new double[4];
-            RegionUtils.getRegionSpan(region, results);
-            return ObaApi.makeGeoPoint(results[2], results[3]);
-        } else {
-            return null;
-        }
-    }
-
-    public static final int DEFAULT_SEARCH_RADIUS = 15000;
-
-    // We need to provide the API for a location used to disambiguate
-    // stop IDs in case of collision, or to provide multiple results
-    // in the case multiple agencies. But we really don't need it to be very
-    // accurate.
-    public static GeoPoint getLocation(Context cxt) {
-        Location last = getLocation2(cxt);
-        if (last != null) {
-            return ObaApi.makeGeoPoint(last.getLatitude(), last.getLongitude());
-        } else {
-            return getDefaultSearchCenter();
-        }
-    }
-
-    public static Location getLocation2(Context cxt) {
-        LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mgr.getProviders(true);
-        Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
-            // If this provider has a last location, and either:
-            // 1. We don't have a last location,
-            // 2. Our last location is older than this location.
-            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
-                last = loc;
-            }
-        }
-        return last;
     }
 
     public static boolean isAirplaneMode(Context context) {

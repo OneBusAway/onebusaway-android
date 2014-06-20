@@ -40,6 +40,7 @@ import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -347,8 +348,12 @@ class RouteMapController implements MapModeController,
         }
 
         public void addLine(int color, ObaShape line) {
-            List<GeoPoint> points = line.getPoints();
-            mLines.add(new Line(color, points));
+            List<Location> points = line.getPoints();
+            List<GeoPoint> geoPoints = new ArrayList<GeoPoint>();
+            for (Location p : points) {
+                geoPoints.add(MapHelp.makeGeoPoint(p));
+            }
+            mLines.add(new Line(color, geoPoints));
             // TODO: Invalidate
         }
 

@@ -15,13 +15,13 @@
  */
 package com.joulespersecond.oba.request;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaReferencesElement;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.elements.ObaStopElement;
+
+import android.location.Location;
 
 import java.util.List;
 
@@ -63,7 +63,7 @@ public final class ObaStopResponse extends ObaResponseWithRefs implements ObaSto
     }
 
     @Override
-    public GeoPoint getLocation() {
+    public Location getLocation() {
         return data.entry.getLocation();
     }
 

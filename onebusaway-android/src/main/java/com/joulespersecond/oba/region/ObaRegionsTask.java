@@ -19,8 +19,8 @@ package com.joulespersecond.oba.region;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.LocationHelp;
 import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -136,7 +136,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
             //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
             //Or, use new Location Services from Google Play Services SDK
-            Location myLocation = UIHelp.getLocation2(mContext);
+            Location myLocation = LocationHelp.getLocation2(mContext);
 
             ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
 

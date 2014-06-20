@@ -15,14 +15,13 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -217,9 +216,9 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
         private final String mQueryText;
 
-        private final GeoPoint mCenter;
+        private final Location mCenter;
 
-        public MyLoader(Context context, String query, GeoPoint center) {
+        public MyLoader(Context context, String query, Location center) {
             super(context);
             mQueryText = query;
             mCenter = center;

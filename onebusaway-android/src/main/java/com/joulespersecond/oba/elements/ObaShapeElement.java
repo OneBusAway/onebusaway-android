@@ -15,7 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.google.android.maps.GeoPoint;
+import com.joulespersecond.seattlebusbot.LocationHelp;
+
+import android.location.Location;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +56,7 @@ public final class ObaShapeElement implements ObaShape {
     }
 
     @Override
-    public List<GeoPoint> getPoints() {
+    public List<Location> getPoints() {
         return decodeLine(points, length);
     }
 
@@ -75,9 +77,9 @@ public final class ObaShapeElement implements ObaShape {
      *                  of points that are contained in the encoded string.
      * @return A list of points from the encoded string.
      */
-    public static List<GeoPoint> decodeLine(String encoded, int numPoints) {
+    public static List<Location> decodeLine(String encoded, int numPoints) {
         assert (numPoints >= 0);
-        ArrayList<GeoPoint> array = new ArrayList<GeoPoint>(numPoints);
+        ArrayList<Location> array = new ArrayList<Location>(numPoints);
 
         final int len = encoded.length();
         int i = 0;
@@ -112,8 +114,8 @@ public final class ObaShapeElement implements ObaShape {
             final int dlon = ((result & 1) == 1 ? ~(result >> 1) : (result >> 1));
             lon += dlon;
 
-            // The polyline encodes in degrees * 1E5, we need degrees * 1E6
-            array.add(new GeoPoint(lat * 10, lon * 10));
+            // The polyline encodes in degrees * 1E5, we need decimal degrees
+            array.add(LocationHelp.makeLocation(lat / 1E5, lon / 1E5));
         }
 
         return array;

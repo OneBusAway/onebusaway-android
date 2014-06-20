@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.oba;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.serialization.JacksonSerializer;
 
 import java.io.Reader;
@@ -53,17 +51,6 @@ public final class ObaApi {
 
     public static ObaContext getDefaultContext() {
         return mDefaultContext;
-    }
-
-    /**
-     * Converts a latitude/longitude to a GeoPoint.
-     *
-     * @param lat The latitude.
-     * @param lon The longitude.
-     * @return A GeoPoint representing this latitude/longitude.
-     */
-    public static final GeoPoint makeGeoPoint(double lat, double lon) {
-        return new GeoPoint((int) (lat * 1E6), (int) (lon * 1E6));
     }
 
     public interface SerializationHandler {

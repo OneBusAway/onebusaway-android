@@ -15,10 +15,9 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.elements.ObaShapeElement;
 
+import android.location.Location;
 import android.test.AndroidTestCase;
 
 import java.util.List;
@@ -26,29 +25,30 @@ import java.util.List;
 public class ShapeTest extends AndroidTestCase {
 
     public void testDecodeLines() {
-        List<GeoPoint> list = ObaShapeElement.decodeLine("_p~iF~ps|U", 1);
+        List<Location> list = ObaShapeElement.decodeLine("_p~iF~ps|U", 1);
         assertNotNull(list);
         assertEquals(1, list.size());
-        GeoPoint pt = list.get(0);
-        assertEquals(38500000, pt.getLatitudeE6());
-        assertEquals(-120200000, pt.getLongitudeE6());
+        Location pt = list.get(0);
+        // Original test used GeoPoint, which is in degrees * 1E6 - fixed below via division
+        assertEquals(38500000 / 1E6, pt.getLatitude());
+        assertEquals(-120200000 / 1E6, pt.getLongitude());
 
         list = ObaShapeElement.decodeLine("_p~iF~ps|U_ulLnnqC", 2);
         assertNotNull(list);
         assertEquals(list.size(), 2);
         pt = list.get(0);
-        assertEquals(38500000, pt.getLatitudeE6());
-        assertEquals(-120200000, pt.getLongitudeE6());
+        assertEquals(38500000 / 1E6, pt.getLatitude());
+        assertEquals(-120200000 / 1E6, pt.getLongitude());
         pt = list.get(1);
-        assertEquals(40700000, pt.getLatitudeE6());
-        assertEquals(-120950000, pt.getLongitudeE6());
+        assertEquals(40700000 / 1E6, pt.getLatitude());
+        assertEquals(-120950000 / 1E6, pt.getLongitude());
 
         list = ObaShapeElement.decodeLine("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 3);
         assertNotNull(list);
         assertEquals(3, list.size());
         pt = list.get(2);
-        assertEquals(43252000, pt.getLatitudeE6());
-        assertEquals(-126453000, pt.getLongitudeE6());
+        assertEquals(43252000 / 1E6, pt.getLatitude());
+        assertEquals(-126453000 / 1E6, pt.getLongitude());
     }
 
     public void testDecodeLevels() {
@@ -65,6 +65,5 @@ public class ShapeTest extends AndroidTestCase {
         assertEquals(3, (int) list.get(1));
         assertEquals(3, (int) list.get(2));
         assertEquals(3, (int) list.get(3));
-
     }
 }

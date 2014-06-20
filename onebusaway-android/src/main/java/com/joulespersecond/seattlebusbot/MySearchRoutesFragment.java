@@ -16,8 +16,6 @@
 
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
@@ -25,6 +23,7 @@ import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -218,9 +217,9 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
         private final String mQueryText;
 
-        private final GeoPoint mCenter;
+        private final Location mCenter;
 
-        public MyLoader(Context context, String query, GeoPoint center) {
+        public MyLoader(Context context, String query, Location center) {
             super(context);
             mQueryText = query;
             mCenter = center;
@@ -243,10 +242,10 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 }
             }
 
-            GeoPoint center = UIHelp.getDefaultSearchCenter();
+            Location center = LocationHelp.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();

@@ -10,6 +10,9 @@ android:
     - build-tools-19.1.0
     # For Google Maps API v1
     - addon-google_apis-google-$ANDROID_API_LEVEL
+  licenses:
+    - android-sdk-license-5be876d5
+    - '.*intel.+'
 
 before_script:
   # Create and start emulator

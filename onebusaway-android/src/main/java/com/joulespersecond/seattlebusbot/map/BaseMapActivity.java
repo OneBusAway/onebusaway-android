@@ -20,7 +20,6 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
 import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
@@ -45,6 +44,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -86,7 +86,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     private static final int REQUEST_NO_LOCATION = 41;
 
-    private MapView mMapView;
+    private ObaMapViewV1 mMapView;
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 
@@ -125,7 +125,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
         mLocationOverlay = new MyLocationOverlay(getActivity(), mMapView);
         mLocationOverlay.enableMyLocation();
-        List<Overlay> mapOverlays = mMapView.getOverlays();
+        List<com.google.android.maps.Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.add(mLocationOverlay);
 
         // Initialize the StopPopup (hidden)
@@ -144,8 +144,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
     }
 
-    private MapView createMap(View view) {
-        MapView map = new MapView(this, getString(API_KEY));
+    private ObaMapViewV1 createMap(View view) {
+        ObaMapViewV1 map = new ObaMapViewV1(this, getString(API_KEY));
         map.setBuiltInZoomControls(false);
         map.setClickable(true);
         map.setFocusableInTouchMode(true);
@@ -237,10 +237,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
-        GeoPoint center = mMapView.getMapCenter();
-        outState.putDouble(MapParams.CENTER_LAT, center.getLatitudeE6() / 1E6);
-        outState.putDouble(MapParams.CENTER_LON, center.getLongitudeE6() / 1E6);
-        outState.putInt(MapParams.ZOOM, mMapView.getZoomLevel());
+        Location center = mMapView.getMapCenter();
+        outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
+        outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
+        outState.putFloat(MapParams.ZOOM, mMapView.getZoomLevel());
     }
 
     public boolean isRouteDisplayed() {
@@ -312,7 +312,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     }
 
     @Override
-    public MapView getMapView() {
+    public MapModeController.MapView getMapView() {
         return mMapView;
     }
 

@@ -15,9 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapView;
-
+import android.location.Location;
 import android.os.Handler;
 
 /**
@@ -43,25 +41,25 @@ public class MapWatcher {
 
     private static final int POLL_TIME = 250;
 
-    private final MapView mMapView;
+    private final MapModeController.MapView mMapView;
 
     private final Handler mHandler;
 
     private final Listener mListener;
 
-    private GeoPoint mCurrentCenter;
+    private Location mCurrentCenter;
 
     private long mCurrentCenterMillis;
 
-    private int mCurrentZoom;
+    private float mCurrentZoom;
 
     private long mCurrentZoomMillis;
 
     private final Runnable mChecker = new Runnable() {
         @Override
         public void run() {
-            GeoPoint newCenter = mMapView.getMapCenter();
-            int newZoom = mMapView.getZoomLevel();
+            Location newCenter = mMapView.getMapCenter();
+            float newZoom = mMapView.getZoomLevel();
 
             // TODO: Allow for a "fuzzy equals" for the center, so
             // we don't report changes that are less than some epsilon.
@@ -89,7 +87,7 @@ public class MapWatcher {
         }
     };
 
-    public MapWatcher(MapView view, Listener listener) {
+    public MapWatcher(MapModeController.MapView view, Listener listener) {
         mMapView = view;
         mHandler = new Handler();
         mListener = listener;

@@ -15,12 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.MapView;
-
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaStop;
 
 import android.app.Activity;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 
@@ -59,6 +58,43 @@ public interface MapModeController {
         void setMyLocation();
 
         void notifyOutOfRange();
+    }
+
+    /**
+     * Interface used to abstract the MapView class, to allow multiple implementations
+     * (e.g., Google Maps API v1, v2)
+     *
+     * @author barbeau
+     */
+    interface MapView {
+
+        // Sets the current zoom level of the map
+        void setZoom(float zoomLevel);
+
+        // Returns the current center-point position of the map
+        Location getMapCenter();
+
+        void setMapCenter(Location location);
+
+        // The current latitude span (from the top edge to the bottom edge of the map) in decimal degrees
+        double getLatitudeSpan();
+
+        // The current longitude span (from the left edge to the right edge of the map) in decimal degrees
+        double getLongitudeSpan();
+
+        // Returns the current zoom level of the map.
+        float getZoomLevel();
+
+        // Enables or disables hardware acceleration (needed for Maps API v1 workaround)
+        void enableHWAccel(boolean enable);
+
+        // Access the overlay list.
+        List<Overlay> getOverlays();
+    }
+
+    // Interface used to abstract the Overlay class to allow multiple implementations
+    interface Overlay {
+
     }
 
     String getMode();

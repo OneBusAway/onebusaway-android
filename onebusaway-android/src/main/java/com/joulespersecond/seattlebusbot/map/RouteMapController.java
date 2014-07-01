@@ -15,15 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.Projection;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
@@ -32,16 +25,8 @@ import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Paint.Cap;
-import android.graphics.Paint.Join;
-import android.graphics.Path;
-import android.graphics.Point;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -51,7 +36,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class RouteMapController implements MapModeController,
@@ -150,7 +134,7 @@ class RouteMapController implements MapModeController,
         List<Overlay> overlays = mapView.getOverlays();
 
         if (mLineOverlay == null) {
-            enableHWAccel(mapView, false);
+            mapView.enableHWAccel(false);
             mLineOverlay = new LineOverlay();
             overlays.add(mLineOverlay);
         }
@@ -190,26 +174,13 @@ class RouteMapController implements MapModeController,
 
     private void removeOverlay() {
         MapView mapView = mFragment.getMapView();
-        enableHWAccel(mapView, true);
+        mapView.enableHWAccel(true);
         List<Overlay> overlays = mapView.getOverlays();
         if (mLineOverlay != null) {
             overlays.remove(mLineOverlay);
         }
         mLineOverlay = null;
         mapView.postInvalidate();
-    }
-
-    //
-    // See this bug: http://code.google.com/p/android/issues/detail?id=24023
-    // Large paths and HW acceleration don't mix, so we can disable it
-    // only when this overlay is visible.
-    //
-    @TargetApi(11)
-    private static void enableHWAccel(MapView mapView, boolean enable) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            int type = enable ? View.LAYER_TYPE_HARDWARE : View.LAYER_TYPE_SOFTWARE;
-            mapView.setLayerType(type, null);
-        }
     }
 
     //
@@ -240,10 +211,10 @@ class RouteMapController implements MapModeController,
                     MapView mapView = mFragment.getMapView();
                     // We want to preserve the current zoom and center.
                     Bundle bundle = new Bundle();
-                    bundle.putInt(MapParams.ZOOM, mapView.getZoomLevel());
-                    GeoPoint point = mapView.getMapCenter();
-                    bundle.putDouble(MapParams.CENTER_LAT, point.getLatitudeE6() / 1E6);
-                    bundle.putDouble(MapParams.CENTER_LON, point.getLongitudeE6() / 1E6);
+                    bundle.putDouble(MapParams.ZOOM, mapView.getZoomLevel());
+                    Location point = mapView.getMapCenter();
+                    bundle.putDouble(MapParams.CENTER_LAT, point.getLatitude());
+                    bundle.putDouble(MapParams.CENTER_LON, point.getLongitude());
                     mFragment.setMapMode(MapParams.MODE_STOP, bundle);
                 }
             });
@@ -306,130 +277,6 @@ class RouteMapController implements MapModeController,
         @Override
         public void onStartLoading() {
             forceLoad();
-        }
-    }
-
-    //
-    // The real line Overlay
-    //
-    public static class LineOverlay extends Overlay {
-
-        public static final class Line {
-
-            private final List<GeoPoint> mPoints;
-
-            private final Paint mPaint;
-
-            public Line(int color, List<GeoPoint> points) {
-                mPoints = points;
-                mPaint = new Paint();
-                mPaint.setColor(color);
-                mPaint.setAlpha(128);
-                mPaint.setStrokeWidth(5);
-                mPaint.setStrokeCap(Cap.ROUND);
-                mPaint.setStrokeJoin(Join.ROUND);
-                mPaint.setStyle(Paint.Style.STROKE);
-            }
-
-            public List<GeoPoint> getPoints() {
-                return mPoints;
-            }
-
-            public Paint getPaint() {
-                return mPaint;
-            }
-        }
-
-        private ArrayList<Line> mLines = new ArrayList<Line>();
-
-        public void addLine(int color, List<GeoPoint> points) {
-            mLines.add(new Line(color, points));
-            // TODO: Invalidate
-        }
-
-        public void addLine(int color, ObaShape line) {
-            List<Location> points = line.getPoints();
-            List<GeoPoint> geoPoints = new ArrayList<GeoPoint>();
-            for (Location p : points) {
-                geoPoints.add(MapHelp.makeGeoPoint(p));
-            }
-            mLines.add(new Line(color, geoPoints));
-            // TODO: Invalidate
-        }
-
-        public void addLines(int color, ObaShape[] lines) {
-            final int len = lines.length;
-            for (int i = 0; i < len; ++i) {
-                addLine(color, lines[i]);
-            }
-        }
-
-        public void setLines(int color, ObaShape[] lines) {
-            mLines.clear();
-            addLines(color, lines);
-        }
-
-        public void clearLines() {
-            mLines.clear();
-        }
-
-        @Override
-        public void draw(Canvas canvas, MapView mapView, boolean shadow) {
-            if (shadow) {
-                super.draw(canvas, mapView, shadow);
-                return;
-            }
-            final Projection projection = mapView.getProjection();
-            Point pt = new Point();
-
-            // Convert points to coords and then call drawLines()
-            final int len = mLines.size();
-            // Log.d(TAG, String.format("Drawing %d line(s)", len));
-
-            Path path = new Path();
-            for (int i = 0; i < len; ++i) {
-                final Line line = mLines.get(i);
-                final List<GeoPoint> geoPoints = line.getPoints();
-                int numPts = geoPoints.size();
-                projection.toPixels(geoPoints.get(0), pt);
-                path.moveTo(pt.x, pt.y);
-
-                int j = 1;
-                for (; j < numPts; ++j) {
-                    projection.toPixels(geoPoints.get(j), pt);
-                    path.lineTo(pt.x, pt.y);
-                }
-                canvas.drawPath(path, line.getPaint());
-                path.rewind();
-            }
-        }
-
-        public void zoom(MapController mapCtrl) {
-            if (mapCtrl == null) {
-                return;
-            }
-
-            int minLat = Integer.MAX_VALUE;
-            int maxLat = Integer.MIN_VALUE;
-            int minLon = Integer.MAX_VALUE;
-            int maxLon = Integer.MIN_VALUE;
-
-            for (Line line : mLines) {
-                for (GeoPoint item : line.mPoints) {
-                    int lat = (int) (item.getLatitudeE6());
-                    int lon = (int) (item.getLongitudeE6());
-
-                    maxLat = Math.max(lat, maxLat);
-                    minLat = Math.min(lat, minLat);
-                    maxLon = Math.max(lon, maxLon);
-                    minLon = Math.min(lon, minLon);
-                }
-            }
-
-            mapCtrl.zoomToSpan(Math.abs(maxLat - minLat),
-                    Math.abs(maxLon - minLon));
-            mapCtrl.animateTo(new GeoPoint((maxLat + minLat) / 2,
-                    (maxLon + minLon) / 2));
         }
     }
 }

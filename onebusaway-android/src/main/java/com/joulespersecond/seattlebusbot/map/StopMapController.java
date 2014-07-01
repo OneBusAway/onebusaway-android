@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -41,34 +37,34 @@ import java.util.List;
 
 final class StopsRequest {
 
-    private final GeoPoint mCenter;
+    private final Location mCenter;
 
-    private final int mLatSpan;
+    private final double mLatSpan;
 
-    private final int mLonSpan;
+    private final double mLonSpan;
 
-    private final int mZoomLevel;
+    private final double mZoomLevel;
 
-    StopsRequest(MapView view) {
+    StopsRequest(MapModeController.MapView view) {
         mCenter = view.getMapCenter();
         mLatSpan = view.getLatitudeSpan();
         mLonSpan = view.getLongitudeSpan();
         mZoomLevel = view.getZoomLevel();
     }
 
-    GeoPoint getCenter() {
+    Location getCenter() {
         return mCenter;
     }
 
-    int getLatSpan() {
+    double getLatSpan() {
         return mLatSpan;
     }
 
-    int getLonSpan() {
+    double getLonSpan() {
         return mLonSpan;
     }
 
-    int getZoomLevel() {
+    double getZoomLevel() {
         return mZoomLevel;
     }
 }
@@ -160,18 +156,18 @@ class StopMapController implements MapModeController,
     @Override
     public void setState(Bundle args) {
         if (args != null) {
-            GeoPoint center = null;
+            Location center = null;
             int mapZoom = args.getInt(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
 
             double lat = args.getDouble(MapParams.CENTER_LAT);
             double lon = args.getDouble(MapParams.CENTER_LON);
             if (lat != 0.0 && lon != 0.0) {
-                center = MapHelp.makeGeoPoint(lat, lon);
+                center = LocationHelp.makeLocation(lat, lon);
             }
-            MapController mapCtrl = mFragment.getMapView().getController();
-            mapCtrl.setZoom(mapZoom);
+            mFragment.getMapView().setZoom((float) mapZoom);
+
             if (center != null) {
-                mapCtrl.setCenter(center);
+                mFragment.getMapView().setMapCenter(center);
                 onLocation();
             } else {
                 mFragment.setMyLocation();
@@ -342,7 +338,7 @@ class StopMapController implements MapModeController,
             //Make OBA REST API call to the server and return result
             ObaStopsForLocationResponse response =
                     new ObaStopsForLocationRequest.Builder(getContext(),
-                            MapHelp.makeLocation(req.getCenter()))
+                            req.getCenter())
                             .setSpan(req.getLatSpan(), req.getLonSpan())
                             .build()
                             .call();

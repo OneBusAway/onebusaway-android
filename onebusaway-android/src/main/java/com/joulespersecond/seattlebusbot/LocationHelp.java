@@ -33,6 +33,7 @@ import java.util.List;
 public class LocationHelp {
 
     public static final int DEFAULT_SEARCH_RADIUS = 15000;
+    private static final float FUZZY_EQUALS_THRESHOLD = 15.0f;
 
     public static Location getDefaultSearchCenter() {
         ObaRegion region = Application.get().getCurrentRegion();
@@ -97,7 +98,6 @@ public class LocationHelp {
      * @return true if the locations are approximately equal, false if they are not
      */
     public static boolean fuzzyEquals(Location a, Location b) {
-        final float FUZZY_EQUALS_THRESHOLD = 15.0f;
         return a.distanceTo(b) <= FUZZY_EQUALS_THRESHOLD;
     }
 }

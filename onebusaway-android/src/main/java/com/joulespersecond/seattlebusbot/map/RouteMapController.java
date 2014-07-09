@@ -35,10 +35,11 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
 
 import java.util.List;
 
-class RouteMapController implements MapModeController,
+public class RouteMapController implements MapModeController,
         LoaderManager.LoaderCallbacks<ObaStopsForRouteResponse>,
         Loader.OnLoadCompleteListener<ObaStopsForRouteResponse> {
 
@@ -60,7 +61,7 @@ class RouteMapController implements MapModeController,
     // available in SherlockMapActivity
     private Loader<ObaStopsForRouteResponse> mLoader;
 
-    RouteMapController(Callback callback) {
+    public RouteMapController(Callback callback) {
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
                 .getResources()

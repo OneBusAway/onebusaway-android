@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot.map;
+package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -52,7 +52,11 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.UIHelp;
-import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.RouteMapController;
+import com.joulespersecond.seattlebusbot.map.StopMapController;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.StopOverlay.StopOverlayItem;
 
 import java.util.List;
 

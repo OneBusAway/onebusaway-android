@@ -31,6 +31,7 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.LocationHelp;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
 
 import java.util.Arrays;
 import java.util.List;
@@ -128,7 +129,7 @@ final class StopsResponse {
     }
 }
 
-class StopMapController implements MapModeController,
+public class StopMapController implements MapModeController,
         LoaderManager.LoaderCallbacks<StopsResponse>,
         Loader.OnLoadCompleteListener<StopsResponse>,
         MapWatcher.Listener {
@@ -145,7 +146,7 @@ class StopMapController implements MapModeController,
 
     private MapWatcher mMapWatcher;
 
-    StopMapController(Callback callback) {
+    public StopMapController(Callback callback) {
         mFragment = callback;
         //mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
         mLoader = onCreateLoader(STOPS_LOADER, null);

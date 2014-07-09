@@ -15,15 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -42,6 +33,15 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -55,7 +55,7 @@ public class HomeActivity extends BaseMapActivity {
     private static final int WHATSNEW_DIALOG = 2;
 
     private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
-            //One week, in milliseconds
+    //One week, in milliseconds
 
     private static final String TAG = "HomeActivity";
 
@@ -69,9 +69,9 @@ public class HomeActivity extends BaseMapActivity {
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -96,9 +96,9 @@ public class HomeActivity extends BaseMapActivity {
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -222,7 +222,8 @@ public class HomeActivity extends BaseMapActivity {
                                 break;
                         }
                     }
-                });
+                }
+        );
         return builder.create();
     }
 
@@ -237,7 +238,8 @@ public class HomeActivity extends BaseMapActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dismissDialog(WHATSNEW_DIALOG);
                     }
-                });
+                }
+        );
         return builder.create();
     }
 

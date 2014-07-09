@@ -16,28 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
-
-import com.actionbarsherlock.app.SherlockMapActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.oba.region.RegionUtils;
-import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
-import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -54,6 +32,27 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
+
+import com.actionbarsherlock.app.SherlockMapActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
+import com.google.android.maps.MapController;
+import com.google.android.maps.MyLocationOverlay;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.UIHelp;
+import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
 
 import java.util.List;
 
@@ -237,10 +236,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
-        Location center = mMapView.getMapCenter();
+        Location center = mMapView.getMapCenterAsLocation();
         outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
         outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
-        outState.putFloat(MapParams.ZOOM, mMapView.getZoomLevel());
+        outState.putFloat(MapParams.ZOOM, mMapView.getZoomLevelAsFloat());
     }
 
     public boolean isRouteDisplayed() {
@@ -312,7 +311,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     }
 
     @Override
-    public MapModeController.MapView getMapView() {
+    public MapModeController.ObaMapView getMapView() {
         return mMapView;
     }
 
@@ -594,8 +593,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     static final int MIN_ZOOM = 1;
 
     void enableZoom() {
-        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevel() != MAX_ZOOM);
-        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevel() != MIN_ZOOM);
+        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevelAsFloat() != MAX_ZOOM);
+        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevelAsFloat() != MIN_ZOOM);
     }
 
     private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
@@ -623,7 +622,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     /**
      * Returns true if no files in private directory
-     * (MapView or MapActivity caches prefs and tiles)
+     * (ObaMapView or MapActivity caches prefs and tiles)
      * This will fail if MapViewActivty never got to onPause
      */
     /*

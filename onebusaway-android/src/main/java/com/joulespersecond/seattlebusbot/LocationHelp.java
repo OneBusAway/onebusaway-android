@@ -15,12 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.RegionUtils;
-
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.RegionUtils;
 
 import java.util.Iterator;
 import java.util.List;
@@ -86,5 +86,18 @@ public class LocationHelp {
         l.setLatitude(lat);
         l.setLongitude(lon);
         return l;
+    }
+
+    /**
+     * Returns true if the locations are approximately equal (i.e., within a certain distance
+     * threshold)
+     *
+     * @param a first location
+     * @param b second location
+     * @return true if the locations are approximately equal, false if they are not
+     */
+    public static boolean fuzzyEquals(Location a, Location b) {
+        final float FUZZY_EQUALS_THRESHOLD = 15.0f;
+        return a.distanceTo(b) <= FUZZY_EQUALS_THRESHOLD;
     }
 }

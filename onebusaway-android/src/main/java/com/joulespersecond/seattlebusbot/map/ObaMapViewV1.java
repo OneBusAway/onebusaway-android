@@ -1,11 +1,5 @@
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-
-import com.joulespersecond.oba.elements.ObaShape;
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -16,14 +10,27 @@ import android.location.Location;
 import android.os.Build;
 import android.view.View;
 
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.MapController;
+import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.Projection;
+import com.joulespersecond.oba.elements.ObaShape;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A wrapper around MapView for Google Maps API v1, to abstract the dependence on the Google APIs
+ * A wrapper around ObaMapView for Google Maps API v1, to abstract the dependence on the Google APIs
  */
 public class ObaMapViewV1 extends com.google.android.maps.MapView
-        implements MapModeController.MapView {
+        implements MapModeController.ObaMapView {
+
+    private LineOverlay mLineOverlay;
+
+    // We have to convert from GeoPoint to Location, so hold references to both
+    private GeoPoint mCenter;
+    private Location mCenterLocation;
 
     public ObaMapViewV1(Context context, String apiKey) {
         super(context, apiKey);
@@ -36,8 +43,15 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
     }
 
     @Override
-    public Location getMapCenter() {
-        return MapHelp.makeLocation(super.getMapCenter());
+    public Location getMapCenterAsLocation() {
+        // If the center is the same as the last call to this method, pass back the same Location
+        // object
+        if (mCenter == null || mCenter != getMapCenter()) {
+            mCenter = getMapCenter();
+            mCenterLocation = MapHelp.makeLocation(mCenter);
+        }
+
+        return mCenterLocation;
     }
 
     @Override
@@ -47,17 +61,17 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
     }
 
     @Override
-    public double getLatitudeSpan() {
+    public double getLatitudeSpanInDecDegrees() {
         return super.getLatitudeSpan() / 1E6;
     }
 
     @Override
-    public double getLongitudeSpan() {
+    public double getLongitudeSpanInDecDegrees() {
         return super.getLongitudeSpan() / 1E6;
     }
 
     @Override
-    public float getZoomLevel() {
+    public float getZoomLevelAsFloat() {
         return super.getZoomLevel();
     }
 
@@ -67,7 +81,7 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
     // only when this overlay is visible.
     //
     @TargetApi(11)
-    public void enableHWAccel(boolean enable) {
+    private void enableHWAccel(boolean enable) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             int type = enable ? View.LAYER_TYPE_HARDWARE : View.LAYER_TYPE_SOFTWARE;
             setLayerType(type, null);
@@ -75,15 +89,38 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
     }
 
     @Override
-    public List<MapModeController.Overlay> getOverlays() {
-        return super.getOverlays();
+    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes) {
+        List<Overlay> overlays = getOverlays();
+
+        if (mLineOverlay == null) {
+            enableHWAccel(false);
+            mLineOverlay = new LineOverlay();
+            overlays.add(mLineOverlay);
+        }
+
+        mLineOverlay.setLines(lineOverlayColor, shapes);
+    }
+
+    @Override
+    public void zoomToRoute() {
+        mLineOverlay.zoom(getController());
+    }
+
+    @Override
+    public void removeRouteOverlay() {
+        enableHWAccel(true);
+        List<Overlay> overlays = getOverlays();
+        if (mLineOverlay != null) {
+            overlays.remove(mLineOverlay);
+        }
+        mLineOverlay = null;
+        postInvalidate();
     }
 
     //
     // The real line Overlay
     //
-    public static class LineOverlay extends com.google.android.maps.Overlay
-            implements MapModeController.Overlay {
+    public static class LineOverlay extends com.google.android.maps.Overlay {
 
         public static final class Line {
 
@@ -145,7 +182,7 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
         }
 
         @Override
-        public void draw(Canvas canvas, MapModeController.MapView mapView, boolean shadow) {
+        public void draw(Canvas canvas, MapView mapView, boolean shadow) {
             if (shadow) {
                 super.draw(canvas, mapView, shadow);
                 return;

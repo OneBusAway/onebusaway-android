@@ -15,6 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -23,14 +31,6 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.LocationHelp;
-
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,11 +45,11 @@ final class StopsRequest {
 
     private final double mZoomLevel;
 
-    StopsRequest(MapModeController.MapView view) {
-        mCenter = view.getMapCenter();
-        mLatSpan = view.getLatitudeSpan();
-        mLonSpan = view.getLongitudeSpan();
-        mZoomLevel = view.getZoomLevel();
+    StopsRequest(MapModeController.ObaMapView view) {
+        mCenter = view.getMapCenterAsLocation();
+        mLatSpan = view.getLatitudeSpanInDecDegrees();
+        mLonSpan = view.getLongitudeSpanInDecDegrees();
+        mZoomLevel = view.getZoomLevelAsFloat();
     }
 
     Location getCenter() {
@@ -407,7 +407,7 @@ class StopMapController implements MapModeController,
 
     @Override
     public void onMapCenterChanged() {
-        //Log.d(TAG, "Map center changed: " + mMapCenter);
+        // Log.d(TAG, "Map center changed.");
         refresh();
     }
 }

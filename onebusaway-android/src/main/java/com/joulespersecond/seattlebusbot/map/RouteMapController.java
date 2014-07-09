@@ -15,16 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
-import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -35,6 +25,16 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
+import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.UIHelp;
 
 import java.util.List;
 
@@ -49,8 +49,6 @@ class RouteMapController implements MapModeController,
     private final Callback mFragment;
 
     private String mRouteId;
-
-    private LineOverlay mLineOverlay;
 
     private boolean mZoomToRoute;
 
@@ -94,7 +92,7 @@ class RouteMapController implements MapModeController,
     @Override
     public void destroy() {
         mRoutePopup.hide();
-        removeOverlay();
+        mFragment.getMapView().removeRouteOverlay();
     }
 
     @Override
@@ -130,14 +128,8 @@ class RouteMapController implements MapModeController,
     @Override
     public void onLoadFinished(Loader<ObaStopsForRouteResponse> loader,
             ObaStopsForRouteResponse response) {
-        MapView mapView = mFragment.getMapView();
-        List<Overlay> overlays = mapView.getOverlays();
 
-        if (mLineOverlay == null) {
-            mapView.enableHWAccel(false);
-            mLineOverlay = new LineOverlay();
-            overlays.add(mLineOverlay);
-        }
+        ObaMapView obaMapView = mFragment.getMapView();
 
         if (response.getCode() != ObaApi.OBA_OK) {
             BaseMapActivity.showMapError(mFragment.getActivity(), response);
@@ -145,7 +137,8 @@ class RouteMapController implements MapModeController,
         }
 
         mRoutePopup.show(response.getRoute(response.getRouteId()));
-        mLineOverlay.setLines(mLineOverlayColor, response.getShapes());
+
+        obaMapView.setRouteOverlay(mLineOverlayColor, response.getShapes());
 
         // Set the stops for this route
         List<ObaStop> stops = response.getStops();
@@ -153,34 +146,23 @@ class RouteMapController implements MapModeController,
         mFragment.showProgress(false);
 
         if (mZoomToRoute) {
-            mLineOverlay.zoom(mapView.getController());
+            obaMapView.zoomToRoute();
             mZoomToRoute = false;
         }
         //
         // wait to zoom till we have the right response
-        mapView.postInvalidate();
+        obaMapView.postInvalidate();
     }
 
     @Override
     public void onLoaderReset(Loader<ObaStopsForRouteResponse> loader) {
-        removeOverlay();
+        mFragment.getMapView().removeRouteOverlay();
     }
 
     @Override
     public void onLoadComplete(Loader<ObaStopsForRouteResponse> loader,
             ObaStopsForRouteResponse response) {
         onLoadFinished(loader, response);
-    }
-
-    private void removeOverlay() {
-        MapView mapView = mFragment.getMapView();
-        mapView.enableHWAccel(true);
-        List<Overlay> overlays = mapView.getOverlays();
-        if (mLineOverlay != null) {
-            overlays.remove(mLineOverlay);
-        }
-        mLineOverlay = null;
-        mapView.postInvalidate();
     }
 
     //
@@ -208,11 +190,11 @@ class RouteMapController implements MapModeController,
             cancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MapView mapView = mFragment.getMapView();
+                    ObaMapView obaMapView = mFragment.getMapView();
                     // We want to preserve the current zoom and center.
                     Bundle bundle = new Bundle();
-                    bundle.putDouble(MapParams.ZOOM, mapView.getZoomLevel());
-                    Location point = mapView.getMapCenter();
+                    bundle.putDouble(MapParams.ZOOM, obaMapView.getZoomLevelAsFloat());
+                    Location point = obaMapView.getMapCenterAsLocation();
                     bundle.putDouble(MapParams.CENTER_LAT, point.getLatitude());
                     bundle.putDouble(MapParams.CENTER_LON, point.getLongitude());
                     mFragment.setMapMode(MapParams.MODE_STOP, bundle);

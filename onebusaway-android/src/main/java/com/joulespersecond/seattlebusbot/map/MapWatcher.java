@@ -18,6 +18,8 @@ package com.joulespersecond.seattlebusbot.map;
 import android.location.Location;
 import android.os.Handler;
 
+import com.joulespersecond.seattlebusbot.LocationHelp;
+
 /**
  * Because the map object doesn't seem to have callbacks when the map
  * center or zoom is changed, we have our own watcher for it.
@@ -41,7 +43,7 @@ public class MapWatcher {
 
     private static final int POLL_TIME = 250;
 
-    private final MapModeController.MapView mMapView;
+    private final MapModeController.ObaMapView mObaMapView;
 
     private final Handler mHandler;
 
@@ -58,12 +60,10 @@ public class MapWatcher {
     private final Runnable mChecker = new Runnable() {
         @Override
         public void run() {
-            Location newCenter = mMapView.getMapCenter();
-            float newZoom = mMapView.getZoomLevel();
+            Location newCenter = mObaMapView.getMapCenterAsLocation();
+            float newZoom = mObaMapView.getZoomLevelAsFloat();
 
-            // TODO: Allow for a "fuzzy equals" for the center, so
-            // we don't report changes that are less than some epsilon.
-            final boolean centerChanged = !newCenter.equals(mCurrentCenter);
+            final boolean centerChanged = !LocationHelp.fuzzyEquals(newCenter, mCurrentCenter);
             final boolean zoomChanged = newZoom != mCurrentZoom;
 
             final long now = System.currentTimeMillis();
@@ -87,8 +87,8 @@ public class MapWatcher {
         }
     };
 
-    public MapWatcher(MapModeController.MapView view, Listener listener) {
-        mMapView = view;
+    public MapWatcher(MapModeController.ObaMapView view, Listener listener) {
+        mObaMapView = view;
         mHandler = new Handler();
         mListener = listener;
     }
@@ -97,8 +97,8 @@ public class MapWatcher {
      * Start watching.
      */
     public void start() {
-        mCurrentCenter = mMapView.getMapCenter();
-        mCurrentZoom = mMapView.getZoomLevel();
+        mCurrentCenter = mObaMapView.getMapCenterAsLocation();
+        mCurrentZoom = mObaMapView.getZoomLevelAsFloat();
         mHandler.postDelayed(mChecker, POLL_TIME);
     }
 

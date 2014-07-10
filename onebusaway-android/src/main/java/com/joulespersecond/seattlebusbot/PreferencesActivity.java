@@ -16,10 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockPreferenceActivity;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -27,6 +23,11 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockPreferenceActivity;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 public class PreferencesActivity extends SherlockPreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -39,7 +40,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     Preference customApiUrlPref;
 
     boolean autoSelectInitialValue;
-            //Save initial value so we can compare to current value in onDestroy()
+    //Save initial value so we can compare to current value in onDestroy()
 
     // Soo... we can use SherlockPreferenceActivity to display the
     // action bar, but we can't use a PreferenceFragment?
@@ -183,7 +184,8 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 Toast.makeText(this,
                         getString(R.string.region_region_found,
                                 Application.get().getCurrentRegion().getName()),
-                        Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_LONG
+                ).show();
             }
 
             // Update the preference summary to show the newly selected region

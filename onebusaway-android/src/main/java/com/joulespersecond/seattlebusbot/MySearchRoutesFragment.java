@@ -16,11 +16,6 @@
 
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
-import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
-
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -38,6 +33,13 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
+import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Arrays;
 
@@ -61,8 +63,8 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root,
-            Bundle savedInstanceState) {
+                             ViewGroup root,
+                             Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -79,7 +81,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
     @Override
     public void onLoadFinished(Loader<ObaRoutesForLocationResponse> loader,
-            ObaRoutesForLocationResponse response) {
+                               ObaRoutesForLocationResponse response) {
         UIHelp.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();

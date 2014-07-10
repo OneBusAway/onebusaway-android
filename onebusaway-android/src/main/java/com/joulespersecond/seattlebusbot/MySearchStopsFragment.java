@@ -15,11 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
-import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -35,6 +30,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Arrays;
 
@@ -61,8 +62,8 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root,
-            Bundle savedInstanceState) {
+                             ViewGroup root,
+                             Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -87,7 +88,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
-            ObaStopsForLocationResponse response) {
+                               ObaStopsForLocationResponse response) {
         UIHelp.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
@@ -153,7 +154,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
+                                    ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         final TextView text = (TextView) info.targetView.findViewById(R.id.stop_name);

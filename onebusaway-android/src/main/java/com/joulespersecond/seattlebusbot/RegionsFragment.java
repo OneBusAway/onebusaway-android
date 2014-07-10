@@ -15,13 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.ObaRegionsLoader;
-import com.joulespersecond.oba.region.RegionUtils;
-
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.location.Location;
@@ -34,6 +28,18 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsLoader;
+import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -55,13 +61,30 @@ public class RegionsFragment extends ListFragment
     // Current region
     private ObaRegion mCurrentRegion;
 
+    /**
+     * Google Location Services
+     */
+    LocationClient mLocationClient;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
+        }
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
         setHasOptionsMenu(true);
 
-        mLocation = LocationHelp.getLocation2(getActivity());
+        mLocation = LocationHelp.getLocation2(getActivity(), mLocationClient);
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();
@@ -105,6 +128,24 @@ public class RegionsFragment extends ListFragment
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
     }
 
     private void refresh() {

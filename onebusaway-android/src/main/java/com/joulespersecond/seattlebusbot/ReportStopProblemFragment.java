@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.request.ObaReportProblemWithStopRequest;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -30,6 +26,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaReportProblemWithStopRequest;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 
 public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
@@ -67,6 +69,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     protected int getLayoutId() {
         return R.layout.report_stop_problem;
     }
+
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -142,7 +145,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         }
 
         // Location / Location accuracy
-        Location location = LocationHelp.getLocation2(getActivity());
+        Location location = LocationHelp.getLocation2(getActivity(), mLocationClient);
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {

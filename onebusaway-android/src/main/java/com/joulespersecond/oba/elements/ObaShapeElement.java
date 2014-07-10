@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.joulespersecond.seattlebusbot.LocationHelp;
-
 import android.location.Location;
+
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 import java.util.ArrayList;
 import java.util.List;

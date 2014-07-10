@@ -26,7 +26,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -41,10 +40,11 @@ import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 
 public class HomeActivity extends BaseMapActivity {
 
@@ -275,39 +275,28 @@ public class HomeActivity extends BaseMapActivity {
         }
     }
 
-    private static String getLocationString(Context context) {
-        LocationManager mgr = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mgr.getProviders(true);
-        Location last = null;
-        String provider = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            String p = i.next();
-            Location loc = mgr.getLastKnownLocation(p);
-            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
-                last = loc;
-                provider = p;
-            }
-        }
+    private String getLocationString(Context context) {
+        Location loc = LocationHelp.getLocation2(context, mLocationClient);
 
-        if (last == null) {
+        if (loc == null) {
             return "";
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(provider);
+        sb.append(loc.getProvider());
         sb.append(' ');
-        sb.append(last.getLatitude());
+        sb.append(loc.getLatitude());
         sb.append(',');
-        sb.append(last.getLongitude());
-        if (last.hasAccuracy()) {
+        sb.append(loc.getLongitude());
+        if (loc.hasAccuracy()) {
             sb.append(' ');
-            sb.append(last.getAccuracy());
+            sb.append(loc.getAccuracy());
         }
 
         return sb.toString();
     }
 
-    private static void goToContactEmail(Context ctxt) {
+    private void goToContactEmail(Context ctxt) {
         PackageManager pm = ctxt.getPackageManager();
         PackageInfo appInfo = null;
         try {

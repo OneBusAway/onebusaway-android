@@ -15,13 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.provider.ObaContract;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -48,6 +41,15 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 
@@ -79,13 +81,13 @@ public class TripInfoActivity extends SherlockFragmentActivity {
     }
 
     public static void start(Context context,
-            String tripId,
-            String stopId,
-            String routeId,
-            String routeName,
-            String stopName,
-            long departureTime,
-            String headsign) {
+                             String tripId,
+                             String stopId,
+                             String routeId,
+                             String routeName,
+                             String stopName,
+                             long departureTime,
+                             String headsign) {
         Intent myIntent = new Intent(context, TripInfoActivity.class);
         myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId));
         myIntent.putExtra(ROUTE_ID, routeId);
@@ -199,7 +201,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater,
-                ViewGroup root, Bundle savedInstanceState) {
+                                 ViewGroup root, Bundle savedInstanceState) {
             if (root == null) {
                 // Currently in a layout without a container, so no
                 // reason to create our view.
@@ -292,8 +294,9 @@ public class TripInfoActivity extends SherlockFragmentActivity {
             }
             if (mStopName == null) {
                 mStopName = UIHelp.stringForQuery(getActivity(), Uri.withAppendedPath(
-                        ObaContract.Stops.CONTENT_URI, mStopId),
-                        ObaContract.Stops.NAME);
+                                ObaContract.Stops.CONTENT_URI, mStopId),
+                        ObaContract.Stops.NAME
+                );
             }
             return true;
         }
@@ -525,13 +528,15 @@ public class TripInfoActivity extends SherlockFragmentActivity {
                                         TripService.scheduleAll(getActivity());
                                         getActivity().finish();
                                     }
-                                })
+                                }
+                        )
                         .setNegativeButton(android.R.string.cancel,
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         dialog.dismiss();
                                     }
-                                });
+                                }
+                        );
                 return builder.create();
             }
         }
@@ -596,7 +601,9 @@ public class TripInfoActivity extends SherlockFragmentActivity {
                         departure,
                         DateUtils.FORMAT_SHOW_TIME |
                                 DateUtils.FORMAT_NO_NOON |
-                                DateUtils.FORMAT_NO_MIDNIGHT));
+                                DateUtils.FORMAT_NO_MIDNIGHT
+                )
+        );
     }
 
     static String getRepeatText(Context ctx, int days) {

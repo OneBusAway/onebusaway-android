@@ -15,14 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot.tripservice;
 
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.provider.ObaContract.TripAlerts;
-import com.joulespersecond.oba.provider.ObaContract.Trips;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.TripService;
-import com.joulespersecond.seattlebusbot.UIHelp;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -31,6 +23,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
+
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.provider.ObaContract.TripAlerts;
+import com.joulespersecond.oba.provider.ObaContract.Trips;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.TripService;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 /**
  * @author paulw
@@ -66,9 +66,9 @@ public final class NotifierTask implements Runnable {
     private long mTimeDiff;
 
     public NotifierTask(Context context,
-            TaskContext taskContext,
-            Uri uri,
-            long timeDiff) {
+                        TaskContext taskContext,
+                        Uri uri,
+                        long timeDiff) {
         mContext = context;
         mTaskContext = taskContext;
         mCR = mContext.getContentResolver();
@@ -146,9 +146,9 @@ public final class NotifierTask implements Runnable {
 
     @SuppressWarnings("deprecation")
     private void setLatestInfo(Notification notification,
-            String stopId,
-            String routeId,
-            long timeDiff) {
+                               String stopId,
+                               String routeId,
+                               long timeDiff) {
         final String title = mContext.getString(R.string.app_name);
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,

@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -30,6 +28,9 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 abstract class MyRouteListFragmentBase extends MyListFragmentBase
         implements QueryUtils.RouteList.Columns {
@@ -70,8 +71,8 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
 
     @Override
     public void onCreateContextMenu(ContextMenu menu,
-            View v,
-            ContextMenuInfo menuInfo) {
+                                    View v,
+                                    ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         final TextView text = (TextView) info.targetView

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.seattlebusbot.util;
 
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.os.Build;
+
+import com.joulespersecond.seattlebusbot.Application;
 
 public class PreferenceHelp {
 

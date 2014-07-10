@@ -15,14 +15,7 @@
  * limitations under the License.
  */
 
-package com.joulespersecond.seattlebusbot;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.provider.ObaContract;
+package com.joulespersecond.seattlebusbot.util;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -44,6 +37,14 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.R;
 
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
@@ -363,7 +364,7 @@ public final class UIHelp {
      * or the number of hours and minutes if minutes > 60
      */
     public static String getNoArrivalsMessage(Context context, int minutes,
-            boolean additionalArrivals) {
+                                              boolean additionalArrivals) {
         if (minutes <= MINUTES_IN_HOUR) {
             // Return just minutes
             if (additionalArrivals) {

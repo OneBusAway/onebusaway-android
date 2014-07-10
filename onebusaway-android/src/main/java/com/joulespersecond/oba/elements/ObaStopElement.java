@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import com.joulespersecond.seattlebusbot.LocationHelp;
-
 import android.location.Location;
+
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 /**
  * Object defining a Stop element.

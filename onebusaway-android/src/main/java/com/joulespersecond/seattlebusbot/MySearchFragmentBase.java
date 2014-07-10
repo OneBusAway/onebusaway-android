@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.view.SearchView;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.location.Location;
@@ -28,6 +26,13 @@ import android.view.View.OnFocusChangeListener;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.view.SearchView;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,6 +46,23 @@ abstract class MySearchFragmentBase extends ListFragment
     private SearchView mSearchView;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
+
+    /**
+     * Google Location Services
+     */
+    LocationClient mLocationClient;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
+        }
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -62,6 +84,24 @@ abstract class MySearchFragmentBase extends ListFragment
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mSearchView = (SearchView) getView().findViewById(R.id.search);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
     }
 
     @Override
@@ -172,7 +212,7 @@ abstract class MySearchFragmentBase extends ListFragment
             result = base.getSearchCenter();
         }
         if (result == null) {
-            result = LocationHelp.getLocation(act);
+            result = LocationHelp.getLocation(act, mLocationClient);
         }
         return result;
     }

@@ -16,17 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentQueryMap;
@@ -50,6 +39,19 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -164,12 +166,13 @@ public class ArrivalsListFragment extends ListFragment
         // Set initial minutesAfter value in the empty list view
         setEmptyText(
                 UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
-                        false));
+                        false)
+        );
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
+                             ViewGroup root, Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -225,7 +228,7 @@ public class ArrivalsListFragment extends ListFragment
     //
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
-            ObaArrivalInfoResponse result) {
+                               ObaArrivalInfoResponse result) {
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
@@ -284,7 +287,8 @@ public class ArrivalsListFragment extends ListFragment
                 Toast.makeText(getActivity(),
                         UIHelp.getNoArrivalsMessage(getActivity(),
                                 getArrivalsLoader().getMinutesAfter(), true),
-                        Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_LONG
+                ).show();
                 mLoadedMoreArrivals = false;  // Only show the toast once
             }
         }

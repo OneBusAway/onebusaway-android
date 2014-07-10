@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.provider.ObaContract;
-
 import android.content.ContentResolver;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -35,6 +31,12 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 public class TripListActivity extends SherlockFragmentActivity {
     // private static final String TAG = "TripListActivity";
@@ -180,8 +182,8 @@ public class TripListActivity extends SherlockFragmentActivity {
 
             simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                 public boolean setViewValue(View view,
-                        Cursor cursor,
-                        int columnIndex) {
+                                            Cursor cursor,
+                                            int columnIndex) {
                     if (columnIndex == COL_NAME) {
                         TextView text = (TextView) view;
                         String name = cursor.getString(columnIndex);
@@ -200,7 +202,8 @@ public class TripListActivity extends SherlockFragmentActivity {
                         text.setText(TripInfoActivity.getDepartureTime(
                                 getActivity(),
                                 ObaContract.Trips.convertDBToTime(cursor
-                                        .getInt(columnIndex))));
+                                        .getInt(columnIndex))
+                        ));
                         return true;
                     } else if (columnIndex == COL_ROUTE_ID) {
                         //
@@ -240,8 +243,8 @@ public class TripListActivity extends SherlockFragmentActivity {
 
         @Override
         public void onCreateContextMenu(ContextMenu menu,
-                View v,
-                ContextMenuInfo menuInfo) {
+                                        View v,
+                                        ContextMenuInfo menuInfo) {
             super.onCreateContextMenu(menu, v, menuInfo);
             AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
             final TextView text = (TextView) info.targetView.findViewById(R.id.name);

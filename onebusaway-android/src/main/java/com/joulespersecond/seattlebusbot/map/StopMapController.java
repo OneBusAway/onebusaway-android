@@ -23,6 +23,9 @@ import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -30,8 +33,8 @@ import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.LocationHelp;
 import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 import java.util.Arrays;
 import java.util.List;
@@ -146,8 +149,21 @@ public class StopMapController implements MapModeController,
 
     private MapWatcher mMapWatcher;
 
+    /**
+     * Google Location Services
+     */
+    LocationClient mLocationClient;
+
     public StopMapController(Callback callback) {
         mFragment = callback;
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mFragment.getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(mFragment.getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
+        }
+
         //mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
@@ -193,11 +209,21 @@ public class StopMapController implements MapModeController,
     @Override
     public void onPause() {
         watchMap(false);
+
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
     }
 
     @Override
     public void onResume() {
         watchMap(true);
+
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
     }
 
     @Override
@@ -245,7 +271,7 @@ public class StopMapController implements MapModeController,
         //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
-        Location myLocation = LocationHelp.getLocation2(mFragment.getActivity());
+        Location myLocation = LocationHelp.getLocation2(mFragment.getActivity(), mLocationClient);
         if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {

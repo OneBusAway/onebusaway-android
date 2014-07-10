@@ -15,12 +15,12 @@
  */
 package com.joulespersecond.oba.request.test;
 
+import android.location.Location;
+
 import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.request.ObaTripsForLocationRequest;
 import com.joulespersecond.oba.request.ObaTripsForLocationResponse;
-import com.joulespersecond.seattlebusbot.LocationHelp;
-
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 
 public class TripsForLocationTest extends ObaTestCase {

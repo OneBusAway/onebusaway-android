@@ -15,14 +15,14 @@
  */
 package com.joulespersecond.oba.request.test;
 
+import android.location.Location;
+
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-import com.joulespersecond.seattlebusbot.LocationHelp;
-
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 
 public class StopsForLocationTest extends ObaTestCase {

@@ -35,6 +35,9 @@ import android.widget.ZoomControls;
 
 import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
@@ -51,12 +54,13 @@ import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
 import com.joulespersecond.seattlebusbot.map.MapModeController;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.RouteMapController;
 import com.joulespersecond.seattlebusbot.map.StopMapController;
 import com.joulespersecond.seattlebusbot.map.googlemapsv1.StopOverlay.StopOverlayItem;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 
@@ -112,6 +116,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     private MapModeController mController;
 
+    /**
+     * Google Location Services
+     */
+    protected LocationClient mLocationClient;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         //boolean firstRun = firstRunCheck();
@@ -144,6 +153,13 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                 args = new Bundle();
             }
             initMap(args);
+        }
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
         }
     }
 
@@ -218,6 +234,24 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
 
         super.onResume();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
     }
 
     @Override

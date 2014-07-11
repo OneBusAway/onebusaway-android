@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A wrapper around ObaMapView for Google Maps API v1, to abstract the dependence on the Google APIs
+ * A wrapper around MapView for Google Maps API v1, to abstract the dependency on the Google APIs
  */
 public class ObaMapViewV1 extends com.google.android.maps.MapView
         implements MapModeController.ObaMapView {

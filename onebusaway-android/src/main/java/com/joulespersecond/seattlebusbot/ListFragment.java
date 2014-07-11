@@ -150,6 +150,13 @@ public class ListFragment extends SherlockFragment {
         ensureList();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().reportScreenView(this);
+    }
+
     /**
      * Detach from list view.
      */

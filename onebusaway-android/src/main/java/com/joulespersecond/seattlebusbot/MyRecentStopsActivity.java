@@ -37,6 +37,20 @@ public class MyRecentStopsActivity extends Activity {
         finish();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
+
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentStopsFragment.TAB_NAME);
         return UIHelp.makeShortcut(this,

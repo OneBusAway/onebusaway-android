@@ -36,6 +36,8 @@ public class AgenciesFragment extends ListFragment
         // Go to the URL
         ObaAgency agency = mResponse.getAgency(mAdapter.getItem(position).getId());
         if (!TextUtils.isEmpty(agency.getUrl())) {
+            Application.getAnalytics().reportEvent("ui_action", "app_switch",
+                    "Loaded agency website");
             UIHelp.goToUrl(getActivity(), agency.getUrl());
         }
     }

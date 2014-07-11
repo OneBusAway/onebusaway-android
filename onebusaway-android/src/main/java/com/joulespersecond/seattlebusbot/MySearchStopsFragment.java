@@ -102,6 +102,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
             // a 'communication' error. Just fake no results.
             setEmptyText(getString(R.string.find_hint_noresults));
         } else {
+            Application.getAnalytics().reportEvent("error", "network", "Communication error");
             setEmptyText(getString(R.string.generic_comm_error));
         }
     }

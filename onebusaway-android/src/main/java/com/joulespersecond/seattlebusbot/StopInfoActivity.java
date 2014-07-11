@@ -48,4 +48,18 @@ public class StopInfoActivity extends Activity {
 
         finish();
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
 }

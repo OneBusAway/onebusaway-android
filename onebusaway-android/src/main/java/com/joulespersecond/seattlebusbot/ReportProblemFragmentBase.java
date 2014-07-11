@@ -59,6 +59,13 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().reportScreenView(this);
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.report_problem_options, menu);
     }

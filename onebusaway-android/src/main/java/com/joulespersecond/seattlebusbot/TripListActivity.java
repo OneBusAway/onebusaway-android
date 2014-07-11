@@ -39,7 +39,6 @@ import android.widget.TextView;
 public class TripListActivity extends SherlockFragmentActivity {
     // private static final String TAG = "TripListActivity";
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +51,20 @@ public class TripListActivity extends SherlockFragmentActivity {
             TripListFragment list = new TripListFragment();
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
     }
 
     @Override

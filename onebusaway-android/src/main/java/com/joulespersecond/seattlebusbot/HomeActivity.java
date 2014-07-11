@@ -138,6 +138,20 @@ public class HomeActivity extends BaseMapActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        Application.getAnalytics().activityStart(this);
+    }
+
+    @Override
+    public void onPause() {
+        Application.getAnalytics().activityStop(this);
+
+        super.onPause();
+    }
+
+    @Override
     protected int getContentView() {
         return R.layout.main;
     }
@@ -154,24 +168,36 @@ public class HomeActivity extends BaseMapActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == android.R.id.home) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Home");
+
             NavHelp.goHome(this);
             return true;
         } else if (id == R.id.find_stop) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "My Stops");
+
             Intent myIntent = new Intent(this, MyStopsActivity.class);
             startActivity(myIntent);
             return true;
         } else if (id == R.id.find_route) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "My Routes");
+
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
             startActivity(myIntent);
             return true;
         } else if (id == R.id.view_trips) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "My Reminders");
+
             Intent myIntent = new Intent(this, TripListActivity.class);
             startActivity(myIntent);
             return true;
         } else if (id == R.id.help) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Help");
+
             showDialog(HELP_DIALOG);
             return true;
         } else if (id == R.id.preferences) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Preferences");
+
             Intent preferences = new Intent(
                     HomeActivity.this,
                     PreferencesActivity.class);
@@ -185,9 +211,13 @@ public class HomeActivity extends BaseMapActivity {
     protected Dialog onCreateDialog(int id) {
         switch (id) {
             case HELP_DIALOG:
+                Application.getAnalytics().reportEvent("ui_action", "show_dialog", "Help");
+
                 return createHelpDialog();
 
             case WHATSNEW_DIALOG:
+                Application.getAnalytics().reportEvent("ui_action", "show_dialog", "What's New");
+
                 return createWhatsNewDialog();
         }
         return super.onCreateDialog(id);
@@ -202,6 +232,9 @@ public class HomeActivity extends BaseMapActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case 0:
+                                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                                                "Clicked Twitter Link");
+
                                 String twitterUrl = TWITTER_URL;
                                 if (Application.get().getCurrentRegion() != null &&
                                         !TextUtils.isEmpty(Application.get().getCurrentRegion()
@@ -209,15 +242,29 @@ public class HomeActivity extends BaseMapActivity {
                                     twitterUrl = Application.get().getCurrentRegion()
                                             .getTwitterUrl();
                                 }
+
+                                Application.getAnalytics().reportEvent("ui_action", "app_switch",
+                                        "Loaded Twitter via Web");
                                 UIHelp.goToUrl(HomeActivity.this, twitterUrl);
                                 break;
                             case 1:
+                                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                                        "Agencies");
+
                                 AgenciesActivity.start(HomeActivity.this);
                                 break;
                             case 2:
+                                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                                        "What's New");
+                                Application.getAnalytics().reportEvent("ui_action", "show_dialog",
+                                        "Manually show: What's New");
+
                                 showDialog(WHATSNEW_DIALOG);
                                 break;
                             case 3:
+                                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                                        "Clicked Email Link");
+
                                 goToContactEmail(HomeActivity.this);
                                 break;
                         }
@@ -263,6 +310,8 @@ public class HomeActivity extends BaseMapActivity {
 
         if ((oldVer > 0) && (oldVer < newVer)) {
             mWhatsNewMessage = R.string.main_help_whatsnew;
+            Application.getAnalytics().reportEvent("ui_action", "show_dialog",
+                    "Automatically show: What's New");
             showDialog(WHATSNEW_DIALOG);
 
             // Updates will remove the alarms. This should put them back.

@@ -23,7 +23,19 @@ It's available on the [Play Store](https://play.google.com/store/apps/details?id
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 2. Run Android Studio (Windows users may need to `Run as administator` when installing Android SDK components).
 3. At the welcome screen select `Import Project`, browse to the location of this repository and double-click it.
-4. Open the Android SDK Manager (Tools->Andorid->SDK Manager) and under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) add a checkmark next to `Google APIs` then select `Install n packages`. `n` may be 1 or more if other updates are available.
+4. Open the Android SDK Manager (Tools->Andorid->SDK Manager) and install the latest version of the following:
+* Under Tools
+	* Android SDK Tools
+	* Android SDK Platform-tools
+	* Android SDK Build-tools
+* Under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle))
+	* SDK Platform
+	* Google APIs
+* Extras
+	* Android Support Repository
+	* Android Support Library
+	* Google Play services
+	* Google Repository
 5. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
 6. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
@@ -61,20 +73,6 @@ We welcome contributions to the project! Please see our [Contributing Guide](htt
 
 If you're using Android Studio v0.4.2 or lower, when importing, please be sure to select the `settings.gradle` file in the root, **NOT** the project directory.
 You will get the above error if you select the project directory / name of the project.
-
-### I get build errors for the Android Support libraries or Google APIs
-
-Open the Android SDK Manager and make sure the following are installed:
-* Under Tools
-	* Android SDK Tools
-	* Android SDK Platform-tools
-	* Android SDK Build-tools
-* Under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle))
-	* SDK Platform
-	* Google APIs
-* Extras
-	* Android Support Repository
-	* Android Support Library
 
 ### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
 

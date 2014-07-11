@@ -82,6 +82,9 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear_starred) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press",
+                    "Remove all starred stops");
+
             new ClearDialog()
                     .show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
             return true;

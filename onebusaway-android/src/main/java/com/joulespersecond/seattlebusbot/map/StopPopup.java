@@ -18,6 +18,7 @@ package com.joulespersecond.seattlebusbot.map;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.MyTextUtils;
 import com.joulespersecond.seattlebusbot.R;
@@ -134,6 +135,7 @@ class StopPopup {
     private final View.OnClickListener mOnShowArrivals = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Show arrivals");
             ArrivalsListActivity.start(mContext, mStop);
         }
     };
@@ -156,9 +158,13 @@ class StopPopup {
 
             mRoutesView.setVisibility(View.VISIBLE);
             text.setText(R.string.main_hide_routes);
+
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Show routes");
         } else {
             mRoutesView.setVisibility(View.GONE);
             text.setText(R.string.main_show_routes);
+
+            Application.getAnalytics().reportEvent("ui_action", "button_press", "Hide routes");
         }
     }
 
@@ -201,6 +207,9 @@ class StopPopup {
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    Application.getAnalytics().reportEvent("ui_action", "button_press",
+                            "Show route on map");
+
                     Bundle args = new Bundle();
                     args.putString(MapParams.ROUTE_ID, route.getId());
                     mFragment.setMapMode(MapParams.MODE_ROUTE, args);

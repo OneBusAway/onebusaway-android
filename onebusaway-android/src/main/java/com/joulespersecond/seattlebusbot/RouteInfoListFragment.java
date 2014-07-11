@@ -127,6 +127,9 @@ public class RouteInfoListFragment extends ListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
+            Application.getAnalytics().reportEvent("ui_action", "button_press",
+                    "Show route on map");
+
             HomeActivity.start(getActivity(), mRouteId);
             return true;
         } else if (id == R.id.goto_url) {

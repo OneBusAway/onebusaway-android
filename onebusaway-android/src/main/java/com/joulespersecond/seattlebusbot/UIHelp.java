@@ -251,21 +251,28 @@ public final class UIHelp {
     public static final int getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
+                Application.getAnalytics().reportEvent("error", "network", "Airplane mode");
                 return R.string.airplane_mode_error;
             } else {
+                Application.getAnalytics().reportEvent("error", "network", "No network");
                 return R.string.no_network_error;
             }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
+                Application.getAnalytics().reportEvent("error", "general", "Internal error");
                 return R.string.internal_error;
             case ObaApi.OBA_NOT_FOUND:
+                Application.getAnalytics().reportEvent("error", "general", "Route not found");
                 return R.string.route_not_found_error;
             case ObaApi.OBA_BAD_GATEWAY:
+                Application.getAnalytics().reportEvent("error", "network", "Bad gateway");
                 return R.string.bad_gateway_error;
             case ObaApi.OBA_OUT_OF_MEMORY:
+                Application.getAnalytics().reportEvent("error", "general", "Out of memory");
                 return R.string.out_of_memory_error;
             default:
+                Application.getAnalytics().reportEvent("error", "network", "Communication error");
                 return R.string.generic_comm_error;
         }
     }
@@ -273,21 +280,28 @@ public final class UIHelp {
     public static final int getStopErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
+                Application.getAnalytics().reportEvent("error", "network", "Airplane mode");
                 return R.string.airplane_mode_error;
             } else {
+                Application.getAnalytics().reportEvent("error", "network", "No network");
                 return R.string.no_network_error;
             }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
+                Application.getAnalytics().reportEvent("error", "general", "Internal error");
                 return R.string.internal_error;
             case ObaApi.OBA_NOT_FOUND:
+                Application.getAnalytics().reportEvent("error", "general", "Stop not found");
                 return R.string.stop_not_found_error;
             case ObaApi.OBA_BAD_GATEWAY:
+                Application.getAnalytics().reportEvent("error", "network", "Bad gateway");
                 return R.string.bad_gateway_error;
             case ObaApi.OBA_OUT_OF_MEMORY:
+                Application.getAnalytics().reportEvent("error", "general", "Out of memory");
                 return R.string.out_of_memory_error;
             default:
+                Application.getAnalytics().reportEvent("error", "network", "Communication error");
                 return R.string.generic_comm_error;
         }
     }
@@ -295,19 +309,25 @@ public final class UIHelp {
     public static final int getMapErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
+                Application.getAnalytics().reportEvent("error", "network", "Airplane mode");
                 return R.string.airplane_mode_error;
             } else {
+                Application.getAnalytics().reportEvent("error", "network", "No network");
                 return R.string.no_network_error;
             }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
+                Application.getAnalytics().reportEvent("error", "general", "Internal error");
                 return R.string.internal_error;
             case ObaApi.OBA_BAD_GATEWAY:
+                Application.getAnalytics().reportEvent("error", "network", "Bad gateway");
                 return R.string.bad_gateway_error;
             case ObaApi.OBA_OUT_OF_MEMORY:
+                Application.getAnalytics().reportEvent("error", "general", "Out of memory");
                 return R.string.out_of_memory_error;
             default:
+                Application.getAnalytics().reportEvent("error", "general", "Map error");
                 return R.string.map_generic_error;
         }
     }

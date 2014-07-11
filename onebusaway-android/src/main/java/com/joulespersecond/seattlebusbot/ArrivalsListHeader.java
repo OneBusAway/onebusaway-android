@@ -111,6 +111,7 @@ class ArrivalsListHeader {
         mNameView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Application.getAnalytics().reportEvent("ui_action", "button_press", "Stop label");
                 beginNameEdit(null);
             }
         });
@@ -120,6 +121,9 @@ class ArrivalsListHeader {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                        "Save stop label edit");
+
                 mController.setUserStopName(mEditNameView.getText().toString());
                 endNameEdit();
             }
@@ -142,6 +146,9 @@ class ArrivalsListHeader {
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                        "Cancel stop label edit");
+
                 endNameEdit();
             }
         });
@@ -150,6 +157,9 @@ class ArrivalsListHeader {
         clear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Application.getAnalytics().reportEvent("ui_action", "button_press",
+                        "Clear stop label edit");
+
                 mController.setUserStopName(null);
                 endNameEdit();
             }
@@ -298,6 +308,8 @@ class ArrivalsListHeader {
     }
 
     void beginNameEdit(String initial) {
+        Application.getAnalytics().reportEvent("ui_action", "textbox_select", "Stop label");
+
         // If we can click on this, then we're definitely not
         // editable, so we should go into edit mode.
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());

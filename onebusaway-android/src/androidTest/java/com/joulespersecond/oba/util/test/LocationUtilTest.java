@@ -10,6 +10,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.TestHelp;
 
 /**
  * Tests to evaluate location utilities
@@ -82,7 +83,7 @@ public class LocationUtilTest extends AndroidTestCase {
         Location loc;
 
         // Make sure we're not running on an emulator, since we'll get a null location there
-        if (!Build.FINGERPRINT.contains("generic")) {
+        if (!TestHelp.isRunningOnEmulator()) {
             /**
              * Test without Google Play Services - should be a Location API v1 location.
              * Typically this is "gps" or "network", but some devices (e.g., HTC EVO LTE)
@@ -106,7 +107,7 @@ public class LocationUtilTest extends AndroidTestCase {
 
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext()) == ConnectionResult.SUCCESS &&
-                !Build.FINGERPRINT.contains("generic")) {
+                !TestHelp.isRunningOnEmulator()) {
             /**
              * Could return either a fused or Location API v1 location
              */
@@ -137,12 +138,12 @@ public class LocationUtilTest extends AndroidTestCase {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             timeDiff = SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos();
-            Log.d(TAG, "Location from " + location.getProvider() + " is " + timeDiff / 1E9 + " seconds old");
+            Log.d(TAG, "Location from " + LocationHelp.printLocationDetails(location));
             // Use elapsed real-time nanos, since its guaranteed monotonic
             return timeDiff <= (FRESH_LOCATION_THRESHOLD_MS * 1E6);
         } else {
             timeDiff = System.currentTimeMillis() - location.getTime();
-            Log.d(TAG, "Location from " + location.getProvider() + " is " + timeDiff / 1E3 + " seconds old");
+            Log.d(TAG, "Location from " + LocationHelp.printLocationDetails(location));
             return timeDiff <= FRESH_LOCATION_THRESHOLD_MS;
         }
     }

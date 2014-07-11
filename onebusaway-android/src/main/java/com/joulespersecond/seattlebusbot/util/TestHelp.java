@@ -19,6 +19,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 
 import com.joulespersecond.seattlebusbot.BuildConfig;
 
@@ -66,5 +67,16 @@ public class TestHelp {
         signal.await(10000, TimeUnit.MILLISECONDS);
         context.unregisterReceiver(broadcastReceiver);
         Thread.sleep(1000);
+    }
+
+    /**
+     * Returns true if tests are running on an emulator, false if tests are running
+     * on an actual device
+     *
+     * @return true if tests are running on an emulator, false if tests are running
+     * on an actual device
+     */
+    public static boolean isRunningOnEmulator() {
+        return Build.FINGERPRINT.contains("generic");
     }
 }

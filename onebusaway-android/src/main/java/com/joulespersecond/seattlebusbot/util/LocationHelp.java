@@ -18,7 +18,9 @@ package com.joulespersecond.seattlebusbot.util;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -161,6 +163,45 @@ public class LocationHelp {
      */
     public static boolean fuzzyEquals(Location a, Location b) {
         return a.distanceTo(b) <= FUZZY_EQUALS_THRESHOLD;
+    }
+
+    /**
+     * Returns the human-readable details of a Location (provider, lat/long, accuracy, timestamp)
+     *
+     * @param loc
+     * @return the details of a Location (provider, lat/long, accuracy, timestamp) in a string
+     */
+    public static String printLocationDetails(Location loc) {
+        if (loc == null) {
+            return "";
+        }
+
+        long timeDiff;
+        double timeDiffSec;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            timeDiff = SystemClock.elapsedRealtimeNanos() - loc.getElapsedRealtimeNanos();
+            // Convert to seconds
+            timeDiffSec = timeDiff / 1E9;
+        } else {
+            timeDiff = System.currentTimeMillis() - loc.getTime();
+            timeDiffSec = timeDiff / 1E3;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(loc.getProvider());
+        sb.append(' ');
+        sb.append(loc.getLatitude());
+        sb.append(',');
+        sb.append(loc.getLongitude());
+        if (loc.hasAccuracy()) {
+            sb.append(' ');
+            sb.append(loc.getAccuracy());
+        }
+        sb.append(", ");
+        sb.append(String.format("%.0f", timeDiffSec) + " second(s) ago");
+
+        return sb.toString();
     }
 
     /**

@@ -277,23 +277,7 @@ public class HomeActivity extends BaseMapActivity {
 
     private String getLocationString(Context context) {
         Location loc = LocationHelp.getLocation2(context, mLocationClient);
-
-        if (loc == null) {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(loc.getProvider());
-        sb.append(' ');
-        sb.append(loc.getLatitude());
-        sb.append(',');
-        sb.append(loc.getLongitude());
-        if (loc.hasAccuracy()) {
-            sb.append(' ');
-            sb.append(loc.getAccuracy());
-        }
-
-        return sb.toString();
+        return LocationHelp.printLocationDetails(loc);
     }
 
     private void goToContactEmail(Context ctxt) {

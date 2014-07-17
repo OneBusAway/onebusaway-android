@@ -4,12 +4,29 @@ env:
   global:
     - ANDROID_API_LEVEL=17
     - ANDROID_ABI=armeabi-v7a
+    - ANDROID_BUILD_TOOLS_VERSION=19.1.0
 
-android:
-  components:
-    - build-tools-19.1.0
-    # For Google Maps API v1
-    - addon-google_apis-google-$ANDROID_API_LEVEL
+before_install:
+   # workaround for travis-ci/travis-ci#2279
+    - 'sudo mv /usr/local/android-sdk/tools/android-* /usr/local/bin'
+    # Accept all licenses (workaround for travis-ci/travis-ci#2466)
+    # Upgrade 'platform-tools' before 'tools' (workaround for travis-ci/travis-ci#2470)
+    # Run distinct 'android update sdk' commands
+    - "android-update-sdk --components='platform-tools,tools' --accept-licenses='.+'"
+      - "android-update-sdk --components='build-tools-19.1.0' --accept-licenses='.+'"
+      - "android-update-sdk --components='android-17' --accept-licenses='.+'"
+      - "android-update-sdk --components='extra-android-m2repository,extra-google-m2repository' --accept-licenses='.+'"
+      - "android-update-sdk --components='addon-google_apis-google-17' --accept-licenses='.+'"
+
+# Don't make any component setup via `android.components` (due to travis-ci/travis-ci#2279)
+# android:
+#   components:
+#    - build-tools-19.1.0
+#    # For Google Maps API v1
+#    - addon-google_apis-google-$ANDROID_API_LEVEL
+#  licenses:
+#    - android-sdk-license-5be876d5
+#    - '.*intel.+'
 
 before_script:
   # Create and start emulator

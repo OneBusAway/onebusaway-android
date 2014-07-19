@@ -75,6 +75,7 @@ Open the Android SDK Manager and make sure the following are installed:
 * Extras
 	* Android Support Repository
 	* Android Support Library
+	* Google Play services
 
 ### Android Studio or Gradle can't find my Android SDK, or the API Levels that I have installed
 

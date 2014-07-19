@@ -15,15 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.BaseMapActivity;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -35,16 +26,25 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 
 public class HomeActivity extends BaseMapActivity {
 
@@ -55,7 +55,7 @@ public class HomeActivity extends BaseMapActivity {
     private static final int WHATSNEW_DIALOG = 2;
 
     private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
-            //One week, in milliseconds
+    //One week, in milliseconds
 
     private static final String TAG = "HomeActivity";
 
@@ -69,9 +69,9 @@ public class HomeActivity extends BaseMapActivity {
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -96,9 +96,9 @@ public class HomeActivity extends BaseMapActivity {
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -222,7 +222,8 @@ public class HomeActivity extends BaseMapActivity {
                                 break;
                         }
                     }
-                });
+                }
+        );
         return builder.create();
     }
 
@@ -237,7 +238,8 @@ public class HomeActivity extends BaseMapActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dismissDialog(WHATSNEW_DIALOG);
                     }
-                });
+                }
+        );
         return builder.create();
     }
 
@@ -273,39 +275,12 @@ public class HomeActivity extends BaseMapActivity {
         }
     }
 
-    private static String getLocationString(Context context) {
-        LocationManager mgr = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mgr.getProviders(true);
-        Location last = null;
-        String provider = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            String p = i.next();
-            Location loc = mgr.getLastKnownLocation(p);
-            if (loc != null && (last == null || loc.getTime() > last.getTime())) {
-                last = loc;
-                provider = p;
-            }
-        }
-
-        if (last == null) {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(provider);
-        sb.append(' ');
-        sb.append(last.getLatitude());
-        sb.append(',');
-        sb.append(last.getLongitude());
-        if (last.hasAccuracy()) {
-            sb.append(' ');
-            sb.append(last.getAccuracy());
-        }
-
-        return sb.toString();
+    private String getLocationString(Context context) {
+        Location loc = LocationHelp.getLocation2(context, mLocationClient);
+        return LocationHelp.printLocationDetails(loc);
     }
 
-    private static void goToContactEmail(Context ctxt) {
+    private void goToContactEmail(Context ctxt) {
         PackageManager pm = ctxt.getPackageManager();
         PackageInfo appInfo = null;
         try {

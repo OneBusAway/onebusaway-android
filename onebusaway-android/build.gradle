@@ -33,7 +33,7 @@ android {
     buildToolsVersion "19.1.0"
 
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 9
         targetSdkVersion 17
     }
 
@@ -98,6 +98,7 @@ tasks.whenTaskAdded { theTask ->
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'com.google.android.gms:play-services:5.0.77'
     compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
     compile 'com.android.support:support-v4:19.1.+'
     compile 'com.fasterxml.jackson.core:jackson-core:2.3.3'

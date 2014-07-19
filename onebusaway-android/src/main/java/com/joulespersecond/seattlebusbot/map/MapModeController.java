@@ -15,14 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import com.google.android.maps.MapView;
-
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaStop;
-
 import android.app.Activity;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
+
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaShape;
+import com.joulespersecond.oba.elements.ObaStop;
 
 import java.util.List;
 
@@ -52,13 +52,51 @@ public interface MapModeController {
 
         void setMapMode(String mode, Bundle args);
 
-        MapView getMapView();
+        ObaMapView getMapView();
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
         void setMyLocation();
 
         void notifyOutOfRange();
+    }
+
+    /**
+     * Interface used to abstract the ObaMapView class, to allow multiple implementations
+     * (e.g., Google Maps API v1, v2)
+     *
+     * @author barbeau
+     */
+    interface ObaMapView {
+
+        // Sets the current zoom level of the map
+        void setZoom(float zoomLevel);
+
+        // Returns the current center-point position of the map
+        Location getMapCenterAsLocation();
+
+        void setMapCenter(Location location);
+
+        // The current latitude span (from the top edge to the bottom edge of the map) in decimal degrees
+        double getLatitudeSpanInDecDegrees();
+
+        // The current longitude span (from the left edge to the right edge of the map) in decimal degrees
+        double getLongitudeSpanInDecDegrees();
+
+        // Returns the current zoom level of the map.
+        float getZoomLevelAsFloat();
+
+        // Set lines to be shown on the map view
+        void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes);
+
+        // Zoom to line overlay of route
+        void zoomToRoute();
+
+        // Post invalidate
+        void postInvalidate();
+
+        // Removes the route from the map
+        void removeRouteOverlay();
     }
 
     String getMode();

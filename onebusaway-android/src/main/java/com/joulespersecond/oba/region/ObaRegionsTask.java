@@ -16,12 +16,6 @@
  */
 package com.joulespersecond.oba.region;
 
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -32,13 +26,22 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * AsyncTask used to refresh region info from the Regions REST API.
- *
+ * <p/>
  * Classes utilizing this task can request a callback via MapModeController.Callback.setMyLocation()
  * by passing in class implementing MapModeController.Callback in the constructor
  *
@@ -72,6 +75,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     private final boolean mShowProgressDialog;
 
     /**
+     * Google Location Services
+     */
+    LocationClient mLocationClient;
+
+    /**
      * @param callback a callback will be made via this interface after the task is complete
      *                 (null if no callback is requested)
      */
@@ -92,11 +100,16 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
      *                           task, false if it should not
      */
     public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback, boolean force,
-            boolean showProgressDialog) {
+                          boolean showProgressDialog) {
         this.mContext = context;
         this.mCallback = callback;
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(context, locCallback, locCallback);
+            mLocationClient.connect();
+        }
     }
 
     @Override
@@ -133,10 +146,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
         if (settings
                 .getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)) {
-            //TODO - Make new request from NETWORK_PROVIDER asynchronously, since LocationManager.getLastKnownLocation() 
-            //is buggy, and NETWORK_PROVIDER should return with a new coarse location (WiFi or cell) quickly
-            //Or, use new Location Services from Google Play Services SDK
-            Location myLocation = UIHelp.getLocation2(mContext);
+            // Pass in the LocationClient initialized in constructor
+            Location myLocation = LocationHelp.getLocation2(mContext, mLocationClient);
 
             ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
 
@@ -172,6 +183,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             } else {
                 doCallback(false);
             }
+        }
+
+        // Tear down Location Services client
+        if (mLocationClient != null) {
+            mLocationClient.disconnect();
         }
 
         super.onPostExecute(results);

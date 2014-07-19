@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot.map;
-
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.MapView;
-import com.google.android.maps.OverlayItem;
-
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.R;
+package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.MapView;
+import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.R;
 
 import java.util.List;
 
@@ -65,7 +64,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         private final ObaStop mStop;
 
         public StopOverlayItem(ObaStop stop) {
-            super(stop.getLocation(), stop.getName(), "");
+            super(MapHelp.makeGeoPoint(stop.getLocation()), stop.getName(), "");
             mStop = stop;
         }
 
@@ -191,7 +190,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 
     /*
     @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event, MapView view) {
+    public boolean onKeyUp(int keyCode, KeyEvent event, ObaMapView view) {
         // For now, eat all keys
         return true;
     }

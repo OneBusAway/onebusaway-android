@@ -20,6 +20,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 public class MyStarredStopsActivity extends Activity {
 
     //
@@ -42,6 +44,7 @@ public class MyStarredStopsActivity extends Activity {
         return UIHelp.makeShortcut(this,
                 getString(R.string.starred_stops_shortcut),
                 new Intent(this, MyStopsActivity.class)
-                        .setData(uri));
+                        .setData(uri)
+        );
     }
 }

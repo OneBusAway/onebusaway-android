@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.provider.ObaContract;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -26,6 +24,9 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists
@@ -62,7 +63,8 @@ final class QueryUtils {
                         ") OR (" + useCount + " > 0))" + regionWhere,
                 null,
                 accessTime + " desc, " +
-                        useCount + " desc");
+                        useCount + " desc"
+        );
     }
 
     static final class RouteList {

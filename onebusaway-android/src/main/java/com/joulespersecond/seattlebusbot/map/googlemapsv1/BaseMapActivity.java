@@ -14,31 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot.map;
-
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
-
-import com.actionbarsherlock.app.SherlockMapActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.oba.region.RegionUtils;
-import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
-import com.joulespersecond.seattlebusbot.map.StopOverlay.StopOverlayItem;
+package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -46,6 +22,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -55,6 +32,35 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
+
+import com.actionbarsherlock.app.SherlockMapActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
+import com.google.android.maps.MapController;
+import com.google.android.maps.MyLocationOverlay;
+import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.RouteMapController;
+import com.joulespersecond.seattlebusbot.map.StopMapController;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.StopOverlay.StopOverlayItem;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 
@@ -87,7 +93,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     private static final int REQUEST_NO_LOCATION = 41;
 
-    private MapView mMapView;
+    private ObaMapViewV1 mMapView;
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 
@@ -110,6 +116,11 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     private MapModeController mController;
 
+    /**
+     * Google Location Services
+     */
+    protected LocationClient mLocationClient;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         //boolean firstRun = firstRunCheck();
@@ -126,7 +137,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
         mLocationOverlay = new MyLocationOverlay(getActivity(), mMapView);
         mLocationOverlay.enableMyLocation();
-        List<Overlay> mapOverlays = mMapView.getOverlays();
+        List<com.google.android.maps.Overlay> mapOverlays = mMapView.getOverlays();
         mapOverlays.add(mLocationOverlay);
 
         // Initialize the StopPopup (hidden)
@@ -143,10 +154,17 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             }
             initMap(args);
         }
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
+        }
     }
 
-    private MapView createMap(View view) {
-        MapView map = new MapView(this, getString(API_KEY));
+    private ObaMapViewV1 createMap(View view) {
+        ObaMapViewV1 map = new ObaMapViewV1(this, getString(API_KEY));
         map.setBuiltInZoomControls(false);
         map.setClickable(true);
         map.setFocusableInTouchMode(true);
@@ -219,6 +237,24 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
@@ -238,10 +274,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
-        GeoPoint center = mMapView.getMapCenter();
-        outState.putDouble(MapParams.CENTER_LAT, center.getLatitudeE6() / 1E6);
-        outState.putDouble(MapParams.CENTER_LON, center.getLongitudeE6() / 1E6);
-        outState.putInt(MapParams.ZOOM, mMapView.getZoomLevel());
+        Location center = mMapView.getMapCenterAsLocation();
+        outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
+        outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
+        outState.putFloat(MapParams.ZOOM, mMapView.getZoomLevelAsFloat());
     }
 
     public boolean isRouteDisplayed() {
@@ -313,7 +349,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     }
 
     @Override
-    public MapView getMapView() {
+    public MapModeController.ObaMapView getMapView() {
         return mMapView;
     }
 
@@ -571,7 +607,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             double results[] = new double[4];
             RegionUtils.getRegionSpan(region, results);
             MapController ctrl = mMapView.getController();
-            ctrl.setCenter(ObaApi.makeGeoPoint(results[2], results[3]));
+            ctrl.setCenter(MapHelp.makeGeoPoint(results[2], results[3]));
             ctrl.zoomToSpan((int) (results[0] * 1E6), (int) (results[1] * 1E6));
         } else {
             // If we don't have a region, then prompt to select a region.
@@ -595,8 +631,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     static final int MIN_ZOOM = 1;
 
     void enableZoom() {
-        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevel() != MAX_ZOOM);
-        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevel() != MIN_ZOOM);
+        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevelAsFloat() != MAX_ZOOM);
+        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevelAsFloat() != MIN_ZOOM);
     }
 
     private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
@@ -624,7 +660,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     /**
      * Returns true if no files in private directory
-     * (MapView or MapActivity caches prefs and tiles)
+     * (ObaMapView or MapActivity caches prefs and tiles)
      * This will fail if MapViewActivty never got to onPause
      */
     /*

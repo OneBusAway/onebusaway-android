@@ -18,7 +18,7 @@ package com.joulespersecond.seattlebusbot.test;
 /*
 import com.joulespersecond.oba.mock.ObaMock;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.TestHelp;
+import com.joulespersecond.seattlebusbot.util.TestHelp;
 
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;

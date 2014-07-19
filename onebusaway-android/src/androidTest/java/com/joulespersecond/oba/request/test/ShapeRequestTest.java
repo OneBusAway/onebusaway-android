@@ -15,10 +15,10 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import com.google.android.maps.GeoPoint;
-
 import com.joulespersecond.oba.request.ObaShapeRequest;
 import com.joulespersecond.oba.request.ObaShapeResponse;
+
+import android.location.Location;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class ShapeRequestTest extends ObaTestCase {
         ObaShapeResponse response = request.call();
         assertOK(response);
         assertTrue(response.getLength() > 0);
-        final List<GeoPoint> points = response.getPoints();
+        final List<Location> points = response.getPoints();
         assertTrue(points.size() > 0);
     }
 

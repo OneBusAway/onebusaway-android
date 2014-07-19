@@ -27,6 +27,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import java.util.ArrayList;
 
 //

@@ -15,20 +15,20 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import com.google.android.maps.GeoPoint;
+import android.location.Location;
 
-import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 
 public class StopsForLocationTest extends ObaTestCase {
 
     public void testDowntownSeattle1() {
-        final GeoPoint pt = ObaApi.makeGeoPoint(47.610980, -122.33845);
+        final Location pt = LocationHelp.makeLocation(47.610980, -122.33845);
 
         ObaStopsForLocationRequest.Builder builder =
                 new ObaStopsForLocationRequest.Builder(getContext(), pt);
@@ -51,7 +51,7 @@ public class StopsForLocationTest extends ObaTestCase {
     }
 
     public void testQuery() {
-        final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
+        final Location pt = LocationHelp.makeLocation(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
                 new ObaStopsForLocationRequest.Builder(getContext(), pt)
@@ -72,7 +72,7 @@ public class StopsForLocationTest extends ObaTestCase {
     }
 
     public void testQueryFail() {
-        final GeoPoint pt = ObaApi.makeGeoPoint(47.25331, -122.44040);
+        final Location pt = LocationHelp.makeLocation(47.25331, -122.44040);
 
         ObaStopsForLocationResponse response =
                 new ObaStopsForLocationRequest.Builder(getContext(), pt)
@@ -88,7 +88,7 @@ public class StopsForLocationTest extends ObaTestCase {
 
     public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
-        final GeoPoint pt = ObaApi.makeGeoPoint(48.85808, 2.29498);
+        final Location pt = LocationHelp.makeLocation(48.85808, 2.29498);
 
         ObaStopsForLocationRequest request =
                 new ObaStopsForLocationRequest.Builder(getContext(), pt).build();

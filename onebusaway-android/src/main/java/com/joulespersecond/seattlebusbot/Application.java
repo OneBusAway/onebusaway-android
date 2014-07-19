@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.provider.ObaContract.Regions;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -28,6 +24,11 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.provider.ObaContract.Regions;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 
 import java.security.MessageDigest;
 import java.util.UUID;

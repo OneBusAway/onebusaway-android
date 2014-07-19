@@ -16,20 +16,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.maps.GeoPoint;
-
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaElement;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
-import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
-import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
-import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -40,6 +31,21 @@ import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaElement;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
+import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
+import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
+import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +84,23 @@ public class SearchResultsFragment extends ListFragment
 
     private MyAdapter mAdapter;
 
+    /**
+     * Google Location Services
+     */
+    LocationClient mLocationClient;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient.connect();
+        }
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -86,6 +109,24 @@ public class SearchResultsFragment extends ListFragment
         setListAdapter(mAdapter);
 
         search();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
     }
 
     private void search() {
@@ -98,7 +139,7 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
-        return new MyLoader(getActivity(), query, UIHelp.getLocation(getActivity()));
+        return new MyLoader(getActivity(), query, LocationHelp.getLocation(getActivity(), mLocationClient));
     }
 
     @Override
@@ -239,9 +280,9 @@ public class SearchResultsFragment extends ListFragment
 
         private final String mQueryText;
 
-        private final GeoPoint mCenter;
+        private final Location mCenter;
 
-        public MyLoader(Context context, String query, GeoPoint center) {
+        public MyLoader(Context context, String query, Location center) {
             super(context);
             mQueryText = query;
             mCenter = center;
@@ -262,10 +303,10 @@ public class SearchResultsFragment extends ListFragment
                     return response;
                 }
             }
-            GeoPoint center = UIHelp.getDefaultSearchCenter();
+            Location center = LocationHelp.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(UIHelp.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();

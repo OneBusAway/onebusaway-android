@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot.map;
-
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.MyTextUtils;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.UIHelp;
+package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -36,6 +28,15 @@ import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 

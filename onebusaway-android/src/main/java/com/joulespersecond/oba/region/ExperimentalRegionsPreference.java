@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.oba.region;
 
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.R;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,13 +25,17 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.util.AttributeSet;
 
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+
 /**
  * Custom preference to handle enabling and disabling experimental
  * (i.e., non-production) OBA regions
- *
+ * <p/>
  * Code for saving/restoring state based on example at:
  * http://developer.android.com/guide/topics/ui/settings.html
- *
+ * <p/>
  * and Android internal YesNoPreference:
  * https://github.com/android/platform_frameworks_base/blob/master/core/java/com/android/internal/preference/YesNoPreference.java
  *
@@ -98,7 +98,8 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.dismiss();
                                 }
-                            })
+                            }
+                    )
                     .create();
             dialog.show();
         } else {
@@ -116,14 +117,16 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
                                         Application.get().setCurrentRegion(null);
                                         setValue(false);
                                     }
-                                })
+                                }
+                        )
                         .setNegativeButton(android.R.string.cancel,
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         dialog.dismiss();
                                     }
-                                })
+                                }
+                        )
                         .create();
                 dialog.show();
             } else {

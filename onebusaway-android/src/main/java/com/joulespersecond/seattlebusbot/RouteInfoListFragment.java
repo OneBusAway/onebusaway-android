@@ -15,19 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.elements.ObaStopGroup;
-import com.joulespersecond.oba.elements.ObaStopGrouping;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaRouteRequest;
-import com.joulespersecond.oba.request.ObaRouteResponse;
-import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
-import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -45,6 +32,21 @@ import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.elements.ObaStopGroup;
+import com.joulespersecond.oba.elements.ObaStopGrouping;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaRouteRequest;
+import com.joulespersecond.oba.request.ObaRouteResponse;
+import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
+import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,7 +102,7 @@ public class RouteInfoListFragment extends ListFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
+                             ViewGroup root, Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -140,10 +142,10 @@ public class RouteInfoListFragment extends ListFragment {
             new ExpandableListView.OnChildClickListener() {
                 @Override
                 public boolean onChildClick(ExpandableListView parent,
-                        View v,
-                        int groupPosition,
-                        int childPosition,
-                        long id) {
+                                            View v,
+                                            int groupPosition,
+                                            int childPosition,
+                                            long id) {
                     showArrivals(v);
                     return true;
                 }
@@ -228,7 +230,7 @@ public class RouteInfoListFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(Loader<ObaRouteResponse> loader,
-                ObaRouteResponse data) {
+                                   ObaRouteResponse data) {
             setHeader(data, true);
         }
 
@@ -248,7 +250,7 @@ public class RouteInfoListFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(Loader<StopsForRouteInfo> loader,
-                StopsForRouteInfo data) {
+                                   StopsForRouteInfo data) {
             setStopsForRoute(data);
         }
 

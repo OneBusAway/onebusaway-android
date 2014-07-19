@@ -15,15 +15,16 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.provider.ObaContract;
-
 import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
+
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 
 import java.util.ArrayList;
 
@@ -82,7 +83,8 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
                 stopInfo.getDisplayTime(),
                 DateUtils.FORMAT_SHOW_TIME |
                         DateUtils.FORMAT_NO_NOON |
-                        DateUtils.FORMAT_NO_MIDNIGHT));
+                        DateUtils.FORMAT_NO_MIDNIGHT
+        ));
 
         ContentValues values = null;
         if (mTripsForStop != null) {

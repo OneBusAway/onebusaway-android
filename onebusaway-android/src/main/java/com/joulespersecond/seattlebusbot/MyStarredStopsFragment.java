@@ -94,7 +94,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         return R.string.my_no_starred_stops;
     }
 
-    private static class ClearDialog extends ClearConfirmDialog {
+    public static class ClearDialog extends ClearConfirmDialog {
 
         @Override
         protected void doClear() {

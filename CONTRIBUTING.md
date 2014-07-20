@@ -8,7 +8,7 @@ We use the [Android Open-Source Project (AOSP) Code Style Guidelines](http://sou
 
 We strongly suggest that you use the [`AndroidStyle.xml`](/AndroidStyle.xml) template file, included in this repository, in Android Studio to format your code:
 
-1. Place `AndroidStyle.xml` in your Android Studio `/codestyles` directory (e.g., `C:\Users\barbeau\.AndroidStudioBeta\config\codestyles`, or `~/Library/Preferences/AndroidStudioBeta/codestyles/` on OS X)
+1. Place `AndroidStyle.xml` in your Android Studio `/codestyles` directory (e.g., `%userprofile%\.AndroidStudioBeta\config\codestyles`, or `~/Library/Preferences/AndroidStudioBeta/codestyles/` on OS X)
 2. Restart Android Studio.
 3. Go to "File->Settings->Code Style", and under "Scheme" select "AndroidStyle" and click "Ok".
 4. Right-click on the files that contain your contributions and select "Reformat Code", check "Optimize imports", and select "Run".

@@ -108,11 +108,19 @@ public final class NotifierTask implements Runnable {
 
         // Set our state to notified
         Notification notification = mTaskContext.getNotification(id);
+
+        // #104 - Instantiate the deleteIntent here, since we need to re-set it in setLatestInfo()
+        Intent deleteIntent = new Intent(mContext, TripService.class);
+        deleteIntent.setAction(TripService.ACTION_CANCEL);
+        deleteIntent.setData(mUri);
+        PendingIntent pendingIntent = PendingIntent.getService(mContext, 0,
+                deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         if (notification == null) {
-            notification = createNotification(mUri);
+            notification = createNotification(pendingIntent);
         }
 
-        setLatestInfo(notification, stopId, routeId, mTimeDiff);
+        setLatestInfo(notification, stopId, routeId, mTimeDiff, pendingIntent);
         mTaskContext.setNotification(id, notification);
     }
 
@@ -127,28 +135,22 @@ public final class NotifierTask implements Runnable {
     };
     */
 
-    private Notification createNotification(Uri alertUri) {
-        //Log.d(TAG, "Creating notification for alert: " + alertUri);
-        Intent deleteIntent = new Intent(mContext, TripService.class);
-        deleteIntent.setAction(TripService.ACTION_CANCEL);
-        deleteIntent.setData(alertUri);
-
+    private Notification createNotification(PendingIntent deleteIntent) {
         return new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setOnlyAlertOnce(true)
                         //.setLights(0xFF00FF00, 1000, 1000)
                         //.setVibrate(VIBRATE_PATTERN)
-                .setDeleteIntent(PendingIntent.getService(mContext, 0,
-                        deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT))
-                .getNotification();
+                .setDeleteIntent(deleteIntent)
+                .build();
     }
 
     @SuppressWarnings("deprecation")
     private void setLatestInfo(Notification notification,
-                               String stopId,
-                               String routeId,
-                               long timeDiff) {
+            String stopId,
+            String routeId,
+            long timeDiff, PendingIntent deleteIntent) {
         final String title = mContext.getString(R.string.app_name);
 
         final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
@@ -159,6 +161,9 @@ public final class NotifierTask implements Runnable {
                 title,
                 getNotifyText(routeId, timeDiff),
                 intent);
+
+        // #104 - Bug in setLatestEventInfo() erases the deleteIntent, so reset it here
+        notification.deleteIntent = deleteIntent;
     }
 
     private String getNotifyText(String routeId, long timeDiff) {

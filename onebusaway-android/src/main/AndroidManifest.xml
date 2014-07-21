@@ -147,9 +147,9 @@
 
         <receiver android:name=".AlarmReceiver">
             <intent-filter>
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE_ALL" />
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE_TRIP" />
-                <action android:name="com.joulespersecond.seattlebusbot.action.POLL_TRIP" />
+                <!-- Should match constants for actions defined in TripService -->
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE" />
+                <action android:name="com.joulespersecond.seattlebusbot.action.POLL" />
             </intent-filter>
         </receiver>
         <receiver android:name=".BootstrapService">

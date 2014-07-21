@@ -140,7 +140,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
         //If the use has selected to auto-select region, and the previous state of the setting was false, 
-        //then run the auto-select by going to HomeActivity
+        //then run the auto-select by going to HomeFragment
         if (currentValue && !autoSelectInitialValue) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG,

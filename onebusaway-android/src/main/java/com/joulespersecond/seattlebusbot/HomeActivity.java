@@ -32,21 +32,25 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Date;
 
-public class HomeActivity extends BaseMapActivity {
+public class HomeActivity extends SherlockFragmentActivity {
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
@@ -58,6 +62,13 @@ public class HomeActivity extends BaseMapActivity {
     //One week, in milliseconds
 
     private static final String TAG = "HomeActivity";
+
+    BaseMapFragment mapFragment;
+
+    /**
+     * Google Location Services
+     */
+    protected LocationClient mLocationClient;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -128,7 +139,9 @@ public class HomeActivity extends BaseMapActivity {
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.main);
+        setContentView(R.layout.main);
+
+        setupGooglePlayServices();
 
         UIHelp.setupActionBar(getSupportActionBar());
 
@@ -138,8 +151,21 @@ public class HomeActivity extends BaseMapActivity {
     }
 
     @Override
-    protected int getContentView() {
-        return R.layout.main;
+    public void onStart() {
+        super.onStart();
+        // Make sure LocationClient is connected, if available
+        if (mLocationClient != null && !mLocationClient.isConnected()) {
+            mLocationClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        // Tear down LocationClient
+        if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.disconnect();
+        }
+        super.onStop();
     }
 
     @Override
@@ -360,5 +386,14 @@ public class HomeActivity extends BaseMapActivity {
         //Check region status, possibly forcing a reload from server and checking proximity to current region
         ObaRegionsTask task = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
         task.execute();
+    }
+
+    private void setupGooglePlayServices() {
+        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            mLocationClient = new LocationClient(this, locCallback, locCallback);
+            mLocationClient.connect();
+        }
     }
 }

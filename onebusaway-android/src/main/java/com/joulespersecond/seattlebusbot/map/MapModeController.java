@@ -56,7 +56,7 @@ public interface MapModeController {
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
-        void setMyLocation();
+        void setMyLocation(boolean useDefaultZoom, boolean animateToLocation);
 
         void notifyOutOfRange();
     }
@@ -97,6 +97,9 @@ public interface MapModeController {
 
         // Removes the route from the map
         void removeRouteOverlay();
+
+        // Returns true if the map is capable of watching itself, false if it needs an external watcher
+        boolean canWatchMapChanges();
     }
 
     String getMode();
@@ -121,4 +124,9 @@ public interface MapModeController {
      * Called when we don't know the user's location.
      */
     void onNoLocation();
+
+    /**
+     * For maps that can watch themselves for changes in zoom/center, this is after a change
+     */
+    void notifyMapChanged();
 }

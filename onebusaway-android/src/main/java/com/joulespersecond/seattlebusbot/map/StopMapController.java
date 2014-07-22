@@ -187,10 +187,10 @@ public class StopMapController implements MapModeController,
                 mFragment.getMapView().setMapCenter(center);
                 onLocation();
             } else {
-                mFragment.setMyLocation();
+                mFragment.setMyLocation(false, true);
             }
         } else {
-            mFragment.setMyLocation();
+            mFragment.setMyLocation(false, true);
         }
     }
 
@@ -403,7 +403,8 @@ public class StopMapController implements MapModeController,
     // Map watcher
     //
     private void watchMap(boolean watch) {
-        if (watch) {
+        // Only instantiate our own map watcher if the mapView isn't capable of watching itself
+        if (watch && !mFragment.getMapView().canWatchMapChanges()) {
             if (mMapWatcher == null) {
                 mMapWatcher = new MapWatcher(mFragment.getMapView(), this);
             }
@@ -435,6 +436,12 @@ public class StopMapController implements MapModeController,
     @Override
     public void onMapCenterChanged() {
         // Log.d(TAG, "Map center changed.");
+        refresh();
+    }
+
+    @Override
+    public void notifyMapChanged() {
+        Log.d(TAG, "Map changed (called by MapView)");
         refresh();
     }
 }

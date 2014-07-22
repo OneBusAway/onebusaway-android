@@ -186,7 +186,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     //
     // Region Task Callback
     //
-    public void onTaskFinished(boolean currentRegionChanged) {
+    public void onRegionTaskFinished(boolean currentRegionChanged) {
         setSupportProgressBarIndeterminateVisibility(false);
 
         if (currentRegionChanged) {

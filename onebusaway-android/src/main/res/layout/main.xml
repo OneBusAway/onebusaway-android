@@ -106,12 +106,5 @@
         <!-- STOP INFO -->
     </LinearLayout>
     <!--  POPUP CONTAINER -->
-
-    <ZoomControls
-        android:id="@+id/zoom_controls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true" />
 </RelativeLayout>
 

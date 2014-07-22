@@ -27,6 +27,7 @@ import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.MapHelp;
 
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
         private final ObaStop mStop;
 
         public StopOverlayItem(ObaStop stop) {
-            super(MapHelpV2.makeGeoPoint(stop.getLocation()), stop.getName(), "");
+            super(MapHelp.makeGeoPoint(stop.getLocation()), stop.getName(), "");
             mStop = stop;
         }
 

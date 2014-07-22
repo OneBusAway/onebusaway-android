@@ -16,42 +16,39 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
-import android.widget.ZoomControls;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
-import com.google.android.maps.ItemizedOverlay.OnFocusChangeListener;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.LocationSource;
+import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.VisibleRegion;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.oba.region.RegionUtils;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.R;
@@ -59,10 +56,9 @@ import com.joulespersecond.seattlebusbot.map.MapModeController;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.RouteMapController;
 import com.joulespersecond.seattlebusbot.map.StopMapController;
-import com.joulespersecond.seattlebusbot.map.googlemapsv1.StopOverlay.StopOverlayItem;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -81,9 +77,11 @@ import java.util.List;
  *
  * @author paulw
  */
-abstract public class BaseMapFragment extends SherlockFragment
-        implements MapModeController.Callback, ObaRegionsTask.Callback {
-    //private static final String TAG = "BaseMapFragment";
+public class BaseMapFragment extends SherlockMapFragment
+        implements MapModeController.Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView,
+        LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
+        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener {
+    private static final String TAG = "BaseMapFragment";
 
     private static final int NOLOCATION_DIALOG = 103;
 
@@ -91,7 +89,26 @@ abstract public class BaseMapFragment extends SherlockFragment
 
     private static final int REQUEST_NO_LOCATION = 41;
 
-    private ObaMapViewV2 mMapView;
+    //
+    // Location Services and Maps API v2 constants
+    //
+    private static final int CAMERA_MOVE_NOTIFY_THRESHOLD_MS = 500;
+
+    public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
+
+    private static final int MILLISECONDS_PER_SECOND = 1000;
+
+    public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
+
+    private static final long UPDATE_INTERVAL =
+            MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS;
+
+    private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
+
+    private static final long FASTEST_INTERVAL =
+            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
+
+    private GoogleMap mMap;
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 
@@ -103,10 +120,6 @@ abstract public class BaseMapFragment extends SherlockFragment
 
     StopPopup mStopPopup;
 
-    private MyLocationOverlay mLocationOverlay;
-
-    private ZoomControls mZoomControls;
-
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
 
@@ -114,30 +127,62 @@ abstract public class BaseMapFragment extends SherlockFragment
 
     private MapModeController mController;
 
+    private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
+
+    // We have to convert from LatLng to Location, so hold references to both
+    private LatLng mCenter;
+    private Location mCenterLocation;
+
     /**
      * Google Location Services
      */
     protected LocationClient mLocationClient;
+
+    // Used to update the map with new location
+    private OnLocationChangedListener mListener;
+
+    private long lastMapCameraMoveTime = Long.MIN_VALUE;
+
+    // Define an object that holds accuracy and frequency parameters
+    LocationRequest mLocationRequest;
+
+    // Reference to last known location
+    Location mLastLocation;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
-        View view = getView();
-        mMapView = createMap(view);
+        mMap = getMap();
 
-        mZoomControls = (ZoomControls) view.findViewById(R.id.zoom_controls);
-        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
-        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
+        if (MapHelpV2.isGoogleMapsInstalled(getActivity())) {
+            if (mMap != null) {
+                UiSettings uiSettings = mMap.getUiSettings();
+                // Show the location on the map
+                mMap.setMyLocationEnabled(true);
+                // Set location source
+                mMap.setLocationSource(this);
+                // Listener for camera changes
+                mMap.setOnCameraChangeListener(this);
+                // Hide MyLocation button on map, since we have the action bar
+                uiSettings.setMyLocationButtonEnabled(false);
+            }
+        } else {
+            MapHelpV2.promptUserInstallGoogleMaps(getActivity());
+        }
 
-//        mLocationOverlay = new MyLocationOverlay(getActivity(), mMapView);
-//        mLocationOverlay.enableMyLocation();
-//        List<Overlay> mapOverlays = mMapView.getOverlays();
-//        mapOverlays.add(mLocationOverlay);
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create();
+        // Use high accuracy
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // Set the update interval to 5 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        // Set the fastest update interval to 1 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
 
         // Initialize the StopPopup (hidden)
-        mStopPopup = new StopPopup(this, view.findViewById(R.id.stop_info));
+        //mStopPopup = new StopPopup(this, v.getRootView().findViewById(R.id.stop_info));
 
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
@@ -153,30 +198,12 @@ abstract public class BaseMapFragment extends SherlockFragment
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
-            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
+            mLocationClient = new LocationClient(getActivity(), this, this);
             mLocationClient.connect();
         }
 
         return v;
     }
-
-    private ObaMapViewV2 createMap(View view) {
-        ObaMapViewV2 map = new ObaMapViewV2(getActivity());
-        //map.setBuiltInZoomControls(false);
-        map.setClickable(true);
-        map.setFocusableInTouchMode(true);
-
-        RelativeLayout mainLayout = (RelativeLayout) view.findViewById(R.id.mainlayout);
-        RelativeLayout.LayoutParams lp =
-                new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT);
-        mainLayout.addView(map, 0, lp);
-
-        return map;
-    }
-
-    abstract protected int getContentView();
 
     private void initMap(Bundle args) {
         mFocusStopId = args.getString(MapParams.STOP_ID);
@@ -191,11 +218,11 @@ abstract public class BaseMapFragment extends SherlockFragment
     @Override
     public void onDestroy() {
         //Log.d(TAG, "onDestroy: " + mStopUserMap);
-        if (mStopUserMap != null) {
-            mStopUserMap.close();
-            mStopUserMap = null;
-            mStopPopup.setStopUserMap(null);
-        }
+//        if (mStopUserMap != null) {
+//            mStopUserMap.close();
+//            mStopUserMap = null;
+//            mStopPopup.setStopUserMap(null);
+//        }
         if (mController != null) {
             mController.destroy();
         }
@@ -204,8 +231,6 @@ abstract public class BaseMapFragment extends SherlockFragment
 
     @Override
     public void onPause() {
-        mLocationOverlay.disableMyLocation();
-
         if (mController != null) {
             mController.onPause();
         }
@@ -217,15 +242,14 @@ abstract public class BaseMapFragment extends SherlockFragment
     @Override
     public void onResume() {
         mRunning = true;
-        mLocationOverlay.enableMyLocation();
 
         //Log.d(TAG, "onResume: " + mStopUserMap);
-        if (mStopUserMap == null) {
-            mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
-        } else {
-            mStopUserMap.requery();
-        }
-        mStopPopup.setStopUserMap(mStopUserMap);
+//        if (mStopUserMap == null) {
+//            mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
+//        } else {
+//            mStopUserMap.requery();
+//        }
+//        mStopPopup.setStopUserMap(mStopUserMap);
 
         if (mController != null) {
             mController.onResume();
@@ -247,22 +271,10 @@ abstract public class BaseMapFragment extends SherlockFragment
     public void onStop() {
         // Tear down LocationClient
         if (mLocationClient != null && mLocationClient.isConnected()) {
+            mLocationClient.removeLocationUpdates(this);
             mLocationClient.disconnect();
         }
         super.onStop();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        final int id = item.getItemId();
-        if (id == R.id.my_location) {
-            setMyLocation();
-            return true;
-        } else if (id == R.id.search) {
-            onSearchRequested();
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -272,10 +284,10 @@ abstract public class BaseMapFragment extends SherlockFragment
         }
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
-        Location center = mMapView.getMapCenterAsLocation();
+        Location center = getMapCenterAsLocation();
         outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
         outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
-        outState.putFloat(MapParams.ZOOM, mMapView.getZoomLevelAsFloat());
+        outState.putFloat(MapParams.ZOOM, getZoomLevelAsFloat());
     }
 
     public boolean isRouteDisplayed() {
@@ -283,42 +295,32 @@ abstract public class BaseMapFragment extends SherlockFragment
                 MapParams.MODE_ROUTE.equals(mController.getMode());
     }
 
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-            case NOLOCATION_DIALOG:
-                return createNoLocationDialog();
+//    @Override
+//    protected Dialog onCreateDialog(int id) {
+//        switch (id) {
+//            case NOLOCATION_DIALOG:
+//                return createNoLocationDialog();
+//
+//            case OUTOFRANGE_DIALOG:
+//                return createOutOfRangeDialog();
+//        }
+//        return null;
+//    }
 
-            case OUTOFRANGE_DIALOG:
-                return createOutOfRangeDialog();
-        }
-        return null;
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case REQUEST_NO_LOCATION:
-                // Clear the map center so we can get the user's location again
-                setMyLocation();
-                break;
-        }
-    }
+//    @Override
+//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        switch (requestCode) {
+//            case REQUEST_NO_LOCATION:
+//                // Clear the map center so we can get the user's location again
+//                setMyLocation();
+//                break;
+//        }
+//    }
 
     //
     // Fragment Controller
     //
-    @Override
-    public Activity getActivity() {
-        return this;
-    }
-
-    @Override
-    public View getView() {
-        return findViewById(android.R.id.content);
-    }
-
     @Override
     public String getMapMode() {
         if (mController != null) {
@@ -348,12 +350,13 @@ abstract public class BaseMapFragment extends SherlockFragment
 
     @Override
     public MapModeController.ObaMapView getMapView() {
-        return mMapView;
+        // We implement the ObaMapView interface too (since we're using MapFragment)
+        return this;
     }
 
     @Override
     public void showProgress(boolean show) {
-        setSupportProgressBarIndeterminateVisibility(show);
+//        setSupportProgressBarIndeterminateVisibility(show);
     }
 
     @Override
@@ -364,27 +367,27 @@ abstract public class BaseMapFragment extends SherlockFragment
         String focusedId = mFocusStopId;
 
         // If there is an List<E>ing StopOverlay, remove it.
-        List<Overlay> mapOverlays = mMapView.getOverlays();
-        if (mStopOverlay != null) {
-            focusedId = mStopOverlay.getFocusedId();
-            mapOverlays.remove(mStopOverlay);
-            mStopOverlay = null;
-        }
-
-        if (stops != null) {
-            mStopOverlay = new StopOverlay(stops, getActivity());
-            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
-            mStopPopup.setReferences(refs);
-
-            if (focusedId != null) {
-                if (!mStopOverlay.setFocusById(focusedId)) {
-                    mStopPopup.hide();
-                }
-            }
-            mapOverlays.add(mStopOverlay);
-        }
-
-        mMapView.postInvalidate();
+//        List<Overlay> mapOverlays = mMapView.getOverlays();
+//        if (mStopOverlay != null) {
+//            focusedId = mStopOverlay.getFocusedId();
+//            mapOverlays.remove(mStopOverlay);
+//            mStopOverlay = null;
+//        }
+//
+//        if (stops != null) {
+//            mStopOverlay = new StopOverlay(stops, getActivity());
+//            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
+//            mStopPopup.setReferences(refs);
+//
+//            if (focusedId != null) {
+//                if (!mStopOverlay.setFocusById(focusedId)) {
+//                    mStopPopup.hide();
+//                }
+//            }
+//            mapOverlays.add(mStopOverlay);
+//        }
+//
+//        mMapView.postInvalidate();
     }
 
     // Apparently you can't show a dialog from within OnLoadFinished?
@@ -401,7 +404,7 @@ abstract public class BaseMapFragment extends SherlockFragment
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
             if (mRunning) {
-                showDialog(OUTOFRANGE_DIALOG);
+                getActivity().showDialog(OUTOFRANGE_DIALOG);
             }
         }
     }
@@ -410,16 +413,16 @@ abstract public class BaseMapFragment extends SherlockFragment
     // Region Task Callback
     //
     @Override
-    public void onTaskFinished(boolean currentRegionChanged) {
+    public void onRegionTaskFinished(boolean currentRegionChanged) {
         // Update map after a new region has been selected
-        setMyLocation();
+        setMyLocation(false, false);
 
         // If region changed and was auto-selected, show user what region we're using
         if (currentRegionChanged
                 && Application.getPrefs()
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                 && Application.get().getCurrentRegion() != null) {
-            Toast.makeText(this,
+            Toast.makeText(getActivity(),
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
                     Toast.LENGTH_LONG
@@ -430,111 +433,62 @@ abstract public class BaseMapFragment extends SherlockFragment
     //
     // Stop changed handler
     //
-    final Handler mStopChangedHandler = new Handler();
-
-    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
-                                   final OverlayItem newFocus) {
-            mStopChangedHandler.post(new Runnable() {
-                public void run() {
-                    if (newFocus != null) {
-                        final StopOverlayItem item = (StopOverlayItem) newFocus;
-                        final ObaStop stop = item.getStop();
-                        mFocusStopId = stop.getId();
-                        //Log.d(TAG, "Show stop popup");
-                        mStopPopup.show(stop);
-                    } else {
-                        mStopPopup.hide();
-                    }
-                }
-            });
-        }
-    };
-
-    // This is a bit annoying: runOnFirstFix() calls its runnable either
-    // immediately or on another thread (AsyncTask). Since we don't know
-    // what thread the runnable will be run on , and since AsyncTasks have
-    // to be created from the UI thread, we need to post a message back to the
-    // UI thread just to create another AsyncTask.
-    final Handler mSetMyLocationHandler = new Handler();
-
-    final Runnable mSetMyLocation = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null) {
-                setMyLocation(mLocationOverlay.getMyLocation());
-            }
-        }
-    };
-
-    //
-    // Location help
-    //
-    static final int WAIT_FOR_LOCATION_TIMEOUT = 10000;
-
-    final Handler mWaitingForLocationHandler = new Handler();
-
-    final Runnable mWaitingForLocation = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null
-                    && mLocationOverlay.getMyLocation() == null) {
-                Activity act = getActivity();
-                if (act == null) {
-                    return;
-                }
-                Toast.makeText(act,
-                        R.string.main_waiting_for_location, Toast.LENGTH_LONG)
-                        .show();
-                mWaitingForLocationHandler.postDelayed(mUnableToGetLocation,
-                        2 * WAIT_FOR_LOCATION_TIMEOUT);
-            }
-        }
-    };
-
-    final Runnable mUnableToGetLocation = new Runnable() {
-        public void run() {
-            if (mLocationOverlay != null
-                    && mLocationOverlay.getMyLocation() == null) {
-                Toast.makeText(getActivity(),
-                        R.string.main_location_unavailable, Toast.LENGTH_LONG)
-                        .show();
-                if (mController != null) {
-                    mController.onNoLocation();
-                }
-            }
-        }
-    };
+//    final Handler mStopChangedHandler = new Handler();
+//
+//    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
+//        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
+//                                   final OverlayItem newFocus) {
+//            mStopChangedHandler.post(new Runnable() {
+//                public void run() {
+//                    if (newFocus != null) {
+//                        final StopOverlayItem item = (StopOverlayItem) newFocus;
+//                        final ObaStop stop = item.getStop();
+//                        mFocusStopId = stop.getId();
+//                        //Log.d(TAG, "Show stop popup");
+//                        mStopPopup.show(stop);
+//                    } else {
+//                        mStopPopup.hide();
+//                    }
+//                }
+//            });
+//        }
+//    };
 
     @Override
     @SuppressWarnings("deprecation")
-    public void setMyLocation() {
-        // Not really sure how this happened, but it happened in issue #54
-        if (mLocationOverlay == null) {
+    public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
+
+        if (mLastLocation == null) {
+            //showDialog(NOLOCATION_DIALOG);
             return;
         }
 
-        if (!mLocationOverlay.isMyLocationEnabled()) {
-            showDialog(NOLOCATION_DIALOG);
-            return;
-        }
-
-        GeoPoint point = mLocationOverlay.getMyLocation();
-        if (point == null) {
-            mWaitingForLocationHandler.postDelayed(mWaitingForLocation,
-                    WAIT_FOR_LOCATION_TIMEOUT);
-            mLocationOverlay.runOnFirstFix(new Runnable() {
-                public void run() {
-                    mSetMyLocationHandler.post(mSetMyLocation);
-                }
-            });
-        } else {
-            setMyLocation(point);
-        }
+        setMyLocation(mLastLocation, useDefaultZoom, animateToLocation);
     }
 
-    private void setMyLocation(GeoPoint point) {
-        MapController mapCtrl = mMapView.getController();
-        mapCtrl.animateTo(point);
-        mapCtrl.setZoom(MapParams.DEFAULT_ZOOM);
+    private void setMyLocation(Location l, boolean useDefaultZoom, boolean animateToLocation) {
+        if (mMap != null && mLastLocation != null) {
+            // Move camera to current location
+            CameraPosition.Builder cameraPosition = new CameraPosition.Builder()
+                    .target(MapHelpV2.makeLatLng(l));
+
+            if (useDefaultZoom) {
+                // Use default zoom level
+                cameraPosition.zoom(CAMERA_DEFAULT_ZOOM);
+            } else {
+                // Use current zoom level
+                cameraPosition.zoom(mMap.getCameraPosition().zoom);
+            }
+
+            if (animateToLocation) {
+                // Smooth animation to position
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition.build()));
+            } else {
+                // Abrupt change to position
+                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition.build()));
+            }
+        }
+
         if (mController != null) {
             mController.onLocation();
         }
@@ -543,78 +497,75 @@ abstract public class BaseMapFragment extends SherlockFragment
     //
     // Dialogs
     //
-    @SuppressWarnings("deprecation")
-    private Dialog createNoLocationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.main_nolocation_title);
-        builder.setIcon(android.R.drawable.ic_dialog_map);
-        builder.setMessage(R.string.main_nolocation);
-        builder.setPositiveButton(android.R.string.yes,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivityForResult(
-                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-                                REQUEST_NO_LOCATION);
-                        dismissDialog(NOLOCATION_DIALOG);
-                    }
-                }
-        );
-        builder.setNegativeButton(android.R.string.no,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Ok, I suppose we can just try looking from where we
-                        // are.
-                        mController.onLocation();
-                        dismissDialog(NOLOCATION_DIALOG);
-                    }
-                }
-        );
-        return builder.create();
-    }
+//    @SuppressWarnings("deprecation")
+//    private Dialog createNoLocationDialog() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle(R.string.main_nolocation_title);
+//        builder.setIcon(android.R.drawable.ic_dialog_map);
+//        builder.setMessage(R.string.main_nolocation);
+//        builder.setPositiveButton(android.R.string.yes,
+//                new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        startActivityForResult(
+//                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+//                                REQUEST_NO_LOCATION);
+//                        dismissDialog(NOLOCATION_DIALOG);
+//                    }
+//                }
+//        );
+//        builder.setNegativeButton(android.R.string.no,
+//                new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        // Ok, I suppose we can just try looking from where we
+//                        // are.
+//                        mController.onLocation();
+//                        dismissDialog(NOLOCATION_DIALOG);
+//                    }
+//                }
+//        );
+//        return builder.create();
+//    }
 
-    @SuppressWarnings("deprecation")
-    private Dialog createOutOfRangeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle(R.string.main_outofrange_title)
-                .setIcon(android.R.drawable.ic_dialog_map)
-                .setMessage(getString(R.string.main_outofrange,
-                        Application.get().getCurrentRegion() != null ?
-                                Application.get().getCurrentRegion().getName() : ""
-                ))
-                .setPositiveButton(R.string.main_outofrange_yes,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                zoomToRegion();
-                                dismissDialog(OUTOFRANGE_DIALOG);
-                            }
-                        }
-                )
-                .setNegativeButton(R.string.main_outofrange_no,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dismissDialog(OUTOFRANGE_DIALOG);
-                                mWarnOutOfRange = false;
-                            }
-                        }
-                );
-        return builder.create();
-    }
+//    @SuppressWarnings("deprecation")
+//    private Dialog createOutOfRangeDialog() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+//                .setTitle(R.string.main_outofrange_title)
+//                .setIcon(android.R.drawable.ic_dialog_map)
+//                .setMessage(getString(R.string.main_outofrange,
+//                        Application.get().getCurrentRegion() != null ?
+//                                Application.get().getCurrentRegion().getName() : ""
+//                ))
+//                .setPositiveButton(R.string.main_outofrange_yes,
+//                        new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                zoomToRegion();
+//                                dismissDialog(OUTOFRANGE_DIALOG);
+//                            }
+//                        }
+//                )
+//                .setNegativeButton(R.string.main_outofrange_no,
+//                        new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                dismissDialog(OUTOFRANGE_DIALOG);
+//                                mWarnOutOfRange = false;
+//                            }
+//                        }
+//                );
+//        return builder.create();
+//    }
 
     void zoomToRegion() {
         // If we have a region, then zoom to it.
         ObaRegion region = Application.get().getCurrentRegion();
-        if (region != null) {
-            double results[] = new double[4];
-            RegionUtils.getRegionSpan(region, results);
-            MapController ctrl = mMapView.getController();
-            ctrl.setCenter(MapHelpV2.makeGeoPoint(results[2], results[3]));
-            ctrl.zoomToSpan((int) (results[0] * 1E6), (int) (results[1] * 1E6));
-        } else {
-            // If we don't have a region, then prompt to select a region.
+
+        if (region != null && mMap != null) {
+            LatLngBounds b = MapHelpV2.getRegionBounds(region);
+            int padding = 0;
+            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, padding)));
         }
     }
 
@@ -628,37 +579,181 @@ abstract public class BaseMapFragment extends SherlockFragment
     }
 
     //
-    // Zoom help
+    // MapView interactions
     //
-    static final int MAX_ZOOM = 21;
 
-    static final int MIN_ZOOM = 1;
-
-    void enableZoom() {
-        mZoomControls.setIsZoomInEnabled(mMapView.getZoomLevelAsFloat() != MAX_ZOOM);
-        mZoomControls.setIsZoomOutEnabled(mMapView.getZoomLevelAsFloat() != MIN_ZOOM);
+    @Override
+    public void setZoom(float zoomLevel) {
+        if (mMap != null) {
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(zoomLevel));
+        }
     }
 
-    private final View.OnClickListener mOnZoomIn = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (!mMapView.getController().zoomIn()) {
-                mZoomControls.setIsZoomInEnabled(false);
-                mZoomControls.setIsZoomOutEnabled(true);
-            } else {
-                enableZoom();
+    @Override
+    public Location getMapCenterAsLocation() {
+        // If the center is the same as the last call to this method, pass back the same Location
+        // object
+        if (mMap != null) {
+            LatLng center = mMap.getCameraPosition().target;
+            if (mCenter == null || mCenter != center) {
+                mCenter = center;
+                mCenterLocation = MapHelpV2.makeLocation(mCenter);
             }
         }
-    };
+        return mCenterLocation;
+    }
 
-    private final View.OnClickListener mOnZoomOut = new View.OnClickListener() {
-        public void onClick(View v) {
-            if (!mMapView.getController().zoomOut()) {
-                mZoomControls.setIsZoomInEnabled(true);
-                mZoomControls.setIsZoomOutEnabled(false);
-            } else {
-                enableZoom();
+    @Override
+    public void setMapCenter(Location location) {
+        if (mMap != null) {
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    new CameraPosition.Builder().target(MapHelpV2.makeLatLng(location)).build()));
+        }
+    }
+
+    @Override
+    public double getLatitudeSpanInDecDegrees() {
+        VisibleRegion vr = mMap.getProjection().getVisibleRegion();
+        return Math.abs(vr.latLngBounds.northeast.latitude - vr.latLngBounds.southwest.latitude);
+    }
+
+    @Override
+    public double getLongitudeSpanInDecDegrees() {
+        VisibleRegion vr = mMap.getProjection().getVisibleRegion();
+        return Math.abs(vr.latLngBounds.northeast.longitude - vr.latLngBounds.southwest.longitude);
+    }
+
+    @Override
+    public float getZoomLevelAsFloat() {
+        return mMap.getCameraPosition().zoom;
+    }
+
+    @Override
+    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes) {
+        if (mMap != null) {
+            mLineOverlay.clear();
+            PolylineOptions lineOptions;
+
+            for (ObaShape s : shapes) {
+                lineOptions = new PolylineOptions();
+                lineOptions.color(lineOverlayColor);
+
+                for (Location l : s.getPoints()) {
+                    lineOptions.add(MapHelpV2.makeLatLng(l));
+                }
+                // Add the line to the map, and keep a reference in the ArrayList
+                mLineOverlay.add(mMap.addPolyline(lineOptions));
             }
         }
-    };
+    }
+
+    @Override
+    public void zoomToRoute() {
+        if (mMap != null) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (Polyline p : mLineOverlay) {
+                for (LatLng l : p.getPoints()) {
+                    builder.include(l);
+                }
+            }
+
+            int padding = 0;
+            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+        }
+    }
+
+    @Override
+    public void removeRouteOverlay() {
+        for (Polyline p : mLineOverlay) {
+            p.remove();
+        }
+
+        mLineOverlay.clear();
+    }
+
+    @Override
+    public boolean canWatchMapChanges() {
+        // Android Map API v2 has an OnCameraChangeListener
+        return true;
+    }
+
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        Log.d(TAG, "onCameraChange");
+        if (mController != null) {
+            // We don't want to pass these events to the controller if they are too close in time.
+            // See https://code.google.com/p/gmaps-api-issues/issues/detail?id=4636
+            long now = System.currentTimeMillis();
+            if (now - lastMapCameraMoveTime < CAMERA_MOVE_NOTIFY_THRESHOLD_MS) {
+                return;
+            }
+            Log.d(TAG, "Notifying controller of map camera change");
+            lastMapCameraMoveTime = now;
+            mController.notifyMapChanged();
+        }
+    }
+
+    /*
+     * Called by Location Services when the request to connect the
+     * client finishes successfully. At this point, you can
+     * request the current location or start periodic updates
+     */
+    @Override
+    public void onConnected(Bundle dataBundle) {
+        Log.d(TAG, "Location Services connected");
+        // Request location updates
+        mLocationClient.requestLocationUpdates(mLocationRequest, this);
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d(TAG, "Location Services connection failed");
+    }
+
+    /*
+     * Called by Location Services if the connection to the
+     * location client drops because of an error.
+     */
+    @Override
+    public void onDisconnected() {
+        Log.d(TAG, "Location Services disconnected");
+    }
+
+    /**
+     * Maps V2 Location updates
+     */
+    @Override
+    public void activate(OnLocationChangedListener listener) {
+        mListener = listener;
+    }
+
+    /**
+     * Maps V2 Location updates
+     */
+    @Override
+    public void deactivate() {
+        mListener = null;
+    }
+
+    public void onLocationChanged(Location l) {
+        boolean firstFix = false;
+        if (mLastLocation == null) {
+            firstFix = true;
+        }
+        mLastLocation = l;
+        if (mListener != null) {
+            // Show real-time location on map
+            mListener.onLocationChanged(l);
+        }
+
+        if (firstFix) {
+            // If its our first location, move the camera to it
+            setMyLocation(true, false);
+        }
+    }
+
+    @Override
+    public void postInvalidate() {
+        this.postInvalidate();
+    }
 }

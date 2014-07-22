@@ -121,6 +121,11 @@ public class RouteMapController implements MapModeController,
     }
 
     @Override
+    public void notifyMapChanged() {
+        // Don't care
+    }
+
+    @Override
     public Loader<ObaStopsForRouteResponse> onCreateLoader(int id,
             Bundle args) {
         return new RoutesLoader(mFragment.getActivity(), mRouteId);

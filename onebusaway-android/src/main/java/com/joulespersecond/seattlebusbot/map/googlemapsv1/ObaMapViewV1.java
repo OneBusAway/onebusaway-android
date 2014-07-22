@@ -256,4 +256,10 @@ public class ObaMapViewV1 extends com.google.android.maps.MapView
                     (maxLon + minLon) / 2));
         }
     }
+
+    @Override
+    public boolean canWatchMapChanges() {
+        // Android Map API v1 doesn't have a built-in map watcher
+        return false;
+    }
 }

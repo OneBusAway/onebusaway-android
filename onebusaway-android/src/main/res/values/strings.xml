@@ -276,6 +276,10 @@
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>
 
+    <!-- Android Maps v2 -->
+    <string name="install_google_maps_positive_button">Install</string>
+    <string name="please_install_google_maps_dialog_title">Please install Google Maps</string>
+
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_display">Display</string>

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com) 
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
     and individual contributors
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +15,9 @@
 	-->
 <resources>
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
+
+    <!-- Android Maps API v2 -->
+    <string name="android_maps_v2_market_url">market://details?id=com.google.android.apps.maps</string>
 
     <!-- Preference keys -->
     <string name="preference_key_region">preference_region</string>

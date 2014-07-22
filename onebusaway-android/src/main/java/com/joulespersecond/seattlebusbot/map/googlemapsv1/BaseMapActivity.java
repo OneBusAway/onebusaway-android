@@ -70,12 +70,12 @@ import java.util.List;
  * The MapFragment class is split into two basic modes:
  * stop mode and route mode. It needs to be able to switch
  * between the two.
- *
+ * <p/>
  * So this class handles the common functionality between
  * the two modes: zooming, the options menu,
  * saving/restoring state, and other minor bookkeeping
  * (the stop user map).
- *
+ * <p/>
  * Everything else is handed off to a specific
  * MapFragmentController instance.
  *
@@ -132,9 +132,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         View view = getView();
         mMapView = createMap(view);
 
-        mZoomControls = (ZoomControls) view.findViewById(R.id.zoom_controls);
-        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
-        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
+//        mZoomControls = (ZoomControls) view.findViewById(R.id.zoom_controls);
+//        mZoomControls.setVisibility(View.VISIBLE);
+//        mZoomControls.setOnZoomInClickListener(mOnZoomIn);
+//        mZoomControls.setOnZoomOutClickListener(mOnZoomOut);
 
         mLocationOverlay = new MyLocationOverlay(getActivity(), mMapView);
         mLocationOverlay.enableMyLocation();
@@ -259,7 +260,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
-            setMyLocation();
+            setMyLocation(false, false);
             return true;
         } else if (id == R.id.search) {
             onSearchRequested();
@@ -304,7 +305,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         switch (requestCode) {
             case REQUEST_NO_LOCATION:
                 // Clear the map center so we can get the user's location again
-                setMyLocation();
+                setMyLocation(false, false);
                 break;
         }
     }
@@ -413,11 +414,9 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     // Region Task Callback
     //
     @Override
-    public void onTaskFinished(boolean currentRegionChanged) {
-        if (currentRegionChanged) {
-            // Move map view after a new region has been selected
-            setMyLocation();
-        }
+    public void onRegionTaskFinished(boolean currentRegionChanged) {
+        // Update map after a new region has been selected
+        setMyLocation(false, false);
 
         // If region changed and was auto-selected, show user what region we're using
         if (currentRegionChanged
@@ -429,7 +428,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             Toast.makeText(this,
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_LONG
+            ).show();
         }
     }
 
@@ -440,7 +440,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
         public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
-                final OverlayItem newFocus) {
+                                   final OverlayItem newFocus) {
             mStopChangedHandler.post(new Runnable() {
                 public void run() {
                     if (newFocus != null) {
@@ -512,7 +512,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
 
     @Override
     @SuppressWarnings("deprecation")
-    public void setMyLocation() {
+    public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
         // Not really sure how this happened, but it happened in issue #54
         if (mLocationOverlay == null) {
             return;
@@ -564,7 +564,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                                 REQUEST_NO_LOCATION);
                         dismissDialog(NOLOCATION_DIALOG);
                     }
-                });
+                }
+        );
         builder.setNegativeButton(android.R.string.no,
                 new DialogInterface.OnClickListener() {
                     @Override
@@ -574,7 +575,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                         mController.onLocation();
                         dismissDialog(NOLOCATION_DIALOG);
                     }
-                });
+                }
+        );
         return builder.create();
     }
 
@@ -585,7 +587,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                 .setIcon(android.R.drawable.ic_dialog_map)
                 .setMessage(getString(R.string.main_outofrange,
                         Application.get().getCurrentRegion() != null ?
-                                Application.get().getCurrentRegion().getName() : ""))
+                                Application.get().getCurrentRegion().getName() : ""
+                ))
                 .setPositiveButton(R.string.main_outofrange_yes,
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -593,7 +596,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                                 zoomToRegion();
                                 dismissDialog(OUTOFRANGE_DIALOG);
                             }
-                        })
+                        }
+                )
                 .setNegativeButton(R.string.main_outofrange_no,
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -601,7 +605,8 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                                 dismissDialog(OUTOFRANGE_DIALOG);
                                 mWarnOutOfRange = false;
                             }
-                        });
+                        }
+                );
         return builder.create();
     }
 

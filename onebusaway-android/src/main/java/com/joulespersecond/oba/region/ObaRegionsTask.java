@@ -57,7 +57,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
          * @param currentRegionChanged true if the current region changed as a result of the task,
          *                             false if it didn't change
          */
-        public void onTaskFinished(boolean currentRegionChanged);
+        public void onRegionTaskFinished(boolean currentRegionChanged);
     }
 
     private static final String TAG = "ObaRegionsTask";
@@ -239,7 +239,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             public void run() {
                 //Map may not have triggered call to OBA REST API, so we force one here
                 if (mCallback != null) {
-                    mCallback.onTaskFinished(currentRegionChanged);
+                    mCallback.onRegionTaskFinished(currentRegionChanged);
                 }
             }
         };

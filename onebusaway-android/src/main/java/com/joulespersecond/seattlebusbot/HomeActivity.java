@@ -63,7 +63,7 @@ public class HomeActivity extends SherlockFragmentActivity {
 
     private static final String TAG = "HomeActivity";
 
-    BaseMapFragment mapFragment;
+    BaseMapFragment mMapFragment;
 
     /**
      * Google Location Services
@@ -141,6 +141,8 @@ public class HomeActivity extends SherlockFragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+
         setupGooglePlayServices();
 
         UIHelp.setupActionBar(getSupportActionBar());
@@ -178,8 +180,17 @@ public class HomeActivity extends SherlockFragmentActivity {
     @Override
     @SuppressWarnings("deprecation")
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected");
         final int id = item.getItemId();
-        if (id == android.R.id.home) {
+        if (id == R.id.my_location) {
+            if (mMapFragment != null) {
+                mMapFragment.setMyLocation(false, true);
+            }
+            return true;
+        } else if (id == R.id.search) {
+            onSearchRequested();
+            return true;
+        } else if (id == android.R.id.home) {
             NavHelp.goHome(this);
             return true;
         } else if (id == R.id.find_stop) {
@@ -384,7 +395,7 @@ public class HomeActivity extends SherlockFragmentActivity {
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
-        ObaRegionsTask task = new ObaRegionsTask(this, this, forceReload, showProgressDialog);
+        ObaRegionsTask task = new ObaRegionsTask(this, mMapFragment, forceReload, showProgressDialog);
         task.execute();
     }
 

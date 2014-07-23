@@ -159,6 +159,8 @@ public class BaseMapFragment extends SherlockMapFragment
                 mMap.setOnCameraChangeListener(this);
                 // Hide MyLocation button on map, since we have the action bar
                 uiSettings.setMyLocationButtonEnabled(false);
+                // Hide Zoom controls
+                uiSettings.setZoomControlsEnabled(false);
             }
         } else {
             MapHelpV2.promptUserInstallGoogleMaps(getActivity());

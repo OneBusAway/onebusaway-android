@@ -137,16 +137,8 @@ public class BaseMapFragment extends SherlockMapFragment
      * Google Location Services
      */
     protected LocationClient mLocationClient;
-
-    // Used to update the map with new location
     private OnLocationChangedListener mListener;
-
-    private long lastMapCameraMoveTime = Long.MIN_VALUE;
-
-    // Define an object that holds accuracy and frequency parameters
     LocationRequest mLocationRequest;
-
-    // Reference to last known location
     Location mLastLocation;
 
     @Override
@@ -681,14 +673,6 @@ public class BaseMapFragment extends SherlockMapFragment
     public void onCameraChange(CameraPosition cameraPosition) {
         Log.d(TAG, "onCameraChange");
         if (mController != null) {
-            // We don't want to pass these events to the controller if they are too close in time.
-            // See https://code.google.com/p/gmaps-api-issues/issues/detail?id=4636
-            long now = System.currentTimeMillis();
-            if (now - lastMapCameraMoveTime < CAMERA_MOVE_NOTIFY_THRESHOLD_MS) {
-                return;
-            }
-            Log.d(TAG, "Notifying controller of map camera change");
-            lastMapCameraMoveTime = now;
             mController.notifyMapChanged();
         }
     }

@@ -184,7 +184,7 @@ public class HomeActivity extends SherlockFragmentActivity {
         final int id = item.getItemId();
         if (id == R.id.my_location) {
             if (mMapFragment != null) {
-                mMapFragment.setMyLocation(false, true);
+                mMapFragment.setMyLocation(true, true);
             }
             return true;
         } else if (id == R.id.search) {

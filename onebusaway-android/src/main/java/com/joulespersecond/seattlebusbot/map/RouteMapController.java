@@ -34,7 +34,7 @@ import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
@@ -138,7 +138,7 @@ public class RouteMapController implements MapModeController,
         ObaMapView obaMapView = mFragment.getMapView();
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapActivity.showMapError(mFragment.getActivity(), response);
+            BaseMapFragment.showMapError(mFragment.getActivity(), response);
             return;
         }
 

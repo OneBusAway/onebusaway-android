@@ -33,7 +33,7 @@ import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 import java.util.Arrays;
@@ -257,7 +257,7 @@ public class StopMapController implements MapModeController,
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapActivity.showMapError(mFragment.getActivity(), response);
+            BaseMapFragment.showMapError(mFragment.getActivity(), response);
             return;
         }
 

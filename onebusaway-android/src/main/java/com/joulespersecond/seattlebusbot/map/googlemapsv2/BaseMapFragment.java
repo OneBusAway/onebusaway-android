@@ -176,7 +176,7 @@ public class BaseMapFragment extends SherlockMapFragment
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
 
         // Initialize the StopPopup (hidden)
-        //mStopPopup = new StopPopup(this, v.getRootView().findViewById(R.id.stop_info));
+//        mStopPopup = new StopPopup(this, v.getRootView().findViewById(R.id.stop_info));
 
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
@@ -360,16 +360,14 @@ public class BaseMapFragment extends SherlockMapFragment
         // have to hide the stop popup
         String focusedId = mFocusStopId;
 
-        // If there is an List<E>ing StopOverlay, remove it.
-//        List<Overlay> mapOverlays = mMapView.getOverlays();
-//        if (mStopOverlay != null) {
-//            focusedId = mStopOverlay.getFocusedId();
-//            mapOverlays.remove(mStopOverlay);
-//            mStopOverlay = null;
-//        }
-//
-//        if (stops != null) {
-//            mStopOverlay = new StopOverlay(stops, getActivity());
+        if (mStopOverlay != null) {
+            //focusedId = mStopOverlay.getFocusedId();
+            mStopOverlay.clear();
+            mStopOverlay = null;
+        }
+
+        if (stops != null) {
+            mStopOverlay = new StopOverlay(stops, getActivity(), mMap);
 //            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
 //            mStopPopup.setReferences(refs);
 //
@@ -378,10 +376,9 @@ public class BaseMapFragment extends SherlockMapFragment
 //                    mStopPopup.hide();
 //                }
 //            }
-//            mapOverlays.add(mStopOverlay);
-//        }
+        }
 //
-//        mMapView.postInvalidate();
+        postInvalidate();
     }
 
     // Apparently you can't show a dialog from within OnLoadFinished?
@@ -740,6 +737,6 @@ public class BaseMapFragment extends SherlockMapFragment
 
     @Override
     public void postInvalidate() {
-        this.postInvalidate();
+        // Do nothing - calling `this.postInvalidate()` causes a StackOverflowError
     }
 }

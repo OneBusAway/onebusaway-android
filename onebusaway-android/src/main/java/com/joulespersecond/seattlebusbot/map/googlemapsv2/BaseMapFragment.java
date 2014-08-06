@@ -360,14 +360,17 @@ public class BaseMapFragment extends SherlockMapFragment
         // have to hide the stop popup
         String focusedId = mFocusStopId;
 
-        if (mStopOverlay != null) {
-            //focusedId = mStopOverlay.getFocusedId();
-            mStopOverlay.clear();
-            mStopOverlay = null;
+//        if (mStopOverlay != null) {
+//            //focusedId = mStopOverlay.getFocusedId();
+//            mStopOverlay.clear();
+//            mStopOverlay = null;
+//        }
+
+        if (mStopOverlay == null) {
+            mStopOverlay = new StopOverlay(getActivity(), mMap);
         }
 
         if (stops != null) {
-            mStopOverlay = new StopOverlay(stops, getActivity(), mMap);
 //            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
 //            mStopPopup.setReferences(refs);
 //
@@ -376,9 +379,8 @@ public class BaseMapFragment extends SherlockMapFragment
 //                    mStopPopup.hide();
 //                }
 //            }
+            mStopOverlay.setStops(stops);
         }
-//
-        postInvalidate();
     }
 
     // Apparently you can't show a dialog from within OnLoadFinished?

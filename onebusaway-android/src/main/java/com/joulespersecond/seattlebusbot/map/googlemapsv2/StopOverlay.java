@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
 import android.app.Activity;
+import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -30,55 +33,78 @@ import java.util.Map;
 public class StopOverlay {
     private static final String TAG = "StopOverlay";
 
-    private final List<ObaStop> mStops;
+    /**
+     * A list of stops from the last REST API response
+     */
+    private List<ObaStop> mStops;
 
     private GoogleMap mMap;
 
-    private HashMap<String, Marker> markers = new HashMap<String, Marker>();
+    /**
+     * A cached set of markers currently shown on the map, up to roughly
+     * FUZZY_MAX_MARKER_COUNT in size.
+     */
+    private HashMap<String, Marker> markers;
+
+    /**
+     * Stops-for-location REST API endpoint returns 100 markers per call by default
+     * (see http://goo.gl/tzvrLb), so we'll support showing max results of around 2 calls before
+     * we completely clear the map and start over.  Note that this is a fuzzy max, since we don't
+     * want to clear the overlay in the middle of processing an API response and remove markers in
+     * the current view
+     */
+    private static final int FUZZY_MAX_MARKER_COUNT = 200;
 
     private final Activity mActivity;
 
-    private static final int getResourceIdForDirection(String direction) {
-        if (direction.equals("N")) {
-            return R.drawable.stop_n;
-        } else if (direction.equals("NW")) {
-            return R.drawable.stop_nw;
-        } else if (direction.equals("W")) {
-            return R.drawable.stop_w;
-        } else if (direction.equals("SW")) {
-            return R.drawable.stop_sw;
-        } else if (direction.equals("S")) {
-            return R.drawable.stop_s;
-        } else if (direction.equals("SE")) {
-            return R.drawable.stop_se;
-        } else if (direction.equals("E")) {
-            return R.drawable.stop_e;
-        } else if (direction.equals("NE")) {
-            return R.drawable.stop_ne;
-        } else {
-            return R.drawable.stop_u;
-        }
-    }
+    private static final String NORTH = "N";
+    private static final String NORTH_WEST = "NW";
+    private static final String WEST = "W";
+    private static final String SOUTH_WEST = "SW";
+    private static final String SOUTH = "S";
+    private static final String SOUTH_EAST = "SE";
+    private static final String EAST = "E";
+    private static final String NORTH_EAST = "NE";
+    private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected stops
 
-    public StopOverlay(List<ObaStop> stops,
-                       Activity activity, GoogleMap map) {
-        mStops = stops;
+    private static BitmapDescriptor[] bus_stop_icons = new BitmapDescriptor[NUM_DIRECTIONS];
+
+    public StopOverlay(Activity activity, GoogleMap map) {
         mActivity = activity;
         mMap = map;
+        loadIcons();
+    }
+
+    public void setStops(List<ObaStop> stops) {
+        mStops = stops;
+        if (markers == null) {
+            markers = new HashMap<String, Marker>();
+        }
         populate();
     }
 
     private void populate() {
-        for (ObaStop stop : mStops) {
-            markers.put(stop.getId(), mMap.addMarker(new MarkerOptions()
-                            .position(MapHelpV2.makeLatLng(stop.getLocation()
-                            )))
-            );
+        if (markers.size() >= FUZZY_MAX_MARKER_COUNT) {
+            // We've exceed our max, so clear the current marker cache and start over
+            removeMarkersFromMap();
+            markers.clear();
+            Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
         }
+
+        int count = 0;
+
+        for (ObaStop stop : mStops) {
+            if (!markers.containsKey(stop.getId())) {
+                addMarkerToMap(stop);
+                count++;
+            }
+        }
+
+        Log.d(TAG, "Added " + count + " markers, total markers = " + markers.size());
     }
 
     public int size() {
-        return mStops.size();
+        return markers.size();
     }
 
     /**
@@ -87,13 +113,80 @@ public class StopOverlay {
     public void clear() {
         if (markers != null) {
             // Clear all markers from the map
-            for (Map.Entry<String, Marker> entry : markers.entrySet()) {
-                entry.getValue().remove();
-            }
+            removeMarkersFromMap();
 
             // Clear the data structures
             markers.clear();
             markers = null;
+        }
+        mStops = null;
+    }
+
+    /**
+     * Cache the BitmapDescriptors that hold the images used for icons
+     */
+    private static final void loadIcons() {
+        bus_stop_icons[0] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_n);
+        bus_stop_icons[1] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_nw);
+        bus_stop_icons[2] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_w);
+        bus_stop_icons[3] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_sw);
+        bus_stop_icons[4] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_s);
+        bus_stop_icons[5] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_se);
+        bus_stop_icons[6] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_e);
+        bus_stop_icons[7] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_ne);
+        bus_stop_icons[8] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_u);
+    }
+
+    /**
+     * Places a marker on the map for this stop, and adds it to our marker HashMap
+     *
+     * @param stop ObaStop that should be shown on the map
+     */
+    private void addMarkerToMap(ObaStop stop) {
+        markers.put(stop.getId(), mMap.addMarker(new MarkerOptions()
+                                .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                                .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
+                                .flat(true)
+                )
+        );
+    }
+
+
+    /**
+     * Remove all markers from the Google Map
+     */
+    private void removeMarkersFromMap() {
+        for (Map.Entry<String, Marker> entry : markers.entrySet()) {
+            entry.getValue().remove();
+        }
+    }
+
+    /**
+     * Returns the BitMapDescriptor for a particular bus stop icon, based on the stop direction
+     *
+     * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
+     *                  contants in this class
+     * @return BitmapDescriptor for the bus stop icon that should be used for that direction
+     */
+    private static BitmapDescriptor getBitmapDescriptorForBusStopDirection(String direction) {
+        if (direction.equals(NORTH)) {
+            return bus_stop_icons[0];
+        } else if (direction.equals(NORTH_WEST)) {
+            return bus_stop_icons[1];
+        } else if (direction.equals(WEST)) {
+            return bus_stop_icons[2];
+        } else if (direction.equals(SOUTH_WEST)) {
+            return bus_stop_icons[3];
+        } else if (direction.equals(SOUTH)) {
+            return bus_stop_icons[4];
+        } else if (direction.equals(SOUTH_EAST)) {
+            return bus_stop_icons[5];
+        } else if (direction.equals(EAST)) {
+            return bus_stop_icons[6];
+        } else if (direction.equals(NORTH_EAST)) {
+            return bus_stop_icons[7];
+        } else {
+            return bus_stop_icons[8];
         }
     }
 

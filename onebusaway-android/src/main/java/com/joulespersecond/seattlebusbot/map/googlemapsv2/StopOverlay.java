@@ -16,7 +16,10 @@
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
 import android.app.Activity;
+import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -30,30 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class StopOverlay {
+public class StopOverlay implements GoogleMap.OnMarkerClickListener {
     private static final String TAG = "StopOverlay";
-
-    /**
-     * A list of stops from the last REST API response
-     */
-    private List<ObaStop> mStops;
 
     private GoogleMap mMap;
 
-    /**
-     * A cached set of markers currently shown on the map, up to roughly
-     * FUZZY_MAX_MARKER_COUNT in size.
-     */
-    private HashMap<String, Marker> markers;
-
-    /**
-     * Stops-for-location REST API endpoint returns 100 markers per call by default
-     * (see http://goo.gl/tzvrLb), so we'll support showing max results of around 2 calls before
-     * we completely clear the map and start over.  Note that this is a fuzzy max, since we don't
-     * want to clear the overlay in the middle of processing an API response and remove markers in
-     * the current view
-     */
-    private static final int FUZZY_MAX_MARKER_COUNT = 200;
+    private StopContainer mStopContainer;
 
     private final Activity mActivity;
 
@@ -65,7 +50,7 @@ public class StopOverlay {
     private static final String SOUTH_EAST = "SE";
     private static final String EAST = "E";
     private static final String NORTH_EAST = "NE";
-    private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected stops
+    private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
     private static BitmapDescriptor[] bus_stop_icons = new BitmapDescriptor[NUM_DIRECTIONS];
 
@@ -73,53 +58,36 @@ public class StopOverlay {
         mActivity = activity;
         mMap = map;
         loadIcons();
+        mMap.setOnMarkerClickListener(this);
     }
 
-    public void setStops(List<ObaStop> stops) {
-        mStops = stops;
-        if (markers == null) {
-            markers = new HashMap<String, Marker>();
+    public synchronized void setStops(List<ObaStop> stops) {
+        if (mStopContainer == null) {
+            mStopContainer = new StopContainer();
         }
-        populate();
+        populate(stops);
     }
 
-    private void populate() {
-        if (markers.size() >= FUZZY_MAX_MARKER_COUNT) {
-            // We've exceed our max, so clear the current marker cache and start over
-            removeMarkersFromMap();
-            markers.clear();
-            Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
-        }
-
-        int count = 0;
-
-        for (ObaStop stop : mStops) {
-            if (!markers.containsKey(stop.getId())) {
-                addMarkerToMap(stop);
-                count++;
-            }
-        }
-
-        Log.d(TAG, "Added " + count + " markers, total markers = " + markers.size());
+    private void populate(List<ObaStop> stops) {
+        mStopContainer.populate(stops);
     }
 
-    public int size() {
-        return markers.size();
+    public synchronized int size() {
+        if (mStopContainer != null) {
+            return mStopContainer.size();
+        } else {
+            return 0;
+        }
     }
 
     /**
      * Clears any stop markers from the map
      */
-    public void clear() {
-        if (markers != null) {
-            // Clear all markers from the map
-            removeMarkersFromMap();
-
-            // Clear the data structures
-            markers.clear();
-            markers = null;
+    public synchronized void clear() {
+        if (mStopContainer != null) {
+            mStopContainer.clear();
+            mStopContainer = null;
         }
-        mStops = null;
     }
 
     /**
@@ -135,30 +103,6 @@ public class StopOverlay {
         bus_stop_icons[6] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_e);
         bus_stop_icons[7] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_ne);
         bus_stop_icons[8] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_u);
-    }
-
-    /**
-     * Places a marker on the map for this stop, and adds it to our marker HashMap
-     *
-     * @param stop ObaStop that should be shown on the map
-     */
-    private void addMarkerToMap(ObaStop stop) {
-        markers.put(stop.getId(), mMap.addMarker(new MarkerOptions()
-                                .position(MapHelpV2.makeLatLng(stop.getLocation()))
-                                .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
-                                .flat(true)
-                )
-        );
-    }
-
-
-    /**
-     * Remove all markers from the Google Map
-     */
-    private void removeMarkersFromMap() {
-        for (Map.Entry<String, Marker> entry : markers.entrySet()) {
-            entry.getValue().remove();
-        }
     }
 
     /**
@@ -187,6 +131,135 @@ public class StopOverlay {
             return bus_stop_icons[7];
         } else {
             return bus_stop_icons[8];
+        }
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            startTime = SystemClock.elapsedRealtimeNanos();
+        }
+        
+        ObaStop stop = mStopContainer.getStopFromMarker(marker);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            endTime = SystemClock.elapsedRealtimeNanos();
+            Log.d(TAG, "Elapsed Time: " + (endTime - startTime) / 1E3 + "ms");
+        }
+        Log.d(TAG, "Stop: " + stop.getName());
+        Toast.makeText(mActivity, "Stop: " + stop.getName(), Toast.LENGTH_SHORT).show();
+        //ArrivalsListActivity.start(mActivity, stop);
+
+        /**
+         * TODO - if the tap on the marker causes the map to move, when zoomed out if the marker count
+         * threshold is exceeded then the tapped marker could be deleted - need to cache and re-add
+         * marker that was last tapped if the main marker cache is cleared
+         */
+        return false;
+    }
+
+    /**
+     * Data structures to track what stops/sarkers are currently shown on the map
+     */
+    class StopContainer {
+
+        /**
+         * Stops-for-location REST API endpoint returns 100 markers per call by default
+         * (see http://goo.gl/tzvrLb), so we'll support showing max results of around 2 calls before
+         * we completely clear the map and start over.  Note that this is a fuzzy max, since we don't
+         * want to clear the overlay in the middle of processing an API response and remove markers in
+         * the current view
+         */
+        private static final int FUZZY_MAX_MARKER_COUNT = 200;
+
+        /**
+         * A cached set of markers currently shown on the map, up to roughly
+         * FUZZY_MAX_MARKER_COUNT in size.  This is needed to add/remove markers from the map.
+         */
+        private HashMap<String, Marker> mMarkers;
+
+        /**
+         * A cached set of ObaStops that are currently shown on the map, up to roughly
+         * FUZZY_MAX_MARKER_COUNT in size.  Since onMarkerClick() provides a marker, we need a
+         * mapping of that marker to the ObaStop.
+         */
+        private HashMap<Marker, ObaStop> mStops;
+
+        StopContainer() {
+            mMarkers = new HashMap<String, Marker>();
+            mStops = new HashMap<Marker, ObaStop>();
+        }
+
+        synchronized void populate(List<ObaStop> stops) {
+            if (mMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
+                // We've exceed our max, so clear the current marker cache and start over
+                removeMarkersFromMap();
+                mMarkers.clear();
+                mStops.clear();
+                Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
+            }
+
+            int count = 0;
+
+            for (ObaStop stop : stops) {
+                if (!mMarkers.containsKey(stop.getId())) {
+                    addMarkerToMap(stop);
+                    count++;
+                }
+            }
+
+            Log.d(TAG, "Added " + count + " markers, total markers = " + mMarkers.size());
+        }
+
+        /**
+         * Places a marker on the map for this stop, and adds it to our marker HashMap
+         *
+         * @param stop ObaStop that should be shown on the map
+         */
+        void addMarkerToMap(ObaStop stop) {
+            Marker m = mMap.addMarker(new MarkerOptions()
+                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                            .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
+                            .flat(true)
+            );
+            mMarkers.put(stop.getId(), m);
+            mStops.put(m, stop);
+        }
+
+        ObaStop getStopFromMarker(Marker marker) {
+            return mStops.get(marker);
+        }
+
+        /**
+         * Remove all markers from the Google Map
+         */
+        void removeMarkersFromMap() {
+            for (Map.Entry<String, Marker> entry : mMarkers.entrySet()) {
+                entry.getValue().remove();
+            }
+        }
+
+        /**
+         * Clears any stop markers from the map
+         */
+        synchronized void clear() {
+            if (mMarkers != null) {
+                // Clear all markers from the map
+                removeMarkersFromMap();
+
+                // Clear the data structures
+                mMarkers.clear();
+                mMarkers = null;
+            }
+            if (mStops != null) {
+                mStops.clear();
+                mStops = null;
+            }
+        }
+
+        synchronized int size() {
+            return mMarkers.size();
         }
     }
 

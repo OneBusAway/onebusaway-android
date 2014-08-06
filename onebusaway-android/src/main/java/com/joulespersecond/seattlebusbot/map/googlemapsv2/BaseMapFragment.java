@@ -333,6 +333,9 @@ public class BaseMapFragment extends SherlockMapFragment
         if (mController != null) {
             mController.destroy();
         }
+        if (mStopOverlay != null) {
+            mStopOverlay.clear();
+        }
         if (MapParams.MODE_ROUTE.equals(mode)) {
             mController = new RouteMapController(this);
         } else if (MapParams.MODE_STOP.equals(mode)) {

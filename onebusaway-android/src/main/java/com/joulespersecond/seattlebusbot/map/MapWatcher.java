@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com), and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

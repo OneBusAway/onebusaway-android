@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class StopOverlay implements GoogleMap.OnMarkerClickListener {
     private static final String TAG = "StopOverlay";
@@ -168,7 +169,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             endTime = SystemClock.elapsedRealtimeNanos();
-            Log.d(TAG, "HashMap read time: " + (endTime - startTime) / 1E3 + "ms");
+            Log.d(TAG, "HashMap read time: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
         }
 
         if (stop == null) {

@@ -180,8 +180,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
         Toast.makeText(mActivity, stop.getName(), Toast.LENGTH_SHORT).show();
         //ArrivalsListActivity.start(mActivity, stop);
 
-        // TODO - change icon of selected marker to indicate focus, change any previously
-        // selected marker back to normal marker
+        mMarkerData.setFocus(stop);
 
         // Notify listeners
         for (Listener l : mListeners) {
@@ -209,7 +208,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
          * A cached set of markers currently shown on the map, up to roughly
          * FUZZY_MAX_MARKER_COUNT in size.  This is needed to add/remove markers from the map.
          */
-        private HashMap<String, Marker> mMarkers;
+        private HashMap<String, Marker> mStopMarkers;
 
         /**
          * A cached set of ObaStops that are currently shown on the map, up to roughly
@@ -218,31 +217,42 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
          */
         private HashMap<Marker, ObaStop> mStops;
 
+        /**
+         * Marker and stop used to indicate which bus stop has focus (i.e., was last clicked/tapped)
+         */
+        private Marker mCurrentFocusMarker;
+        private ObaStop mCurrentFocusStop;
+
         MarkerData() {
-            mMarkers = new HashMap<String, Marker>();
+            mStopMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
         }
 
         synchronized void populate(List<ObaStop> stops) {
             int count = 0;
 
-            if (mMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
+            if (mStopMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
                 // We've exceed our max, so clear the current marker cache and start over
-                removeMarkersFromMap();
-                mMarkers.clear();
-                mStops.clear();
-                // TODO - always keep marker that was last tapped (i.e., has focus) - add here
                 Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
+                removeMarkersFromMap();
+                mStopMarkers.clear();
+                mStops.clear();
+
+                // Make sure the currently focused stop still exists on the map
+                if (mCurrentFocusStop != null) {
+                    addMarkerToMap(mCurrentFocusStop);
+                    count++;
+                }
             }
 
             for (ObaStop stop : stops) {
-                if (!mMarkers.containsKey(stop.getId())) {
+                if (!mStopMarkers.containsKey(stop.getId())) {
                     addMarkerToMap(stop);
                     count++;
                 }
             }
 
-            Log.d(TAG, "Added " + count + " markers, total markers = " + mMarkers.size());
+            Log.d(TAG, "Added " + count + " markers, total markers = " + mStopMarkers.size());
         }
 
         /**
@@ -250,13 +260,14 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
          *
          * @param stop ObaStop that should be shown on the map
          */
-        void addMarkerToMap(ObaStop stop) {
+        private void addMarkerToMap(ObaStop stop) {
             Marker m = mMap.addMarker(new MarkerOptions()
-                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
-                            .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
-                            .flat(true)
+                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                    .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
+                    .flat(true)
+                    .anchor(.5f, .5f) // Since the marker is flat, anchor in middle of marker
             );
-            mMarkers.put(stop.getId(), m);
+            mStopMarkers.put(stop.getId(), m);
             mStops.put(m, stop);
         }
 
@@ -264,8 +275,36 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
             return mStops.get(marker);
         }
 
+        /**
+         * Sets the current focus to a particular stop
+         *
+         * @param stop ObaStop that should have focus
+         */
+        void setFocus(ObaStop stop) {
+            if (mCurrentFocusMarker != null) {
+                // Remove the current focus marker from map
+                mCurrentFocusMarker.remove();
+            }
+            mCurrentFocusStop = stop;
+            mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
+                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
+            );
+        }
+
+        /**
+         * Remove focus of a stop on the map
+         */
+        void removeFocus() {
+            if (mCurrentFocusMarker != null) {
+                // Remove the current focus marker from map
+                mCurrentFocusMarker.remove();
+                mCurrentFocusMarker = null;
+            }
+            mCurrentFocusStop = null;
+        }
+
         private void removeMarkersFromMap() {
-            for (Map.Entry<String, Marker> entry : mMarkers.entrySet()) {
+            for (Map.Entry<String, Marker> entry : mStopMarkers.entrySet()) {
                 entry.getValue().remove();
             }
         }
@@ -274,22 +313,23 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
          * Clears any stop markers from the map
          */
         synchronized void clear() {
-            if (mMarkers != null) {
+            if (mStopMarkers != null) {
                 // Clear all markers from the map
                 removeMarkersFromMap();
 
                 // Clear the data structures
-                mMarkers.clear();
-                mMarkers = null;
+                mStopMarkers.clear();
+                mStopMarkers = null;
             }
             if (mStops != null) {
                 mStops.clear();
                 mStops = null;
             }
+            removeFocus();
         }
 
         synchronized int size() {
-            return mMarkers.size();
+            return mStopMarkers.size();
         }
     }
 

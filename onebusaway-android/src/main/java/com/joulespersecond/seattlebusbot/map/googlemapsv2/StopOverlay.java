@@ -38,7 +38,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
 
-    private StopContainer mStopContainer;
+    private MarkerData mMarkerData;
 
     private final Activity mActivity;
 
@@ -62,19 +62,19 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
     }
 
     public synchronized void setStops(List<ObaStop> stops) {
-        if (mStopContainer == null) {
-            mStopContainer = new StopContainer();
+        if (mMarkerData == null) {
+            mMarkerData = new MarkerData();
         }
         populate(stops);
     }
 
     private void populate(List<ObaStop> stops) {
-        mStopContainer.populate(stops);
+        mMarkerData.populate(stops);
     }
 
     public synchronized int size() {
-        if (mStopContainer != null) {
-            return mStopContainer.size();
+        if (mMarkerData != null) {
+            return mMarkerData.size();
         } else {
             return 0;
         }
@@ -84,9 +84,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
      * Clears any stop markers from the map
      */
     public synchronized void clear() {
-        if (mStopContainer != null) {
-            mStopContainer.clear();
-            mStopContainer = null;
+        if (mMarkerData != null) {
+            mMarkerData.clear();
+            mMarkerData = null;
         }
     }
 
@@ -140,29 +140,27 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             startTime = SystemClock.elapsedRealtimeNanos();
         }
-        
-        ObaStop stop = mStopContainer.getStopFromMarker(marker);
+
+        ObaStop stop = mMarkerData.getStopFromMarker(marker);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             endTime = SystemClock.elapsedRealtimeNanos();
             Log.d(TAG, "Elapsed Time: " + (endTime - startTime) / 1E3 + "ms");
         }
         Log.d(TAG, "Stop: " + stop.getName());
-        Toast.makeText(mActivity, "Stop: " + stop.getName(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(mActivity, stop.getName(), Toast.LENGTH_SHORT).show();
         //ArrivalsListActivity.start(mActivity, stop);
 
-        /**
-         * TODO - if the tap on the marker causes the map to move, when zoomed out if the marker count
-         * threshold is exceeded then the tapped marker could be deleted - need to cache and re-add
-         * marker that was last tapped if the main marker cache is cleared
-         */
-        return false;
+        // TODO - change icon of selected marker to indicate focus, change any previously
+        // selected marker back to normal marker
+
+        return true;
     }
 
     /**
-     * Data structures to track what stops/sarkers are currently shown on the map
+     * Data structures to track what stops/markers are currently shown on the map
      */
-    class StopContainer {
+    class MarkerData {
 
         /**
          * Stops-for-location REST API endpoint returns 100 markers per call by default
@@ -186,7 +184,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
          */
         private HashMap<Marker, ObaStop> mStops;
 
-        StopContainer() {
+        MarkerData() {
             mMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
         }
@@ -197,6 +195,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
                 removeMarkersFromMap();
                 mMarkers.clear();
                 mStops.clear();
+                // TODO - always keep marker that was last tapped (i.e., has focus) - add here
                 Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
             }
 

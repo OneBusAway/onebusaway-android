@@ -24,18 +24,18 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class StopOverlay implements GoogleMap.OnMarkerClickListener {
+public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
     private static final String TAG = "StopOverlay";
 
     private GoogleMap mMap;
@@ -56,16 +56,17 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
 
     private static BitmapDescriptor[] bus_stop_icons = new BitmapDescriptor[NUM_DIRECTIONS];
 
-    ArrayList<Listener> mListeners = new ArrayList<Listener>();
+    OnFocusChangedListener mOnFocusChangedListener;
 
-    public interface Listener {
+    public interface OnFocusChangedListener {
         /**
-         * Called when a stop on the map is clicked (i.e., tapped)
+         * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
+         * or when the user taps on an area away from the map for the first time after a stop
+         * is already selected, which removes focus
          *
-         * @param stop   the ObaStop that was clicked
-         * @param marker the marker for the ObaStop that was clicked
+         * @param stop the ObaStop that obtained focus, or null if no stop is in focus
          */
-        void onStopClick(ObaStop stop, Marker marker);
+        void onFocusChanged(ObaStop stop);
     }
 
     public StopOverlay(Activity activity, GoogleMap map) {
@@ -73,16 +74,11 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
         mMap = map;
         loadIcons();
         mMap.setOnMarkerClickListener(this);
+        mMap.setOnMapClickListener(this);
     }
 
-    public void addListener(Listener listener) {
-        if (listener != null) {
-            mListeners.add(listener);
-        }
-    }
-
-    public void removeListener(Listener listener) {
-        mListeners.remove(listener);
+    public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {
+        mOnFocusChangedListener = onFocusChangedListener;
     }
 
     public synchronized void setStops(List<ObaStop> stops) {
@@ -158,6 +154,19 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
         }
     }
 
+    /**
+     * Returns the currently focused stop, or null if no stop is in focus
+     *
+     * @return the currently focused stop, or null if no stop is in focus
+     */
+    public ObaStop getFocus() {
+        if (mMarkerData != null) {
+            return mMarkerData.getFocus();
+        }
+
+        return null;
+    }
+
     @Override
     public boolean onMarkerClick(Marker marker) {
         long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
@@ -177,18 +186,27 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
             return false;
         }
 
-        Log.d(TAG, "Stop: " + stop.getName());
         Toast.makeText(mActivity, stop.getName(), Toast.LENGTH_SHORT).show();
         //ArrivalsListActivity.start(mActivity, stop);
 
         mMarkerData.setFocus(stop);
 
-        // Notify listeners
-        for (Listener l : mListeners) {
-            l.onStopClick(stop, marker);
-        }
+        // Notify listener
+        mOnFocusChangedListener.onFocusChanged(stop);
 
         return true;
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        Log.d(TAG, "Map clicked");
+
+        // Only notify focus changed the first time the map is clicked away from a stop marker
+        if (mMarkerData.getFocus() != null) {
+            mMarkerData.removeFocus();
+            // Notify listener
+            mOnFocusChangedListener.onFocusChanged(null);
+        }
     }
 
     /**
@@ -290,6 +308,15 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener {
             mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
                             .position(MapHelpV2.makeLatLng(stop.getLocation()))
             );
+        }
+
+        /**
+         * Returns the last focused stop, or null if no stop is in focus
+         *
+         * @return last focused stop, or null if no stop is in focus
+         */
+        ObaStop getFocus() {
+            return mCurrentFocusStop;
         }
 
         /**

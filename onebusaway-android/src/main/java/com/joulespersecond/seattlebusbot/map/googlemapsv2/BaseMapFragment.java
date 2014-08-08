@@ -113,6 +113,7 @@ public class BaseMapFragment extends SherlockMapFragment
     private UIHelp.StopUserInfoMap mStopUserMap;
 
     private String mFocusStopId;
+    private ObaStop mFocusStop;
 
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
@@ -362,19 +363,21 @@ public class BaseMapFragment extends SherlockMapFragment
         // If we can't maintain focus through this step, then we
         // have to hide the stop popup
         String focusedId = mFocusStopId;
+        ObaStop focusedStop = mFocusStop;
 
-//        if (mStopOverlay != null) {
-//            //focusedId = mStopOverlay.getFocusedId();
-//            mStopOverlay.clear();
-//            mStopOverlay = null;
-//        }
+        if (mStopOverlay != null) {
+            focusedStop = mStopOverlay.getFocus();
+            if (focusedStop != null) {
+                focusedId = focusedStop.getId();
+            }
+        }
 
         if (mStopOverlay == null) {
             mStopOverlay = new StopOverlay(getActivity(), mMap);
         }
 
         if (stops != null) {
-//            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
+            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
 //            mStopPopup.setReferences(refs);
 //
 //            if (focusedId != null) {
@@ -429,26 +432,25 @@ public class BaseMapFragment extends SherlockMapFragment
     //
     // Stop changed handler
     //
-//    final Handler mStopChangedHandler = new Handler();
-//
-//    final OnFocusChangeListener mFocusChangeListener = new OnFocusChangeListener() {
-//        public void onFocusChanged(@SuppressWarnings("rawtypes") ItemizedOverlay overlay,
-//                                   final OverlayItem newFocus) {
-//            mStopChangedHandler.post(new Runnable() {
-//                public void run() {
-//                    if (newFocus != null) {
-//                        final StopOverlayItem item = (StopOverlayItem) newFocus;
-//                        final ObaStop stop = item.getStop();
-//                        mFocusStopId = stop.getId();
-//                        //Log.d(TAG, "Show stop popup");
-//                        mStopPopup.show(stop);
-//                    } else {
-//                        mStopPopup.hide();
-//                    }
-//                }
-//            });
-//        }
-//    };
+    final Handler mStopChangedHandler = new Handler();
+
+    final StopOverlay.OnFocusChangedListener mFocusChangeListener = new StopOverlay.OnFocusChangedListener() {
+        public void onFocusChanged(final ObaStop stop) {
+            mStopChangedHandler.post(new Runnable() {
+                public void run() {
+                    if (stop != null) {
+                        mFocusStop = stop;
+                        mFocusStopId = stop.getId();
+                        //Log.d(TAG, "Focused changed to " + stop.getName());
+                        //mStopPopup.show(stop);
+                    } else {
+                        //Log.d(TAG, "Removed focus");
+                        //mStopPopup.hide();
+                    }
+                }
+            });
+        }
+    };
 
     @Override
     @SuppressWarnings("deprecation")

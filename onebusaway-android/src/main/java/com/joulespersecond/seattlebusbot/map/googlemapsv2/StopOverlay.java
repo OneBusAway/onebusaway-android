@@ -305,6 +305,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                 mCurrentFocusMarker.remove();
             }
             mCurrentFocusStop = stop;
+            // TODO - reduce focus marker latitude by 0.001 to ensure z-order is always on top
             mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
                             .position(MapHelpV2.makeLatLng(stop.getLocation()))
             );

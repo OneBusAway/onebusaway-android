@@ -91,4 +91,9 @@
         <item>The bus doesn\'t stop here</item>
         <item>Something else</item>
     </string-array>
+    <string-array name="preferred_units_options">
+        <item>@string/preferences_preferred_units_option_automatic</item>
+        <item>@string/preferences_preferred_units_option_metric</item>
+        <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
 </resources>

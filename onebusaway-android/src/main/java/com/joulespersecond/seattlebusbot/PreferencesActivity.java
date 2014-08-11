@@ -16,18 +16,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockPreferenceActivity;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockPreferenceActivity;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 public class PreferencesActivity extends SherlockPreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -41,6 +42,8 @@ public class PreferencesActivity extends SherlockPreferenceActivity
 
     boolean autoSelectInitialValue;
     //Save initial value so we can compare to current value in onDestroy()
+
+    ListPreference preferredUnits;
 
     // Soo... we can use SherlockPreferenceActivity to display the
     // action bar, but we can't use a PreferenceFragment?
@@ -63,6 +66,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         autoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
+        preferredUnits = (ListPreference) findPreference(
+                getString(R.string.preference_key_preferred_units));
+
         settings.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -70,6 +76,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     protected void onResume() {
         super.onResume();
         changePreferenceSummary(getString(R.string.preference_key_region));
+        changePreferenceSummary(getString(R.string.preference_key_preferred_units));
     }
 
     /**
@@ -90,6 +97,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 regionPref.setSummary(getString(R.string.preferences_region_summary_custom_api));
                 customApiUrlPref.setSummary(Application.get().getCustomApiUrl());
             }
+        } else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
+            preferredUnits.setSummary(preferredUnits.getValue());
         }
     }
 
@@ -166,6 +176,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
             // Wait to change the region preference description until the task callback
         } else if (key.equals(getString(R.string.preference_key_oba_api_url))) {
             // Change the region preference description to show we're not using a region
+            changePreferenceSummary(key);
+        } else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
+            // Change the preferred units description
             changePreferenceSummary(key);
         }
     }

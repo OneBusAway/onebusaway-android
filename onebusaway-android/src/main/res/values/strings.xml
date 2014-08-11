@@ -250,10 +250,18 @@
     <string name="report_problem_uservehicle_hint">optional</string>
 
     <!-- Region list -->
-    <plurals name="region_distance">
-        <item quantity="one">1 mile away</item>
+    <plurals name="region_distance_miles">
+    <item quantity="one">1 mile away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
+    </plurals>
+    <plurals name="region_distance_kilometers">
+        <item quantity="one">1 kilometer away</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            kilometers away
+        </item>
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
@@ -274,6 +282,7 @@
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
+    <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_region_title">Your region</string>
@@ -287,6 +296,11 @@
     <string name="preferences_auto_select_region_summary">Set your current transit region based on
         your current location
     </string>
+
+    <string name="preferences_preferred_units_title">Preferred distance units</string>
+    <string name="preferences_preferred_units_option_automatic">Automatic</string>
+    <string name="preferences_preferred_units_option_metric">Metric (km, m)</string>
+    <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
 
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway

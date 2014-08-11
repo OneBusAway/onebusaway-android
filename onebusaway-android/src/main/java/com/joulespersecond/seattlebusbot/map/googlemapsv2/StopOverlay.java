@@ -15,20 +15,21 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
-import android.app.Activity;
-import android.os.Build;
-import android.os.SystemClock;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
+
+import android.app.Activity;
+import android.os.Build;
+import android.os.SystemClock;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.List;
@@ -305,9 +306,13 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                 mCurrentFocusMarker.remove();
             }
             mCurrentFocusStop = stop;
-            // TODO - reduce focus marker latitude by 0.001 to ensure z-order is always on top
+
+            // Reduce focus marker latitude by small amount to ensure it is always on top of the
+            // corresponding stop marker (i.e., so its not identical to stop marker latitude)
+            LatLng latLng = new LatLng(stop.getLatitude() - 0.000001, stop.getLongitude());
+
             mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
-                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                            .position(latLng)
             );
         }
 

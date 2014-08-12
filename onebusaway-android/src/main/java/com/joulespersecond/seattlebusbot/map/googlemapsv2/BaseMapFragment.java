@@ -61,6 +61,8 @@ import com.joulespersecond.seattlebusbot.util.UIHelp;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.joulespersecond.seattlebusbot.map.MapModeController.Callback;
+
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -78,7 +80,7 @@ import java.util.List;
  * @author paulw
  */
 public class BaseMapFragment extends SherlockMapFragment
-        implements MapModeController.Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView,
+        implements Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView,
         LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
         GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener {
     private static final String TAG = "BaseMapFragment";
@@ -141,6 +143,19 @@ public class BaseMapFragment extends SherlockMapFragment
     private OnLocationChangedListener mListener;
     LocationRequest mLocationRequest;
     Location mLastLocation;
+
+    OnFocusChangedListener mOnFocusChangedListener;
+
+    public interface OnFocusChangedListener {
+        /**
+         * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
+         * or when the user taps on an area away from the map for the first time after a stop
+         * is already selected, which removes focus
+         *
+         * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+         */
+        void onFocusChanged(ObaStop stop);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -429,6 +444,10 @@ public class BaseMapFragment extends SherlockMapFragment
         }
     }
 
+    public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {
+        mOnFocusChangedListener = onFocusChangedListener;
+    }
+
     //
     // Stop changed handler
     //
@@ -447,6 +466,9 @@ public class BaseMapFragment extends SherlockMapFragment
                         //Log.d(TAG, "Removed focus");
                         //mStopPopup.hide();
                     }
+
+                    // Notify listeners
+                    mOnFocusChangedListener.onFocusChanged(stop);
                 }
             });
         }

@@ -41,6 +41,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
@@ -50,7 +51,7 @@ import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Date;
 
-public class HomeActivity extends SherlockFragmentActivity {
+public class HomeActivity extends SherlockFragmentActivity implements BaseMapFragment.OnFocusChangedListener {
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
@@ -150,6 +151,9 @@ public class HomeActivity extends SherlockFragmentActivity {
         autoShowWhatsNew();
 
         checkRegionStatus();
+
+        // Register listener for map focus callbacks
+        mMapFragment.setOnFocusChangeListener(this);
     }
 
     @Override
@@ -310,6 +314,11 @@ public class HomeActivity extends SherlockFragmentActivity {
             TripService.scheduleAll(this);
             PreferenceHelp.saveInt(WHATS_NEW_VER, appInfo.versionCode);
         }
+    }
+
+    @Override
+    public void onFocusChanged(ObaStop stop) {
+        // TODO - handle stop focus change
     }
 
     private String getLocationString(Context context) {

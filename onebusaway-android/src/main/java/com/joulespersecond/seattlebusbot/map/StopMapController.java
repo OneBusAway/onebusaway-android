@@ -174,14 +174,14 @@ public class StopMapController implements MapModeController,
     public void setState(Bundle args) {
         if (args != null) {
             Location center = null;
-            int mapZoom = args.getInt(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
+            float mapZoom = args.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
 
             double lat = args.getDouble(MapParams.CENTER_LAT);
             double lon = args.getDouble(MapParams.CENTER_LON);
             if (lat != 0.0 && lon != 0.0) {
                 center = LocationHelp.makeLocation(lat, lon);
             }
-            mFragment.getMapView().setZoom((float) mapZoom);
+            mFragment.getMapView().setZoom(mapZoom);
 
             if (center != null) {
                 mFragment.getMapView().setMapCenter(center);

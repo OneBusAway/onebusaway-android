@@ -30,6 +30,12 @@ import java.util.List;
 public interface MapModeController {
 
     /**
+     * The percentage of the map that the bottom sliding overlay will cover when expanded,
+     * from 0 to 1
+     */
+    public static final float OVERLAY_PERCENTAGE = 0.7f;
+
+    /**
      * Controllers should make every attempt to communicate through
      * the Callback interface rather than accessing the MapFragment
      * directly, even if it means duplicating some functionality,
@@ -76,7 +82,8 @@ public interface MapModeController {
         // Returns the current center-point position of the map
         Location getMapCenterAsLocation();
 
-        void setMapCenter(Location location);
+        // Sets the map center, taking into account whether the overlay is expanded
+        void setMapCenter(Location location, boolean overlayExpanded);
 
         // The current latitude span (from the top edge to the bottom edge of the map) in decimal degrees
         double getLatitudeSpanInDecDegrees();

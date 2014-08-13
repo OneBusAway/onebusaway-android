@@ -28,8 +28,11 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -43,11 +46,14 @@ import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.Date;
 
@@ -65,11 +71,18 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
     private static final String TAG = "HomeActivity";
 
     BaseMapFragment mMapFragment;
+    ArrivalsListFragment mArrivalsListFragment;
 
     /**
      * Google Location Services
      */
     protected LocationClient mLocationClient;
+
+    // Bottom Sliding panel
+    SlidingUpPanelLayout mSlidingPanel;
+
+    // Stop that currently has focus in the map view
+    ObaStop mFocusedStop = null;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -143,6 +156,12 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
         setContentView(R.layout.main);
 
         mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+
+        // Keeps the map from flickering - see https://code.google.com/p/gmaps-api-issues/issues/detail?id=4639
+        ViewGroup mapHost = (ViewGroup) findViewById(R.id.mainlayout);
+        mapHost.requestTransparentRegion(mapHost);
+
+        setupSlidingPanel();
 
         setupGooglePlayServices();
 
@@ -316,9 +335,32 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
         }
     }
 
+    /**
+     * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
+     *
+     * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+     */
     @Override
     public void onFocusChanged(ObaStop stop) {
-        // TODO - handle stop focus change
+        mFocusedStop = stop;
+        if (stop != null) {
+            // A stop on the map was just tapped, show it in the sliding panel
+            FragmentManager fm = getSupportFragmentManager();
+
+            // Create the arrivals list fragment if necessary
+            mArrivalsListFragment = new ArrivalsListFragment();
+
+            // Add the arrivals list fragment to the sliding panel
+            Intent i = new ArrivalsListFragment.IntentBuilder(this, stop).build();
+            mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(i));
+            fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
+
+            mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
+            mSlidingPanel.showPanel();
+        } else {
+            // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
+            mSlidingPanel.hidePanel();
+        }
     }
 
     private String getLocationString(Context context) {
@@ -415,5 +457,39 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             mLocationClient = new LocationClient(this, locCallback, locCallback);
             mLocationClient.connect();
         }
+    }
+
+    private void setupSlidingPanel() {
+        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        mSlidingPanel.hidePanel();  // Don't show the panel until we have content
+        mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+            @Override
+            public void onPanelSlide(View panel, float slideOffset) {
+                Log.d(TAG, "onPanelSlide, offset " + slideOffset);
+            }
+
+            @Override
+            public void onPanelExpanded(View panel) {
+                Log.d(TAG, "onPanelExpanded");
+            }
+
+            @Override
+            public void onPanelCollapsed(View panel) {
+                Log.d(TAG, "onPanelCollapsed");
+            }
+
+            @Override
+            public void onPanelAnchored(View panel) {
+                Log.d(TAG, "onPanelAnchored");
+                if (mFocusedStop != null) {
+                    mMapFragment.setMapCenter(mFocusedStop.getLocation(), true);
+                }
+            }
+
+            @Override
+            public void onPanelHidden(View panel) {
+                Log.d(TAG, "onPanelHidden");
+            }
+        });
     }
 }

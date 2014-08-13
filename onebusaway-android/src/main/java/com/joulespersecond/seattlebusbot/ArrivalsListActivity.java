@@ -27,15 +27,12 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 
 public class ArrivalsListActivity extends SherlockFragmentActivity {
     //private static final String TAG = "ArrivalInfoActivity";
-
-    public static final String STOP_NAME = ".StopName";
-
-    public static final String STOP_DIRECTION = ".StopDir";
 
     public static class Builder {
 
@@ -58,12 +55,12 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
         }
 
         public Builder setStopName(String stopName) {
-            mIntent.putExtra(STOP_NAME, stopName);
+            mIntent.putExtra(ArrivalsListFragment.STOP_NAME, stopName);
             return this;
         }
 
         public Builder setStopDirection(String stopDir) {
-            mIntent.putExtra(STOP_DIRECTION, stopDir);
+            mIntent.putExtra(ArrivalsListFragment.STOP_DIRECTION, stopDir);
             return this;
         }
 

@@ -17,15 +17,12 @@
 package com.joulespersecond.seattlebusbot.map;
 
 import android.content.Context;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -36,7 +33,6 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 
@@ -128,13 +124,13 @@ public class RouteMapController implements MapModeController,
 
     @Override
     public Loader<ObaStopsForRouteResponse> onCreateLoader(int id,
-            Bundle args) {
+                                                           Bundle args) {
         return new RoutesLoader(mFragment.getActivity(), mRouteId);
     }
 
     @Override
     public void onLoadFinished(Loader<ObaStopsForRouteResponse> loader,
-            ObaStopsForRouteResponse response) {
+                               ObaStopsForRouteResponse response) {
 
         ObaMapView obaMapView = mFragment.getMapView();
 
@@ -168,7 +164,7 @@ public class RouteMapController implements MapModeController,
 
     @Override
     public void onLoadComplete(Loader<ObaStopsForRouteResponse> loader,
-            ObaStopsForRouteResponse response) {
+                               ObaStopsForRouteResponse response) {
         onLoadFinished(loader, response);
     }
 
@@ -178,52 +174,52 @@ public class RouteMapController implements MapModeController,
     private class RoutePopup {
 
         //private final Context mContext;
-        private final View mView;
+        //private final View mView;
 
-        private final TextView mRouteShortName;
-
-        private final TextView mRouteLongName;
+//        private final TextView mRouteShortName;
+//
+//        private final TextView mRouteLongName;
 
         RoutePopup() {
             //mContext = fragment.getActivity();
-            mView = mFragment.getView().findViewById(R.id.route_info);
-            mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
-            mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
-            TextView agency = (TextView) mView.findViewById(R.id.agency);
-            agency.setVisibility(View.GONE);
-            // Make sure the cancel button is shown
-            View cancel = mView.findViewById(R.id.cancel_route_mode);
-            cancel.setVisibility(View.VISIBLE);
-            cancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ObaMapView obaMapView = mFragment.getMapView();
-                    // We want to preserve the current zoom and center.
-                    Bundle bundle = new Bundle();
-                    bundle.putFloat(MapParams.ZOOM, obaMapView.getZoomLevelAsFloat());
-                    Location point = obaMapView.getMapCenterAsLocation();
-                    bundle.putDouble(MapParams.CENTER_LAT, point.getLatitude());
-                    bundle.putDouble(MapParams.CENTER_LON, point.getLongitude());
-                    mFragment.setMapMode(MapParams.MODE_STOP, bundle);
-                }
-            });
+            //mView = mFragment.getView().findViewById(R.id.route_info);
+//            mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
+//            mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
+//            TextView agency = (TextView) mView.findViewById(R.id.agency);
+//            agency.setVisibility(View.GONE);
+//            Make sure the cancel button is shown
+//            View cancel = mView.findViewById(R.id.cancel_route_mode);
+//            cancel.setVisibility(View.VISIBLE);
+//            cancel.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    ObaMapView obaMapView = mFragment.getMapView();
+//                    // We want to preserve the current zoom and center.
+//                    Bundle bundle = new Bundle();
+//                    bundle.putFloat(MapParams.ZOOM, obaMapView.getZoomLevelAsFloat());
+//                    Location point = obaMapView.getMapCenterAsLocation();
+//                    bundle.putDouble(MapParams.CENTER_LAT, point.getLatitude());
+//                    bundle.putDouble(MapParams.CENTER_LON, point.getLongitude());
+//                    mFragment.setMapMode(MapParams.MODE_STOP, bundle);
+//                }
+//            });
         }
 
         void showLoading() {
-            mRouteShortName.setVisibility(View.GONE);
-            mRouteLongName.setText(R.string.loading);
-            mView.setVisibility(View.VISIBLE);
+//            mRouteShortName.setVisibility(View.GONE);
+//            mRouteLongName.setText(R.string.loading);
+//            mView.setVisibility(View.VISIBLE);
         }
 
         void show(ObaRoute route) {
-            mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
-            mRouteLongName.setText(UIHelp.getRouteDescription(route));
-            mRouteShortName.setVisibility(View.VISIBLE);
-            mView.setVisibility(View.VISIBLE);
+//            mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
+//            mRouteLongName.setText(UIHelp.getRouteDescription(route));
+//            mRouteShortName.setVisibility(View.VISIBLE);
+//            mView.setVisibility(View.VISIBLE);
         }
 
         void hide() {
-            mView.setVisibility(View.GONE);
+            //mView.setVisibility(View.GONE);
         }
     }
 

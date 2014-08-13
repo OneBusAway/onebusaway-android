@@ -21,7 +21,9 @@ import android.app.Dialog;
 import android.content.ContentQueryMap;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -50,6 +52,7 @@ import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
@@ -65,6 +68,10 @@ public class ArrivalsListFragment extends ListFragment
         ArrivalsListHeader.Controller {
 
     private static final String TAG = "ArrivalsListFragment";
+
+    public static final String STOP_NAME = ".StopName";
+
+    public static final String STOP_DIRECTION = ".StopDir";
 
     private static final long RefreshPeriod = 60 * 1000;
 
@@ -103,6 +110,40 @@ public class ArrivalsListFragment extends ListFragment
 
     // The list of situation alerts
     private ArrayList<SituationAlert> mSituationAlerts;
+
+    /**
+     * Builds an intent used to set the stop for the ArrivalListFragment directly
+     * (i.e., when ArrivalsListActivity is not used)
+     */
+    public static class IntentBuilder {
+        private Intent mIntent;
+
+        public IntentBuilder(Context context, String stopId) {
+            mIntent = new Intent(context, ArrivalsListFragment.class);
+            mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
+        }
+
+        public IntentBuilder(Context mContext, ObaStop stop) {
+            mIntent = new Intent(mContext, ArrivalsListFragment.class);
+            mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
+            setStopName(stop.getName());
+            setStopDirection(stop.getDirection());
+        }
+
+        public IntentBuilder setStopName(String stopName) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_NAME, stopName);
+            return this;
+        }
+
+        public IntentBuilder setStopDirection(String stopDir) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_DIRECTION, stopDir);
+            return this;
+        }
+
+        public Intent build() {
+            return mIntent;
+        }
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -432,7 +473,7 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             // Check the arguments
             Bundle args = getArguments();
-            name = args.getString(ArrivalsListActivity.STOP_NAME);
+            name = args.getString(STOP_NAME);
         }
         return MyTextUtils.toTitleCase(name);
     }
@@ -444,7 +485,7 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             // Check the arguments
             Bundle args = getArguments();
-            return args.getString(ArrivalsListActivity.STOP_DIRECTION);
+            return args.getString(STOP_DIRECTION);
         }
     }
 

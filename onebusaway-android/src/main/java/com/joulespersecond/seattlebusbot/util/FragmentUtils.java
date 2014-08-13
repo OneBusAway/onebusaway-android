@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.seattlebusbot.util;
 
 import android.content.Intent;
 import android.os.Bundle;
 
-final class FragmentUtils {
+public class FragmentUtils {
 
-    static final String URI = "uri";
+    public static final String URI = "uri";
 
-    static Bundle getIntentArgs(Intent intent) {
+    public static Bundle getIntentArgs(Intent intent) {
         Bundle args = intent.getExtras();
         if (args != null) {
             args = (Bundle) args.clone();

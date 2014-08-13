@@ -26,7 +26,6 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.TextView;
 
 import com.joulespersecond.oba.elements.ObaReferences;
@@ -59,7 +58,7 @@ class StopPopup {
 
     private final TextView mDirection;
 
-    private final GridView mRoutesView;
+    //private final GridView mRoutesView;
 
     private final RoutesAdapter mRoutesAdapter;
 
@@ -75,9 +74,9 @@ class StopPopup {
         mView = view;
         mNameView = (TextView) view.findViewById(R.id.stop_name);
         mDirection = (TextView) view.findViewById(R.id.direction);
-        mRoutesView = (GridView) view.findViewById(R.id.route_list);
+        //mRoutesView = (GridView) view.findViewById(R.id.route_list);
         mRoutesAdapter = new RoutesAdapter(mContext);
-        mRoutesView.setAdapter(mRoutesAdapter);
+        //mRoutesView.setAdapter(mRoutesAdapter);
         // Make sure clicks on the popup don't leak to the map.
         mView.setOnClickListener(new OnClickListener() {
             @Override
@@ -85,11 +84,11 @@ class StopPopup {
         });
 
         // Initialize the links
-        View showArrivals = mView.findViewById(R.id.show_arrival_info);
-        showArrivals.setOnClickListener(mOnShowArrivals);
+        //View showArrivals = mView.findViewById(R.id.show_arrival_info);
+        //showArrivals.setOnClickListener(mOnShowArrivals);
 
-        View showRoutes = mView.findViewById(R.id.show_routes);
-        showRoutes.setOnClickListener(mOnShowRoutes);
+        //View showRoutes = mView.findViewById(R.id.show_routes);
+        //showRoutes.setOnClickListener(mOnShowRoutes);
     }
 
     void show(ObaStop stop) {
@@ -110,10 +109,10 @@ class StopPopup {
                 mView.setVisibility(View.VISIBLE);
             }
 
-            if (mRoutesView.isShown()) {
-                List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
-                mRoutesAdapter.setData(routes);
-            }
+//            if (mRoutesView.isShown()) {
+//                List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
+//                mRoutesAdapter.setData(routes);
+//            }
         }
     }
 
@@ -147,20 +146,20 @@ class StopPopup {
     };
 
     private void toggleShowRoutes(TextView text) {
-        if (text == null) {
-            text = (TextView) mView.findViewById(R.id.show_routes);
-        }
-        if (!mRoutesView.isShown() && mStop != null) {
-            // Update the routes
-            List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
-            mRoutesAdapter.setData(routes);
-
-            mRoutesView.setVisibility(View.VISIBLE);
-            text.setText(R.string.main_hide_routes);
-        } else {
-            mRoutesView.setVisibility(View.GONE);
-            text.setText(R.string.main_show_routes);
-        }
+//        if (text == null) {
+//            text = (TextView) mView.findViewById(R.id.show_routes);
+//        }
+//        if (!mRoutesView.isShown() && mStop != null) {
+//            // Update the routes
+//            List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
+//            mRoutesAdapter.setData(routes);
+//
+//            mRoutesView.setVisibility(View.VISIBLE);
+//            text.setText(R.string.main_hide_routes);
+//        } else {
+//            mRoutesView.setVisibility(View.GONE);
+//            text.setText(R.string.main_show_routes);
+//        }
     }
 
     private class RoutesAdapter extends ArrayAdapter<ObaRoute> {

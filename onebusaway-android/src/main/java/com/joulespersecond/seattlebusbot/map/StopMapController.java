@@ -185,7 +185,7 @@ public class StopMapController implements MapModeController,
             mFragment.getMapView().setZoom(mapZoom);
 
             if (center != null) {
-                mFragment.getMapView().setMapCenter(center);
+                mFragment.getMapView().setMapCenter(center, false);
                 onLocation();
             } else {
                 mFragment.setMyLocation(false, true);

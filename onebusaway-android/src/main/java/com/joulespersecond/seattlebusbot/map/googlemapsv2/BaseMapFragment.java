@@ -82,7 +82,8 @@ import static com.joulespersecond.seattlebusbot.map.MapModeController.Callback;
 public class BaseMapFragment extends SherlockMapFragment
         implements Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView,
         LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
-        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener {
+        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
+        StopOverlay.OnFocusChangedListener {
     private static final String TAG = "BaseMapFragment";
 
     private static final int NOLOCATION_DIALOG = 103;
@@ -144,6 +145,7 @@ public class BaseMapFragment extends SherlockMapFragment
     LocationRequest mLocationRequest;
     Location mLastLocation;
 
+    // Listen to map tap events
     OnFocusChangedListener mOnFocusChangedListener;
 
     public interface OnFocusChangedListener {
@@ -392,7 +394,7 @@ public class BaseMapFragment extends SherlockMapFragment
         }
 
         if (stops != null) {
-            mStopOverlay.setOnFocusChangeListener(mFocusChangeListener);
+            mStopOverlay.setOnFocusChangeListener(this);
 //            mStopPopup.setReferences(refs);
 //
 //            if (focusedId != null) {
@@ -455,26 +457,25 @@ public class BaseMapFragment extends SherlockMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    final StopOverlay.OnFocusChangedListener mFocusChangeListener = new StopOverlay.OnFocusChangedListener() {
-        public void onFocusChanged(final ObaStop stop) {
-            mStopChangedHandler.post(new Runnable() {
-                public void run() {
-                    if (stop != null) {
-                        mFocusStop = stop;
-                        mFocusStopId = stop.getId();
-                        //Log.d(TAG, "Focused changed to " + stop.getName());
-                        //mStopPopup.show(stop);
-                    } else {
-                        //Log.d(TAG, "Removed focus");
-                        //mStopPopup.hide();
-                    }
-
-                    // Notify listeners
-                    mOnFocusChangedListener.onFocusChanged(stop);
+    public void onFocusChanged(final ObaStop stop) {
+        // Run in a separate thread, to avoid blocking UI for long running events
+        mStopChangedHandler.post(new Runnable() {
+            public void run() {
+                if (stop != null) {
+                    mFocusStop = stop;
+                    mFocusStopId = stop.getId();
+                    //Log.d(TAG, "Focused changed to " + stop.getName());
+                    //mStopPopup.show(stop);
+                } else {
+                    //Log.d(TAG, "Removed focus");
+                    //mStopPopup.hide();
                 }
-            });
-        }
-    };
+
+                // Pass overlay focus event up to listeners for this fragment
+                mOnFocusChangedListener.onFocusChanged(stop);
+            }
+        });
+    }
 
     @Override
     @SuppressWarnings("deprecation")
@@ -626,10 +627,17 @@ public class BaseMapFragment extends SherlockMapFragment
     }
 
     @Override
-    public void setMapCenter(Location location) {
+    public void setMapCenter(Location location, boolean overlayExpanded) {
         if (mMap != null) {
+            CameraPosition cp = mMap.getCameraPosition();
+            // TODO - if (overlayExpanded) adjust camera target based on MapModeController.OVERLAY_PERCENTAGE
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                    new CameraPosition.Builder().target(MapHelpV2.makeLatLng(location)).build()));
+                    new CameraPosition.Builder().target(MapHelpV2.makeLatLng(location))
+                            .zoom(cp.zoom)
+                            .bearing(cp.bearing)
+                            .tilt(cp.tilt)
+                            .build()
+            ));
         }
     }
 

@@ -105,4 +105,5 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
     compile 'commons-io:commons-io:2.4'
+    compile 'com.sothree.slidinguppanel:library:2.0.1'
 }

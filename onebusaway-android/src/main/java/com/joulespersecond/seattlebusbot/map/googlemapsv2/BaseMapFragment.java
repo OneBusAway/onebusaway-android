@@ -428,8 +428,10 @@ public class BaseMapFragment extends SherlockMapFragment
     //
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
-        // Update map after a new region has been selected
-        setMyLocation(false, false);
+        if (currentRegionChanged) {
+            // Move map view after a new region has been selected
+            setMyLocation(false, false);
+        }
 
         // If region changed and was auto-selected, show user what region we're using
         if (currentRegionChanged

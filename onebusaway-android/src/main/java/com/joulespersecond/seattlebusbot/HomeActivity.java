@@ -32,7 +32,6 @@ import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -156,10 +155,6 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
         setContentView(R.layout.main);
 
         mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
-
-        // Keeps the map from flickering - see https://code.google.com/p/gmaps-api-issues/issues/detail?id=4639
-        ViewGroup mapHost = (ViewGroup) findViewById(R.id.mainlayout);
-        mapHost.requestTransparentRegion(mapHost);
 
         setupSlidingPanel();
 

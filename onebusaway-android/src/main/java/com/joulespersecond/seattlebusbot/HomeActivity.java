@@ -457,6 +457,7 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
     private void setupSlidingPanel() {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mSlidingPanel.hidePanel();  // Don't show the panel until we have content
+        mSlidingPanel.setOverlayed(true);
         mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
@@ -476,8 +477,8 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             @Override
             public void onPanelAnchored(View panel) {
                 Log.d(TAG, "onPanelAnchored");
-                if (mFocusedStop != null) {
-                    mMapFragment.setMapCenter(mFocusedStop.getLocation(), true);
+                if (mFocusedStop != null && mMapFragment != null) {
+                    mMapFragment.setMapCenter(mFocusedStop.getLocation(), true, true);
                 }
             }
 

@@ -627,17 +627,38 @@ public class BaseMapFragment extends SherlockMapFragment
     }
 
     @Override
-    public void setMapCenter(Location location, boolean overlayExpanded) {
+    public void setMapCenter(Location location, boolean animateToLocation, boolean overlayExpanded) {
         if (mMap != null) {
             CameraPosition cp = mMap.getCameraPosition();
-            // TODO - if (overlayExpanded) adjust camera target based on MapModeController.OVERLAY_PERCENTAGE
-            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                    new CameraPosition.Builder().target(MapHelpV2.makeLatLng(location))
-                            .zoom(cp.zoom)
-                            .bearing(cp.bearing)
-                            .tilt(cp.tilt)
-                            .build()
-            ));
+
+            LatLng target = MapHelpV2.makeLatLng(location);
+            LatLng offsetTarget;
+
+            if (overlayExpanded) {
+                // Adjust camera target based on MapModeController.OVERLAY_PERCENTAGE
+                // so it appears in the center of the visible map
+                double bias = (getLongitudeSpanInDecDegrees() * MapModeController.OVERLAY_PERCENTAGE) / 2;
+                offsetTarget = new LatLng(target.latitude - bias, target.longitude);
+                target = offsetTarget;
+            }
+
+            if (animateToLocation) {
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder().target(target)
+                                .zoom(cp.zoom)
+                                .bearing(cp.bearing)
+                                .tilt(cp.tilt)
+                                .build()
+                ));
+            } else {
+                mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder().target(target)
+                                .zoom(cp.zoom)
+                                .bearing(cp.bearing)
+                                .tilt(cp.tilt)
+                                .build()
+                ));
+            }
         }
     }
 

@@ -33,7 +33,7 @@ public interface MapModeController {
      * The percentage of the map that the bottom sliding overlay will cover when expanded,
      * from 0 to 1
      */
-    public static final float OVERLAY_PERCENTAGE = 0.7f;
+    public static final float OVERLAY_PERCENTAGE = 0.5f;
 
     /**
      * Controllers should make every attempt to communicate through
@@ -83,7 +83,7 @@ public interface MapModeController {
         Location getMapCenterAsLocation();
 
         // Sets the map center, taking into account whether the overlay is expanded
-        void setMapCenter(Location location, boolean overlayExpanded);
+        void setMapCenter(Location location, boolean animateToLocation, boolean overlayExpanded);
 
         // The current latitude span (from the top edge to the bottom edge of the map) in decimal degrees
         double getLatitudeSpanInDecDegrees();

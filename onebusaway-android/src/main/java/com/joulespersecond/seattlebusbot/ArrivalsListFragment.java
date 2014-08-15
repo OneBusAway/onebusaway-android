@@ -83,6 +83,8 @@ public class ArrivalsListFragment extends ListFragment
 
     private ArrivalsListHeader mHeader;
 
+    private View mHeaderView;
+
     private View mFooter;
 
     private View mEmptyList;
@@ -159,9 +161,17 @@ public class ArrivalsListFragment extends ListFragment
         mAlertList = new AlertList(getActivity());
         mAlertList.initView(getView().findViewById(R.id.arrivals_alert_list));
 
-        mHeader = new ArrivalsListHeader(getActivity(), this);
-        View header = getView().findViewById(R.id.arrivals_list_header);
-        mHeader.initView(header);
+        if (mHeader == null) {
+            // We should use the header contained in this fragment's layout, if none was provided
+            // by the Activity via setHeader()
+            mHeader = new ArrivalsListHeader(getActivity(), this);
+            mHeaderView = getView().findViewById(R.id.arrivals_list_header);
+        } else {
+            // The header is in another layout, so we need to remove the header in this layout
+            getView().findViewById(R.id.arrivals_list_header).setVisibility(View.GONE);
+        }
+
+        mHeader.initView(mHeaderView);
         mHeader.refresh();
 
         // Setup list footer button to load more arrivals (when arrivals are shown)
@@ -335,6 +345,17 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         //TestHelp.notifyLoadFinished(getActivity());
+    }
+
+    /**
+     * Sets the header for this list to be instantiated in another layout, but still controlled by this fragment
+     *
+     * @param header     header that will be controlled by this fragment
+     * @param headerView View that contains this header
+     */
+    public void setHeader(ArrivalsListHeader header, View headerView) {
+        mHeader = header;
+        mHeaderView = headerView;
     }
 
     private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {

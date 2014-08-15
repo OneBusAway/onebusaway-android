@@ -341,11 +341,12 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
         if (stop != null) {
             // A stop on the map was just tapped, show it in the sliding panel
             FragmentManager fm = getSupportFragmentManager();
-
-            // Create the arrivals list fragment if necessary
             mArrivalsListFragment = new ArrivalsListFragment();
 
-            // Add the arrivals list fragment to the sliding panel
+            // Set the header for the arrival list to be the top of the sliding panel
+            ArrivalsListHeader header = new ArrivalsListHeader(this, mArrivalsListFragment);
+            mArrivalsListFragment.setHeader(header, findViewById(R.id.arrivals_list_header));
+
             Intent i = new ArrivalsListFragment.IntentBuilder(this, stop).build();
             mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(i));
             fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();

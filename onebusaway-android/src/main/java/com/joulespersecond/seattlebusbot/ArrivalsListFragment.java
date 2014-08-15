@@ -16,6 +16,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentQueryMap;
@@ -57,6 +58,7 @@ import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 //
@@ -559,6 +561,12 @@ public class ArrivalsListFragment extends ListFragment
         return loader.getLastGoodResponseTime();
     }
 
+
+    @Override
+    public List<String> getRouteIds() {
+        return Arrays.asList(mStop.getRouteIds());
+    }
+
     @Override
     public int getNumRoutes() {
         if (mStop != null) {
@@ -654,9 +662,16 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            ArrivalsListActivity act = (ArrivalsListActivity) getActivity();
+            Activity act = getActivity();
+            ArrivalsListFragment frag = null;
+
             // Get the fragment we want...
-            ArrivalsListFragment frag = act.getArrivalsListFragment();
+            if (act instanceof ArrivalsListActivity) {
+                frag = ((ArrivalsListActivity) act).getArrivalsListFragment();
+            } else if (act instanceof HomeActivity) {
+                frag = ((HomeActivity) act).getArrivalsListFragment();
+            }
+
             frag.setRoutesFilter(mChecks);
             dialog.dismiss();
         }

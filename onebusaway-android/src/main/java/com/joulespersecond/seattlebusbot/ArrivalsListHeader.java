@@ -30,6 +30,7 @@ import android.widget.TextView;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
+import java.util.List;
 
 //
 // A helper class that gets most of the header interaction
@@ -60,6 +61,8 @@ class ArrivalsListHeader {
         boolean setFavorite(boolean favorite);
 
         AlertList getAlertList();
+
+        List<String> getRouteIds();
     }
 
     private Controller mController;

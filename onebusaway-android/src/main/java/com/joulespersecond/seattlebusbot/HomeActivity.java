@@ -493,4 +493,8 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             }
         });
     }
+
+    public ArrivalsListFragment getArrivalsListFragment() {
+        return mArrivalsListFragment;
+    }
 }

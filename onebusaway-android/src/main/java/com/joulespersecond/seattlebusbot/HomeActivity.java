@@ -485,6 +485,10 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             @Override
             public void onPanelHidden(View panel) {
                 Log.d(TAG, "onPanelHidden");
+                if (mArrivalsListFragment != null) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    fm.beginTransaction().remove(mArrivalsListFragment).commit();
+                }
             }
         });
     }

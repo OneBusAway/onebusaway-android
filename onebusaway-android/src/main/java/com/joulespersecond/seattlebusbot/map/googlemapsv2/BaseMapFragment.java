@@ -143,7 +143,8 @@ public class BaseMapFragment extends SherlockMapFragment
     protected LocationClient mLocationClient;
     private OnLocationChangedListener mListener;
     LocationRequest mLocationRequest;
-    Location mLastLocation;
+    // Use a single location instance over all BaseMapFragments
+    static Location mLastLocation;
 
     // Listen to map tap events
     OnFocusChangedListener mOnFocusChangedListener;
@@ -781,6 +782,7 @@ public class BaseMapFragment extends SherlockMapFragment
     public void onLocationChanged(Location l) {
         boolean firstFix = false;
         if (mLastLocation == null) {
+            // mLastLocation is static, so this is a first fix across all BaseMapFragments
             firstFix = true;
         }
         mLastLocation = l;
@@ -790,7 +792,7 @@ public class BaseMapFragment extends SherlockMapFragment
         }
 
         if (firstFix) {
-            // If its our first location, move the camera to it
+            // If its our first location (across all BaseMapFragments), move the camera to it
             setMyLocation(true, false);
         }
     }

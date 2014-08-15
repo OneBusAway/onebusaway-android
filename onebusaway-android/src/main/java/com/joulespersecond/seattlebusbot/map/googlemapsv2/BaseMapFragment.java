@@ -404,6 +404,12 @@ public class BaseMapFragment extends SherlockMapFragment
 //                }
 //            }
             mStopOverlay.setStops(stops);
+
+            if (focusedId != null) {
+                // TODO - Add ability to focus on stop using StopID, since
+                // when starting from an Intent (e.g., a bookmark) we don't have ObaStop
+                //mStopOverlay.setFocus(stop);
+            }
         }
     }
 
@@ -431,9 +437,9 @@ public class BaseMapFragment extends SherlockMapFragment
     //
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
-        if (currentRegionChanged) {
-            // Move map view after a new region has been selected
-            setMyLocation(false, false);
+        if (currentRegionChanged && mLastLocation == null) {
+            // Move map view after a new region has been selected, if we don't have user location
+            zoomToRegion();
         }
 
         // If region changed and was auto-selected, show user what region we're using

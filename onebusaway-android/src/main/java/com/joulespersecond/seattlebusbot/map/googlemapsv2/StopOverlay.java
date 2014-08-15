@@ -15,22 +15,21 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import android.app.Activity;
+import android.os.Build;
+import android.os.SystemClock;
+import android.util.Log;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
 
-import android.app.Activity;
-import android.os.Build;
-import android.os.SystemClock;
-import android.util.Log;
-import android.widget.Toast;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +167,20 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         return null;
     }
 
+    /**
+     * Sets focus to a particular stop
+     *
+     * @param stop ObaStop to focus on
+     */
+    public void setFocus(ObaStop stop) {
+        // Make sure that this stop is added to the overlay and has a marker visible on the map
+        // If an intent started the map fragment to focus on a stop, no markers may exist on the map
+        ArrayList<ObaStop> l = new ArrayList<ObaStop>();
+        l.add(stop);
+        setStops(l);
+
+    }
+
     @Override
     public boolean onMarkerClick(Marker marker) {
         long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
@@ -187,15 +200,15 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             return false;
         }
 
-        Toast.makeText(mActivity, stop.getName(), Toast.LENGTH_SHORT).show();
-        //ArrivalsListActivity.start(mActivity, stop);
-
-        mMarkerData.setFocus(stop);
-
-        // Notify listener
-        mOnFocusChangedListener.onFocusChanged(stop);
+        doFocusChange(stop);
 
         return true;
+    }
+
+    private void doFocusChange(ObaStop stop) {
+        mMarkerData.setFocus(stop);
+        // Notify listener
+        mOnFocusChangedListener.onFocusChanged(stop);
     }
 
     @Override

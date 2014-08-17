@@ -15,8 +15,22 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsLoader;
+import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
@@ -29,23 +43,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.ObaRegionsLoader;
-import com.joulespersecond.oba.region.RegionUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Locale;
 
 public class RegionsFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ArrayList<ObaRegion>> {
@@ -57,6 +60,16 @@ public class RegionsFragment extends ListFragment
     private ArrayAdapter<ObaRegion> mAdapter;
 
     private Location mLocation;
+
+    Locale mLocale;
+
+    SharedPreferences mSettings = Application.getPrefs();
+
+    private static String IMPERIAL;
+
+    private static String METRIC;
+
+    private static String AUTOMATIC;
 
     // Current region
     private ObaRegion mCurrentRegion;
@@ -76,6 +89,11 @@ public class RegionsFragment extends ListFragment
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
+
+        mLocale = Locale.getDefault();
+        IMPERIAL = getString(R.string.preferences_preferred_units_option_imperial);
+        METRIC = getString(R.string.preferences_preferred_units_option_metric);
+        AUTOMATIC = getString(R.string.preferences_preferred_units_option_automatic);
     }
 
     @Override
@@ -241,7 +259,6 @@ public class RegionsFragment extends ListFragment
             ImageView image = (ImageView) view.findViewById(android.R.id.selectedIcon);
             text1.setText(region.getName());
             Float distance = null;
-            Resources r = getResources();
 
             int regionVis = View.INVISIBLE;
             if (mCurrentRegion != null && region.getId() == mCurrentRegion.getId()) {
@@ -254,14 +271,29 @@ public class RegionsFragment extends ListFragment
                 distance = RegionUtils.getDistanceAway(region, mLocation);
             }
             if (distance != null) {
-                NumberFormat fmt = NumberFormat.getInstance();
-                if (fmt instanceof DecimalFormat) {
-                    ((DecimalFormat) fmt).setMaximumFractionDigits(1);
-                }
                 double miles = distance * 0.000621371;
-                text2.setText(r.getQuantityString(R.plurals.region_distance,
-                        (int) miles,
-                        fmt.format(miles)));
+                distance /= 1000; // Convert meters to kilometers
+
+                String preferredUnits = mSettings
+                        .getString(getString(R.string.preference_key_preferred_units),
+                                AUTOMATIC);
+
+                if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+                    Log.d(TAG, "Setting units automatically");
+                    // If the country is set to USA, assume imperial, otherwise metric
+                    // TODO - Method of guessing metric/imperial can definitely be improved
+                    if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
+                        // Assume imperial
+                        setDistanceTextView(text2, miles, IMPERIAL);
+                    } else {
+                        // Assume metric
+                        setDistanceTextView(text2, distance, METRIC);
+                    }
+                } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
+                    setDistanceTextView(text2, miles, IMPERIAL);
+                } else if (preferredUnits.equalsIgnoreCase(METRIC)) {
+                    setDistanceTextView(text2, distance, METRIC);
+                }
             } else {
                 view.setEnabled(false);
                 text2.setText(R.string.region_unavailable);
@@ -269,4 +301,31 @@ public class RegionsFragment extends ListFragment
         }
     }
 
+    /**
+     * Sets the text view that contains distance with units based on input parameters
+     *
+     * @param text     the TextView to be set
+     * @param distance the distance to be used, in miles (for imperial) or kilometers (for metric)
+     * @param units    the units to be used from strings.xml, either preferences_preferred_units_option_metric
+     *                 or preferences_preferred_units_option_imperial
+     */
+    private void setDistanceTextView(TextView text, double distance, String units) {
+        Resources r = getResources();
+        NumberFormat fmt = NumberFormat.getInstance();
+        if (fmt instanceof DecimalFormat) {
+            ((DecimalFormat) fmt).setMaximumFractionDigits(1);
+        }
+
+        if (units.equalsIgnoreCase(
+                getString(R.string.preferences_preferred_units_option_imperial))) {
+            text.setText(r.getQuantityString(R.plurals.region_distance_miles,
+                    (int) distance,
+                    fmt.format(distance)));
+        } else if (units
+                .equalsIgnoreCase(getString(R.string.preferences_preferred_units_option_metric))) {
+            text.setText(r.getQuantityString(R.plurals.region_distance_kilometers,
+                    (int) distance,
+                    fmt.format(distance)));
+        }
+    }
 }

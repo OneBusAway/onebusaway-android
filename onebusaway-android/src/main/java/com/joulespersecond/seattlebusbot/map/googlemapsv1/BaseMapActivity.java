@@ -413,8 +413,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
     //
     @Override
     public void onTaskFinished(boolean currentRegionChanged) {
-        // Update map after a new region has been selected
-        setMyLocation();
+        if (currentRegionChanged) {
+            // Move map view after a new region has been selected
+            setMyLocation();
+        }
 
         // If region changed and was auto-selected, show user what region we're using
         if (currentRegionChanged

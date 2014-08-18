@@ -84,6 +84,8 @@ class ArrivalsListHeader {
 
     private ImageButton mFavoriteView;
 
+    private TextView mRouteIdView;
+
     private View mDirectionView;
 
     private View mFilterGroup;
@@ -102,6 +104,7 @@ class ArrivalsListHeader {
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
+        mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
         mDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
@@ -171,6 +174,7 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
+        refreshRouteIds();
         refreshDirection();
         refreshFavorite();
         refreshFilter();
@@ -185,6 +189,18 @@ class ArrivalsListHeader {
             mNameView.setText(userName);
         } else if (name != null) {
             mNameView.setText(name);
+        }
+    }
+
+    private void refreshRouteIds() {
+        List<String> routeIds = mController.getRouteIds();
+
+        if (routeIds != null) {
+            mRouteIdView.setText(UIHelp.getPrettyRouteIds(mContext, routeIds));
+            mRouteIdView.setVisibility(View.VISIBLE);
+        } else {
+            mRouteIdView.setVisibility(View.GONE);
+
         }
     }
 

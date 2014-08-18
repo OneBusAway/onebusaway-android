@@ -26,6 +26,14 @@ apply plugin: 'android'
 
 repositories {
     mavenCentral()
+    maven {
+        // CUTR SNAPSHOTs
+        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
+    }
+    maven {
+        // CUTR Releases
+        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/releases"
+    }
 }
 
 android {
@@ -106,4 +114,5 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
     compile 'commons-io:commons-io:2.4'
     compile 'com.sothree.slidinguppanel:library:2.0.1'
+    compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
 }

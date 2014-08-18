@@ -75,6 +75,12 @@ public class ArrivalsListFragment extends ListFragment
 
     public static final String STOP_DIRECTION = ".StopDir";
 
+    /**
+     * Comma-delimited set of routes that serve this stop
+     * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+     */
+    public static final String STOP_ROUTES = ".StopRoutes";
+
     private static final long RefreshPeriod = 60 * 1000;
 
     private static int TRIPS_FOR_STOP_LOADER = 1;
@@ -132,6 +138,7 @@ public class ArrivalsListFragment extends ListFragment
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
+            setStopRoutes(UIHelp.serializeRouteIds(stop));
         }
 
         public IntentBuilder setStopName(String stopName) {
@@ -141,6 +148,19 @@ public class ArrivalsListFragment extends ListFragment
 
         public IntentBuilder setStopDirection(String stopDir) {
             mIntent.putExtra(ArrivalsListFragment.STOP_DIRECTION, stopDir);
+            return this;
+        }
+
+        /**
+         * Sets the routes that serve this stop via a comma-delimited set of route_ids
+         * <p/>
+         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+         *
+         * @param routes comma-delimited list of route_ids that serve this stop
+         * @return
+         */
+        public IntentBuilder setStopRoutes(String routes) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_ROUTES, routes);
             return this;
         }
 
@@ -564,7 +584,18 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public List<String> getRouteIds() {
-        return Arrays.asList(mStop.getRouteIds());
+        if (mStop != null) {
+            return Arrays.asList(mStop.getRouteIds());
+        } else {
+            // Check the arguments
+            Bundle args = getArguments();
+            String serializedRoutes = args.getString(STOP_ROUTES);
+            if (serializedRoutes != null) {
+                return UIHelp.deserializeRouteIds(serializedRoutes);
+            }
+        }
+        // If we've gotten this far, we don't have any routeIds to share
+        return null;
     }
 
     @Override

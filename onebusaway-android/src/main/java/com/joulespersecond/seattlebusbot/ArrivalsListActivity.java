@@ -52,6 +52,7 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
+            setStopRoutes(UIHelp.serializeRouteIds(stop));
         }
 
         public Builder setStopName(String stopName) {
@@ -61,6 +62,19 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
 
         public Builder setStopDirection(String stopDir) {
             mIntent.putExtra(ArrivalsListFragment.STOP_DIRECTION, stopDir);
+            return this;
+        }
+
+        /**
+         * Sets the routes that serve this stop via a comma-delimited set of route_ids
+         * <p/>
+         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+         *
+         * @param routes comma-delimited list of route_ids that serve this stop
+         * @return
+         */
+        public Builder setStopRoutes(String routes) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_ROUTES, routes);
             return this;
         }
 

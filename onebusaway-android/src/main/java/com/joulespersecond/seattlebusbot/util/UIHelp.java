@@ -47,6 +47,21 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.R;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import edu.usf.cutr.util.comparators.AlphanumComparator;
+
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
 
@@ -212,6 +227,72 @@ public final class UIHelp {
             }
             nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
         }
+    }
+
+    /**
+     * Returns a comma-delimited list of route_ids that serve a stop
+     * <p/>
+     * For example, if a stop was served by "1_14" and "1_54", this method will return "1_14,1_54"
+     *
+     * @param stop
+     * @return comma-delimited list of route_ids that serve a stop
+     */
+    public static String serializeRouteIds(ObaStop stop) {
+        StringBuffer sb = new StringBuffer();
+        String[] routeIds = stop.getRouteIds();
+        for (int i = 0; i < routeIds.length; i++) {
+            sb.append(routeIds[i]);
+
+            if (i != routeIds.length - 1) {
+                sb.append(",");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a list of routeIds from a serialized list of routeIds
+     * <p/>
+     * See {@link #serializeRouteIds(ObaStop)}
+     *
+     * @param serializedRouteIds comma-separate list of routeIds from serializeRouteIds()
+     * @return list of routeIds
+     */
+    public static List<String> deserializeRouteIds(String serializedRouteIds) {
+        String routes[] = serializedRouteIds.split(",");
+        return Arrays.asList(routes);
+    }
+
+    /**
+     * Returns a formatted list of routeIds (with agency removed) for presentation in a single line
+     * <p/>
+     * For example, the following list:
+     * <p/>
+     * 1_11,1_4,1_15
+     * <p/>
+     * ...would be formatted as:
+     * <p/>
+     * Routes: 4, 11, 15
+     *
+     * @param routeIds
+     * @return a formatted list of routeIds (with agency removed) for presentation in a single line
+     */
+    public static String getPrettyRouteIds(Context context, List<String> routeIds) {
+        Collections.sort(routeIds, new AlphanumComparator());
+        StringBuffer sb = new StringBuffer();
+        sb.append(context.getString(R.string.stop_info_route_ids_label) + " ");
+        for (int i = 0; i < routeIds.size(); i++) {
+            // RouteId looks like "1_5" - we just want everything after the "_"
+            String routeIdTrimmed = routeIds.get(i).split("_")[1];
+            sb.append(routeIdTrimmed);
+
+            if (i != routeIds.size() - 1) {
+                sb.append(", ");
+            }
+        }
+
+        return sb.toString();
     }
 
     /**

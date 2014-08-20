@@ -15,6 +15,9 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -24,9 +27,6 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists
@@ -163,7 +163,8 @@ final class QueryUtils {
                 public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                     if (columnIndex == Columns.COL_FAVORITE) {
                         TextView favorite = (TextView) view.findViewById(R.id.stop_name);
-                        int icon = (cursor.getInt(columnIndex) == 1) ? R.drawable.star_on : 0;
+                        int icon = (cursor.getInt(columnIndex) == 1)
+                                ? R.drawable.ic_action_important : 0;
                         favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
                         return true;
                     } else if (columnIndex == Columns.COL_DIRECTION) {

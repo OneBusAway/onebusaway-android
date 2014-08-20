@@ -22,8 +22,8 @@
                     <corners android:radius="2dp"/>
                 </shape>
             </item>
-            <item android:drawable="@drawable/star_on"/>
+            <item android:drawable="@drawable/ic_action_important"/>
         </layer-list>
     </item>
-    <item android:drawable="@drawable/star_on"/>
+    <item android:drawable="@drawable/ic_action_important"/>
 </selector>

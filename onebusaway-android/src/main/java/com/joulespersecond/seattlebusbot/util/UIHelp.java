@@ -215,7 +215,7 @@ public final class UIHelp {
 
                 nameView.setText(TextUtils.isEmpty(userName) ?
                         MyTextUtils.toTitleCase(stopName) : userName);
-                icon = favorite && showIcon ? R.drawable.star_on : 0;
+                icon = favorite && showIcon ? R.drawable.ic_action_important : 0;
             } else {
                 nameView.setText(MyTextUtils.toTitleCase(stopName));
             }

@@ -15,13 +15,13 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.location.Location;
-
 import com.joulespersecond.oba.elements.ObaAgency;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
+
+import android.location.Location;
 
 
 public class RoutesForLocationTest extends ObaTestCase {
@@ -35,7 +35,7 @@ public class RoutesForLocationTest extends ObaTestCase {
         ObaRoutesForLocationResponse response = request.call();
         assertOK(response);
 
-        final ObaRoute[] list = response.getRoutes();
+        final ObaRoute[] list = response.getRoutesForLocation();
         assertTrue(list.length > 0);
         assertTrue(response.getLimitExceeded());
 
@@ -55,7 +55,7 @@ public class RoutesForLocationTest extends ObaTestCase {
                         .build()
                         .call();
         assertOK(response);
-        final ObaRoute[] list = response.getRoutes();
+        final ObaRoute[] list = response.getRoutesForLocation();
         assertTrue(list.length > 0);
         assertFalse(response.getLimitExceeded());
         assertFalse(response.getOutOfRange());
@@ -76,7 +76,7 @@ public class RoutesForLocationTest extends ObaTestCase {
                         .build()
                         .call();
         assertOK(response);
-        final ObaRoute[] list = response.getRoutes();
+        final ObaRoute[] list = response.getRoutesForLocation();
         assertEquals(0, list.length);
         assertFalse(response.getLimitExceeded());
         assertFalse(response.getOutOfRange());

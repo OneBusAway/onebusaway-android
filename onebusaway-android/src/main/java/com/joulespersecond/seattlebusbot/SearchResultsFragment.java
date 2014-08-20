@@ -95,8 +95,10 @@ public class SearchResultsFragment extends ListFragment
         super.onAttach(activity);
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback
+                    = new LocationHelp.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -140,7 +142,8 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
-        return new MyLoader(getActivity(), query, LocationHelp.getLocation(getActivity(), mLocationClient));
+        return new MyLoader(getActivity(), query,
+                LocationHelp.getLocation(getActivity(), mLocationClient));
     }
 
     @Override
@@ -213,7 +216,8 @@ public class SearchResultsFragment extends ListFragment
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-                        ArrivalsListActivity.start(getActivity(), stop);
+                        // TODO - Pass in a route mapping?  Can we get away with just a stopId here?
+                        ArrivalsListActivity.start(getActivity(), stop.getId());
                         break;
                     case 1:
                         HomeActivity.start(getActivity(),
@@ -300,7 +304,7 @@ public class SearchResultsFragment extends ListFragment
             // open a wider next in some "default" location
             //Log.d(TAG, "Server returns: " + response.getCode());
             if (response.getCode() == ObaApi.OBA_OK) {
-                ObaRoute[] routes = response.getRoutes();
+                ObaRoute[] routes = response.getRoutesForLocation();
                 if (routes.length != 0) {
                     return response;
                 }
@@ -343,7 +347,7 @@ public class SearchResultsFragment extends ListFragment
             }
 
             if (code == ObaApi.OBA_OK) {
-                results.addAll(Arrays.asList(routes.getRoutes()));
+                results.addAll(Arrays.asList(routes.getRoutesForLocation()));
                 results.addAll(Arrays.asList(stops.getStops()));
             }
 

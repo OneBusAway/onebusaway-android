@@ -15,6 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -22,13 +31,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
+import java.util.HashMap;
 
 
 public class ArrivalsListActivity extends SherlockFragmentActivity {
@@ -46,13 +49,17 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         }
 
-        public Builder(Context context, ObaStop stop) {
+        /**
+         * @param stop   ObaStop to be set
+         * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         */
+        public Builder(Context context, ObaStop stop, HashMap<String, ObaRoute> routes) {
             mContext = context;
             mIntent = new Intent(context, ArrivalsListActivity.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
-            setStopRoutes(UIHelp.serializeRouteIds(stop));
+            setStopRoutes(UIHelp.serializeRouteDisplayNames(stop, routes));
         }
 
         public Builder setStopName(String stopName) {
@@ -66,9 +73,9 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
         }
 
         /**
-         * Sets the routes that serve this stop via a comma-delimited set of route_ids
+         * Sets the routes that serve this stop as a comma-delimited set of route_ids
          * <p/>
-         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteDisplayNames(ObaStop, java.util.HashMap)}
          *
          * @param routes comma-delimited list of route_ids that serve this stop
          * @return
@@ -99,8 +106,14 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
         new Builder(context, stopId).start();
     }
 
-    public static void start(Context context, ObaStop stop) {
-        new Builder(context, stop).start();
+    /**
+     *
+     * @param context
+     * @param stop the ObaStop to be used
+     * @param routes a HashMap of all route display names that serve this stop - key is routeId
+     */
+    public static void start(Context context, ObaStop stop, HashMap<String, ObaRoute> routes) {
+        new Builder(context, stop, routes).start();
     }
 
     private boolean mNewFragment = false;

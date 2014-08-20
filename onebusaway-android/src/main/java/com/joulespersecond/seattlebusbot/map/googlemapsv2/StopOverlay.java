@@ -15,19 +15,22 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
-import android.app.Activity;
-import android.os.Build;
-import android.os.SystemClock;
-import android.util.Log;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
+
+import android.app.Activity;
+import android.os.Build;
+import android.os.SystemClock;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,8 +68,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
          * is already selected, which removes focus
          *
          * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
-        void onFocusChanged(ObaStop stop);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
     }
 
     public StopOverlay(Activity activity, GoogleMap map) {
@@ -81,15 +85,22 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
-    public synchronized void setStops(List<ObaStop> stops) {
+    public synchronized void setStops(List<ObaStop> stops, ObaReferences refs) {
         if (mMarkerData == null) {
             mMarkerData = new MarkerData();
         }
-        populate(stops);
+        populate(stops, refs.getRoutes());
     }
 
-    private void populate(List<ObaStop> stops) {
-        mMarkerData.populate(stops);
+    public synchronized void setStops(List<ObaStop> stops, List<ObaRoute> routes) {
+        if (mMarkerData == null) {
+            mMarkerData = new MarkerData();
+        }
+        populate(stops, routes);
+    }
+
+    private void populate(List<ObaStop> stops, List<ObaRoute> routes) {
+        mMarkerData.populate(stops, routes);
     }
 
     public synchronized int size() {
@@ -171,14 +182,15 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      * Sets focus to a particular stop
      *
      * @param stop ObaStop to focus on
+     * @param routes a list of all route display names that serve this stop
      */
-    public void setFocus(ObaStop stop) {
+    public void setFocus(ObaStop stop, List<ObaRoute> routes) {
         // Make sure that this stop is added to the overlay and has a marker visible on the map
         // If an intent started the map fragment to focus on a stop, no markers may exist on the map
         ArrayList<ObaStop> l = new ArrayList<ObaStop>();
         l.add(stop);
-        setStops(l);
-
+        setStops(l, routes);
+        doFocusChange(stop);
     }
 
     @Override
@@ -192,7 +204,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             endTime = SystemClock.elapsedRealtimeNanos();
-            Log.d(TAG, "HashMap read time: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
+            Log.d(TAG, "Stop HashMap read time: " + TimeUnit.MILLISECONDS
+                    .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
         }
 
         if (stop == null) {
@@ -207,8 +220,10 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
     private void doFocusChange(ObaStop stop) {
         mMarkerData.setFocus(stop);
+        HashMap<String, ObaRoute> routes = mMarkerData.getCachedRoutes();
+
         // Notify listener
-        mOnFocusChangedListener.onFocusChanged(stop);
+        mOnFocusChangedListener.onFocusChanged(stop, routes);
     }
 
     @Override
@@ -219,7 +234,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
             // Notify listener
-            mOnFocusChangedListener.onFocusChanged(null);
+            mOnFocusChangedListener.onFocusChanged(null, null);
         }
     }
 
@@ -240,6 +255,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         /**
          * A cached set of markers currently shown on the map, up to roughly
          * FUZZY_MAX_MARKER_COUNT in size.  This is needed to add/remove markers from the map.
+         * StopId is the key.
          */
         private HashMap<String, Marker> mStopMarkers;
 
@@ -247,8 +263,16 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
          * A cached set of ObaStops that are currently shown on the map, up to roughly
          * FUZZY_MAX_MARKER_COUNT in size.  Since onMarkerClick() provides a marker, we need a
          * mapping of that marker to the ObaStop.
+         * Marker that represents an ObaStop is the key.
          */
         private HashMap<Marker, ObaStop> mStops;
+
+        /**
+         * A cached set of ObaRoutes that serve the currently cached ObaStops.  This is
+         * needed to retrieve the route display names that serve a particular stop.
+         * RouteId is the key.
+         */
+        private HashMap<String, ObaRoute> mStopRoutes;
 
         /**
          * Marker and stop used to indicate which bus stop has focus (i.e., was last clicked/tapped)
@@ -256,12 +280,20 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         private Marker mCurrentFocusMarker;
         private ObaStop mCurrentFocusStop;
 
+        /**
+         * Keep a copy of ObaRoute references for stops have have had focus, so we can reconstruct
+         * the mStopRoutes HashMap after clearing the cache
+         */
+        private HashMap<String, ObaRoute> mFocusedRoutes;
+
         MarkerData() {
             mStopMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
+            mStopRoutes = new HashMap<String, ObaRoute>();
+            mFocusedRoutes = new HashMap<String, ObaRoute>();
         }
 
-        synchronized void populate(List<ObaStop> stops) {
+        synchronized void populate(List<ObaStop> stops, List<ObaRoute> routes) {
             int count = 0;
 
             if (mStopMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
@@ -273,14 +305,17 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
                 // Make sure the currently focused stop still exists on the map
                 if (mCurrentFocusStop != null) {
-                    addMarkerToMap(mCurrentFocusStop);
+                    addMarkerToMap(mCurrentFocusStop, routes);
                     count++;
                 }
+
+                // TODO - handle copy/clear focus routes
+
             }
 
             for (ObaStop stop : stops) {
                 if (!mStopMarkers.containsKey(stop.getId())) {
-                    addMarkerToMap(stop);
+                    addMarkerToMap(stop, routes);
                     count++;
                 }
             }
@@ -288,12 +323,17 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             Log.d(TAG, "Added " + count + " markers, total markers = " + mStopMarkers.size());
         }
 
+        private void copyRoutesForFocusedStop() {
+
+        }
+
         /**
          * Places a marker on the map for this stop, and adds it to our marker HashMap
          *
          * @param stop ObaStop that should be shown on the map
+         * @param routes A list of ObaRoutes that serve this stop
          */
-        private void addMarkerToMap(ObaStop stop) {
+        private void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
             Marker m = mMap.addMarker(new MarkerOptions()
                     .position(MapHelpV2.makeLatLng(stop.getLocation()))
                     .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
@@ -302,10 +342,26 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             );
             mStopMarkers.put(stop.getId(), m);
             mStops.put(m, stop);
+            for (ObaRoute route : routes) {
+                // ObaRoutes may have already been added for other stops, so check before adding
+                if (!mStopRoutes.containsKey(route.getId())) {
+                    mStopRoutes.put(route.getId(), route);
+                }
+            }
+
         }
 
-        ObaStop getStopFromMarker(Marker marker) {
+        synchronized ObaStop getStopFromMarker(Marker marker) {
             return mStops.get(marker);
+        }
+
+        /**
+         * Gets the ObaRoute objects that have been cached
+         *
+         * @return a copy of the HashMap containing the ObaRoutes that have been cached, with the routeId as key
+         */
+        synchronized HashMap<String, ObaRoute> getCachedRoutes() {
+            return new HashMap<String, ObaRoute>(mStopRoutes);
         }
 
         /**
@@ -319,6 +375,15 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                 mCurrentFocusMarker.remove();
             }
             mCurrentFocusStop = stop;
+
+            // Save a copy of ObaRoute references for this stop, so we have them when clearing cache
+            String[] routeIds = stop.getRouteIds();
+            for (int i = 0; i < routeIds.length; i++) {
+                ObaRoute route = mStopRoutes.get(routeIds[i]);
+                if (route != null) {
+                    mFocusedRoutes.put(routeIds[i], route);
+                }
+            }
 
             // Reduce focus marker latitude by small amount to ensure it is always on top of the
             // corresponding stop marker (i.e., so its not identical to stop marker latitude)
@@ -347,6 +412,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                 mCurrentFocusMarker.remove();
                 mCurrentFocusMarker = null;
             }
+            mFocusedRoutes.clear();
             mCurrentFocusStop = null;
         }
 
@@ -371,6 +437,10 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             if (mStops != null) {
                 mStops.clear();
                 mStops = null;
+            }
+            if (mStopRoutes != null) {
+                mStops.clear();
+                mStopRoutes = null;
             }
             removeFocus();
         }

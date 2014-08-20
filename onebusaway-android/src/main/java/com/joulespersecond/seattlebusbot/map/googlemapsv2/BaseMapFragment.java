@@ -16,18 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
-import android.content.Context;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -44,8 +32,11 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
+
+import com.actionbarsherlock.app.SherlockMapFragment;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.ObaRegionsTask;
@@ -58,7 +49,19 @@ import com.joulespersecond.seattlebusbot.map.RouteMapController;
 import com.joulespersecond.seattlebusbot.map.StopMapController;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
+import android.content.Context;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.joulespersecond.seattlebusbot.map.MapModeController.Callback;
@@ -118,6 +121,8 @@ public class BaseMapFragment extends SherlockMapFragment
     private String mFocusStopId;
     private ObaStop mFocusStop;
 
+    private HashMap<String, ObaRoute> mFocusStopRoutes;
+
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
     private StopOverlay mStopOverlay;
@@ -156,8 +161,9 @@ public class BaseMapFragment extends SherlockMapFragment
          * is already selected, which removes focus
          *
          * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
-        void onFocusChanged(ObaStop stop);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
     }
 
     @Override
@@ -403,7 +409,7 @@ public class BaseMapFragment extends SherlockMapFragment
 //                    mStopPopup.hide();
 //                }
 //            }
-            mStopOverlay.setStops(stops);
+            mStopOverlay.setStops(stops, refs);
 
             if (focusedId != null) {
                 // TODO - Add ability to focus on stop using StopID, since
@@ -464,13 +470,14 @@ public class BaseMapFragment extends SherlockMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
                 if (stop != null) {
                     mFocusStop = stop;
                     mFocusStopId = stop.getId();
+                    mFocusStopRoutes = routes;
                     //Log.d(TAG, "Focused changed to " + stop.getName());
                     //mStopPopup.show(stop);
                 } else {
@@ -479,7 +486,7 @@ public class BaseMapFragment extends SherlockMapFragment
                 }
 
                 // Pass overlay focus event up to listeners for this fragment
-                mOnFocusChangedListener.onFocusChanged(stop);
+                mOnFocusChangedListener.onFocusChanged(stop, routes);
             }
         });
     }

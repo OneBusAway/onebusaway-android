@@ -16,6 +16,7 @@
 package com.joulespersecond.oba.elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class ObaReferencesElement implements ObaReferences {
@@ -58,6 +59,11 @@ public final class ObaReferencesElement implements ObaReferences {
     @Override
     public List<ObaRoute> getRoutes(String[] ids) {
         return findList(ObaRoute.class, routes, ids);
+    }
+
+    @Override
+    public List<ObaRoute> getRoutes() {
+        return new ArrayList<ObaRoute>(Arrays.asList(routes));
     }
 
     @Override

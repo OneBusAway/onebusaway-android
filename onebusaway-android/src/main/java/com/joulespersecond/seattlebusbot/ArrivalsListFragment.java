@@ -16,6 +16,20 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -43,22 +57,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 //
@@ -77,7 +77,7 @@ public class ArrivalsListFragment extends ListFragment
 
     /**
      * Comma-delimited set of routes that serve this stop
-     * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+     * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteDisplayNames(ObaStop, java.util.HashMap)}
      */
     public static final String STOP_ROUTES = ".StopRoutes";
 
@@ -133,12 +133,17 @@ public class ArrivalsListFragment extends ListFragment
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
         }
 
-        public IntentBuilder(Context mContext, ObaStop stop) {
-            mIntent = new Intent(mContext, ArrivalsListFragment.class);
+        /**
+         * @param stop   ObaStop to be set
+         * @param routes a HashMap of all route display names that may serve this stop - key is
+         *               routeId
+         */
+        public IntentBuilder(Context context, ObaStop stop, HashMap<String, ObaRoute> routes) {
+            mIntent = new Intent(context, ArrivalsListFragment.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
-            setStopRoutes(UIHelp.serializeRouteIds(stop));
+            setStopRoutes(UIHelp.serializeRouteDisplayNames(stop, routes));
         }
 
         public IntentBuilder setStopName(String stopName) {
@@ -152,11 +157,11 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         /**
-         * Sets the routes that serve this stop via a comma-delimited set of route_ids
+         * Sets the routes that serve this stop via a comma-delimited set of route display names
          * <p/>
-         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteIds(ObaStop)}
+         * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteDisplayNames(ObaStop, java.util.HashMap)}
          *
-         * @param routes comma-delimited list of route_ids that serve this stop
+         * @param routes comma-delimited list of route display names that serve this stop
          * @return
          */
         public IntentBuilder setStopRoutes(String routes) {
@@ -583,15 +588,22 @@ public class ArrivalsListFragment extends ListFragment
 
 
     @Override
-    public List<String> getRouteIds() {
-        if (mStop != null) {
-            return Arrays.asList(mStop.getRouteIds());
+    public List<String> getRouteDisplayNames() {
+        if (mStop != null && getArrivalsLoader() != null) {
+            ObaArrivalInfoResponse response =
+                    getArrivalsLoader().getLastGoodResponse();
+            List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
+            ArrayList<String> displayNames = new ArrayList<String>();
+            for (ObaRoute r : routes) {
+                displayNames.add(UIHelp.getRouteDisplayName(r));
+            }
+            return displayNames;
         } else {
             // Check the arguments
             Bundle args = getArguments();
             String serializedRoutes = args.getString(STOP_ROUTES);
             if (serializedRoutes != null) {
-                return UIHelp.deserializeRouteIds(serializedRoutes);
+                return UIHelp.deserializeRouteDisplayNames(serializedRoutes);
             }
         }
         // If we've gotten this far, we don't have any routeIds to share

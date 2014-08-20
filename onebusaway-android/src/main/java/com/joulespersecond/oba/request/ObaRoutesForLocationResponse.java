@@ -56,7 +56,7 @@ public final class ObaRoutesForLocationResponse extends ObaResponseWithRefs {
     /**
      * @return The list of routes.
      */
-    public ObaRoute[] getRoutes() {
+    public ObaRoute[] getRoutesForLocation() {
         return data.list;
     }
 

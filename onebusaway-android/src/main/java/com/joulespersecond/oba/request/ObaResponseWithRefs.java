@@ -47,6 +47,11 @@ public abstract class ObaResponseWithRefs extends ObaResponse implements ObaRefe
     }
 
     @Override
+    public List<ObaRoute> getRoutes() {
+        return getRefs().getRoutes();
+    }
+
+    @Override
     public ObaTrip getTrip(String id) {
         return getRefs().getTrip(id);
     }

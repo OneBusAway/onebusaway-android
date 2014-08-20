@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -26,8 +28,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +62,7 @@ class ArrivalsListHeader {
 
         AlertList getAlertList();
 
-        List<String> getRouteIds();
+        List<String> getRouteDisplayNames();
     }
 
     private Controller mController;
@@ -174,7 +174,7 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
-        refreshRouteIds();
+        refreshRouteDisplayNames();
         refreshDirection();
         refreshFavorite();
         refreshFilter();
@@ -192,15 +192,16 @@ class ArrivalsListHeader {
         }
     }
 
-    private void refreshRouteIds() {
-        List<String> routeIds = mController.getRouteIds();
+    private void refreshRouteDisplayNames() {
+        List<String> routeDisplayNames = mController.getRouteDisplayNames();
 
-        if (routeIds != null) {
-            mRouteIdView.setText(UIHelp.getPrettyRouteIds(mContext, routeIds));
+        if (routeDisplayNames != null) {
+            mRouteIdView.setText(
+                    mContext.getString(R.string.stop_info_route_ids_label) + " " + UIHelp
+                            .formatRouteDisplayNames(routeDisplayNames));
             mRouteIdView.setVisibility(View.VISIBLE);
         } else {
             mRouteIdView.setVisibility(View.GONE);
-
         }
     }
 

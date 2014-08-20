@@ -57,6 +57,12 @@ public interface ObaReferences {
     public List<ObaRoute> getRoutes(String[] ids);
 
     /**
+     * Returns all routes
+     * @return all routes
+     */
+    public List<ObaRoute> getRoutes();
+
+    /**
      * References a trip by its ID.
      *
      * @param id The trip ID.

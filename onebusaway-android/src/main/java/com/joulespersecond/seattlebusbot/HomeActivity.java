@@ -15,6 +15,28 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -34,27 +56,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.MapModeController;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
 import java.util.Date;
+import java.util.HashMap;
 
 public class HomeActivity extends SherlockFragmentActivity implements BaseMapFragment.OnFocusChangedListener {
 
@@ -334,9 +337,11 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
      * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
      *
      * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+     * @param routes a HashMap of all route display names that serve this stop - key is routeId
+     *
      */
     @Override
-    public void onFocusChanged(ObaStop stop) {
+    public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes) {
         mFocusedStop = stop;
         if (stop != null) {
             // A stop on the map was just tapped, show it in the sliding panel
@@ -347,7 +352,7 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             ArrivalsListHeader header = new ArrivalsListHeader(this, mArrivalsListFragment);
             mArrivalsListFragment.setHeader(header, findViewById(R.id.arrivals_list_header));
 
-            Intent i = new ArrivalsListFragment.IntentBuilder(this, stop).build();
+            Intent i = new ArrivalsListFragment.IntentBuilder(this, stop, routes).build();
             mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(i));
             fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
 

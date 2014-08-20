@@ -15,6 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
@@ -28,15 +37,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -110,7 +111,7 @@ class StopPopup {
             }
 
 //            if (mRoutesView.isShown()) {
-//                List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
+//                List<ObaRoute> routes = mReferences.getRoutesForLocation(mStop.getRouteDisplayNames());
 //                mRoutesAdapter.setData(routes);
 //            }
         }
@@ -134,7 +135,11 @@ class StopPopup {
     private final OnClickListener mOnShowArrivals = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            ArrivalsListActivity.start(mContext, mStop);
+            HashMap<String, ObaRoute> routes = new HashMap<String, ObaRoute>();
+            for (ObaRoute r : mReferences.getRoutes()) {
+                routes.put(r.getId(), r);
+            }
+            ArrivalsListActivity.start(mContext, mStop, routes);
         }
     };
 
@@ -151,7 +156,7 @@ class StopPopup {
 //        }
 //        if (!mRoutesView.isShown() && mStop != null) {
 //            // Update the routes
-//            List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
+//            List<ObaRoute> routes = mReferences.getRoutesForLocation(mStop.getRouteDisplayNames());
 //            mRoutesAdapter.setData(routes);
 //
 //            mRoutesView.setVisibility(View.VISIBLE);

@@ -213,7 +213,7 @@ class ArrivalsListHeader {
             if (directionText != R.string.direction_none && !mInNameEdit) {
                 mDirectionView.setVisibility(View.VISIBLE);
             } else {
-                mDirectionView.setVisibility(View.GONE);
+                mDirectionView.setVisibility(View.INVISIBLE);
             }
         }
     }

@@ -364,6 +364,17 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        // Collapse the panel when the user presses the back button
+        if (mSlidingPanel != null && mSlidingPanel.isPanelExpanded() || mSlidingPanel
+                .isPanelAnchored()) {
+            mSlidingPanel.collapsePanel();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     private String getLocationString(Context context) {
         Location loc = LocationHelp.getLocation2(context, mLocationClient);
         return LocationHelp.printLocationDetails(loc);

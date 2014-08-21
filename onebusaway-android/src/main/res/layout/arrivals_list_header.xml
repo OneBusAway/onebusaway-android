@@ -13,36 +13,28 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/HeaderItem"
     android:id="@+id/arrivals_list_header"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="68dp"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/name_container"
-        android:orientation="horizontal"
+    <ImageButton
+        android:id="@+id/stop_favorite"
+        android:src="@drawable/android:star_off"
+        android:contentDescription="@string/stop_info_favorite"
+        android:background="@null"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <ImageButton
-            android:id="@+id/stop_favorite"
-            android:src="@drawable/android:star_off"
-            android:contentDescription="@string/stop_info_favorite"
-            android:background="@null"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingRight="5dp"
-            android:layout_gravity="center_vertical" />
-
-        <TextView
-            android:id="@+id/stop_name"
-            style="@style/HeaderText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"/>
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:maxWidth="35dp"
+        android:maxHeight="35dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true" />
 
     <LinearLayout
         android:id="@+id/edit_name_container"
@@ -94,24 +86,36 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/name_container"
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="left">
+        android:layout_centerInParent="true"
+        android:layout_toRightOf="@+id/stop_favorite">
+
+        <TextView
+            android:id="@+id/stop_name"
+            style="@style/HeaderText"
+            android:paddingLeft="@dimen/arrivals_header_pad_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left" />
 
         <TextView
                 android:id="@+id/routeIds"
                 style="@style/Header2Text"
                 android:paddingLeft="@dimen/arrivals_header_pad_left"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"></TextView>
+            android:layout_height="wrap_content"
+            android:layout_gravity="left" />
 
         <TextView
             android:id="@+id/direction"
             style="@style/Header2Text"
             android:paddingLeft="@dimen/arrivals_header_pad_left"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"></TextView>
+            android:layout_height="wrap_content"
+            android:layout_gravity="left" />
     </LinearLayout>
 
     <LinearLayout
@@ -138,4 +142,4 @@
             android:bufferType="spannable"
             android:linksClickable="true"></TextView>
     </LinearLayout>
-</LinearLayout>
+</RelativeLayout>

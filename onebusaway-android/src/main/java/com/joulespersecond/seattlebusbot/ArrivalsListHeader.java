@@ -15,8 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
 import android.content.Context;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -28,6 +26,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -327,6 +327,10 @@ class ArrivalsListHeader {
         mDirectionView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
+        mFavoriteView.setVisibility(View.GONE);
+        // TODO - Re-size the header layout to show the edit buttons
+//        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.WRAP_CONTENT));
         mEditNameView.requestFocus();
         mInNameEdit = true;
         // TODO: Ensure the soft keyboard is up
@@ -337,6 +341,10 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mDirectionView.setVisibility(View.VISIBLE);
+        mFavoriteView.setVisibility(View.VISIBLE);
+        // TODO - Re-size the header layout back to 68dp
+//        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.WRAP_CONTENT));
         //setFilterHeader();
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

@@ -15,5 +15,5 @@
 -->
 <resources>
     <dimen name="route_button_width">48sp</dimen>
-    <dimen name="arrivals_header_pad_left">30dp</dimen>
+    <dimen name="arrivals_header_pad_left">5dp</dimen>
 </resources>

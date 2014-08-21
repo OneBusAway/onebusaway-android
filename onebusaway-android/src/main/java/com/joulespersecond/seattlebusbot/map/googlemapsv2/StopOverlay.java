@@ -15,22 +15,26 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import android.app.Activity;
+import android.graphics.Point;
+import android.os.Build;
+import android.os.Handler;
+import android.os.SystemClock;
+import android.util.Log;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.Interpolator;
+
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.seattlebusbot.R;
-
-import android.app.Activity;
-import android.os.Build;
-import android.os.SystemClock;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -392,6 +396,46 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
                             .position(latLng)
             );
+
+            // This doesn't look good since when bouncing, the focus marker is drawn behind
+            // the bus stop marker.  If only we could control z-order...
+            // animateMarker(mCurrentFocusMarker);
+        }
+
+        /**
+         * Give the marker a slight bounce effect
+         *
+         * @param marker marker to animate
+         */
+        private void animateMarker(final Marker marker) {
+            final Handler handler = new Handler();
+
+            final long startTime = SystemClock.uptimeMillis();
+            final long duration = 300; // ms
+
+            Projection proj = mMap.getProjection();
+            final LatLng markerLatLng = marker.getPosition();
+            Point startPoint = proj.toScreenLocation(markerLatLng);
+            startPoint.offset(0, -10);
+            final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+
+            final Interpolator interpolator = new BounceInterpolator();
+
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    long elapsed = SystemClock.uptimeMillis() - startTime;
+                    float t = interpolator.getInterpolation((float) elapsed / duration);
+                    double lng = t * markerLatLng.longitude + (1 - t) * startLatLng.longitude;
+                    double lat = t * markerLatLng.latitude + (1 - t) * startLatLng.latitude;
+                    marker.setPosition(new LatLng(lat, lng));
+
+                    if (t < 1.0) {
+                        // Post again 16ms later (60fps)
+                        handler.postDelayed(this, 16);
+                    }
+                }
+            });
         }
 
         /**

@@ -18,4 +18,5 @@
 
 <resources>
     <color name="pressed_busbot">#CC6dce31</color>
+    <color name="oba_dark_green">#5A8029</color>
 </resources>

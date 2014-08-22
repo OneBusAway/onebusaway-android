@@ -48,14 +48,14 @@
     </style>
 
     <style name="busbot_solid_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar.Solid">
-        <item name="background">@drawable/ab_solid_busbot</item>
+        <item name="background">@color/oba_dark_green</item>
         <item name="backgroundStacked">@drawable/ab_stacked_solid_busbot</item>
-        <item name="backgroundSplit">@drawable/ab_bottom_solid_busbot</item>
+        <item name="backgroundSplit">@color/oba_dark_green</item>
         <item name="progressBarStyle">@style/busbot_ProgressBar</item>
 
-        <item name="android:background">@drawable/ab_solid_busbot</item>
+        <item name="android:background">@color/oba_dark_green</item>
         <item name="android:backgroundStacked">@drawable/ab_stacked_solid_busbot</item>
-        <item name="android:backgroundSplit">@drawable/ab_bottom_solid_busbot</item>
+        <item name="android:backgroundSplit">@color/oba_dark_green</item>
         <item name="android:progressBarStyle">@style/busbot_ProgressBar</item>
     </style>
 

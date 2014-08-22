@@ -21,7 +21,7 @@
 
     <!--  Styles -->
     <style name="HeaderItem">
-        <item name="android:background">#5A8029</item>
+        <item name="android:background">@color/oba_dark_green</item>
         <item name="android:padding">4dp</item>
     </style>
     <style name="HeaderList">

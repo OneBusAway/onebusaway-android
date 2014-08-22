@@ -35,8 +35,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -70,8 +68,6 @@ import edu.usf.cutr.util.comparators.AlphanumComparator;
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
 
-    private static final int OBA_DARK_GREEN = Color.argb(255, 90, 128, 41);
-
     public static void setupActionBar(SherlockFragmentActivity activity) {
         setupActionBar(activity.getSupportActionBar());
     }
@@ -79,9 +75,6 @@ public final class UIHelp {
     public static void setupActionBar(ActionBar bar) {
         bar.setDisplayHomeAsUpEnabled(true);
         bar.setDisplayShowTitleEnabled(false);
-        // TODO - Should this color be declared as a resource?
-        // If we're going to support dynamic re-skinning we'll have to set this from code, such as below
-        bar.setBackgroundDrawable(new ColorDrawable(OBA_DARK_GREEN));
     }
 
     public static void showProgress(SherlockFragment fragment, boolean visible) {
@@ -244,14 +237,14 @@ public final class UIHelp {
      * <p/>
      * For example, if a stop was served by "14" and "54", this method will return "14,54"
      *
-     * @param stop the stop for which the route display names should be serialized
+     * @param stop   the stop for which the route display names should be serialized
      * @param routes a HashMap containing all routes that serve this stop, with the routeId as the key.
      *               Note that for efficiency this routes HashMap may contain routes that don't serve this stop as well -
      *               the routes for the stop are referenced via stop.getRouteDisplayNames()
      * @return comma-delimited list of route display names that serve a stop
      */
     public static String serializeRouteDisplayNames(ObaStop stop,
-            HashMap<String, ObaRoute> routes) {
+                                                    HashMap<String, ObaRoute> routes) {
         StringBuffer sb = new StringBuffer();
         String[] routeIds = stop.getRouteIds();
         for (int i = 0; i < routeIds.length; i++) {

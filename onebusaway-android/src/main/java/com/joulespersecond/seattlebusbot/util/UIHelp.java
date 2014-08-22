@@ -35,6 +35,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -49,6 +51,15 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.R;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +70,8 @@ import edu.usf.cutr.util.comparators.AlphanumComparator;
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
 
+    private static final int OBA_DARK_GREEN = Color.argb(255, 90, 128, 41);
+
     public static void setupActionBar(SherlockFragmentActivity activity) {
         setupActionBar(activity.getSupportActionBar());
     }
@@ -66,6 +79,9 @@ public final class UIHelp {
     public static void setupActionBar(ActionBar bar) {
         bar.setDisplayHomeAsUpEnabled(true);
         bar.setDisplayShowTitleEnabled(false);
+        // TODO - Should this color be declared as a resource?
+        // If we're going to support dynamic re-skinning we'll have to set this from code, such as below
+        bar.setBackgroundDrawable(new ColorDrawable(OBA_DARK_GREEN));
     }
 
     public static void showProgress(SherlockFragment fragment, boolean visible) {

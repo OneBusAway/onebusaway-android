@@ -250,7 +250,7 @@ public class StopMapController implements MapModeController,
 
     @Override
     public void onLoadFinished(Loader<StopsResponse> loader,
-            StopsResponse _response) {
+                               StopsResponse _response) {
         mFragment.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
         if (response == null) {
@@ -306,7 +306,7 @@ public class StopMapController implements MapModeController,
     // Remove when adding back LoaderManager help.
     @Override
     public void onLoadComplete(Loader<StopsResponse> loader,
-            StopsResponse response) {
+                               StopsResponse response) {
         onLoadFinished(loader, response);
     }
 
@@ -323,16 +323,18 @@ public class StopMapController implements MapModeController,
     private void refresh() {
         // First we need to check to see if the current request we have can handle this.
         // Otherwise, we need to restart the loader with the new request.
-        mFragment.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                StopsLoader loader = getLoader();
-                if (loader != null) {
-                    StopsRequest req = new StopsRequest(mFragment.getMapView());
-                    loader.update(req);
+        if (mFragment != null) {
+            mFragment.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    StopsLoader loader = getLoader();
+                    if (loader != null) {
+                        StopsRequest req = new StopsRequest(mFragment.getMapView());
+                        loader.update(req);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //

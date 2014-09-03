@@ -15,28 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.MapModeController;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -54,12 +32,38 @@ import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
-public class HomeActivity extends SherlockFragmentActivity implements BaseMapFragment.OnFocusChangedListener {
+public class HomeActivity extends SherlockFragmentActivity
+        implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener {
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
@@ -74,6 +78,8 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
 
     BaseMapFragment mMapFragment;
     ArrivalsListFragment mArrivalsListFragment;
+    ArrivalsListHeader mArrivalsListHeader;
+    View mArrivalsListHeaderView;
 
     /**
      * Google Location Services
@@ -336,9 +342,8 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
     /**
      * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
      *
-     * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+     * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
      * @param routes a HashMap of all route display names that serve this stop - key is routeId
-     *
      */
     @Override
     public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes) {
@@ -347,21 +352,37 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
             // A stop on the map was just tapped, show it in the sliding panel
             FragmentManager fm = getSupportFragmentManager();
             mArrivalsListFragment = new ArrivalsListFragment();
+            mArrivalsListFragment.setListener(this);
 
             // Set the header for the arrival list to be the top of the sliding panel
-            ArrivalsListHeader header = new ArrivalsListHeader(this, mArrivalsListFragment);
-            mArrivalsListFragment.setHeader(header, findViewById(R.id.arrivals_list_header));
+            mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
+
+            mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
 
             Intent i = new ArrivalsListFragment.IntentBuilder(this, stop, routes).build();
             mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(i));
             fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
-
-            mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
             mSlidingPanel.showPanel();
         } else {
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
             mSlidingPanel.hidePanel();
         }
+    }
+
+    /**
+     * Called by the ArrivalsListFragment when the ListView is created
+     *
+     * @param listView the ListView that was just created
+     */
+    @Override
+    public void onListViewCreated(ListView listView) {
+        // Set the scrollable view in the sliding panel
+        //mSlidingPanel.setScrollableView(listView);
+    }
+
+    @Override
+    public void onArrivalsUpdated(ObaArrivalInfo[] info, List<ObaSituation> situations) {
+        // TODO - show arrival info in sliding panel header
     }
 
     @Override
@@ -473,8 +494,11 @@ public class HomeActivity extends SherlockFragmentActivity implements BaseMapFra
 
     private void setupSlidingPanel() {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
+
         mSlidingPanel.hidePanel();  // Don't show the panel until we have content
         mSlidingPanel.setOverlayed(true);
+        mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
         mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
             @Override
             public void onPanelSlide(View panel, float slideOffset) {

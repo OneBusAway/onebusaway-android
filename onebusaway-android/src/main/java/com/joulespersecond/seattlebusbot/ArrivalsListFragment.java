@@ -16,20 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -57,6 +43,20 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,6 +80,11 @@ public class ArrivalsListFragment extends ListFragment
      * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteDisplayNames(ObaStop, java.util.HashMap)}
      */
     public static final String STOP_ROUTES = ".StopRoutes";
+
+    /**
+     * If set to true, the fragment is using a header external to this layout, and shouldn't instantiate its own header view
+     */
+    public static final String EXTERNAL_HEADER = ".ExternalHeader";
 
     private static final long RefreshPeriod = 60 * 1000;
 
@@ -120,6 +125,21 @@ public class ArrivalsListFragment extends ListFragment
 
     // The list of situation alerts
     private ArrayList<SituationAlert> mSituationAlerts;
+
+    // Set to true if we're using an external header not in this layout (e.g., if this fragment is in a sliding panel)
+    private boolean mExternalHeader = false;
+
+    private Listener mListener;
+
+    public interface Listener {
+
+        /**
+         * Called when the ListView has been created
+         *
+         * @param listView the ListView that was just created
+         */
+        void onListViewCreated(ListView listView);
+    }
 
     /**
      * Builds an intent used to set the stop for the ArrivalListFragment directly
@@ -188,18 +208,7 @@ public class ArrivalsListFragment extends ListFragment
         mAlertList = new AlertList(getActivity());
         mAlertList.initView(getView().findViewById(R.id.arrivals_alert_list));
 
-        if (mHeader == null) {
-            // We should use the header contained in this fragment's layout, if none was provided
-            // by the Activity via setHeader()
-            mHeader = new ArrivalsListHeader(getActivity(), this);
-            mHeaderView = getView().findViewById(R.id.arrivals_list_header);
-        } else {
-            // The header is in another layout, so we need to remove the header in this layout
-            getView().findViewById(R.id.arrivals_list_header).setVisibility(View.GONE);
-        }
-
-        mHeader.initView(mHeaderView);
-        mHeader.refresh();
+        setupHeader(savedInstanceState);
 
         // Setup list footer button to load more arrivals (when arrivals are shown)
         Button loadMoreArrivals = (Button) mFooter.findViewById(R.id.load_more_arrivals);
@@ -262,6 +271,12 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(EXTERNAL_HEADER, mExternalHeader);
+    }
+
+    @Override
     public void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
         super.onPause();
@@ -269,6 +284,22 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onResume() {
+        // Notify listener that ListView is now created
+        if (mListener != null) {
+            final Handler handler = new Handler();
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mListener.onListViewCreated(getListView());
+                }
+            });
+        }
+
+        if (mHeader != null) {
+            Log.d(TAG, "Resuming, header is not null");
+            mHeader.refresh();
+        }
+
         // Try to show any old data just in case we're coming out of sleep
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader != null) {
@@ -306,7 +337,7 @@ public class ArrivalsListFragment extends ListFragment
     //
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
-                               ObaArrivalInfoResponse result) {
+                               final ObaArrivalInfoResponse result) {
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
@@ -383,10 +414,14 @@ public class ArrivalsListFragment extends ListFragment
     public void setHeader(ArrivalsListHeader header, View headerView) {
         mHeader = header;
         mHeaderView = headerView;
+        mHeader.initView(mHeaderView);
+        mExternalHeader = true;
     }
 
     private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
-        mHeader.refresh();
+        if (mHeader != null) {
+            mHeader.refresh();
+        }
 
         // Convert any stop situations into a list of alerts
         if (situations != null) {
@@ -446,10 +481,14 @@ public class ArrivalsListFragment extends ListFragment
                 showRoutesFilterDialog();
             }
         } else if (id == R.id.edit_name) {
-            mHeader.beginNameEdit(null);
+            if (mHeader != null) {
+                mHeader.beginNameEdit(null);
+            }
         } else if (id == R.id.toggle_favorite) {
             setFavorite(!mFavorite);
-            mHeader.refresh();
+            if (mHeader != null) {
+                mHeader.refresh();
+            }
         } else if (id == R.id.report_problem) {
             if (mStop != null) {
                 ReportStopProblemFragment.show(getSherlockActivity(), mStop);
@@ -497,7 +536,9 @@ public class ArrivalsListFragment extends ListFragment
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(stop.getInfo().getRouteId());
                     setRoutesFilter(routes);
-                    mHeader.refresh();
+                    if (mHeader != null) {
+                        mHeader.refresh();
+                    }
                 } else if (hasUrl && which == 3) {
                     UIHelp.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
@@ -671,6 +712,36 @@ public class ArrivalsListFragment extends ListFragment
         frag.show(getActivity().getSupportFragmentManager(), ".RoutesFilterDialog");
     }
 
+    /**
+     * Sets the listener
+     *
+     * @param listener the listener
+     */
+    public void setListener(Listener listener) {
+        this.mListener = listener;
+    }
+
+    private void setupHeader(Bundle bundle) {
+        if (bundle != null) {
+            mExternalHeader = bundle.getBoolean(EXTERNAL_HEADER);
+        }
+
+        if (mHeader == null && mExternalHeader == false) {
+            // We should use the header contained in this fragment's layout, if none was provided
+            // by the Activity via setHeader()
+            mHeader = new ArrivalsListHeader(getActivity(), this);
+            mHeaderView = getView().findViewById(R.id.arrivals_list_header);
+            mHeader.initView(mHeaderView);
+        } else {
+            // The header is in another layout (e.g., sliding panel), so we need to remove the header in this layout
+            getView().findViewById(R.id.arrivals_list_header).setVisibility(View.GONE);
+        }
+
+        if (mHeader != null) {
+            mHeader.refresh();
+        }
+    }
+
     public static class RoutesFilterDialog extends DialogFragment
             implements DialogInterface.OnMultiChoiceClickListener,
             DialogInterface.OnClickListener {
@@ -748,7 +819,9 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         setRoutesFilter(newFilter);
-        mHeader.refresh();
+        if (mHeader != null) {
+            mHeader.refresh();
+        }
     }
 
     //

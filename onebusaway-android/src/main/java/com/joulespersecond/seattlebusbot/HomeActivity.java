@@ -15,6 +15,29 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -35,37 +58,15 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.MapModeController;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 public class HomeActivity extends SherlockFragmentActivity
         implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener {
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
+
+    public static final String STOP_ID = ".StopId";
 
     private static final int HELP_DIALOG = 1;
 
@@ -89,7 +90,14 @@ public class HomeActivity extends SherlockFragmentActivity
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
 
-    // Stop that currently has focus in the map view
+    /**
+     * Stop that has current focus on the map.  We retain a reference to the StopId,
+     * since during rapid rotations its possible that a reference to a ObaStop object in
+     * mFocusedStop can still be null, and we don't want to lose the state of which stopId is in
+     * focus.  We also need access to the focused stop properties, hence why we also have
+     * mFocusedStop
+     */
+    String mFocusedStopId = null;
     ObaStop mFocusedStop = null;
 
     /**
@@ -165,7 +173,7 @@ public class HomeActivity extends SherlockFragmentActivity
 
         mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
 
-        setupSlidingPanel();
+        setupSlidingPanel(savedInstanceState);
 
         setupGooglePlayServices();
 
@@ -195,6 +203,14 @@ public class HomeActivity extends SherlockFragmentActivity
             mLocationClient.disconnect();
         }
         super.onStop();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mFocusedStopId != null) {
+            outState.putString(STOP_ID, mFocusedStopId);
+        }
     }
 
     @Override
@@ -347,22 +363,12 @@ public class HomeActivity extends SherlockFragmentActivity
      */
     @Override
     public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes) {
+        mFocusedStopId = stop.getId();
         mFocusedStop = stop;
+
         if (stop != null) {
             // A stop on the map was just tapped, show it in the sliding panel
-            FragmentManager fm = getSupportFragmentManager();
-            mArrivalsListFragment = new ArrivalsListFragment();
-            mArrivalsListFragment.setListener(this);
-
-            // Set the header for the arrival list to be the top of the sliding panel
-            mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
-
-            mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
-
-            Intent i = new ArrivalsListFragment.IntentBuilder(this, stop, routes).build();
-            mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(i));
-            fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
-            mSlidingPanel.showPanel();
+            updateArrivalListFragment(stop.getId(), stop, routes);
         } else {
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
             mSlidingPanel.hidePanel();
@@ -380,9 +386,24 @@ public class HomeActivity extends SherlockFragmentActivity
         //mSlidingPanel.setScrollableView(listView);
     }
 
+    /**
+     * Called by the ArrivalsListFragment when we have new updated arrival information
+     * @param response new arrival information
+     */
     @Override
-    public void onArrivalsUpdated(ObaArrivalInfo[] info, List<ObaSituation> situations) {
-        // TODO - show arrival info in sliding panel header
+    public void onArrivalTimesUpdated(ObaArrivalInfoResponse response) {
+        if (response == null || response.getStop() == null) {
+            return;
+        }
+
+        // If we're missing any local references (e.g., if orientation just changed), store the values
+        if (mFocusedStopId == null) {
+            mFocusedStopId = response.getStop().getId();
+        }
+
+        if (mFocusedStop == null) {
+            mFocusedStop = response.getStop();
+        }
     }
 
     @Override
@@ -394,6 +415,33 @@ public class HomeActivity extends SherlockFragmentActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    private void updateArrivalListFragment(String stopId, ObaStop stop,
+            HashMap<String, ObaRoute> routes) {
+        FragmentManager fm = getSupportFragmentManager();
+        Intent intent;
+
+        mArrivalsListFragment = new ArrivalsListFragment();
+        mArrivalsListFragment.setListener(this);
+
+        // Set the header for the arrival list to be the top of the sliding panel
+        mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
+        mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
+
+        if (stop != null && routes != null) {
+            // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
+            // before getting an API response
+            intent = new ArrivalsListFragment.IntentBuilder(this, stop, routes).build();
+        } else {
+            // All we have is a stopId (likely started from Intent or after rotating device)
+            // Some fields will be blank until we get an API response
+            intent = new ArrivalsListFragment.IntentBuilder(this, stopId).build();
+        }
+
+        mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
+        fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
+        mSlidingPanel.showPanel();
     }
 
     private String getLocationString(Context context) {
@@ -492,7 +540,7 @@ public class HomeActivity extends SherlockFragmentActivity
         }
     }
 
-    private void setupSlidingPanel() {
+    private void setupSlidingPanel(Bundle bundle) {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
 
@@ -532,6 +580,18 @@ public class HomeActivity extends SherlockFragmentActivity
                 }
             }
         });
+
+        String stopId;
+        if (bundle != null) {
+            stopId = bundle.getString(STOP_ID);
+
+            if (stopId != null) {
+                mFocusedStopId = stopId;
+                // We're recreating an instance with a previous state, so show the focused stop in panel
+                // We don't have an ObaStop or ObaRoute mapping, so just pass in null for those
+                updateArrivalListFragment(stopId, null, null);
+            }
+        }
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

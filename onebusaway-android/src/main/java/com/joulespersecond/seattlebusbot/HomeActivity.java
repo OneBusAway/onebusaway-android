@@ -33,7 +33,7 @@ import com.joulespersecond.seattlebusbot.map.MapModeController;
 import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
 import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -445,8 +445,8 @@ public class HomeActivity extends SherlockFragmentActivity
     }
 
     private String getLocationString(Context context) {
-        Location loc = LocationHelp.getLocation2(context, mLocationClient);
-        return LocationHelp.printLocationDetails(loc);
+        Location loc = LocationUtil.getLocation2(context, mLocationClient);
+        return LocationUtil.printLocationDetails(loc);
     }
 
     private void goToContactEmail(Context ctxt) {
@@ -534,7 +534,8 @@ public class HomeActivity extends SherlockFragmentActivity
     private void setupGooglePlayServices() {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(this, locCallback, locCallback);
             mLocationClient.connect();
         }

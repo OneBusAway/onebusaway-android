@@ -28,7 +28,7 @@ import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
 import com.joulespersecond.oba.request.ObaStopsForLocationRequest;
 import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
@@ -97,8 +97,8 @@ public class SearchResultsFragment extends ListFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback
-                    = new LocationHelp.LocationServicesCallback();
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -143,7 +143,7 @@ public class SearchResultsFragment extends ListFragment
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
         return new MyLoader(getActivity(), query,
-                LocationHelp.getLocation(getActivity(), mLocationClient));
+                LocationUtil.getLocation(getActivity(), mLocationClient));
     }
 
     @Override
@@ -296,7 +296,7 @@ public class SearchResultsFragment extends ListFragment
         private ObaRoutesForLocationResponse getRoutes() {
             ObaRoutesForLocationResponse response =
                     new ObaRoutesForLocationRequest.Builder(getContext(), mCenter)
-                            .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
+                            .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
                             .setQuery(mQueryText)
                             .build()
                             .call();
@@ -309,10 +309,10 @@ public class SearchResultsFragment extends ListFragment
                     return response;
                 }
             }
-            Location center = LocationHelp.getDefaultSearchCenter();
+            Location center = LocationUtil.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();

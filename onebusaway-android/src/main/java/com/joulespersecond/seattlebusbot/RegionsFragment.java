@@ -25,7 +25,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsLoader;
 import com.joulespersecond.oba.region.RegionUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 
 import android.app.Activity;
@@ -84,8 +84,10 @@ public class RegionsFragment extends ListFragment
         super.onAttach(activity);
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -102,7 +104,7 @@ public class RegionsFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
-        mLocation = LocationHelp.getLocation2(getActivity(), mLocationClient);
+        mLocation = LocationUtil.getLocation2(getActivity(), mLocationClient);
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();

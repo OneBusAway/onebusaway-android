@@ -20,7 +20,7 @@ import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.request.ObaRoutesForLocationRequest;
 import com.joulespersecond.oba.request.ObaRoutesForLocationResponse;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import android.content.Context;
@@ -244,10 +244,10 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 }
             }
 
-            Location center = LocationHelp.getDefaultSearchCenter();
+            Location center = LocationUtil.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();

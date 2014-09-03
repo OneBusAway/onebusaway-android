@@ -15,18 +15,18 @@
  */
 package com.joulespersecond.oba.request.test;
 
-import android.location.Location;
-
 import com.joulespersecond.oba.elements.ObaTripDetails;
 import com.joulespersecond.oba.request.ObaTripsForLocationRequest;
 import com.joulespersecond.oba.request.ObaTripsForLocationResponse;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+
+import android.location.Location;
 
 
 public class TripsForLocationTest extends ObaTestCase {
 
     public void test1() {
-        final Location pt = LocationHelp.makeLocation(47.653, -122.307);
+        final Location pt = LocationUtil.makeLocation(47.653, -122.307);
 
         ObaTripsForLocationRequest.Builder builder =
                 new ObaTripsForLocationRequest.Builder(getContext(), pt);
@@ -41,7 +41,7 @@ public class TripsForLocationTest extends ObaTestCase {
 
     public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
-        final Location pt = LocationHelp.makeLocation(48.85808, 2.29498);
+        final Location pt = LocationUtil.makeLocation(48.85808, 2.29498);
 
         ObaTripsForLocationRequest request =
                 new ObaTripsForLocationRequest.Builder(getContext(), pt).build();

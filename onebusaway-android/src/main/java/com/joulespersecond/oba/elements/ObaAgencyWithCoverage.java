@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import android.location.Location;
 
 public final class ObaAgencyWithCoverage implements ObaElement {
 
@@ -50,7 +50,7 @@ public final class ObaAgencyWithCoverage implements ObaElement {
      * @return The center point of the agency's coverage area.
      */
     public Location getPoint() {
-        return LocationHelp.makeLocation(lat, lon);
+        return LocationUtil.makeLocation(lat, lon);
     }
 
     /**

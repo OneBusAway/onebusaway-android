@@ -16,10 +16,10 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+
 import android.location.Location;
 import android.os.Handler;
-
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 /**
  * Because the map object doesn't seem to have callbacks when the map
@@ -64,7 +64,7 @@ public class MapWatcher {
             Location newCenter = mObaMapView.getMapCenterAsLocation();
             float newZoom = mObaMapView.getZoomLevelAsFloat();
 
-            final boolean centerChanged = !LocationHelp.fuzzyEquals(newCenter, mCurrentCenter);
+            final boolean centerChanged = !LocationUtil.fuzzyEquals(newCenter, mCurrentCenter);
             final boolean zoomChanged = newZoom != mCurrentZoom;
 
             final long now = System.currentTimeMillis();

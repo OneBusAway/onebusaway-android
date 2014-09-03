@@ -16,17 +16,10 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
+
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -35,7 +28,15 @@ import com.joulespersecond.oba.request.ObaStopsForLocationResponse;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
@@ -159,8 +160,10 @@ public class StopMapController implements MapModeController,
         mFragment = callback;
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mFragment.getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mFragment.getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(mFragment.getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -180,7 +183,7 @@ public class StopMapController implements MapModeController,
             double lat = args.getDouble(MapParams.CENTER_LAT);
             double lon = args.getDouble(MapParams.CENTER_LON);
             if (lat != 0.0 && lon != 0.0) {
-                center = LocationHelp.makeLocation(lat, lon);
+                center = LocationUtil.makeLocation(lat, lon);
             }
             mFragment.getMapView().setZoom(mapZoom);
 
@@ -250,7 +253,7 @@ public class StopMapController implements MapModeController,
 
     @Override
     public void onLoadFinished(Loader<StopsResponse> loader,
-                               StopsResponse _response) {
+            StopsResponse _response) {
         mFragment.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
         if (response == null) {
@@ -272,7 +275,7 @@ public class StopMapController implements MapModeController,
         //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
-        Location myLocation = LocationHelp.getLocation2(mFragment.getActivity(), mLocationClient);
+        Location myLocation = LocationUtil.getLocation2(mFragment.getActivity(), mLocationClient);
         if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {
@@ -306,7 +309,7 @@ public class StopMapController implements MapModeController,
     // Remove when adding back LoaderManager help.
     @Override
     public void onLoadComplete(Loader<StopsResponse> loader,
-                               StopsResponse response) {
+            StopsResponse response) {
         onLoadFinished(loader, response);
     }
 

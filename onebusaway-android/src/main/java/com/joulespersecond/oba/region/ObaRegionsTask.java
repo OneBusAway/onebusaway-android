@@ -16,6 +16,16 @@
  */
 package com.joulespersecond.oba.region;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -25,15 +35,6 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,13 +101,15 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
      *                           task, false if it should not
      */
     public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback, boolean force,
-                          boolean showProgressDialog) {
+            boolean showProgressDialog) {
         this.mContext = context;
         this.mCallback = callback;
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(context, locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -147,7 +150,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         if (settings
                 .getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)) {
             // Pass in the LocationClient initialized in constructor
-            Location myLocation = LocationHelp.getLocation2(mContext, mLocationClient);
+            Location myLocation = LocationUtil.getLocation2(mContext, mLocationClient);
 
             ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
 

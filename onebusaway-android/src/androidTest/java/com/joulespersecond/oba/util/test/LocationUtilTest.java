@@ -1,16 +1,17 @@
 package com.joulespersecond.oba.util.test;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+import com.joulespersecond.seattlebusbot.util.TestHelp;
+
 import android.location.Location;
 import android.os.Build;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.TestHelp;
 
 /**
  * Tests to evaluate location utilities
@@ -18,6 +19,7 @@ import com.joulespersecond.seattlebusbot.util.TestHelp;
 public class LocationUtilTest extends AndroidTestCase {
 
     public static final String TAG = "LocationUtilTest";
+
     public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 5;  // Within last 5 minutes
 
     /**
@@ -30,8 +32,10 @@ public class LocationUtilTest extends AndroidTestCase {
         super.setUp();
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(getContext(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -55,12 +59,12 @@ public class LocationUtilTest extends AndroidTestCase {
         // Test that non-null location is preferred
         a = new Location("test");
         b = null;
-        result = LocationHelp.compareLocations(a, b);
+        result = LocationUtil.compareLocations(a, b);
         assertTrue(result);
 
         a = null;
         b = new Location("test");
-        result = LocationHelp.compareLocations(a, b);
+        result = LocationUtil.compareLocations(a, b);
         assertFalse(result);
 
         // Test that location with greater (i.e., newer) timestamp is preferred
@@ -69,13 +73,13 @@ public class LocationUtilTest extends AndroidTestCase {
         b = new Location("test");
         b.setTime(1000);
 
-        result = LocationHelp.compareLocations(a, b);
+        result = LocationUtil.compareLocations(a, b);
         assertTrue(result);
 
         a.setTime(1000);
         b.setTime(1001);
 
-        result = LocationHelp.compareLocations(a, b);
+        result = LocationUtil.compareLocations(a, b);
         assertFalse(result);
     }
 
@@ -90,7 +94,7 @@ public class LocationUtilTest extends AndroidTestCase {
              * have custom Android framework providers such as "hybrid" that might should up here.
              * So, we can't test for "gps" or "network" specifically.
              */
-            loc = LocationHelp.getLocation2(getContext(), null);
+            loc = LocationUtil.getLocation2(getContext(), null);
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -106,14 +110,16 @@ public class LocationUtilTest extends AndroidTestCase {
         Location loc;
 
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext()) == ConnectionResult.SUCCESS &&
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
+                == ConnectionResult.SUCCESS &&
                 !TestHelp.isRunningOnEmulator()) {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = LocationHelp.getLocation2(getContext(), mLocationClient);
+            loc = LocationUtil.getLocation2(getContext(), mLocationClient);
             assertNotNull(loc);
-            Log.d(TAG, "Location Provider for Location Services test is '" + loc.getProvider() + "'");
+            Log.d(TAG,
+                    "Location Provider for Location Services test is '" + loc.getProvider() + "'");
             assertFreshLocation(loc);
         }
     }
@@ -138,12 +144,12 @@ public class LocationUtilTest extends AndroidTestCase {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             timeDiff = SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos();
-            Log.d(TAG, "Location from " + LocationHelp.printLocationDetails(location));
+            Log.d(TAG, "Location from " + LocationUtil.printLocationDetails(location));
             // Use elapsed real-time nanos, since its guaranteed monotonic
             return timeDiff <= (FRESH_LOCATION_THRESHOLD_MS * 1E6);
         } else {
             timeDiff = System.currentTimeMillis() - location.getTime();
-            Log.d(TAG, "Location from " + LocationHelp.printLocationDetails(location));
+            Log.d(TAG, "Location from " + LocationUtil.printLocationDetails(location));
             return timeDiff <= FRESH_LOCATION_THRESHOLD_MS;
         }
     }

@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import android.location.Location;
 
 /**
  * Object defining a Stop element.
@@ -73,7 +73,7 @@ public final class ObaStopElement implements ObaStop {
     }
 
     public Location getLocation() {
-        return LocationHelp.makeLocation(lat, lon);
+        return LocationUtil.makeLocation(lat, lon);
     }
 
     public double getLatitude() {

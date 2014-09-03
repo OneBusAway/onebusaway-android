@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import android.location.Location;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,7 +115,7 @@ public final class ObaShapeElement implements ObaShape {
             lon += dlon;
 
             // The polyline encodes in degrees * 1E5, we need decimal degrees
-            array.add(LocationHelp.makeLocation(lat / 1E5, lon / 1E5));
+            array.add(LocationUtil.makeLocation(lat / 1E5, lon / 1E5));
         }
 
         return array;

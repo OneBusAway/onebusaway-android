@@ -40,9 +40,9 @@ import java.util.List;
  *
  * @author barbeau
  */
-public class LocationHelp {
+public class LocationUtil {
 
-    public static final String TAG = "LocationHelp";
+    public static final String TAG = "LocationUtil";
 
     public static final int DEFAULT_SEARCH_RADIUS = 40000;
     private static final float FUZZY_EQUALS_THRESHOLD = 15.0f;
@@ -52,7 +52,7 @@ public class LocationHelp {
         if (region != null) {
             double results[] = new double[4];
             RegionUtils.getRegionSpan(region, results);
-            return LocationHelp.makeLocation(results[2], results[3]);
+            return LocationUtil.makeLocation(results[2], results[3]);
         } else {
             return null;
         }

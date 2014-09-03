@@ -15,6 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.request.ObaResponse;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -26,18 +39,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.request.ObaResponse;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.concurrent.Callable;
 
@@ -57,8 +58,10 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
         super.onAttach(activity);
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }

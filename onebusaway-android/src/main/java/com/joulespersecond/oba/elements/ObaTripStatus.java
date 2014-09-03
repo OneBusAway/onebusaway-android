@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.oba.elements;
 
-import android.location.Location;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import android.location.Location;
 
 public interface ObaTripStatus {
 
@@ -36,7 +36,7 @@ public interface ObaTripStatus {
         }
 
         public Location getLocation() {
-            return LocationHelp.makeLocation(lat, lon);
+            return LocationUtil.makeLocation(lat, lon);
         }
     }
 

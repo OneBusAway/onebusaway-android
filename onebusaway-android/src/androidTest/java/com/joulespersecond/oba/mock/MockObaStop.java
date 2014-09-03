@@ -2,7 +2,7 @@ package com.joulespersecond.oba.mock;
 
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 
 import android.location.Location;
 
@@ -44,7 +44,7 @@ public class MockObaStop {
 
         @Override
         public Location getLocation() {
-            return LocationHelp.makeLocation(getLatitude(), getLongitude());
+            return LocationUtil.makeLocation(getLatitude(), getLongitude());
         }
 
         @Override

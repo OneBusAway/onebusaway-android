@@ -15,6 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.view.SearchView;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.location.Location;
@@ -26,13 +34,6 @@ import android.view.View.OnFocusChangeListener;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.joulespersecond.view.SearchView;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -57,8 +58,10 @@ abstract class MySearchFragmentBase extends ListFragment
         super.onAttach(activity);
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationUtil.LocationServicesCallback locCallback
+                    = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -212,7 +215,7 @@ abstract class MySearchFragmentBase extends ListFragment
             result = base.getSearchCenter();
         }
         if (result == null) {
-            result = LocationHelp.getLocation(act, mLocationClient);
+            result = LocationUtil.getLocation(act, mLocationClient);
         }
         return result;
     }

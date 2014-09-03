@@ -15,19 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 
 abstract class MyTabActivityBase extends SherlockFragmentActivity {
@@ -154,7 +154,7 @@ abstract class MyTabActivityBase extends SherlockFragmentActivity {
     private static final Location getSearchCenter(Intent intent) {
         double[] p = intent.getDoubleArrayExtra(EXTRA_SEARCHCENTER);
         if (p != null && p.length == 2) {
-            return LocationHelp.makeLocation(p[0], p[1]);
+            return LocationUtil.makeLocation(p[0], p[1]);
         }
         return null;
     }

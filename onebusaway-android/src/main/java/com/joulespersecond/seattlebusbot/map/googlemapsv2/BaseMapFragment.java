@@ -16,6 +16,18 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import android.content.Context;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -32,8 +44,6 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
-
-import com.actionbarsherlock.app.SherlockMapFragment;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -48,17 +58,6 @@ import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.RouteMapController;
 import com.joulespersecond.seattlebusbot.map.StopMapController;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
-
-import android.content.Context;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -314,6 +313,13 @@ public class BaseMapFragment extends SherlockMapFragment
                 MapParams.MODE_ROUTE.equals(mController.getMode());
     }
 
+    public void setupStopOverlay() {
+        if (mStopOverlay == null) {
+            mStopOverlay = new StopOverlay(getActivity(), mMap);
+            mStopOverlay.setOnFocusChangeListener(this);
+        }
+    }
+
 //    @Override
 //    protected Dialog onCreateDialog(int id) {
 //        switch (id) {
@@ -396,12 +402,10 @@ public class BaseMapFragment extends SherlockMapFragment
             }
         }
 
-        if (mStopOverlay == null) {
-            mStopOverlay = new StopOverlay(getActivity(), mMap);
-        }
+        // Make sure that the stop overlay has been initialized
+        setupStopOverlay();
 
         if (stops != null) {
-            mStopOverlay.setOnFocusChangeListener(this);
 //            mStopPopup.setReferences(refs);
 //
 //            if (focusedId != null) {
@@ -409,12 +413,14 @@ public class BaseMapFragment extends SherlockMapFragment
 //                    mStopPopup.hide();
 //                }
 //            }
-            mStopOverlay.setStops(stops, refs);
+            mStopOverlay.populateStops(stops, refs);
 
             if (focusedId != null) {
                 // TODO - Add ability to focus on stop using StopID, since
                 // when starting from an Intent (e.g., a bookmark) we don't have ObaStop
-                //mStopOverlay.setFocus(stop);
+                // This is left over from the old OBA Maps API v1 model - focus has been delegated
+                // largely to the StopOverlay - do we still need this?
+                //mStopOverlay.setFocus(stopId);
             }
         }
     }
@@ -640,6 +646,13 @@ public class BaseMapFragment extends SherlockMapFragment
         return mCenterLocation;
     }
 
+    /**
+     * Sets the map center to the given parameter
+     *
+     * @param location          location to center on
+     * @param animateToLocation true if the map should animate to the location, false if it should snap to it
+     * @param overlayExpanded   true if the sliding panel is expanded, false if it is not
+     */
     @Override
     public void setMapCenter(Location location, boolean animateToLocation, boolean overlayExpanded) {
         if (mMap != null) {
@@ -740,6 +753,14 @@ public class BaseMapFragment extends SherlockMapFragment
     public boolean canWatchMapChanges() {
         // Android Map API v2 has an OnCameraChangeListener
         return true;
+    }
+
+    @Override
+    public void setFocusStop(ObaStop stop, List<ObaRoute> routes) {
+        // Make sure that the stop overlay has been initialized
+        setupStopOverlay();
+
+        mStopOverlay.setFocus(stop, routes);
     }
 
     @Override

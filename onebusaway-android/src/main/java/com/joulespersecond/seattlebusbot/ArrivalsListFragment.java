@@ -16,20 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -56,6 +42,20 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -303,7 +303,6 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         if (mHeader != null) {
-            Log.d(TAG, "Resuming, header is not null");
             mHeader.refresh();
         }
 

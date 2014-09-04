@@ -89,21 +89,17 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
-    public synchronized void setStops(List<ObaStop> stops, ObaReferences refs) {
-        if (mMarkerData == null) {
-            mMarkerData = new MarkerData();
-        }
+    public synchronized void populateStops(List<ObaStop> stops, ObaReferences refs) {
         populate(stops, refs.getRoutes());
     }
 
-    public synchronized void setStops(List<ObaStop> stops, List<ObaRoute> routes) {
-        if (mMarkerData == null) {
-            mMarkerData = new MarkerData();
-        }
+    public synchronized void populateStops(List<ObaStop> stops, List<ObaRoute> routes) {
         populate(stops, routes);
     }
 
     private void populate(List<ObaStop> stops, List<ObaRoute> routes) {
+        // Make sure that the MarkerData has been initialized
+        setupMarkerData();
         mMarkerData.populate(stops, routes);
     }
 
@@ -189,11 +185,34 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      * @param routes a list of all route display names that serve this stop
      */
     public void setFocus(ObaStop stop, List<ObaRoute> routes) {
-        // Make sure that this stop is added to the overlay and has a marker visible on the map
-        // If an intent started the map fragment to focus on a stop, no markers may exist on the map
-        ArrayList<ObaStop> l = new ArrayList<ObaStop>();
-        l.add(stop);
-        setStops(l, routes);
+        // Make sure that the MarkerData has been initialized
+        setupMarkerData();
+
+        /**
+         * If mMarkerData exists before this method is called, the stop reference passed into this
+         * method might not match any existing stop reference in our HashMaps, since this stop came
+         * from an external REST API call - is this a problem???
+         *
+         * If so, we'll need to keep another HashMap mapping stopIds to ObaStops so we can pull out
+         * an internal reference to an ObaStop object that has the same stopId as the ObaStop object
+         * passed into this method.  Then, we would use that internal reference in place of the
+         * ObaStop passed into this method.  We don't want to maintain Yet Another HashMap for
+         * memory/performance reasons if we don't have to.  For now, I think we can get away with
+         * a separate reference that doesn't match the internal HashMaps, since we don't need to
+         * match the references.
+         */
+
+        /**
+         * Make sure that this stop is added to the overlay.  If an intent/orientation change started
+         * the map fragment to focus on a stop, no markers may exist on the map
+         */
+        if (!mMarkerData.containsStop(stop)) {
+            ArrayList<ObaStop> l = new ArrayList<ObaStop>();
+            l.add(stop);
+            populateStops(l, routes);
+        }
+
+        // Add the focus marker to the map by setting focus to this stop
         doFocusChange(stop);
     }
 
@@ -239,6 +258,12 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             mMarkerData.removeFocus();
             // Notify listener
             mOnFocusChangedListener.onFocusChanged(null, null);
+        }
+    }
+
+    private void setupMarkerData() {
+        if (mMarkerData == null) {
+            mMarkerData = new MarkerData();
         }
     }
 
@@ -327,10 +352,6 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             Log.d(TAG, "Added " + count + " markers, total markers = " + mStopMarkers.size());
         }
 
-        private void copyRoutesForFocusedStop() {
-
-        }
-
         /**
          * Places a marker on the map for this stop, and adds it to our marker HashMap
          *
@@ -357,6 +378,34 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
         synchronized ObaStop getStopFromMarker(Marker marker) {
             return mStops.get(marker);
+        }
+
+        /**
+         * Returns true if this overlay contains the provided ObaStop
+         *
+         * @param stop ObaStop to check for
+         * @return true if this overlay contains the provided ObaStop, false if it does not
+         */
+        synchronized boolean containsStop(ObaStop stop) {
+            if (stop != null) {
+                return containsStop(stop.getId());
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Returns true if this overlay contains the provided stopId
+         *
+         * @param stopId stopId to check for
+         * @return true if this overlay contains the provided stopId, false if it does not
+         */
+        synchronized boolean containsStop(String stopId) {
+            if (mStopMarkers != null) {
+                return mStopMarkers.containsKey(stopId);
+            } else {
+                return false;
+            }
         }
 
         /**

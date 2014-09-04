@@ -15,29 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-import com.joulespersecond.seattlebusbot.map.MapModeController;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationUtil;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -57,6 +34,28 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.map.MapModeController;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -363,14 +362,22 @@ public class HomeActivity extends SherlockFragmentActivity
      */
     @Override
     public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes) {
-        mFocusedStopId = stop.getId();
+        // Check to see if we're already focused on this same stop - if so, we shouldn't do anything
+        if (mFocusedStopId != null && stop != null &&
+                mFocusedStopId.equalsIgnoreCase(stop.getId())) {
+            return;
+        }
+
         mFocusedStop = stop;
 
         if (stop != null) {
+            mFocusedStopId = stop.getId();
             // A stop on the map was just tapped, show it in the sliding panel
             updateArrivalListFragment(stop.getId(), stop, routes);
         } else {
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
+            // and clear the currently focused stopId
+            mFocusedStopId = null;
             mSlidingPanel.hidePanel();
         }
     }
@@ -400,9 +407,16 @@ public class HomeActivity extends SherlockFragmentActivity
         if (mFocusedStopId == null) {
             mFocusedStopId = response.getStop().getId();
         }
-
         if (mFocusedStop == null) {
             mFocusedStop = response.getStop();
+
+            // Since mFocusedStop was null, the layout changed, and we should recenter map on stop
+            if (mMapFragment != null && mSlidingPanel != null) {
+                mMapFragment.setMapCenter(mFocusedStop.getLocation(), true, mSlidingPanel.isPanelAnchored());
+            }
+
+            // ...and we should add a focus marker for this stop
+            mMapFragment.setFocusStop(mFocusedStop, response.getRoutes());
         }
     }
 

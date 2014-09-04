@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
 
@@ -108,6 +109,9 @@ public interface MapModeController {
 
         // Returns true if the map is capable of watching itself, false if it needs an external watcher
         boolean canWatchMapChanges();
+
+        // Sets the currently focused stop for the map
+        public void setFocusStop(ObaStop stop, List<ObaRoute> routes);
     }
 
     String getMode();

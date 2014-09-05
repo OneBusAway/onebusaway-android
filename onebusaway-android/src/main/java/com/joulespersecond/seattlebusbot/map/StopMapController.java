@@ -16,10 +16,18 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
+import android.app.Activity;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -29,14 +37,6 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
-
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
@@ -327,16 +327,19 @@ public class StopMapController implements MapModeController,
         // First we need to check to see if the current request we have can handle this.
         // Otherwise, we need to restart the loader with the new request.
         if (mFragment != null) {
-            mFragment.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    StopsLoader loader = getLoader();
-                    if (loader != null) {
-                        StopsRequest req = new StopsRequest(mFragment.getMapView());
-                        loader.update(req);
+            Activity a = mFragment.getActivity();
+            if (a != null) {
+                a.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        StopsLoader loader = getLoader();
+                        if (loader != null) {
+                            StopsRequest req = new StopsRequest(mFragment.getMapView());
+                            loader.update(req);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 

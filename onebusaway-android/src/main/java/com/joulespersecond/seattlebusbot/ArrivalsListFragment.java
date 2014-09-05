@@ -293,13 +293,7 @@ public class ArrivalsListFragment extends ListFragment
     public void onResume() {
         // Notify listener that ListView is now created
         if (mListener != null) {
-            final Handler handler = new Handler();
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mListener.onListViewCreated(getListView());
-                }
-            });
+            mListener.onListViewCreated(getListView());
         }
 
         if (mHeader != null) {

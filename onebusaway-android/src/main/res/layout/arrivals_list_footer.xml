@@ -26,4 +26,10 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"/>
+    <View android:layout_width="fill_parent"
+          android:layout_height="1dp"
+          android:id="@+id/separator_bottom"
+          android:visibility="visible"
+          android:layout_below="@id/load_more_arrivals"
+          android:background="@drawable/abs__list_divider_holo_light"/>
 </RelativeLayout>

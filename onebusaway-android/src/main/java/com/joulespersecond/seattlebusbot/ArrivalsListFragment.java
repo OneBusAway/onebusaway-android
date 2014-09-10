@@ -54,8 +54,12 @@ import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.view.ArrowView;
+import com.joulespersecond.view.DistanceToStopView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,6 +135,15 @@ public class ArrivalsListFragment extends ListFragment
 
     private Listener mListener;
 
+    ArrowView mArrowView;
+
+    DistanceToStopView mDistanceToStopView;
+
+    // Utility classes to help with managing location and orientation for the arrow/distance views
+    OrientationHelper mOrientationHelper;
+
+    LocationHelper mLocationHelper;
+
     public interface Listener {
 
         /**
@@ -202,8 +215,29 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     @Override
+    public View onCreateView(LayoutInflater inflater,
+                             ViewGroup root, Bundle savedInstanceState) {
+        if (root == null) {
+            // Currently in a layout without a container, so no
+            // reason to create our view.
+            return null;
+        }
+
+        mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
+        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
+        return inflater.inflate(R.layout.fragment_arrivals_list, null);
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        // Start helpers to monitor location and orientation
+        mOrientationHelper = new OrientationHelper(getActivity());
+        mLocationHelper = new LocationHelper(getActivity());
+
+        initArrowView();
+        initDistanceToStopView();
 
         // Set and add the view that is shown if no arrival information is returned by the REST API
         getListView().setEmptyView(mEmptyList);
@@ -264,17 +298,15 @@ public class ArrivalsListFragment extends ListFragment
         );
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater,
-                             ViewGroup root, Bundle savedInstanceState) {
-        if (root == null) {
-            // Currently in a layout without a container, so no
-            // reason to create our view.
-            return null;
-        }
-        mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
-        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
-        return inflater.inflate(R.layout.fragment_arrivals_list, null);
+    private void initArrowView() {
+        mArrowView = (ArrowView) getActivity().findViewById(R.id.arrow);
+        mOrientationHelper.registerListener(mArrowView);
+        mLocationHelper.registerListener(mArrowView);
+    }
+
+    private void initDistanceToStopView() {
+        mDistanceToStopView = (DistanceToStopView) getActivity().findViewById(R.id.dist_to_stop);
+        mLocationHelper.registerListener(mDistanceToStopView);
     }
 
     @Override
@@ -286,6 +318,8 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
+        mOrientationHelper.onPause();
+        mLocationHelper.onPause();
         super.onPause();
     }
 
@@ -322,6 +356,9 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             mRefreshHandler.postDelayed(mRefresh, newPeriod);
         }
+
+        mOrientationHelper.onResume();
+        mLocationHelper.onResume();
 
         super.onResume();
     }

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
     and individual contributors
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -251,17 +250,14 @@
 
     <!-- Region list -->
     <plurals name="region_distance_miles">
-    <item quantity="one">1 mile away</item>
+        <item quantity="one">1 mile away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
     </plurals>
     <plurals name="region_distance_kilometers">
         <item quantity="one">1 kilometer away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            kilometers away
-        </item>
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> kilometers away</item>
     </plurals>
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>

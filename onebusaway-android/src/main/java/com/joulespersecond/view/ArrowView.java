@@ -16,6 +16,10 @@
 
 package com.joulespersecond.view;
 
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
+import com.joulespersecond.seattlebusbot.util.MathUtils;
+import com.joulespersecond.seattlebusbot.util.OrientationHelper;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -25,10 +29,6 @@ import android.graphics.Path;
 import android.location.Location;
 import android.util.AttributeSet;
 import android.view.View;
-
-import com.joulespersecond.seattlebusbot.util.LocationHelper;
-import com.joulespersecond.seattlebusbot.util.MathUtils;
-import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 
 /**
  * View that draws an arrow that points towards the given bus mStop
@@ -101,7 +101,10 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
         int height = getHeight();
         int width = getWidth();
 
-        final float BUFFER = width / 8;
+        // Create a buffer around the arrow so when it rotates it doesn't get clipped by view edge
+        final float BUFFER = width / 5;
+
+        // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
         final float CUTOUT_HEIGHT = getHeight() / 5;
 
         float x1, y1;  // Tip of arrow

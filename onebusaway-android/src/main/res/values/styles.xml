@@ -38,6 +38,10 @@
     <style name="Header2Text">
         <item name="android:textColor">#FFFFFF</item>
     </style>
+    <style name="Header3Text">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
     <style name="HeaderLink">
         <item name="android:textSize">20sp</item>
         <item name="android:background">@drawable/stop_popup_button</item>

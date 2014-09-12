@@ -90,13 +90,16 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_toRightOf="@+id/stop_favorite">
+        android:paddingLeft="@dimen/arrivals_header_pad_left"
+        android:layout_toRightOf="@+id/stop_favorite"
+        android:layout_toLeftOf="@+id/right_margin_container"
+        android:layout_alignParentBottom="true">
 
         <TextView
             android:id="@+id/stop_name"
             style="@style/HeaderText"
-            android:paddingLeft="@dimen/arrivals_header_pad_left"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="left" />
@@ -104,36 +107,49 @@
         <TextView
             android:id="@+id/routeIds"
             style="@style/Header2Text"
-            android:paddingLeft="@dimen/arrivals_header_pad_left"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left" />
+            android:layout_gravity="left"
+            android:includeFontPadding="false"/>
 
         <TextView
             android:id="@+id/direction"
             style="@style/Header2Text"
-            android:paddingLeft="@dimen/arrivals_header_pad_left"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left" />
+            android:layout_gravity="left"
+            android:includeFontPadding="false"/>
     </LinearLayout>
 
-    <com.joulespersecond.view.DistanceToStopView
-        android:id="@+id/dist_to_stop"
-        android:textSize="14dp"
-        style="@style/Header2Text"
+    <LinearLayout
+            android:id="@+id/right_margin_container"
+            android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="5dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="5dp"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/arrow" />
+        android:layout_alignParentBottom="true">
 
-    <com.joulespersecond.view.ArrowView
-        android:id="@+id/arrow"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_marginLeft="10dp"
-        android:layout_alignParentRight="true" />
+        <com.joulespersecond.view.ArrowView
+                android:id="@+id/arrow"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_gravity="center_horizontal"/>
+
+        <com.joulespersecond.view.DistanceToStopView
+                android:id="@+id/dist_to_stop"
+                style="@style/Header3Text"
+                android:layout_marginTop="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"/>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/filter_group"

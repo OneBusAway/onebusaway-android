@@ -16,11 +16,6 @@
 
 package com.joulespersecond.view;
 
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.util.LocationHelper;
-import com.joulespersecond.seattlebusbot.util.MathUtils;
-import com.joulespersecond.seattlebusbot.util.OrientationHelper;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -30,6 +25,10 @@ import android.graphics.Path;
 import android.location.Location;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
+import com.joulespersecond.seattlebusbot.util.MathUtils;
+import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 
 /**
  * View that draws an arrow that points towards the given bus mStop
@@ -46,15 +45,13 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     Location mStopLocation = new Location("stopLocation");
 
-    ObaStop mObaStop;
-
     float bearingToStop;
 
     public ArrowView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         mArrowPaint = new Paint();
-        mArrowPaint.setColor(Color.BLACK);
+        mArrowPaint.setColor(Color.WHITE);
         mArrowPaint.setStyle(Paint.Style.STROKE);
         mArrowPaint.setStrokeWidth(4.0f);
         mArrowPaint.setAntiAlias(true);
@@ -67,13 +64,13 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     }
 
-    public void setObaStop(ObaStop stop) {
-        mObaStop = stop;
+    public void setStopLocation(Location location) {
+        mStopLocation = location;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mObaStop == null || mLastLocation == null) {
+        if (mStopLocation == null || mLastLocation == null) {
             return;
         }
         drawArrow(canvas);
@@ -88,9 +85,7 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
-        if (mObaStop != null) {
-            mStopLocation.setLatitude(mObaStop.getLocation().getLatitude());
-            mStopLocation.setLongitude(mObaStop.getLocation().getLongitude());
+        if (mStopLocation != null) {
             bearingToStop = location.bearingTo(mStopLocation);
 
             // Result of bearingTo() can be from -180 to 180. If negative, convert to 181-360 range

@@ -16,6 +16,7 @@
 package com.joulespersecond.seattlebusbot;
 
 import android.content.Context;
+import android.location.Location;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
@@ -27,7 +28,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
+import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.view.ArrowView;
+import com.joulespersecond.view.DistanceToStopView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +44,8 @@ import java.util.List;
 class ArrivalsListHeader {
 
     interface Controller {
+
+        Location getStopLocation();
 
         String getStopName();
 
@@ -92,9 +99,22 @@ class ArrivalsListHeader {
 
     private boolean mInNameEdit = false;
 
+    ArrowView mArrowView;
+
+    DistanceToStopView mDistanceToStopView;
+
+    // Utility classes to help with managing location and orientation for the arrow/distance views
+    OrientationHelper mOrientationHelper;
+
+    LocationHelper mLocationHelper;
+
     ArrivalsListHeader(Context context, Controller controller) {
         mController = controller;
         mContext = context;
+
+        // Start helpers to monitor location and orientation
+        mOrientationHelper = new OrientationHelper(mContext);
+        mLocationHelper = new LocationHelper(mContext);
     }
 
     void initView(View view) {
@@ -107,6 +127,11 @@ class ArrivalsListHeader {
         mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
         mDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
+        mArrowView = (ArrowView) mView.findViewById(R.id.arrow);
+        mOrientationHelper.registerListener(mArrowView);
+        mLocationHelper.registerListener(mArrowView);
+        mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
+        mLocationHelper.registerListener(mDistanceToStopView);
 
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -165,6 +190,24 @@ class ArrivalsListHeader {
         UIHelp.setChildClickable(mView, R.id.show_all, mShowAllClick);
     }
 
+    /**
+     * Should be called from onResume() of context hosting this header
+     */
+    public void onResume() {
+        // Resume monitoring of sensors and location
+        mOrientationHelper.onResume();
+        mLocationHelper.onResume();
+    }
+
+    /**
+     * Should be called from onPause() of context hosting this header
+     */
+    public void onPause() {
+        // Pause monitoring of sensors and location
+        mOrientationHelper.onPause();
+        mLocationHelper.onPause();
+    }
+
     private final ClickableSpan mShowAllClick = new ClickableSpan() {
         public void onClick(View v) {
             mController.setRoutesFilter(new ArrayList<String>());
@@ -176,6 +219,7 @@ class ArrivalsListHeader {
         refreshName();
         refreshRouteDisplayNames();
         refreshDirection();
+        refreshLocation();
         refreshFavorite();
         refreshFilter();
         refreshError();
@@ -215,6 +259,14 @@ class ArrivalsListHeader {
             } else {
                 mDirectionView.setVisibility(View.INVISIBLE);
             }
+        }
+    }
+
+    private void refreshLocation() {
+        Location location = mController.getStopLocation();
+        if (location != null) {
+            mArrowView.setStopLocation(location);
+            mDistanceToStopView.setStopLocation(location);
         }
     }
 

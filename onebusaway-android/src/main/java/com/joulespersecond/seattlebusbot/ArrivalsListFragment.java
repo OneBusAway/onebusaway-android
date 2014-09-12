@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,12 +55,9 @@ import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.LocationHelper;
+import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.joulespersecond.view.ArrowView;
-import com.joulespersecond.view.DistanceToStopView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,6 +82,10 @@ public class ArrivalsListFragment extends ListFragment
      * See {@link com.joulespersecond.seattlebusbot.util.UIHelp#serializeRouteDisplayNames(ObaStop, java.util.HashMap)}
      */
     public static final String STOP_ROUTES = ".StopRoutes";
+
+    public static final String STOP_LAT = ".StopLatitude";
+
+    public static final String STOP_LON = ".StopLongitude";
 
     /**
      * If set to true, the fragment is using a header external to this layout, and shouldn't instantiate its own header view
@@ -135,15 +137,6 @@ public class ArrivalsListFragment extends ListFragment
 
     private Listener mListener;
 
-    ArrowView mArrowView;
-
-    DistanceToStopView mDistanceToStopView;
-
-    // Utility classes to help with managing location and orientation for the arrow/distance views
-    OrientationHelper mOrientationHelper;
-
-    LocationHelper mLocationHelper;
-
     public interface Listener {
 
         /**
@@ -184,6 +177,7 @@ public class ArrivalsListFragment extends ListFragment
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
             setStopRoutes(UIHelp.serializeRouteDisplayNames(stop, routes));
+            setStopLocation(stop.getLocation());
         }
 
         public IntentBuilder setStopName(String stopName) {
@@ -193,6 +187,12 @@ public class ArrivalsListFragment extends ListFragment
 
         public IntentBuilder setStopDirection(String stopDir) {
             mIntent.putExtra(ArrivalsListFragment.STOP_DIRECTION, stopDir);
+            return this;
+        }
+
+        public IntentBuilder setStopLocation(Location stopLocation) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_LAT, stopLocation.getLatitude());
+            mIntent.putExtra(ArrivalsListFragment.STOP_LON, stopLocation.getLongitude());
             return this;
         }
 
@@ -231,13 +231,6 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        // Start helpers to monitor location and orientation
-        mOrientationHelper = new OrientationHelper(getActivity());
-        mLocationHelper = new LocationHelper(getActivity());
-
-        initArrowView();
-        initDistanceToStopView();
 
         // Set and add the view that is shown if no arrival information is returned by the REST API
         getListView().setEmptyView(mEmptyList);
@@ -298,17 +291,6 @@ public class ArrivalsListFragment extends ListFragment
         );
     }
 
-    private void initArrowView() {
-        mArrowView = (ArrowView) getActivity().findViewById(R.id.arrow);
-        mOrientationHelper.registerListener(mArrowView);
-        mLocationHelper.registerListener(mArrowView);
-    }
-
-    private void initDistanceToStopView() {
-        mDistanceToStopView = (DistanceToStopView) getActivity().findViewById(R.id.dist_to_stop);
-        mLocationHelper.registerListener(mDistanceToStopView);
-    }
-
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -318,8 +300,9 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onPause() {
         mRefreshHandler.removeCallbacks(mRefresh);
-        mOrientationHelper.onPause();
-        mLocationHelper.onPause();
+        if (mHeader != null) {
+            mHeader.onPause();
+        }
         super.onPause();
     }
 
@@ -331,6 +314,7 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         if (mHeader != null) {
+            mHeader.onResume();
             mHeader.refresh();
         }
 
@@ -356,9 +340,6 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             mRefreshHandler.postDelayed(mRefresh, newPeriod);
         }
-
-        mOrientationHelper.onResume();
-        mLocationHelper.onResume();
 
         super.onResume();
     }
@@ -602,6 +583,21 @@ public class ArrivalsListFragment extends ListFragment
     //
     // ActivityListHeader.Controller
     //
+    @Override
+    public Location getStopLocation() {
+        Location location = null;
+        if (mStop != null) {
+            location = mStop.getLocation();
+        } else {
+            // Check the arguments
+            Bundle args = getArguments();
+            double latitude = args.getDouble(STOP_LAT);
+            double longitude = args.getDouble(STOP_LON);
+            location = LocationUtil.makeLocation(latitude, longitude);
+        }
+        return location;
+    }
+
     @Override
     public String getStopName() {
         String name;

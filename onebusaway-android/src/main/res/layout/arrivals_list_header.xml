@@ -121,17 +121,18 @@
     <com.joulespersecond.view.DistanceToStopView
         android:id="@+id/dist_to_stop"
         android:textSize="14dp"
+        style="@style/Header2Text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
-        android:layout_toLeftOf="@+id/arrow" />
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/arrow" />
 
     <com.joulespersecond.view.ArrowView
         android:id="@+id/arrow"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:layout_marginLeft="10dp"
-        android:layout_alignBottom="@id/dist_to_stop"
         android:layout_alignParentRight="true" />
 
     <LinearLayout

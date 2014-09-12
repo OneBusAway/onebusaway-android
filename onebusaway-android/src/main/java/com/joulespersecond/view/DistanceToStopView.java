@@ -16,14 +16,13 @@
 package com.joulespersecond.view;
 
 
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.util.LocationHelper;
-
 import android.content.Context;
 import android.location.Location;
 import android.util.AttributeSet;
 import android.widget.TextView;
+
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
 
 import java.text.NumberFormat;
 
@@ -33,8 +32,6 @@ import java.text.NumberFormat;
 public class DistanceToStopView extends TextView implements LocationHelper.Listener {
 
     Context mContext;
-
-    ObaStop mObaStop;
 
     Location mStopLocation = new Location("stopLocation");
 
@@ -54,17 +51,13 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
         mNumberFormat.setMaximumFractionDigits(1);
     }
 
-    public void setObaStop(ObaStop stop) {
-        mObaStop = stop;
-        if (stop != null) {
-            mStopLocation.setLatitude(mObaStop.getLocation().getLatitude());
-            mStopLocation.setLongitude(mObaStop.getLocation().getLongitude());
-        }
+    public void setStopLocation(Location location) {
+        mStopLocation = location;
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        if (mObaStop != null) {
+        if (mStopLocation != null) {
             float distance = location.distanceTo(mStopLocation);
 
             // If the distance is greater than a quarter mile, show in miles, else show in feet

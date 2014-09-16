@@ -91,8 +91,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="@dimen/arrivals_header_pad_left"
+        android:paddingBottom="@dimen/arrivals_header_pad_left"
         android:layout_toRightOf="@+id/stop_favorite"
-        android:layout_toLeftOf="@+id/right_margin_container"
+        android:layout_toLeftOf="@+id/right_margin_separator"
         android:layout_alignParentBottom="true">
 
         <TextView
@@ -106,7 +107,7 @@
 
         <TextView
             android:id="@+id/routeIds"
-            style="@style/Header2Text"
+            style="@style/Header3Text"
             android:ellipsize="end"
             android:singleLine="true"
             android:layout_width="wrap_content"
@@ -116,7 +117,7 @@
 
         <TextView
             android:id="@+id/direction"
-            style="@style/Header2Text"
+            style="@style/Header3Text"
             android:ellipsize="end"
             android:singleLine="true"
             android:layout_width="wrap_content"
@@ -125,13 +126,24 @@
             android:includeFontPadding="false"/>
     </LinearLayout>
 
+    <View
+            android:id="@+id/right_margin_separator"
+            android:layout_width="1dp"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_toLeftOf="@+id/right_margin_container"
+            android:background="@android:color/white"/>
+
     <LinearLayout
             android:id="@+id/right_margin_container"
             android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="5dp"
-        android:paddingRight="8dp"
+        android:paddingRight="10dp"
         android:paddingBottom="5dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true">
@@ -163,7 +175,7 @@
             style="@style/Header2Text"
             android:paddingLeft="@dimen/arrivals_header_pad_left"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"></TextView>
+            android:layout_height="wrap_content"/>
 
         <TextView
             android:id="@+id/show_all"
@@ -173,6 +185,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:bufferType="spannable"
-            android:linksClickable="true"></TextView>
+            android:linksClickable="true"/>
     </LinearLayout>
 </RelativeLayout>

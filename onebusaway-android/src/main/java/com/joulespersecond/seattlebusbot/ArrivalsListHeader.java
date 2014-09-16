@@ -15,6 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.LocationHelper;
+import com.joulespersecond.seattlebusbot.util.OrientationHelper;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.view.ArrowView;
+import com.joulespersecond.view.DistanceToStopView;
+
 import android.content.Context;
 import android.location.Location;
 import android.text.TextUtils;
@@ -26,13 +32,8 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.joulespersecond.seattlebusbot.util.LocationHelper;
-import com.joulespersecond.seattlebusbot.util.OrientationHelper;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-import com.joulespersecond.view.ArrowView;
-import com.joulespersecond.view.DistanceToStopView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,9 @@ class ArrivalsListHeader {
         void setUserStopName(String userName);
 
         long getLastGoodResponseTime();
+
+        // Returns a sorted list of arrival times for the current stop
+        ArrayList<ArrivalInfo> getArrivalInfo();
 
         ArrayList<String> getRoutesFilter();
 
@@ -99,9 +103,19 @@ class ArrivalsListHeader {
 
     private boolean mInNameEdit = false;
 
-    ArrowView mArrowView;
+    private ArrowView mArrowView;
 
-    DistanceToStopView mDistanceToStopView;
+    private DistanceToStopView mDistanceToStopView;
+
+    private ArrayList<ArrivalInfo> mArrivalInfo;
+
+    private boolean mIsSlidingPanelCollapsed = false;
+
+    private int mShortAnimationDuration;
+
+    private ImageView mBusStopIconView;
+
+    private TextView mArrivalInfoView;
 
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
@@ -115,6 +129,10 @@ class ArrivalsListHeader {
         // Start helpers to monitor location and orientation
         mOrientationHelper = new OrientationHelper(mContext);
         mLocationHelper = new LocationHelper(mContext);
+
+        // Retrieve and cache the system's default "short" animation time.
+        mShortAnimationDuration = mContext.getResources().getInteger(
+                android.R.integer.config_shortAnimTime);
     }
 
     void initView(View view) {
@@ -128,6 +146,8 @@ class ArrivalsListHeader {
         mDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
         mArrowView = (ArrowView) mView.findViewById(R.id.arrow);
+        mBusStopIconView = (ImageView) mView.findViewById(R.id.header_bus_icon);
+        mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
         mOrientationHelper.registerListener(mArrowView);
         mLocationHelper.registerListener(mArrowView);
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
@@ -208,6 +228,11 @@ class ArrivalsListHeader {
         mLocationHelper.onPause();
     }
 
+    public void setSlidingPanelCollapsed(boolean collapsed) {
+        mIsSlidingPanelCollapsed = collapsed;
+        refresh();
+    }
+
     private final ClickableSpan mShowAllClick = new ClickableSpan() {
         public void onClick(View v) {
             mController.setRoutesFilter(new ArrayList<String>());
@@ -217,12 +242,14 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
+        refreshArrivalInfo();  // Needs to occur before refreshRouteDisplayNames(), so route name for next arrival is highlighted
         refreshRouteDisplayNames();
         refreshDirection();
         refreshLocation();
         refreshFavorite();
         refreshFilter();
         refreshError();
+        crossfadeRightMarginContainer();
     }
 
     private void refreshName() {
@@ -236,13 +263,37 @@ class ArrivalsListHeader {
         }
     }
 
+    /**
+     * Retrieves a sorted list of arrival times for the current stop
+     */
+    private void refreshArrivalInfo() {
+        mArrivalInfo = mController.getArrivalInfo();
+
+        if (mArrivalInfo != null) {
+            long eta = mArrivalInfo.get(0).getEta();
+            if (eta == 0) {
+                mArrivalInfoView.setText(mContext.getString(R.string.stop_info_eta_now));
+            } else if (eta > 0) {
+                mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_arrival_info,
+                        eta));
+            } else if (eta < 0) {
+                mArrivalInfoView.setText((mContext.getString(R.string.stop_info_header_just_left)));
+            }
+        }
+    }
+
+
     private void refreshRouteDisplayNames() {
         List<String> routeDisplayNames = mController.getRouteDisplayNames();
+        String nextArrivalRouteShortName = "";
+        if (mArrivalInfo != null) {
+            nextArrivalRouteShortName = mArrivalInfo.get(0).getInfo().getShortName();
+        }
 
         if (routeDisplayNames != null) {
             mRouteIdView.setText(
                     mContext.getString(R.string.stop_info_route_ids_label) + " " + UIHelp
-                            .formatRouteDisplayNames(routeDisplayNames));
+                            .formatRouteDisplayNames(routeDisplayNames, nextArrivalRouteShortName));
             mRouteIdView.setVisibility(View.VISIBLE);
         } else {
             mRouteIdView.setVisibility(View.GONE);
@@ -288,6 +339,33 @@ class ArrivalsListHeader {
         } else {
             mFilterGroup.setVisibility(View.GONE);
         }
+    }
+
+    private void crossfadeRightMarginContainer() {
+        // Set the content view to 0% opacity but visible, so that it is visible
+        // (but fully transparent) during the animation.
+//        mContentView.setAlpha(0f);
+//        mContentView.setVisibility(View.VISIBLE);
+
+        // Animate the content view to 100% opacity, and clear any animation
+        // listener set on the view.
+//        mContentView.animate()
+//                .alpha(1f)
+//                .setDuration(mShortAnimationDuration)
+//                .setListener(null);
+
+        // Animate the loading view to 0% opacity. After the animation ends,
+        // set its visibility to GONE as an optimization step (it won't
+        // participate in layout passes, etc.)
+//        mLoadingView.animate()
+//                .alpha(0f)
+//                .setDuration(mShortAnimationDuration)
+//                .setListener(new AnimatorListenerAdapter() {
+//                    @Override
+//                    public void onAnimationEnd(Animator animation) {
+//                        mLoadingView.setVisibility(View.GONE);
+//                    }
+//                });
     }
 
     private static class ResponseError implements AlertList.Alert {

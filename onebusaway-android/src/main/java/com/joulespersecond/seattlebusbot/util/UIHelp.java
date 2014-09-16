@@ -22,7 +22,6 @@ import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
-
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.R;
@@ -41,6 +40,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -48,15 +48,6 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.R;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -289,13 +280,21 @@ public final class UIHelp {
      * 4, 8b, 11, 15
      *
      * @param routeDisplayNames list of route display names
+     * @param nextArrivalRouteShortName the short route name of the next arrival at the stop.  This will be highlighted in the results.
      * @return a formatted and sorted list of route display names for presentation in a single line
      */
-    public static String formatRouteDisplayNames(List<String> routeDisplayNames) {
+    public static String formatRouteDisplayNames(List<String> routeDisplayNames,
+            String nextArrivalRouteShortName) {
         Collections.sort(routeDisplayNames, new AlphanumComparator());
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < routeDisplayNames.size(); i++) {
-            sb.append(routeDisplayNames.get(i));
+            if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
+                // If this route name matches the route name for the next arrival, highlight this route in the text
+                sb.append(Html.fromHtml("<b>" + routeDisplayNames.get(i) + "</b>"));
+            } else {
+                // Just append the normally-formatted route name
+                sb.append(routeDisplayNames.get(i));
+            }
 
             if (i != routeDisplayNames.size() - 1) {
                 sb.append(", ");

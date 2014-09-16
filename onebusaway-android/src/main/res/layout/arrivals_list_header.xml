@@ -152,7 +152,8 @@
                 android:id="@+id/arrow"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
 
         <com.joulespersecond.view.DistanceToStopView
                 android:id="@+id/dist_to_stop"
@@ -160,7 +161,31 @@
                 android:layout_marginTop="2dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"/>
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
+
+        <ImageView
+                android:id="@+id/header_bus_icon"
+                android:src="@drawable/ic_bus_white"
+                android:background="@null"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:maxWidth="25dp"
+                android:maxHeight="25dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                />
+        <TextView
+                android:id="@+id/header_arrival_info"
+                style="@style/Header3Text"
+                android:layout_marginTop="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                />
     </LinearLayout>
 
     <LinearLayout

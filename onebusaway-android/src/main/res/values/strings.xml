@@ -147,6 +147,8 @@
     <string name="stop_info_old_data">Data updated %s</string>
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_route_ids_label">Routes:</string>
+    <string name="stop_info_header_arrival_info">in %1$d min</string>
+    <string name="stop_info_header_just_left">just left</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>

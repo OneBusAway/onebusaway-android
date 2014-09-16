@@ -38,13 +38,13 @@ public class UIUtilTest extends AndroidTestCase {
 
         routes.add("1");
         routes.add("5");
-        formattedString = UIHelp.formatRouteDisplayNames(routes);
+        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
         assertEquals("1, 5", formattedString);
 
         routes.clear();
         routes.add("5");
         routes.add("1");
-        formattedString = UIHelp.formatRouteDisplayNames(routes);
+        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
         assertEquals("1, 5", formattedString);
 
         routes.clear();
@@ -53,7 +53,7 @@ public class UIUtilTest extends AndroidTestCase {
         routes.add("15");
         routes.add("8b");
         routes.add("8a");
-        formattedString = UIHelp.formatRouteDisplayNames(routes);
+        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
         assertEquals("1, 5, 8a, 8b, 15", formattedString);
     }
 

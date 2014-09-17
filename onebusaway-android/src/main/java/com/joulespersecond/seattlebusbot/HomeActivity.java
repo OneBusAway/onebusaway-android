@@ -455,6 +455,7 @@ public class HomeActivity extends SherlockFragmentActivity
         }
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
+        mArrivalsListHeader.setSlidingPanelCollapsed(!mSlidingPanel.isPanelExpanded());
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
         mSlidingPanel.showPanel();
     }
@@ -574,6 +575,7 @@ public class HomeActivity extends SherlockFragmentActivity
                 Log.d(TAG, "onPanelExpanded");
                 if (mArrivalsListHeader != null) {
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
+                    mArrivalsListHeader.refresh();
                 }
             }
 
@@ -582,6 +584,7 @@ public class HomeActivity extends SherlockFragmentActivity
                 Log.d(TAG, "onPanelCollapsed");
                 if (mArrivalsListHeader != null) {
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
+                    mArrivalsListHeader.refresh();
                 }
             }
 
@@ -593,6 +596,7 @@ public class HomeActivity extends SherlockFragmentActivity
                 }
                 if (mArrivalsListHeader != null) {
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
+                    mArrivalsListHeader.refresh();
                 }
             }
 

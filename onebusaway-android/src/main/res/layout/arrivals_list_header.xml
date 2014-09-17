@@ -132,7 +132,7 @@
             android:layout_height="fill_parent"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginRight="4dp"
             android:layout_marginLeft="10dp"
             android:layout_toLeftOf="@+id/right_margin_container"
             android:background="@android:color/white"/>
@@ -142,11 +142,19 @@
             android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:paddingRight="10dp"
+        android:minWidth="60dp"
+        android:layout_marginLeft="8dp"
+        android:paddingRight="8dp"
         android:paddingBottom="5dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true">
+
+        <ProgressBar
+                android:id="@+id/header_loading_spinner"
+                style="?android:progressBarStyleLarge"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_vertical"/>
 
         <com.joulespersecond.view.ArrowView
                 android:id="@+id/arrow"
@@ -177,7 +185,7 @@
                 android:adjustViewBounds="true"
                 android:paddingLeft="1dp"
                 android:paddingRight="1dp"
-                />
+                android:visibility="gone"/>
         <TextView
                 android:id="@+id/header_arrival_info"
                 style="@style/Header3Text"
@@ -185,7 +193,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                />
+                android:visibility="gone"/>
     </LinearLayout>
 
     <LinearLayout

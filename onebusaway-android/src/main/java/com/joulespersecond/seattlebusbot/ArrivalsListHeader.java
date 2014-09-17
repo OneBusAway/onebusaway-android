@@ -33,6 +33,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -97,13 +98,13 @@ class ArrivalsListHeader {
 
     private TextView mRouteIdView;
 
-    private View mDirectionView;
+    private View mRouteDirectionView;
 
     private View mFilterGroup;
 
     private boolean mInNameEdit = false;
 
-    private ArrowView mArrowView;
+    private ArrowView mArrowToStopView;
 
     private DistanceToStopView mDistanceToStopView;
 
@@ -116,6 +117,8 @@ class ArrivalsListHeader {
     private ImageView mBusStopIconView;
 
     private TextView mArrivalInfoView;
+
+    private ProgressBar mProgressBar;
 
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
@@ -143,15 +146,16 @@ class ArrivalsListHeader {
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
-        mDirectionView = mView.findViewById(R.id.direction);
+        mRouteDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
-        mArrowView = (ArrowView) mView.findViewById(R.id.arrow);
+        mArrowToStopView = (ArrowView) mView.findViewById(R.id.arrow);
         mBusStopIconView = (ImageView) mView.findViewById(R.id.header_bus_icon);
         mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
-        mOrientationHelper.registerListener(mArrowView);
-        mLocationHelper.registerListener(mArrowView);
+        mOrientationHelper.registerListener(mArrowToStopView);
+        mLocationHelper.registerListener(mArrowToStopView);
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
         mLocationHelper.registerListener(mDistanceToStopView);
+        mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
 
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -230,7 +234,6 @@ class ArrivalsListHeader {
 
     public void setSlidingPanelCollapsed(boolean collapsed) {
         mIsSlidingPanelCollapsed = collapsed;
-        refresh();
     }
 
     private final ClickableSpan mShowAllClick = new ClickableSpan() {
@@ -249,7 +252,10 @@ class ArrivalsListHeader {
         refreshFavorite();
         refreshFilter();
         refreshError();
-        crossfadeRightMarginContainer();
+        if (mArrivalInfo != null) {
+            // If we have arrival info, we can show the right margin contents
+            showRightMarginContainer();
+        }
     }
 
     private void refreshName() {
@@ -286,7 +292,8 @@ class ArrivalsListHeader {
     private void refreshRouteDisplayNames() {
         List<String> routeDisplayNames = mController.getRouteDisplayNames();
         String nextArrivalRouteShortName = "";
-        if (mArrivalInfo != null) {
+        if (mArrivalInfo != null && mIsSlidingPanelCollapsed) {
+            // Only highlight the route if the sliding panel is collapsed
             nextArrivalRouteShortName = mArrivalInfo.get(0).getInfo().getShortName();
         }
 
@@ -304,11 +311,11 @@ class ArrivalsListHeader {
         String direction = mController.getStopDirection();
         if (direction != null) {
             final int directionText = UIHelp.getStopDirectionText(direction);
-            ((TextView) mDirectionView).setText(directionText);
+            ((TextView) mRouteDirectionView).setText(directionText);
             if (directionText != R.string.direction_none && !mInNameEdit) {
-                mDirectionView.setVisibility(View.VISIBLE);
+                mRouteDirectionView.setVisibility(View.VISIBLE);
             } else {
-                mDirectionView.setVisibility(View.INVISIBLE);
+                mRouteDirectionView.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -316,7 +323,7 @@ class ArrivalsListHeader {
     private void refreshLocation() {
         Location location = mController.getStopLocation();
         if (location != null) {
-            mArrowView.setStopLocation(location);
+            mArrowToStopView.setStopLocation(location);
             mDistanceToStopView.setStopLocation(location);
         }
     }
@@ -341,31 +348,27 @@ class ArrivalsListHeader {
         }
     }
 
-    private void crossfadeRightMarginContainer() {
-        // Set the content view to 0% opacity but visible, so that it is visible
-        // (but fully transparent) during the animation.
-//        mContentView.setAlpha(0f);
-//        mContentView.setVisibility(View.VISIBLE);
+    /**
+     * Hiding the loading component, and replaces it with the correct content depending on sliding
+     * panel state
+     */
+    private void showRightMarginContainer() {
+        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
 
-        // Animate the content view to 100% opacity, and clear any animation
-        // listener set on the view.
-//        mContentView.animate()
-//                .alpha(1f)
-//                .setDuration(mShortAnimationDuration)
-//                .setListener(null);
-
-        // Animate the loading view to 0% opacity. After the animation ends,
-        // set its visibility to GONE as an optimization step (it won't
-        // participate in layout passes, etc.)
-//        mLoadingView.animate()
-//                .alpha(0f)
-//                .setDuration(mShortAnimationDuration)
-//                .setListener(new AnimatorListenerAdapter() {
-//                    @Override
-//                    public void onAnimationEnd(Animator animation) {
-//                        mLoadingView.setVisibility(View.GONE);
-//                    }
-//                });
+        // TODO - Improve animation - things slide around in the layout during animation
+        if (mIsSlidingPanelCollapsed) {
+            // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
+            UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+        } else {
+            // Cross-fade in direction arrow and distance to stop, and hide bus icon and arrival info
+            UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
+        }
     }
 
     private static class ResponseError implements AlertList.Alert {
@@ -454,7 +457,7 @@ class ArrivalsListHeader {
         // editable, so we should go into edit mode.
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
-        mDirectionView.setVisibility(View.GONE);
+        mRouteDirectionView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.GONE);
@@ -470,7 +473,7 @@ class ArrivalsListHeader {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
-        mDirectionView.setVisibility(View.VISIBLE);
+        mRouteDirectionView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.VISIBLE);
         // TODO - Re-size the header layout back to 68dp
 //        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

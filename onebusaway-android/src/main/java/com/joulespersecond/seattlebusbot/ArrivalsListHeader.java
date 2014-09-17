@@ -15,6 +15,7 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.seattlebusbot.util.LocationHelper;
 import com.joulespersecond.seattlebusbot.util.OrientationHelper;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
@@ -22,10 +23,13 @@ import com.joulespersecond.view.ArrowView;
 import com.joulespersecond.view.DistanceToStopView;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -55,6 +59,8 @@ class ArrivalsListHeader {
 
         String getUserStopName();
 
+        String getStopId();
+
         void setUserStopName(String userName);
 
         long getLastGoodResponseTime();
@@ -76,6 +82,8 @@ class ArrivalsListHeader {
 
         List<String> getRouteDisplayNames();
     }
+
+    public static final String TAG = "ArrivalsListHeader";
 
     private Controller mController;
 
@@ -120,6 +128,8 @@ class ArrivalsListHeader {
 
     private ProgressBar mProgressBar;
 
+    private ImageButton mStopInfo;
+
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
 
@@ -156,6 +166,7 @@ class ArrivalsListHeader {
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
         mLocationHelper.registerListener(mDistanceToStopView);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
+        mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info);
 
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
@@ -163,6 +174,32 @@ class ArrivalsListHeader {
         UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+
+        // Initialize stop info view
+        final ObaRegion obaRegion = Application.get().getCurrentRegion();
+        if (obaRegion == null || TextUtils.isEmpty(obaRegion.getStopInfoUrl())) {
+            // This region doesn't support StopInfo - hide the info icon
+            mStopInfo.setVisibility(View.GONE);
+        } else {
+            mStopInfo.setVisibility(View.VISIBLE);
+
+            mStopInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Assemble StopInfo URL for the current stop
+                    Uri stopInfoUri = Uri.parse(obaRegion.getStopInfoUrl());
+                    Uri.Builder stopInfoBuilder = stopInfoUri.buildUpon();
+                    stopInfoBuilder.appendPath(mContext.getString(R.string.stop_info_url_path));
+                    stopInfoBuilder.appendPath(mController.getStopId());
+
+                    Log.d(TAG, "StopInfoUrl - " + stopInfoBuilder.build());
+
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(stopInfoBuilder.build());
+                    mContext.startActivity(i);
+                }
+            });
+        }
 
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -282,7 +319,7 @@ class ArrivalsListHeader {
     private void refreshArrivalInfo() {
         mArrivalInfo = mController.getArrivalInfo();
 
-        if (mArrivalInfo != null) {
+        if (mArrivalInfo != null && mArrivalInfo.size() > 0) {
             long eta = mArrivalInfo.get(0).getEta();
             if (eta == 0) {
                 mArrivalInfoView.setText("*" + mContext.getString(R.string.stop_info_eta_now));
@@ -299,7 +336,7 @@ class ArrivalsListHeader {
     private void refreshRouteDisplayNames() {
         List<String> routeDisplayNames = mController.getRouteDisplayNames();
         String nextArrivalRouteShortName = "";
-        if (mArrivalInfo != null && mIsSlidingPanelCollapsed) {
+        if (mArrivalInfo != null && mArrivalInfo.size() > 0 && mIsSlidingPanelCollapsed) {
             // Only highlight the route if the sliding panel is collapsed
             nextArrivalRouteShortName = mArrivalInfo.get(0).getInfo().getShortName();
         }

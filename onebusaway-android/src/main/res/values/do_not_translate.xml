@@ -27,4 +27,7 @@
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
+
+    <!-- StopInfo project (see #103) -->
+    <string name="stop_info_url_path">busstops</string>
 </resources>

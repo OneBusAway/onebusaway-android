@@ -85,7 +85,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
             android:id="@+id/name_container"
             android:orientation="vertical"
             android:layout_width="fill_parent"
@@ -105,6 +105,23 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"/>
 
+        <ImageButton
+                android:id="@+id/stop_info"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:background="@null"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="left"
+                android:layout_alignTop="@id/stop_name"
+                android:layout_toRightOf="@+id/stop_name"
+                android:maxWidth="35dp"
+                android:maxHeight="35dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                android:layout_marginTop="-2dp"/>
+
         <TextView
                 android:id="@+id/routeIds"
                 style="@style/Header3Text"
@@ -113,6 +130,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
+                android:layout_below="@id/stop_name"
                 android:includeFontPadding="false"/>
 
         <TextView
@@ -123,8 +141,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
+                android:layout_below="@id/routeIds"
                 android:includeFontPadding="false"/>
-    </LinearLayout>
+    </RelativeLayout>
 
     <View
             android:id="@+id/right_margin_separator"
@@ -184,7 +203,7 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true">
 
-    <ImageView
+        <ImageView
                 android:id="@+id/header_bus_icon"
                 android:src="@drawable/ic_bus_white"
                 android:background="@null"

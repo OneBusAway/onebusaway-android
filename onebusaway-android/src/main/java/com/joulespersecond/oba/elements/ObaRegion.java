@@ -100,4 +100,9 @@ public interface ObaRegion {
      * @return true if this server is experimental, false if its production.
      */
     public boolean getExperimental();
+
+    /**
+     * @return the StopInfo URL for the region (see #103)
+     */
+    public String getStopInfoUrl();
 }

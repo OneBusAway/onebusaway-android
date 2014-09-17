@@ -16,6 +16,8 @@
 package com.joulespersecond.oba.elements;
 
 
+import java.util.Arrays;
+
 public class ObaRegionElement implements ObaRegion {
 
     public static final ObaRegionElement[] EMPTY_ARRAY = new ObaRegionElement[]{};
@@ -96,6 +98,8 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean experimental;
 
+    private final String stopInfoUrl;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -110,6 +114,7 @@ public class ObaRegionElement implements ObaRegion {
         supportsSiriRealtimeApis = false;
         twitterUrl = "";
         experimental = true;
+        stopInfoUrl = "";
     }
 
     public ObaRegionElement(long id,
@@ -124,7 +129,8 @@ public class ObaRegionElement implements ObaRegion {
             boolean supportsObaRealtimeApis,
             boolean supportsSiriRealtimeApis,
             String twitterUrl,
-            boolean experimental) {
+            boolean experimental,
+            String stopInfoUrl) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -138,6 +144,7 @@ public class ObaRegionElement implements ObaRegion {
         this.supportsSiriRealtimeApis = supportsSiriRealtimeApis;
         this.twitterUrl = twitterUrl;
         this.experimental = experimental;
+        this.stopInfoUrl = stopInfoUrl;
     }
 
     @Override
@@ -206,6 +213,11 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public String getStopInfoUrl() {
+        return stopInfoUrl;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -237,15 +249,21 @@ public class ObaRegionElement implements ObaRegion {
 
     @Override
     public String toString() {
-        return "ObaRegionElement [id=" + id + ", regionName=" + regionName
-                + ", active=" + active + ", obaBaseUrl=" + obaBaseUrl
-                + ", siriBaseUrl=" + siriBaseUrl + ", language=" + language
-                + ", contactEmail=" + contactEmail
-                + ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis
-                + ", supportsObaRealtimeApis=" + supportsObaRealtimeApis
-                + ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis
-                + ", twitterUrl=" + twitterUrl
-                + ", experimental=" + experimental
-                + "]";
+        return "ObaRegionElement{" +
+                "id=" + id +
+                ", regionName='" + regionName + '\'' +
+                ", active=" + active +
+                ", obaBaseUrl='" + obaBaseUrl + '\'' +
+                ", siriBaseUrl='" + siriBaseUrl + '\'' +
+                ", bounds=" + Arrays.toString(bounds) +
+                ", language='" + language + '\'' +
+                ", contactEmail='" + contactEmail + '\'' +
+                ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis +
+                ", supportsObaRealtimeApis=" + supportsObaRealtimeApis +
+                ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis +
+                ", twitterUrl='" + twitterUrl + '\'' +
+                ", experimental=" + experimental +
+                ", stopInfoUrl='" + stopInfoUrl + '\'' +
+                '}';
     }
 }

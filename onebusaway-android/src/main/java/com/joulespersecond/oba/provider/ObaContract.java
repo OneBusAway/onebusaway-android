@@ -369,6 +369,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String EXPERIMENTAL = "experimental";
+
+        /**
+         * The StopInfo URL for the region (see #103)
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String STOP_INFO_URL = "stop_info_url";
     }
 
     protected interface RegionBoundsColumns {
@@ -968,7 +976,8 @@ public final class ObaContract {
                     SUPPORTS_OBA_REALTIME,
                     SUPPORTS_SIRI_REALTIME,
                     TWITTER_URL,
-                    EXPERIMENTAL
+                    EXPERIMENTAL,
+                    STOP_INFO_URL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -990,7 +999,8 @@ public final class ObaContract {
                             c.getInt(7) > 0,            // Supports Oba Realtime
                             c.getInt(8) > 0,            // Supports Siri Realtime
                             c.getString(9),              // Twitter URL
-                            c.getInt(10) > 0               // Experimental
+                            c.getInt(10) > 0,               // Experimental
+                            c.getString(11)              // StopInfoUrl
                     );
                 } finally {
                     c.close();

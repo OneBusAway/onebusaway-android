@@ -588,6 +588,11 @@ public class ArrivalsListFragment extends ListFragment
     // ActivityListHeader.Controller
     //
     @Override
+    public String getStopId() {
+        return mStopId;
+    }
+
+    @Override
     public Location getStopLocation() {
         Location location = null;
         if (mStop != null) {

@@ -372,7 +372,8 @@ public class RegionUtils {
                     Regions.SUPPORTS_OBA_REALTIME,
                     Regions.SUPPORTS_SIRI_REALTIME,
                     Regions.TWITTER_URL,
-                    Regions.EXPERIMENTAL
+                    Regions.EXPERIMENTAL,
+                    Regions.STOP_INFO_URL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -406,7 +407,8 @@ public class RegionUtils {
                         c.getInt(7) > 0,            // Supports Oba Realtime
                         c.getInt(8) > 0,            // Supports Siri Realtime
                         c.getString(9),              // Twitter URL
-                        c.getInt(10) > 0            // Experimental
+                        c.getInt(10) > 0,            // Experimental
+                        c.getString(11)             // StopInfoUrl
                 ));
 
             } while (c.moveToNext());
@@ -551,6 +553,7 @@ public class RegionUtils {
         values.put(Regions.SUPPORTS_SIRI_REALTIME, region.getSupportsSiriRealtimeApis() ? 1 : 0);
         values.put(Regions.TWITTER_URL, region.getTwitterUrl());
         values.put(Regions.EXPERIMENTAL, region.getExperimental());
+        values.put(Regions.STOP_INFO_URL, region.getStopInfoUrl());
         return values;
     }
 

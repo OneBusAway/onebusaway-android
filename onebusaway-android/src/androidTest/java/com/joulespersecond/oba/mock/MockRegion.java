@@ -76,7 +76,7 @@ public class MockRegion {
                 true,
                 false,
                 null,
-                false);
+                false, stopInfoUrl);
     }
 
     /**
@@ -105,7 +105,7 @@ public class MockRegion {
                 true,
                 false,
                 null,
-                false);
+                false, stopInfoUrl);
     }
 
     /**
@@ -134,7 +134,7 @@ public class MockRegion {
                 true,
                 false,
                 null,
-                false);
+                false, stopInfoUrl);
     }
 
     /**
@@ -163,6 +163,6 @@ public class MockRegion {
                 true,
                 false,
                 null,
-                false);
+                false, stopInfoUrl);
     }
 }

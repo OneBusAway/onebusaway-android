@@ -442,6 +442,8 @@ public class HomeActivity extends SherlockFragmentActivity
 
         // Set the header for the arrival list to be the top of the sliding panel
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
+        mArrivalsListHeader.setSlidingPanelCollapsed(
+                !(mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored()));
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
 
         if (stop != null && routes != null) {
@@ -455,7 +457,6 @@ public class HomeActivity extends SherlockFragmentActivity
         }
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
-        mArrivalsListHeader.setSlidingPanelCollapsed(!mSlidingPanel.isPanelExpanded());
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
         mSlidingPanel.showPanel();
     }

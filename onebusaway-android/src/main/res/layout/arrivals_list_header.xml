@@ -14,116 +14,116 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/HeaderItem"
-    android:id="@+id/arrivals_list_header"
-    android:layout_width="match_parent"
-    android:layout_height="68dp"
-    android:orientation="vertical">
+                style="@style/HeaderItem"
+                android:id="@+id/arrivals_list_header"
+                android:layout_width="match_parent"
+                android:layout_height="68dp"
+                android:orientation="vertical">
 
     <ImageButton
-        android:id="@+id/stop_favorite"
-        android:src="@drawable/android:star_off"
-        android:contentDescription="@string/stop_info_favorite"
-        android:background="@null"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:maxWidth="35dp"
-        android:maxHeight="35dp"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
-        android:paddingLeft="1dp"
-        android:paddingRight="1dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true" />
+            android:id="@+id/stop_favorite"
+            android:src="@drawable/android:star_off"
+            android:contentDescription="@string/stop_info_favorite"
+            android:background="@null"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="35dp"
+            android:maxHeight="35dp"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"/>
 
     <LinearLayout
-        android:id="@+id/edit_name_container"
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone">
+            android:id="@+id/edit_name_container"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
         <!--  NOTE: I'm sure there's a way to have a textview
           switch between displaying itself as an edittext
           and a regular text, but this method will be
           guaranteed to work across any release -->
         <EditText
-            android:id="@+id/edit_name"
-            style="@style/HeaderText"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"
-            android:imeOptions="actionDone" />
+                android:id="@+id/edit_name"
+                style="@style/HeaderText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:imeOptions="actionDone"/>
 
         <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="10dip"
-            android:paddingRight="10dip"
-            android:gravity="center">
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dip"
+                android:paddingRight="10dip"
+                android:gravity="center">
 
             <Button
-                android:id="@+id/edit_name_cancel"
-                android:text="@string/stop_info_cancel"
-                android:layout_height="wrap_content"
-                android:layout_width="0dip"
-                android:layout_weight="1" />
+                    android:id="@+id/edit_name_cancel"
+                    android:text="@string/stop_info_cancel"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
 
             <Button
-                android:id="@+id/edit_name_save"
-                android:text="@string/stop_info_save"
-                android:layout_height="wrap_content"
-                android:layout_width="0dip"
-                android:layout_weight="1" />
+                    android:id="@+id/edit_name_save"
+                    android:text="@string/stop_info_save"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
 
             <Button
-                android:id="@+id/edit_name_revert"
-                android:text="@string/stop_info_clear"
-                android:layout_height="wrap_content"
-                android:layout_width="0dip"
-                android:layout_weight="1" />
+                    android:id="@+id/edit_name_revert"
+                    android:text="@string/stop_info_clear"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dip"
+                    android:layout_weight="1"/>
         </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/name_container"
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/arrivals_header_pad_left"
-        android:paddingBottom="@dimen/arrivals_header_pad_left"
-        android:layout_toRightOf="@+id/stop_favorite"
-        android:layout_toLeftOf="@+id/right_margin_separator"
-        android:layout_alignParentBottom="true">
+            android:id="@+id/name_container"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/arrivals_header_pad_left"
+            android:paddingBottom="@dimen/arrivals_header_pad_left"
+            android:layout_toRightOf="@+id/stop_favorite"
+            android:layout_toLeftOf="@+id/right_margin_separator"
+            android:layout_alignParentBottom="true">
 
         <TextView
-            android:id="@+id/stop_name"
-            style="@style/HeaderText"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left" />
+                android:id="@+id/stop_name"
+                style="@style/HeaderText"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"/>
 
         <TextView
-            android:id="@+id/routeIds"
-            style="@style/Header3Text"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:includeFontPadding="false"/>
+                android:id="@+id/routeIds"
+                style="@style/Header3Text"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:includeFontPadding="false"/>
 
         <TextView
-            android:id="@+id/direction"
-            style="@style/Header3Text"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:includeFontPadding="false"/>
+                android:id="@+id/direction"
+                style="@style/Header3Text"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:includeFontPadding="false"/>
     </LinearLayout>
 
     <View
@@ -140,16 +140,16 @@
     <LinearLayout
             android:id="@+id/right_margin_container"
             android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minWidth="60dp"
-        android:layout_marginLeft="8dp"
-        android:paddingRight="8dp"
-        android:paddingBottom="5dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="60dp"
+            android:layout_marginLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true">
 
-        <ProgressBar
+    <ProgressBar
                 android:id="@+id/header_loading_spinner"
                 style="?android:progressBarStyleLarge"
                 android:layout_width="40dp"
@@ -197,27 +197,27 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/filter_group"
-        style="@style/Header2Text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/filter"
+            android:id="@+id/filter_group"
             style="@style/Header2Text"
-            android:paddingLeft="@dimen/arrivals_header_pad_left"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <TextView
-            android:id="@+id/show_all"
-            android:text="@string/stop_info_filter_showall"
-            style="@style/Header2Text"
-            android:paddingLeft="5dip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:bufferType="spannable"
-            android:linksClickable="true"/>
+            android:visibility="gone">
+
+        <TextView
+                android:id="@+id/filter"
+                style="@style/Header2Text"
+                android:paddingLeft="@dimen/arrivals_header_pad_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        <TextView
+                android:id="@+id/show_all"
+                android:text="@string/stop_info_filter_showall"
+                style="@style/Header2Text"
+                android:paddingLeft="5dip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:bufferType="spannable"
+                android:linksClickable="true"/>
     </LinearLayout>
 </RelativeLayout>

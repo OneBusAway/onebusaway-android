@@ -40,7 +40,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -290,7 +289,7 @@ public final class UIHelp {
         for (int i = 0; i < routeDisplayNames.size(); i++) {
             if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
                 // If this route name matches the route name for the next arrival, highlight this route in the text
-                sb.append(Html.fromHtml("<b>" + routeDisplayNames.get(i) + "</b>"));
+                sb.append(routeDisplayNames.get(i) + "*");
             } else {
                 // Just append the normally-formatted route name
                 sb.append(routeDisplayNames.get(i));

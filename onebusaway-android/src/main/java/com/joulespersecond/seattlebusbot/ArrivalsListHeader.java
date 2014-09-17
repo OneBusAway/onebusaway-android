@@ -272,7 +272,7 @@ class ArrivalsListHeader {
         if (mArrivalInfo != null) {
             long eta = mArrivalInfo.get(0).getEta();
             if (eta == 0) {
-                mArrivalInfoView.setText(mContext.getString(R.string.stop_info_eta_now));
+                mArrivalInfoView.setText("*" + mContext.getString(R.string.stop_info_eta_now));
             } else if (eta > 0) {
                 mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_arrival_info,
                         eta));

@@ -134,11 +134,14 @@
             android:layout_marginBottom="8dp"
             android:layout_marginRight="4dp"
             android:layout_marginLeft="10dp"
-            android:layout_toLeftOf="@+id/right_margin_container"
+            android:layout_toLeftOf="@+id/right_margin_container1"
             android:background="@android:color/white"/>
 
+    <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are
+         used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
+         views and arrival info views -->
     <LinearLayout
-            android:id="@+id/right_margin_container"
+            android:id="@+id/right_margin_container1"
             android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -148,13 +151,6 @@
             android:paddingBottom="5dp"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true">
-
-    <ProgressBar
-                android:id="@+id/header_loading_spinner"
-                style="?android:progressBarStyleLarge"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"/>
 
         <com.joulespersecond.view.ArrowView
                 android:id="@+id/arrow"
@@ -171,8 +167,24 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:visibility="gone"/>
+    </LinearLayout>
 
-        <ImageView
+    <!-- Layout container for arrival info. Two right_margin_container layouts are
+         used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
+         views and arrival info views -->
+    <LinearLayout
+            android:id="@+id/right_margin_container2"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="60dp"
+            android:layout_marginLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true">
+
+    <ImageView
                 android:id="@+id/header_bus_icon"
                 android:src="@drawable/ic_bus_white"
                 android:background="@null"
@@ -195,6 +207,17 @@
                 android:layout_gravity="center_horizontal"
                 android:visibility="gone"/>
     </LinearLayout>
+
+    <ProgressBar
+            android:id="@+id/header_loading_spinner"
+            style="?android:progressBarStyleLarge"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="center"/>
 
     <LinearLayout
             android:id="@+id/filter_group"

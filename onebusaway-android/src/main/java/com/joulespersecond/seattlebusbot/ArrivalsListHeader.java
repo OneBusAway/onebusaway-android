@@ -157,6 +157,13 @@ class ArrivalsListHeader {
         mLocationHelper.registerListener(mDistanceToStopView);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
 
+        // Initialize right margin view visibilities
+        UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+
         mFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -353,9 +360,6 @@ class ArrivalsListHeader {
      * panel state
      */
     private void showRightMarginContainer() {
-        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
-
-        // TODO - Improve animation - things slide around in the layout during animation
         if (mIsSlidingPanelCollapsed) {
             // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
             UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
@@ -369,6 +373,8 @@ class ArrivalsListHeader {
             UIHelp.showViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         }
+
+        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
     }
 
     private static class ResponseError implements AlertList.Alert {

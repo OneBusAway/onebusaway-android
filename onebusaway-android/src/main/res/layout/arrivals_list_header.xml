@@ -116,8 +116,9 @@
                         android:layout_weight=".95"/>
 
                 <ImageButton
-                        android:id="@+id/stop_info"
+                        android:id="@+id/stop_info_button"
                         android:src="@drawable/ic_stop_info"
+                        android:contentDescription="@string/stop_info_button_content_description"
                         android:background="@null"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

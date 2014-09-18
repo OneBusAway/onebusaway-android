@@ -175,7 +175,7 @@ class ArrivalsListHeader {
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
         mLocationHelper.registerListener(mDistanceToStopView);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
-        mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info);
+        mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
 
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);

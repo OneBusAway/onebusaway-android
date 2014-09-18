@@ -103,7 +103,9 @@
                 android:singleLine="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"/>
+                android:layout_gravity="left"
+                android:layout_alignParentLeft="true"
+                android:layout_toLeftOf="@+id/stop_info"/>
 
         <ImageButton
                 android:id="@+id/stop_info"
@@ -111,9 +113,8 @@
                 android:background="@null"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="left"
                 android:layout_alignTop="@id/stop_name"
-                android:layout_toRightOf="@+id/stop_name"
+                android:layout_alignParentRight="true"
                 android:maxWidth="35dp"
                 android:maxHeight="35dp"
                 android:scaleType="fitCenter"

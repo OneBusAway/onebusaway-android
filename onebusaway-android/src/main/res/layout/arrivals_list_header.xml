@@ -86,64 +86,69 @@
     </LinearLayout>
 
     <RelativeLayout
-            android:id="@+id/name_container"
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="@dimen/arrivals_header_pad_left"
-            android:paddingBottom="@dimen/arrivals_header_pad_left"
+            android:id="@+id/name_and_info_container"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
             android:layout_toRightOf="@+id/stop_favorite"
-            android:layout_toLeftOf="@+id/right_margin_separator"
-            android:layout_alignParentBottom="true">
+            android:layout_toLeftOf="@+id/right_margin_separator">
 
-        <TextView
-                android:id="@+id/stop_name"
-                style="@style/HeaderText"
-                android:ellipsize="end"
-                android:singleLine="true"
+        <RelativeLayout
+                android:id="@+id/name_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"
                 android:layout_alignParentLeft="true"
-                android:layout_toLeftOf="@+id/stop_info"/>
+                android:layout_centerVertical="true"
+                android:paddingLeft="@dimen/arrivals_header_pad_left">
+
+            <TextView
+                    android:id="@+id/stop_name"
+                    style="@style/HeaderText"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left"
+                    android:layout_alignParentLeft="true"/>
+
+            <TextView
+                    android:id="@+id/routeIds"
+                    style="@style/Header3Text"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left"
+                    android:layout_below="@id/stop_name"
+                    android:includeFontPadding="false"/>
+
+            <TextView
+                    android:id="@+id/direction"
+                    style="@style/Header3Text"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left"
+                    android:layout_below="@id/routeIds"
+                    android:includeFontPadding="false"/>
+        </RelativeLayout>
 
         <ImageButton
                 android:id="@+id/stop_info"
-                android:src="@android:drawable/ic_menu_info_details"
+                android:src="@drawable/ic_stop_info"
                 android:background="@null"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignTop="@id/stop_name"
-                android:layout_alignParentRight="true"
-                android:maxWidth="35dp"
-                android:maxHeight="35dp"
+                android:maxWidth="23dp"
+                android:maxHeight="23dp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:layout_marginTop="-2dp"/>
-
-        <TextView
-                android:id="@+id/routeIds"
-                style="@style/Header3Text"
-                android:ellipsize="end"
-                android:singleLine="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:layout_below="@id/stop_name"
-                android:includeFontPadding="false"/>
-
-        <TextView
-                android:id="@+id/direction"
-                style="@style/Header3Text"
-                android:ellipsize="end"
-                android:singleLine="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:layout_below="@id/routeIds"
-                android:includeFontPadding="false"/>
+                android:layout_alignTop="@id/name_container"
+                android:layout_toRightOf="@id/name_container"
+                android:paddingTop="4dp"
+                android:layout_marginLeft="3dp"
+                android:layout_marginRight="2dp"
+                />
     </RelativeLayout>
 
     <View

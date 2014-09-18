@@ -81,13 +81,24 @@ class ArrivalsListHeader {
         AlertList getAlertList();
 
         List<String> getRouteDisplayNames();
+
+        /**
+         * Gets the range of arrival info (i.e., arrival info for the next "minutesAfter" minutes),
+         * or -1 if this information isn't available
+         *
+         * @return minutesAfter the range of arrival info (i.e., arrival info for the next
+         * "minutesAfter" minutes), or -1 if this information isn't available
+         */
+        int getMinutesAfter();
     }
 
-    public static final String TAG = "ArrivalsListHeader";
+    private static final String TAG = "ArrivalsListHeader";
 
     private Controller mController;
 
     private Context mContext;
+
+    private ArrayList<ArrivalInfo> mArrivalInfo;
 
     //
     // Cached views
@@ -115,8 +126,6 @@ class ArrivalsListHeader {
     private ArrowView mArrowToStopView;
 
     private DistanceToStopView mDistanceToStopView;
-
-    private ArrayList<ArrivalInfo> mArrivalInfo;
 
     private boolean mIsSlidingPanelCollapsed = false;
 
@@ -177,6 +186,7 @@ class ArrivalsListHeader {
 
         // Initialize stop info view
         final ObaRegion obaRegion = Application.get().getCurrentRegion();
+
         if (obaRegion == null || TextUtils.isEmpty(obaRegion.getStopInfoUrl())) {
             // This region doesn't support StopInfo - hide the info icon
             mStopInfo.setVisibility(View.GONE);
@@ -319,26 +329,52 @@ class ArrivalsListHeader {
     private void refreshArrivalInfo() {
         mArrivalInfo = mController.getArrivalInfo();
 
-        if (mArrivalInfo != null && mArrivalInfo.size() > 0) {
-            long eta = mArrivalInfo.get(0).getEta();
-            if (eta == 0) {
-                mArrivalInfoView.setText("*" + mContext.getString(R.string.stop_info_eta_now));
-            } else if (eta > 0) {
-                mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_arrival_info,
-                        eta));
-            } else if (eta < 0) {
-                mArrivalInfoView.setText((mContext.getString(R.string.stop_info_header_just_left)));
+        StringBuilder arrivalInfo = new StringBuilder();
+
+        if (mController.getRouteDisplayNames().size() > 1) {
+            // More than one route will be displayed, so add highlight
+            arrivalInfo.append("* ");
+        }
+
+        if (mArrivalInfo != null) {
+            if (mArrivalInfo.size() > 0) {
+                // We have arrival info for at least one bus
+                long eta = mArrivalInfo.get(0).getEta();
+                if (eta == 0) {
+                    arrivalInfo.append(mContext.getString(R.string.stop_info_eta_now));
+                    mArrivalInfoView.setText(arrivalInfo);
+                } else if (eta > 0) {
+                    mArrivalInfoView
+                            .setText(mContext.getString(R.string.stop_info_header_arrival_info,
+                                    eta));
+                } else if (eta < 0) {
+                    arrivalInfo.append(mContext.getString(R.string.stop_info_header_just_left));
+                    mArrivalInfoView.setText(arrivalInfo);
+                }
+            } else if (mArrivalInfo.size() == 0) {
+                // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
+                int minAfter = mController.getMinutesAfter();
+                if (minAfter != -1) {
+                    mArrivalInfoView
+                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, true));
+                } else {
+                    // If we don't have the precise minAfter value, show a generic message
+                    mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_later));
+                }
             }
         }
     }
 
-
     private void refreshRouteDisplayNames() {
         List<String> routeDisplayNames = mController.getRouteDisplayNames();
         String nextArrivalRouteShortName = "";
-        if (mArrivalInfo != null && mArrivalInfo.size() > 0 && mIsSlidingPanelCollapsed) {
-            // Only highlight the route if the sliding panel is collapsed
+        if (mArrivalInfo != null && mArrivalInfo.size() > 0 && routeDisplayNames.size() > 1
+                && mIsSlidingPanelCollapsed) {
+            // Only highlight the route if there is more than one route and the sliding panel is collapsed
             nextArrivalRouteShortName = mArrivalInfo.get(0).getInfo().getShortName();
+
+            // TODO - Improve to highlight more than one route when next X routes have same
+            // arrival info (e.g., "just left", "NOW", "1 min")
         }
 
         if (routeDisplayNames != null) {
@@ -411,6 +447,7 @@ class ArrivalsListHeader {
             UIHelp.showViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         }
 
+        // Hide progress bar
         UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
     }
 

@@ -289,7 +289,7 @@ public class ArrivalsListFragment extends ListFragment
         // Set initial minutesAfter value in the empty list view
         setEmptyText(
                 UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
-                        false)
+                        false, false)
         );
     }
 
@@ -315,11 +315,6 @@ public class ArrivalsListFragment extends ListFragment
             mListener.onListViewCreated(getListView());
         }
 
-        if (mHeader != null) {
-            mHeader.onResume();
-            mHeader.refresh();
-        }
-
         // Try to show any old data just in case we're coming out of sleep
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader != null) {
@@ -341,6 +336,11 @@ public class ArrivalsListFragment extends ListFragment
             refresh();
         } else {
             mRefreshHandler.postDelayed(mRefresh, newPeriod);
+        }
+
+        if (mHeader != null) {
+            mHeader.onResume();
+            mHeader.refresh();
         }
 
         super.onResume();
@@ -426,7 +426,7 @@ public class ArrivalsListFragment extends ListFragment
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),
                         UIHelp.getNoArrivalsMessage(getActivity(),
-                                getArrivalsLoader().getMinutesAfter(), true),
+                                getArrivalsLoader().getMinutesAfter(), true, false),
                         Toast.LENGTH_LONG
                 ).show();
                 mLoadedMoreArrivals = false;  // Only show the toast once
@@ -452,10 +452,6 @@ public class ArrivalsListFragment extends ListFragment
     private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
         mArrivalInfo = info;
 
-        if (mHeader != null) {
-            mHeader.refresh();
-        }
-
         // Convert any stop situations into a list of alerts
         if (situations != null) {
             refreshSituations(situations);
@@ -466,8 +462,12 @@ public class ArrivalsListFragment extends ListFragment
         if (info != null) {
             // Reset the empty text just in case there is no data.
             setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(),
-                    getArrivalsLoader().getMinutesAfter(), false));
+                    getArrivalsLoader().getMinutesAfter(), false, false));
             mAdapter.setData(info, mRoutesFilter);
+        }
+
+        if (mHeader != null) {
+            mHeader.refresh();
         }
     }
 
@@ -639,6 +639,23 @@ public class ArrivalsListFragment extends ListFragment
             list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter);
         }
         return list;
+    }
+
+    /**
+     * Returns the range of arrival times (i.e., for the next "minutesAfter" minutes), or -1 if
+     * this information isn't available
+     *
+     * @return the range of arrival times (i.e., for the next "minutesAfter" minutes), or -1 if
+     * this information isn't available
+     */
+    @Override
+    public int getMinutesAfter() {
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            return loader.getMinutesAfter();
+        } else {
+            return -1;
+        }
     }
 
     @Override

@@ -123,18 +123,32 @@
     <string name="stop_info_option_removestar">Remove Star</string>
     <string name="stop_info_option_reportproblem">Report Problem</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
+    <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
         <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
     </plurals>
+    <plurals name="stop_info_nodata_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ minutes.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+    </plurals>
     <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d
         minutes.
     </string>
+    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
         <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+    </plurals>
+    <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
@@ -147,8 +161,9 @@
     <string name="stop_info_old_data">Data updated %s</string>
     <string name="stop_info_favorite">Favorite stop</string>
     <string name="stop_info_route_ids_label">Routes:</string>
-    <string name="stop_info_header_arrival_info">* in %1$d min</string>
-    <string name="stop_info_header_just_left">* just left</string>
+    <string name="stop_info_header_arrival_info">%1$d min</string>
+    <string name="stop_info_header_just_left">just left</string>
+    <string name="stop_info_header_later">later</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>

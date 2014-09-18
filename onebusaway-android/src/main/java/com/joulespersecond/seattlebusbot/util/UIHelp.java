@@ -289,6 +289,10 @@ public final class UIHelp {
             String nextArrivalRouteShortName) {
         Collections.sort(routeDisplayNames, new AlphanumComparator());
         StringBuffer sb = new StringBuffer();
+
+        // TODO - Improve to highlight more than one route when next X routes have same
+        // arrival info (e.g., "just left", "NOW", "1 min")
+
         for (int i = 0; i < routeDisplayNames.size(); i++) {
             if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
                 // If this route name matches the route name for the next arrival, highlight this route in the text
@@ -452,28 +456,65 @@ public final class UIHelp {
      * @param minutes            number of minutes for which there are no upcoming arrivals
      * @param additionalArrivals true if the response should include the word additional, false if
      *                           it should not
+     * @param shortFormat true if the format should be abbreviated, false if it should be long
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
     public static String getNoArrivalsMessage(Context context, int minutes,
-                                              boolean additionalArrivals) {
+            boolean additionalArrivals, boolean shortFormat) {
         if (minutes <= MINUTES_IN_HOUR) {
             // Return just minutes
             if (additionalArrivals) {
-                return context.getString(R.string.stop_info_no_additional_data_minutes, minutes);
+                if (shortFormat) {
+                    // Abbreviated version
+                    return context
+                            .getString(R.string.stop_info_no_additional_data_minutes_short_format,
+                                    minutes);
+                } else {
+                    // Long version
+                    return context
+                            .getString(R.string.stop_info_no_additional_data_minutes, minutes);
+                }
             } else {
-                return context.getString(R.string.stop_info_nodata_minutes, minutes);
+                if (shortFormat) {
+                    // Abbreviated version
+                    return context
+                            .getString(R.string.stop_info_nodata_minutes_short_format, minutes);
+                } else {
+                    // Long version
+                    return context.getString(R.string.stop_info_nodata_minutes, minutes);
+                }
             }
         } else {
             // Return hours and minutes
             if (additionalArrivals) {
-                return context.getResources()
-                        .getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes,
-                                minutes / 60, minutes % 60, minutes / 60);
+                if (shortFormat) {
+                    // Abbreviated version
+                    return context.getResources()
+                            .getQuantityString(
+                                    R.plurals.stop_info_no_additional_data_hours_minutes_short_format,
+                                    minutes / 60, minutes % 60, minutes / 60);
+                } else {
+                    // Long version
+                    return context.getResources()
+                            .getQuantityString(R.plurals.stop_info_no_additional_data_hours_minutes,
+                                    minutes / 60, minutes % 60, minutes / 60);
+                }
             } else {
-                return context.getResources()
-                        .getQuantityString(R.plurals.stop_info_nodata_hours_minutes, minutes / 60,
-                                minutes % 60, minutes / 60);
+                if (shortFormat) {
+                    // Abbreviated version
+                    return context.getResources()
+                            .getQuantityString(
+                                    R.plurals.stop_info_nodata_hours_minutes_short_format,
+                                    minutes / 60,
+                                    minutes % 60, minutes / 60);
+                } else {
+                    // Long version
+                    return context.getResources()
+                            .getQuantityString(R.plurals.stop_info_nodata_hours_minutes,
+                                    minutes / 60,
+                                    minutes % 60, minutes / 60);
+                }
             }
         }
     }

@@ -631,6 +631,11 @@ public class ArrivalsListFragment extends ListFragment
         }
     }
 
+    /**
+     * Returns a sorted list (by ETA) of arrival times for the current stop
+     *
+     * @return a sorted list (by ETA) of arrival times for the current stop
+     */
     @Override
     public ArrayList<ArrivalInfo> getArrivalInfo() {
         ArrayList<ArrivalInfo> list = null;

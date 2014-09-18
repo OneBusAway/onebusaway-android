@@ -65,7 +65,7 @@ class ArrivalsListHeader {
 
         long getLastGoodResponseTime();
 
-        // Returns a sorted list of arrival times for the current stop
+        // Returns a sorted list (by ETA) of arrival times for the current stop
         ArrayList<ArrivalInfo> getArrivalInfo();
 
         ArrayList<String> getRoutesFilter();
@@ -367,20 +367,38 @@ class ArrivalsListHeader {
 
     private void refreshRouteDisplayNames() {
         List<String> routeDisplayNames = mController.getRouteDisplayNames();
-        String nextArrivalRouteShortName = "";
+        ArrayList<String> nextArrivalRouteShortNames = new ArrayList<String>();
+
         if (mArrivalInfo != null && mArrivalInfo.size() > 0 && routeDisplayNames.size() > 1
                 && mIsSlidingPanelCollapsed) {
-            // Only highlight the route if there is more than one route and the sliding panel is collapsed
-            nextArrivalRouteShortName = mArrivalInfo.get(0).getInfo().getShortName();
+            // Only highlight routes if there is more than one route and the sliding panel is collapsed.
+            // Always highlight the route for the next ETA
+            String firstArrivalShortName = mArrivalInfo.get(0).getInfo().getShortName();
+            long firstEta = mArrivalInfo.get(0).getEta();
+            nextArrivalRouteShortNames.add(firstArrivalShortName);
 
-            // TODO - Improve to highlight more than one route when next X routes have same
-            // arrival info (e.g., "just left", "NOW", "1 min")
+            // Add the routes for the next X sequential arrivals that have the same eta status
+            // (e.g., "just left", "NOW", "1 min") so we highlight more than one route in the header
+            for (int i = 1; i < mArrivalInfo.size(); i++) {
+                if (mArrivalInfo.get(i).getEta() < 0 && firstEta < 0) {
+                    // All arrival times less than 0 are grouped into the same "Just left" message,
+                    // so add any sequential routes that also have negative ETAs
+                    nextArrivalRouteShortNames.add(mArrivalInfo.get(i).getInfo().getShortName());
+                } else if (mArrivalInfo.get(i).getEta() == firstEta) {
+                    // All ETA == first ETA can also be highlighted
+                    nextArrivalRouteShortNames.add(mArrivalInfo.get(i).getInfo().getShortName());
+                } else {
+                    // No match, so break entirely, since no
+                    break;
+                }
+            }
         }
 
         if (routeDisplayNames != null) {
             mRouteIdView.setText(
                     mContext.getString(R.string.stop_info_route_ids_label) + " " + UIHelp
-                            .formatRouteDisplayNames(routeDisplayNames, nextArrivalRouteShortName));
+                            .formatRouteDisplayNames(routeDisplayNames,
+                                    nextArrivalRouteShortNames));
             mRouteIdView.setVisibility(View.VISIBLE);
         } else {
             mRouteIdView.setVisibility(View.GONE);

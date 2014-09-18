@@ -35,16 +35,17 @@ public class UIUtilTest extends AndroidTestCase {
     public void testFormatRouteDisplayNames() {
         String formattedString;
         ArrayList<String> routes = new ArrayList<String>();
+        ArrayList<String> highlightedRoutes = new ArrayList<String>();
 
         routes.add("1");
         routes.add("5");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
+        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
         routes.add("5");
         routes.add("1");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
+        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
@@ -53,8 +54,33 @@ public class UIUtilTest extends AndroidTestCase {
         routes.add("15");
         routes.add("8b");
         routes.add("8a");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, "");
+        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5, 8a, 8b, 15", formattedString);
+
+        // Test highlighting one URL
+        routes.clear();
+        routes.add("5");
+        routes.add("1");
+        routes.add("15");
+        routes.add("8b");
+        routes.add("8a");
+        highlightedRoutes.add("1");
+        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        assertEquals("1*, 5, 8a, 8b, 15", formattedString);
+
+        // Test highlighting several URLs
+        routes.clear();
+        highlightedRoutes.clear();
+        routes.add("5");
+        routes.add("1");
+        routes.add("15");
+        routes.add("8b");
+        routes.add("8a");
+        highlightedRoutes.add("1");
+        highlightedRoutes.add("8b");
+        highlightedRoutes.add("15");
+        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        assertEquals("1*, 5, 8a, 8b*, 15*", formattedString);
     }
 
 }

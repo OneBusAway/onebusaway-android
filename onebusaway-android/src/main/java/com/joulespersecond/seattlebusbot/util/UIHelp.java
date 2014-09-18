@@ -282,20 +282,26 @@ public final class UIHelp {
      * 4, 8b, 11, 15
      *
      * @param routeDisplayNames list of route display names
-     * @param nextArrivalRouteShortName the short route name of the next arrival at the stop.  This will be highlighted in the results.
+     * @param nextArrivalRouteShortNames the short route names of the next X arrivals at the stop that are the same.  These will be highlighted in the results.
      * @return a formatted and sorted list of route display names for presentation in a single line
      */
     public static String formatRouteDisplayNames(List<String> routeDisplayNames,
-            String nextArrivalRouteShortName) {
+            List<String> nextArrivalRouteShortNames) {
         Collections.sort(routeDisplayNames, new AlphanumComparator());
         StringBuffer sb = new StringBuffer();
 
-        // TODO - Improve to highlight more than one route when next X routes have same
-        // arrival info (e.g., "just left", "NOW", "1 min")
-
         for (int i = 0; i < routeDisplayNames.size(); i++) {
-            if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
-                // If this route name matches the route name for the next arrival, highlight this route in the text
+            boolean match = false;
+
+            for (String nextArrivalRouteShortName : nextArrivalRouteShortNames) {
+                if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
+                    match = true;
+                    break;
+                }
+            }
+
+            if (match) {
+                // If this route name matches a route name for the next X arrivals that are the same, highlight this route in the text
                 sb.append(routeDisplayNames.get(i) + "*");
             } else {
                 // Just append the normally-formatted route name

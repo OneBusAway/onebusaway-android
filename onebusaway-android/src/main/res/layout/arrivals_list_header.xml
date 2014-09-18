@@ -86,7 +86,7 @@
     </LinearLayout>
 
     <RelativeLayout
-            android:id="@+id/name_and_info_container"
+            android:id="@+id/stop_details_container"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:layout_toRightOf="@+id/stop_favorite"
@@ -100,15 +100,39 @@
                 android:layout_centerVertical="true"
                 android:paddingLeft="@dimen/arrivals_header_pad_left">
 
-            <TextView
-                    android:id="@+id/stop_name"
-                    style="@style/HeaderText"
-                    android:ellipsize="end"
-                    android:singleLine="true"
+            <LinearLayout
+                    android:id="@+id/stop_name_and_info_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="left"
-                    android:layout_alignParentLeft="true"/>
+                    android:weightSum="1">
+                <TextView
+                        android:id="@+id/stop_name"
+                        style="@style/HeaderText"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left"
+                        android:layout_weight=".95"/>
+
+                <ImageButton
+                        android:id="@+id/stop_info"
+                        android:src="@drawable/ic_stop_info"
+                        android:background="@null"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="3dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight=".05"
+                        android:paddingTop="2dp"
+                        android:minWidth="23dp"
+                        android:maxWidth="23dp"
+                        android:minHeight="23dp"
+                        android:maxHeight="23dp"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"/>
+            </LinearLayout>
 
             <TextView
                     android:id="@+id/routeIds"
@@ -118,7 +142,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="left"
-                    android:layout_below="@id/stop_name"
+                    android:layout_below="@id/stop_name_and_info_container"
                     android:includeFontPadding="false"/>
 
             <TextView
@@ -133,22 +157,6 @@
                     android:includeFontPadding="false"/>
         </RelativeLayout>
 
-        <ImageButton
-                android:id="@+id/stop_info"
-                android:src="@drawable/ic_stop_info"
-                android:background="@null"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxWidth="23dp"
-                android:maxHeight="23dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:layout_alignTop="@id/name_container"
-                android:layout_toRightOf="@id/name_container"
-                android:paddingTop="4dp"
-                android:layout_marginLeft="3dp"
-                android:layout_marginRight="2dp"
-                />
     </RelativeLayout>
 
     <View

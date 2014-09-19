@@ -114,15 +114,15 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
                     // TODO - Method of guessing metric/imperial can definitely be improved
                     if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
                         // Assume imperial
-                        setDistanceTextView(this, miles, IMPERIAL);
+                        setDistanceTextView(miles, IMPERIAL);
                     } else {
                         // Assume metric
-                        setDistanceTextView(this, distance, METRIC);
+                        setDistanceTextView(distance, METRIC);
                     }
                 } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
-                    setDistanceTextView(this, miles, IMPERIAL);
+                    setDistanceTextView(miles, IMPERIAL);
                 } else if (preferredUnits.equalsIgnoreCase(METRIC)) {
-                    setDistanceTextView(this, distance, METRIC);
+                    setDistanceTextView(distance, METRIC);
                 }
                 return;
             }
@@ -135,12 +135,11 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
     /**
      * Sets the text view that contains distance with units based on input parameters
      *
-     * @param text     the TextView to be set
      * @param distance the distance to be used, in miles (for imperial) or kilometers (for metric)
      * @param units    the units to be used from strings.xml, either preferences_preferred_units_option_metric
      *                 or preferences_preferred_units_option_imperial
      */
-    private void setDistanceTextView(TextView text, double distance, String units) {
+    private void setDistanceTextView(double distance, String units) {
         // Set TextView text
         // TODO - Set ContentDescription to be read by screen readers
         if (units.equalsIgnoreCase(

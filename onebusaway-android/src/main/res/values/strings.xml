@@ -270,16 +270,33 @@
     <string name="report_problem_uservehicle_hint">optional</string>
 
     <!-- Region list -->
-    <plurals name="region_distance_miles">
-        <item quantity="one">1 mile away</item>
+    <plurals name="distance_miles">
+    <item quantity="one">1 mile away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
     </plurals>
-    <plurals name="region_distance_kilometers">
-        <item quantity="one">1 kilometer away</item>
+    <plurals name="distance_feet">
+        <item quantity="one">1 foot away</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            feet away
+        </item>
+    </plurals>
+    <plurals name="distance_kilometers">
+    <item quantity="one">1 kilometer away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> kilometers away</item>
     </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">1 meter away</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            meters away
+        </item>
+    </plurals>
+
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
     <string name="region_detecting_server">Finding your transit services&#8230;</string>

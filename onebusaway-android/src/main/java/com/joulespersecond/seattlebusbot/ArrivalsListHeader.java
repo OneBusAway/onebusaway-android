@@ -275,6 +275,9 @@ class ArrivalsListHeader {
         // Resume monitoring of sensors and location
         mOrientationHelper.onResume();
         mLocationHelper.onResume();
+
+        // Refresh preference for units
+        mDistanceToStopView.refreshUnitsPreference();
     }
 
     /**

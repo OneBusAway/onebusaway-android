@@ -315,17 +315,17 @@ public class RegionsFragment extends ListFragment
         Resources r = getResources();
         NumberFormat fmt = NumberFormat.getInstance();
         if (fmt instanceof DecimalFormat) {
-            ((DecimalFormat) fmt).setMaximumFractionDigits(1);
+            fmt.setMaximumFractionDigits(1);
         }
 
         if (units.equalsIgnoreCase(
                 getString(R.string.preferences_preferred_units_option_imperial))) {
-            text.setText(r.getQuantityString(R.plurals.region_distance_miles,
+            text.setText(r.getQuantityString(R.plurals.distance_miles,
                     (int) distance,
                     fmt.format(distance)));
-        } else if (units
-                .equalsIgnoreCase(getString(R.string.preferences_preferred_units_option_metric))) {
-            text.setText(r.getQuantityString(R.plurals.region_distance_kilometers,
+        } else if (units.equalsIgnoreCase(
+                getString(R.string.preferences_preferred_units_option_metric))) {
+            text.setText(r.getQuantityString(R.plurals.distance_kilometers,
                     (int) distance,
                     fmt.format(distance)));
         }

@@ -331,7 +331,8 @@ class ArrivalsListHeader {
 
         StringBuilder arrivalInfo = new StringBuilder();
 
-        if (mController.getRouteDisplayNames().size() > 1) {
+        if (mController != null & mController.getRouteDisplayNames() != null &&
+                mController.getRouteDisplayNames().size() > 1) {
             // More than one route will be displayed, so add highlight
             arrivalInfo.append("* ");
         }

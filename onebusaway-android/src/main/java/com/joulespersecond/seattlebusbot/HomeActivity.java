@@ -197,6 +197,16 @@ public class HomeActivity extends SherlockFragmentActivity
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+        // Make sure header has sliding panel state
+        if (mArrivalsListHeader != null && mSlidingPanel != null) {
+            mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
+        }
+    }
+
+    @Override
     public void onStop() {
         // Tear down LocationClient
         if (mLocationClient != null && mLocationClient.isConnected()) {
@@ -442,8 +452,7 @@ public class HomeActivity extends SherlockFragmentActivity
 
         // Set the header for the arrival list to be the top of the sliding panel
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
-        mArrivalsListHeader.setSlidingPanelCollapsed(
-                !(mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored()));
+        mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
 
         if (stop != null && routes != null) {
@@ -622,6 +631,10 @@ public class HomeActivity extends SherlockFragmentActivity
                 updateArrivalListFragment(stopId, null, null);
             }
         }
+    }
+
+    private boolean isSlidingPanelCollapsed() {
+        return !(mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored());
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

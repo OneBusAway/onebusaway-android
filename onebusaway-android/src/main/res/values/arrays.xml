@@ -96,4 +96,41 @@
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
     </string-array>
+
+    <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
+         towards the selected bus stop instead of N/S/E/W. -->
+    <string-array name="spoken_compass_directions">
+        <item>straight ahead</item>
+        <!-- North -->
+        <item>slight left</item>
+        <!-- NNE -->
+        <item>slight left</item>
+        <!-- NE -->
+        <item>left</item>
+        <!-- ENE -->
+        <item>left</item>
+        <!-- East -->
+        <item>behind you to left</item>
+        <!-- ESE -->
+        <item>behind you to left</item>
+        <!-- SE -->
+        <item>behind you to left</item>
+        <!-- SSE -->
+        <item>straight behind you</item>
+        <!-- South -->
+        <item>behind you to right</item>
+        <!-- SSW -->
+        <item>behind you to right</item>
+        <!-- SW -->
+        <item>behind you to right</item>
+        <!-- WSW -->
+        <item>right</item>
+        <!-- West -->
+        <item>right</item>
+        <!-- WNW -->
+        <item>slight right</item>
+        <!-- NW -->
+        <item>slight right</item>
+        <!-- NNW -->
+    </string-array>
 </resources>

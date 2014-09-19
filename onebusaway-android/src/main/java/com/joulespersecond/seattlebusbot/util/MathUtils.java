@@ -18,9 +18,12 @@ package com.joulespersecond.seattlebusbot.util;
 /**
  * A utility class containing arithmetic and geometry helper methods.
  *
- * (from Glass Compass sample)
+ * (from Glass Compass sample - https://github.com/googleglass/gdk-compass-sample/)
  */
 public class MathUtils {
+
+    /** The number of half winds for boxing the compass. */
+    private static final int NUMBER_OF_HALF_WINDS = 16;
 
     /**
      * Calculates {@code a mod b} in a way that respects negative values (for example,
@@ -32,5 +35,19 @@ public class MathUtils {
      */
     public static float mod(float a, float b) {
         return (a % b + b) % b;
+    }
+
+    /**
+     * Converts the specified heading angle into an index between 0-15 that can be used to retrieve
+     * the direction name for that heading (known as "boxing the compass", down to the half-wind
+     * level).
+     *
+     * @param heading the heading angle
+     * @return the index of the direction name for the angle
+     */
+    public static int getHalfWindIndex(float heading) {
+        float partitionSize = 360.0f / NUMBER_OF_HALF_WINDS;
+        float displacedHeading = MathUtils.mod(heading + partitionSize / 2, 360.0f);
+        return (int) (displacedHeading / partitionSize);
     }
 }

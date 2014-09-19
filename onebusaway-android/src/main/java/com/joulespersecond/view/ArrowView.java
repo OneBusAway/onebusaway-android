@@ -16,6 +16,7 @@
 
 package com.joulespersecond.view;
 
+import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.util.LocationHelper;
 import com.joulespersecond.seattlebusbot.util.MathUtils;
 import com.joulespersecond.seattlebusbot.util.OrientationHelper;
@@ -143,5 +144,11 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
         c.drawPath(path, mArrowPaint);
         c.drawPath(path, mArrowFillPaint);
+
+        // Update content description, so screen readers can announce direction to stop
+        String[] spokenDirections = getResources()
+                .getStringArray(R.array.spoken_compass_directions);
+        String directionName = spokenDirections[MathUtils.getHalfWindIndex(direction)];
+        setContentDescription(directionName);
     }
 }

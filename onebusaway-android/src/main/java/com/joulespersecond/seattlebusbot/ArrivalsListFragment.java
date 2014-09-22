@@ -817,6 +817,9 @@ public class ArrivalsListFragment extends ListFragment
             mHeader = new ArrivalsListHeader(getActivity(), this);
             mHeaderView = getView().findViewById(R.id.arrivals_list_header);
             mHeader.initView(mHeaderView);
+            mHeader.showExpandCollapseIndicator(false);
+            // Header is not in a sliding panel, so set collapsed state to false
+            mHeader.setSlidingPanelCollapsed(false);
         } else {
             // The header is in another layout (e.g., sliding panel), so we need to remove the header in this layout
             getView().findViewById(R.id.arrivals_list_header).setVisibility(View.GONE);

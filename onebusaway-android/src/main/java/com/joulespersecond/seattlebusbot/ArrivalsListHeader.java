@@ -32,6 +32,8 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -127,7 +129,8 @@ class ArrivalsListHeader {
 
     private DistanceToStopView mDistanceToStopView;
 
-    private boolean mIsSlidingPanelCollapsed = false;
+    // Default state for the header is inside a sliding fragment
+    private boolean mIsSlidingPanelCollapsed = true;
 
     private int mShortAnimationDuration;
 
@@ -139,10 +142,19 @@ class ArrivalsListHeader {
 
     private ImageButton mStopInfo;
 
+    private ImageView mExpandCollapse;
+
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
 
     LocationHelper mLocationHelper;
+
+    // Animations
+    private static final int ANIM_PIVOT_TYPE = Animation.RELATIVE_TO_SELF;
+    private static final float ANIM_PIVOT_VALUE = 0.5f;  // 50%
+    private static final float ANIM_STATE_NORMAL = 0.0f;  // 0 degrees (no rotation)
+    private static final float ANIM_STATE_INVERTED = -180.0f;  // -180 degrees
+    private static final long ANIM_DURATION = 300;  // milliseconds
 
     ArrivalsListHeader(Context context, Controller controller) {
         mController = controller;
@@ -176,6 +188,7 @@ class ArrivalsListHeader {
         mLocationHelper.registerListener(mDistanceToStopView);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
+        mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
 
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
@@ -290,7 +303,50 @@ class ArrivalsListHeader {
     }
 
     public void setSlidingPanelCollapsed(boolean collapsed) {
-        mIsSlidingPanelCollapsed = collapsed;
+        // If the state has changed and image is initialized, then rotate the expand/collapse image
+        if (mExpandCollapse != null && collapsed != mIsSlidingPanelCollapsed) {
+            RotateAnimation rotate;
+
+            // Update value
+            mIsSlidingPanelCollapsed = collapsed;
+
+            if (!collapsed) {
+                // Rotate counter-clockwise
+                rotate = getRotation(ANIM_STATE_NORMAL, ANIM_STATE_INVERTED);
+            } else {
+                // Rotate clockwise
+                rotate = getRotation(ANIM_STATE_INVERTED, ANIM_STATE_NORMAL);
+            }
+
+            mExpandCollapse.setAnimation(rotate);
+        }
+    }
+
+    public void showExpandCollapseIndicator(boolean value) {
+        if (mExpandCollapse != null) {
+            if (value) {
+                mExpandCollapse.setVisibility(View.VISIBLE);
+            } else {
+                mExpandCollapse.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    /**
+     * Creates and returns a new rotation animation for the expand/collapse image based on the
+     * provided startState and endState.
+     *
+     * @param startState beginning state of the image, either ANIM_STATE_NORMAL or ANIM_STATE_INVERTED
+     * @param endState end state of the image, either ANIM_STATE_NORMAL or ANIM_STATE_INVERTED
+     * @return a new rotation animation for the expand/collapse image
+     */
+    private RotateAnimation getRotation(float startState, float endState) {
+        RotateAnimation r =  new RotateAnimation(startState, endState,
+                Animation.RELATIVE_TO_SELF, ANIM_PIVOT_VALUE,
+                Animation.RELATIVE_TO_SELF, ANIM_PIVOT_VALUE);
+        r.setDuration(ANIM_DURATION);
+        r.setFillAfter(true);
+        return r;
     }
 
     private final ClickableSpan mShowAllClick = new ClickableSpan() {

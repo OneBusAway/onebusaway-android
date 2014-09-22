@@ -277,4 +277,13 @@
                 android:bufferType="spannable"
                 android:linksClickable="true"/>
     </LinearLayout>
+
+    <ImageView
+            android:id="@+id/expand_collapse"
+            android:src="@drawable/ic_action_expand_edited"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="1dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
 </RelativeLayout>

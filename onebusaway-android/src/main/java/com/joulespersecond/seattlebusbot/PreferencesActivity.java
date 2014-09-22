@@ -89,8 +89,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_region))
                 || preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_oba_api_url))) {
             if (Application.get().getCurrentRegion() != null) {
-                regionPref.setSummary(getString(R.string.preferences_region_summary,
-                        Application.get().getCurrentRegion().getName()));
+                regionPref.setSummary(Application.get().getCurrentRegion().getName());
                 customApiUrlPref
                         .setSummary(getString(R.string.preferences_oba_api_servername_summary));
             } else {

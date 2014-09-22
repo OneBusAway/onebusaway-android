@@ -19,8 +19,7 @@
     <PreferenceCategory android:title="@string/preferences_category_location">
         <Preference
                 android:key="@string/preference_key_region"
-                android:title="@string/preferences_region_title"
-                android:summary="@string/preferences_region_summary"/>
+                android:title="@string/preferences_region_title"/>
         <CheckBoxPreference
                 android:key="@string/preference_key_auto_select_region"
                 android:title="@string/preferences_auto_select_region_title"

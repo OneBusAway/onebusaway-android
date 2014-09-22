@@ -93,22 +93,34 @@
     <plurals name="stop_info_arrive_delayed">
         <item quantity="one">1 minute delay</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%d</xliff:g> minute delay</item>
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            minute delay
+        </item>
     </plurals>
     <plurals name="stop_info_arrive_early">
         <item quantity="one">1 minute early</item>
         <!-- Below element should remain on same line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%d</xliff:g> minutes early</item>
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            minutes early
+        </item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
         <item quantity="one">Departed 1 minute late</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes late</item>
+        <item quantity="other">Departed
+            <xliff:g id="count">%d</xliff:g>
+            minutes late
+        </item>
     </plurals>
     <plurals name="stop_info_depart_early">
         <item quantity="one">Departed 1 minute early</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">Departed <xliff:g id="count">%d</xliff:g> minutes early</item>
+        <item quantity="other">Departed
+            <xliff:g id="count">%d</xliff:g>
+            minutes early
+        </item>
     </plurals>
     <string name="stop_info_scheduled_arrival">Scheduled arrival</string>
     <string name="stop_info_scheduled_departure">Scheduled departure</string>
@@ -127,7 +139,10 @@
     <plurals name="stop_info_nodata_hours_minutes">
         <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+        <item quantity="other">No arrivals in the next
+            <xliff:g id="count">%2$d</xliff:g>
+            hours and %1$d minutes.
+        </item>
     </plurals>
     <plurals name="stop_info_nodata_hours_minutes_short_format">
         <item quantity="one">1h %1$d+ minutes.</item>
@@ -142,7 +157,10 @@
     <plurals name="stop_info_no_additional_data_hours_minutes">
         <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+        <item quantity="other">No additional arrivals in the next
+            <xliff:g id="count">%2$d</xliff:g>
+            hours and %1$d minutes.
+        </item>
     </plurals>
     <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
         <item quantity="one">1h %1$d+ min</item>
@@ -271,9 +289,12 @@
 
     <!-- Region list -->
     <plurals name="distance_miles">
-    <item quantity="one">1 mile away</item>
+        <item quantity="one">1 mile away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            miles away
+        </item>
     </plurals>
     <plurals name="distance_feet">
         <item quantity="one">1 foot away</item>
@@ -284,9 +305,12 @@
         </item>
     </plurals>
     <plurals name="distance_kilometers">
-    <item quantity="one">1 kilometer away</item>
+        <item quantity="one">1 kilometer away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%s</xliff:g> kilometers away</item>
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            kilometers away
+        </item>
     </plurals>
     <plurals name="distance_meters">
         <item quantity="one">1 meter away</item>
@@ -324,7 +348,6 @@
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_region_title">Your region</string>
-    <string name="preferences_region_summary">%1$s is currently selected</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
     <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
     <string name="preferences_auto_refresh_regions_summary">Automatically updates region info

@@ -311,10 +311,10 @@ class ArrivalsListHeader {
             mIsSlidingPanelCollapsed = collapsed;
 
             if (!collapsed) {
-                // Rotate counter-clockwise
+                // Rotate clockwise
                 rotate = getRotation(ANIM_STATE_NORMAL, ANIM_STATE_INVERTED);
             } else {
-                // Rotate clockwise
+                // Rotate counter-clockwise
                 rotate = getRotation(ANIM_STATE_INVERTED, ANIM_STATE_NORMAL);
             }
 

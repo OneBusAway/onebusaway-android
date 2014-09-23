@@ -21,9 +21,11 @@ import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.R;
 
 import android.animation.Animator;
@@ -342,47 +344,59 @@ public final class UIHelp {
         }
     }
 
-    public static final int getRouteErrorString(Context context, int code) {
+    public static final String getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
-                return R.string.airplane_mode_error;
+                return context.getString(R.string.airplane_mode_error);
             } else {
-                return R.string.no_network_error;
+                return context.getString(R.string.no_network_error);
             }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
-                return R.string.internal_error;
+                return context.getString(R.string.internal_error);
             case ObaApi.OBA_NOT_FOUND:
-                return R.string.route_not_found_error;
+                ObaRegion r = Application.get().getCurrentRegion();
+                if (r != null) {
+                    return context.getString(R.string.route_not_found_error_with_region_name,
+                            r.getName());
+                } else {
+                    return context.getString(R.string.route_not_found_error_no_region);
+                }
             case ObaApi.OBA_BAD_GATEWAY:
-                return R.string.bad_gateway_error;
+                return context.getString(R.string.bad_gateway_error);
             case ObaApi.OBA_OUT_OF_MEMORY:
-                return R.string.out_of_memory_error;
+                return context.getString(R.string.out_of_memory_error);
             default:
-                return R.string.generic_comm_error;
+                return context.getString(R.string.generic_comm_error);
         }
     }
 
-    public static final int getStopErrorString(Context context, int code) {
+    public static final String getStopErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
-                return R.string.airplane_mode_error;
+                return context.getString(R.string.airplane_mode_error);
             } else {
-                return R.string.no_network_error;
+                return context.getString(R.string.no_network_error);
             }
         }
         switch (code) {
             case ObaApi.OBA_INTERNAL_ERROR:
-                return R.string.internal_error;
+                return context.getString(R.string.internal_error);
             case ObaApi.OBA_NOT_FOUND:
-                return R.string.stop_not_found_error;
+                ObaRegion r = Application.get().getCurrentRegion();
+                if (r != null) {
+                    return context
+                            .getString(R.string.stop_not_found_error_with_region_name, r.getName());
+                } else {
+                    return context.getString(R.string.stop_not_found_error_no_region);
+                }
             case ObaApi.OBA_BAD_GATEWAY:
-                return R.string.bad_gateway_error;
+                return context.getString(R.string.bad_gateway_error);
             case ObaApi.OBA_OUT_OF_MEMORY:
-                return R.string.out_of_memory_error;
+                return context.getString(R.string.out_of_memory_error);
             default:
-                return R.string.generic_comm_error;
+                return context.getString(R.string.generic_comm_error);
         }
     }
 

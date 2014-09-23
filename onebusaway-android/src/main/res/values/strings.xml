@@ -28,11 +28,29 @@
         information. Try again and it might work.
     </string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
-    <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a
-        shortcut, it\'s possible your link is out of date.
+    <string name="route_not_found_error_no_region">Sorry, that particular route can\'t be found. If
+        this was a
+        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        (Change in
+        \"Preferences->Your region\").
     </string>
-    <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a
-        shortcut, it\'s possible your link is out of date.
+    <string name="route_not_found_error_with_region_name">Sorry, that particular route can\'t be
+        found. If this was a
+        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        current region is
+        %1$s. Change in \"Preferences->Your region\").
+    </string>
+    <string name="stop_not_found_error_no_region">Sorry, that particular stop can\'t be found. If
+        this was a
+        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        (Change in
+        \"Preferences->Your region\").
+    </string>
+    <string name="stop_not_found_error_with_region_name">Sorry, that particular stop can\'t be
+        found. If this was a
+        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        current region is
+        %1$s. Change in \"Preferences->Your region\").
     </string>
     <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
     <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that

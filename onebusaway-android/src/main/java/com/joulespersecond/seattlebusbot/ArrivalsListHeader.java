@@ -150,10 +150,10 @@ class ArrivalsListHeader {
     LocationHelper mLocationHelper;
 
     // Animations
-    private static final int ANIM_PIVOT_TYPE = Animation.RELATIVE_TO_SELF;
     private static final float ANIM_PIVOT_VALUE = 0.5f;  // 50%
     private static final float ANIM_STATE_NORMAL = 0.0f;  // 0 degrees (no rotation)
-    private static final float ANIM_STATE_INVERTED = -180.0f;  // -180 degrees
+
+    private static final float ANIM_STATE_INVERTED = 180.0f;  // 180 degrees
     private static final long ANIM_DURATION = 300;  // milliseconds
 
     ArrivalsListHeader(Context context, Controller controller) {

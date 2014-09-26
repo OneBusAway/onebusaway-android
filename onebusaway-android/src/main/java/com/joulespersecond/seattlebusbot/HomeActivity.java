@@ -436,12 +436,13 @@ public class HomeActivity extends SherlockFragmentActivity
     @Override
     public void onBackPressed() {
         // Collapse the panel when the user presses the back button
-        if (mSlidingPanel != null && mSlidingPanel.isPanelExpanded() || mSlidingPanel
-                .isPanelAnchored()) {
-            mSlidingPanel.collapsePanel();
-        } else {
-            super.onBackPressed();
+        if (mSlidingPanel != null) {
+            if (mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored()) {
+                mSlidingPanel.collapsePanel();
+                return;
+            }
         }
+        super.onBackPressed();
     }
 
     private void updateArrivalListFragment(String stopId, ObaStop stop,

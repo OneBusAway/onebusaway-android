@@ -454,8 +454,8 @@ public class HomeActivity extends SherlockFragmentActivity
 
         // Set the header for the arrival list to be the top of the sliding panel
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
-        mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
+        mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields

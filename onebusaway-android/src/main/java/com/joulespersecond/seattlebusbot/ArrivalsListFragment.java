@@ -370,17 +370,6 @@ public class ArrivalsListFragment extends ListFragment
             }
             info = result.getArrivalInfo();
             situations = result.getSituations();
-
-            // Notify listener that we have new arrival info
-            if (mListener != null) {
-                final Handler handler = new Handler();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mListener.onArrivalTimesUpdated(result);
-                    }
-                });
-            }
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -433,7 +422,8 @@ public class ArrivalsListFragment extends ListFragment
             }
         }
 
-        //TestHelp.notifyLoadFinished(getActivity());
+        // Notify listener that we have new arrival info
+        mListener.onArrivalTimesUpdated(result);
     }
 
     /**

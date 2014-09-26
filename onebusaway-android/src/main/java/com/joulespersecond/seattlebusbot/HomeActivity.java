@@ -427,7 +427,9 @@ public class HomeActivity extends SherlockFragmentActivity
             }
 
             // ...and we should add a focus marker for this stop
-            mMapFragment.setFocusStop(mFocusedStop, response.getRoutes());
+            if (mMapFragment != null) {
+                mMapFragment.setFocusStop(mFocusedStop, response.getRoutes());
+            }
         }
     }
 

@@ -340,7 +340,7 @@ class ArrivalsListHeader {
      * @param endState end state of the image, either ANIM_STATE_NORMAL or ANIM_STATE_INVERTED
      * @return a new rotation animation for the expand/collapse image
      */
-    private RotateAnimation getRotation(float startState, float endState) {
+    private static RotateAnimation getRotation(float startState, float endState) {
         RotateAnimation r =  new RotateAnimation(startState, endState,
                 Animation.RELATIVE_TO_SELF, ANIM_PIVOT_VALUE,
                 Animation.RELATIVE_TO_SELF, ANIM_PIVOT_VALUE);
@@ -365,10 +365,7 @@ class ArrivalsListHeader {
         refreshFavorite();
         refreshFilter();
         refreshError();
-        if (mArrivalInfo != null) {
-            // If we have arrival info, we can show the right margin contents
-            showRightMarginContainer();
-        }
+        showRightMarginContainer();
     }
 
     private void refreshName() {
@@ -512,6 +509,10 @@ class ArrivalsListHeader {
      */
     private void showRightMarginContainer() {
         if (mIsSlidingPanelCollapsed) {
+            if (mArrivalInfo == null) {
+                // We don't have any arrival info yet, so return to leave the progress bar running
+                return;
+            }
             // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
             UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);

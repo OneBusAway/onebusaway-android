@@ -146,6 +146,8 @@ class ArrivalsListHeader {
 
     private ImageView mExpandCollapse;
 
+    private View mRightMarginSeparatorView;
+
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
 
@@ -191,6 +193,7 @@ class ArrivalsListHeader {
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
+        mRightMarginSeparatorView = mView.findViewById(R.id.right_margin_separator);
 
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
         // Register to be notified when the ArrowView and DistanceToStopView are completely initialized
@@ -326,24 +329,44 @@ class ArrivalsListHeader {
         mLocationHelper.onPause();
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     public void setSlidingPanelCollapsed(boolean collapsed) {
         // If the state has changed and image is initialized, then rotate the expand/collapse image
         if (mExpandCollapse != null && collapsed != mIsSlidingPanelCollapsed) {
-            RotateAnimation rotate;
-
             // Update value
             mIsSlidingPanelCollapsed = collapsed;
 
-            if (!collapsed) {
-                // Rotate clockwise
-                rotate = getRotation(ANIM_STATE_NORMAL, ANIM_STATE_INVERTED);
-            } else {
-                // Rotate counter-clockwise
-                rotate = getRotation(ANIM_STATE_INVERTED, ANIM_STATE_NORMAL);
+            if (!UIHelp.canAnimateViewModern()) {
+                rotateExpandCollapseImageViewLegacy(collapsed);
+                return;
             }
 
-            mExpandCollapse.setAnimation(rotate);
+            if (!collapsed) {
+                // Rotate clockwise
+                mExpandCollapse.animate()
+                        .setDuration(ANIM_DURATION)
+                        .rotationBy(ANIM_STATE_INVERTED);
+            } else {
+                // Rotate counter-clockwise
+                mExpandCollapse.animate()
+                        .setDuration(ANIM_DURATION)
+                        .rotationBy(-ANIM_STATE_INVERTED);
+            }
         }
+    }
+
+    private void rotateExpandCollapseImageViewLegacy(boolean isSlidingPanelCollapsed) {
+        RotateAnimation rotate;
+
+        if (!isSlidingPanelCollapsed) {
+            // Rotate clockwise
+            rotate = getRotation(ANIM_STATE_NORMAL, ANIM_STATE_INVERTED);
+        } else {
+            // Rotate counter-clockwise
+            rotate = getRotation(ANIM_STATE_INVERTED, ANIM_STATE_NORMAL);
+        }
+
+        mExpandCollapse.setAnimation(rotate);
     }
 
     public void showExpandCollapseIndicator(boolean value) {
@@ -654,8 +677,19 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.GONE);
         mRouteDirectionView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
-        mEditNameContainerView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.GONE);
+        mRightMarginSeparatorView.setVisibility(View.GONE);
+        mDistanceToStopView.setVisibility(View.GONE);
+        mArrowToStopView.setVisibility(View.GONE);
+        mBusStopIconView.setVisibility(View.GONE);
+        mArrivalInfoView.setVisibility(View.GONE);
+        if (!UIHelp.canAnimateViewModern()) {
+            // View won't disappear without clearing the legacy rotation animation
+            mExpandCollapse.clearAnimation();
+        }
+        mExpandCollapse.setVisibility(View.GONE);
+        mEditNameContainerView.setVisibility(View.VISIBLE);
+
         // TODO - Re-size the header layout to show the edit buttons
 //        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 //                ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -670,6 +704,8 @@ class ArrivalsListHeader {
         mEditNameContainerView.setVisibility(View.GONE);
         mRouteDirectionView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.VISIBLE);
+        mRightMarginSeparatorView.setVisibility(View.VISIBLE);
+        mExpandCollapse.setVisibility(View.VISIBLE);
         // TODO - Re-size the header layout back to 68dp
 //        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 //                ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -677,6 +713,6 @@ class ArrivalsListHeader {
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
-        refreshName();
+        refresh();
     }
 }

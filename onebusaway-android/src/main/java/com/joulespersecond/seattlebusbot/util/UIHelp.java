@@ -560,9 +560,9 @@ public final class UIHelp {
     /**
      * Returns true if the API level supports animating alpha values for Views, false if it doesn't
      *
-     * @return true if the API level supports animating alpha values for Views, false if it doesn't
+     * @return true if the API level supports animating Views using ViewPropertyAnimator, false if it doesn't
      */
-    public static boolean canAnimateViewAlpha() {
+    public static boolean canAnimateViewModern() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1;
     }
 
@@ -585,7 +585,7 @@ public final class UIHelp {
     @TargetApi(14)
     public static void showViewWithAnimation(final View v, int animationDuration) {
         // If we're on a legacy device, show the view without the animation
-        if (!canAnimateViewAlpha()) {
+        if (!canAnimateViewModern()) {
             showViewWithoutAnimation(v);
             return;
         }
@@ -636,7 +636,7 @@ public final class UIHelp {
     @TargetApi(14)
     public static void hideViewWithAnimation(final View v, int animationDuration) {
         // If we're on a legacy device, hide the view without the animation
-        if (!canAnimateViewAlpha()) {
+        if (!canAnimateViewModern()) {
             hideViewWithoutAnimation(v);
             return;
         }
@@ -689,7 +689,7 @@ public final class UIHelp {
             if (v.getVisibility() == View.VISIBLE) {
                 Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
                         + " is visible");
-                if (UIHelp.canAnimateViewAlpha()) {
+                if (UIHelp.canAnimateViewModern()) {
                     Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
                             + " alpha - " + v.getAlpha());
                 }

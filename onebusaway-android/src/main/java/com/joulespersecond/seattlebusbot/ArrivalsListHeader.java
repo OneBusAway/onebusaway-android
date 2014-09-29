@@ -22,10 +22,12 @@ import com.joulespersecond.seattlebusbot.util.UIHelp;
 import com.joulespersecond.view.ArrowView;
 import com.joulespersecond.view.DistanceToStopView;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
@@ -170,6 +172,10 @@ class ArrivalsListHeader {
     }
 
     void initView(View view) {
+        // Clear any existing arrival info
+        mArrivalInfo = null;
+
+        // Init views
         mView = view;
         mNameContainerView = mView.findViewById(R.id.name_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
@@ -179,19 +185,37 @@ class ArrivalsListHeader {
         mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
         mRouteDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
-        mArrowToStopView = (ArrowView) mView.findViewById(R.id.arrow);
+
         mBusStopIconView = (ImageView) mView.findViewById(R.id.header_bus_icon);
         mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
-        mOrientationHelper.registerListener(mArrowToStopView);
-        mLocationHelper.registerListener(mArrowToStopView);
-        mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
-        mLocationHelper.registerListener(mDistanceToStopView);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
 
+        mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
+        // Register to be notified when the ArrowView and DistanceToStopView are completely initialized
+        mDistanceToStopView.registerListener(new DistanceToStopView.Listener() {
+            @Override
+            public void onInitializationComplete() {
+                refresh();
+            }
+        });
+        mArrowToStopView = (ArrowView) mView.findViewById(R.id.arrow);
+        mArrowToStopView.registerListener(new ArrowView.Listener() {
+            @Override
+            public void onInitializationComplete() {
+                refresh();
+            }
+        });
+
+        // Register views for location and orientation updates
+        mOrientationHelper.registerListener(mArrowToStopView);
+        mLocationHelper.registerListener(mArrowToStopView);
+        mLocationHelper.registerListener(mDistanceToStopView);
+
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+
         UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
@@ -365,7 +389,7 @@ class ArrivalsListHeader {
         refreshFavorite();
         refreshFilter();
         refreshError();
-        showRightMarginContainer();
+        refreshRightMarginContainer();
     }
 
     private void refreshName() {
@@ -504,30 +528,42 @@ class ArrivalsListHeader {
     }
 
     /**
-     * Hiding the loading component, and replaces it with the correct content depending on sliding
+     * Hides the progress bar, and replaces it with the correct content depending on sliding
      * panel state
      */
-    private void showRightMarginContainer() {
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void refreshRightMarginContainer() {
         if (mIsSlidingPanelCollapsed) {
-            if (mArrivalInfo == null) {
-                // We don't have any arrival info yet, so return to leave the progress bar running
-                return;
-            }
             // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
             UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
+            if (mArrivalInfo == null) {
+                // We don't have any arrival info yet, so make sure the progress bar is running
+                UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+                return;
+            }
             UIHelp.showViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+
+            // Hide progress bar
+            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
         } else {
             // Cross-fade in direction arrow and distance to stop, and hide bus icon and arrival info
             UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
+
+            if (!mArrowToStopView.isInitialized() || !mDistanceToStopView.isInitialized()) {
+                // At least one of the views isn't ready yet, so make sure the progress bar is running
+                UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+                return;
+            }
+
             UIHelp.showViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
-        }
 
-        // Hide progress bar
-        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            // Hide progress bar
+            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+        }
     }
 
     private static class ResponseError implements AlertList.Alert {

@@ -251,7 +251,8 @@
             android:paddingRight="8dp"
             android:paddingBottom="5dp"
             android:layout_alignParentRight="true"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:visibility="visible"/>
 
     <LinearLayout
             android:id="@+id/filter_group"

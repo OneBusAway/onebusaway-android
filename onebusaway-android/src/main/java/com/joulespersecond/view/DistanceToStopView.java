@@ -27,6 +27,7 @@ import android.util.AttributeSet;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -34,11 +35,21 @@ import java.util.Locale;
  */
 public class DistanceToStopView extends TextView implements LocationHelper.Listener {
 
+    public interface Listener {
+
+        /**
+         * Called when the DistanceToStopView is showing information to the user
+         */
+        void onInitializationComplete();
+    }
+
     private static String TAG = "DistanceToStopView";
 
     Context mContext;
 
-    Location mStopLocation = new Location("stopLocation");
+    Location mStopLocation;
+
+    ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
     private static final float MILES_TO_METERS = 0.000621371f;
 
@@ -62,6 +73,8 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
 
     private String preferredUnits;
 
+    boolean mInitialized = false;
+
     public DistanceToStopView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
@@ -78,6 +91,18 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
         preferredUnits = mSettings
                 .getString(mContext.getString(R.string.preference_key_preferred_units),
                         AUTOMATIC);
+    }
+
+    public synchronized void registerListener(Listener listener) {
+        if (!mListeners.contains(listener)) {
+            mListeners.add(listener);
+        }
+    }
+
+    public synchronized void unregisterListener(Listener listener) {
+        if (mListeners.contains(listener)) {
+            mListeners.remove(listener);
+        }
     }
 
     /**
@@ -99,9 +124,27 @@ public class DistanceToStopView extends TextView implements LocationHelper.Liste
                         AUTOMATIC);
     }
 
+    /**
+     * Returns true if the view is initialized and ready to draw to the screen, false if it is not
+     *
+     * @return true if the view is initialized and ready to draw to the screen, false if it is not
+     */
+    public boolean isInitialized() {
+        return mInitialized;
+    }
+
     @Override
     public void onLocationChanged(Location location) {
         if (mStopLocation != null) {
+
+            if (!mInitialized) {
+                mInitialized = true;
+                // Notify listeners that we have both stop and real-time location
+                for (Listener l : mListeners) {
+                    l.onInitializationComplete();
+                }
+            }
+
             Float distance = location.distanceTo(mStopLocation);
 
             if (distance != null) {

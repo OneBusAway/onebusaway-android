@@ -49,6 +49,7 @@ import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,7 +62,8 @@ import java.util.List;
 import edu.usf.cutr.util.comparators.AlphanumComparator;
 
 public final class UIHelp {
-    // private static final String TAG = "UIHelp";
+
+    private static final String TAG = "UIHelp";
 
     public static void setupActionBar(SherlockFragmentActivity activity) {
         setupActionBar(activity.getSupportActionBar());
@@ -565,32 +567,64 @@ public final class UIHelp {
     }
 
     /**
+     * Returns true if the API level supports canceling existing animations via the
+     * ViewPropertyAnimator, and false if it does not
+     * @return true if the API level supports canceling existing animations via the
+     * ViewPropertyAnimator, and false if it does not
+     */
+    public static boolean canCancelAnimation() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
+    }
+
+    /**
      * Shows a view, using animation if the platform supports it
      *
-     * @param v                 View to show
+     * @param v View to show
      * @param animationDuration duration of animation
      */
-    @TargetApi(12)
+    @TargetApi(14)
     public static void showViewWithAnimation(final View v, int animationDuration) {
+        // If we're on a legacy device, show the view without the animation
+        if (!canAnimateViewAlpha()) {
+            showViewWithoutAnimation(v);
+            return;
+        }
+
+        if (v.getVisibility() == View.VISIBLE && v.getAlpha() == 1) {
+            // View is already visible and not transparent, return without doing anything
+            return;
+        }
+
+        v.clearAnimation();
+        if (canCancelAnimation()) {
+            v.animate().cancel();
+        }
+
+        if (v.getVisibility() != View.VISIBLE) {
+            // Set the content view to 0% opacity but visible, so that it is visible
+            // (but fully transparent) during the animation.
+            v.setAlpha(0f);
+            v.setVisibility(View.VISIBLE);
+        }
+
+        // Animate the content view to 100% opacity, and clear any animation listener set on the view.
+        v.animate()
+                .alpha(1f)
+                .setDuration(animationDuration)
+                .setListener(null);
+    }
+
+    /**
+     * Shows a view without using animation
+     *
+     * @param v View to show
+     */
+    public static void showViewWithoutAnimation(final View v) {
         if (v.getVisibility() == View.VISIBLE) {
             // View is already visible, return without doing anything
             return;
         }
-        // Set the content view to 0% opacity but visible, so that it is visible
-        // (but fully transparent) during the animation.
-        if (UIHelp.canAnimateViewAlpha()) {
-            v.setAlpha(0f);
-        }
         v.setVisibility(View.VISIBLE);
-
-        // Animate the content view to 100% opacity, and clear any animation
-        // listener set on the view.
-        if (UIHelp.canAnimateViewAlpha()) {
-            v.animate()
-                    .alpha(1f)
-                    .setDuration(animationDuration)
-                    .setListener(null);
-        }
     }
 
     /**
@@ -599,29 +633,76 @@ public final class UIHelp {
      * @param v                 View to hide
      * @param animationDuration duration of animation
      */
-    @TargetApi(12)
+    @TargetApi(14)
     public static void hideViewWithAnimation(final View v, int animationDuration) {
+        // If we're on a legacy device, hide the view without the animation
+        if (!canAnimateViewAlpha()) {
+            hideViewWithoutAnimation(v);
+            return;
+        }
+
         if (v.getVisibility() == View.GONE) {
             // View is already gone, return without doing anything
             return;
         }
 
-        if (UIHelp.canAnimateViewAlpha()) {
-            // Animate the loading view to 0% opacity. After the animation ends,
-            // set its visibility to GONE as an optimization step (it won't
-            // participate in layout passes, etc.)
-            v.animate()
-                    .alpha(0f)
-                    .setDuration(animationDuration)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            v.setVisibility(View.GONE);
-                        }
-                    });
-        } else {
-            // Hide the progress bar without animation
-            v.setVisibility(View.GONE);
+        v.clearAnimation();
+        if (canCancelAnimation()) {
+            v.animate().cancel();
+        }
+
+        // Animate the view to 0% opacity. After the animation ends, set its visibility to GONE as
+        // an optimization step (it won't participate in layout passes, etc.)
+        v.animate()
+                .alpha(0f)
+                .setDuration(animationDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        v.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    /**
+     * Hides a view without using animation
+     *
+     * @param v View to hide
+     */
+    public static void hideViewWithoutAnimation(final View v) {
+        if (v.getVisibility() == View.GONE) {
+            // View is already gone, return without doing anything
+            return;
+        }
+        // Hide the view without animation
+        v.setVisibility(View.GONE);
+    }
+
+    /**
+     * Prints View visibility information to the log for debugging purposes
+     *
+     * @param v View to log visibility information for
+     */
+    @TargetApi(12)
+    public static void logViewVisibility(View v) {
+        if (v != null) {
+            if (v.getVisibility() == View.VISIBLE) {
+                Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
+                        + " is visible");
+                if (UIHelp.canAnimateViewAlpha()) {
+                    Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
+                            + " alpha - " + v.getAlpha());
+                }
+            } else if (v.getVisibility() == View.INVISIBLE) {
+                Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
+                        + " is INVISIBLE");
+            } else if (v.getVisibility() == View.GONE) {
+                Log.d(TAG,
+                        v.getContext().getResources().getResourceEntryName(v.getId()) + " is GONE");
+            } else {
+                Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
+                        + ".getVisibility() - " + v.getVisibility());
+            }
         }
     }
 }

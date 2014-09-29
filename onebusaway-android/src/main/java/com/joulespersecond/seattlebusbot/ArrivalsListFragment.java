@@ -465,6 +465,12 @@ public class ArrivalsListFragment extends ListFragment
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
         UIHelp.showProgress(this, false);
         mAdapter.setData(null, mRoutesFilter);
+
+        mArrivalInfo = null;
+
+        if (mHeader != null) {
+            mHeader.refresh();
+        }
     }
 
     //

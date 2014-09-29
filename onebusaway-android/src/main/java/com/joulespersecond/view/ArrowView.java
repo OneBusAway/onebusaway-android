@@ -31,10 +31,22 @@ import android.location.Location;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.ArrayList;
+
 /**
  * View that draws an arrow that points towards the given bus mStop
  */
 public class ArrowView extends View implements OrientationHelper.Listener, LocationHelper.Listener {
+
+    public interface Listener {
+
+        /**
+         * Called when the ArrowView is showing information to the user
+         */
+        void onInitializationComplete();
+    }
+
+    ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
     private float mHeading;
 
@@ -46,7 +58,9 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
 
     Location mStopLocation = new Location("stopLocation");
 
-    float bearingToStop;
+    float mBearingToStop;
+
+    boolean mInitialized = false;
 
     public ArrowView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -69,6 +83,27 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
         mStopLocation = location;
     }
 
+    public synchronized void registerListener(Listener listener) {
+        if (!mListeners.contains(listener)) {
+            mListeners.add(listener);
+        }
+    }
+
+    public synchronized void unregisterListener(Listener listener) {
+        if (mListeners.contains(listener)) {
+            mListeners.remove(listener);
+        }
+    }
+
+    /**
+     * Returns true if the view is initialized and ready to draw to the screen, false if it is not
+     *
+     * @return true if the view is initialized and ready to draw to the screen, false if it is not
+     */
+    public boolean isInitialized() {
+        return mInitialized;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         if (mStopLocation == null || mLastLocation == null) {
@@ -87,12 +122,20 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
     public void onLocationChanged(Location location) {
         mLastLocation = location;
         if (mStopLocation != null) {
-            bearingToStop = location.bearingTo(mStopLocation);
+            if (!mInitialized) {
+                mInitialized = true;
+                // Notify listeners that we have both stop and real-time location and can draw
+                for (Listener l : mListeners) {
+                    l.onInitializationComplete();
+                }
+            }
+
+            mBearingToStop = location.bearingTo(mStopLocation);
 
             // Result of bearingTo() can be from -180 to 180. If negative, convert to 181-360 range
             // See http://stackoverflow.com/a/8043485/937715
-            if (bearingToStop < 0) {
-                bearingToStop += 360;
+            if (mBearingToStop < 0) {
+                mBearingToStop += 360;
             }
             invalidate();
         }
@@ -133,7 +176,7 @@ public class ArrowView extends View implements OrientationHelper.Listener, Locat
         path.lineTo(x1, y1);
         path.close();
 
-        float direction = mHeading - bearingToStop;
+        float direction = mHeading - mBearingToStop;
         // Make sure value is between 0-360
         direction = MathUtils.mod(direction, 360.0f);
 

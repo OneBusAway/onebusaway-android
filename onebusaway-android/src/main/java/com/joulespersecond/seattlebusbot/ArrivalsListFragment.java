@@ -423,7 +423,9 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         // Notify listener that we have new arrival info
-        mListener.onArrivalTimesUpdated(result);
+        if (mListener != null) {
+            mListener.onArrivalTimesUpdated(result);
+        }
     }
 
     /**

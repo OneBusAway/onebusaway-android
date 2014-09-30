@@ -160,6 +160,16 @@ class ArrivalsListHeader {
     private static final float ANIM_STATE_INVERTED = 180.0f;  // 180 degrees
     private static final long ANIM_DURATION = 300;  // milliseconds
 
+    // Manages header size in "stop name edit mode"
+    private int cachedHeaderHeight;
+
+    private int cachedExpandCollapseViewVisibility;
+
+    private static final float EXPANDED_HEADER_HEIGHT_DP = 100.0f;
+
+    // Controller to change parent sliding panel
+    HomeActivity.SlidingPanelController mSlidingPanelController;
+
     ArrivalsListHeader(Context context, Controller controller) {
         mController = controller;
         mContext = context;
@@ -309,6 +319,15 @@ class ArrivalsListHeader {
     }
 
     /**
+     * Used to give the header control over the containing sliding panel, primarily to change the
+     * panel header height
+     * @param controller
+     */
+    public void setSlidingPanelController(HomeActivity.SlidingPanelController controller) {
+        mSlidingPanelController = controller;
+    }
+
+    /**
      * Should be called from onResume() of context hosting this header
      */
     public void onResume() {
@@ -440,7 +459,7 @@ class ArrivalsListHeader {
             arrivalInfo.append("* ");
         }
 
-        if (mArrivalInfo != null) {
+        if (mArrivalInfo != null && !mInNameEdit) {
             if (mArrivalInfo.size() > 0) {
                 // We have arrival info for at least one bus
                 long eta = mArrivalInfo.get(0).getEta();
@@ -498,7 +517,7 @@ class ArrivalsListHeader {
             }
         }
 
-        if (routeDisplayNames != null) {
+        if (routeDisplayNames != null && !mInNameEdit) {
             mRouteIdView.setText(
                     mContext.getString(R.string.stop_info_route_ids_label) + " " + UIHelp
                             .formatRouteDisplayNames(routeDisplayNames,
@@ -556,6 +575,10 @@ class ArrivalsListHeader {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void refreshRightMarginContainer() {
+        if (mInNameEdit) {
+            // If the user is editing a stop name, we shouldn't show any of these views
+            return;
+        }
         if (mIsSlidingPanelCollapsed) {
             // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
             UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
@@ -670,7 +693,7 @@ class ArrivalsListHeader {
         }
     }
 
-    void beginNameEdit(String initial) {
+    synchronized void beginNameEdit(String initial) {
         // If we can click on this, then we're definitely not
         // editable, so we should go into edit mode.
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
@@ -683,6 +706,8 @@ class ArrivalsListHeader {
         mArrowToStopView.setVisibility(View.GONE);
         mBusStopIconView.setVisibility(View.GONE);
         mArrivalInfoView.setVisibility(View.GONE);
+        // Save mExpandCollapse visibility state
+        cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
         if (!UIHelp.canAnimateViewModern()) {
             // View won't disappear without clearing the legacy rotation animation
             mExpandCollapse.clearAnimation();
@@ -690,29 +715,50 @@ class ArrivalsListHeader {
         mExpandCollapse.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
-        // TODO - Re-size the header layout to show the edit buttons
-//        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-//                ViewGroup.LayoutParams.WRAP_CONTENT));
+        increaseHeaderSize();
+
         mEditNameView.requestFocus();
+        mEditNameView.setSelection(mEditNameView.getText().length());
         mInNameEdit = true;
-        // TODO: Ensure the soft keyboard is up
+
+        // Open soft keyboard if no physical keyboard is open
+        InputMethodManager inputMethodManager = (InputMethodManager) mContext.getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.showSoftInput(mEditNameView, InputMethodManager.SHOW_IMPLICIT);
     }
 
-    void endNameEdit() {
+    void increaseHeaderSize() {
+        // Re-size the header layout to show the edit buttons
+        cachedHeaderHeight = mView.getLayoutParams().height;
+        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext, EXPANDED_HEADER_HEIGHT_DP);
+        if (mSlidingPanelController != null) {
+            mSlidingPanelController
+                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext, EXPANDED_HEADER_HEIGHT_DP));
+        }
+    }
+
+    synchronized void endNameEdit() {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mRouteDirectionView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
-        mExpandCollapse.setVisibility(View.VISIBLE);
-        // TODO - Re-size the header layout back to 68dp
-//        mView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-//                ViewGroup.LayoutParams.WRAP_CONTENT));
+        mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
+        decreaseHeaderSize();
         //setFilterHeader();
+        // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
         refresh();
+    }
+
+    void decreaseHeaderSize() {
+        // Re-size the header layout to normal size
+        mView.getLayoutParams().height = cachedHeaderHeight;
+        if (mSlidingPanelController != null) {
+            mSlidingPanelController.setPanelHeightPixels(cachedHeaderHeight);
+        }
     }
 }

@@ -49,6 +49,7 @@
         <EditText
                 android:id="@+id/edit_name"
                 style="@style/HeaderText"
+                android:textCursorDrawable="@null"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
@@ -64,6 +65,7 @@
 
             <Button
                     android:id="@+id/edit_name_cancel"
+                    style="@style/Header2Text"
                     android:text="@string/stop_info_cancel"
                     android:layout_height="wrap_content"
                     android:layout_width="0dip"
@@ -71,6 +73,7 @@
 
             <Button
                     android:id="@+id/edit_name_save"
+                    style="@style/Header2Text"
                     android:text="@string/stop_info_save"
                     android:layout_height="wrap_content"
                     android:layout_width="0dip"
@@ -78,6 +81,7 @@
 
             <Button
                     android:id="@+id/edit_name_revert"
+                    style="@style/Header2Text"
                     android:text="@string/stop_info_clear"
                     android:layout_height="wrap_content"
                     android:layout_width="0dip"

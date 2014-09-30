@@ -64,6 +64,16 @@ import java.util.HashMap;
 public class HomeActivity extends SherlockFragmentActivity
         implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener {
 
+    interface SlidingPanelController {
+
+        /**
+         * Sets the height of the sliding panel in pixels
+         *
+         * @param heightInPixels height of panel in pixels
+         */
+        void setPanelHeightPixels(int heightInPixels);
+    }
+
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
     public static final String STOP_ID = ".StopId";
@@ -77,6 +87,7 @@ public class HomeActivity extends SherlockFragmentActivity
 
     private static final String TAG = "HomeActivity";
 
+    Context mContext;
     BaseMapFragment mMapFragment;
     ArrivalsListFragment mArrivalsListFragment;
     ArrivalsListHeader mArrivalsListHeader;
@@ -165,11 +176,14 @@ public class HomeActivity extends SherlockFragmentActivity
 
     private int mWhatsNewMessage = R.string.main_help_whatsnew;
 
+    SlidingPanelController mSlidingPanelController;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        mContext = this;
 
         mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
 
@@ -456,6 +470,7 @@ public class HomeActivity extends SherlockFragmentActivity
         // Set the header for the arrival list to be the top of the sliding panel
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
+        mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
 
         if (stop != null && routes != null) {
@@ -622,6 +637,15 @@ public class HomeActivity extends SherlockFragmentActivity
                 }
             }
         });
+
+        mSlidingPanelController = new SlidingPanelController() {
+            @Override
+            public void setPanelHeightPixels(int heightInPixels) {
+                if (mSlidingPanel != null) {
+                    mSlidingPanel.setPanelHeight(heightInPixels);
+                }
+            }
+        };
 
         String stopId;
         if (bundle != null) {

@@ -109,10 +109,13 @@ dependencies {
     compile 'com.google.android.gms:play-services:5.0.89'
     compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
     compile 'com.android.support:support-v4:20.+'
+    compile 'commons-io:commons-io:2.4'
+    // JSON data binding for OBA REST API responses
     compile 'com.fasterxml.jackson.core:jackson-core:2.3.3'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
-    compile 'commons-io:commons-io:2.4'
+    // Bottom sliding panel
     compile 'com.sothree.slidinguppanel:library:2.0.1'
+    // For sorting alphanumeric route names
     compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
 }

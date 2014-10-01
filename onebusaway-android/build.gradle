@@ -110,9 +110,9 @@ dependencies {
     compile 'com.android.support:appcompat-v7:20.0.0'
     compile 'commons-io:commons-io:2.4'
     // JSON data binding for OBA REST API responses
-    compile 'com.fasterxml.jackson.core:jackson-core:2.3.3'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.4.2'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.2'
     // Bottom sliding panel
     compile 'com.sothree.slidinguppanel:library:2.0.1'
     // For sorting alphanumeric route names

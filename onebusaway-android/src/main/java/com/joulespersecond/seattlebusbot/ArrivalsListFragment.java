@@ -937,6 +937,10 @@ public class ArrivalsListFragment extends ListFragment
     // Helpers
     //
     private ArrivalsListLoader getArrivalsLoader() {
+        // If the Fragment hasn't been attached to an Activity yet, return null
+        if (!isAdded()) {
+            return null;
+        }
         Loader<ObaArrivalInfoResponse> l =
                 getLoaderManager().getLoader(ARRIVALS_LIST_LOADER);
         return (ArrivalsListLoader) l;

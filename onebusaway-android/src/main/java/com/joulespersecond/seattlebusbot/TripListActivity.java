@@ -15,6 +15,10 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.ContentResolver;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -25,20 +29,16 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.app.ActionBarActivity;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
-public class TripListActivity extends SherlockFragmentActivity {
+public class TripListActivity extends ActionBarActivity {
     // private static final String TAG = "TripListActivity";
 
 
@@ -182,8 +182,8 @@ public class TripListActivity extends SherlockFragmentActivity {
 
             simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                 public boolean setViewValue(View view,
-                                            Cursor cursor,
-                                            int columnIndex) {
+                        Cursor cursor,
+                        int columnIndex) {
                     if (columnIndex == COL_NAME) {
                         TextView text = (TextView) view;
                         String name = cursor.getString(columnIndex);
@@ -243,8 +243,8 @@ public class TripListActivity extends SherlockFragmentActivity {
 
         @Override
         public void onCreateContextMenu(ContextMenu menu,
-                                        View v,
-                                        ContextMenuInfo menuInfo) {
+                View v,
+                ContextMenuInfo menuInfo) {
             super.onCreateContextMenu(menu, v, menuInfo);
             AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
             final TextView text = (TextView) info.targetView.findViewById(R.id.name);

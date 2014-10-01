@@ -15,14 +15,14 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import android.app.Activity;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
-public class MyStarredStopsActivity extends Activity {
+public class MyStarredStopsActivity extends ActionBarActivity {
 
     //
     // The only thing this is used for anymore is to create

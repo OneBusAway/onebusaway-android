@@ -16,9 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -52,6 +49,9 @@ import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -522,7 +522,8 @@ public class ArrivalsListFragment extends ListFragment
             }
         } else if (id == R.id.report_problem) {
             if (mStop != null) {
-                ReportStopProblemFragment.show(getSherlockActivity(), mStop);
+                ReportStopProblemFragment.show(
+                        (android.support.v7.app.ActionBarActivity) getActivity(), mStop);
             }
         }
         return false;
@@ -573,7 +574,9 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (hasUrl && which == 3) {
                     UIHelp.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
-                    ReportTripProblemFragment.show(getSherlockActivity(), stop.getInfo());
+                    ReportTripProblemFragment.show(
+                            (android.support.v7.app.ActionBarActivity) getActivity(),
+                            stop.getInfo());
                 }
             }
         });
@@ -1094,7 +1097,8 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            SituationFragment.show(getSherlockActivity(), mSituation);
+            SituationFragment
+                    .show((android.support.v7.app.ActionBarActivity) getActivity(), mSituation);
         }
 
         @Override

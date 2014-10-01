@@ -19,11 +19,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -52,16 +47,21 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.Date;
 import java.util.HashMap;
 
-public class HomeActivity extends SherlockFragmentActivity
+public class HomeActivity extends ActionBarActivity
         implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener {
 
     interface SlidingPanelController {
@@ -88,9 +88,13 @@ public class HomeActivity extends SherlockFragmentActivity
     private static final String TAG = "HomeActivity";
 
     Context mContext;
+
     BaseMapFragment mMapFragment;
+
     ArrivalsListFragment mArrivalsListFragment;
+
     ArrivalsListHeader mArrivalsListHeader;
+
     View mArrivalsListHeaderView;
 
     /**
@@ -109,6 +113,7 @@ public class HomeActivity extends SherlockFragmentActivity
      * mFocusedStop
      */
     String mFocusedStopId = null;
+
     ObaStop mFocusedStop = null;
 
     /**
@@ -121,9 +126,9 @@ public class HomeActivity extends SherlockFragmentActivity
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-                                   String focusId,
-                                   double lat,
-                                   double lon) {
+            String focusId,
+            double lat,
+            double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -148,9 +153,9 @@ public class HomeActivity extends SherlockFragmentActivity
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-                                          String focusId,
-                                          double lat,
-                                          double lon) {
+            String focusId,
+            double lat,
+            double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -185,7 +190,8 @@ public class HomeActivity extends SherlockFragmentActivity
         setContentView(R.layout.main);
         mContext = this;
 
-        mMapFragment = (BaseMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+        mMapFragment = (BaseMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_fragment);
 
         setupSlidingPanel(savedInstanceState);
 
@@ -239,7 +245,7 @@ public class HomeActivity extends SherlockFragmentActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getSupportMenuInflater();
+        MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_options, menu);
         return true;
     }
@@ -420,6 +426,7 @@ public class HomeActivity extends SherlockFragmentActivity
 
     /**
      * Called by the ArrivalsListFragment when we have new updated arrival information
+     *
      * @param response new arrival information
      */
     @Override
@@ -437,7 +444,8 @@ public class HomeActivity extends SherlockFragmentActivity
 
             // Since mFocusedStop was null, the layout changed, and we should recenter map on stop
             if (mMapFragment != null && mSlidingPanel != null) {
-                mMapFragment.setMapCenter(mFocusedStop.getLocation(), true, mSlidingPanel.isPanelAnchored());
+                mMapFragment.setMapCenter(mFocusedStop.getLocation(), true,
+                        mSlidingPanel.isPanelAnchored());
             }
 
             // ...and we should add a focus marker for this stop
@@ -571,13 +579,15 @@ public class HomeActivity extends SherlockFragmentActivity
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
-        ObaRegionsTask task = new ObaRegionsTask(this, mMapFragment, forceReload, showProgressDialog);
+        ObaRegionsTask task = new ObaRegionsTask(this, mMapFragment, forceReload,
+                showProgressDialog);
         task.execute();
     }
 
     private void setupGooglePlayServices() {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
+                == ConnectionResult.SUCCESS) {
             LocationUtil.LocationServicesCallback locCallback
                     = new LocationUtil.LocationServicesCallback();
             mLocationClient = new LocationClient(this, locCallback, locCallback);

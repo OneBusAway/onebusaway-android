@@ -110,7 +110,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".MyRoutesActivity"
             android:label="@string/route_shortcut">
@@ -127,8 +126,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".PreferencesActivity" />
+        <!-- ActionBarCompat library doesn't have an ActionBarPreferenceActivity, so define parent here-->
+        <activity
+                android:name=".PreferencesActivity"
+                android:parentActivityName=".HomeActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".HomeActivity"/>
+        </activity>
         <activity android:name=".RegionsActivity" />
         <activity android:name=".AgenciesActivity" />
 

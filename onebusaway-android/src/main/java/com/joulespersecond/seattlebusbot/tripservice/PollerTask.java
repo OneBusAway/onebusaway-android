@@ -15,12 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot.tripservice;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.provider.ObaContract;
@@ -30,6 +24,12 @@ import com.joulespersecond.oba.request.ObaArrivalInfoRequest;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 import com.joulespersecond.seattlebusbot.TripService;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 
 public final class PollerTask implements Runnable {
     //private static final String TAG = "PollerTask";

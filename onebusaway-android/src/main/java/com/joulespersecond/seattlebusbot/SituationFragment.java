@@ -15,25 +15,25 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.elements.ObaSituation;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class SituationFragment extends SherlockFragment {
+public class SituationFragment extends Fragment {
 
     private static final String TITLE = ".Title";
 
     private static final String DESCRIPTION = ".Description";
 
-    static void show(SherlockFragmentActivity activity, ObaSituation situation) {
+    static void show(ActionBarActivity activity, ObaSituation situation) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();

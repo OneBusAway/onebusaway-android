@@ -15,6 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.elements.ObaAgency;
+import com.joulespersecond.oba.elements.ObaAgencyWithCoverage;
+import com.joulespersecond.oba.request.ObaAgenciesWithCoverageRequest;
+import com.joulespersecond.oba.request.ObaAgenciesWithCoverageResponse;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -24,12 +30,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.joulespersecond.oba.elements.ObaAgency;
-import com.joulespersecond.oba.elements.ObaAgencyWithCoverage;
-import com.joulespersecond.oba.request.ObaAgenciesWithCoverageRequest;
-import com.joulespersecond.oba.request.ObaAgenciesWithCoverageResponse;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Arrays;
 
@@ -63,7 +63,7 @@ public class AgenciesFragment extends ListFragment
 
     @Override
     public void onLoadFinished(Loader<ObaAgenciesWithCoverageResponse> l,
-                               ObaAgenciesWithCoverageResponse result) {
+            ObaAgenciesWithCoverageResponse result) {
         // Create our generic adapter
         mResponse = result;
         mAdapter = new Adapter(getActivity());

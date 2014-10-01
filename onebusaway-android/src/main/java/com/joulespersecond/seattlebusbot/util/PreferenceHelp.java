@@ -15,11 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot.util;
 
+import com.joulespersecond.seattlebusbot.Application;
+
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.os.Build;
-
-import com.joulespersecond.seattlebusbot.Application;
 
 public class PreferenceHelp {
 

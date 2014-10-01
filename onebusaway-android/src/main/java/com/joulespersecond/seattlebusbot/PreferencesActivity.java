@@ -16,21 +16,20 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockPreferenceActivity;
-import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.PreferenceActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Window;
 import android.widget.Toast;
 
-public class PreferencesActivity extends SherlockPreferenceActivity
+public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
         SharedPreferences.OnSharedPreferenceChangeListener, ObaRegionsTask.Callback {
 
@@ -45,14 +44,11 @@ public class PreferencesActivity extends SherlockPreferenceActivity
 
     ListPreference preferredUnits;
 
-    // Soo... we can use SherlockPreferenceActivity to display the
-    // action bar, but we can't use a PreferenceFragment?
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(getSupportActionBar());
-        setSupportProgressBarIndeterminate(true);
+        setProgressBarIndeterminate(true);
 
         addPreferencesFromResource(R.xml.preferences);
 
@@ -168,7 +164,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
             We need to use our own Action Bar progress bar here so its linked to this activity,
             which will survive orientation changes.
             */
-            setSupportProgressBarIndeterminateVisibility(true);
+            setProgressBarIndeterminateVisibility(true);
             ObaRegionsTask task = new ObaRegionsTask(this, this, true, false);
             task.execute();
 
@@ -186,7 +182,7 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     // Region Task Callback
     //
     public void onRegionTaskFinished(boolean currentRegionChanged) {
-        setSupportProgressBarIndeterminateVisibility(false);
+        setProgressBarIndeterminateVisibility(false);
 
         if (currentRegionChanged) {
             // If region was auto-selected, show user the region we're using

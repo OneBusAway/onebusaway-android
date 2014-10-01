@@ -16,10 +16,10 @@
 
 package com.joulespersecond.seattlebusbot;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
 /**
@@ -29,7 +29,7 @@ import android.util.Log;
  * @author paulw
  */
 @Deprecated
-public class StopInfoActivity extends Activity {
+public class StopInfoActivity extends ActionBarActivity {
 
     private static final String TAG = "StopInfoActivity";
 

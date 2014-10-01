@@ -31,5 +31,5 @@
           android:id="@+id/separator_bottom"
           android:visibility="visible"
           android:layout_below="@id/load_more_arrivals"
-          android:background="@drawable/abs__list_divider_holo_light"/>
+          android:background="@drawable/abc_list_divider_holo_light"/>
 </RelativeLayout>

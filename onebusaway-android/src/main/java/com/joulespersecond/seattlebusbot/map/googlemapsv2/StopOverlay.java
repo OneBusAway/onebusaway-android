@@ -15,6 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.app.Activity;
 import android.graphics.Point;
 import android.os.Build;
@@ -24,18 +37,6 @@ import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.R;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
+
     private static final String TAG = "StopOverlay";
 
     private GoogleMap mMap;
@@ -52,13 +54,21 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     private final Activity mActivity;
 
     private static final String NORTH = "N";
+
     private static final String NORTH_WEST = "NW";
+
     private static final String WEST = "W";
+
     private static final String SOUTH_WEST = "SW";
+
     private static final String SOUTH = "S";
+
     private static final String SOUTH_EAST = "SE";
+
     private static final String EAST = "E";
+
     private static final String NORTH_EAST = "NE";
+
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
     private static BitmapDescriptor[] bus_stop_icons = new BitmapDescriptor[NUM_DIRECTIONS];
@@ -66,12 +76,13 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     OnFocusChangedListener mOnFocusChangedListener;
 
     public interface OnFocusChangedListener {
+
         /**
          * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
          * or when the user taps on an area away from the map for the first time after a stop
          * is already selected, which removes focus
          *
-         * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+         * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
@@ -181,7 +192,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     /**
      * Sets focus to a particular stop
      *
-     * @param stop ObaStop to focus on
+     * @param stop   ObaStop to focus on
      * @param routes a list of all route display names that serve this stop
      */
     public void setFocus(ObaStop stop, List<ObaRoute> routes) {
@@ -274,9 +285,12 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
         /**
          * Stops-for-location REST API endpoint returns 100 markers per call by default
-         * (see http://goo.gl/tzvrLb), so we'll support showing max results of around 2 calls before
-         * we completely clear the map and start over.  Note that this is a fuzzy max, since we don't
-         * want to clear the overlay in the middle of processing an API response and remove markers in
+         * (see http://goo.gl/tzvrLb), so we'll support showing max results of around 2 calls
+         * before
+         * we completely clear the map and start over.  Note that this is a fuzzy max, since we
+         * don't
+         * want to clear the overlay in the middle of processing an API response and remove markers
+         * in
          * the current view
          */
         private static final int FUZZY_MAX_MARKER_COUNT = 200;
@@ -304,9 +318,11 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         private HashMap<String, ObaRoute> mStopRoutes;
 
         /**
-         * Marker and stop used to indicate which bus stop has focus (i.e., was last clicked/tapped)
+         * Marker and stop used to indicate which bus stop has focus (i.e., was last
+         * clicked/tapped)
          */
         private Marker mCurrentFocusMarker;
+
         private ObaStop mCurrentFocusStop;
 
         /**
@@ -327,7 +343,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
             if (mStopMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
                 // We've exceed our max, so clear the current marker cache and start over
-                Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT + ", clearing cache");
+                Log.d(TAG, "Exceed max marker cache of " + FUZZY_MAX_MARKER_COUNT
+                        + ", clearing cache");
                 removeMarkersFromMap();
                 mStopMarkers.clear();
                 mStops.clear();
@@ -355,7 +372,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         /**
          * Places a marker on the map for this stop, and adds it to our marker HashMap
          *
-         * @param stop ObaStop that should be shown on the map
+         * @param stop   ObaStop that should be shown on the map
          * @param routes A list of ObaRoutes that serve this stop
          */
         private void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
@@ -411,7 +428,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         /**
          * Gets the ObaRoute objects that have been cached
          *
-         * @return a copy of the HashMap containing the ObaRoutes that have been cached, with the routeId as key
+         * @return a copy of the HashMap containing the ObaRoutes that have been cached, with the
+         * routeId as key
          */
         synchronized HashMap<String, ObaRoute> getCachedRoutes() {
             return new HashMap<String, ObaRoute>(mStopRoutes);

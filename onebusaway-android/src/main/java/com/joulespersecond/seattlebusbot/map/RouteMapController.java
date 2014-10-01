@@ -16,14 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import android.content.Context;
-import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -33,6 +25,14 @@ import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.List;
 
@@ -124,13 +124,13 @@ public class RouteMapController implements MapModeController,
 
     @Override
     public Loader<ObaStopsForRouteResponse> onCreateLoader(int id,
-                                                           Bundle args) {
+            Bundle args) {
         return new RoutesLoader(mFragment.getActivity(), mRouteId);
     }
 
     @Override
     public void onLoadFinished(Loader<ObaStopsForRouteResponse> loader,
-                               ObaStopsForRouteResponse response) {
+            ObaStopsForRouteResponse response) {
 
         ObaMapView obaMapView = mFragment.getMapView();
 
@@ -164,7 +164,7 @@ public class RouteMapController implements MapModeController,
 
     @Override
     public void onLoadComplete(Loader<ObaStopsForRouteResponse> loader,
-                               ObaStopsForRouteResponse response) {
+            ObaStopsForRouteResponse response) {
         onLoadFinished(loader, response);
     }
 

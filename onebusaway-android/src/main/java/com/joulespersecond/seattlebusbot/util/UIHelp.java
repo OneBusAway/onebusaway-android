@@ -17,9 +17,6 @@
 
 package com.joulespersecond.seattlebusbot.util;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -45,6 +42,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -65,7 +65,7 @@ public final class UIHelp {
 
     private static final String TAG = "UIHelp";
 
-    public static void setupActionBar(SherlockFragmentActivity activity) {
+    public static void setupActionBar(ActionBarActivity activity) {
         setupActionBar(activity.getSupportActionBar());
     }
 
@@ -74,8 +74,8 @@ public final class UIHelp {
         bar.setDisplayShowTitleEnabled(false);
     }
 
-    public static void showProgress(SherlockFragment fragment, boolean visible) {
-        SherlockFragmentActivity act = fragment.getSherlockActivity();
+    public static void showProgress(Fragment fragment, boolean visible) {
+        ActionBarActivity act = (ActionBarActivity) fragment.getActivity();
         if (act != null) {
             act.setSupportProgressBarIndeterminateVisibility(visible);
         }
@@ -235,13 +235,15 @@ public final class UIHelp {
      * For example, if a stop was served by "14" and "54", this method will return "14,54"
      *
      * @param stop   the stop for which the route display names should be serialized
-     * @param routes a HashMap containing all routes that serve this stop, with the routeId as the key.
-     *               Note that for efficiency this routes HashMap may contain routes that don't serve this stop as well -
+     * @param routes a HashMap containing all routes that serve this stop, with the routeId as the
+     *               key.
+     *               Note that for efficiency this routes HashMap may contain routes that don't
+     *               serve this stop as well -
      *               the routes for the stop are referenced via stop.getRouteDisplayNames()
      * @return comma-delimited list of route display names that serve a stop
      */
     public static String serializeRouteDisplayNames(ObaStop stop,
-                                                    HashMap<String, ObaRoute> routes) {
+            HashMap<String, ObaRoute> routes) {
         StringBuffer sb = new StringBuffer();
         String[] routeIds = stop.getRouteIds();
         for (int i = 0; i < routeIds.length; i++) {
@@ -285,8 +287,10 @@ public final class UIHelp {
      * <p/>
      * 4, 8b, 11, 15
      *
-     * @param routeDisplayNames list of route display names
-     * @param nextArrivalRouteShortNames the short route names of the next X arrivals at the stop that are the same.  These will be highlighted in the results.
+     * @param routeDisplayNames          list of route display names
+     * @param nextArrivalRouteShortNames the short route names of the next X arrivals at the stop
+     *                                   that are the same.  These will be highlighted in the
+     *                                   results.
      * @return a formatted and sorted list of route display names for presentation in a single line
      */
     public static String formatRouteDisplayNames(List<String> routeDisplayNames,
@@ -478,7 +482,8 @@ public final class UIHelp {
      * @param minutes            number of minutes for which there are no upcoming arrivals
      * @param additionalArrivals true if the response should include the word additional, false if
      *                           it should not
-     * @param shortFormat true if the format should be abbreviated, false if it should be long
+     * @param shortFormat        true if the format should be abbreviated, false if it should be
+     *                           long
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
@@ -558,9 +563,11 @@ public final class UIHelp {
     }
 
     /**
-     * Returns true if the API level supports animating alpha values for Views, false if it doesn't
+     * Returns true if the API level supports animating Views using ViewPropertyAnimator, false if
+     * it doesn't
      *
-     * @return true if the API level supports animating Views using ViewPropertyAnimator, false if it doesn't
+     * @return true if the API level supports animating Views using ViewPropertyAnimator, false if
+     * it doesn't
      */
     public static boolean canAnimateViewModern() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1;
@@ -569,6 +576,7 @@ public final class UIHelp {
     /**
      * Returns true if the API level supports canceling existing animations via the
      * ViewPropertyAnimator, and false if it does not
+     *
      * @return true if the API level supports canceling existing animations via the
      * ViewPropertyAnimator, and false if it does not
      */
@@ -579,7 +587,7 @@ public final class UIHelp {
     /**
      * Shows a view, using animation if the platform supports it
      *
-     * @param v View to show
+     * @param v                 View to show
      * @param animationDuration duration of animation
      */
     @TargetApi(14)

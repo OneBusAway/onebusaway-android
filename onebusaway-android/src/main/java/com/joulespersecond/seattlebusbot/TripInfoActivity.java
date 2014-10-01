@@ -15,6 +15,11 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.FragmentUtils;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -27,13 +32,18 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBarActivity;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -42,19 +52,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.util.FragmentUtils;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
 import java.util.List;
 
-public class TripInfoActivity extends SherlockFragmentActivity {
+public class TripInfoActivity extends ActionBarActivity {
 
     private static final String TAG = "TripInfoActivity";
 
@@ -82,13 +82,13 @@ public class TripInfoActivity extends SherlockFragmentActivity {
     }
 
     public static void start(Context context,
-                             String tripId,
-                             String stopId,
-                             String routeId,
-                             String routeName,
-                             String stopName,
-                             long departureTime,
-                             String headsign) {
+            String tripId,
+            String stopId,
+            String routeId,
+            String routeName,
+            String stopName,
+            long departureTime,
+            String headsign) {
         Intent myIntent = new Intent(context, TripInfoActivity.class);
         myIntent.setData(ObaContract.Trips.buildUri(tripId, stopId));
         myIntent.putExtra(ROUTE_ID, routeId);
@@ -132,7 +132,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
         return (TripInfoFragment) fm.findFragmentById(android.R.id.content);
     }
 
-    public static final class TripInfoFragment extends SherlockFragment
+    public static final class TripInfoFragment extends Fragment
             implements LoaderManager.LoaderCallbacks<Cursor> {
 
         private static final String TAG_DELETE_DIALOG = ".DeleteDialog";
@@ -202,7 +202,7 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         @Override
         public View onCreateView(LayoutInflater inflater,
-                                 ViewGroup root, Bundle savedInstanceState) {
+                ViewGroup root, Bundle savedInstanceState) {
             if (root == null) {
                 // Currently in a layout without a container, so no
                 // reason to create our view.

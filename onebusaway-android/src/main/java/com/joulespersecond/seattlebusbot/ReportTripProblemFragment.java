@@ -15,7 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.request.ObaReportProblemWithTripRequest;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
@@ -26,6 +25,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -55,7 +55,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     private static final String USER_VEHICLE_NUM = ".UserVehicleNum";
 
-    static void show(SherlockFragmentActivity activity, ObaArrivalInfo arrival) {
+    static void show(ActionBarActivity activity, ObaArrivalInfo arrival) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();

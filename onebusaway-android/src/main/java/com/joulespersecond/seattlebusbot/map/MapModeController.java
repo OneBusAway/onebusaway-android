@@ -16,15 +16,15 @@
  */
 package com.joulespersecond.seattlebusbot.map;
 
-import android.app.Activity;
-import android.location.Location;
-import android.os.Bundle;
-import android.view.View;
-
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaShape;
 import com.joulespersecond.oba.elements.ObaStop;
+
+import android.app.Activity;
+import android.location.Location;
+import android.os.Bundle;
+import android.view.View;
 
 import java.util.List;
 

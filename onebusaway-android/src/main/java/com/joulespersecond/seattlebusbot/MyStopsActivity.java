@@ -15,10 +15,9 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.ActionBar;
-
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 
 public class MyStopsActivity extends MyTabActivityBase {
     //private static final String TAG = "MyStopsActivity";

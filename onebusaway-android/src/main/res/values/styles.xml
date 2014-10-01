@@ -56,7 +56,7 @@
     <style name="LinkText">
         <item name="android:textColor">#0000ff</item>
     </style>
-    <style name="LoadingProgress" parent="@style/Widget.Sherlock.Light.ProgressBar">
+    <style name="LoadingProgress" parent="@style/Widget.AppCompat.ProgressBar">
         <item name="android:paddingRight">5sp</item>
     </style>
     <style name="LoadingText">

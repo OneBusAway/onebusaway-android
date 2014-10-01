@@ -15,19 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
+import android.view.Window;
 
 
-public class SearchActivity extends SherlockFragmentActivity {
+public class SearchActivity extends ActionBarActivity {
     //private static final String TAG = "SearchActivity";
 
     @Override

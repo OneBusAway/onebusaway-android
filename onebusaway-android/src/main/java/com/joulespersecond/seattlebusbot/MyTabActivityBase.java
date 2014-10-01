@@ -15,10 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
@@ -28,9 +24,13 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
+import android.view.Window;
 
 
-abstract class MyTabActivityBase extends SherlockFragmentActivity {
+abstract class MyTabActivityBase extends ActionBarActivity {
 
     public static final String EXTRA_SHORTCUTMODE = ".ShortcutMode";
 

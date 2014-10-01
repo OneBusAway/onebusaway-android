@@ -15,6 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,11 +29,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
-
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.R;
 
 /**
  * Utilities to help process data for Android Maps API v1
@@ -131,8 +132,6 @@ public class MapHelpV2 {
 
     /**
      * Prompts the user to install Android Maps V2 from Google Play
-     *
-     * @param context
      */
     public static void promptUserInstallGoogleMaps(final Context context) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);

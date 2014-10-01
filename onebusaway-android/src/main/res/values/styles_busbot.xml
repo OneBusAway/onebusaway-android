@@ -18,7 +18,7 @@
 
 <resources>
 
-    <style name="Theme.BusBot" parent="@style/Theme.Sherlock.Light">
+    <style name="Theme.BusBot" parent="@style/Theme.AppCompat.Light">
         <item name="actionBarItemBackground">@drawable/selectable_background_busbot</item>
         <item name="popupMenuStyle">@style/busbot_PopupMenu</item>
         <item name="dropDownListViewStyle">@style/busbot_DropDownListView</item>
@@ -47,7 +47,7 @@
         <item name="android:listChoiceBackgroundIndicator">@drawable/list_selector_holo_light</item>
     </style>
 
-    <style name="busbot_solid_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar.Solid">
+    <style name="busbot_solid_ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid">
         <item name="background">@color/oba_dark_green</item>
         <item name="backgroundStacked">@drawable/ab_stacked_solid_busbot</item>
         <item name="backgroundSplit">@color/oba_dark_green</item>
@@ -59,7 +59,7 @@
         <item name="android:progressBarStyle">@style/busbot_ProgressBar</item>
     </style>
 
-    <style name="busbot_transparent_ActionBar" parent="@style/Widget.Sherlock.Light.ActionBar">
+    <style name="busbot_transparent_ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar">
         <item name="background">@drawable/ab_transparent_busbot</item>
         <item name="progressBarStyle">@style/busbot_ProgressBar</item>
 
@@ -67,22 +67,22 @@
         <item name="android:progressBarStyle">@style/busbot_ProgressBar</item>
     </style>
 
-    <style name="busbot_PopupMenu" parent="@style/Widget.Sherlock.Light.ListPopupWindow">
+    <style name="busbot_PopupMenu" parent="@style/Widget.AppCompat.Light.ListPopupWindow">
         <item name="android:popupBackground">@drawable/menu_dropdown_panel_busbot</item>
     </style>
 
-    <style name="busbot_DropDownListView" parent="@style/Widget.Sherlock.Light.ListView.DropDown">
+    <style name="busbot_DropDownListView" parent="@style/Widget.AppCompat.Light.ListView.DropDown">
         <item name="android:listSelector">@drawable/selectable_background_busbot</item>
     </style>
 
-    <style name="busbot_ActionBarTabStyle" parent="@style/Widget.Sherlock.Light.ActionBar.TabView">
+    <style name="busbot_ActionBarTabStyle" parent="@style/Widget.AppCompat.Light.ActionBar.TabView">
         <item name="background">@drawable/tab_indicator_ab_busbot</item>
 
         <item name="android:background">@drawable/tab_indicator_ab_busbot</item>
     </style>
 
     <style name="busbot_DropDownNav"
-           parent="@style/Widget.Sherlock.Light.Spinner.DropDown.ActionBar">
+           parent="@style/Widget.AppCompat.Light.Spinner.DropDown.ActionBar">
         <item name="background">@drawable/spinner_background_ab_busbot</item>
 
         <item name="android:background">@drawable/spinner_background_ab_busbot</item>
@@ -90,7 +90,9 @@
         <item name="android:dropDownSelector">@drawable/selectable_background_busbot</item>
     </style>
 
-    <style name="busbot_ProgressBar" parent="@style/Widget.Sherlock.Light.ProgressBar.Horizontal">
+    <!-- Exact equivalent is not available in AppCompat library
+    <style name="busbot_ProgressBar" parent="@style/Widget.AppCompat.Light.ProgressBar.Horizontal"> -->
+    <style name="busbot_ProgressBar" parent="@style/Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:progressDrawable">@drawable/progress_horizontal_busbot</item>
     </style>
 

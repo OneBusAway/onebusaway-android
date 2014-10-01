@@ -15,16 +15,16 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
-
-public class RegionsActivity extends SherlockFragmentActivity {
+public class RegionsActivity extends ActionBarActivity {
     /*
     public static final String RETURN_MODE = ".Return";
     public static final String RESULT_LAT = ".lat";

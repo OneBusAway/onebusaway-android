@@ -15,6 +15,10 @@
  */
 package com.joulespersecond.oba.region;
 
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,10 +28,6 @@ import android.os.Parcelable;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.util.AttributeSet;
-
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 
 /**
  * Custom preference to handle enabling and disabling experimental
@@ -136,7 +136,8 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
     }
 
     /**
-     * Sets the experimental regions preference (both user interface and shared preference value) to
+     * Sets the experimental regions preference (both user interface and shared preference value)
+     * to
      * the input value
      *
      * @param newValue true if the preference should be set to true, false if it should be set to

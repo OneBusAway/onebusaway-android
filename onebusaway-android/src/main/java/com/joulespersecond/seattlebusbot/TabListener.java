@@ -15,14 +15,12 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.ActionBar.Tab;
-
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 
 
 /**
@@ -64,7 +62,7 @@ public class TabListener<T extends Fragment> implements ActionBar.TabListener {
         }
     }
 
-    public void onTabSelected(Tab tab, FragmentTransaction unused) {
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction unused) {
         // The parameter is always null
         // See: http://groups.google.com/group/actionbarsherlock/browse_thread/thread/89eac58c13fe1ae0/8d6db0ba248e53d9?show_docid=8d6db0ba248e53d9
         FragmentManager fm = mActivity.getSupportFragmentManager();
@@ -78,7 +76,7 @@ public class TabListener<T extends Fragment> implements ActionBar.TabListener {
         ft.commit();
     }
 
-    public void onTabUnselected(Tab tab, FragmentTransaction unused) {
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction unused) {
         if (mFragment != null) {
             FragmentManager fm = mActivity.getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
@@ -89,6 +87,6 @@ public class TabListener<T extends Fragment> implements ActionBar.TabListener {
         }
     }
 
-    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
     }
 }

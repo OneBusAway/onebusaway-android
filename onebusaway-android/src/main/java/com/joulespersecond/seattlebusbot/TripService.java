@@ -15,6 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.provider.ObaContract.Trips;
+import com.joulespersecond.seattlebusbot.tripservice.CancelNotifyTask;
+import com.joulespersecond.seattlebusbot.tripservice.NotifierTask;
+import com.joulespersecond.seattlebusbot.tripservice.PollerTask;
+import com.joulespersecond.seattlebusbot.tripservice.SchedulerTask;
+import com.joulespersecond.seattlebusbot.tripservice.TaskContext;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -28,15 +37,6 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
-
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.provider.ObaContract.Trips;
-import com.joulespersecond.seattlebusbot.tripservice.CancelNotifyTask;
-import com.joulespersecond.seattlebusbot.tripservice.NotifierTask;
-import com.joulespersecond.seattlebusbot.tripservice.PollerTask;
-import com.joulespersecond.seattlebusbot.tripservice.SchedulerTask;
-import com.joulespersecond.seattlebusbot.tripservice.TaskContext;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -183,9 +183,9 @@ public class TripService extends Service {
     private final IBinder mBinder = new Binder() {
         @Override
         protected boolean onTransact(int code,
-                                     Parcel data,
-                                     Parcel reply,
-                                     int flags) throws RemoteException {
+                Parcel data,
+                Parcel reply,
+                int flags) throws RemoteException {
             return super.onTransact(code, data, reply, flags);
         }
     };

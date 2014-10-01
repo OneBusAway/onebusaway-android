@@ -16,11 +16,10 @@
 
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragment;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +38,7 @@ import android.widget.TextView;
  * because being able to specify our own custom view and still use all of this
  * good switching code is helpful.
  */
-public class ListFragment extends SherlockFragment {
+public class ListFragment extends Fragment {
 
     final private Handler mHandler = new Handler();
 

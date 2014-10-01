@@ -15,9 +15,6 @@
  */
 package com.joulespersecond.seattlebusbot;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
 import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
@@ -30,11 +27,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
+import android.view.Window;
 
 import java.util.HashMap;
 
 
-public class ArrivalsListActivity extends SherlockFragmentActivity {
+public class ArrivalsListActivity extends ActionBarActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static class Builder {

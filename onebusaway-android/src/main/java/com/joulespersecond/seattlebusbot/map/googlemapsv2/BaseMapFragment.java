@@ -16,18 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv2;
 
-import android.content.Context;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -37,6 +25,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -44,6 +33,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
+
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -58,6 +48,17 @@ import com.joulespersecond.seattlebusbot.map.MapParams;
 import com.joulespersecond.seattlebusbot.map.RouteMapController;
 import com.joulespersecond.seattlebusbot.map.StopMapController;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+
+import android.content.Context;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,11 +82,13 @@ import static com.joulespersecond.seattlebusbot.map.MapModeController.Callback;
  *
  * @author paulw
  */
-public class BaseMapFragment extends SherlockMapFragment
+public class BaseMapFragment extends SupportMapFragment
         implements Callback, ObaRegionsTask.Callback, MapModeController.ObaMapView,
         LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
-        GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener,
+        GooglePlayServicesClient.ConnectionCallbacks,
+        GooglePlayServicesClient.OnConnectionFailedListener,
         StopOverlay.OnFocusChangedListener {
+
     private static final String TAG = "BaseMapFragment";
 
     private static final int NOLOCATION_DIALOG = 103;
@@ -118,6 +121,7 @@ public class BaseMapFragment extends SherlockMapFragment
     private UIHelp.StopUserInfoMap mStopUserMap;
 
     private String mFocusStopId;
+
     private ObaStop mFocusStop;
 
     private HashMap<String, ObaRoute> mFocusStopRoutes;
@@ -139,14 +143,18 @@ public class BaseMapFragment extends SherlockMapFragment
 
     // We have to convert from LatLng to Location, so hold references to both
     private LatLng mCenter;
+
     private Location mCenterLocation;
 
     /**
      * Google Location Services
      */
     protected LocationClient mLocationClient;
+
     private OnLocationChangedListener mListener;
+
     LocationRequest mLocationRequest;
+
     // Use a single location instance over all BaseMapFragments
     static Location mLastLocation;
 
@@ -154,12 +162,13 @@ public class BaseMapFragment extends SherlockMapFragment
     OnFocusChangedListener mOnFocusChangedListener;
 
     public interface OnFocusChangedListener {
+
         /**
          * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
          * or when the user taps on an area away from the map for the first time after a stop
          * is already selected, which removes focus
          *
-         * @param stop the ObaStop that obtained focus, or null if no stop is in focus
+         * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
@@ -167,7 +176,7 @@ public class BaseMapFragment extends SherlockMapFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mMap = getMap();
@@ -215,7 +224,8 @@ public class BaseMapFragment extends SherlockMapFragment
         }
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
             mLocationClient = new LocationClient(getActivity(), this, this);
             mLocationClient.connect();
         }
@@ -650,11 +660,13 @@ public class BaseMapFragment extends SherlockMapFragment
      * Sets the map center to the given parameter
      *
      * @param location          location to center on
-     * @param animateToLocation true if the map should animate to the location, false if it should snap to it
+     * @param animateToLocation true if the map should animate to the location, false if it should
+     *                          snap to it
      * @param overlayExpanded   true if the sliding panel is expanded, false if it is not
      */
     @Override
-    public void setMapCenter(Location location, boolean animateToLocation, boolean overlayExpanded) {
+    public void setMapCenter(Location location, boolean animateToLocation,
+            boolean overlayExpanded) {
         if (mMap != null) {
             CameraPosition cp = mMap.getCameraPosition();
 
@@ -664,7 +676,8 @@ public class BaseMapFragment extends SherlockMapFragment
             if (overlayExpanded) {
                 // Adjust camera target based on MapModeController.OVERLAY_PERCENTAGE
                 // so it appears in the center of the visible map
-                double bias = (getLongitudeSpanInDecDegrees() * MapModeController.OVERLAY_PERCENTAGE) / 2;
+                double bias =
+                        (getLongitudeSpanInDecDegrees() * MapModeController.OVERLAY_PERCENTAGE) / 2;
                 offsetTarget = new LatLng(target.latitude - bias, target.longitude);
                 target = offsetTarget;
             }

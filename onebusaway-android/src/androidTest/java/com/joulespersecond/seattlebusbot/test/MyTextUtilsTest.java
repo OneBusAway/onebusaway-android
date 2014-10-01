@@ -15,9 +15,9 @@
  */
 package com.joulespersecond.seattlebusbot.test;
 
-import android.test.AndroidTestCase;
-
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+
+import android.test.AndroidTestCase;
 
 public class MyTextUtilsTest extends AndroidTestCase {
 

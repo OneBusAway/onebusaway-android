@@ -346,6 +346,12 @@ class ArrivalsListHeader {
         // Pause monitoring of sensors and location
         mOrientationHelper.onPause();
         mLocationHelper.onPause();
+
+        // If we're editing a stop name, close out the editing session
+        if (mInNameEdit) {
+            mController.setUserStopName(null);
+            endNameEdit();
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)

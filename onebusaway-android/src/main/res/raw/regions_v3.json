@@ -313,8 +313,8 @@
         "facebookUrl": "https://www.facebook.com/198178906967045", 
         "obaBaseUrl": "http://oba.yrt.ca/", 
         "id": 5, 
-        "experimental": true, 
-        "regionName": "York (beta)"
+        "experimental": false, 
+        "regionName": "York"
       }, 
       {
         "siriBaseUrl": null, 

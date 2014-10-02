@@ -203,6 +203,7 @@ class ArrivalsListHeader {
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
+        resetExpandCollapseAnimation();
         mRightMarginSeparatorView = mView.findViewById(R.id.right_margin_separator);
 
         mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
@@ -354,29 +355,32 @@ class ArrivalsListHeader {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
-    public void setSlidingPanelCollapsed(boolean collapsed) {
+    synchronized public void setSlidingPanelCollapsed(boolean collapsed) {
         // If the state has changed and image is initialized, then rotate the expand/collapse image
         if (mExpandCollapse != null && collapsed != mIsSlidingPanelCollapsed) {
             // Update value
             mIsSlidingPanelCollapsed = collapsed;
 
-            if (!UIHelp.canAnimateViewModern()) {
-                rotateExpandCollapseImageViewLegacy(collapsed);
-                return;
-            }
+            doExpandCollapseRotation(collapsed);
+        }
+    }
 
-            if (!collapsed) {
-                // Rotate clockwise
-                mExpandCollapse.animate()
-                        .setDuration(ANIM_DURATION)
-                        .rotationBy(ANIM_STATE_INVERTED);
-            } else {
-                // Rotate counter-clockwise
-                mExpandCollapse.animate()
-                        .setDuration(ANIM_DURATION)
-                        .rotationBy(-ANIM_STATE_INVERTED);
-            }
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+    private void doExpandCollapseRotation(boolean collapsed) {
+        if (!UIHelp.canAnimateViewModern()) {
+            rotateExpandCollapseImageViewLegacy(collapsed);
+            return;
+        }
+        if (!collapsed) {
+            // Rotate clockwise
+            mExpandCollapse.animate()
+                    .setDuration(ANIM_DURATION)
+                    .rotationBy(ANIM_STATE_INVERTED);
+        } else {
+            // Rotate counter-clockwise
+            mExpandCollapse.animate()
+                    .setDuration(ANIM_DURATION)
+                    .rotationBy(-ANIM_STATE_INVERTED);
         }
     }
 
@@ -394,6 +398,29 @@ class ArrivalsListHeader {
         mExpandCollapse.setAnimation(rotate);
     }
 
+    /**
+     * Resets the animation that has been applied to the expand/collapse indicator image
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+    private synchronized void resetExpandCollapseAnimation() {
+        if (mExpandCollapse == null) {
+            return;
+        }
+        if (UIHelp.canAnimateViewModern()) {
+            if (mExpandCollapse.getRotation() != 0) {
+                mExpandCollapse.setRotation(0);
+            }
+        } else {
+            mExpandCollapse.clearAnimation();
+        }
+    }
+
+    /**
+     * Allows external classes to set whether or not the expand/collapse indicator should be
+     * shown (e.g., if the header is not in a sliding window, we don't want to show it)
+     *
+     * @param value true if the expand/collapse indicator should be shown, false if it should not
+     */
     public void showExpandCollapseIndicator(boolean value) {
         if (mExpandCollapse != null) {
             if (value) {

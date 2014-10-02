@@ -197,7 +197,7 @@ public class HomeActivity extends ActionBarActivity
 
         setupGooglePlayServices();
 
-        UIHelp.setupActionBar(getSupportActionBar());
+        UIHelp.setupActionBar(this);
 
         autoShowWhatsNew();
 

@@ -52,11 +52,17 @@
         <item name="backgroundStacked">@drawable/ab_stacked_solid_busbot</item>
         <item name="backgroundSplit">@color/oba_dark_green</item>
         <item name="progressBarStyle">@style/busbot_ProgressBar</item>
+        <item name="titleTextStyle">@style/TitleBarTextColor</item>
 
+        <item name="android:titleTextStyle">@style/TitleBarTextColor</item>
         <item name="android:background">@color/oba_dark_green</item>
         <item name="android:backgroundStacked">@drawable/ab_stacked_solid_busbot</item>
         <item name="android:backgroundSplit">@color/oba_dark_green</item>
         <item name="android:progressBarStyle">@style/busbot_ProgressBar</item>
+    </style>
+
+    <style name="TitleBarTextColor" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">#FFFFFF</item>
     </style>
 
     <style name="busbot_transparent_ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar">

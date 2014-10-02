@@ -17,113 +17,112 @@
     android:versionCode="40"
     android:versionName="1.7.4">
 
-<permission
+    <permission
         android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
         android:label="@string/trip_service_perm_label"
         android:description="@string/trip_service_perm_description"
         android:protectionLevel="normal" />
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
-    <uses-permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"/>
 
     <application
-        android:allowBackup="false"
-        android:name=".Application"
-        android:icon="@drawable/ic_launcher"
-        android:logo="@drawable/logo"
-        android:label="@string/app_name"
-        android:theme="@style/Theme.BusBot">
+            android:allowBackup="false"
+            android:name=".Application"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.BusBot">
         <meta-data
-            android:name="android.app.default_searchable"
-            android:value=".SearchActivity" />
+                android:name="android.app.default_searchable"
+                android:value=".SearchActivity"/>
 
         <activity
-            android:name=".SearchActivity"
-            android:launchMode="singleTop">
+                android:name=".SearchActivity"
+                android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
+                <action android:name="android.intent.action.SEARCH"/>
             </intent-filter>
             <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
+                    android:name="android.app.searchable"
+                    android:resource="@xml/searchable"/>
         </activity>
 
         <activity
-            android:name=".HomeActivity"
-            android:theme="@style/Theme.BusBot.NoBackground">
+                android:name=".HomeActivity"
+                android:theme="@style/Theme.BusBot.NoBackground">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".ArrivalsListActivity"
-            android:launchMode="singleTop">
+                android:name=".ArrivalsListActivity"
+                android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
         <activity android:name=".StopInfoActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
         <activity android:name=".RouteInfoActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </activity>
-        <activity android:name=".TripInfoActivity" />
-        <activity android:name=".TripListActivity" />
+        <activity android:name=".TripInfoActivity"/>
+        <activity android:name=".TripListActivity"/>
 
         <activity
-            android:name=".MyStopsActivity"
-            android:label="@string/stop_shortcut">
+                android:name=".MyStopsActivity"
+                android:label="@string/stop_shortcut">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyRecentStopsActivity"
-            android:label="@string/recent_stops_shortcut">
+                android:name=".MyRecentStopsActivity"
+                android:label="@string/recent_stops_shortcut">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyStarredStopsActivity"
-            android:label="@string/starred_stops_shortcut">
+                android:name=".MyStarredStopsActivity"
+                android:label="@string/starred_stops_shortcut">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyRoutesActivity"
-            android:label="@string/route_shortcut">
+                android:name=".MyRoutesActivity"
+                android:label="@string/route_shortcut">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".MyRecentRoutesActivity"
-            android:label="@string/recent_routes_shortcut">
+                android:name=".MyRecentRoutesActivity"
+                android:label="@string/recent_routes_shortcut">
             <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <!-- ActionBarCompat library doesn't have an ActionBarPreferenceActivity, so define parent here-->
@@ -134,45 +133,45 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value=".HomeActivity"/>
         </activity>
-        <activity android:name=".RegionsActivity" />
-        <activity android:name=".AgenciesActivity" />
+        <activity android:name=".RegionsActivity"/>
+        <activity android:name=".AgenciesActivity"/>
 
         <provider
-            android:name="com.joulespersecond.oba.provider.ObaProvider"
-            android:authorities="com.joulespersecond.oba" />
+                android:name="com.joulespersecond.oba.provider.ObaProvider"
+                android:authorities="com.joulespersecond.oba"/>
 
         <service
-            android:name=".TripService"
-            android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
+                android:name=".TripService"
+                android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
             <intent-filter>
-                <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver" />
-                <action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />
+                <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"/>
+                <action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
             </intent-filter>
         </service>
 
         <receiver android:name=".AlarmReceiver">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE" />
-                <action android:name="com.joulespersecond.seattlebusbot.action.POLL" />
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
+                <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
             </intent-filter>
         </receiver>
         <receiver android:name=".BootstrapService">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
         </receiver>
 
         <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+                android:name="com.google.android.gms.version"
+                android:value="@integer/google_play_services_version"/>
         <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
-            android:value="@string/apiv2_key" />
+                android:name="com.google.android.maps.v2.API_KEY"
+                android:value="@string/apiv2_key"/>
     </application>
 
     <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
+            android:glEsVersion="0x00020000"
+            android:required="true"/>
 </manifest>

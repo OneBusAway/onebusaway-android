@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
@@ -50,6 +52,8 @@ public class MyRoutesActivity extends MyTabActivityBase {
                         MySearchRoutesFragment.class)));
 
         restoreDefaultTab();
+
+        UIHelp.setupActionBar(this);
     }
 
     @Override

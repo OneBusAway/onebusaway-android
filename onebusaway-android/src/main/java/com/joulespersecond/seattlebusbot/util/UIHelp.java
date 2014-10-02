@@ -23,6 +23,7 @@ import com.joulespersecond.oba.elements.ObaRoute;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.HomeActivity;
 import com.joulespersecond.seattlebusbot.R;
 
 import android.animation.Animator;
@@ -66,12 +67,15 @@ public final class UIHelp {
     private static final String TAG = "UIHelp";
 
     public static void setupActionBar(ActionBarActivity activity) {
-        setupActionBar(activity.getSupportActionBar());
-    }
+        ActionBar bar = activity.getSupportActionBar();
+        bar.setIcon(android.R.color.transparent);
+        bar.setDisplayShowTitleEnabled(true);
 
-    public static void setupActionBar(ActionBar bar) {
-        bar.setDisplayHomeAsUpEnabled(true);
-        bar.setDisplayShowTitleEnabled(false);
+        // HomeActivity is the root for all other activities
+        if (!(activity instanceof HomeActivity)) {
+            bar.setDisplayHomeAsUpEnabled(true);
+        }
+
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {

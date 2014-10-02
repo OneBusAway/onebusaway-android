@@ -15,6 +15,8 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
@@ -26,7 +28,6 @@ public class MyStopsActivity extends MyTabActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //ensureSupportActionBarAttached();
         final Resources res = getResources();
         final ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -58,6 +59,8 @@ public class MyStopsActivity extends MyTabActivityBase {
                         MySearchStopsFragment.class)));
 
         restoreDefaultTab();
+
+        UIHelp.setupActionBar(this);
     }
 
     @Override

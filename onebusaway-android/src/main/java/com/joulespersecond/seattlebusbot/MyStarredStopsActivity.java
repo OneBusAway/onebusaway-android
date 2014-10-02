@@ -32,6 +32,8 @@ public class MyStarredStopsActivity extends ActionBarActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        UIHelp.setupActionBar(this);
+
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
             setResult(RESULT_OK, getShortcutIntent());

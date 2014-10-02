@@ -24,7 +24,7 @@
         android:layout_height="match_parent"
         android:gravity="bottom"
         sothree:panelHeight="68dp"
-        sothree:shadowHeight="4dp"
+        sothree:shadowHeight="5dp"
         sothree:paralaxOffset="100dp"
         sothree:dragView="@+id/dragView">
 

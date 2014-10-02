@@ -500,9 +500,9 @@ class ArrivalsListHeader {
                     arrivalInfo.append(mContext.getString(R.string.stop_info_eta_now));
                     mArrivalInfoView.setText(arrivalInfo);
                 } else if (eta > 0) {
-                    mArrivalInfoView
-                            .setText(mContext.getString(R.string.stop_info_header_arrival_info,
-                                    eta));
+                    arrivalInfo.append(mContext.getString(R.string.stop_info_header_arrival_info,
+                            eta));
+                    mArrivalInfoView.setText(arrivalInfo);
                 } else if (eta < 0) {
                     arrivalInfo.append(mContext.getString(R.string.stop_info_header_just_left));
                     mArrivalInfoView.setText(arrivalInfo);

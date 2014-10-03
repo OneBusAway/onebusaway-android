@@ -190,7 +190,7 @@ public class BaseMapFragment extends SupportMapFragment
                 mMap.setLocationSource(this);
                 // Listener for camera changes
                 mMap.setOnCameraChangeListener(this);
-                // Hide MyLocation button on map, since we have the action bar
+                // Hide MyLocation button on map, since we have our own button
                 uiSettings.setMyLocationButtonEnabled(false);
                 // Hide Zoom controls
                 uiSettings.setZoomControlsEnabled(false);
@@ -512,7 +512,10 @@ public class BaseMapFragment extends SupportMapFragment
     public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
 
         if (mLastLocation == null) {
-            //showDialog(NOLOCATION_DIALOG);
+            Toast.makeText(getActivity(),
+                    getResources()
+                            .getString(R.string.main_waiting_for_location),
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 

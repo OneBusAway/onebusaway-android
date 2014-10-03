@@ -54,7 +54,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -82,8 +86,8 @@ public class HomeActivity extends ActionBarActivity
 
     private static final int WHATSNEW_DIALOG = 2;
 
-    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
     //One week, in milliseconds
+    private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
 
     private static final String TAG = "HomeActivity";
 
@@ -96,6 +100,12 @@ public class HomeActivity extends ActionBarActivity
     ArrivalsListHeader mArrivalsListHeader;
 
     View mArrivalsListHeaderView;
+
+    private ImageButton mBtnMyLocation;
+
+    private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
+
+    private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
     /**
      * Google Location Services
@@ -193,6 +203,8 @@ public class HomeActivity extends ActionBarActivity
         mMapFragment = (BaseMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map_fragment);
 
+        setupMyLocationButton();
+
         setupSlidingPanel(savedInstanceState);
 
         setupGooglePlayServices();
@@ -255,12 +267,7 @@ public class HomeActivity extends ActionBarActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d(TAG, "onOptionsItemSelected");
         final int id = item.getItemId();
-        if (id == R.id.my_location) {
-            if (mMapFragment != null) {
-                mMapFragment.setMyLocation(true, true);
-            }
-            return true;
-        } else if (id == R.id.search) {
+        if (id == R.id.search) {
             onSearchRequested();
             return true;
         } else if (id == android.R.id.home) {
@@ -494,6 +501,7 @@ public class HomeActivity extends ActionBarActivity
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
         mSlidingPanel.showPanel();
+        moveMyLocationButtonUp();
     }
 
     private String getLocationString(Context context) {
@@ -584,6 +592,84 @@ public class HomeActivity extends ActionBarActivity
         task.execute();
     }
 
+    private void setupMyLocationButton() {
+        // Initialize the My Location button
+        mBtnMyLocation = (ImageButton) findViewById(R.id.btnMyLocation);
+        View.OnClickListener oclMyLocation = new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                if (mMapFragment != null) {
+                    mMapFragment.setMyLocation(true, true);
+                }
+            }
+        };
+        mBtnMyLocation.setOnClickListener(oclMyLocation);
+        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+                .getLayoutParams();
+        MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
+    }
+
+    private void moveMyLocationButtonUp() {
+        if (mBtnMyLocation == null) {
+            return;
+        }
+
+        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+                .getLayoutParams();
+
+        if (p.bottomMargin != MY_LOC_DEFAULT_BOTTOM_MARGIN) {
+            // Button was already moved, do nothing
+            return;
+        }
+
+        // Move My Location button above the sliding panel header, so its still visible
+        final int bottomMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN + mSlidingPanel.getPanelHeight();
+
+        Animation a = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                UIHelp.setMargins(mBtnMyLocation,
+                        p.leftMargin,
+                        p.topMargin,
+                        p.rightMargin,
+                        (int) (bottomMargin * interpolatedTime));
+            }
+        };
+        a.setDuration(MY_LOC_BTN_ANIM_DURATION);
+        mBtnMyLocation.startAnimation(a);
+    }
+
+    private void moveMyLocationButtonDown() {
+        if (mBtnMyLocation == null) {
+            return;
+        }
+
+        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+                .getLayoutParams();
+
+        if (p.bottomMargin == MY_LOC_DEFAULT_BOTTOM_MARGIN) {
+            // Button is already in default state, do nothing
+            return;
+        }
+
+        // Move My Location button back to its default position
+        final int bottomMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN;
+
+        // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
+        Animation a = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                UIHelp.setMargins(mBtnMyLocation,
+                        p.leftMargin,
+                        p.topMargin,
+                        p.rightMargin,
+                        (int) (bottomMargin * interpolatedTime));
+            }
+        };
+        a.setDuration(MY_LOC_BTN_ANIM_DURATION);
+        mBtnMyLocation.startAnimation(a);
+    }
+
     private void setupGooglePlayServices() {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
@@ -636,6 +722,7 @@ public class HomeActivity extends ActionBarActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
                     mArrivalsListHeader.refresh();
                 }
+                moveMyLocationButtonUp();
             }
 
             @Override
@@ -645,6 +732,7 @@ public class HomeActivity extends ActionBarActivity
                     FragmentManager fm = getSupportFragmentManager();
                     fm.beginTransaction().remove(mArrivalsListFragment).commit();
                 }
+                moveMyLocationButtonDown();
             }
         });
 

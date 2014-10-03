@@ -52,6 +52,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -730,5 +731,20 @@ public final class UIHelp {
         final float scale = context.getResources().getDisplayMetrics().density;
         // Convert the dps to pixels, based on density scale
         return (int) (dp * scale + 0.5f);
+    }
+
+    /**
+     * Sets the margins for a given view
+     *
+     * @param v View to set the margin for
+     * @param l left margin, in pixels
+     * @param t top margin, in pixels
+     * @param r right margin, in pixels
+     * @param b bottom margin, in pixels
+     */
+    public static void setMargins(View v, int l, int t, int r, int b) {
+        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+        p.setMargins(l, t, r, b);
+        v.setLayoutParams(p);
     }
 }

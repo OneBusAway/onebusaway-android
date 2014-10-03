@@ -29,12 +29,26 @@
         sothree:dragView="@+id/dragView">
 
         <!-- MAIN CONTENT -->
-        <fragment
-            class="com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment"
-            android:id="@+id/map_fragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+            <fragment
+                    class="com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment"
+                    android:id="@+id/map_fragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+            <ImageButton
+                    android:id="@+id/btnMyLocation"
+                    android:layout_height="55dp"
+                    android:layout_width="55dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentBottom="true"
+                    android:src="@drawable/device_access_location_found"
+                    android:background="@drawable/button_layout"
+                    android:contentDescription="@string/map_option_mylocation">
+            </ImageButton>
+        </RelativeLayout>
 
         <!-- SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->
         <LinearLayout

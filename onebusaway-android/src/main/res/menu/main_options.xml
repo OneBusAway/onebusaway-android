@@ -15,10 +15,6 @@
 -->
 <menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
       xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/my_location"
-          android:title="@string/map_option_mylocation"
-          android:icon="@drawable/ic_action_location_found"
-          onebusaway:showAsAction="ifRoom"/>
     <item android:id="@+id/search"
           android:title="@string/map_option_search"
           android:icon="@drawable/ic_action_search"

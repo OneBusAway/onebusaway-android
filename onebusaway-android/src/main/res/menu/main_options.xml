@@ -28,9 +28,10 @@
     <item android:id="@+id/view_trips"
           android:title="@string/main_option_viewtrips"
           android:icon="@drawable/ic_menu_notifications"/>
-    <item android:id="@+id/preferences"
+    <item android:id="@+id/settings"
           android:title="@string/main_option_preferences"
-          android:icon="@drawable/android:ic_menu_preferences"/>
+          android:icon="@drawable/android:ic_menu_preferences"
+          android:orderInCategory="100"/>
     <item android:id="@+id/help"
           android:title="@string/main_option_help"
           android:icon="@drawable/android:ic_menu_help"/>

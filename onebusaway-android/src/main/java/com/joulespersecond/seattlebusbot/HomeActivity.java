@@ -47,11 +47,12 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,7 +67,8 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class HomeActivity extends ActionBarActivity
-        implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener {
+        implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener,
+        NavigationDrawerFragment.NavigationDrawerCallbacks {
 
     interface SlidingPanelController {
 
@@ -114,6 +116,16 @@ public class HomeActivity extends ActionBarActivity
 
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
+
+    /**
+     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+     */
+    private NavigationDrawerFragment mNavigationDrawerFragment;
+
+    /**
+     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
+     */
+    private CharSequence mTitle;
 
     /**
      * Stop that has current focus on the map.  We retain a reference to the StopId,
@@ -200,6 +212,8 @@ public class HomeActivity extends ActionBarActivity
         setContentView(R.layout.main);
         mContext = this;
 
+        setupNavigationDrawer();
+
         mMapFragment = (BaseMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map_fragment);
 
@@ -256,10 +270,36 @@ public class HomeActivity extends ActionBarActivity
     }
 
     @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        // update the main content by replacing fragments
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        // TODO - Add handling of our own navigation drawer item selections
+//        fragmentManager.beginTransaction()
+//                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
+//                .commit();
+    }
+
+    public void restoreActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setTitle(mTitle);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_options, menu);
-        return true;
+//        MenuInflater inflater = getMenuInflater();
+//        inflater.inflate(R.menu.main_options, menu);
+//        return true;
+        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+            // Only show items in the action bar relevant to this screen
+            // if the drawer is not showing. Otherwise, let the drawer
+            // decide what to show in the action bar.
+            getMenuInflater().inflate(R.menu.main_options, menu);
+            restoreActionBar();
+            return true;
+        }
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -269,9 +309,6 @@ public class HomeActivity extends ActionBarActivity
         final int id = item.getItemId();
         if (id == R.id.search) {
             onSearchRequested();
-            return true;
-        } else if (id == android.R.id.home) {
-            NavHelp.goHome(this);
             return true;
         } else if (id == R.id.find_stop) {
             Intent myIntent = new Intent(this, MyStopsActivity.class);
@@ -288,10 +325,8 @@ public class HomeActivity extends ActionBarActivity
         } else if (id == R.id.help) {
             showDialog(HELP_DIALOG);
             return true;
-        } else if (id == R.id.preferences) {
-            Intent preferences = new Intent(
-                    HomeActivity.this,
-                    PreferencesActivity.class);
+        } else if (id == R.id.settings) {
+            Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
             startActivity(preferences);
             return true;
         }
@@ -670,6 +705,17 @@ public class HomeActivity extends ActionBarActivity
         mBtnMyLocation.startAnimation(a);
     }
 
+    private void setupNavigationDrawer() {
+        mNavigationDrawerFragment = (NavigationDrawerFragment)
+                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+        mTitle = getTitle();
+
+        // Set up the drawer.
+        mNavigationDrawerFragment.setUp(
+                R.id.navigation_drawer,
+                (DrawerLayout) findViewById(R.id.nav_drawer_left_pane));
+    }
+
     private void setupGooglePlayServices() {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
@@ -682,7 +728,7 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private void setupSlidingPanel(Bundle bundle) {
-        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
+        mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
 
         mSlidingPanel.hidePanel();  // Don't show the panel until we have content

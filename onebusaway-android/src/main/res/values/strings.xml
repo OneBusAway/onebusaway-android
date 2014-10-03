@@ -86,7 +86,7 @@
     <string name="main_option_findstop">My Stops</string>
     <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
-    <string name="main_option_preferences">Preferences</string>
+    <string name="main_option_preferences">Settings</string>
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
@@ -379,4 +379,8 @@
     <string name="miles_abbreviation">mi</string>
     <string name="meters_abbreviation">m</string>
     <string name="kilometers_abbreviation">km</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

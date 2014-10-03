@@ -12,69 +12,88 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mainlayout"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
-
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/sliding_layout"
+<android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/nav_drawer_left_pane"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="bottom"
-        sothree:panelHeight="68dp"
-        sothree:shadowHeight="5dp"
-        sothree:paralaxOffset="100dp"
-        sothree:dragView="@+id/dragView">
+        tools:context=".MyActivity">
 
-        <!-- MAIN CONTENT -->
-        <RelativeLayout
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:id="@+id/mainlayout"
+                    android:orientation="vertical"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
+
+        <com.sothree.slidinguppanel.SlidingUpPanelLayout
+                xmlns:sothree="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/bottom_sliding_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1">
-            <fragment
-                    class="com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment"
-                    android:id="@+id/map_fragment"
+                android:gravity="bottom"
+                sothree:panelHeight="68dp"
+                sothree:shadowHeight="5dp"
+                sothree:paralaxOffset="100dp"
+                sothree:dragView="@+id/dragView">
+
+            <!-- MAIN CONTENT -->
+            <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
-            <ImageButton
-                    android:id="@+id/btnMyLocation"
-                    android:layout_height="55dp"
-                    android:layout_width="55dp"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentBottom="true"
-                    android:src="@drawable/device_access_location_found"
-                    android:background="@drawable/button_layout"
-                    android:contentDescription="@string/map_option_mylocation">
-            </ImageButton>
-        </RelativeLayout>
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
+                <fragment
+                        class="com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment"
+                        android:id="@+id/map_fragment"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+                <ImageButton
+                        android:id="@+id/btnMyLocation"
+                        android:layout_height="55dp"
+                        android:layout_width="55dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentBottom="true"
+                        android:src="@drawable/device_access_location_found"
+                        android:background="@drawable/button_layout"
+                        android:contentDescription="@string/map_option_mylocation">
+                </ImageButton>
+            </RelativeLayout>
 
-        <!-- SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#eeeeee"
-            android:orientation="vertical"
-            android:clickable="true"
-            android:focusable="false"
-            android:id="@+id/slidingPanel">
-
-            <!-- Header for sliding panel -->
-            <include layout="@layout/arrivals_list_header" />
-
-            <!-- Content of sliding panel -->
+            <!-- BOTTOM SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:scaleType="fitStart"
-                android:id="@+id/slidingFragment"
-                android:orientation="horizontal">
-                <!-- Fragment is added here programmatically -->
-            </LinearLayout>
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#eeeeee"
+                    android:orientation="vertical"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:id="@+id/slidingPanel">
 
-        </LinearLayout>
-    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
-</RelativeLayout>
+                <!-- Header for bottom sliding panel -->
+                <include layout="@layout/arrivals_list_header"/>
+
+                <!-- Content of bottom sliding panel -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitStart"
+                        android:id="@+id/slidingFragment"
+                        android:orientation="horizontal">
+                    <!-- Fragment is added here programmatically -->
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+    </RelativeLayout>
+
+    <!-- The drawer is given a fixed width in dp and extends the full height of
+         the container. -->
+    <fragment android:id="@+id/navigation_drawer"
+              android:layout_width="@dimen/navigation_drawer_width"
+              android:layout_height="match_parent"
+              android:layout_gravity="start"
+              android:name="com.joulespersecond.seattlebusbot.NavigationDrawerFragment"
+              tools:layout="@layout/fragment_navigation_drawer"/>
+</android.support.v4.widget.DrawerLayout>
 

@@ -41,8 +41,16 @@ android {
     buildToolsVersion "19.1.0"
 
     defaultConfig {
+        /**
+         * To allow this app to be distributed via Google Play, the applicationId MUST remain the
+         * original package name of the app before it was re-branded to OneBusAway:
+         * com.joulespersecond.seattlebusbot
+         */
+        applicationId "com.joulespersecond.seattlebusbot"
         minSdkVersion 9
         targetSdkVersion 19
+        versionCode 38
+        versionName "1.7.2"
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk

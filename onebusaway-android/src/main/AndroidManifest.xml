@@ -13,15 +13,13 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.joulespersecond.seattlebusbot"
-    android:versionCode="40"
-    android:versionName="1.7.4">
+    package="com.joulespersecond.seattlebusbot">
 
     <permission
         android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
         android:label="@string/trip_service_perm_label"
         android:description="@string/trip_service_perm_description"
-        android:protectionLevel="normal" />
+        android:protectionLevel="normal"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>

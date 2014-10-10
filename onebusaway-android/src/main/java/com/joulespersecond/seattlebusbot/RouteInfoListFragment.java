@@ -24,6 +24,7 @@ import com.joulespersecond.oba.request.ObaRouteRequest;
 import com.joulespersecond.oba.request.ObaRouteResponse;
 import com.joulespersecond.oba.request.ObaStopsForRouteRequest;
 import com.joulespersecond.oba.request.ObaStopsForRouteResponse;
+import com.joulespersecond.seattlebusbot.app.ListFragment;
 import com.joulespersecond.seattlebusbot.util.FragmentUtils;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
@@ -103,7 +104,7 @@ public class RouteInfoListFragment extends ListFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-                             ViewGroup root, Bundle savedInstanceState) {
+            ViewGroup root, Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -143,10 +144,10 @@ public class RouteInfoListFragment extends ListFragment {
             new ExpandableListView.OnChildClickListener() {
                 @Override
                 public boolean onChildClick(ExpandableListView parent,
-                                            View v,
-                                            int groupPosition,
-                                            int childPosition,
-                                            long id) {
+                        View v,
+                        int groupPosition,
+                        int childPosition,
+                        long id) {
                     showArrivals(v);
                     return true;
                 }
@@ -231,7 +232,7 @@ public class RouteInfoListFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(Loader<ObaRouteResponse> loader,
-                                   ObaRouteResponse data) {
+                ObaRouteResponse data) {
             setHeader(data, true);
         }
 
@@ -251,7 +252,7 @@ public class RouteInfoListFragment extends ListFragment {
 
         @Override
         public void onLoadFinished(Loader<StopsForRouteInfo> loader,
-                                   StopsForRouteInfo data) {
+                StopsForRouteInfo data) {
             setStopsForRoute(data);
         }
 

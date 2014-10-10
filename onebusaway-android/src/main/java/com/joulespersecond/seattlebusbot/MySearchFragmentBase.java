@@ -19,6 +19,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 
+import com.joulespersecond.seattlebusbot.app.ListFragment;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 import com.joulespersecond.view.SearchView;

@@ -23,6 +23,7 @@ import com.joulespersecond.oba.elements.ObaSituation;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.app.ListFragment;
 import com.joulespersecond.seattlebusbot.util.FragmentUtils;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;

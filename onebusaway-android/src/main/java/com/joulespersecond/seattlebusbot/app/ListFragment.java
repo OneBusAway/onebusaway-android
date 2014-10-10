@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.joulespersecond.seattlebusbot;
+package com.joulespersecond.seattlebusbot.app;
+
+import com.joulespersecond.seattlebusbot.R;
 
 import android.content.Context;
 import android.os.Bundle;

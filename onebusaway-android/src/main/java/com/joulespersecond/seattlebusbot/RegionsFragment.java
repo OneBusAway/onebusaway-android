@@ -22,6 +22,7 @@ import com.google.android.gms.location.LocationClient;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsLoader;
 import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.seattlebusbot.app.ListFragment;
 import com.joulespersecond.seattlebusbot.util.LocationUtil;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 

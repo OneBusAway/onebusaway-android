@@ -43,7 +43,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
                 <fragment
-                        class="com.joulespersecond.seattlebusbot.map.googlemapsv2.BaseMapFragment"
+                        class="org.onebusaway.android.map.googlemapsv2.BaseMapFragment"
                         android:id="@+id/map_fragment"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
@@ -93,7 +93,7 @@
               android:layout_width="@dimen/navigation_drawer_width"
               android:layout_height="match_parent"
               android:layout_gravity="start"
-              android:name="com.joulespersecond.seattlebusbot.NavigationDrawerFragment"
+              android:name="org.onebusaway.android.ui.NavigationDrawerFragment"
               tools:layout="@layout/fragment_navigation_drawer"/>
 </android.support.v4.widget.DrawerLayout>
 

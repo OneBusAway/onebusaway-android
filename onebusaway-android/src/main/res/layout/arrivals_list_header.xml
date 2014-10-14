@@ -190,14 +190,14 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true">
 
-        <com.joulespersecond.view.ArrowView
+        <org.onebusaway.android.view.ArrowView
                 android:id="@+id/arrow"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:layout_gravity="center_horizontal"
                 android:visibility="gone"/>
 
-        <com.joulespersecond.view.DistanceToStopView
+        <org.onebusaway.android.view.DistanceToStopView
                 android:id="@+id/dist_to_stop"
                 style="@style/Header3Text"
                 android:layout_marginTop="2dp"

@@ -45,15 +45,15 @@
         </ListPreference>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
-        <com.joulespersecond.seattlebusbot.backup.SavePreference
+        <org.onebusaway.android.io.backup.SavePreference
                 android:title="@string/preferences_save_title"
                 android:summary="@string/preferences_save_summary"/>
-        <com.joulespersecond.seattlebusbot.backup.RestorePreference
+        <org.onebusaway.android.io.backup.RestorePreference
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
-        <com.joulespersecond.oba.region.ExperimentalRegionsPreference
+        <org.onebusaway.android.region.ExperimentalRegionsPreference
                 android:title="@string/preferences_experimental_regions_title"
                 android:summary="@string/preferences_experimental_regions_summary"/>
         <EditTextPreference

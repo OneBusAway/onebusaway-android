@@ -42,7 +42,6 @@ public class Application extends android.app.Application {
     // Region preference (long id)
     private static final String TAG = "Application";
 
-    //private static final String PREFS_NAME = "com.joulespersecond.seattlebusbot.prefs";
     private SharedPreferences mPrefs;
 
     private static Application mApp;

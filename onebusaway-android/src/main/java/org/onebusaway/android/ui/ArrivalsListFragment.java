@@ -609,7 +609,9 @@ public class ArrivalsListFragment extends ListFragment
             Bundle args = getArguments();
             double latitude = args.getDouble(STOP_LAT);
             double longitude = args.getDouble(STOP_LON);
-            location = LocationUtil.makeLocation(latitude, longitude);
+            if (latitude != 0 && longitude != 0) {
+                location = LocationUtil.makeLocation(latitude, longitude);
+            }
         }
         return location;
     }

@@ -40,7 +40,13 @@ public class TripService extends Service {
 
     public static final String TAG = "TripService";
 
-    // Actions - should match intent-filter actions for AlarmReceiver in AndroidManifest.xml
+    /**
+     * Actions - should match intent-filter actions for AlarmReceiver in AndroidManifest.xml
+     *
+     * NOTE: The action names in this class should not be changed.  They need to stay under the
+     * "com.joulespersecond.seattlebusbot" namespace to support backwards compatibility with
+     * existing installed apps
+     */
     public static final String ACTION_SCHEDULE =
             "com.joulespersecond.seattlebusbot.action.SCHEDULE";
 

@@ -34,6 +34,10 @@ import java.util.ArrayList;
  *
  * This really needs to be documented better.
  *
+ * NOTE: The AUTHORITY names in this class cannot be changed.  They need to stay under the
+ * "com.joulespersecond.oba" namespace to support backwards compatibility with existing installed
+ * apps
+ *
  * @author paulw
  */
 public final class ObaContract {

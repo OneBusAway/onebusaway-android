@@ -33,6 +33,10 @@ import java.util.List;
 
 public class ObaProvider extends ContentProvider {
 
+    /**
+     * The database name cannot be changed.  It needs to remain the same to support backwards
+     * compatibility with existing installed apps
+     */
     private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
 
     private class OpenHelper extends SQLiteOpenHelper {

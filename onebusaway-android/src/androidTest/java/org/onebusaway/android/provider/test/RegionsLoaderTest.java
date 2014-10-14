@@ -102,7 +102,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // Retrieve from provider
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getContext());
         assertNotNull(regions);
-        assertEquals(3, regions.size());  // Number of production regions
+        assertEquals(4, regions.size());  // Number of production regions
 
         // Production regions
         _assertTampa(regions.get(0));

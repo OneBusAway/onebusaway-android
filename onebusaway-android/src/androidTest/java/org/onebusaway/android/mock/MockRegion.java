@@ -2,7 +2,7 @@ package org.onebusaway.android.mock;
 
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.region.RegionUtils;
+import org.onebusaway.android.util.RegionUtils;
 
 import android.content.Context;
 

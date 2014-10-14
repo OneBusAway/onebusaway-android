@@ -22,7 +22,6 @@ import com.google.android.gms.location.LocationClient;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.RegionUtils;
 
 import android.content.Context;
 import android.location.Location;

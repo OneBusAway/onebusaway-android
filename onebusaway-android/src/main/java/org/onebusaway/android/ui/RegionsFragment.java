@@ -24,10 +24,10 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsLoader;
-import org.onebusaway.android.region.RegionUtils;
 import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.RegionUtils;
 
 import android.app.Activity;
 import android.content.Context;

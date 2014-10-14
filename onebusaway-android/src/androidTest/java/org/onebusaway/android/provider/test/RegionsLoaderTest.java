@@ -17,7 +17,7 @@ package org.onebusaway.android.provider.test;
 
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.test.ObaLoaderTestCase;
-import org.onebusaway.android.region.RegionUtils;
+import org.onebusaway.android.util.RegionUtils;
 
 import java.util.ArrayList;
 

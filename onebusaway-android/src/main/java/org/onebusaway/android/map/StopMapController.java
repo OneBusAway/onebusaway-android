@@ -27,8 +27,8 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.region.RegionUtils;
 import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.RegionUtils;
 
 import android.app.Activity;
 import android.location.Location;

@@ -25,6 +25,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.RegionUtils;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;

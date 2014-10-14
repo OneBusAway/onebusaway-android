@@ -5,7 +5,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.region.RegionUtils;
+import org.onebusaway.android.util.RegionUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;

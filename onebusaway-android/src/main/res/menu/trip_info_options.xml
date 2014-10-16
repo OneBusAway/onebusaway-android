@@ -22,7 +22,7 @@
     <item
             android:id="@+id/trip_info_delete"
             android:title="@string/trip_info_delete"
-            android:icon="@drawable/ic_action_discard"
+            android:icon="@drawable/ic_action_content_discard"
             onebusaway:showAsAction="ifRoom"/>
     <item
             android:id="@+id/show_route"

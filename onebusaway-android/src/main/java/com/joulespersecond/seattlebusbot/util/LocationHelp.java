@@ -15,6 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot.util;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.RegionUtils;
+import com.joulespersecond.seattlebusbot.Application;
+
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
@@ -22,14 +31,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.RegionUtils;
-import com.joulespersecond.seattlebusbot.Application;
 
 import java.util.Iterator;
 import java.util.List;
@@ -42,7 +43,8 @@ import java.util.List;
 public class LocationHelp {
 
     public static final String TAG = "LocationHelp";
-    public static final int DEFAULT_SEARCH_RADIUS = 15000;
+
+    public static final int DEFAULT_SEARCH_RADIUS = 40000;
     private static final float FUZZY_EQUALS_THRESHOLD = 15.0f;
 
     public static Location getDefaultSearchCenter() {
@@ -95,6 +97,7 @@ public class LocationHelp {
     public static Location getLocation2(Context cxt, LocationClient client) {
         Location playServices = null;
         if (client != null &&
+                cxt != null &&
                 GooglePlayServicesUtil.isGooglePlayServicesAvailable(cxt) == ConnectionResult.SUCCESS
                 && client.isConnected()) {
             playServices = client.getLastLocation();
@@ -112,6 +115,9 @@ public class LocationHelp {
     }
 
     private static Location getLocationApiV1(Context cxt) {
+        if (cxt == null) {
+            return null;
+        }
         LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = mgr.getProviders(true);
         Location last = null;

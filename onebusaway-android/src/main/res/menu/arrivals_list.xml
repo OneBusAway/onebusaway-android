@@ -17,7 +17,7 @@
       xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/refresh"
           android:title="@string/stop_info_option_refresh"
-          android:icon="@drawable/ic_action_refresh"
+          android:icon="@drawable/ic_action_navigation_refresh"
           onebusaway:showAsAction="ifRoom"/>
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap"

@@ -17,6 +17,14 @@
 
 package com.joulespersecond.seattlebusbot.util;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockFragment;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
@@ -28,6 +36,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.text.Spannable;
@@ -37,14 +46,6 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.R;
 
 public final class UIHelp {
     // private static final String TAG = "UIHelp";
@@ -383,6 +384,22 @@ public final class UIHelp {
                         .getQuantityString(R.plurals.stop_info_nodata_hours_minutes, minutes / 60,
                                 minutes % 60, minutes / 60);
             }
+        }
+    }
+
+    /**
+     * Returns true if the activity is still active and dialogs can be displayed, or false if it is
+     * not
+     *
+     * @param activity Activity to check for displaying a dialog
+     * @return true if the activity is still active and dialogs can be displayed, or false if it is
+     * not
+     */
+    public static boolean canDisplayDialog(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return !activity.isFinishing() && !activity.isDestroyed();
+        } else {
+            return !activity.isFinishing();
         }
     }
 }

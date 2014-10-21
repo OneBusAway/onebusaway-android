@@ -16,25 +16,6 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.text.TextUtils;
-import android.view.View;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
-import android.widget.ZoomControls;
-
-import com.actionbarsherlock.app.SherlockMapActivity;
-import com.actionbarsherlock.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
@@ -45,6 +26,9 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
+
+import com.actionbarsherlock.app.SherlockMapActivity;
+import com.actionbarsherlock.view.MenuItem;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -61,6 +45,23 @@ import com.joulespersecond.seattlebusbot.map.StopMapController;
 import com.joulespersecond.seattlebusbot.map.googlemapsv1.StopOverlay.StopOverlayItem;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
+import android.widget.ZoomControls;
 
 import java.util.List;
 
@@ -402,7 +403,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
-            if (mRunning) {
+            if (mRunning && UIHelp.canDisplayDialog(this)) {
                 showDialog(OUTOFRANGE_DIALOG);
             }
         }
@@ -422,7 +423,9 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         if (currentRegionChanged
                 && Application.getPrefs()
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)
-                && Application.get().getCurrentRegion() != null) {
+                && Application.get().getCurrentRegion() != null
+                && mRunning
+                && UIHelp.canDisplayDialog(this)) {
             Toast.makeText(this,
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
@@ -515,7 +518,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             return;
         }
 
-        if (!mLocationOverlay.isMyLocationEnabled()) {
+        if (!mLocationOverlay.isMyLocationEnabled() && mRunning && UIHelp.canDisplayDialog(this)) {
             showDialog(NOLOCATION_DIALOG);
             return;
         }

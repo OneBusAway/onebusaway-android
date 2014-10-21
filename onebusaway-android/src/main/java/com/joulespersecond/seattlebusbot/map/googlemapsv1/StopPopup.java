@@ -15,6 +15,15 @@
  */
 package com.joulespersecond.seattlebusbot.map.googlemapsv1;
 
+import com.joulespersecond.oba.elements.ObaReferences;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
@@ -28,15 +37,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
-
-import com.joulespersecond.oba.elements.ObaReferences;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.List;
 
@@ -69,6 +69,10 @@ class StopPopup {
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 
+    View mShowArrivals;
+
+    View mShowRoutes;
+
     StopPopup(BaseMapActivity fragment, View view) {
         mFragment = fragment;
         mContext = fragment.getActivity();
@@ -84,12 +88,9 @@ class StopPopup {
             public void onClick(View v) { /* no-op */ }
         });
 
-        // Initialize the links
-        View showArrivals = mView.findViewById(R.id.show_arrival_info);
-        showArrivals.setOnClickListener(mOnShowArrivals);
-
-        View showRoutes = mView.findViewById(R.id.show_routes);
-        showRoutes.setOnClickListener(mOnShowRoutes);
+        // Initialize the buttons
+        mShowArrivals = mView.findViewById(R.id.show_arrival_info);
+        mShowRoutes = mView.findViewById(R.id.show_routes);
     }
 
     void show(ObaStop stop) {
@@ -114,12 +115,14 @@ class StopPopup {
                 List<ObaRoute> routes = mReferences.getRoutes(mStop.getRouteIds());
                 mRoutesAdapter.setData(routes);
             }
+            mShowArrivals.setOnClickListener(mOnShowArrivals);
+            mShowRoutes.setOnClickListener(mOnShowRoutes);
         }
     }
 
     void hide() {
-        mView.startAnimation(AnimationUtils.loadAnimation(
-                mContext, android.R.anim.fade_out));
+        mShowArrivals.setOnClickListener(null);
+        mShowRoutes.setOnClickListener(null);
         mView.setVisibility(View.GONE);
         mStop = null;
     }

@@ -42,7 +42,7 @@
             android:theme="@style/Theme.BusBot">
         <meta-data
                 android:name="android.app.default_searchable"
-                android:value=".SearchActivity"/>
+                android:value="org.onebusaway.android.ui.SearchActivity"/>
 
         <activity
                 android:name="org.onebusaway.android.ui.SearchActivity"

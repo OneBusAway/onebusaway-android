@@ -15,16 +15,16 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+
 import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
-
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 
 import java.util.ArrayList;
 
@@ -76,7 +76,7 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
         }
 
         int color = context.getResources().getColor(stopInfo.getColor());
-        // status.setTextColor(color); // This just doesn't look very good.
+        status.setTextColor(color);
         etaView.setTextColor(color);
 
         time.setText(DateUtils.formatDateTime(context,

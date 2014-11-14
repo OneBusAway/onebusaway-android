@@ -29,11 +29,11 @@
           android:layout_height="1dp"
           android:id="@+id/separator_top"
           android:visibility="visible"
-          android:background="@drawable/abc_list_divider_holo_light"/>
+          android:background="@drawable/abc_list_divider_mtrl_alpha"/>
     <include layout="@layout/arrivals_list_footer"/>
     <View android:layout_width="fill_parent"
           android:layout_height="1dp"
           android:id="@+id/separator_bottom"
           android:visibility="visible"
-          android:background="@drawable/abc_list_divider_holo_light"/>
+          android:background="@drawable/abc_list_divider_mtrl_alpha"/>
 </LinearLayout>

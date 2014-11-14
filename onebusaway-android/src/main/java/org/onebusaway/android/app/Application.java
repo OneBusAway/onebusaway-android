@@ -27,7 +27,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -49,13 +48,9 @@ public class Application extends android.app.Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //ExceptionHandler.register(this, BUG_REPORT_URL);
 
         mApp = this;
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Fix bugs in pre-Froyo
-        disableConnectionReuseIfNecessary();
 
         initOba();
         initObaRegion();
@@ -213,12 +208,5 @@ public class Application extends android.app.Application {
         }
 
         ObaApi.getDefaultContext().setRegion(region);
-    }
-
-    private void disableConnectionReuseIfNecessary() {
-        // Work around pre-Froyo bugs in HTTP connection reuse.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-            System.setProperty("http.keepAlive", "false");
-        }
     }
 }

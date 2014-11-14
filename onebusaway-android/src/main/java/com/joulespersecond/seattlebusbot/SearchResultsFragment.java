@@ -320,6 +320,7 @@ public class SearchResultsFragment extends ListFragment
 
         private ObaStopsForLocationResponse getStops() {
             return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
+                    .setRadius(LocationHelp.DEFAULT_SEARCH_RADIUS)
                     .setQuery(mQueryText)
                     .build()
                     .call();

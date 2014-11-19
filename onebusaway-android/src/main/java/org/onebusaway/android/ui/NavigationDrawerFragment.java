@@ -104,7 +104,7 @@ public class NavigationDrawerFragment extends Fragment {
         });
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),
-                android.R.layout.simple_list_item_1,
+                R.layout.navigation_drawer_main_list_item,
                 android.R.id.text1,
                 new String[]{
                         "Section 1",

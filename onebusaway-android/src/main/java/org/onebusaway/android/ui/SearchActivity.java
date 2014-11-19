@@ -32,8 +32,8 @@ public class SearchActivity extends ActionBarActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        super.onCreate(savedInstanceState);
         UIHelp.setupActionBar(this);
         handleIntent(getIntent());
     }

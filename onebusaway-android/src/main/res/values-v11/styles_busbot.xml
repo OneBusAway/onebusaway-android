@@ -15,7 +15,7 @@
 -->
 <resources>
     <style name="Theme.BusBot" parent="@style/Theme.AppCompat.Light.DarkActionBar">
-    <item name="actionBarItemBackground">@drawable/selectable_background_busbot</item>
+        <item name="actionBarItemBackground">@drawable/selectable_background_busbot</item>
         <item name="popupMenuStyle">@style/busbot_PopupMenu</item>
         <item name="dropDownListViewStyle">@style/busbot_DropDownListView</item>
         <item name="actionBarTabStyle">@style/busbot_ActionBarTabStyle</item>

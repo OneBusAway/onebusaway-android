@@ -13,9 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/refresh"
           android:title="@string/region_option_refresh"
-          android:icon="@drawable/ic_action_refresh"
-          android:showAsAction="ifRoom"/>
+          android:icon="@drawable/ic_action_navigation_refresh"
+          onebusaway:showAsAction="ifRoom"/>
 </menu>

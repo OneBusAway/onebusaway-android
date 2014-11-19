@@ -1,17 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
-    and individual contributors
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+    and individual contributors.
 
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-          http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
@@ -28,11 +29,29 @@
         information. Try again and it might work.
     </string>
     <string name="generic_comm_error_toast">Failed to update. We\'ll try again in a minute.</string>
-    <string name="route_not_found_error">Sorry, that particular route can\'t be found. If this was a
-        shortcut, it\'s possible your link is out of date.
+    <string name="route_not_found_error_no_region">Sorry, that particular route can\'t be found. If
+        this was a
+        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        (Change in
+        \"Preferences->Your region\").
     </string>
-    <string name="stop_not_found_error">Sorry, that particular stop can\'t be found. If this was a
-        shortcut, it\'s possible your link is out of date.
+    <string name="route_not_found_error_with_region_name">Sorry, that particular route can\'t be
+        found. If this was a
+        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        current region is
+        %1$s. Change in \"Preferences->Your region\").
+    </string>
+    <string name="stop_not_found_error_no_region">Sorry, that particular stop can\'t be found. If
+        this was a
+        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        (Change in
+        \"Preferences->Your region\").
+    </string>
+    <string name="stop_not_found_error_with_region_name">Sorry, that particular stop can\'t be
+        found. If this was a
+        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        current region is
+        %1$s. Change in \"Preferences->Your region\").
     </string>
     <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
     <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that
@@ -68,7 +87,7 @@
     <string name="main_option_findstop">My Stops</string>
     <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
-    <string name="main_option_preferences">Preferences</string>
+    <string name="main_option_preferences">Settings</string>
     <string name="main_arrival_info">Show arrivals</string>
     <string name="main_show_routes">Show routes</string>
     <string name="main_hide_routes">Hide routes</string>
@@ -123,16 +142,29 @@
     <string name="stop_info_option_removestar">Remove Star</string>
     <string name="stop_info_option_reportproblem">Report Problem</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
+    <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
         <item quantity="one">No arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">No arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
     </plurals>
-    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.</string>
+    <plurals name="stop_info_nodata_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min</item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">No additional arrivals in the next %1$d minutes.
+    </string>
+    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_no_additional_data_hours_minutes">
         <item quantity="one">No additional arrivals in the next 1 hour and %1$d minutes.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">No additional arrivals in the next <xliff:g id="count">%2$d</xliff:g> hours and %1$d minutes.</item>
+    </plurals>
+    <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min</item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Load more arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>
@@ -144,6 +176,11 @@
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_old_data">Data updated %s</string>
     <string name="stop_info_favorite">Favorite stop</string>
+    <string name="stop_info_route_ids_label">Routes:</string>
+    <string name="stop_info_header_arrival_info">%1$d min</string>
+    <string name="stop_info_header_just_left">just left</string>
+    <string name="stop_info_header_later">later</string>
+    <string name="stop_info_button_content_description">About this stop</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>
@@ -249,16 +286,27 @@
     <string name="report_problem_uservehicle_hint">optional</string>
 
     <!-- Region list -->
-    <plurals name="region_distance_miles">
+    <plurals name="distance_miles">
         <item quantity="one">1 mile away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> miles away</item>
     </plurals>
-    <plurals name="region_distance_kilometers">
+    <plurals name="distance_feet">
+        <item quantity="one">1 foot away</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> feet away</item>
+    </plurals>
+    <plurals name="distance_kilometers">
         <item quantity="one">1 kilometer away</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%s</xliff:g> kilometers away</item>
     </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">1 meter away</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> meters away</item>
+    </plurals>
+
     <string name="region_unavailable">unavailable</string>
     <string name="region_option_refresh">Refresh</string>
     <string name="region_detecting_server">Finding your transit services&#8230;</string>
@@ -276,13 +324,16 @@
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>
 
+    <!-- Android Maps v2 -->
+    <string name="install_google_maps_positive_button">Install</string>
+    <string name="please_install_google_maps_dialog_title">Please install Google Maps</string>
+
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_region_title">Your region</string>
-    <string name="preferences_region_summary">%1$s is currently selected</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
     <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
     <string name="preferences_auto_refresh_regions_summary">Automatically updates region info
@@ -302,7 +353,7 @@
     <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway
         API calls
     </string>
-    <string name="preferences_oba_api_servername_hint">example.onebusaway.org/api</string>
+    <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_save_title">Save to SD card</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from SD card</string>
@@ -323,4 +374,14 @@
     <string name="preferences_experimental_regions_disable_warning">Your current experimental region
         won\'t be available! Go ahead?
     </string>
+
+    <!-- Units -->
+    <string name="feet_abbreviation">ft</string>
+    <string name="miles_abbreviation">mi</string>
+    <string name="meters_abbreviation">m</string>
+    <string name="kilometers_abbreviation">km</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

@@ -12,110 +12,88 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mainlayout"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+<android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/nav_drawer_left_pane"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MyActivity">
 
-    <!--
-    <com.google.android.maps.ObaMapView
-        android:id="@+id/mapview"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:clickable="true"
-        android:apiKey="@string/apiKey"
-        android:focusableInTouchMode="true"
-    />
-    -->
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <LinearLayout
-            android:id="@+id/route_info"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="gone">
-
-            <include layout="@layout/route_info_head" />
-        </LinearLayout>
-        <!-- ROUTE MODE -->
-
-        <!-- STOP INFO -->
-        <LinearLayout
-            android:id="@+id/stop_info"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/ab_stacked_solid_busbot"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="5sp">
-
-                <TextView
-                    android:id="@+id/stop_name"
-                    style="@style/HeaderText"
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:id="@+id/mainlayout"
+                    android:orientation="vertical"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:maxLines="3" />
+                    android:layout_height="fill_parent">
 
-                <TextView
-                    android:id="@+id/direction"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+        <com.sothree.slidinguppanel.SlidingUpPanelLayout
+                xmlns:sothree="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/bottom_sliding_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="bottom"
+                sothree:panelHeight="68dp"
+                sothree:shadowHeight="5dp"
+                sothree:paralaxOffset="100dp"
+                sothree:dragView="@+id/dragView">
 
-            <!--  STOP LINKS -->
+            <!-- MAIN CONTENT -->
+            <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
+                <fragment
+                        class="org.onebusaway.android.map.googlemapsv2.BaseMapFragment"
+                        android:id="@+id/map_fragment"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+                <ImageButton
+                        android:id="@+id/btnMyLocation"
+                        android:layout_height="55dp"
+                        android:layout_width="55dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentBottom="true"
+                        android:src="@drawable/device_access_location_found"
+                        android:background="@drawable/button_layout"
+                        android:contentDescription="@string/map_option_mylocation">
+                </ImageButton>
+            </RelativeLayout>
+
+            <!-- BOTTOM SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->
             <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#eeeeee"
+                    android:orientation="vertical"
+                    android:clickable="true"
+                    android:focusable="false"
+                    android:id="@+id/slidingPanel">
 
-                <Button
-                    android:id="@+id/show_arrival_info"
-                    android:text="@string/main_arrival_info"
-                    style="@style/HeaderLink"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content" />
+                <!-- Header for bottom sliding panel -->
+                <include layout="@layout/arrivals_list_header"/>
 
-                <Button
-                    android:id="@+id/show_routes"
-                    android:text="@string/main_show_routes"
-                    style="@style/HeaderLink"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content" />
+                <!-- Content of bottom sliding panel -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitStart"
+                        android:id="@+id/slidingFragment"
+                        android:orientation="horizontal">
+                    <!-- Fragment is added here programmatically -->
+                </LinearLayout>
+
             </LinearLayout>
+        </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+    </RelativeLayout>
 
-            <GridView
-                android:id="@+id/route_list"
-                android:visibility="gone"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:numColumns="auto_fit"
-                android:columnWidth="@dimen/route_button_width"
-                android:padding="0dip"
-                android:verticalSpacing="0dp"
-                android:horizontalSpacing="0dp" />
-        </LinearLayout>
-        <!-- STOP INFO -->
-    </LinearLayout>
-    <!--  POPUP CONTAINER -->
-
-    <ZoomControls
-        android:id="@+id/zoom_controls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true" />
-</RelativeLayout>
+    <!-- The drawer is given a fixed width in dp and extends the full height of
+         the container. -->
+    <fragment android:id="@+id/navigation_drawer"
+              android:layout_width="@dimen/navigation_drawer_width"
+              android:layout_height="match_parent"
+              android:layout_gravity="start"
+              android:name="org.onebusaway.android.ui.NavigationDrawerFragment"
+              tools:layout="@layout/fragment_navigation_drawer"/>
+</android.support.v4.widget.DrawerLayout>
 

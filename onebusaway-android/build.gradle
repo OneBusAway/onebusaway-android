@@ -19,22 +19,38 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.android.tools.build:gradle:0.13.2'
     }
 }
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 repositories {
     mavenCentral()
+    maven {
+        // CUTR SNAPSHOTs
+        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
+    }
+    maven {
+        // CUTR Releases
+        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/releases"
+    }
 }
 
 android {
-    compileSdkVersion "Google Inc.:Google APIs:17"
-    buildToolsVersion "19.1.0"
+    compileSdkVersion 21
+    buildToolsVersion "21.1.1"
 
     defaultConfig {
+        /**
+         * To allow this app to be distributed via Google Play, the applicationId MUST remain the
+         * original package name of the app before it was re-branded to OneBusAway:
+         * com.joulespersecond.seattlebusbot
+         */
+        applicationId "com.joulespersecond.seattlebusbot"
         minSdkVersion 9
-        targetSdkVersion 17
+        targetSdkVersion 21
+        versionCode 38
+        versionName "1.7.2"
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
@@ -98,11 +114,15 @@ tasks.whenTaskAdded { theTask ->
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
-    compile 'com.google.android.gms:play-services:5.0.89'
-    compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
-    compile 'com.android.support:support-v4:19.1.+'
-    compile 'com.fasterxml.jackson.core:jackson-core:2.3.3'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.3.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.3.3'
+    compile 'com.google.android.gms:play-services:6.1.71'
+    compile 'com.android.support:appcompat-v7:21.0.0'
     compile 'commons-io:commons-io:2.4'
+    // JSON data binding for OBA REST API responses
+    compile 'com.fasterxml.jackson.core:jackson-core:2.4.2'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.2'
+    // Bottom sliding panel
+    compile 'com.sothree.slidinguppanel:library:2.0.1'
+    // For sorting alphanumeric route names
+    compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
 }

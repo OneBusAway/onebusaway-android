@@ -13,11 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/show_on_map"
           android:title="@string/stop_info_option_showonmap"
-          android:icon="@drawable/ic_action_map"
-          android:showAsAction="always"/>
+          android:icon="@drawable/ic_action_location_map"
+          onebusaway:showAsAction="always"/>
     <item android:id="@+id/goto_url"
           android:title="@string/route_info_goto_url"
           android:icon="@drawable/ic_menu_month"/>

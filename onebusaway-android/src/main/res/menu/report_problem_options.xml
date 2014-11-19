@@ -13,9 +13,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/report_problem_send"
           android:title="@string/report_problem_send"
-          android:icon="@drawable/ic_action_send"
-          android:showAsAction="always|withText"/>
+          android:icon="@drawable/ic_action_social_send_now"
+          onebusaway:showAsAction="always|withText"/>
 </menu>

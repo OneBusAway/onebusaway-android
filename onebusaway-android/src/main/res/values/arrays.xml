@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+    and individual contributors.
 
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-          http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 -->
 <resources>
     <string-array name="main_help_options">
@@ -95,5 +96,42 @@
         <item>@string/preferences_preferred_units_option_automatic</item>
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
+
+    <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
+         towards the selected bus stop instead of N/S/E/W. -->
+    <string-array name="spoken_compass_directions">
+        <item>straight ahead</item>
+        <!-- North -->
+        <item>slight left</item>
+        <!-- NNE -->
+        <item>slight left</item>
+        <!-- NE -->
+        <item>left</item>
+        <!-- ENE -->
+        <item>left</item>
+        <!-- East -->
+        <item>behind you to left</item>
+        <!-- ESE -->
+        <item>behind you to left</item>
+        <!-- SE -->
+        <item>behind you to left</item>
+        <!-- SSE -->
+        <item>straight behind you</item>
+        <!-- South -->
+        <item>behind you to right</item>
+        <!-- SSW -->
+        <item>behind you to right</item>
+        <!-- SW -->
+        <item>behind you to right</item>
+        <!-- WSW -->
+        <item>right</item>
+        <!-- West -->
+        <item>right</item>
+        <!-- WNW -->
+        <item>slight right</item>
+        <!-- NW -->
+        <item>slight right</item>
+        <!-- NNW -->
     </string-array>
 </resources>

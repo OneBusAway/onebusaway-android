@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,19 +12,24 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/trip_info_save"
-          android:title="@string/trip_info_save"
-          android:icon="@drawable/ic_action_save"
-          android:showAsAction="ifRoom"/>
-    <item android:id="@+id/trip_info_delete"
-          android:title="@string/trip_info_delete"
-          android:icon="@drawable/ic_action_trash"
-          android:showAsAction="ifRoom"/>
-    <item android:id="@+id/show_route"
-          android:title="@string/trip_info_option_showroute"
-          android:icon="@drawable/ic_menu_trip"/>
-    <item android:id="@+id/show_stop"
-          android:title="@string/trip_info_option_showstop"
-          android:icon="@drawable/ic_menu_stop"/>
+<menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+            android:id="@+id/trip_info_save"
+            android:title="@string/trip_info_save"
+            android:icon="@drawable/ic_action_content_save"
+            onebusaway:showAsAction="ifRoom"/>
+    <item
+            android:id="@+id/trip_info_delete"
+            android:title="@string/trip_info_delete"
+            android:icon="@drawable/ic_action_content_discard"
+            onebusaway:showAsAction="ifRoom"/>
+    <item
+            android:id="@+id/show_route"
+            android:title="@string/trip_info_option_showroute"
+            android:icon="@drawable/ic_menu_trip"/>
+    <item
+            android:id="@+id/show_stop"
+            android:title="@string/trip_info_option_showstop"
+            android:icon="@drawable/ic_menu_stop"/>
 </menu>

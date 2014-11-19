@@ -8,6 +8,6 @@
         <!--   Darker variant for the status bar and contextual app bars -->
         <item name="colorPrimaryDark">@color/oba_dark_green</item>
         <!--   Theme UI controls like checkboxes and text fields -->
-        <item name="colorAccent">@color/pressed_busbot</item>
+        <item name="colorAccent">@color/oba_accent_green</item>
     </style>
 </resources>

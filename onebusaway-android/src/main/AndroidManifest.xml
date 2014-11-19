@@ -39,7 +39,7 @@
             android:name="org.onebusaway.android.app.Application"
             android:icon="@drawable/ic_launcher"
             android:label="@string/app_name"
-            android:theme="@style/Theme.BusBot">
+            android:theme="@style/Theme.OneBusAway">
         <meta-data
                 android:name="android.app.default_searchable"
                 android:value="org.onebusaway.android.ui.SearchActivity"/>
@@ -56,9 +56,8 @@
         </activity>
 
         <activity
-                android:name="org.onebusaway.android.ui.HomeActivity"
-                android:theme="@style/Theme.BusBot.NoBackground">
-            <intent-filter>
+                android:name="org.onebusaway.android.ui.HomeActivity">
+        <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>

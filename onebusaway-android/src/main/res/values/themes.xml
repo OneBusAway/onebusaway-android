@@ -15,8 +15,6 @@
 -->
 <resources>
     <style name="Theme.OneBusAway" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Set AppCompat’s actionBarStyle -->
-        <item name="actionBarStyle">@style/busbot_solid_ActionBar</item>
         <!--   App branding color for the app bar -->
         <item name="colorPrimary">@color/oba_light_green</item>
         <!--   Darker variant for the status bar and contextual app bars -->

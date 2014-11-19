@@ -69,7 +69,7 @@ final class ArrivalInfo {
 
     private final String mStatusText;
 
-    private final int mColor;
+    private final Integer mColor;
 
     private static final int ms_in_mins = 60 * 1000;
 
@@ -105,10 +105,8 @@ final class ArrivalInfo {
 
     }
 
-    private int computeColor(final long scheduled, final long predicted) {
-
+    private Integer computeColor(final long scheduled, final long predicted) {
         if (predicted != 0) {
-
             long delay = predicted - scheduled;
 
             // Bus is arriving
@@ -123,7 +121,8 @@ final class ArrivalInfo {
                 return R.color.stop_info_ontime;
             }
         } else {
-            return R.color.stop_info_scheduled;
+            // The default color for the UI element should be used, so return null
+            return null;
         }
     }
 
@@ -159,7 +158,6 @@ final class ArrivalInfo {
         }
 
         if (predicted != 0) {
-
             long delay = predictedMins - scheduledMins;
 
             if (mEta >= 0) {
@@ -225,7 +223,14 @@ final class ArrivalInfo {
         return mStatusText;
     }
 
-    final int getColor() {
+    /**
+     * Returns the resource code for the color that should be used for the arrival time, or null if
+     * the default color for UI element (e.g., Heading1 TextBox) should be used
+     *
+     * @return the resource code for the color that should be used for the arrival time, or null if
+     * the default color for UI element (e.g., Heading1 TextBox) should be used
+     */
+    final Integer getColor() {
         return mColor;
     }
 }

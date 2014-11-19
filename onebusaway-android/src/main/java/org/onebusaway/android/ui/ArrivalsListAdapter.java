@@ -77,9 +77,12 @@ public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
             etaView.setText(String.valueOf(eta));
         }
 
-        int color = context.getResources().getColor(stopInfo.getColor());
-        status.setTextColor(color);
-        etaView.setTextColor(color);
+        Integer colorCode = stopInfo.getColor();
+        if (colorCode != null) {
+            int color = context.getResources().getColor(colorCode);
+            status.setTextColor(color);
+            etaView.setTextColor(color);
+        }
 
         time.setText(DateUtils.formatDateTime(context,
                 stopInfo.getDisplayTime(),

@@ -129,8 +129,6 @@ public class BaseMapFragment extends SupportMapFragment
     // is used by both modes.
     private StopOverlay mStopOverlay;
 
-    StopPopup mStopPopup;
-
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
 
@@ -207,9 +205,6 @@ public class BaseMapFragment extends SupportMapFragment
         // Set the fastest update interval to 1 second
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
 
-        // Initialize the StopPopup (hidden)
-//        mStopPopup = new StopPopup(this, v.getRootView().findViewById(R.id.stop_info));
-
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
         } else {
@@ -244,12 +239,6 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onDestroy() {
-        //Log.d(TAG, "onDestroy: " + mStopUserMap);
-//        if (mStopUserMap != null) {
-//            mStopUserMap.close();
-//            mStopUserMap = null;
-//            mStopPopup.setStopUserMap(null);
-//        }
         if (mController != null) {
             mController.destroy();
         }
@@ -269,14 +258,6 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onResume() {
         mRunning = true;
-
-        //Log.d(TAG, "onResume: " + mStopUserMap);
-//        if (mStopUserMap == null) {
-//            mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
-//        } else {
-//            mStopUserMap.requery();
-//        }
-//        mStopPopup.setStopUserMap(mStopUserMap);
 
         if (mController != null) {
             mController.onResume();
@@ -415,13 +396,6 @@ public class BaseMapFragment extends SupportMapFragment
         setupStopOverlay();
 
         if (stops != null) {
-//            mStopPopup.setReferences(refs);
-//
-//            if (focusedId != null) {
-//                if (!mStopOverlay.setFocusById(focusedId)) {
-//                    mStopPopup.hide();
-//                }
-//            }
             mStopOverlay.populateStops(stops, refs);
 
             if (focusedId != null) {
@@ -494,10 +468,8 @@ public class BaseMapFragment extends SupportMapFragment
                     mFocusStopId = stop.getId();
                     mFocusStopRoutes = routes;
                     //Log.d(TAG, "Focused changed to " + stop.getName());
-                    //mStopPopup.show(stop);
                 } else {
                     //Log.d(TAG, "Removed focus");
-                    //mStopPopup.hide();
                 }
 
                 // Pass overlay focus event up to listeners for this fragment

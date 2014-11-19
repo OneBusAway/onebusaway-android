@@ -14,13 +14,19 @@
      limitations under the License.
 -->
 <resources>
-    <color name="light_gray">#f0f0f0</color>
+    <!-- OneBusAway Theme -->
+    <color name="oba_accent_green">#CC6dce31</color>
+    <color name="oba_dark_green">#539729</color>
+    <color name="oba_light_green">#5db53b</color>
+
     <color name="focus">#ff8e00</color>
     <color name="route_overlay_line">#00F</color>
     <color name="stop_info_ontime">@color/oba_dark_green</color>
     <color name="stop_info_delayed">#0000ff</color>
     <color name="stop_info_early">#ff0000</color>
     <color name="stop_info_scheduled">#000000</color>
+
+    <!-- Alerts-->
     <color name="alert_error">#FFC4C4</color>
     <color name="alert_warning">#FFFF99</color>
     <color name="alert_info">#f0f0f0</color>

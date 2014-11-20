@@ -27,6 +27,17 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.RegionUtils;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -116,7 +127,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
     @Override
     protected void onPreExecute() {
-        if (mShowProgressDialog) {
+        if (mShowProgressDialog && UIHelp.canManageDialog(mContext)) {
             mProgressDialog = ProgressDialog.show(mContext, "",
                     mContext.getString(R.string.region_detecting_server), true);
             mProgressDialog.setIndeterminate(true);
@@ -140,7 +151,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         }
 
         // Dismiss the dialog before calling the callbacks to avoid errors referencing the dialog later
-        if (mShowProgressDialog && mProgressDialog.isShowing()) {
+        if (mShowProgressDialog && UIHelp.canManageDialog(mContext) && mProgressDialog
+                .isShowing()) {
             mProgressDialog.dismiss();
         }
 
@@ -204,6 +216,10 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     }
 
     private void haveUserChooseRegion(final ArrayList<ObaRegion> result) {
+        if (!UIHelp.canManageDialog(mContext)) {
+            return;
+        }
+
         // Create dialog for user to choose
         List<String> serverNames = new ArrayList<String>();
         for (ObaRegion region : result) {

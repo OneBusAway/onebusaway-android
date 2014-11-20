@@ -157,8 +157,10 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         }
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity()) == ConnectionResult.SUCCESS) {
-            LocationHelp.LocationServicesCallback locCallback = new LocationHelp.LocationServicesCallback();
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+                == ConnectionResult.SUCCESS) {
+            LocationHelp.LocationServicesCallback locCallback
+                    = new LocationHelp.LocationServicesCallback();
             mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
             mLocationClient.connect();
         }
@@ -403,7 +405,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
-            if (mRunning && UIHelp.canDisplayDialog(this)) {
+            if (mRunning && UIHelp.canManageDialog(this)) {
                 showDialog(OUTOFRANGE_DIALOG);
             }
         }
@@ -425,7 +427,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                 && Application.get().getCurrentRegion() != null
                 && mRunning
-                && UIHelp.canDisplayDialog(this)) {
+                && UIHelp.canManageDialog(this)) {
             Toast.makeText(this,
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
@@ -518,7 +520,7 @@ abstract public class BaseMapActivity extends SherlockMapActivity
             return;
         }
 
-        if (!mLocationOverlay.isMyLocationEnabled() && mRunning && UIHelp.canDisplayDialog(this)) {
+        if (!mLocationOverlay.isMyLocationEnabled() && mRunning && UIHelp.canManageDialog(this)) {
             showDialog(NOLOCATION_DIALOG);
             return;
         }

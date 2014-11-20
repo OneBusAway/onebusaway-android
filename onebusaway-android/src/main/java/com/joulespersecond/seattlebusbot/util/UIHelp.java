@@ -388,18 +388,52 @@ public final class UIHelp {
     }
 
     /**
-     * Returns true if the activity is still active and dialogs can be displayed, or false if it is
+     * Returns true if the activity is still active and dialogs can be managed (i.e., displayed
+     * or dismissed), or false if it is
      * not
      *
-     * @param activity Activity to check for displaying a dialog
-     * @return true if the activity is still active and dialogs can be displayed, or false if it is
+     * @param activity Activity to check for displaying/dismissing a dialog
+     * @return true if the activity is still active and dialogs can be managed, or false if it is
      * not
      */
-    public static boolean canDisplayDialog(Activity activity) {
+    public static boolean canManageDialog(Activity activity) {
+        if (activity == null) {
+            return false;
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return !activity.isFinishing() && !activity.isDestroyed();
         } else {
             return !activity.isFinishing();
+        }
+    }
+
+    /**
+     * Returns true if the context is an Activity and is still active and dialogs can be managed
+     * (i.e., displayed or dismissed) OR the context is not an Activity, or false if the Activity
+     * is
+     * no longer active.
+     *
+     * NOTE: We really shouldn't display dialogs from a Service - a notification is a better way
+     * to communicate with the user.
+     *
+     * @param context Context to check for displaying/dismissing a dialog
+     * @return true if the context is an Activity and is still active and dialogs can be managed
+     * (i.e., displayed or dismissed) OR the context is not an Activity, or false if the Activity
+     * is
+     * no longer active
+     */
+    public static boolean canManageDialog(Context context) {
+        if (context == null) {
+            return false;
+        }
+
+        if (context instanceof Activity) {
+            return canManageDialog((Activity) context);
+        } else {
+            // We really shouldn't be displaying dialogs from a Service, but if for some reason we
+            // need to do this, we don't have any way of checking whether its possible
+            return true;
         }
     }
 }

@@ -16,6 +16,17 @@
  */
 package com.joulespersecond.oba.region;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -25,15 +36,6 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -114,7 +116,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
     @Override
     protected void onPreExecute() {
-        if (mShowProgressDialog) {
+        if (mShowProgressDialog && UIHelp.canManageDialog(mContext)) {
             mProgressDialog = ProgressDialog.show(mContext, "",
                     mContext.getString(R.string.region_detecting_server), true);
             mProgressDialog.setIndeterminate(true);
@@ -138,7 +140,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         }
 
         // Dismiss the dialog before calling the callbacks to avoid errors referencing the dialog later
-        if (mShowProgressDialog && mProgressDialog.isShowing()) {
+        if (mShowProgressDialog && UIHelp.canManageDialog(mContext) && mProgressDialog
+                .isShowing()) {
             mProgressDialog.dismiss();
         }
 
@@ -194,6 +197,10 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     }
 
     private void haveUserChooseRegion(final ArrayList<ObaRegion> result) {
+        if (!UIHelp.canManageDialog(mContext)) {
+            return;
+        }
+
         // Create dialog for user to choose
         List<String> serverNames = new ArrayList<String>();
         for (ObaRegion region : result) {

@@ -18,6 +18,7 @@
     <!-- DO NOT TRANSLATE ANY STRINGS IN THIS FILE. -->
 
     <!-- Android Maps API v2 -->
+    <string name="apiv2_key">AIzaSyBxVM57hZ2WLRgtixDs_G5BGbK90mM5S5U</string>
     <string name="android_maps_v2_market_url">market://details?id=com.google.android.apps.maps</string>
 
     <!-- Preference keys -->

@@ -173,7 +173,7 @@
             android:layout_marginRight="4dp"
             android:layout_marginLeft="10dp"
             android:layout_toLeftOf="@+id/right_margin_container1"
-            android:background="@android:color/white"/>
+            android:background="@drawable/white_transparent_gradient"/>
 
     <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are
          used to avoid shifting of UI elements when cross-fading between arrow/distance to stop

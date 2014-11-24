@@ -22,13 +22,11 @@
 
     <ImageButton
             android:id="@+id/stop_favorite"
-            android:src="@drawable/ic_action_not_important"
+            android:src="@drawable/ic_toggle_star_outline"
             android:contentDescription="@string/stop_info_favorite"
             android:background="@drawable/selectable_background_busbot"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="35dp"
-            android:maxHeight="35dp"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
             android:paddingLeft="1dp"

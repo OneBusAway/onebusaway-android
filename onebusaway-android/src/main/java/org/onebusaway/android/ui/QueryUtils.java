@@ -166,7 +166,7 @@ public final class QueryUtils {
                     if (columnIndex == Columns.COL_FAVORITE) {
                         TextView favorite = (TextView) view.findViewById(R.id.stop_name);
                         int icon = (cursor.getInt(columnIndex) == 1)
-                                ? R.drawable.ic_action_important : 0;
+                                ? R.drawable.ic_toggle_star : 0;
                         favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
                         return true;
                     } else if (columnIndex == Columns.COL_DIRECTION) {

@@ -55,8 +55,15 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
 
         Uri uri1 = cr.insert(Regions.CONTENT_URI, values);
 
+        final String[] PROJECTION = {
+                ObaContract.Regions._ID,
+                ObaContract.Regions.NAME,
+                ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
+                ObaContract.Regions.SUPPORTS_SIRI_REALTIME
+        };
+
         // Query
-        Cursor c1 = cr.query(uri1, null, null, null, null);
+        Cursor c1 = cr.query(uri1, PROJECTION, null, null, null);
         assertNotNull(c1);
         assertEquals(1, c1.getCount());
         c1.moveToFirst();
@@ -69,12 +76,6 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
 
         assertEquals(uri1, uri2);
 
-        final String[] PROJECTION = {
-                ObaContract.Regions._ID,
-                ObaContract.Regions.NAME,
-                ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
-                ObaContract.Regions.SUPPORTS_SIRI_REALTIME
-        };
         Cursor c2 = cr.query(uri2, PROJECTION, null, null, null);
         assertNotNull(c2);
         assertEquals(1, c2.getCount());

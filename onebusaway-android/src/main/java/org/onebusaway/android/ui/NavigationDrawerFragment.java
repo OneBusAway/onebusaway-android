@@ -102,7 +102,6 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_star,
             R.drawable.ic_drawer_map,
             R.drawable.ic_drawer_alarm, // My reminders
-            R.drawable.ic_drawer_map,
             0, // Settings
             0, // Help
             0, // Send feedback

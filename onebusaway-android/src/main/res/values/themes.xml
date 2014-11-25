@@ -16,10 +16,10 @@
 <resources>
     <style name="Theme.OneBusAway" parent="Theme.AppCompat.Light.DarkActionBar">
         <!--   App branding color for the app bar -->
-        <item name="colorPrimary">@color/oba_green</item>
+        <item name="colorPrimary">@color/theme_primary</item>
         <!--   Darker variant for the status bar and contextual app bars -->
-        <item name="colorPrimaryDark">@color/oba_dark_green</item>
+        <item name="colorPrimaryDark">@color/theme_primary_dark</item>
         <!--   Theme UI controls like checkboxes and text fields -->
-        <item name="colorAccent">@color/oba_accent_green</item>
+        <item name="colorAccent">@color/theme_accent</item>
     </style>
 </resources>

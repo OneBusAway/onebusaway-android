@@ -1,6 +1,26 @@
+/*
+ * Copyright 2014 Google Inc., University of South Florida (sjbarbeau@gmail.com) All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Portions of code taken from the Google I/0 2014 (https://github.com/google/iosched)
+ * and a generated NavigationDrawer app from Android Studio, modified for OneBusAway by USF
+ */
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -19,9 +39,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import java.util.ArrayList;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -41,6 +63,57 @@ public class NavigationDrawerFragment extends Fragment {
      */
     private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 
+    // symbols for navdrawer items (indices must correspond to array below). This is
+    // not a list of items that are necessarily *present* in the Nav Drawer; rather,
+    // it's a list of all possible items.
+    protected static final int NAVDRAWER_ITEM_STARRED_STOPS = 0;
+
+    protected static final int NAVDRAWER_ITEM_MAP = 1;
+
+    protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 2;
+
+    protected static final int NAVDRAWER_ITEM_SETTINGS = 3;
+
+    protected static final int NAVDRAWER_ITEM_HELP = 4;
+
+    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
+
+    protected static final int NAVDRAWER_ITEM_INVALID = -1;
+
+    protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
+
+    protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
+
+    // Currently selected navigation drawer item (must be value of one of the constants above)
+    private int mCurrentSelectedPosition = 1;
+
+    // titles for navdrawer items (indices must correspond to the above)
+    private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
+            R.string.navdrawer_item_starred_stops,
+            R.string.navdrawer_item_map,
+            R.string.navdrawer_item_my_reminders,
+            R.string.navdrawer_item_settings,
+            R.string.navdrawer_item_help,
+            R.string.navdrawer_item_send_feedback
+    };
+
+    // icons for navdrawer items (indices must correspond to above array)
+    private static final int[] NAVDRAWER_ICON_RES_ID = new int[]{
+            R.drawable.ic_drawer_star,
+            R.drawable.ic_drawer_map,
+            R.drawable.ic_drawer_alarm, // My reminders
+            R.drawable.ic_drawer_map,
+            0, // Settings
+            0, // Help
+            0, // Send feedback
+    };
+
+    // list of navdrawer items that were actually added to the navdrawer, in order
+    private ArrayList<Integer> mNavDrawerItems = new ArrayList<Integer>();
+
+    // views that correspond to each navdrawer item, null if not yet created
+    private View[] mNavDrawerItemViews = null;
+
     /**
      * A pointer to the current callbacks instance (the Activity).
      */
@@ -51,13 +124,14 @@ public class NavigationDrawerFragment extends Fragment {
      */
     private ActionBarDrawerToggle mDrawerToggle;
 
+    // Navigation drawer:
     private DrawerLayout mDrawerLayout;
+
+    private ViewGroup mDrawerItemsListContainer;
 
     private ListView mDrawerListView;
 
     private View mFragmentContainerView;
-
-    private int mCurrentSelectedPosition = 0;
 
     private boolean mFromSavedInstanceState;
 
@@ -94,25 +168,10 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mDrawerListView = (ListView) inflater.inflate(
-                R.layout.fragment_navigation_drawer, container, false);
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
-            }
-        });
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
-                getActionBar().getThemedContext(),
-                R.layout.navigation_drawer_main_list_item,
-                android.R.id.text1,
-                new String[]{
-                        "Section 1",
-                        "Section 2",
-                        "Section 3",
-                }));
-        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
-        return mDrawerListView;
+        mDrawerItemsListContainer = (ViewGroup) inflater
+                .inflate(R.layout.navdrawer_list, container, false);
+
+        return mDrawerItemsListContainer;
     }
 
     public boolean isDrawerOpen() {
@@ -126,12 +185,29 @@ public class NavigationDrawerFragment extends Fragment {
      * @param drawerLayout The DrawerLayout containing this fragment's UI.
      */
     public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+        int selfItem = mCurrentSelectedPosition;
         mFragmentContainerView = getActivity().findViewById(fragmentId);
         mDrawerLayout = drawerLayout;
 
+        if (mDrawerLayout == null) {
+            return;
+        }
+
         // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        // set up the drawer's list view with items and click listener
+        ScrimInsetsScrollView navDrawer = (ScrimInsetsScrollView)
+                mDrawerLayout.findViewById(R.id.navdrawer);
+        if (selfItem == NAVDRAWER_ITEM_INVALID) {
+            // do not show a nav drawer
+            if (navDrawer != null) {
+                ((ViewGroup) navDrawer.getParent()).removeView(navDrawer);
+            }
+            mDrawerLayout = null;
+            return;
+        }
+
+        // populate the nav drawer with the correct items
+        populateNavDrawer();
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -193,7 +269,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private void selectItem(int position) {
-        mCurrentSelectedPosition = position;
+        setSelectedNavDrawerItem(position);
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
         }
@@ -203,6 +279,26 @@ public class NavigationDrawerFragment extends Fragment {
         if (mCallbacks != null) {
             mCallbacks.onNavigationDrawerItemSelected(position);
         }
+    }
+
+    /**
+     * Sets up the given navdrawer item's appearance to the selected state. Note: this could
+     * also be accomplished (perhaps more cleanly) with state-based layouts.
+     */
+    private void setSelectedNavDrawerItem(int itemId) {
+        mCurrentSelectedPosition = itemId;
+        if (mNavDrawerItemViews != null) {
+            for (int i = 0; i < mNavDrawerItemViews.length; i++) {
+                if (i < mNavDrawerItems.size()) {
+                    int thisItemId = mNavDrawerItems.get(i);
+                    formatNavDrawerItem(mNavDrawerItemViews[i], thisItemId, itemId == thisItemId);
+                }
+            }
+        }
+    }
+
+    private boolean isSeparator(int itemId) {
+        return itemId == NAVDRAWER_ITEM_SEPARATOR || itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL;
     }
 
     @Override
@@ -283,5 +379,99 @@ public class NavigationDrawerFragment extends Fragment {
          * Called when an item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position);
+    }
+
+    /** Populates the navigation drawer with the appropriate items. */
+    private void populateNavDrawer() {
+        mNavDrawerItems.clear();
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_MAP);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SETTINGS);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_HELP);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SEND_FEEDBACK);
+
+        createNavDrawerItems();
+    }
+
+    private void createNavDrawerItems() {
+        if (mDrawerItemsListContainer == null) {
+            return;
+        }
+
+        mNavDrawerItemViews = new View[mNavDrawerItems.size()];
+        mDrawerItemsListContainer.removeAllViews();
+        int i = 0;
+        for (int itemId : mNavDrawerItems) {
+            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, mDrawerItemsListContainer);
+            mDrawerItemsListContainer.addView(mNavDrawerItemViews[i]);
+            ++i;
+        }
+    }
+
+    private View makeNavDrawerItem(final int itemId, ViewGroup container) {
+        boolean selected = mCurrentSelectedPosition == itemId;
+        int layoutToInflate = 0;
+        if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
+            layoutToInflate = R.layout.navdrawer_separator;
+        } else if (itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL) {
+            layoutToInflate = R.layout.navdrawer_separator;
+        } else {
+            layoutToInflate = R.layout.navdrawer_item;
+        }
+        View view = getActivity().getLayoutInflater().inflate(layoutToInflate, container, false);
+
+        if (isSeparator(itemId)) {
+            // we are done
+            UIHelp.setAccessibilityIgnore(view);
+            return view;
+        }
+
+        ImageView iconView = (ImageView) view.findViewById(R.id.icon);
+        TextView titleView = (TextView) view.findViewById(R.id.title);
+        int iconId = itemId >= 0 && itemId < NAVDRAWER_ICON_RES_ID.length ?
+                NAVDRAWER_ICON_RES_ID[itemId] : 0;
+        int titleId = itemId >= 0 && itemId < NAVDRAWER_TITLE_RES_ID.length ?
+                NAVDRAWER_TITLE_RES_ID[itemId] : 0;
+
+        // set icon and text
+        iconView.setVisibility(iconId > 0 ? View.VISIBLE : View.GONE);
+        if (iconId > 0) {
+            iconView.setImageResource(iconId);
+        }
+        titleView.setText(getString(titleId));
+
+        formatNavDrawerItem(view, itemId, selected);
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectItem(itemId);
+            }
+        });
+
+        return view;
+    }
+
+    private void formatNavDrawerItem(View view, int itemId, boolean selected) {
+        if (isSeparator(itemId)) {
+            // not applicable
+            return;
+        }
+
+        ImageView iconView = (ImageView) view.findViewById(R.id.icon);
+        TextView titleView = (TextView) view.findViewById(R.id.title);
+
+        // configure its appearance according to whether or not it's selected
+        titleView.setTextColor(selected ?
+                getResources().getColor(R.color.navdrawer_text_color_selected) :
+                getResources().getColor(R.color.navdrawer_text_color));
+        iconView.setColorFilter(selected ?
+                getResources().getColor(R.color.navdrawer_icon_tint_selected) :
+                getResources().getColor(R.color.navdrawer_icon_tint));
     }
 }

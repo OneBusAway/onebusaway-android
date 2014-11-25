@@ -747,4 +747,16 @@ public final class UIHelp {
         p.setMargins(l, t, r, b);
         v.setLayoutParams(p);
     }
+
+    /**
+     * Formats a view so it is ignored for accessible access
+     */
+    public static void setAccessibilityIgnore(View view) {
+        view.setClickable(false);
+        view.setFocusable(false);
+        view.setContentDescription("");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        }
+    }
 }

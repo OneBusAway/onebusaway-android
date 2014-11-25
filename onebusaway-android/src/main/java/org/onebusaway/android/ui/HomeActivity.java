@@ -71,9 +71,17 @@ import android.widget.Toast;
 import java.util.Date;
 import java.util.HashMap;
 
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MAP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+
 public class HomeActivity extends ActionBarActivity
         implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener,
-        NavigationDrawerFragment.NavigationDrawerCallbacks {
+        NavigationDrawerCallbacks {
 
     interface SlidingPanelController {
 
@@ -276,12 +284,40 @@ public class HomeActivity extends ActionBarActivity
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
+        goToNavDrawerItem(position);
+    }
+
+    private boolean isSpecialItem(int itemId) {
+        return itemId == NAVDRAWER_ITEM_SETTINGS;
+    }
+
+    private void goToNavDrawerItem(int item) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
         // TODO - Add handling of our own navigation drawer item selections
-//        fragmentManager.beginTransaction()
+        //        fragmentManager.beginTransaction()
 //                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
 //                .commit();
+        switch (item) {
+            case NAVDRAWER_ITEM_STARRED_STOPS:
+                Log.d(TAG, "Selected starred stops");
+                break;
+            case NAVDRAWER_ITEM_MAP:
+                Log.d(TAG, "Selected map");
+                break;
+            case NAVDRAWER_ITEM_MY_REMINDERS:
+                Log.d(TAG, "Selected my reminders");
+                break;
+            case NAVDRAWER_ITEM_SETTINGS:
+                Log.d(TAG, "Selected settings");
+                break;
+            case NAVDRAWER_ITEM_HELP:
+                Log.d(TAG, "Selected help");
+                break;
+            case NAVDRAWER_ITEM_SEND_FEEDBACK:
+                Log.d(TAG, "Selected send feedback");
+                break;
+        }
     }
 
     public void restoreActionBar() {

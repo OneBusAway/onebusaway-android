@@ -16,7 +16,7 @@
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
     <style name="HeaderItem">
-        <item name="android:background">@color/oba_green</item>
+        <item name="android:background">@color/theme_primary</item>
         <item name="android:padding">4dp</item>
     </style>
     <style name="HeaderList">

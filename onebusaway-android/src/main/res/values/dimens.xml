@@ -23,6 +23,9 @@
          https://developer.android.com/design/patterns/navigation-drawer.html -->
     <dimen name="navigation_drawer_width">240dp</dimen>
 
+    <dimen name="keyline_1">16dp</dimen>
+
+    <!-- Other misc items -->
     <dimen name="route_button_width">48sp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
 </resources>

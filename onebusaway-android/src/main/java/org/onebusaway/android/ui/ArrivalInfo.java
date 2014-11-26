@@ -132,6 +132,10 @@ final class ArrivalInfo {
             final long predicted,
             final long scheduledMins,
             final long predictedMins) {
+        if (context == null) {
+            // The Activity has been destroyed, so just return an empty string to avoid an NPE
+            return "";
+        }
 
         final Resources res = context.getResources();
 

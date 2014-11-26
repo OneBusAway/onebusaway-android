@@ -15,12 +15,13 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              style="@style/NavDrawerListItem"
               android:orientation="horizontal"
-              android:background="?android:selectableItemBackground"
               android:gravity="start|center_vertical"
               android:paddingLeft="@dimen/keyline_1"
               android:paddingRight="@dimen/keyline_1"
               android:layout_width="match_parent"
+              android:focusable="true"
               android:layout_height="48dp">
 
     <ImageView

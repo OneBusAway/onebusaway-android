@@ -287,10 +287,6 @@ public class HomeActivity extends ActionBarActivity
         goToNavDrawerItem(position);
     }
 
-    private boolean isSpecialItem(int itemId) {
-        return itemId == NAVDRAWER_ITEM_SETTINGS;
-    }
-
     private void goToNavDrawerItem(int item) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -300,22 +296,23 @@ public class HomeActivity extends ActionBarActivity
 //                .commit();
         switch (item) {
             case NAVDRAWER_ITEM_STARRED_STOPS:
-                Log.d(TAG, "Selected starred stops");
+                Log.d(TAG, "TODO - show starred stop fragment");
                 break;
             case NAVDRAWER_ITEM_MAP:
-                Log.d(TAG, "Selected map");
+                Log.d(TAG, "TODO - show map fragment");
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
-                Log.d(TAG, "Selected my reminders");
+                Log.d(TAG, "TODO - show my reminders fragment");
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
-                Log.d(TAG, "Selected settings");
+                Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
+                startActivity(preferences);
                 break;
             case NAVDRAWER_ITEM_HELP:
-                Log.d(TAG, "Selected help");
+                showDialog(HELP_DIALOG);
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
-                Log.d(TAG, "Selected send feedback");
+                Log.d(TAG, "TODO - show send feedback fragment");
                 break;
         }
     }
@@ -362,13 +359,6 @@ public class HomeActivity extends ActionBarActivity
         } else if (id == R.id.view_trips) {
             Intent myIntent = new Intent(this, TripListActivity.class);
             startActivity(myIntent);
-            return true;
-        } else if (id == R.id.help) {
-            showDialog(HELP_DIALOG);
-            return true;
-        } else if (id == R.id.settings) {
-            Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
-            startActivity(preferences);
             return true;
         }
         return super.onOptionsItemSelected(item);

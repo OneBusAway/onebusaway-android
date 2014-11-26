@@ -15,6 +15,12 @@
     limitations under the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Navigation Drawer -->
+    <style name="NavDrawerListItem" parent="style/Widget.AppCompat.ListView.Menu">
+        <item name="android:background">@drawable/navdrawer_item_selectable</item>
+    </style>
+
+    <!-- General styles -->
     <style name="HeaderItem">
         <item name="android:background">@color/theme_primary</item>
         <item name="android:padding">4dp</item>

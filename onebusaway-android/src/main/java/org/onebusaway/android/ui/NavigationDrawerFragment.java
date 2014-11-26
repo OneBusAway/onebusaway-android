@@ -279,7 +279,10 @@ public class NavigationDrawerFragment extends Fragment {
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
     private void setSelectedNavDrawerItem(int itemId) {
-        mCurrentSelectedPosition = itemId;
+        if (!isNewActivityItem(itemId)) {
+            // We only change the selected item if it doesn't launch a new activity
+            mCurrentSelectedPosition = itemId;
+        }
         if (mNavDrawerItemViews != null) {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
@@ -288,10 +291,6 @@ public class NavigationDrawerFragment extends Fragment {
                 }
             }
         }
-    }
-
-    private boolean isSeparator(int itemId) {
-        return itemId == NAVDRAWER_ITEM_SEPARATOR || itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL;
     }
 
     @Override
@@ -452,19 +451,55 @@ public class NavigationDrawerFragment extends Fragment {
 
     private void formatNavDrawerItem(View view, int itemId, boolean selected) {
         if (isSeparator(itemId)) {
-            // not applicable
+            // Don't do any formatting
             return;
         }
 
         ImageView iconView = (ImageView) view.findViewById(R.id.icon);
         TextView titleView = (TextView) view.findViewById(R.id.title);
 
-        // configure its appearance according to whether or not it's selected
-        titleView.setTextColor(selected ?
-                getResources().getColor(R.color.navdrawer_text_color_selected) :
-                getResources().getColor(R.color.navdrawer_text_color));
-        iconView.setColorFilter(selected ?
-                getResources().getColor(R.color.navdrawer_icon_tint_selected) :
-                getResources().getColor(R.color.navdrawer_icon_tint));
+        /**
+         * Configure its appearance according to whether or not it's selected.  Certain items
+         * (e.g., Settings) don't get formatted upon selection, since they open a new activity.
+         */
+        if (selected) {
+            if (isNewActivityItem(itemId)) {
+                // Don't change any formatting, since this is a category that launches a new activity
+                return;
+            } else {
+                // Show the category as highlighted by changing background, text, and icon color
+                view.setSelected(true);
+                titleView.setTextColor(
+                        getResources().getColor(R.color.navdrawer_text_color_selected));
+                iconView.setColorFilter(
+                        getResources().getColor(R.color.navdrawer_icon_tint_selected));
+            }
+        } else {
+            // Show the category as not highlighted, if its not currently selected
+            if (itemId != mCurrentSelectedPosition) {
+                view.setSelected(false);
+                titleView.setTextColor(getResources().getColor(R.color.navdrawer_text_color));
+                iconView.setColorFilter(getResources().getColor(R.color.navdrawer_icon_tint));
+            }
+        }
+    }
+
+    private boolean isSeparator(int itemId) {
+        return itemId == NAVDRAWER_ITEM_SEPARATOR || itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL;
+    }
+
+    /**
+     * Returns true if this is an item that should not allow selection (e.g., Settings),
+     * because they launch a new Activity and aren't part of this screen, false if its selectable
+     * and changes the current UI via a new fragment
+     *
+     * @return true if this is an item that should not allow selection (e.g., Settings),
+     * because they launch a new Activity and aren't part of this screen, false if its selectable
+     * and changes the current UI via a new fragment
+     */
+    private boolean isNewActivityItem(int itemId) {
+        return itemId == NAVDRAWER_ITEM_SETTINGS ||
+                itemId == NAVDRAWER_ITEM_HELP ||
+                itemId == NAVDRAWER_ITEM_SEND_FEEDBACK;
     }
 }

@@ -3,7 +3,7 @@ jdk: oraclejdk7
 env:
   global:
     - ANDROID_API_LEVEL=21
-    - ANDROID_BUILD_TOOLS_VERSION=21.1.1
+    - ANDROID_BUILD_TOOLS_VERSION=21.0.2
     - ANDROID_ABI=armeabi-v7a
 
 android:
@@ -23,5 +23,5 @@ before_script:
   - emulator -avd test -no-skin -no-audio -no-window &
 
 script:
-  - ./android-wait-for-emulator
+  - ./wait-for-emulator
   - ./gradlew connectedCheck -PdisablePreDex

@@ -33,6 +33,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -50,6 +51,8 @@ import java.util.ArrayList;
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
 public class NavigationDrawerFragment extends Fragment {
+
+    public static final String TAG = "NavigationDrawerFragment";
 
     /**
      * Remember the position of the selected item.
@@ -148,6 +151,11 @@ public class NavigationDrawerFragment extends Fragment {
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
             mFromSavedInstanceState = true;
+            Log.d(TAG, "Using position from savedInstanceState = " + mCurrentSelectedPosition);
+        } else {
+            // Try to get the saved position from preferences
+            mCurrentSelectedPosition = sp.getInt(STATE_SELECTED_POSITION, NAVDRAWER_ITEM_MAP);
+            Log.d(TAG, "Using position from preferences = " + mCurrentSelectedPosition);
         }
 
         // Select either the default item (0) or the last selected item.
@@ -282,6 +290,11 @@ public class NavigationDrawerFragment extends Fragment {
         if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
+
+            // Save the selected position as a preference
+            SharedPreferences sp = PreferenceManager
+                    .getDefaultSharedPreferences(getActivity());
+            sp.edit().putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition).apply();
         }
         if (mNavDrawerItemViews != null) {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
@@ -312,6 +325,7 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d(TAG, "Saving position = " + mCurrentSelectedPosition);
         outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
     }
 

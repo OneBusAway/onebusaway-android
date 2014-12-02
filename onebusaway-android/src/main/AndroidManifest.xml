@@ -13,7 +13,7 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.onebusaway.android">
+          package="org.onebusaway.android">
 
     <permission
             android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
@@ -57,7 +57,7 @@
 
         <activity
                 android:name="org.onebusaway.android.ui.HomeActivity">
-        <intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
@@ -80,7 +80,7 @@
             </intent-filter>
         </activity>
         <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
-        <activity android:name="org.onebusaway.android.ui.TripListActivity"/>
+        <activity android:name=".ui.MyRemindersActivity"/>
 
         <activity
                 android:name="org.onebusaway.android.ui.MyStopsActivity"

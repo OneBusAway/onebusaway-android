@@ -108,8 +108,6 @@ public class HomeActivity extends ActionBarActivity
 
     Context mContext;
 
-    BaseMapFragment mMapFragment;
-
     ArrivalsListFragment mArrivalsListFragment;
 
     ArrivalsListHeader mArrivalsListHeader;
@@ -134,6 +132,22 @@ public class HomeActivity extends ActionBarActivity
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
+
+    /**
+     * Currently selected navigation drawer position (so we don't unnecessarily swap fragments
+     * if the same item is selected).  Initialized to -1 so the initial callback from
+     * NavigationDrawerFragment always instantiates the fragments
+     */
+    private int mCurrentNavDrawerPosition = -1;
+
+    /**
+     * Fragments that can be selected as main content via the NavigationDrawer
+     */
+    MyStarredStopsFragment mMyStarredStopsFragment;
+
+    BaseMapFragment mMapFragment;
+
+    MyRemindersFragment mMyRemindersFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -227,12 +241,9 @@ public class HomeActivity extends ActionBarActivity
 
         setupNavigationDrawer();
 
-        mMapFragment = (BaseMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map_fragment);
+        setupSlidingPanel(savedInstanceState);
 
         setupMyLocationButton();
-
-        setupSlidingPanel(savedInstanceState);
 
         setupGooglePlayServices();
 
@@ -241,9 +252,6 @@ public class HomeActivity extends ActionBarActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
-
-        // Register listener for map focus callbacks
-        mMapFragment.setOnFocusChangeListener(this);
     }
 
     @Override
@@ -288,21 +296,25 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private void goToNavDrawerItem(int item) {
-        // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        // TODO - Add handling of our own navigation drawer item selections
-        //        fragmentManager.beginTransaction()
-//                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
-//                .commit();
+        // Update the main content by replacing fragments
         switch (item) {
             case NAVDRAWER_ITEM_STARRED_STOPS:
-                Log.d(TAG, "TODO - show starred stop fragment");
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_STARRED_STOPS) {
+                    showStarredStopsFragment();
+                    mCurrentNavDrawerPosition = item;
+                }
                 break;
             case NAVDRAWER_ITEM_MAP:
-                Log.d(TAG, "TODO - show map fragment");
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MAP) {
+                    showMapFragment();
+                    mCurrentNavDrawerPosition = item;
+                }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
-                Log.d(TAG, "TODO - show my reminders fragment");
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MY_REMINDERS) {
+                    showMyRemindersFragment();
+                    mCurrentNavDrawerPosition = item;
+                }
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
@@ -315,6 +327,81 @@ public class HomeActivity extends ActionBarActivity
                 Log.d(TAG, "TODO - show send feedback fragment");
                 break;
         }
+    }
+
+    private void showMapFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        if (mMyStarredStopsFragment != null) {
+            fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
+        }
+        if (mMyRemindersFragment != null) {
+            fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        if (mMapFragment == null) {
+            mMapFragment = new BaseMapFragment();
+
+            // Register listener for map focus callbacks
+            mMapFragment.setOnFocusChangeListener(this);
+            fm.beginTransaction().add(R.id.main_fragment, mMapFragment).commit();
+        }
+        getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
+        showMyLocationButton();
+    }
+
+    private void showStarredStopsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        if (mMapFragment != null) {
+            fm.beginTransaction().hide(mMapFragment).commit();
+        }
+        if (mMyRemindersFragment != null) {
+            fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+        if (mSlidingPanel != null) {
+            mSlidingPanel.hidePanel();
+        }
+        hideMyLocationButton();
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        if (mMyStarredStopsFragment == null) {
+            mMyStarredStopsFragment = new MyStarredStopsFragment();
+            fm.beginTransaction().add(R.id.main_fragment, mMyStarredStopsFragment).commit();
+        }
+        fm.beginTransaction().show(mMyStarredStopsFragment).commit();
+    }
+
+    private void showMyRemindersFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        if (mMyStarredStopsFragment != null) {
+            fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
+        }
+        if (mMapFragment != null) {
+            fm.beginTransaction().hide(mMapFragment).commit();
+        }
+        if (mSlidingPanel != null) {
+            mSlidingPanel.hidePanel();
+        }
+        hideMyLocationButton();
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        if (mMyRemindersFragment == null) {
+            mMyRemindersFragment = new MyRemindersFragment();
+            fm.beginTransaction().add(R.id.main_fragment, mMyRemindersFragment).commit();
+        }
+        fm.beginTransaction().show(mMyRemindersFragment).commit();
     }
 
     public void restoreActionBar() {
@@ -357,7 +444,7 @@ public class HomeActivity extends ActionBarActivity
             startActivity(myIntent);
             return true;
         } else if (id == R.id.view_trips) {
-            Intent myIntent = new Intent(this, TripListActivity.class);
+            Intent myIntent = new Intent(this, MyRemindersActivity.class);
             startActivity(myIntent);
             return true;
         }
@@ -673,6 +760,11 @@ public class HomeActivity extends ActionBarActivity
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
                 .getLayoutParams();
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
+        if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_MAP) {
+            showMyLocationButton();
+        } else {
+            hideMyLocationButton();
+        }
     }
 
     private void moveMyLocationButtonUp() {
@@ -734,6 +826,24 @@ public class HomeActivity extends ActionBarActivity
         };
         a.setDuration(MY_LOC_BTN_ANIM_DURATION);
         mBtnMyLocation.startAnimation(a);
+    }
+
+    private void showMyLocationButton() {
+        if (mBtnMyLocation == null) {
+            return;
+        }
+        if (mBtnMyLocation.getVisibility() != View.VISIBLE) {
+            mBtnMyLocation.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideMyLocationButton() {
+        if (mBtnMyLocation == null) {
+            return;
+        }
+        if (mBtnMyLocation.getVisibility() != View.GONE) {
+            mBtnMyLocation.setVisibility(View.GONE);
+        }
     }
 
     private void setupNavigationDrawer() {

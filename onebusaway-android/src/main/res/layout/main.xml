@@ -39,14 +39,11 @@
 
             <!-- MAIN CONTENT -->
             <RelativeLayout
+                    android:id="@+id/main_fragment"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1">
-                <fragment
-                        class="org.onebusaway.android.map.googlemapsv2.BaseMapFragment"
-                        android:id="@+id/map_fragment"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
+                <!-- Fragment is added here programmatically -->
                 <ImageButton
                         android:id="@+id/btnMyLocation"
                         android:layout_height="55dp"

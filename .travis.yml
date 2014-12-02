@@ -23,5 +23,5 @@ before_script:
   - emulator -avd test -no-skin -no-audio -no-window &
 
 script:
-  - ./wait-for-emulator
+  - ./wait_for_emulator
   - ./gradlew connectedCheck -PdisablePreDex

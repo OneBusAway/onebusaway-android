@@ -348,7 +348,7 @@ public class HomeActivity extends ActionBarActivity
 
             // Register listener for map focus callbacks
             mMapFragment.setOnFocusChangeListener(this);
-            fm.beginTransaction().add(R.id.main_fragment, mMapFragment).commit();
+            fm.beginTransaction().add(R.id.main_fragment_container, mMapFragment).commit();
         }
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
         showMyLocationButton();
@@ -359,6 +359,7 @@ public class HomeActivity extends ActionBarActivity
         /**
          * Hide everything that shouldn't be shown
          */
+        hideMyLocationButton();
         if (mMapFragment != null) {
             fm.beginTransaction().hide(mMapFragment).commit();
         }
@@ -368,13 +369,13 @@ public class HomeActivity extends ActionBarActivity
         if (mSlidingPanel != null) {
             mSlidingPanel.hidePanel();
         }
-        hideMyLocationButton();
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
         if (mMyStarredStopsFragment == null) {
             mMyStarredStopsFragment = new MyStarredStopsFragment();
-            fm.beginTransaction().add(R.id.main_fragment, mMyStarredStopsFragment).commit();
+            fm.beginTransaction().add(R.id.main_fragment_container, mMyStarredStopsFragment)
+                    .commit();
         }
         fm.beginTransaction().show(mMyStarredStopsFragment).commit();
     }
@@ -384,6 +385,7 @@ public class HomeActivity extends ActionBarActivity
         /**
          * Hide everything that shouldn't be shown
          */
+        hideMyLocationButton();
         if (mMyStarredStopsFragment != null) {
             fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
         }
@@ -393,13 +395,12 @@ public class HomeActivity extends ActionBarActivity
         if (mSlidingPanel != null) {
             mSlidingPanel.hidePanel();
         }
-        hideMyLocationButton();
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
         if (mMyRemindersFragment == null) {
             mMyRemindersFragment = new MyRemindersFragment();
-            fm.beginTransaction().add(R.id.main_fragment, mMyRemindersFragment).commit();
+            fm.beginTransaction().add(R.id.main_fragment_container, mMyRemindersFragment).commit();
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();
     }

@@ -39,11 +39,15 @@
 
             <!-- MAIN CONTENT -->
             <RelativeLayout
-                    android:id="@+id/main_fragment"
+                    android:id="@+id/main_content"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1">
                 <!-- Fragment is added here programmatically -->
+                <RelativeLayout
+                        android:id="@+id/main_fragment_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
                 <ImageButton
                         android:id="@+id/btnMyLocation"
                         android:layout_height="55dp"

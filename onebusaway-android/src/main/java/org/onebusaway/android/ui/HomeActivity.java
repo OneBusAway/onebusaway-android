@@ -334,10 +334,10 @@ public class HomeActivity extends ActionBarActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        if (mMyStarredStopsFragment != null) {
+        if (mMyStarredStopsFragment != null && !mMyStarredStopsFragment.isHidden()) {
             fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
         }
-        if (mMyRemindersFragment != null) {
+        if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
         }
         /**
@@ -352,6 +352,10 @@ public class HomeActivity extends ActionBarActivity
         }
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
         showMyLocationButton();
+        if (mFocusedStopId != null && mSlidingPanel != null) {
+            // if we've focused on a stop, then show the panel that was previously hidden
+            mSlidingPanel.showPanel();
+        }
     }
 
     private void showStarredStopsFragment() {
@@ -360,10 +364,10 @@ public class HomeActivity extends ActionBarActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
-        if (mMapFragment != null) {
+        if (mMapFragment != null && !mMapFragment.isHidden()) {
             fm.beginTransaction().hide(mMapFragment).commit();
         }
-        if (mMyRemindersFragment != null) {
+        if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
         }
         if (mSlidingPanel != null) {
@@ -386,10 +390,10 @@ public class HomeActivity extends ActionBarActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
-        if (mMyStarredStopsFragment != null) {
+        if (mMyStarredStopsFragment != null && !mMyStarredStopsFragment.isHidden()) {
             fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
         }
-        if (mMapFragment != null) {
+        if (mMapFragment != null && !mMapFragment.isHidden()) {
             fm.beginTransaction().hide(mMapFragment).commit();
         }
         if (mSlidingPanel != null) {
@@ -570,7 +574,12 @@ public class HomeActivity extends ActionBarActivity
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
             // and clear the currently focused stopId
             mFocusedStopId = null;
+            moveMyLocationButtonDown();
             mSlidingPanel.hidePanel();
+            if (mArrivalsListFragment != null) {
+                FragmentManager fm = getSupportFragmentManager();
+                fm.beginTransaction().remove(mArrivalsListFragment).commit();
+            }
         }
     }
 
@@ -916,11 +925,9 @@ public class HomeActivity extends ActionBarActivity
             @Override
             public void onPanelHidden(View panel) {
                 Log.d(TAG, "onPanelHidden");
-                if (mArrivalsListFragment != null) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    fm.beginTransaction().remove(mArrivalsListFragment).commit();
-                }
-                moveMyLocationButtonDown();
+                // We need to hide the panel when switching between fragments via the navdrawer,
+                // so we shouldn't put anything here that causes us to lose the state of the
+                // MapFragment or the ArrivalListFragment (e.g., removing the ArrivalListFragment)
             }
         });
 

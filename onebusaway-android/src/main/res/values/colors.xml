@@ -16,8 +16,8 @@
 -->
 <resources>
     <!-- OneBusAway Theme -->
-    <color name="theme_primary">#539729</color>
-    <color name="theme_primary_dark">#1B5E20</color>
+    <color name="theme_primary">#4CAF50</color>
+    <color name="theme_primary_dark">#388E3C</color>
     <color name="theme_accent">#5db53b</color>
 
     <color name="body_text_1">#de000000</color>

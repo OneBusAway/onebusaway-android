@@ -73,8 +73,8 @@ import java.util.Date;
 import java.util.HashMap;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MAP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
@@ -305,8 +305,8 @@ public class HomeActivity extends ActionBarActivity
                     mCurrentNavDrawerPosition = item;
                 }
                 break;
-            case NAVDRAWER_ITEM_MAP:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MAP) {
+            case NAVDRAWER_ITEM_NEARBY:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
                     mCurrentNavDrawerPosition = item;
                 }
@@ -763,7 +763,7 @@ public class HomeActivity extends ActionBarActivity
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
                 .getLayoutParams();
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
-        if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_MAP) {
+        if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
             showMyLocationButton();
         } else {
             hideMyLocationButton();

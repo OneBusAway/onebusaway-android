@@ -68,7 +68,7 @@ public class NavigationDrawerFragment extends Fragment {
     // symbols for navdrawer items (indices must correspond to array below). This is
     // not a list of items that are necessarily *present* in the Nav Drawer; rather,
     // it's a list of all possible items.
-    protected static final int NAVDRAWER_ITEM_MAP = 0;
+    protected static final int NAVDRAWER_ITEM_NEARBY = 0;
 
     protected static final int NAVDRAWER_ITEM_STARRED_STOPS = 1;
 
@@ -91,7 +91,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
-            R.string.navdrawer_item_map,
+            R.string.navdrawer_item_nearby,
             R.string.navdrawer_item_starred_stops,
             R.string.navdrawer_item_my_reminders,
             R.string.navdrawer_item_settings,
@@ -101,7 +101,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     // icons for navdrawer items (indices must correspond to above array)
     private static final int[] NAVDRAWER_ICON_RES_ID = new int[]{
-            R.drawable.ic_drawer_map,
+            R.drawable.ic_drawer_maps_place,  // Nearby
             R.drawable.ic_drawer_star, // Starred Stops
             R.drawable.ic_drawer_alarm, // My reminders
             0, // Settings
@@ -154,7 +154,7 @@ public class NavigationDrawerFragment extends Fragment {
             Log.d(TAG, "Using position from savedInstanceState = " + mCurrentSelectedPosition);
         } else {
             // Try to get the saved position from preferences
-            mCurrentSelectedPosition = sp.getInt(STATE_SELECTED_POSITION, NAVDRAWER_ITEM_MAP);
+            mCurrentSelectedPosition = sp.getInt(STATE_SELECTED_POSITION, NAVDRAWER_ITEM_NEARBY);
             Log.d(TAG, "Using position from preferences = " + mCurrentSelectedPosition);
         }
 
@@ -391,7 +391,7 @@ public class NavigationDrawerFragment extends Fragment {
     private void populateNavDrawer() {
         mNavDrawerItems.clear();
 
-        mNavDrawerItems.add(NAVDRAWER_ITEM_MAP);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 

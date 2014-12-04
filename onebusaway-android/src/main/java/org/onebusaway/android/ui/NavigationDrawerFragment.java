@@ -68,9 +68,9 @@ public class NavigationDrawerFragment extends Fragment {
     // symbols for navdrawer items (indices must correspond to array below). This is
     // not a list of items that are necessarily *present* in the Nav Drawer; rather,
     // it's a list of all possible items.
-    protected static final int NAVDRAWER_ITEM_STARRED_STOPS = 0;
+    protected static final int NAVDRAWER_ITEM_MAP = 0;
 
-    protected static final int NAVDRAWER_ITEM_MAP = 1;
+    protected static final int NAVDRAWER_ITEM_STARRED_STOPS = 1;
 
     protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 2;
 
@@ -87,12 +87,12 @@ public class NavigationDrawerFragment extends Fragment {
     protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
 
     // Currently selected navigation drawer item (must be value of one of the constants above)
-    private int mCurrentSelectedPosition = 1;
+    private int mCurrentSelectedPosition = 0;
 
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
-            R.string.navdrawer_item_starred_stops,
             R.string.navdrawer_item_map,
+            R.string.navdrawer_item_starred_stops,
             R.string.navdrawer_item_my_reminders,
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
@@ -101,8 +101,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     // icons for navdrawer items (indices must correspond to above array)
     private static final int[] NAVDRAWER_ICON_RES_ID = new int[]{
-            R.drawable.ic_drawer_star,
             R.drawable.ic_drawer_map,
+            R.drawable.ic_drawer_star, // Starred Stops
             R.drawable.ic_drawer_alarm, // My reminders
             0, // Settings
             0, // Help
@@ -391,8 +391,8 @@ public class NavigationDrawerFragment extends Fragment {
     private void populateNavDrawer() {
         mNavDrawerItems.clear();
 
-        mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MAP);
+        mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);

@@ -125,4 +125,5 @@ dependencies {
     compile 'com.sothree.slidinguppanel:library:2.0.1'
     // For sorting alphanumeric route names
     compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
+    compile project(':oba')
 }

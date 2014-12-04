@@ -148,4 +148,5 @@ dependencies {
     compile 'org.onebusaway.util:comparators:1.0.0'
     // Only used on Amazon devices via amazon build flavor
     amazonCompile('com.amazon.android:amazon-maps-api:2.0')
+    compile project(':oba')
 }

@@ -12,8 +12,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.onebusaway.android">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.onebusaway.android">
 
     <permission
             android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
@@ -35,6 +37,7 @@
     <uses-permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"/>
 
     <application
+            tools:replace="android:allowBackup"
             android:allowBackup="false"
             android:name="org.onebusaway.android.app.Application"
             android:icon="@drawable/ic_launcher"

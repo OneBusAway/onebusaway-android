@@ -1,1 +1,1 @@
-include ':onebusaway-android'
+include ':onebusaway-android', ':oba'

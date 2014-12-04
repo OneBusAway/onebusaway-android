@@ -441,16 +441,8 @@ public class HomeActivity extends ActionBarActivity
         if (id == R.id.search) {
             onSearchRequested();
             return true;
-        } else if (id == R.id.find_stop) {
-            Intent myIntent = new Intent(this, MyStopsActivity.class);
-            startActivity(myIntent);
-            return true;
         } else if (id == R.id.find_route) {
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
-            startActivity(myIntent);
-            return true;
-        } else if (id == R.id.view_trips) {
-            Intent myIntent = new Intent(this, MyRemindersActivity.class);
             startActivity(myIntent);
             return true;
         }

@@ -22,10 +22,4 @@
     <item android:id="@+id/find_route"
           android:title="@string/main_option_findroute"
           android:icon="@drawable/ic_menu_trip"/>
-    <item android:id="@+id/find_stop"
-          android:title="@string/main_option_findstop"
-          android:icon="@drawable/ic_menu_stop"/>
-    <item android:id="@+id/view_trips"
-          android:title="@string/main_option_viewtrips"
-          android:icon="@drawable/ic_menu_notifications"/>
 </menu>

@@ -122,7 +122,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.2'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.4.2'
     // Bottom sliding panel
-    compile 'com.sothree.slidinguppanel:library:2.0.1'
+    compile 'com.sothree.slidinguppanel:library:2.0.3'
     // For sorting alphanumeric route names
     compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
 }

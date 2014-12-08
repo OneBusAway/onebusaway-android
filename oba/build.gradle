@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.13.2'
+        classpath 'com.android.tools.build:gradle:1.0.+'
     }
 }
 
@@ -14,7 +14,6 @@ android {
     buildToolsVersion "21.1.1"
 
     defaultConfig {
-        applicationId "org.onebusaway.android.core"
         minSdkVersion 9
         targetSdkVersion 21
         versionCode 1
@@ -22,7 +21,7 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

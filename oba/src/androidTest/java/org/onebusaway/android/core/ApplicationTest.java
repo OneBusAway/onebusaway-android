@@ -1,4 +1,4 @@
-package org.onebusaway.android;
+package org.onebusaway.android.core;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

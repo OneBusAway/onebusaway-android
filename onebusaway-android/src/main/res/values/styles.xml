@@ -18,6 +18,12 @@
     <!-- Navigation Drawer -->
     <style name="NavDrawerListItem" parent="style/Widget.AppCompat.ListView.Menu">
         <item name="android:background">@drawable/navdrawer_item_selectable</item>
+        <item name="android:shape">oval</item>
+    </style>
+
+    <!-- Floating Action Button (FAB) style is only applied on Android 5.0 and greater-->
+    <style name="OneBusAway.FloatingActionButton" parent="android:style/Widget.Material.Button">
+        <item name="android:background">@drawable/fab_background</item>
     </style>
 
     <!-- General styles -->

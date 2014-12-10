@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
-    and individual contributors.
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,18 @@
     <dimen name="navigation_drawer_width">260dp</dimen>
 
     <dimen name="keyline_1">16dp</dimen>
+
+    <!-- Floating action button (FAB) dimensions -->
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <!-- Shadows, for FAB on platforms before Lollipop -->
+    <dimen name="fab_shadow_size_1">@dimen/fab_size</dimen>
+    <dimen name="fab_shadow_size_2">@dimen/fab_size</dimen>
+    <!-- Below shadow sizes should each increment fab_size by 1, to form incremental shadows -->
+    <dimen name="fab_shadow_size_3">57dp</dimen>
+    <dimen name="fab_shadow_size_4">58dp</dimen>
+    <dimen name="fab_shadow_size_5">59dp</dimen>
+    <dimen name="fab_shadow_size_6">60dp</dimen>
 
     <!-- Other misc items -->
     <dimen name="route_button_width">48sp</dimen>

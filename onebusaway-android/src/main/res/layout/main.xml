@@ -48,16 +48,8 @@
                         android:id="@+id/main_fragment_container"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
-                <ImageButton
-                        android:id="@+id/btnMyLocation"
-                        android:layout_height="55dp"
-                        android:layout_width="55dp"
-                        android:layout_alignParentRight="true"
-                        android:layout_alignParentBottom="true"
-                        android:src="@drawable/device_access_location_found"
-                        android:background="@drawable/button_layout"
-                        android:contentDescription="@string/map_option_mylocation">
-                </ImageButton>
+                <!-- Floating Action Button for My Location, overlaid on map -->
+                <include layout="@layout/my_location_button"/>
             </RelativeLayout>
 
             <!-- BOTTOM SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->

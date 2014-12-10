@@ -149,4 +149,5 @@ dependencies {
     // Only used on Amazon devices via amazon build flavor
     amazonCompile('com.amazon.android:amazon-maps-api:2.0')
     compile project(':oba')
+    wearApp project(':wear')
 }

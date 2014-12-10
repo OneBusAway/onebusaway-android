@@ -5,6 +5,11 @@ import android.os.Bundle;
 import android.support.wearable.view.WatchViewStub;
 import android.widget.TextView;
 
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItemBuffer;
+
+import org.onebusaway.android.core.GoogleApiHelper;
+
 public class MainActivity extends Activity {
 
     private static final String TAG = "OBAWEAR";
@@ -24,7 +29,17 @@ public class MainActivity extends Activity {
                 mTextView = (TextView) stub.findViewById(R.id.text);
             }
         });
-        mGoogleApiHelper = new GoogleApiHelper(this);
+        mGoogleApiHelper = new GoogleApiHelper(this) {
+            @Override
+            protected void handleOnResultsRetrieved(DataItemBuffer dataItems) {
+
+            }
+
+            @Override
+            public void onDataChanged(DataEventBuffer dataEvents) {
+
+            }
+        };
     }
 
     @Override

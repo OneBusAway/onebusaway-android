@@ -127,4 +127,9 @@
         <item name="android:paddingLeft">4dip</item>
         <item name="android:paddingRight">4dip</item>
     </style>
+
+    <!-- Problem reporting forms -->
+    <style name="ReportProblemForms">
+        <item name="android:background">@android:color/background_light</item>
+    </style>
 </resources>

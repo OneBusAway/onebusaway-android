@@ -1,4 +1,4 @@
-package org.onebusaway.android.wear;
+package org.onebusaway.android.core;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -6,23 +6,21 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemBuffer;
-import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.Wearable;
 
-public class GoogleApiHelper implements DataApi.DataListener {
+/**
+ * Wraps boilerplate GoogleApi code.  Concrete classes implement the DataListener callbacks for data updates during application runtime.
+ */
+public abstract class GoogleApiHelper implements DataApi.DataListener {
     private final String TAG = "GoogleApiHelper";
 
     private GoogleApiClient mGoogleApiClient;
     private Context mContext;
 
-    public GoogleApiHelper(Context context) {
+    public GoogleApiHelper(Context context, DataApi.DataListener listener) {
         mContext = context;
         mGoogleApiClient = new GoogleApiClient.Builder(mContext)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
@@ -49,8 +47,7 @@ public class GoogleApiHelper implements DataApi.DataListener {
 
     private void handledOnConnected() {
         Wearable.DataApi.addListener(mGoogleApiClient, this);
-        PendingResult<DataItemBuffer> dataItems = Wearable.DataApi.getDataItems(mGoogleApiClient);
-        dataItems.setResultCallback(new ResultCallback<DataItemBuffer>() {
+        Wearable.DataApi.getDataItems(mGoogleApiClient).setResultCallback(new ResultCallback<DataItemBuffer>() {
             @Override
             public void onResult(DataItemBuffer dataItems) {
                 handleOnResultsRetrieved(dataItems);
@@ -58,12 +55,8 @@ public class GoogleApiHelper implements DataApi.DataListener {
         });
     }
 
-    private void handleOnResultsRetrieved(DataItemBuffer dataItems) {
-        for(DataItem item : dataItems) {
-            DataMap map = DataMap.fromByteArray(item.getData());
-            // todo: do something with the datamap
-        }
-    }
+    // called when the google api connects to load initial data items.
+    protected abstract void handleOnResultsRetrieved(DataItemBuffer dataItems);
 
     public void start() {
         mGoogleApiClient.connect();
@@ -71,12 +64,5 @@ public class GoogleApiHelper implements DataApi.DataListener {
 
     public void stop() {
         mGoogleApiClient.disconnect();
-    }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEvents) {
-        for(DataEvent event : dataEvents) {
-            // todo: do something with the event
-        }
     }
 }

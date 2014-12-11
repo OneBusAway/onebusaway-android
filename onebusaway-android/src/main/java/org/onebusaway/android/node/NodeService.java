@@ -44,11 +44,6 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
 
     public static final String DATA_MAP_KEY_STARRED_STOPS_LIST = "starred_stops_key";
 
-    public static final String KEY_DATA_MAP_STOP_DATA_ID = "id";
-    public static final String KEY_DATA_MAP_STOP_DATA_DIR = "dir";
-    public static final String KEY_DATA_MAP_STOP_DATA_NAME = "name";
-    public static final String KEY_DATA_MAP_STOP_DATA_UI_NAME = "uiName";
-
     private GoogleApiHelper mGoogleApiHelper;
     private static final String TAG = "OBA::NodeService";
 
@@ -117,16 +112,12 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
         ArrayList<DataMap> dataMaps = new ArrayList<DataMap>();
         for(int i = 0; i < c.getCount(); i++) {
             StopData data = StopDataCursorHelper.createStopData(c, i);
-            DataMap dataMap = new DataMap();
-            dataMap.putString(KEY_DATA_MAP_STOP_DATA_ID, data.getId());
-            dataMap.putString(KEY_DATA_MAP_STOP_DATA_DIR, data.getDir());
-            dataMap.putString(KEY_DATA_MAP_STOP_DATA_NAME, data.getName());
-            dataMap.putString(KEY_DATA_MAP_STOP_DATA_UI_NAME, data.getUiName());
+            dataMaps.add(data.toDataMap());
         }
         // @todo: poh - optimize this so it doesnt always add the whole list, maybe a way to do only the delta
-        PutDataMapRequest dataMap = PutDataMapRequest.create(URI_STARRED_STOPS);
-        dataMap.getDataMap().putDataMapArrayList(DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
-        PutDataRequest request = dataMap.asPutDataRequest();
+        PutDataMapRequest dataMapRequest = PutDataMapRequest.create(URI_STARRED_STOPS);
+        dataMapRequest.getDataMap().putDataMapArrayList(DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
+        PutDataRequest request = dataMapRequest.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(mGoogleApiHelper.getClient(), request);
     }

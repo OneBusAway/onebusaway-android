@@ -2,6 +2,7 @@ package org.onebusaway.android.node;
 
 import android.app.Service;
 import android.content.ContentProviderClient;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.IBinder;
@@ -61,11 +62,13 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
             }
         };
         mGoogleApiHelper.start();
+        Log.d(TAG, "onStartCommand");
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "onDestroy");
         mGoogleApiHelper.stop();
         mGoogleApiHelper = null;
         super.onDestroy();
@@ -120,5 +123,10 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
         PutDataRequest request = dataMapRequest.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(mGoogleApiHelper.getClient(), request);
+    }
+
+    public static void schedule(Context context) {
+        final Intent intent = new Intent(context, NodeService.class);
+        context.startService(intent);
     }
 }

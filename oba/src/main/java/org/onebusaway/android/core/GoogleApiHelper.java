@@ -26,12 +26,12 @@ public abstract class GoogleApiHelper implements DataApi.DataListener {
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle connectionHint) {
-                        Log.i(TAG, "google api client connected");
+                        Log.d(TAG, "google api client connected");
                         handledOnConnected();
                     }
                     @Override
                     public void onConnectionSuspended(int cause) {
-                        Log.i(TAG, "google api client connection suspended code[" + cause + "]");
+                        Log.d(TAG, "google api client connection suspended code[" + cause + "]");
                     }
                 })
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {

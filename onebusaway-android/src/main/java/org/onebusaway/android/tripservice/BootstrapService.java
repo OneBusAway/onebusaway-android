@@ -19,6 +19,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import org.onebusaway.android.node.NodeService;
+
 public class BootstrapService extends BroadcastReceiver {
 
     //
@@ -28,5 +30,6 @@ public class BootstrapService extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         TripService.scheduleAll(context);
+        NodeService.schedule(context);
     }
 }

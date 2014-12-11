@@ -38,7 +38,8 @@
     <color name="navdrawer_icon_tint_selected">@color/theme_primary</color>
 
     <!-- Default route line color on map -->
-    <color name="route_overlay_line">#00F</color>
+    <color name="route_line_color_default">#00F</color>
+    <color name="route_text_color_default">@android:color/black</color>
 
     <!-- Arrival time colors -->
     <color name="stop_info_ontime">@color/theme_primary</color>

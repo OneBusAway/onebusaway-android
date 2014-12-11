@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 package org.onebusaway.android.io.elements;
 
 import android.graphics.Color;
+import android.text.TextUtils;
 
 /**
  * Object defining a Route element.
@@ -28,6 +30,8 @@ public final class ObaRouteElement implements ObaRoute {
     public static final ObaRouteElement EMPTY_OBJECT = new ObaRouteElement();
 
     public static final ObaRouteElement[] EMPTY_ARRAY = new ObaRouteElement[]{};
+
+    public static final String COLOR_PREFIX = "#";
 
     private final String id;
 
@@ -104,14 +108,34 @@ public final class ObaRouteElement implements ObaRoute {
         return url;
     }
 
+    /**
+     * Returns the integer representation of the Android color for the route line, or null if this
+     * value is not included in the API response
+     *
+     * @return the integer representation of the Android color for the route line, or null if this
+     * value is not included in the API response
+     */
     @Override
-    public int getColor() {
-        return 0xFF000000 | Integer.getInteger(color, Color.WHITE);
+    public Integer getColor() {
+        if (!TextUtils.isEmpty(color)) {
+            return Color.parseColor(COLOR_PREFIX + color.trim());
+        }
+        return null;
     }
 
+    /**
+     * Returns the integer representation of the Android color for the route text, or null if this
+     * value is not included in the API response
+     *
+     * @return the integer representation of the Android color for the route text, or null if this
+     * value is not included in the API response
+     */
     @Override
-    public int getTextColor() {
-        return 0xFF000000 | Integer.getInteger(textColor, Color.BLACK);
+    public Integer getTextColor() {
+        if (!TextUtils.isEmpty(textColor)) {
+            return Color.parseColor(COLOR_PREFIX + textColor.trim());
+        }
+        return null;
     }
 
     @Override

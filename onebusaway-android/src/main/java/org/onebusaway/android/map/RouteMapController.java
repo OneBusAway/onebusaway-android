@@ -50,7 +50,7 @@ public class RouteMapController implements MapModeController,
 
     private boolean mZoomToRoute;
 
-    private final int mLineOverlayColor;
+    private int mLineOverlayColor;
 
     private RoutePopup mRoutePopup;
 
@@ -62,7 +62,7 @@ public class RouteMapController implements MapModeController,
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
                 .getResources()
-                .getColor(R.color.route_overlay_line);
+                .getColor(R.color.route_line_color_default);
         mRoutePopup = new RoutePopup();
     }
 
@@ -139,7 +139,13 @@ public class RouteMapController implements MapModeController,
             return;
         }
 
-        mRoutePopup.show(response.getRoute(response.getRouteId()));
+        ObaRoute route = response.getRoute(response.getRouteId());
+
+        mRoutePopup.show(route);
+
+        if (route.getColor() != null) {
+            mLineOverlayColor = route.getColor();
+        }
 
         obaMapView.setRouteOverlay(mLineOverlayColor, response.getShapes());
 

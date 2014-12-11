@@ -109,12 +109,12 @@ public class MockObaStop {
         }
 
         @Override
-        public int getColor() {
+        public Integer getColor() {
             return 0; // GTFS says 09346D?
         }
 
         @Override
-        public int getTextColor() {
+        public Integer getTextColor() {
             return 0;  // GTFS says FFFFFF?
         }
 
@@ -157,12 +157,12 @@ public class MockObaStop {
         }
 
         @Override
-        public int getColor() {
+        public Integer getColor() {
             return 0; // GTFS says 09346D?
         }
 
         @Override
-        public int getTextColor() {
+        public Integer getTextColor() {
             return 0;  // GTFS says FFFFFF?
         }
 

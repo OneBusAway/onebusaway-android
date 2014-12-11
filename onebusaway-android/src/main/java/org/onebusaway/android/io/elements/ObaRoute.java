@@ -64,14 +64,16 @@ public interface ObaRoute extends ObaElement {
     public String getUrl();
 
     /**
-     * @return The route color.
+     * @return the integer representation of the Android color for the route line, or null if this
+     * value is not included in the API response.
      */
-    public int getColor();
+    public Integer getColor();
 
     /**
-     * @return The route text color
+     * @return the integer representation of the Android color for the route text, or null if this
+     * value is not included in the API response
      */
-    public int getTextColor();
+    public Integer getTextColor();
 
     /**
      * @return The ID of the agency operating this route.

@@ -74,12 +74,12 @@ public final class ObaRouteResponse extends ObaResponseWithRefs implements ObaRo
     }
 
     @Override
-    public int getColor() {
+    public Integer getColor() {
         return data.entry.getColor();
     }
 
     @Override
-    public int getTextColor() {
+    public Integer getTextColor() {
         return data.entry.getTextColor();
     }
 

@@ -14,6 +14,7 @@
     "/api/where/current-time.json": "current_time",
 
     "/api/where/route/1_10.json": "route_1_10",
+    "/api/api/where/route/Hillsborough%20Area%20Regional%20Transit_5.json": "route_hart_5",
 
     "/api/where/routes-for-location.json?lat=47.61098&lon=-122.33845": "routes_for_location_downtown_seattle1",
     "/api/where/routes-for-location.json?lat=48.85808&lon=2.29498": "routes_for_location_outofrange",

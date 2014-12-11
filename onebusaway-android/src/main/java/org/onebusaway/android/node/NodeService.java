@@ -9,10 +9,8 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
@@ -38,27 +36,27 @@ import java.util.ArrayList;
  * This class is also the entry point for any message requests from nodes to request data or execute
  * actions on the device.
  */
-public class NodeService extends Service implements MessageApi.MessageListener, QueryUtils.StopList.Columns {
+public class NodeService extends Service implements QueryUtils.StopList.Columns {
 
     private GoogleApiHelper mGoogleApiHelper;
     private static final String TAG = "OBA::NodeService";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mGoogleApiHelper = new GoogleApiHelper(getApplicationContext()) {
-            @Override
-            protected void handleOnResultsRetrieved(DataItemBuffer dataItems) {
-
-            }
-
-            @Override
-            public void onDataChanged(DataEventBuffer dataEvents) {
-
-            }
-        };
+        mGoogleApiHelper = new GoogleApiHelper(Application.get());
+        mGoogleApiHelper.setMessageListener(createMessageListener());
         mGoogleApiHelper.start();
         Log.d(TAG, "onStartCommand");
-        return START_STICKY;
+        return START_STICKY; // @todo: poh - doesnt seem to work.  service is not restarting itself on nexus4
+    }
+
+    private MessageApi.MessageListener createMessageListener() {
+        return new MessageApi.MessageListener() {
+            @Override
+            public void onMessageReceived(MessageEvent messageEvent) {
+                handleOnMessageReceived(messageEvent);
+            }
+        };
     }
 
     @Override
@@ -74,28 +72,30 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
         return null;
     }
 
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
+    private void handleOnMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, "onMessageReceived::" + messageEvent.getPath());
-        Toast.makeText(getApplicationContext(), messageEvent.getPath(), Toast.LENGTH_SHORT).show(); // todo: poh - debug
         if (StarredStops.URI_REQUEST_SYNC_STARRED_STOPS.equals(messageEvent.getPath())) {
             syncStarredStops();
         }
     }
 
     private void syncStarredStops() {
+        Log.d(TAG, "syncStarredStops");
         ContentProviderClient client = null;
         try {
             client = getApplicationContext().getContentResolver()
                     .acquireContentProviderClient(ObaContract.AUTHORITY);
             ObaProvider provider = (ObaProvider) client.getLocalContentProvider();
+
+            String selection = ObaContract.Stops.FAVORITE + "=1" +
+                    (Application.get().getCurrentRegion() == null ? "" : " AND " +
+                            QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
+                                    Application.get().getCurrentRegion().getId()));
+
             Cursor c = provider.query(
                     ObaContract.Stops.CONTENT_URI,
                     PROJECTION,
-                    ObaContract.Stops.FAVORITE + "=1" +
-                            (Application.get().getCurrentRegion() == null ? "" : " AND " +
-                                    QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
-                                            Application.get().getCurrentRegion().getId())),
+                    selection,
                     null,
                     ObaContract.Stops.USE_COUNT + " desc");
             copyCursorToWearData(c);
@@ -107,17 +107,28 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
     }
 
     private void copyCursorToWearData(Cursor c) {
+        Log.d(TAG, "copyCursorToWearData");
         ArrayList<DataMap> dataMaps = new ArrayList<DataMap>();
         for(int i = 0; i < c.getCount(); i++) {
             StopData data = StopDataCursorHelper.createStopData(c, i);
-            dataMaps.add(data.toDataMap());
+            DataMap dataMap = data.toDataMap();
+            Log.d(TAG, "syncing " + data.getUiName());
+            dataMaps.add(dataMap);
         }
         // @todo: poh - optimize this so it doesnt always add the whole list, maybe a way to do only the delta
         PutDataMapRequest dataMapRequest = PutDataMapRequest.create(StarredStops.URI_STARRED_STOPS);
         dataMapRequest.getDataMap().putDataMapArrayList(StarredStops.DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
         PutDataRequest request = dataMapRequest.asPutDataRequest();
-        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
-                .putDataItem(mGoogleApiHelper.getClient(), request);
+        Wearable.DataApi.putDataItem(mGoogleApiHelper.getClient(), request).setResultCallback(createEmptyResultCallback());
+    }
+
+    private ResultCallback<DataApi.DataItemResult> createEmptyResultCallback() {
+        return new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                Log.d(TAG, "createEmptyResultCallback::" + dataItemResult.getStatus().isSuccess());
+            }
+        };
     }
 
     public static void schedule(Context context) {

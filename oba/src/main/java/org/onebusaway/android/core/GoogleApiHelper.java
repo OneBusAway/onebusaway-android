@@ -9,16 +9,19 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataItemBuffer;
+import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Wearable;
 
 /**
  * Wraps boilerplate GoogleApi code.  Concrete classes implement the DataListener callbacks for data updates during application runtime.
  */
-public abstract class GoogleApiHelper implements DataApi.DataListener {
+public class GoogleApiHelper {
     private final String TAG = "OBA::GoogleApiHelper";
 
     private GoogleApiClient mGoogleApiClient;
     private Context mContext;
+    private DataApi.DataListener dataListener;
+    private MessageApi.MessageListener messageListener;
 
     public GoogleApiHelper(Context context) {
         mContext = context;
@@ -45,24 +48,34 @@ public abstract class GoogleApiHelper implements DataApi.DataListener {
                 .build();
     }
 
-    private void handledOnConnected() {
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
-        Wearable.DataApi.getDataItems(mGoogleApiClient).setResultCallback(new ResultCallback<DataItemBuffer>() {
-            @Override
-            public void onResult(DataItemBuffer dataItems) {
-                handleOnResultsRetrieved(dataItems);
-            }
-        });
+    public void setDataListener(DataApi.DataListener listener) {
+        dataListener = listener;
     }
 
-    // called when the google api connects to load initial data items.
-    protected abstract void handleOnResultsRetrieved(DataItemBuffer dataItems);
+    public void setMessageListener(MessageApi.MessageListener listener) {
+        messageListener = listener;
+    }
+
+    private void handledOnConnected() {
+        if (dataListener != null) {
+            Wearable.DataApi.addListener(mGoogleApiClient, dataListener);
+        }
+        if (messageListener != null) {
+            Wearable.MessageApi.addListener(mGoogleApiClient, messageListener);
+        }
+    }
 
     public void start() {
         mGoogleApiClient.connect();
     }
 
     public void stop() {
+        if (dataListener != null) {
+            Wearable.DataApi.removeListener(mGoogleApiClient, dataListener);
+        }
+        if (messageListener != null) {
+            Wearable.MessageApi.removeListener(mGoogleApiClient, messageListener);
+        }
         mGoogleApiClient.disconnect();
     }
 

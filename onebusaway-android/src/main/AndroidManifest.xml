@@ -18,10 +18,10 @@
     package="org.onebusaway.android">
 
     <permission
-            android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
-            android:label="@string/trip_service_perm_label"
-            android:description="@string/trip_service_perm_description"
-            android:protectionLevel="normal"/>
+        android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
+        android:label="@string/trip_service_perm_label"
+        android:description="@string/trip_service_perm_description"
+        android:protectionLevel="normal"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -151,7 +151,8 @@
 
         <service
             android:name=".node.NodeService"
-            android:permission="com.joulespersecondseattlebusot.permission.NODE_SERVICE">
+            android:enabled="true"
+            android:permission="com.joulespersecond.seattlebusbot.permission.NODE_SERVICE">
             <intent-filter>
                 <action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
             </intent-filter>

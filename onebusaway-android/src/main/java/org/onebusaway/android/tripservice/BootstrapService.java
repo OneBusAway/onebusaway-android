@@ -30,6 +30,5 @@ public class BootstrapService extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         TripService.scheduleAll(context);
-        NodeService.schedule(context);
     }
 }

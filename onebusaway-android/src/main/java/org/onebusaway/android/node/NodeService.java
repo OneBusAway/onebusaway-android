@@ -79,7 +79,7 @@ public class NodeService extends Service implements QueryUtils.StopList.Columns 
         }
     }
 
-    private void syncStarredStops() {
+    private synchronized void syncStarredStops() {
         Log.d(TAG, "syncStarredStops");
         ContentProviderClient client = null;
         try {

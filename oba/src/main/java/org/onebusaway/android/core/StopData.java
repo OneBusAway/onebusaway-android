@@ -70,4 +70,33 @@ public class StopData {
     public String getUiName() {
         return uiName;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof StopData) {
+            StopData other = (StopData) o;
+            return stringEquals(other.dir, dir) &&
+                    stringEquals(other.id, id) &&
+                    stringEquals(other.name, name) &&
+                    stringEquals(other.uiName, uiName);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = super.hashCode();
+        hashCode = hashCode * 31 + dir == null ? 0 : dir.hashCode();
+        hashCode = hashCode * 31 + id == null ? 0 : id.hashCode();
+        hashCode = hashCode * 31 + name == null ? 0 : name.hashCode();
+        hashCode = hashCode * 31 + uiName == null ? 0 : uiName.hashCode();
+        return hashCode;
+    }
+
+    private boolean stringEquals(String s1, String s2) {
+        if (s1 == null || s2 == null) {
+            return (s1 == null && s2 == null);
+        }
+        return s1.equals(s2);
+    }
 }

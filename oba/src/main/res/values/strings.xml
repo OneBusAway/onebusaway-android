@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">onebusaway-core</string>
+    <string name="app_name">One Bus Away</string>
     <string name="node_service_perm_label">interact with node service</string>
     <string name="node_service_perm_description">used to interact with the node service</string>
 </resources>

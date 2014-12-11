@@ -17,6 +17,8 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.core.StopData;
+import org.onebusaway.android.provider.StopDataCursorHelper;
 import org.onebusaway.android.util.UIHelp;
 
 import android.app.Activity;
@@ -50,7 +52,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
     public void onListItemClick(ListView l, View v, int position, long id) {
         StopData stopData = getStopData(l, position);
 
-        ArrivalsListActivity.Builder b = stopData.getArrivalsList();
+        ArrivalsListActivity.Builder b = getArrivalsList(stopData);
 
         if (isShortcutMode()) {
             final Intent shortcut =
@@ -68,7 +70,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
     protected StopData getStopData(ListView l, int position) {
         // Get the cursor and fetch the stop ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
-        return new StopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());
+        return StopDataCursorHelper.createStopData(cursorAdapter.getCursor(), position - l.getHeaderViewsCount());
     }
 
     @Override
@@ -103,8 +105,8 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
             case CONTEXT_MENU_CREATE_SHORTCUT:
                 StopData stopData = getStopData(getListView(), info.position);
                 final Intent shortcutIntent =
-                        UIHelp.makeShortcut(getActivity(), stopData.uiName,
-                                stopData.getArrivalsList().getIntent());
+                        UIHelp.makeShortcut(getActivity(), stopData.getUiName(),
+                                getArrivalsList(stopData).getIntent());
                 shortcutIntent.setAction(INSTALL_SHORTCUT);
                 shortcutIntent.setFlags(0);
                 getActivity().sendBroadcast(shortcutIntent);
@@ -126,44 +128,9 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
         HomeActivity.start(getActivity(), stopId, lat, lon);
     }
 
-    protected class StopData {
-
-        private final String id;
-
-        private final String name;
-
-        private final String dir;
-
-        private final String uiName;
-
-        public StopData(Cursor c, int row) {
-            c.moveToPosition(row);
-            id = c.getString(COL_ID);
-            name = c.getString(COL_NAME);
-            dir = c.getString(COL_DIRECTION);
-            uiName = c.getString(COL_UI_NAME);
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDir() {
-            return dir;
-        }
-
-        public String getUiName() {
-            return uiName;
-        }
-
-        public ArrivalsListActivity.Builder getArrivalsList() {
-            return new ArrivalsListActivity.Builder(getActivity(), id)
-                    .setStopName(name)
-                    .setStopDirection(dir);
-        }
+    public ArrivalsListActivity.Builder getArrivalsList(StopData data) {
+        return new ArrivalsListActivity.Builder(getActivity(), data.getId())
+                .setStopName(data.getName())
+                .setStopDirection(data.getDir());
     }
 }

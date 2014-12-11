@@ -123,7 +123,7 @@ public final class QueryUtils {
         }
     }
 
-    static final class StopList {
+    public static final class StopList {
 
         public interface Columns {
 

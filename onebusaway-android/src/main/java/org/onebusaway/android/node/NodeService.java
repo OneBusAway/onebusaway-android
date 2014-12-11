@@ -1,17 +1,33 @@
 package org.onebusaway.android.node;
 
 import android.app.Service;
+import android.content.ContentProviderClient;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItemBuffer;
+import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.core.GoogleApiHelper;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.provider.ObaProvider;
+import org.onebusaway.android.core.StopData;
+import org.onebusaway.android.ui.QueryUtils;
+import org.onebusaway.android.provider.StopDataCursorHelper;
+
+import java.util.ArrayList;
 
 /**
  * A long running background service listening for data updates.  The intention of this class is to
@@ -20,7 +36,18 @@ import org.onebusaway.android.core.GoogleApiHelper;
  * This class is also the entry point for any message requests from nodes to request data or execute
  * actions on the device.
  */
-public class NodeService extends Service implements MessageApi.MessageListener {
+public class NodeService extends Service implements MessageApi.MessageListener, QueryUtils.StopList.Columns {
+
+    public static final String MESSAGE_SYNC_STARRED_STOPS = "sync_starred_stops";
+
+    public static final String URI_STARRED_STOPS = "/starredstops";
+
+    public static final String DATA_MAP_KEY_STARRED_STOPS_LIST = "starred_stops_key";
+
+    public static final String KEY_DATA_MAP_STOP_DATA_ID = "id";
+    public static final String KEY_DATA_MAP_STOP_DATA_DIR = "dir";
+    public static final String KEY_DATA_MAP_STOP_DATA_NAME = "name";
+    public static final String KEY_DATA_MAP_STOP_DATA_UI_NAME = "uiName";
 
     private GoogleApiHelper mGoogleApiHelper;
     private static final String TAG = "OBA::NodeService";
@@ -58,5 +85,49 @@ public class NodeService extends Service implements MessageApi.MessageListener {
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, "onMessageReceived::" + messageEvent.getPath());
         Toast.makeText(getApplicationContext(), messageEvent.getPath(), Toast.LENGTH_SHORT).show(); // todo: poh - debug
+        if (MESSAGE_SYNC_STARRED_STOPS.equals(messageEvent.getPath())) {
+            syncStarredStops();
+        }
+    }
+
+    private void syncStarredStops() {
+        ContentProviderClient client = null;
+        try {
+            client = getApplicationContext().getContentResolver()
+                    .acquireContentProviderClient(ObaContract.AUTHORITY);
+            ObaProvider provider = (ObaProvider) client.getLocalContentProvider();
+            Cursor c = provider.query(
+                    ObaContract.Stops.CONTENT_URI,
+                    PROJECTION,
+                    ObaContract.Stops.FAVORITE + "=1" +
+                            (Application.get().getCurrentRegion() == null ? "" : " AND " +
+                                    QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
+                                            Application.get().getCurrentRegion().getId())),
+                    null,
+                    ObaContract.Stops.USE_COUNT + " desc");
+            copyCursorToWearData(c);
+        } finally {
+            if (client != null) {
+                client.release();
+            }
+        }
+    }
+
+    private void copyCursorToWearData(Cursor c) {
+        ArrayList<DataMap> dataMaps = new ArrayList<DataMap>();
+        for(int i = 0; i < c.getCount(); i++) {
+            StopData data = StopDataCursorHelper.createStopData(c, i);
+            DataMap dataMap = new DataMap();
+            dataMap.putString(KEY_DATA_MAP_STOP_DATA_ID, data.getId());
+            dataMap.putString(KEY_DATA_MAP_STOP_DATA_DIR, data.getDir());
+            dataMap.putString(KEY_DATA_MAP_STOP_DATA_NAME, data.getName());
+            dataMap.putString(KEY_DATA_MAP_STOP_DATA_UI_NAME, data.getUiName());
+        }
+        // @todo: poh - optimize this so it doesnt always add the whole list, maybe a way to do only the delta
+        PutDataMapRequest dataMap = PutDataMapRequest.create(URI_STARRED_STOPS);
+        dataMap.getDataMap().putDataMapArrayList(DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
+        PutDataRequest request = dataMap.asPutDataRequest();
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
+                .putDataItem(mGoogleApiHelper.getClient(), request);
     }
 }

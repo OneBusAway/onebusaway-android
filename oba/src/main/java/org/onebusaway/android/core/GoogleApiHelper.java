@@ -9,9 +9,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataItemBuffer;
-import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 
 /**
@@ -67,5 +64,9 @@ public abstract class GoogleApiHelper implements DataApi.DataListener {
 
     public void stop() {
         mGoogleApiClient.disconnect();
+    }
+
+    public GoogleApiClient getClient() {
+        return mGoogleApiClient;
     }
 }

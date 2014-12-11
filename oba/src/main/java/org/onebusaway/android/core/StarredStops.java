@@ -5,4 +5,5 @@ public final class StarredStops {
     public static final String URI_REQUEST_SYNC_STARRED_STOPS = "/requestsyncstarredstops";
     public static final String DATA_MAP_KEY_STARRED_STOPS_LIST = "starred_stops_key";
 
+    public static final String URI_REQUEST_ARRIVAL_INFO_FOR_STOP = "/requestsyncarrivalinfoforstop";
 }

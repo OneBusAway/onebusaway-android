@@ -5,12 +5,16 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
@@ -21,6 +25,9 @@ import com.google.android.gms.wearable.Wearable;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.core.GoogleApiHelper;
 import org.onebusaway.android.core.StarredStops;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.provider.ObaProvider;
 import org.onebusaway.android.core.StopData;
@@ -76,6 +83,64 @@ public class NodeService extends Service implements QueryUtils.StopList.Columns 
         Log.d(TAG, "onMessageReceived::" + messageEvent.getPath());
         if (StarredStops.URI_REQUEST_SYNC_STARRED_STOPS.equals(messageEvent.getPath())) {
             syncStarredStops();
+        } else if (StarredStops.URI_REQUEST_ARRIVAL_INFO_FOR_STOP.equals(messageEvent.getPath())) {
+            syncArrivalInfo(DataMap.fromByteArray(messageEvent.getData()));
+        }
+    }
+
+    private void syncArrivalInfo(DataMap dataMap) {
+        String stopId = dataMap.getString(StopData.Keys.ID.toString());
+        final ObaArrivalInfoRequest request = ObaArrivalInfoRequest.newRequest(Application.get(), stopId);
+        Handler handler = new Handler();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                ObaArrivalInfoResponse response = request.call();
+                clearExpiredArrivalInfos();
+                handleObaArrivalInfoResponse(response);
+            }
+        });
+    }
+
+    private final static String ARRIVAL_PATH = "arrivals";
+    private static final String KEY_TIME = "time";
+    private static final String KEY_VEHICLE_ID = "vehicleId";
+    private static final String KEY_ROUTE_NAME = "routeName";
+    private final static Uri.Builder baseUriBuilder = new Uri.Builder().appendPath(ARRIVAL_PATH);
+
+    private void clearExpiredArrivalInfos() {
+        DataItemBuffer buffer = Wearable.DataApi.getDataItems(mGoogleApiHelper.getClient(), baseUriBuilder.build()).await();
+        for(DataItem item : buffer) {
+            DataMap dm = DataMap.fromByteArray(item.getData());
+            if (dm.getLong(KEY_TIME) - System.currentTimeMillis() < 0) { // @todo: poh - confirm this is GMT
+                Wearable.DataApi.deleteDataItems(mGoogleApiHelper.getClient(), item.getUri()).setResultCallback(createEmptyDeleteResultCallback());
+            }
+        }
+        buffer.release();
+    }
+
+    private ResultCallback<DataApi.DeleteDataItemsResult> createEmptyDeleteResultCallback() {
+        return new ResultCallback<DataApi.DeleteDataItemsResult>() {
+            @Override
+            public void onResult(DataApi.DeleteDataItemsResult deleteDataItemsResult) {
+
+            }
+        };
+    }
+
+    private void handleObaArrivalInfoResponse(ObaArrivalInfoResponse response) {
+        for(int i = 0; i < response.getArrivalInfo().length; i++) {
+            ObaArrivalInfo info = response.getArrivalInfo()[i];
+            Uri newUri = baseUriBuilder
+                    .appendPath(info.getStopId())
+                    .appendPath(info.getRouteId())
+                    .build();
+            PutDataMapRequest dataMapRequest = PutDataMapRequest.create(newUri.getPath());
+            dataMapRequest.getDataMap().putString(KEY_VEHICLE_ID, info.getVehicleId());
+            dataMapRequest.getDataMap().putLong(KEY_TIME, info.getPredictedArrivalTime());
+            dataMapRequest.getDataMap().putString(KEY_ROUTE_NAME, info.getRouteLongName());
+            PutDataRequest request = dataMapRequest.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiHelper.getClient(), request).setResultCallback(createEmptyResultCallback());
         }
     }
 

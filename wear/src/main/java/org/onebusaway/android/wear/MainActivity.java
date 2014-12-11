@@ -64,10 +64,12 @@ public class MainActivity extends Activity implements GoogleApiHelper.OnConnecti
                 Log.d(TAG, "createDataListener::onDataChanged::" + dataEvents.getCount());
                 for(DataEvent event : dataEvents) {
                     DataEvent frozenEvent = event.freeze();
-                    if (frozenEvent.getType() == DataEvent.TYPE_CHANGED) {
-                        updateStarredStops(DataMap.fromByteArray(frozenEvent.getDataItem().getData()));
-                    } else if (frozenEvent.getType() == DataEvent.TYPE_DELETED) {
-                        removeStarredStops(DataMap.fromByteArray(frozenEvent.getDataItem().getData()));
+                    if (frozenEvent.getDataItem().getUri().getPath().equals(StarredStops.URI_STARRED_STOPS)) {
+                        if (frozenEvent.getType() == DataEvent.TYPE_CHANGED) {
+                            updateStarredStops(DataMap.fromByteArray(frozenEvent.getDataItem().getData()));
+                        } else if (frozenEvent.getType() == DataEvent.TYPE_DELETED) {
+                            removeStarredStops(DataMap.fromByteArray(frozenEvent.getDataItem().getData()));
+                        }
                     }
                 }
             }
@@ -232,8 +234,6 @@ public class MainActivity extends Activity implements GoogleApiHelper.OnConnecti
             }
         });
     }
-
-
 
     private void handleStopDataClick(StopData stopData) {
         Log.d(TAG, "handleStopDataClick::" + stopData.getUiName());

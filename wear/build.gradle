@@ -14,7 +14,7 @@ android {
     buildToolsVersion "21.1.1"
 
     defaultConfig {
-        applicationId "org.onebusaway.android.wear"
+        applicationId "com.joulespersecond.seattlebusbot" // @todo: poh - there seems to be an undocumented requiremnet that this is identical to id of app
         minSdkVersion 20
         targetSdkVersion 21
         versionCode 1

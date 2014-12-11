@@ -15,7 +15,7 @@ import com.google.android.gms.wearable.Wearable;
  * Wraps boilerplate GoogleApi code.  Concrete classes implement the DataListener callbacks for data updates during application runtime.
  */
 public abstract class GoogleApiHelper implements DataApi.DataListener {
-    private final String TAG = "GoogleApiHelper";
+    private final String TAG = "OBA::GoogleApiHelper";
 
     private GoogleApiClient mGoogleApiClient;
     private Context mContext;

@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.Wearable;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.core.GoogleApiHelper;
+import org.onebusaway.android.core.StarredStops;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.provider.ObaProvider;
 import org.onebusaway.android.core.StopData;
@@ -38,12 +39,6 @@ import java.util.ArrayList;
  * actions on the device.
  */
 public class NodeService extends Service implements MessageApi.MessageListener, QueryUtils.StopList.Columns {
-
-    public static final String MESSAGE_SYNC_STARRED_STOPS = "sync_starred_stops";
-
-    public static final String URI_STARRED_STOPS = "/starredstops";
-
-    public static final String DATA_MAP_KEY_STARRED_STOPS_LIST = "starred_stops_key";
 
     private GoogleApiHelper mGoogleApiHelper;
     private static final String TAG = "OBA::NodeService";
@@ -83,7 +78,7 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, "onMessageReceived::" + messageEvent.getPath());
         Toast.makeText(getApplicationContext(), messageEvent.getPath(), Toast.LENGTH_SHORT).show(); // todo: poh - debug
-        if (MESSAGE_SYNC_STARRED_STOPS.equals(messageEvent.getPath())) {
+        if (StarredStops.URI_REQUEST_SYNC_STARRED_STOPS.equals(messageEvent.getPath())) {
             syncStarredStops();
         }
     }
@@ -118,8 +113,8 @@ public class NodeService extends Service implements MessageApi.MessageListener, 
             dataMaps.add(data.toDataMap());
         }
         // @todo: poh - optimize this so it doesnt always add the whole list, maybe a way to do only the delta
-        PutDataMapRequest dataMapRequest = PutDataMapRequest.create(URI_STARRED_STOPS);
-        dataMapRequest.getDataMap().putDataMapArrayList(DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
+        PutDataMapRequest dataMapRequest = PutDataMapRequest.create(StarredStops.URI_STARRED_STOPS);
+        dataMapRequest.getDataMap().putDataMapArrayList(StarredStops.DATA_MAP_KEY_STARRED_STOPS_LIST, dataMaps);
         PutDataRequest request = dataMapRequest.asPutDataRequest();
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(mGoogleApiHelper.getClient(), request);

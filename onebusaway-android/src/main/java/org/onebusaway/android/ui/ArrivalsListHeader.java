@@ -165,11 +165,13 @@ class ArrivalsListHeader {
     private static final long ANIM_DURATION = 300;  // milliseconds
 
     // Manages header size in "stop name edit mode"
-    private int cachedHeaderHeight;
-
     private int cachedExpandCollapseViewVisibility;
 
-    private static final float EXPANDED_HEADER_HEIGHT_DP = 100.0f;
+    private static float DEFAULT_HEADER_HEIGHT_DP;
+
+    private static final float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP = 100.0f;
+
+    private static final float EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = 90.0f;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -190,6 +192,10 @@ class ArrivalsListHeader {
     void initView(View view) {
         // Clear any existing arrival info
         mArrivalInfo = null;
+
+        // Cache the default ArrivalsListHeader height
+        DEFAULT_HEADER_HEIGHT_DP = view.getResources().getDimension(R.dimen.arrival_header_height)
+                / view.getResources().getDisplayMetrics().density;
 
         // Init views
         mView = view;
@@ -593,15 +599,22 @@ class ArrivalsListHeader {
     }
 
     private void refreshFilter() {
-        TextView v = (TextView) mView.findViewById(R.id.filter);
+        TextView v = (TextView) mView.findViewById(R.id.filter_text);
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
         if (num > 0) {
             final int total = mController.getNumRoutes();
             v.setText(mContext.getString(R.string.stop_info_filter_header, num, total));
             // Show the filter text (except when in name edit mode)
-            mFilterGroup.setVisibility(mInNameEdit ? View.GONE : View.VISIBLE);
+            if (mInNameEdit) {
+                mFilterGroup.setVisibility(View.GONE);
+                setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
+            } else {
+                setHeaderSize(EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP);
+                mFilterGroup.setVisibility(View.VISIBLE);
+            }
         } else {
+            setHeaderSize(DEFAULT_HEADER_HEIGHT_DP);
             mFilterGroup.setVisibility(View.GONE);
         }
     }
@@ -752,7 +765,7 @@ class ArrivalsListHeader {
         mExpandCollapse.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
-        increaseHeaderSize();
+        setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());
@@ -764,16 +777,6 @@ class ArrivalsListHeader {
         inputMethodManager.showSoftInput(mEditNameView, InputMethodManager.SHOW_IMPLICIT);
     }
 
-    void increaseHeaderSize() {
-        // Re-size the header layout to show the edit buttons
-        cachedHeaderHeight = mView.getLayoutParams().height;
-        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext, EXPANDED_HEADER_HEIGHT_DP);
-        if (mSlidingPanelController != null) {
-            mSlidingPanelController
-                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext, EXPANDED_HEADER_HEIGHT_DP));
-        }
-    }
-
     synchronized void endNameEdit() {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
@@ -782,7 +785,7 @@ class ArrivalsListHeader {
         mFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
-        decreaseHeaderSize();
+        setHeaderSize(DEFAULT_HEADER_HEIGHT_DP);
         //setFilterHeader();
         // Hide soft keyboard
         InputMethodManager imm =
@@ -791,11 +794,18 @@ class ArrivalsListHeader {
         refresh();
     }
 
-    void decreaseHeaderSize() {
-        // Re-size the header layout to normal size
-        mView.getLayoutParams().height = cachedHeaderHeight;
+    /**
+     * Re-size the header layout to the provided size, in dp
+     *
+     * @param newHeightDp the new header layout, in dp
+     */
+    void setHeaderSize(float newHeightDp) {
+        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
+                newHeightDp);
         if (mSlidingPanelController != null) {
-            mSlidingPanelController.setPanelHeightPixels(cachedHeaderHeight);
+            mSlidingPanelController
+                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext,
+                            newHeightDp));
         }
     }
 }

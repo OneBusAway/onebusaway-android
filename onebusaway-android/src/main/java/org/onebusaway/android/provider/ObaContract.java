@@ -620,6 +620,9 @@ public final class ObaContract {
         public static void set(Context context,
                 String stopId,
                 ArrayList<String> filter) {
+            if (context == null) {
+                return;
+            }
             // First, delete any existing rows for this stop.
             // Then, insert all of these rows.
             // Should we put this in a transaction? We could,

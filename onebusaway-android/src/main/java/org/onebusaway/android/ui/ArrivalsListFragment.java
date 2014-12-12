@@ -707,9 +707,11 @@ public class ArrivalsListFragment extends ListFragment
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
-        ObaArrivalInfoResponse response =
-                getArrivalsLoader().getLastGoodResponse();
-        mAdapter.setData(response.getArrivalInfo(), mRoutesFilter);
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            ObaArrivalInfoResponse response = loader.getLastGoodResponse();
+            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter);
+        }
     }
 
     @Override

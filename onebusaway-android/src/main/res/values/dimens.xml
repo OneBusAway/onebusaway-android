@@ -39,5 +39,8 @@
 
     <!-- Other misc items -->
     <dimen name="route_button_width">48sp</dimen>
+
+    <!-- Arrival List Header -->
+    <dimen name="arrival_header_height">68dp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
 </resources>

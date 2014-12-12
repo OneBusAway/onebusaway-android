@@ -37,6 +37,9 @@
     <color name="navdrawer_icon_tint">#888</color>
     <color name="navdrawer_icon_tint_selected">@color/theme_primary</color>
 
+    <!-- ListView background -->
+    <color name="listview_background">@android:color/white</color>
+
     <!-- Default route line color on map -->
     <color name="route_line_color_default">#00F</color>
     <color name="route_text_color_default">@android:color/black</color>

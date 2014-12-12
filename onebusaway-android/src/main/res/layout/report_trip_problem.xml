@@ -16,9 +16,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            style="@style/ReportProblemForms">
+            style="@style/FormBackground">
 
-<LinearLayout
+    <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">

@@ -31,6 +31,8 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.view.View;
+import android.widget.ListView;
 
 /**
  * Base class for the stop/route list fragments.
@@ -86,6 +88,13 @@ abstract class MyListFragmentBase extends ListFragment
 
         // Prepare the loader
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ListView listView = getListView();
+        listView.setBackgroundColor(getResources().getColor(R.color.listview_background));
     }
 
     @Override

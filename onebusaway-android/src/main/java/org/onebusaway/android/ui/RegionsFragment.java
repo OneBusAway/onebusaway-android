@@ -17,7 +17,7 @@ package org.onebusaway.android.ui;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -79,9 +79,9 @@ public class RegionsFragment extends ListFragment
     private ObaRegion mCurrentRegion;
 
     /**
-     * Google Location Services
+     * GoogleApiClient being used for Location Services
      */
-    LocationClient mLocationClient;
+    GoogleApiClient mGoogleApiClient;
 
     @Override
     public void onAttach(Activity activity) {
@@ -90,10 +90,8 @@ public class RegionsFragment extends ListFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            LocationUtil.LocationServicesCallback locCallback
-                    = new LocationUtil.LocationServicesCallback();
-            mLocationClient = new LocationClient(getActivity(), locCallback, locCallback);
-            mLocationClient.connect();
+            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
+            mGoogleApiClient.connect();
         }
 
         mLocale = Locale.getDefault();
@@ -108,7 +106,7 @@ public class RegionsFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
-        mLocation = LocationUtil.getLocation2(getActivity(), mLocationClient);
+        mLocation = LocationUtil.getLocation2(getActivity(), mGoogleApiClient);
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();
@@ -157,17 +155,17 @@ public class RegionsFragment extends ListFragment
     @Override
     public void onStart() {
         super.onStart();
-        // Make sure LocationClient is connected, if available
-        if (mLocationClient != null && !mLocationClient.isConnected()) {
-            mLocationClient.connect();
+        // Make sure GoogleApiClient is connected, if available
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
         }
     }
 
     @Override
     public void onStop() {
-        // Tear down LocationClient
-        if (mLocationClient != null && mLocationClient.isConnected()) {
-            mLocationClient.disconnect();
+        // Tear down GoogleApiClient
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
         }
         super.onStop();
     }

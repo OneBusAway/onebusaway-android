@@ -16,9 +16,9 @@
 package org.onebusaway.android.util;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -34,6 +34,8 @@ import android.util.Log;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+
 /**
  * Utilities to help obtain and process location data
  *
@@ -44,6 +46,7 @@ public class LocationUtil {
     public static final String TAG = "LocationUtil";
 
     public static final int DEFAULT_SEARCH_RADIUS = 40000;
+
     private static final float FUZZY_EQUALS_THRESHOLD = 15.0f;
 
     public static Location getDefaultSearchCenter() {
@@ -63,18 +66,18 @@ public class LocationUtil {
      * in the case multiple agencies. But we really don't need it to be very
      * accurate.
      * <p/>
-     * Note that the LocationClient must already have been initialized and connected prior to
+     * Note that the GoogleApiClient must already have been initialized and connected prior to
      * calling
-     * this method, since LocationClient.connect() is asynchronous and doesn't connect before it
+     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
      * returns,
      * which requires additional initialization time (prior to calling this method)
      *
-     * @param client an initialized and connected LocationClient, or null if Google Play Services
+     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
      *               isn't available
      * @return a recent location, considering both Google Play Services (if available) and the
      * Android Location API
      */
-    public static Location getLocation(Context cxt, LocationClient client) {
+    public static Location getLocation(Context cxt, GoogleApiClient client) {
         Location last = getLocation2(cxt, client);
         if (last != null) {
             return last;
@@ -87,25 +90,25 @@ public class LocationUtil {
      * Returns a location, considering both Google Play Services (if available) and the Android
      * Location API
      * <p/>
-     * Note that the LocationClient must already have been initialized and connected prior to
+     * Note that the GoogleApiClient must already have been initialized and connected prior to
      * calling
-     * this method, since LocationClient.connect() is asynchronous and doesn't connect before it
+     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
      * returns,
      * which requires additional initialization time (prior to calling this method)
      *
-     * @param client an initialized and connected LocationClient, or null if Google Play Services
+     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
      *               isn't available
      * @return a recent location, considering both Google Play Services (if available) and the
      * Android Location API
      */
-    public static Location getLocation2(Context cxt, LocationClient client) {
+    public static Location getLocation2(Context cxt, GoogleApiClient client) {
         Location playServices = null;
         if (client != null &&
                 cxt != null &&
                 GooglePlayServicesUtil.isGooglePlayServicesAvailable(cxt)
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
-            playServices = client.getLastLocation();
+            playServices = FusedLocationApi.getLastLocation(client);
             Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
         }
         Location apiV1 = getLocationApiV1(cxt);
@@ -213,27 +216,39 @@ public class LocationUtil {
     }
 
     /**
+     * Returns a new GoogleApiClient which includes LocationServicesCallbacks
+     */
+    public static GoogleApiClient getGoogleApiClientWithCallbacks(Context context) {
+        LocationServicesCallback locCallback = new LocationServicesCallback();
+        return new GoogleApiClient.Builder(context)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(locCallback)
+                .addOnConnectionFailedListener(locCallback)
+                .build();
+    }
+
+    /**
      * Class to handle Google Play Location Services callbacks
      */
     public static class LocationServicesCallback
-            implements GooglePlayServicesClient.ConnectionCallbacks,
-            GooglePlayServicesClient.OnConnectionFailedListener {
+            implements GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener {
 
         private static final String TAG = "LocationServicesCallback";
 
         @Override
         public void onConnected(Bundle bundle) {
-            Log.d(TAG, "GooglePlayServicesClient.onConnected");
+            Log.d(TAG, "GoogleApiClient.onConnected");
         }
 
         @Override
-        public void onDisconnected() {
-            Log.d(TAG, "GooglePlayServicesClient.onDisconnected");
+        public void onConnectionSuspended(int i) {
+            Log.d(TAG, "GoogleApiClient.onConnectionSuspended");
         }
 
         @Override
         public void onConnectionFailed(ConnectionResult connectionResult) {
-            Log.d(TAG, "GooglePlayServicesClient.onConnectionFailed");
+            Log.d(TAG, "GoogleApiClient.onConnectionFailed");
         }
     }
 }

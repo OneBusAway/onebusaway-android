@@ -16,10 +16,10 @@
 package org.onebusaway.android.util;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import org.onebusaway.android.app.Application;
 
@@ -34,13 +34,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+
 /**
  * Implements a helper to keep listeners updated with the best location available from
  * multiple providers
  */
 public class LocationHelper implements com.google.android.gms.location.LocationListener,
-        android.location.LocationListener, GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener {
+        android.location.LocationListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     public interface Listener {
 
@@ -63,9 +65,9 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
     /**
-     * Google Location Services in Play Services
+     * GoogleApiClient being used for Location Services
      */
-    protected LocationClient mLocationClient;
+    protected GoogleApiClient mGoogleApiClient;
 
     LocationRequest mLocationRequest;
 
@@ -117,10 +119,10 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     public synchronized void onPause() {
         mLocationManager.removeUpdates(this);
 
-        // Tear down LocationClient
-        if (mLocationClient != null && mLocationClient.isConnected()) {
-            mLocationClient.removeLocationUpdates(this);
-            mLocationClient.disconnect();
+        // Tear down GoogleApiClient
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
         }
     }
 
@@ -183,9 +185,9 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
             mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
         }
 
-        // Make sure LocationClient is connected, if available
-        if (mLocationClient != null && !mLocationClient.isConnected()) {
-            mLocationClient.connect();
+        // Make sure GoogleApiClient is connected, if available
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
         }
     }
 
@@ -202,8 +204,12 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mContext)
                 == ConnectionResult.SUCCESS) {
-            mLocationClient = new LocationClient(mContext, this, this);
-            mLocationClient.connect();
+            mGoogleApiClient = new GoogleApiClient.Builder(mContext)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+            mGoogleApiClient.connect();
         }
     }
 
@@ -211,11 +217,11 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Location Services connected");
         // Request location updates
-        mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
     }
 
     @Override
-    public void onDisconnected() {
+    public void onConnectionSuspended(int i) {
 
     }
 

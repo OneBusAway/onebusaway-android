@@ -18,7 +18,7 @@ package org.onebusaway.android.region;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -77,9 +77,9 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     private final boolean mShowProgressDialog;
 
     /**
-     * Google Location Services
+     * GoogleApiClient being used for Location Services
      */
-    LocationClient mLocationClient;
+    GoogleApiClient mGoogleApiClient;
 
     /**
      * @param callback a callback will be made via this interface after the task is complete
@@ -109,10 +109,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         mShowProgressDialog = showProgressDialog;
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)
                 == ConnectionResult.SUCCESS) {
-            LocationUtil.LocationServicesCallback locCallback
-                    = new LocationUtil.LocationServicesCallback();
-            mLocationClient = new LocationClient(context, locCallback, locCallback);
-            mLocationClient.connect();
+            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(context);
+            mGoogleApiClient.connect();
         }
     }
 
@@ -150,8 +148,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
         if (settings
                 .getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)) {
-            // Pass in the LocationClient initialized in constructor
-            Location myLocation = LocationUtil.getLocation2(mContext, mLocationClient);
+            // Pass in the GoogleApiClient initialized in constructor
+            Location myLocation = LocationUtil.getLocation2(mContext, mGoogleApiClient);
 
             ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
 
@@ -190,8 +188,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         }
 
         // Tear down Location Services client
-        if (mLocationClient != null) {
-            mLocationClient.disconnect();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
         }
 
         super.onPostExecute(results);

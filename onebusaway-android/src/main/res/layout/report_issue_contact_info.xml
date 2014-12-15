@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="Name"
+        android:ems="10"
+        android:layout_marginTop="@dimen/report_issue_margin"
+        android:id="@+id/rici_name_editText"
+         />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="Last Name"
+        android:ems="10"
+        android:layout_marginTop="@dimen/report_issue_margin"
+        android:id="@+id/rici_lastname_editText"
+        />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:ems="10"
+        android:hint="Email"
+        android:layout_marginTop="@dimen/report_issue_margin"
+        android:id="@+id/rici_email_editText" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="phone"
+        android:ems="10"
+        android:hint="Phone"
+        android:layout_marginTop="@dimen/report_issue_margin"
+        android:id="@+id/rici_phone_editText" />
+
+    <Button
+        android:layout_width="194dp"
+        android:layout_height="wrap_content"
+        android:text="@string/rici_button_save"
+        android:layout_marginTop="@dimen/report_issue_margin"
+        android:id="@+id/rici_button_save"
+        android:layout_gravity="center_horizontal" />
+</LinearLayout>

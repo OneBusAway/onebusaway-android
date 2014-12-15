@@ -86,4 +86,8 @@ public class PreferenceHelp {
     public static void saveBoolean(String key, boolean value) {
         saveBoolean(Application.getPrefs(), key, value);
     }
+
+    public static String getString(String key) {
+        return Application.getPrefs().getString(key, null);
+    }
 }

@@ -76,6 +76,7 @@ public class ObaContext {
 
     /**
      * Connection factory
+     *
      */
     public ObaConnectionFactory setConnectionFactory(ObaConnectionFactory factory) {
         ObaConnectionFactory prev = mConnectionFactory;

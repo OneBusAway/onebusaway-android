@@ -218,6 +218,17 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public String getOpen311Url() {
+        return "http://test.seeclickfix.com/open311/v2/";
+    }
+
+    @Override
+    public String getOpen311JurisdictionId() {
+        return "Tampa";
+//        return "miamidade.gov";
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;

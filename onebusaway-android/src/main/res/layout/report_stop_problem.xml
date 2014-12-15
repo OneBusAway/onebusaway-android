@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,59 +13,58 @@
      limitations under the License.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            style="@style/FormBackground">
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/white">
 
     <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
 
         <LinearLayout
-                style="@style/HeaderItem"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_horizontal">
+            style="@style/HeaderItem"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
             <TextView
-                    android:id="@+id/stop_name"
-                    style="@style/HeaderText"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"/>
+                android:id="@+id/stop_name"
+                style="@style/HeaderText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
-                android:orientation="vertical"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp">
+
+            <TextView
+                style="@style/FormLabel"
+                android:text="@string/report_problem_code"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"></TextView>
+
+            <Spinner
+                android:id="@+id/report_problem_code"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"></Spinner>
+
+            <TextView
+                style="@style/FormLabel"
+                android:text="@string/report_problem_comment"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"></TextView>
+
+            <EditText
+                android:id="@+id/report_problem_comment"
+                android:hint="@string/report_problem_comment_hint"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:padding="4dp">
-
-            <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_code"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
-            <Spinner
-                    android:id="@+id/report_problem_code"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </Spinner>
-
-            <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_comment"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
-            <EditText
-                    android:id="@+id/report_problem_comment"
-                    android:hint="@string/report_problem_comment_hint"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:minLines="4">
-            </EditText>
+                android:minLines="4"></EditText>
 
             <!--
             <TextView
@@ -84,11 +82,10 @@
             -->
 
             <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_hint"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+                style="@style/FormLabel"
+                android:text="@string/report_problem_hint"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"></TextView>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -15,17 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -42,6 +31,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.UIHelp;
+
 import java.util.concurrent.Callable;
 
 public abstract class ReportProblemFragmentBase extends Fragment
@@ -55,6 +55,17 @@ public abstract class ReportProblemFragmentBase extends Fragment
      */
     GoogleApiClient mGoogleApiClient;
 
+    private OnProblemReportedListener mCallback;
+
+    public interface OnProblemReportedListener{
+        /**
+         * Called when the problem submitted
+         * Callback mechanism implemented as described in Android best-practices documentation:
+         * http://developer.android.com/training/basics/fragments/communicating.html
+         */
+        void onSendReport();
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -64,6 +75,14 @@ public abstract class ReportProblemFragmentBase extends Fragment
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
+        }
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, print error log
+        try {
+            mCallback = (OnProblemReportedListener) activity;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
         }
     }
 
@@ -122,6 +141,11 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
                 getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
+
+        //If the activity implements the callback, then notify
+        if (mCallback != null){
+            mCallback.onSendReport();
+        }
     }
 
     @Override

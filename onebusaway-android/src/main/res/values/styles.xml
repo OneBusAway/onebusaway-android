@@ -131,4 +131,10 @@
         <item name="android:paddingLeft">4dip</item>
         <item name="android:paddingRight">4dip</item>
     </style>
+
+    <!-- Reporting -->
+    <style name="Line3Text">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#343434</item>
+    </style>
 </resources>

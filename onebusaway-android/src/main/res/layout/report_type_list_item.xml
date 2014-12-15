@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="5dip">
+
+    <LinearLayout
+        android:id="@+id/rtl_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="3dip"
+        android:layout_alignParentLeft="true"
+        android:layout_marginRight="5dip">
+
+        <ImageView
+            android:id="@+id/rtl_icon"
+            android:layout_width="50dip"
+            android:layout_height="50dip"
+            android:src="@drawable/ic_launcher" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/rtl_list"
+        android:layout_toEndOf="@+id/rtl_list">
+
+
+        <TextView
+            android:id="@+id/rtl_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/Line1Text"
+            android:text="Title" />
+
+        <TextView
+            android:id="@+id/rtl_desc"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/rtl_title"
+            style="@style/Line3Text"
+            android:layout_marginTop="1dip"
+            android:text="Desc" />
+    </RelativeLayout>
+
+</RelativeLayout>

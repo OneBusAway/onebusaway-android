@@ -45,7 +45,13 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     private static final String USER_COMMENT = ".UserComment";
 
-    static void show(ActionBarActivity activity, ObaStop stop) {
+    public static final String TAG = "ReportStopProblemFragment";
+
+    public static void show(ActionBarActivity activity, ObaStop stop) {
+        show(activity, stop, null);
+    }
+
+    public static void show(ActionBarActivity activity, ObaStop stop, Integer containerViewId) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -58,7 +64,12 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(android.R.id.content, content);
+
+        if (containerViewId == null) {
+            ft.replace(android.R.id.content, content, TAG);
+        } else {
+            ft.replace(containerViewId, content, TAG);
+        }
         ft.addToBackStack(null);
         ft.commit();
     }
@@ -80,7 +91,6 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
         stopName.setText(MyTextUtils.toTitleCase(args.getString(STOP_NAME)));
 
-        //
         // The code spinner
         //
         mCodeView = (Spinner) view.findViewById(R.id.report_problem_code);

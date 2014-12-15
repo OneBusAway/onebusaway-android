@@ -34,6 +34,9 @@
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>
 
+    <!-- IdeaScale URL -->
+    <string name="ideascale_url">http://onebusaway.ideascale.com/a/ideas/top/campaign-filter/byids/campaigns/46167</string>
+
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
 

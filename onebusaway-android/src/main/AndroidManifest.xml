@@ -133,6 +133,9 @@
         <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
 
+        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
+        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
+
         <provider
                 android:name="org.onebusaway.android.provider.ObaProvider"
                 android:authorities="com.joulespersecond.oba"/>

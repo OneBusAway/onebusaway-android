@@ -105,4 +105,14 @@ public interface ObaRegion {
      * @return the StopInfo URL for the region (see #103)
      */
     public String getStopInfoUrl();
+
+    /**
+     * @return The Open311 URL for the region
+     */
+    public String getOpen311Url();
+
+    /**
+     * @return The Open311 jurisdiction id for the region
+     */
+    public String getOpen311JurisdictionId();
 }

@@ -35,6 +35,15 @@ public interface ObaRegion {
         public double getLonSpan();
     }
 
+    public interface Open311Servers {
+
+        public String getJuridisctionId();
+
+        public String getApiKey();
+
+        public String getBaseUrl();
+    }
+
     /**
      * @return The ID of this region.
      */
@@ -65,6 +74,8 @@ public interface ObaRegion {
      * @return An array of bounding boxes for the region.
      */
     public Bounds[] getBounds();
+
+    public Open311Servers[] getOpen311Servers();
 
     /**
      * @return The primary language for this region.

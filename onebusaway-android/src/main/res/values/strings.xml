@@ -491,6 +491,50 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- Crowdsourced implementation-->
+    <string name="region_dialog_title">Info</string>
+    <string name="region_dialog_Message1">We think you are in %1$s</string>
+    <string name="region_dialog_Message2"> Are you in %1$s</string>
+    <string name="report_dialog_message"> This location is out of reporting region. Do you want to
+    change the location?</string>
+    <string name="report_dialog_out_of_region_message"> This location is out of reporting region.
+    Please select the closest stop.</string>
+    <string name="report_dialog_in_region_message">Please select the closest stop or issue location.</string>
+
+    <!-- report issue screen-->
+    <string name="ri_action_title">Contact Information</string>
+    <string name="ri_title">Issue Summary</string>
+    <string name="ri_desc">Issue Description</string>
+    <string name="ri_button_camera">Camera</string>
+    <string name="ri_button_gallery">Gallery</string>
+    <string name="ri_button_submit">Submit Issue</string>
+    <string name="ri_address_not_found">Address not found. Please check your address.</string>
+    <string name="ri_append_stop_id">\n\n\nLatest clicked bus stop id: %1$s</string>
+    <string name="ri_location_problem">Error getting location</string>
+    <string name="ri_service_description_problem">Service description could not found.</string>
+
+    <!-- report issue types screen-->
+    <string name="rt_infrastructure_problem">Report an Infrastructure Issue</string>
+    <string name="rt_customer_service">Contact Customer Service</string>
+    <string name="rt_stop_problem">Report a Bus Stop Problem</string>
+    <string name="rt_arrival_problem">Report Arrival Time Problem</string>
+    <string name="rt_app_feedback">Send App Feedback</string>
+    <string name="rt_ideas">Ideas For New Features</string>
+    <string name="rt_message_infrastructure_problem">Missing bus stop, broken bench, etc.</string>
+    <string name="rt_message_customer_service">Driver compliments and complaints, lost &amp; found, etc.</string>
+    <string name="rt_message_stop_problem">Wrong bus stop, etc.</string>
+    <string name="rt_message_arrival_problem">Late bus, early bus, etc.</string>
+    <string name="rt_message_app_feedback">App crash, bugs.</string>
+    <string name="rt_message_ideas">New ideas for future improvements.</string>
+
+    <string name="rici_contact_info">Contact Information</string>
+    <string name="rici_button_save">Save</string>
+
+    <string name="pager_button_prev">Previous</string>
+    <string name="pager_button_next">Next</string>
+    <string name="pager_button_done">Done</string>
+
+
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
     <string name="trip_details_scheduled_data">Schedule data</string>

@@ -72,4 +72,9 @@ public final class ObaAgencyResponse extends ObaResponse implements ObaAgency {
     public String getDisclaimer() {
         return data.entry.getDisclaimer();
     }
+
+    @Override
+    public String getEmail() {
+        return data.entry.getEmail();
+    }
 }

@@ -60,6 +60,14 @@
     <color name="realtime_indicator_line">@android:color/white</color>
 
     <!-- Alerts-->
+    <color name="alert_error">#FFC4C4</color>
+    <color name="alert_warning">#FFFF99</color>
+    <color name="tutorial_navigation">#e0dcdc</color>
+
+    <!--Reporting-->
+    <color name="light_gray">#f0f0f0</color>
+    <color name="focus">#ff8e00</color>
+    <color name="alert_info">@color/theme_primary_dark</color>
     <color name="alert_text_background_error">#ff9999</color>
     <color name="alert_text_background_warning">#999900</color>
     <color name="alert_text_background_info">@color/theme_primary_dark</color>

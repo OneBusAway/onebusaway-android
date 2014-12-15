@@ -8,6 +8,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
         "supportsSiriRealtimeApis": true, 
+        "supportsObaDiscoveryApis": true,
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "supportsObaRealtimeApis": true, 
@@ -19,7 +20,18 @@
             "lonSpan": 0.576357999999999
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [
+          {
+            "juridisctionId": null, 
+            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f", 
+            "baseUrl": "http://test.seeclickfix.com/open311/v2/"
+          }, 
+          {
+            "juridisctionId": null, 
+            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f", 
+            "baseUrl": "http://www.publicstuff.com/api/open311/"
+          }
+        ], 
         "contactEmail": "onebusaway@gohart.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -33,6 +45,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
         "supportsObaRealtimeApis": true, 
@@ -92,7 +105,7 @@
             "lonSpan": 0.784555996061
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "onebusaway@soundtransit.org", 
         "stopInfoUrl": "http://stopinfo.pugetsound.onebusaway.org", 
         "active": true, 
@@ -106,6 +119,7 @@
         "siriBaseUrl": "http://bustime.mta.info/api/", 
         "obaVersionInfo": "", 
         "supportsSiriRealtimeApis": true, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
         "supportsObaRealtimeApis": false, 
@@ -123,7 +137,7 @@
             "lonSpan": 0.23146799999999246
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "MTABusTime@mtahq.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -137,6 +151,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
         "supportsObaRealtimeApis": true, 
@@ -184,7 +199,7 @@
             "lonSpan": 0.5820399999999921
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "onebusaway@ce.gatech.edu", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -198,6 +213,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -215,7 +231,7 @@
             "lonSpan": 0.10683699999999874
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "kurt@kurtraschke.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -229,6 +245,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_CA", 
         "twitterUrl": "https://mobile.twitter.com/YRTViva", 
         "supportsObaRealtimeApis": true, 
@@ -240,7 +257,7 @@
             "lonSpan": 0.49329600000000084
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "transitinfo@york.ca", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -254,6 +271,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "https://mobile.twitter.com/CalParking", 
         "supportsObaRealtimeApis": true, 
@@ -265,7 +283,7 @@
             "lonSpan": 0.10181500000000199
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "bear-transit@v-a.io", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -279,6 +297,7 @@
         "siriBaseUrl": null, 
         "obaVersionInfo": "", 
         "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
         "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -296,7 +315,7 @@
             "lonSpan": 1.1692720000000065
           }
         ], 
-        "supportsObaDiscoveryApis": true, 
+        "open311Servers": [], 
         "contactEmail": "sbrown@camsys.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -305,6 +324,58 @@
         "id": 7, 
         "experimental": true, 
         "regionName": "Boston (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b", 
+        "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
+        "language": "fi_FI", 
+        "twitterUrl": "", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 61.05999415916385, 
+            "latSpan": 0.07303466470629871, 
+            "lon": 28.197898391353952, 
+            "lonSpan": 0.2674852336517013
+          }
+        ], 
+        "open311Servers": [], 
+        "contactEmail": "obasupport@octo3.fi", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://194.89.230.196:8080/", 
+        "id": 8, 
+        "experimental": true, 
+        "regionName": "Lappeenranta (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "", 
+        "supportsSiriRealtimeApis": false, 
+        "supportsObaDiscoveryApis": true, 
+        "language": "en_US", 
+        "twitterUrl": "", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 42.309802394046, 
+            "latSpan": 0.2679752119080021, 
+            "lon": -122.82026350000001, 
+            "lonSpan": 0.2974530000000044
+          }
+        ], 
+        "open311Servers": [], 
+        "contactEmail": "info@rvtd.org", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://oba.rvtd.org:8080/onebusaway-api-webapp/", 
+        "id": 9, 
+        "experimental": false, 
+        "regionName": "Rogue Valley, Oregon"
       }, 
       {
         "siriBaseUrl": null, 

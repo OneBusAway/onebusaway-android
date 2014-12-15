@@ -211,6 +211,12 @@
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/header_text_color</item>
     </style>
+
+    <!-- Reporting -->
+    <style name="Line3Text">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#343434</item>
+    </style>
     <!-- About -->
     <style name="Theme.OneBusAway.NoActionBar">
         <item name="windowActionBar">false</item>

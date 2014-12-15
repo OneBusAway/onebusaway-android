@@ -46,7 +46,13 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     public static final String USER_COMMENT = ".UserComment";
 
-    static void show(AppCompatActivity activity, ObaStop stop) {
+    public static final String TAG = "ReportStopProblemFragment";
+
+    public static void show(AppCompatActivity activity, ObaStop stop) {
+        show(activity, stop, null);
+    }
+
+    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -59,7 +65,12 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(android.R.id.content, content);
+
+        if (containerViewId == null) {
+            ft.replace(android.R.id.content, content, TAG);
+        } else {
+            ft.replace(containerViewId, content, TAG);
+        }
         ft.addToBackStack(null);
         ft.commit();
     }

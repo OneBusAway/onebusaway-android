@@ -41,6 +41,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.security.MessageDigest;
@@ -48,6 +49,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+
+import edu.usf.cutr.open311client.Open311Manager;
+import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
@@ -94,6 +98,7 @@ public class Application extends android.app.Application {
 
         initOba();
         initObaRegion();
+        initOpen311(getCurrentRegion());
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
@@ -126,8 +131,10 @@ public class Application extends android.app.Application {
      * location yet.  When trying to get a most recent location in one shot, this method should
      * always be called.
      *
-     * @param cxt The Context being used, or null if one isn't available
-     * @param client The GoogleApiClient being used to obtain fused provider updates, or null if one isn't available
+     * @param cxt    The Context being used, or null if one isn't available
+     * @param client The GoogleApiClient being used to obtain fused provider updates, or null if
+     *               one
+     *               isn't available
      * @return the last known location that the application has seen, or null if we haven't seen a
      * location yet
      */
@@ -279,6 +286,8 @@ public class Application extends android.app.Application {
             ObaApi.getDefaultContext().setRegion(null);
             PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
         }
+        // Init the reporting with the new endpoints
+        initOpen311(region);
     }
 
     /**
@@ -425,6 +434,25 @@ public class Application extends android.app.Application {
 
 
         ObaApi.getDefaultContext().setRegion(region);
+    }
+
+    private void initOpen311(ObaRegion region) {
+        if (BuildConfig.DEBUG) {
+            Open311Manager.setDebugMode(true);
+            Open311Manager.setDryRun(true);
+        }
+
+        if (region != null && region.getOpen311Servers() != null) {
+            for (ObaRegion.Open311Servers open311Server : region.getOpen311Servers()) {
+                String jurisdictionId = open311Server.getJuridisctionId();
+                Open311Option option = new Open311Option(open311Server.getBaseUrl(),
+                        open311Server.getApiKey(),
+                        TextUtils.isEmpty(jurisdictionId) ? null : jurisdictionId);
+                Open311Manager.initOpen311WithOption(option);
+            }
+        } else {
+           Open311Manager.clearOpen311();
+        }
     }
 
     public synchronized Tracker getTracker(TrackerName trackerId) {

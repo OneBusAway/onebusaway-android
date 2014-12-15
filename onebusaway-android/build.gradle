@@ -32,6 +32,8 @@ repositories {
         // OBA Releases - for comparator to sort alphanumeric routes
         url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
     }
+
+    maven { url "http://dl.bintray.com/cutr-at-usf/cutr-mvn-repo" }
 }
 
 android {
@@ -186,6 +188,9 @@ android {
     packagingOptions {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE.txt'
     }
 
     if (project.hasProperty("secure.properties")
@@ -295,4 +300,5 @@ dependencies {
     googleCompile 'com.google.android.gms:play-services-maps:8.3.0'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile('com.amazon.android:amazon-maps-api:2.0')
+    compile 'edu.usf.cutr:open311client:1.1.2'
 }

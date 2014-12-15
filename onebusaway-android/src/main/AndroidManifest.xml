@@ -137,6 +137,10 @@
         </activity>
         <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
+
+        <activity android:name="org.onebusaway.android.report.ui.ReportActivity"/>
+        <activity android:name="org.onebusaway.android.report.ui.InfrastructureIssueActivity"/>
+
         <activity android:name="org.onebusaway.android.ui.SituationActivity"
                   android:label="@string/situation_activity_label"
                   android:parentActivityName="org.onebusaway.android.ui.HomeActivity">

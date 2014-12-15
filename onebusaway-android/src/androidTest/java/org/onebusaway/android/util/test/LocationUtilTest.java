@@ -2,7 +2,7 @@ package org.onebusaway.android.util.test;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.TestHelp;
@@ -23,9 +23,9 @@ public class LocationUtilTest extends AndroidTestCase {
     public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 5;  // Within last 5 minutes
 
     /**
-     * Google Location Services
+     * GoogleApiClient being used for Location Services
      */
-    LocationClient mLocationClient;
+    GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void setUp() throws Exception {
@@ -34,10 +34,8 @@ public class LocationUtilTest extends AndroidTestCase {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
-            LocationUtil.LocationServicesCallback locCallback
-                    = new LocationUtil.LocationServicesCallback();
-            mLocationClient = new LocationClient(getContext(), locCallback, locCallback);
-            mLocationClient.connect();
+            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getContext());
+            mGoogleApiClient.connect();
         }
     }
 
@@ -45,9 +43,9 @@ public class LocationUtilTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        // Tear down LocationClient
-        if (mLocationClient != null && mLocationClient.isConnected()) {
-            mLocationClient.disconnect();
+        // Tear down GoogleApiClient
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
         }
     }
 
@@ -116,7 +114,7 @@ public class LocationUtilTest extends AndroidTestCase {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = LocationUtil.getLocation2(getContext(), mLocationClient);
+            loc = LocationUtil.getLocation2(getContext(), mGoogleApiClient);
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

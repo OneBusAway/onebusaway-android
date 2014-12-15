@@ -17,11 +17,11 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -64,6 +64,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -84,8 +86,8 @@ public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
         LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
-        GooglePlayServicesClient.ConnectionCallbacks,
-        GooglePlayServicesClient.OnConnectionFailedListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";
@@ -144,9 +146,9 @@ public class BaseMapFragment extends SupportMapFragment
     private Location mCenterLocation;
 
     /**
-     * Google Location Services
+     * GoogleApiClient being used for Location Services
      */
-    protected LocationClient mLocationClient;
+    protected GoogleApiClient mGoogleApiClient;
 
     private OnLocationChangedListener mListener;
 
@@ -220,8 +222,12 @@ public class BaseMapFragment extends SupportMapFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            mLocationClient = new LocationClient(getActivity(), this, this);
-            mLocationClient.connect();
+            mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+            mGoogleApiClient.connect();
         }
 
         return v;
@@ -269,18 +275,18 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onStart() {
         super.onStart();
-        // Make sure LocationClient is connected, if available
-        if (mLocationClient != null && !mLocationClient.isConnected()) {
-            mLocationClient.connect();
+        // Make sure GoogleApiClient is connected, if available
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
         }
     }
 
     @Override
     public void onStop() {
-        // Tear down LocationClient
-        if (mLocationClient != null && mLocationClient.isConnected()) {
-            mLocationClient.removeLocationUpdates(this);
-            mLocationClient.disconnect();
+        // Tear down GoogleApiClient
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
         }
         super.onStop();
     }
@@ -767,7 +773,7 @@ public class BaseMapFragment extends SupportMapFragment
     public void onConnected(Bundle dataBundle) {
         Log.d(TAG, "Location Services connected");
         // Request location updates
-        mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
     }
 
     @Override
@@ -780,7 +786,7 @@ public class BaseMapFragment extends SupportMapFragment
      * location client drops because of an error.
      */
     @Override
-    public void onDisconnected() {
+    public void onConnectionSuspended(int i) {
         Log.d(TAG, "Location Services disconnected");
     }
 

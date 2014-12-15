@@ -18,7 +18,7 @@ package org.onebusaway.android.ui;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -122,9 +122,9 @@ public class HomeActivity extends ActionBarActivity
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
     /**
-     * Google Location Services
+     * GoogleApiClient being used for Location Services
      */
-    protected LocationClient mLocationClient;
+    protected GoogleApiClient mGoogleApiClient;
 
     // Bottom Sliding panel
     SlidingUpPanelLayout mSlidingPanel;
@@ -258,9 +258,9 @@ public class HomeActivity extends ActionBarActivity
     @Override
     public void onStart() {
         super.onStart();
-        // Make sure LocationClient is connected, if available
-        if (mLocationClient != null && !mLocationClient.isConnected()) {
-            mLocationClient.connect();
+        // Make sure GoogleApiClient is connected, if available
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
         }
     }
 
@@ -276,9 +276,9 @@ public class HomeActivity extends ActionBarActivity
 
     @Override
     public void onStop() {
-        // Tear down LocationClient
-        if (mLocationClient != null && mLocationClient.isConnected()) {
-            mLocationClient.disconnect();
+        // Tear down GoogleApiClient
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
         }
         super.onStop();
     }
@@ -661,7 +661,7 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private String getLocationString(Context context) {
-        Location loc = LocationUtil.getLocation2(context, mLocationClient);
+        Location loc = LocationUtil.getLocation2(context, mGoogleApiClient);
         return LocationUtil.printLocationDetails(loc);
     }
 
@@ -864,10 +864,8 @@ public class HomeActivity extends ActionBarActivity
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
                 == ConnectionResult.SUCCESS) {
-            LocationUtil.LocationServicesCallback locCallback
-                    = new LocationUtil.LocationServicesCallback();
-            mLocationClient = new LocationClient(this, locCallback, locCallback);
-            mLocationClient.connect();
+            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(this);
+            mGoogleApiClient.connect();
         }
     }
 

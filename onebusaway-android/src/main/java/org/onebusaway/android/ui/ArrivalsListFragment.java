@@ -21,11 +21,14 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.FragmentUtils;
@@ -133,6 +136,8 @@ public class ArrivalsListFragment extends ListFragment
     private String mStopId;
 
     private Uri mStopUri;
+
+    private ObaReferences mObaReferences;
 
     private ArrayList<String> mRoutesFilter;
 
@@ -338,7 +343,8 @@ public class ArrivalsListFragment extends ListFragment
         if (loader != null) {
             ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
             if (lastGood != null) {
-                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations());
+                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations(),
+                        lastGood.getRefs());
             }
         }
 
@@ -401,6 +407,7 @@ public class ArrivalsListFragment extends ListFragment
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;
+        ObaReferences refs = null;
 
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
@@ -409,6 +416,8 @@ public class ArrivalsListFragment extends ListFragment
             }
             info = result.getArrivalInfo();
             situations = result.getSituations();
+            refs = result.getRefs();
+
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -427,7 +436,7 @@ public class ArrivalsListFragment extends ListFragment
             }
         }
 
-        setResponseData(info, situations);
+        setResponseData(info, situations, refs);
 
         // The list should now be shown.
         if (isResumed()) {
@@ -509,12 +518,17 @@ public class ArrivalsListFragment extends ListFragment
     public void setHeader(ArrivalsListHeader header, View headerView) {
         mHeader = header;
         mHeaderView = headerView;
-        mHeader.initView(mHeaderView);
+        if (header != null) {
+            mHeader.initView(mHeaderView);
+        }
         mExternalHeader = true;
     }
 
-    private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations) {
+    private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations,
+                                 ObaReferences refs) {
         mArrivalInfo = info;
+
+        mObaReferences = refs;
 
         // Convert any stop situations into a list of alerts
         if (situations != null) {
@@ -618,12 +632,30 @@ public class ArrivalsListFragment extends ListFragment
             showStopDetailsDialog();
         } else if (id == R.id.report_stop_problem) {
             if (mStop != null) {
-                ReportStopProblemActivity.start(getActivity(), mStop);
+                Intent intent = makeIntent(getActivity(), mStop.getId(), mStop.getName(),
+                        mStop.getStopCode(), mStop.getLatitude(), mStop.getLongitude());
+                InfrastructureIssueActivity.startWithService(getActivity(), intent,
+                        getString(R.string.ri_selected_service_stop));
             }
         } else if (id == R.id.night_light) {
             NightLightActivity.start(getActivity());
         }
         return false;
+    }
+
+    public static Intent makeIntent(Context context,
+                                    String focusId,
+                                    String stopName,
+                                    String stopCode,
+                                    double lat,
+                                    double lon) {
+        Intent myIntent = new Intent(context, HomeActivity.class);
+        myIntent.putExtra(MapParams.STOP_ID, focusId);
+        myIntent.putExtra(MapParams.STOP_NAME, stopName);
+        myIntent.putExtra(MapParams.STOP_CODE, stopCode);
+        myIntent.putExtra(MapParams.CENTER_LAT, lat);
+        myIntent.putExtra(MapParams.CENTER_LON, lon);
+        return myIntent;
     }
 
     @Override
@@ -709,7 +741,16 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (hasUrl && which == 5) {
                     UIUtils.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 5) || (hasUrl && which == 6)) {
-                    ReportTripProblemActivity.start(getActivity(), arrivalInfo.getInfo());
+                    // Find agency name
+                    String routeId = arrivalInfo.getInfo().getRouteId();
+                    String agencyId = mObaReferences.getRoute(routeId).getAgencyId();
+                    String agencyName = mObaReferences.getAgency(agencyId).getName();
+
+                    Intent intent = makeIntent(getActivity(), mStop.getId(), mStop.getName(),
+                            mStop.getStopCode(), mStop.getLatitude(), mStop.getLongitude());
+
+                    InfrastructureIssueActivity.startWithService(getActivity(), intent,
+                            getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(), agencyName);
                 }
             }
         });

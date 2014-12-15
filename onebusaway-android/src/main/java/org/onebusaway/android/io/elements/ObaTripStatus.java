@@ -19,9 +19,11 @@ import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
+import java.io.Serializable;
+
 public interface ObaTripStatus {
 
-    public static final class Position {
+    public static final class Position implements Serializable {
 
         private double lat = 0;
 

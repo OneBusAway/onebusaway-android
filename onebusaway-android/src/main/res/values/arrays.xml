@@ -65,7 +65,7 @@
         <item>Sunday</item>
     </string-array>
     <string-array name="report_stop_problem_code">
-        <item>Choose one</item>
+        <item>Choose a problem</item>
         <item>Stop name is wrong</item>
         <item>Stop number is wrong</item>
         <item>Location is wrong</item>
@@ -73,7 +73,7 @@
         <item>Something else</item>
     </string-array>
     <string-array name="report_trip_problem_code_bus">
-        <item>Choose one</item>
+        <item>Choose a problem</item>
         <item>The bus never came</item>
         <item>It came earlier than predicted</item>
         <item>It came later than predicted</item>
@@ -127,4 +127,77 @@
         <item>slight right</item>
         <!-- NNW -->
     </string-array>
+    <!-- Issue reporting -->
+    <string-array name="report_types">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_infrastructure_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+    <string-array name="report_types_desc">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_infrastructure_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_types_without_open311">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_stop_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+
+    <string-array name="report_types_desc_without_open311">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_stop_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons_without_open311">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_stop_issue_tutorial_desc">
+        <item>Click on the bus stop, that you want to report.</item>
+        <item>Then select report problem section from options.</item>
+        <item>Submit your bus stop related problem.</item>
+    </string-array>
+
+    <string-array name="report_stop_transit_category_keywords">
+        <item>transit</item>
+        <item>bus</item>
+        <item>stop</item>
+    </string-array>
+
+    <string-array name="report_trip_transit_category_keywords">
+        <item>trip</item>
+        <item>arrival</item>
+        <item>schedule</item>
+    </string-array>
+
+    <string-array name="report_stop_id_field_keywords">
+        <item>stop</item>
+        <item>id</item>
+        <item>bus</item>
+    </string-array>
+
+
 </resources>

@@ -60,7 +60,12 @@
     <color name="realtime_indicator_fill">@android:color/transparent</color>
     <color name="realtime_indicator_line">@android:color/white</color>
 
-    <!-- Alerts-->
+    <!--Reporting-->
+    <color name="light_gray">#CCCCCC</color>
+    <color name="material_gray">#7F7F7F</color>
+    <color name="material_background">#F9F9F9</color>
+    <color name="focus">#ff8e00</color>
+    <color name="alert_info">@color/theme_primary_dark</color>
     <color name="alert_text_background_error">#ff9999</color>
     <color name="alert_text_background_warning">#999900</color>
     <color name="alert_text_background_info">@color/theme_primary_dark</color>
@@ -78,7 +83,6 @@
     <!-- Trip details colors -->
     <color name="trip_details_passed">@color/body_text_disabled</color>
     <color name="trip_details_not_passed">@color/body_text_2</color>
-    <color name="trip_details_color_selected">#11000000</color>
     <color name="trip_details_background">@color/stop_info_arrival_list_background</color>
 
     <!-- Tutorials -->

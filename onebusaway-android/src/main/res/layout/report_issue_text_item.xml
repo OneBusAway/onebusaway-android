@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
+
+        <ImageView style="@style/MaterialSmallIcon"
+                   android:layout_marginTop="12dp"
+                   android:src="@drawable/ic_question_answer"
+                   android:id="@+id/ri_ic_question_answer"/>
+
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/riti_editText"
+                style="@style/MaterialItem"/>
+
+    </FrameLayout>
+</RelativeLayout>

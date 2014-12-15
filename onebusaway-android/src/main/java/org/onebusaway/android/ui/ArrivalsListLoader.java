@@ -24,7 +24,7 @@ import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 
 
-class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
+public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     private final String mStopId;
 

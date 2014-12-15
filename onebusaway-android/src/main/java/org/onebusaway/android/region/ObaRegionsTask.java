@@ -177,7 +177,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 String oldRegionName = Application.get().getCurrentRegion().getName();
                 Application.get().setCurrentRegion(closestRegion);
                 Log.d(TAG, "Detected closer region '" + closestRegion.getName()
-                            + "', changed to this region.");
+                        + "', changed to this region.");
                 //Analytics
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                         mContext.getString(R.string.analytics_action_configured_region_auto)
@@ -185,6 +185,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                                 + closestRegion.getName() + "; Old Region: "
                                 + oldRegionName);
                 doCallback(true);
+            } else if (Application.get().getCurrentRegion() != null && closestRegion != null
+                    && Application.get().getCurrentRegion().equals(closestRegion)) {
+                //User is closer to a different region than the current region, so change to the closest region
+                Application.get().setCurrentRegion(closestRegion);
+                doCallback(false);
             } else {
                 doCallback(false);
             }

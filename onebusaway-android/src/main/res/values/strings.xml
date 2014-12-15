@@ -392,12 +392,7 @@
     <string name="trip_stat">Route %1$s is %2$d minutes away!</string>
 
     <!-- Report problem -->
-    <string name="report_problem_code">What\'s the problem?</string>
-    <string name="report_problem_comment">Anything else?</string>
-    <string name="report_problem_comment_hint">optional</string>
-    <string name="report_problem_email">Your email address</string>
-    <string name="report_problem_email_hint">optional</string>
-    <string name="report_problem_cancel">Cancel</string>
+    <string name="report_problem_comment_hint">Problem description (optional)</string>
     <string name="report_problem_send">Send</string>
     <string name="report_problem_hint">Your reports help OneBusAway find and fix problems!</string>
     <string name="report_problem_sent">Report sent! Thank you!</string>
@@ -405,8 +400,7 @@
     <string name="report_problem_invalid_argument">Please choose a problem category.</string>
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
-    <string name="report_problem_vehiclenumber_bus">Bus number</string>
-    <string name="report_problem_uservehicle_hint">optional</string>
+    <string name="report_problem_uservehicle_hint">Bus number (optional)</string>
     <string name="report_problem_stop_activity_label">Report Stop Problem</string>
     <string name="report_problem_trip_activity_label">Report Trip Problem</string>
 
@@ -457,6 +451,9 @@
     <string name="bug_report_subject">OneBusAway Android: Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
+    </string>
+    <string name="bug_report_body_without_location">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d
     </string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>
@@ -548,6 +545,53 @@
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Issue reporting implementation-->
+    <string name="region_dialog_message"> Are you in %1$s</string>
+    <string name="preference_region_dialog_message"> Your region is currently set to %1$s.
+    If we got this wrong, please tap on \'Your Region\' to change it!</string>
+    <string name="preference_region_dialog_title">Please check region</string>
+    <string name="report_dialog_out_of_region_message"> Please select a stop.</string>
+    <string name="report_dialog_trip"> Please select an arrival time.</string>
+
+    <!-- report issue screen-->
+    <string name="ri_desc">Issue Description</string>
+    <string name="ri_button_camera">Camera</string>
+    <string name="ri_button_image">ADD IMAGE</string>
+    <string name="ri_button_gallery">Gallery</string>
+    <string name="ri_address_not_found">Address not found. Please check your address.</string>
+    <string name="ri_location_problem_info">Error getting location, please tap on map</string>
+    <string name="ri_location_problem">Error getting location</string>
+    <string name="ri_service_description_problem">Service description could not be found.</string>
+    <string name="ri_service_default">Choose a Problem</string>
+    <string name="ri_service_stop">Stop Problem</string>
+    <string name="ri_service_trip">Arrival Time Problem</string>
+    <string name="ri_user_name">First Name</string>
+    <string name="ri_user_lastname">Last Name</string>
+    <string name="ri_user_email">Email</string>
+    <string name="ri_user_phone">Phone Number</string>
+    <string name="ri_no_trip">No arrival times, please check back later.</string>
+    <string name="ri_anonymous_checkbox">Keep it anonymous</string>
+    <string name="ri_submitting_message">Submitting your report</string>
+    <string name="ri_unsuccessful_submit">An error occurred during submission, please try again later.</string>
+
+    <!-- report issue types screen-->
+    <!-- Remote rt_infrastructure_problem and use rt_stop_problem -->
+    <string name="rt_infrastructure_problem">Report a Stop Problem</string>
+    <string name="rt_customer_service">Contact Customer Service</string>
+    <string name="rt_stop_problem">Report a Stop Problem</string>
+    <string name="rt_arrival_problem">Report an Arrival Time Problem</string>
+    <string name="rt_infrastructure_problem_title">Report a Problem</string>
+    <string name="rt_stop_problem_title">Stop Problem</string>
+    <string name="rt_arrival_problem_title">Arrival Time Problem</string>
+    <string name="rt_app_feedback">Send App Feedback</string>
+    <string name="rt_ideas">Ideas For New Features</string>
+    <string name="rt_message_infrastructure_problem">Missing route, broken bench, etc.</string>
+    <string name="rt_message_customer_service">Driver compliments and complaints, lost &amp; found, etc.</string>
+    <string name="rt_message_stop_problem">Missing route, wrong stop name, etc.</string>
+    <string name="rt_message_arrival_problem">Vehicle never came, wrong arrival time, etc.</string>
+    <string name="rt_message_app_feedback">App crash, bugs, etc.</string>
+    <string name="rt_message_ideas">New ideas for future improvements</string>
 
     <!-- Tutorial Fragment -->
     <string name="pager_button_prev">Previous</string>
@@ -687,7 +731,9 @@
         "to the Noun Project under CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/us/):\n\n"
 
         "* Arrow by Zlatko Najdenovski, MK\n"
-        "* Map Marker by Housin Aziz, SE\n\n"
+        "* Map Marker by Housin Aziz, SE\n"
+        "* Incognito by Christopher Schreiner\n"
+        "* Flag Triangle by Austin Andrews\n\n"
 
         "Thanks to Google for the material design icons
         (https://github.com/google/material-design-icons), "

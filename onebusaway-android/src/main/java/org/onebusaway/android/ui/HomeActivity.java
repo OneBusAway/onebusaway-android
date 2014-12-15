@@ -34,6 +34,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
@@ -44,6 +45,7 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -71,6 +73,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.Date;
@@ -110,6 +113,10 @@ public class HomeActivity extends AppCompatActivity
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
 
     public static final String STOP_ID = ".StopId";
+
+    private static final String WHATS_NEW_VER = "whatsNewVer";
+
+    private static final String CHECK_REGION_VER = "checkRegionVer";
 
     private static final int HELP_DIALOG = 1;
 
@@ -197,9 +204,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -224,9 +231,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -386,10 +393,10 @@ public class HomeActivity extends AppCompatActivity
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
                 Log.d(TAG, "TODO - show send feedback fragment");
-                ObaAnalytics
-                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_feedback));
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_feedback));
+                goToSendFeedBack();
                 break;
         }
         invalidateOptionsMenu();
@@ -626,7 +633,7 @@ public class HomeActivity extends AppCompatActivity
                                 showDialog(WHATSNEW_DIALOG);
                                 break;
                             case 4:
-                                UIUtils.sendContactEmail(HomeActivity.this, mGoogleApiClient);
+                                goToSendFeedBack();
                                 break;
                         }
                     }
@@ -650,8 +657,6 @@ public class HomeActivity extends AppCompatActivity
         );
         return builder.create();
     }
-
-    private static final String WHATS_NEW_VER = "whatsNewVer";
 
     @SuppressWarnings("deprecation")
     private void autoShowWhatsNew() {
@@ -686,8 +691,8 @@ public class HomeActivity extends AppCompatActivity
     /**
      * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
      *
-     * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-     * @param routes a HashMap of all route display names that serve this stop - key is routeId
+     * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+     * @param routes   a HashMap of all route display names that serve this stop - key is routeId
      * @param location the user touch location on the map, or null if the focus was otherwise
      *                 cleared programmatically
      */
@@ -887,7 +892,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void updateArrivalListFragment(String stopId, ObaStop stop,
-            HashMap<String, ObaRoute> routes) {
+                                           HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -921,6 +926,63 @@ public class HomeActivity extends AppCompatActivity
         moveMyLocationButton();
     }
 
+    private String getLocationString(Context context) {
+        Location loc = Application.getLastKnownLocation(context, mGoogleApiClient);
+        return LocationUtils.printLocationDetails(loc);
+    }
+
+    private void goToContactEmail(Context ctxt) {
+        PackageManager pm = ctxt.getPackageManager();
+        PackageInfo appInfo = null;
+        try {
+            appInfo = pm.getPackageInfo(ctxt.getPackageName(),
+                    PackageManager.GET_META_DATA);
+        } catch (NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region == null) {
+            return;
+        }
+
+        // appInfo.versionName
+        // Build.MODEL
+        // Build.VERSION.RELEASE
+        // Build.VERSION.SDK
+        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
+        final String body = ctxt.getString(R.string.bug_report_body,
+                appInfo.versionName,
+                Build.MODEL,
+                Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT,
+                getLocationString(ctxt));
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                new String[]{region.getContactEmail()});
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                ctxt.getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            ctxt.startActivity(Intent.createChooser(send,
+                    ctxt.getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+
+    private void goToSendFeedBack() {
+        if (mFocusedStop != null) {
+            ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(),
+                    mFocusedStop.getLatitude(), mFocusedStop.getLongitude(), mGoogleApiClient);
+        } else {
+            Location loc = Application.getLastKnownLocation(this, mGoogleApiClient);
+            ReportActivity.start(this, null, null, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
+        }
+    }
+
     /**
      * Checks region status, which can potentially including forcing a reload of region
      * info from the server.  Also includes auto-selection of closest region.
@@ -949,16 +1011,31 @@ public class HomeActivity extends AppCompatActivity
         //If we don't have region info selected, or if enough time has passed since last region info update,
         //force contacting the server again
         if (Application.get().getCurrentRegion() == null ||
-                        new Date().getTime() - Application.get().getLastRegionUpdateDate()
-                                > REGION_UPDATE_THRESHOLD) {
+                new Date().getTime() - Application.get().getLastRegionUpdateDate()
+                        > REGION_UPDATE_THRESHOLD) {
             forceReload = true;
             Log.d(TAG,
-                        "Region info has expired (or does not exist), forcing a reload from the server...");
+                    "Region info has expired (or does not exist), forcing a reload from the server...");
         }
 
         if (Application.get().getCurrentRegion() != null) {
             //We already have region info locally, so just check current region status quietly in the background
             showProgressDialog = false;
+        }
+
+        try {
+            PackageInfo appInfo = getPackageManager().getPackageInfo(getPackageName(),
+                    PackageManager.GET_META_DATA);
+            SharedPreferences settings = Application.getPrefs();
+            final int oldVer = settings.getInt(CHECK_REGION_VER, 0);
+            final int newVer = appInfo.versionCode;
+
+            if (oldVer < newVer) {
+                forceReload = true;
+            }
+            PreferenceUtils.saveInt(CHECK_REGION_VER, appInfo.versionCode);
+        } catch (NameNotFoundException e) {
+            // Do nothing
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region

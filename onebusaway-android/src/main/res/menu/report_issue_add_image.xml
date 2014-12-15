@@ -1,0 +1,8 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+            android:id="@+id/ri_button_camera"
+            android:title="@string/ri_button_camera"/>
+    <item
+            android:id="@+id/ri_button_gallery"
+            android:title="@string/ri_button_gallery"/>
+</menu>

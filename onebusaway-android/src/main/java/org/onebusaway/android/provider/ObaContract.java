@@ -434,6 +434,42 @@ public final class ObaContract {
 
     }
 
+    protected interface RegionOpen311ServersColumns {
+
+        /**
+         * The region ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "region_id";
+
+        /**
+         * The jurisdiction id of the open311 server
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String JURISDICTION = "jurisdiction";
+
+        /**
+         * The api key of the open311 server
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String API_KEY = "api_key";
+
+        /**
+         * The url of the open311 server
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String BASE_URL = "open311_base_url";
+
+    }
+
     protected interface RouteHeadsignKeyColumns extends StopRouteKeyColumns {
 
         /**
@@ -1064,6 +1100,7 @@ public final class ObaContract {
                             c.getString(2),             // OBA Base URL
                             c.getString(3),             // SIRI Base URL
                             RegionBounds.getRegion(cr, id), // Bounds
+                            RegionOpen311Servers.getOpen311Server(cr, id), // Open311 servers
                             c.getString(4),             // Lang
                             c.getString(5),             // Contact Email
                             c.getInt(6) > 0,            // Supports Oba Discovery
@@ -1132,6 +1169,68 @@ public final class ObaContract {
                                 c.getDouble(1),
                                 c.getDouble(2),
                                 c.getDouble(3));
+                        i++;
+                    } while (c.moveToNext());
+
+                    return results;
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
+        }
+    }
+
+    public static class RegionOpen311Servers implements BaseColumns, RegionOpen311ServersColumns {
+
+        // Cannot be instantiated
+        private RegionOpen311Servers() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "open311_servers";
+
+        /**
+         * The content:// style URI for this table URI is of the form
+         * content://<authority>/region_open311_servers/<id>
+         */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_TYPE
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".open311_servers";
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".open311_servers";
+
+        public static final Uri buildUri(int id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static ObaRegionElement.Open311Server[] getOpen311Server
+                (ContentResolver cr, int regionId) {
+            final String[] PROJECTION = {
+                    JURISDICTION,
+                    API_KEY,
+                    BASE_URL
+            };
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,
+                    "(" + RegionOpen311Servers.REGION_ID + " = " + regionId + ")",
+                    null, null);
+            if (c != null) {
+                try {
+                    ObaRegionElement.Open311Server[] results = new ObaRegionElement.Open311Server[c.getCount()];
+                    if (c.getCount() == 0) {
+                        return results;
+                    }
+
+                    int i = 0;
+                    c.moveToFirst();
+                    do {
+                        results[i] = new ObaRegionElement.Open311Server(
+                                c.getString(0),
+                                c.getString(1),
+                                c.getString(2));
                         i++;
                     } while (c.moveToNext());
 

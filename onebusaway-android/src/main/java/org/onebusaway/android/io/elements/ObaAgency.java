@@ -54,4 +54,10 @@ public interface ObaAgency extends ObaElement {
      * to users when using the agency's data in an application. Can be empty.
      */
     public String getDisclaimer();
+
+    /**
+     *
+     * @return The agency's email address. Can be empty.
+     */
+    public String getEmail();
 }

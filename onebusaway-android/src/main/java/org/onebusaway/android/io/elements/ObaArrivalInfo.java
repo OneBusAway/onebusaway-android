@@ -15,13 +15,15 @@
  */
 package org.onebusaway.android.io.elements;
 
-public final class ObaArrivalInfo {
+import java.io.Serializable;
+
+public final class ObaArrivalInfo implements Serializable{
 
     public static final ObaArrivalInfo EMPTY_OBJECT = new ObaArrivalInfo();
 
     public static final ObaArrivalInfo[] EMPTY_ARRAY = new ObaArrivalInfo[]{};
 
-    public static final class Frequency {
+    public static final class Frequency implements Serializable {
 
         private final long startTime;
 

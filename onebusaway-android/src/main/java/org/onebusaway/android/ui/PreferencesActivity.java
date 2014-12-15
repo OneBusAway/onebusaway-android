@@ -22,10 +22,13 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -37,6 +40,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,6 +62,8 @@ public class PreferencesActivity extends PreferenceActivity
         SharedPreferences.OnSharedPreferenceChangeListener, ObaRegionsTask.Callback {
 
     private static final String TAG = "PreferencesActivity";
+
+    public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
     Preference regionPref;
 
@@ -139,6 +145,11 @@ public class PreferencesActivity extends PreferenceActivity
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
             aboutCategory.removePreference(donatePref);
         }
+
+        boolean showCheckRegionDialog = getIntent().getBooleanExtra(SHOW_CHECK_REGION_DIALOG, false);
+        if (showCheckRegionDialog) {
+            showCheckRegionDialog();
+        }
     }
 
     @Override
@@ -203,6 +214,21 @@ public class PreferencesActivity extends PreferenceActivity
     @Override
     protected void onStop() {
         super.onStop();
+    }
+
+    private void showCheckRegionDialog() {
+        ObaRegion obaRegion = Application.get().getCurrentRegion();
+        if (obaRegion == null) {
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.preference_region_dialog_title))
+                .setMessage(getString(R.string.preference_region_dialog_message, obaRegion.getName()))
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
     }
 
     /**

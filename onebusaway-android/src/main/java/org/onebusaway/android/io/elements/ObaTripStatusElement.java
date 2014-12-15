@@ -17,7 +17,9 @@ package org.onebusaway.android.io.elements;
 
 import android.location.Location;
 
-public final class ObaTripStatusElement implements ObaTripStatus {
+import java.io.Serializable;
+
+public final class ObaTripStatusElement implements ObaTripStatus, Serializable {
 
     protected static final ObaTripStatusElement EMPTY_OBJECT = new ObaTripStatusElement();
 

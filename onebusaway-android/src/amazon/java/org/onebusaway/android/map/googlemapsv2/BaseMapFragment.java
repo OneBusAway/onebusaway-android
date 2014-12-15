@@ -111,8 +111,6 @@ public class BaseMapFragment extends SupportMapFragment
     //
     // Location Services and Maps API v2 constants
     //
-    private static final int CAMERA_MOVE_NOTIFY_THRESHOLD_MS = 500;
-
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
 
     public static final float DEFAULT_MAP_PADDING_DP = 20.0f;
@@ -130,13 +128,7 @@ public class BaseMapFragment extends SupportMapFragment
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
     private com.amazon.geo.mapsv2.AmazonMap mMap;
 
-    private UIUtils.StopUserInfoMap mStopUserMap;
-
     private String mFocusStopId;
-
-    private ObaStop mFocusStop;
-
-    private HashMap<String, ObaRoute> mFocusStopRoutes;
 
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
@@ -542,9 +534,7 @@ public class BaseMapFragment extends SupportMapFragment
         mStopChangedHandler.post(new Runnable() {
             public void run() {
                 if (stop != null) {
-                    mFocusStop = stop;
                     mFocusStopId = stop.getId();
-                    mFocusStopRoutes = routes;
                     //Log.d(TAG, "Focused changed to " + stop.getName());
                 } else {
                     //Log.d(TAG, "Removed focus");

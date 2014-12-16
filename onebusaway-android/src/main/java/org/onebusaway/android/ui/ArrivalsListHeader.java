@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +110,9 @@ class ArrivalsListHeader {
     //
     // Cached views
     //
-    private View mView;
+    private View mView;  // Entire header parent view
+
+    private View mMainContainerView; // Holds everything except for the mFilterGroup
 
     private View mNameContainerView;
 
@@ -169,9 +172,9 @@ class ArrivalsListHeader {
 
     private static float DEFAULT_HEADER_HEIGHT_DP;
 
-    private static final float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP = 100.0f;
+    private static float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP;
 
-    private static final float EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = 90.0f;
+    private static float EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -193,12 +196,19 @@ class ArrivalsListHeader {
         // Clear any existing arrival info
         mArrivalInfo = null;
 
-        // Cache the default ArrivalsListHeader height
+        // Cache the ArrivalsListHeader height values
         DEFAULT_HEADER_HEIGHT_DP = view.getResources().getDimension(R.dimen.arrival_header_height)
                 / view.getResources().getDisplayMetrics().density;
+        EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = view.getResources()
+                .getDimension(R.dimen.arrival_header_height_expanded_filter_routes)
+                / view.getResources().getDisplayMetrics().density;
+        EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_expanded_edit_name)
+                        / view.getResources().getDisplayMetrics().density;
 
         // Init views
         mView = view;
+        mMainContainerView = mView.findViewById(R.id.main_header_content);
         mNameContainerView = mView.findViewById(R.id.name_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
@@ -765,7 +775,11 @@ class ArrivalsListHeader {
         mExpandCollapse.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
+        // Set the entire header size
         setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
+        // Set the main container view size to be the same
+        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
+                EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());
@@ -785,8 +799,11 @@ class ArrivalsListHeader {
         mFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
+        // Set the entire header size
         setHeaderSize(DEFAULT_HEADER_HEIGHT_DP);
-        //setFilterHeader();
+        // Set the main container view size to be the same
+        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
+                DEFAULT_HEADER_HEIGHT_DP);
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

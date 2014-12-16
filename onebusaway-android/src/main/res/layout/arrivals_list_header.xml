@@ -1,261 +1,280 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
-     and individual contributors.
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
 
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-          http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                style="@style/HeaderItem"
                 android:id="@+id/arrivals_list_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/arrival_header_height"
                 android:orientation="vertical">
 
-    <ImageButton
-            android:id="@+id/stop_favorite"
-            android:src="@drawable/ic_toggle_star_outline"
-            android:contentDescription="@string/stop_info_favorite"
-            android:background="@drawable/selectable_background_busbot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:paddingLeft="1dp"
-            android:paddingRight="1dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"/>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    style="@style/HeaderItem"
+                    android:id="@+id/main_header_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/arrival_header_height"
+                    android:layout_alignParentTop="true"
+                    android:orientation="vertical">
 
-    <LinearLayout
-            android:id="@+id/edit_name_container"
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone">
-        <!--  NOTE: I'm sure there's a way to have a textview
-          switch between displaying itself as an edittext
-          and a regular text, but this method will be
-          guaranteed to work across any release -->
-        <EditText
-                android:id="@+id/edit_name"
-                style="@style/HeaderText"
-                android:textCursorDrawable="@null"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                android:imeOptions="actionDone"/>
-
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10dip"
-                android:paddingRight="10dip"
-                android:gravity="center">
-
-            <Button
-                    android:id="@+id/edit_name_cancel"
-                    style="@style/Header2Text"
-                    android:text="@string/stop_info_cancel"
-                    android:layout_height="wrap_content"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"/>
-
-            <Button
-                    android:id="@+id/edit_name_save"
-                    style="@style/Header2Text"
-                    android:text="@string/stop_info_save"
-                    android:layout_height="wrap_content"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"/>
-
-            <Button
-                    android:id="@+id/edit_name_revert"
-                    style="@style/Header2Text"
-                    android:text="@string/stop_info_clear"
-                    android:layout_height="wrap_content"
-                    android:layout_width="0dip"
-                    android:layout_weight="1"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <RelativeLayout
-            android:id="@+id/stop_details_container"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_toRightOf="@+id/stop_favorite"
-            android:layout_toLeftOf="@+id/right_margin_separator">
-
-        <RelativeLayout
-                android:id="@+id/name_container"
+        <ImageButton
+                android:id="@+id/stop_favorite"
+                android:src="@drawable/ic_toggle_star_outline"
+                android:contentDescription="@string/stop_info_favorite"
+                android:background="@drawable/selectable_background_busbot"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
                 android:layout_centerVertical="true"
-                android:paddingLeft="@dimen/arrivals_header_pad_left">
+                android:layout_alignParentLeft="true"/>
+
+        <LinearLayout
+                android:id="@+id/edit_name_container"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone">
+            <!--  NOTE: I'm sure there's a way to have a textview
+              switch between displaying itself as an edittext
+              and a regular text, but this method will be
+              guaranteed to work across any release -->
+            <EditText
+                    android:id="@+id/edit_name"
+                    style="@style/HeaderText"
+                    android:textCursorDrawable="@null"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:imeOptions="actionDone"/>
 
             <LinearLayout
-                    android:id="@+id/stop_name_and_info_container"
+                    android:orientation="horizontal"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="10dip"
+                    android:paddingRight="10dip"
+                    android:gravity="center">
+
+                <Button
+                        android:id="@+id/edit_name_cancel"
+                        style="@style/Header2Text"
+                        android:text="@string/stop_info_cancel"
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dip"
+                        android:layout_weight="1"/>
+
+                <Button
+                        android:id="@+id/edit_name_save"
+                        style="@style/Header2Text"
+                        android:text="@string/stop_info_save"
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dip"
+                        android:layout_weight="1"/>
+
+                <Button
+                        android:id="@+id/edit_name_revert"
+                        style="@style/Header2Text"
+                        android:text="@string/stop_info_clear"
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dip"
+                        android:layout_weight="1"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <RelativeLayout
+                android:id="@+id/stop_details_container"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_toRightOf="@+id/stop_favorite"
+                android:layout_toLeftOf="@+id/right_margin_separator">
+
+            <RelativeLayout
+                    android:id="@+id/name_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:weightSum="1">
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:paddingLeft="@dimen/arrivals_header_pad_left">
+
+                <LinearLayout
+                        android:id="@+id/stop_name_and_info_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:weightSum="1">
+                    <TextView
+                            android:id="@+id/stop_name"
+                            style="@style/HeaderText"
+                            android:ellipsize="end"
+                            android:singleLine="true"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="left"
+                            android:layout_weight=".95"/>
+
+                    <ImageButton
+                            android:id="@+id/stop_info_button"
+                            android:background="@drawable/selectable_background_busbot"
+                            android:src="@drawable/ic_stop_info"
+                            android:contentDescription="@string/stop_info_button_content_description"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="14dp"
+                            android:layout_marginRight="2dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight=".05"
+                            android:paddingTop="3dp"
+                            android:minWidth="23dp"
+                            android:maxWidth="23dp"
+                            android:minHeight="23dp"
+                            android:maxHeight="23dp"
+                            android:scaleType="fitCenter"
+                            android:adjustViewBounds="true"/>
+                </LinearLayout>
+
                 <TextView
-                        android:id="@+id/stop_name"
-                        style="@style/HeaderText"
+                        android:id="@+id/routeIds"
+                        style="@style/Header3Text"
                         android:ellipsize="end"
                         android:singleLine="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="left"
-                        android:layout_weight=".95"/>
+                        android:layout_below="@id/stop_name_and_info_container"
+                        android:includeFontPadding="false"/>
 
-                <ImageButton
-                        android:id="@+id/stop_info_button"
-                        android:background="@drawable/selectable_background_busbot"
-                        android:src="@drawable/ic_stop_info"
-                        android:contentDescription="@string/stop_info_button_content_description"
+                <TextView
+                        android:id="@+id/direction"
+                        style="@style/Header3Text"
+                        android:ellipsize="end"
+                        android:singleLine="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="14dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight=".05"
-                        android:paddingTop="3dp"
-                        android:minWidth="23dp"
-                        android:maxWidth="23dp"
-                        android:minHeight="23dp"
-                        android:maxHeight="23dp"
-                        android:scaleType="fitCenter"
-                        android:adjustViewBounds="true"/>
-            </LinearLayout>
+                        android:layout_gravity="left"
+                        android:layout_below="@id/routeIds"
+                        android:includeFontPadding="false"/>
+            </RelativeLayout>
 
-            <TextView
-                    android:id="@+id/routeIds"
-                    style="@style/Header3Text"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="left"
-                    android:layout_below="@id/stop_name_and_info_container"
-                    android:includeFontPadding="false"/>
-
-            <TextView
-                    android:id="@+id/direction"
-                    style="@style/Header3Text"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="left"
-                    android:layout_below="@id/routeIds"
-                    android:includeFontPadding="false"/>
         </RelativeLayout>
 
-    </RelativeLayout>
+        <View
+                android:id="@+id/right_margin_separator"
+                android:layout_width="1dp"
+                android:layout_height="fill_parent"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginRight="4dp"
+                android:layout_marginLeft="10dp"
+                android:layout_toLeftOf="@+id/right_margin_container1"
+                android:background="@drawable/white_transparent_gradient"/>
 
-    <View
-            android:id="@+id/right_margin_separator"
-            android:layout_width="1dp"
-            android:layout_height="fill_parent"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginLeft="10dp"
-            android:layout_toLeftOf="@+id/right_margin_container1"
-            android:background="@drawable/white_transparent_gradient"/>
-
-    <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are
-         used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
-         views and arrival info views -->
-    <LinearLayout
-            android:id="@+id/right_margin_container1"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="60dp"
-            android:layout_marginLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="5dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true">
-
-        <org.onebusaway.android.view.ArrowView
-                android:id="@+id/arrow"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_gravity="center_horizontal"
-                android:visibility="gone"/>
-
-        <org.onebusaway.android.view.DistanceToStopView
-                android:id="@+id/dist_to_stop"
-                style="@style/Header3Text"
-                android:layout_marginTop="2dp"
+        <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are
+             used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
+             views and arrival info views -->
+        <LinearLayout
+                android:id="@+id/right_margin_container1"
+                android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:visibility="gone"/>
-    </LinearLayout>
+                android:minWidth="60dp"
+                android:layout_marginLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="5dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true">
 
-    <!-- Layout container for arrival info. Two right_margin_container layouts are
-         used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
-         views and arrival info views -->
-    <LinearLayout
-            android:id="@+id/right_margin_container2"
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="60dp"
-            android:layout_marginLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="5dp"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true">
+            <org.onebusaway.android.view.ArrowView
+                    android:id="@+id/arrow"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_gravity="center_horizontal"
+                    android:visibility="gone"/>
+
+            <org.onebusaway.android.view.DistanceToStopView
+                    android:id="@+id/dist_to_stop"
+                    style="@style/Header3Text"
+                    android:layout_marginTop="2dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:visibility="gone"/>
+        </LinearLayout>
+
+        <!-- Layout container for arrival info. Two right_margin_container layouts are
+             used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
+             views and arrival info views -->
+        <LinearLayout
+                android:id="@+id/right_margin_container2"
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="60dp"
+                android:layout_marginLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="5dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true">
+
+            <ImageView
+                    android:id="@+id/header_bus_icon"
+                    android:src="@drawable/ic_bus_white"
+                    android:background="@null"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:maxWidth="25dp"
+                    android:maxHeight="25dp"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    android:paddingLeft="1dp"
+                    android:paddingRight="1dp"
+                    android:visibility="gone"/>
+            <TextView
+                    android:id="@+id/header_arrival_info"
+                    style="@style/Header3Text"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:visibility="gone"/>
+        </LinearLayout>
+
+        <ProgressBar
+                android:id="@+id/header_loading_spinner"
+                style="?android:progressBarStyleLarge"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="5dp"
+                android:layout_alignParentRight="true"
+                android:layout_gravity="center"
+                android:visibility="visible"/>
 
         <ImageView
-                android:id="@+id/header_bus_icon"
-                android:src="@drawable/ic_bus_white"
-                android:background="@null"
+                android:id="@+id/expand_collapse"
+                android:src="@drawable/ic_action_expand_edited"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:maxWidth="25dp"
-                android:maxHeight="25dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:paddingLeft="1dp"
-                android:paddingRight="1dp"
-                android:visibility="gone"/>
-        <TextView
-                android:id="@+id/header_arrival_info"
-                style="@style/Header3Text"
-                android:layout_marginTop="4dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:visibility="gone"/>
-    </LinearLayout>
+                android:layout_marginBottom="1dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
 
-    <ProgressBar
-            android:id="@+id/header_loading_spinner"
-            style="?android:progressBarStyleLarge"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_marginLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="5dp"
-            android:layout_alignParentRight="true"
-            android:layout_gravity="center"
-            android:visibility="visible"/>
-
+    <!-- Filter by route -->
     <LinearLayout
             android:id="@+id/filter_group"
             style="@style/Header3Text"
@@ -263,7 +282,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:background="@color/theme_primary_dark"
@@ -289,15 +307,7 @@
                 android:layout_marginLeft="2dp"
                 android:gravity="center_vertical"
                 android:bufferType="spannable"
-                android:linksClickable="true"/>
+                android:linksClickable="true"
+                android:textColorLink="@color/theme_accent"/>
     </LinearLayout>
-
-    <ImageView
-            android:id="@+id/expand_collapse"
-            android:src="@drawable/ic_action_expand_edited"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="1dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"/>
 </RelativeLayout>

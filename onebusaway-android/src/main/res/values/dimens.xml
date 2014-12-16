@@ -42,5 +42,7 @@
 
     <!-- Arrival List Header -->
     <dimen name="arrival_header_height">68dp</dimen>
+    <dimen name="arrival_header_height_expanded_filter_routes">93dp</dimen>
+    <dimen name="arrival_header_height_expanded_edit_name">100dp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
 </resources>

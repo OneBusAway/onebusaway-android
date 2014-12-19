@@ -24,12 +24,16 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -136,15 +140,24 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      * Cache the BitmapDescriptors that hold the images used for icons
      */
     private static final void loadIcons() {
-        bus_stop_icons[0] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_n);
-        bus_stop_icons[1] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_nw);
-        bus_stop_icons[2] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_w);
-        bus_stop_icons[3] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_sw);
-        bus_stop_icons[4] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_s);
-        bus_stop_icons[5] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_se);
-        bus_stop_icons[6] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_e);
-        bus_stop_icons[7] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_ne);
-        bus_stop_icons[8] = BitmapDescriptorFactory.fromResource(R.drawable.bus_stop_u);
+        int px = Application.get().getResources()
+                .getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
+        Bitmap bm = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        Drawable shape = Application.get().getResources().getDrawable(R.drawable.map_stop_icon);
+        shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
+        shape.draw(canvas);
+
+        // TODO - barbeau - Add directionality to stops, in coordination with showing route lines
+        bus_stop_icons[0] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[1] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[2] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[3] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[4] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[5] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[6] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[7] = BitmapDescriptorFactory.fromBitmap(bm);
+        bus_stop_icons[8] = BitmapDescriptorFactory.fromBitmap(bm);
     }
 
     /**

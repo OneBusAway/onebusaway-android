@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 
 import android.database.Cursor;
@@ -56,8 +57,14 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     }
 
     @Override
+    public void onStart() {
+        ObaAnalytics.reportFragmentStart(this);
+        super.onStart();
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
+                                    ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.my_context_remove_star);
     }
@@ -101,6 +108,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_edit_field),
+                    getString(R.string.analytics_label_edit_field_bookmark_delete));
         }
     }
 }

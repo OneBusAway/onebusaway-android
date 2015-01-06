@@ -25,9 +25,11 @@ import com.amazon.geo.mapsv2.model.MarkerOptions;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.LocationUtil;
 
 import android.app.Activity;
 import android.content.res.Resources;
@@ -41,6 +43,7 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -614,6 +617,11 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
         doFocusChange(stop);
 
+        // Report Stop distance metric
+        Location stopLocation = stop.getLocation();
+        Location myLocation = LocationUtil.getLocation2(mActivity, null);
+        // Track the users distance to bus stop
+        ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
         return true;
     }
 

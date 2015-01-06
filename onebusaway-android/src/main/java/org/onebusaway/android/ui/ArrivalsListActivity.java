@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
@@ -167,6 +168,12 @@ public class ArrivalsListActivity extends ActionBarActivity {
             }
             ft.commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        ObaAnalytics.reportActivityStart(this);
+        super.onStart();
     }
 
     @Override

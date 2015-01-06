@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.util.LocationUtil;
@@ -118,6 +119,9 @@ public abstract class ReportProblemFragmentBase extends Fragment
     protected void sendReport() {
         UIHelp.showProgress(this, true);
         getLoaderManager().restartLoader(REPORT_LOADER, getArguments(), this);
+
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
     }
 
     @Override

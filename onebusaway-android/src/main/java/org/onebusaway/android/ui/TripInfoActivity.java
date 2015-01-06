@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 package org.onebusaway.android.ui;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -53,6 +46,14 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
 
 import java.util.List;
 
@@ -228,6 +229,17 @@ public class TripInfoActivity extends ActionBarActivity {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+        }
+
+        @Override
+        public void onStart() {
+            ObaAnalytics.reportActivityStart(getActivity());
+            super.onStart();
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
         }
 
         private boolean initFromBundle(Bundle bundle) {

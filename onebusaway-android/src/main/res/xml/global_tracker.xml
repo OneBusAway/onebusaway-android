@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ga_trackingId">UA-2423527-17</string>
+
+    <bool name="ga_autoActivityTracking">true</bool>
+    <bool name="ga_reportUncaughtExceptions">true</bool>
+
+    <item
+        name="ga_dispatchPeriod"
+        format="integer"
+        type="integer">120
+    </item>
+
+    <string name="ga_sampleFrequency">90</string>
+    <bool name="ga_anonymizeIp">true</bool>
+    <bool name="ga_dryRun">false</bool>
+    <string name="ga_sampleFrequency">100.0</string>
+    <integer name="ga_sessionTimeout">500</integer>
+
+    <screenName name="org.onebusaway.android.ui.SearchActivity">
+        SearchActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.HomeActivity">
+        HomeActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.RouteInfoActivity">
+        RouteInfoActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.TripInfoActivity">
+        TripInfoActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.MyStopsActivity">
+        MyStopsActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.ArrivalsListActivity">
+        ArrivalsListActivity
+    </screenName>
+    <screenName name="org.onebusaway.android.ui.PreferencesActivity">
+        PreferencesActivity
+    </screenName>
+</resources>

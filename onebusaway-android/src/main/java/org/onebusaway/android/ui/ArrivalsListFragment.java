@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -42,6 +28,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.DialogFragment;
@@ -56,10 +43,26 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -223,7 +226,7 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
+                             ViewGroup root, Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
@@ -356,13 +359,32 @@ public class ArrivalsListFragment extends ListFragment
         return new ArrivalsListLoader(getActivity(), mStopId);
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
+
+        if (Build.VERSION.SDK_INT >= 14) {
+            AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
+                    getActivity().ACCESSIBILITY_SERVICE);
+
+            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+            if (isTalkBackEnabled)
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                        getString(R.string.analytics_action_touch_exploration),
+                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                                + " using TalkBack");
+        }
+    }
+
     //
     // This is where the bulk of the initialization takes place to create
     // this screen.
     //
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
-            final ObaArrivalInfoResponse result) {
+                               final ObaArrivalInfoResponse result) {
         UIHelp.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
@@ -775,6 +797,12 @@ public class ArrivalsListFragment extends ListFragment
         // Apparently we can't rely on onPrepareOptionsMenu to set the
         // menus like we did before...
         getActivity().supportInvalidateOptionsMenu();
+
+        //Analytics
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getString(R.string.analytics_action_edit_field),
+                getString(R.string.analytics_label_edit_field));
+
         return mFavorite;
     }
 
@@ -972,6 +1000,11 @@ public class ArrivalsListFragment extends ListFragment
         getArrivalsLoader().incrementMinutesAfter();
         mLoadedMoreArrivals = true;
         refresh();
+
+        //Analytics
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getActivity().getString(R.string.analytics_action_button_press),
+                getActivity().getString(R.string.analytics_label_button_press));
     }
 
     //

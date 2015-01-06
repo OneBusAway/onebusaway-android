@@ -17,6 +17,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.MyTextUtils;
@@ -101,6 +102,12 @@ public final class MyRemindersFragment extends ListFragment
 
         // Prepare the loader
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    public void onStart() {
+        ObaAnalytics.reportFragmentStart(this);
+        super.onStart();
     }
 
     @Override

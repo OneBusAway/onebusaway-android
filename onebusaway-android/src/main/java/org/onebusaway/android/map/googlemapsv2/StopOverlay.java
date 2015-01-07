@@ -30,9 +30,16 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
@@ -72,6 +79,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     private static final String EAST = "E";
 
     private static final String NORTH_EAST = "NE";
+
+    private static final String NO_DIRECTION = "null";
 
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
@@ -140,31 +149,175 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      * Cache the BitmapDescriptors that hold the images used for icons
      */
     private static final void loadIcons() {
-        int px = Application.get().getResources()
-                .getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
-        Bitmap bm = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bm);
-        Drawable shape = Application.get().getResources().getDrawable(R.drawable.map_stop_icon);
-        shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
-        shape.draw(canvas);
+        bus_stop_icons[0] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH));
+        bus_stop_icons[1] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH_WEST));
+        bus_stop_icons[2] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(WEST));
+        bus_stop_icons[3] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH_WEST));
+        bus_stop_icons[4] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH));
+        bus_stop_icons[5] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH_EAST));
+        bus_stop_icons[6] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(EAST));
+        bus_stop_icons[7] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH_EAST));
+        bus_stop_icons[8] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NO_DIRECTION));
+    }
 
-        // TODO - barbeau - Add directionality to stops, in coordination with showing route lines
-        bus_stop_icons[0] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[1] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[2] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[3] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[4] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[5] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[6] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[7] = BitmapDescriptorFactory.fromBitmap(bm);
-        bus_stop_icons[8] = BitmapDescriptorFactory.fromBitmap(bm);
+    /**
+     * Creates a bus stop icon with the given direction arrow, or without a direction arrow if
+     * the direction is NO_DIRECTION
+     *
+     * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
+     *                  constants in this class, or NO_DIRECTION if the stop icon shouldn't have a
+     *                  direction arrow
+     * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
+     * if direction is NO_DIRECTION
+     */
+    private static Bitmap createBusStopIcon(String direction) {
+        if (direction == null) {
+            throw new IllegalArgumentException(direction);
+        }
+        Resources r = Application.get().getResources();
+        int px = r.getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
+
+        // By default assume we're not going to add a direction arrow
+        float TRIANGLE_WIDTH_PX = 0;
+        float TRIANGLE_HEIGHT_PX = 0;
+
+        if (!direction.equals(NO_DIRECTION)) {
+            TRIANGLE_WIDTH_PX = px / 2;  // Triangle width is 1/2 the height of circle icon
+            TRIANGLE_HEIGHT_PX = px
+                    / (float) 2.5;  // Triangle height is 1/4 the height of circle icon
+            Log.d(TAG, "arrow height = " + TRIANGLE_HEIGHT_PX);
+            Log.d(TAG, "arrow width = " + TRIANGLE_WIDTH_PX);
+        }
+
+        Float directionAngle = null;  // 0-360 degrees
+        Bitmap bm;
+        Canvas c;
+        Drawable shape;
+
+        if (direction.equals(NO_DIRECTION)) {
+            // Don't draw the arrow
+            bm = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(NORTH)) {
+            directionAngle = 0f;
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(NORTH_WEST)) {
+            directionAngle = 315f;
+            // TODO - fix this for NW
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(WEST)) {
+            directionAngle = 270f;
+            // TODO - fix this for W
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(SOUTH_WEST)) {
+            directionAngle = 225f;
+            // TODO - fix this for SW
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(SOUTH)) {
+            directionAngle = 180f;
+            // TODO - fix this for S
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(SOUTH_EAST)) {
+            directionAngle = 135f;
+            // TODO - fix this for SE
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(EAST)) {
+            directionAngle = 90f;
+            // TODO - fix this for E
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else if (direction.equals(NORTH_EAST)) {
+            directionAngle = 45f;
+            // TODO - fix this for NE
+            bm = Bitmap.createBitmap(px, (int) (px + TRIANGLE_HEIGHT_PX), Bitmap.Config.ARGB_8888);
+            c = new Canvas(bm);
+            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape.setBounds(0, (int) TRIANGLE_HEIGHT_PX, bm.getWidth(), bm.getHeight());
+        } else {
+            throw new IllegalArgumentException(direction);
+        }
+
+        shape.draw(c);
+
+        if (direction.equals(NO_DIRECTION)) {
+            // Everything after this point is for drawing the arrow image, so return the bitmap as-is for no arrow
+            return bm;
+        }
+
+        Paint arrowPaint = new Paint();
+        arrowPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        arrowPaint.setAntiAlias(true);
+        // TODO - reset to green
+        //arrowPaint.setShader(new LinearGradient(0, 0, 0, bm.getHeight(), r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent), Shader.TileMode.MIRROR));
+        arrowPaint.setShader(
+                new LinearGradient(0, 0, bm.getWidth(), bm.getHeight(), Color.BLACK, Color.WHITE,
+                        Shader.TileMode.MIRROR));
+
+        // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
+        final float CUTOUT_HEIGHT = bm.getHeight() / 10;
+
+        float x1, y1;  // Tip of arrow
+        x1 = bm.getWidth() / 2;
+        y1 = 0;
+
+        float x2, y2;  // lower left
+        x2 = (bm.getWidth() / 2) - (TRIANGLE_WIDTH_PX / 2);
+        y2 = TRIANGLE_HEIGHT_PX;
+
+        float x3, y3; // cutout in arrow bottom
+        x3 = bm.getWidth() / 2;
+        y3 = TRIANGLE_HEIGHT_PX - CUTOUT_HEIGHT;
+
+        float x4, y4; // lower right
+        x4 = (bm.getWidth() / 2) + (TRIANGLE_WIDTH_PX / 2);
+        y4 = TRIANGLE_HEIGHT_PX;
+
+        Path path = new Path();
+        path.setFillType(Path.FillType.EVEN_ODD);
+        path.moveTo(x1, y1);
+        path.lineTo(x2, y2);
+        path.lineTo(x3, y3);
+        path.lineTo(x4, y4);
+        path.lineTo(x1, y1);
+        path.close();
+
+        // Rotate arrow around center point
+        Matrix matrix = new Matrix();
+        matrix.postRotate(directionAngle, bm.getWidth() / 2, bm.getHeight() / 2);
+        path.transform(matrix);
+
+        c.drawPath(path, arrowPaint);
+
+        return bm;
     }
 
     /**
      * Returns the BitMapDescriptor for a particular bus stop icon, based on the stop direction
      *
      * @param direction Bus stop direction, obtained from ObaStop.getDirection() and defined in
-     *                  contants in this class
+     *                  constants in this class
      * @return BitmapDescriptor for the bus stop icon that should be used for that direction
      */
     private static BitmapDescriptor getBitmapDescriptorForBusStopDirection(String direction) {
@@ -184,6 +337,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             return bus_stop_icons[6];
         } else if (direction.equals(NORTH_EAST)) {
             return bus_stop_icons[7];
+        } else if (direction.equals(NO_DIRECTION)) {
+            return bus_stop_icons[8];
         } else {
             return bus_stop_icons[8];
         }

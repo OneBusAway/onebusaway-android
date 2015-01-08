@@ -263,9 +263,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, 0, bm.getWidth(), bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(0, bm.getHeight() / 2, mArrowHeightPx, bm.getHeight() / 2,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // For WEST
@@ -320,9 +319,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
             shape.setBounds(0, 0, mPx, bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth(), bm.getHeight() / 2,
+                            bm.getWidth() - mArrowHeightPx, bm.getHeight() / 2,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             rotationX = bm.getWidth() / 2f;

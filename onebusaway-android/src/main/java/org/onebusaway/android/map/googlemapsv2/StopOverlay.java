@@ -319,14 +319,13 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, 0, (int) (bm.getWidth() - mBuffer), bm.getHeight());
+            shape.setBounds(0, 0, mPx, bm.getHeight());
             // TODO - Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // For WEST
-            rotationX = bm.getHeight() / 2f;
+            rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_EAST)) {
             directionAngle = 45f;

@@ -95,11 +95,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
     private static float mBuffer = 0;  // Add this to the icon size to get the Bitmap size
 
-    private static float mXPercentOffset = 0.5f;
-            // % offset used to position the stop icon for all icons but N & S
-
-    private static float mYPercentOffset = 0.5f;
-            // % offset used to position the stop icon for all icons but E & W
+    private static float mPercentOffsetNSEW = 0.5f;
+    // % offset used to position the stop icon for N, S, E, and W
 
     private static Paint mArrowPaintStroke;
             // Stroke color used for outline of directional arrows on stops
@@ -178,11 +175,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
         mBuffer = mArrowHeightPx - arrowSpacingReductionPx;
 
-        // Set X offset used to position the image on some Markers (see getXPercentOffsetForDirection())
-        mXPercentOffset = mBuffer / (mPx + mBuffer);
-
-        // Set Y offset used to position the image on some Markers (see getYPercentOffsetForDirection())
-        mYPercentOffset = (mBuffer / (mPx + mBuffer)) * 0.5f;
+        // Set offset used to position the image for N, S, E, and W Markers (see getYPercentOffsetForDirection())
+        mPercentOffsetNSEW = (mBuffer / (mPx + mBuffer)) * 0.5f;
 
         mArrowPaintStroke = new Paint();
         mArrowPaintStroke.setColor(Color.WHITE);
@@ -215,6 +209,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         if (direction == null) {
             throw new IllegalArgumentException(direction);
         }
+
         Resources r = Application.get().getResources();
 
         Float directionAngle = null;  // 0-360 degrees
@@ -250,7 +245,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         } else if (direction.equals(NORTH_WEST)) {
             directionAngle = 315f;
             // TODO - fix this for NW
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mArrowHeightPx), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
             shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
@@ -263,19 +258,18 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(WEST)) {
-            directionAngle = 270f;
-            // TODO - fix this for W
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mArrowHeightPx), Bitmap.Config.ARGB_8888);
+            directionAngle = 0f;  // Arrow is drawn pointing West, so no rotation
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
+            shape.setBounds((int) mBuffer, 0, bm.getWidth(), bm.getHeight());
             // TODO - Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
+            // For WEST
+            rotationX = bm.getHeight() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_WEST)) {
             directionAngle = 225f;
@@ -321,28 +315,27 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(EAST)) {
-            directionAngle = 90f;
-            bm = Bitmap
-                    .createBitmap((int) (mPx + mArrowHeightPx * 1.5), mPx, Bitmap.Config.ARGB_8888);
+            directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, 0, mPx, mPx);
+            shape.setBounds(0, 0, (int) (bm.getWidth() - mBuffer), bm.getHeight());
             // TODO - Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
+            // For WEST
+            rotationX = bm.getHeight() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_EAST)) {
             directionAngle = 45f;
-            bm = Bitmap.createBitmap((int) (mPx + mArrowHeightPx / 1.5),
-                    (int) (mPx + mArrowHeightPx / 1.5), Bitmap.Config.ARGB_8888);
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer / 1.5),
+                    (int) (mPx + mBuffer / 1.5), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) (mArrowHeightPx / 1.5), mPx, bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
+            shape.setBounds(0, (int) (mBuffer / 1.5), mPx, bm.getHeight());
+            // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
@@ -367,24 +360,47 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
          */
         // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
         final float CUTOUT_HEIGHT = mPx / 12;
-
-        float x1, y1;  // Tip of arrow
-        x1 = mPx / 2;
-        y1 = 0;
-
-        float x2, y2;  // lower left
-        x2 = (mPx / 2) - (mArrowWidthPx / 2);
-        y2 = mArrowHeightPx;
-
-        float x3, y3; // cutout in arrow bottom
-        x3 = mPx / 2;
-        y3 = mArrowHeightPx - CUTOUT_HEIGHT;
-
-        float x4, y4; // lower right
-        x4 = (mPx / 2) + (mArrowWidthPx / 2);
-        y4 = mArrowHeightPx;
-
         Path path = new Path();
+        float x1, y1;  // Tip of arrow
+        float x2, y2;  // lower left
+        float x3, y3; // cutout in arrow bottom
+        float x4, y4; // lower right
+
+        if (direction.equals(NORTH) || direction.equals(SOUTH)) {
+            // Tip of arrow
+            x1 = mPx / 2;
+            y1 = 0;
+
+            // lower left
+            x2 = (mPx / 2) - (mArrowWidthPx / 2);
+            y2 = mArrowHeightPx;
+
+            // cutout in arrow bottom
+            x3 = mPx / 2;
+            y3 = mArrowHeightPx - CUTOUT_HEIGHT;
+
+            // lower right
+            x4 = (mPx / 2) + (mArrowWidthPx / 2);
+            y4 = mArrowHeightPx;
+        } else {
+            // TODO - EAST and WEST FOR NOW - Add others
+            // Tip of arrow
+            x1 = 0;
+            y1 = mPx / 2;
+
+            // lower left
+            x2 = mArrowHeightPx;
+            y2 = (mPx / 2) - (mArrowWidthPx / 2);
+
+            // cutout in arrow bottom
+            x3 = mArrowHeightPx - CUTOUT_HEIGHT;
+            y3 = mPx / 2;
+
+            // lower right
+            x4 = mArrowHeightPx;
+            y4 = (mPx / 2) + (mArrowWidthPx / 2);
+        }
+
         path.setFillType(Path.FillType.EVEN_ODD);
         path.moveTo(x1, y1);
         path.lineTo(x2, y2);
@@ -416,20 +432,20 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_WEST)) {
-            return mXPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(WEST)) {
-            return mXPercentOffset;
+            return 0.5f + mPercentOffsetNSEW;
         } else if (direction.equals(SOUTH_WEST)) {
-            return mXPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(SOUTH)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mXPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(EAST)) {
-            return mXPercentOffset;
+            return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(NORTH_EAST)) {
-            return mXPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;
@@ -448,25 +464,23 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      */
     private static float getYPercentOffsetForDirection(String direction) {
         if (direction.equals(NORTH)) {
-            Log.d(TAG, direction + "- Y=" + mYPercentOffset);
-            return 0.5f + mYPercentOffset;
+            return 0.5f + mPercentOffsetNSEW;
         } else if (direction.equals(NORTH_WEST)) {
-            return mYPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(WEST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_WEST)) {
-            return mYPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(SOUTH)) {
-            Log.d(TAG, direction + "- Y=" + mYPercentOffset);
-            return 0.5f - mYPercentOffset;
+            return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mYPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(EAST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_EAST)) {
-            return mYPercentOffset;
+            return mPercentOffsetNSEW;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;

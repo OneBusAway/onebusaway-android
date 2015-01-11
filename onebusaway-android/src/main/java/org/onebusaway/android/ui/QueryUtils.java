@@ -27,8 +27,8 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 /**
  * Utilities mainly to support queries for the Stops and Routes lists
@@ -154,7 +154,7 @@ public final class QueryUtils {
             int[] to = new int[]{
                     R.id.stop_name,
                     R.id.direction,
-                    R.id.stop_name
+                    R.id.stop_favorite
             };
             SimpleCursorAdapter simpleAdapter =
                     new SimpleCursorAdapter(context, R.layout.stop_list_item, null, from, to, 0);
@@ -164,10 +164,12 @@ public final class QueryUtils {
             simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
                 public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                     if (columnIndex == Columns.COL_FAVORITE) {
-                        TextView favorite = (TextView) view.findViewById(R.id.stop_name);
-                        int icon = (cursor.getInt(columnIndex) == 1)
-                                ? R.drawable.ic_toggle_star : 0;
-                        favorite.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+                        ImageView favorite = (ImageView) view.findViewById(R.id.stop_favorite);
+                        if (cursor.getInt(columnIndex) == 1) {
+                            favorite.setVisibility(View.VISIBLE);
+                        } else {
+                            favorite.setVisibility(View.GONE);
+                        }
                         return true;
                     } else if (columnIndex == Columns.COL_DIRECTION) {
                         UIHelp.setStopDirection(view.findViewById(R.id.direction),

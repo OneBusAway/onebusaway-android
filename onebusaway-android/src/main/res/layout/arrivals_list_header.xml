@@ -36,6 +36,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:scaleType="fitCenter"
+                android:maxHeight="30dp"
+                android:maxWidth="30dp"
                 android:adjustViewBounds="true"
                 android:paddingLeft="1dp"
                 android:paddingRight="1dp"

@@ -406,7 +406,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             x1 = mPx;
             y1 = 0;
 
-            float sideLength = (mArrowHeightPx / (float) Math.sin(45));
+            // Pythagorean theorem
+            float sideLength = (float) Math.sqrt(
+                    (mArrowHeightPx * mArrowHeightPx) + (mArrowWidthPx / 2) * (mArrowWidthPx / 2));
 
             // lower left
             x2 = mPx - sideLength;

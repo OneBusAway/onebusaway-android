@@ -327,10 +327,10 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_EAST)) {
-            directionAngle = 0f;  // Arrow is drawn pointing NE, so no rotation
-            // TODO - this is close, but polish it up
-            float bufferMultiplier = 0.1f;
-            bm = Bitmap.createBitmap((int) (mPx + mBuffer * bufferMultiplier),
+            directionAngle = 45f;  // Arrow is drawn pointing N
+            // TODO - still need to tweak this, remove multiplier here in favor of overall strategy
+            float bufferMultiplier = 0.8f;
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer * bufferMultiplier), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
@@ -340,7 +340,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                     new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // No rotation for NE, but set values anyway
+            // Middle of image
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else {
@@ -366,7 +366,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         float x3, y3; // cutout in arrow bottom
         float x4, y4; // lower right
 
-        if (direction.equals(NORTH) || direction.equals(SOUTH)) {
+        if (direction.equals(NORTH) || direction.equals(SOUTH) || direction.equals(NORTH_EAST)) {
             // Arrow is drawn pointing NORTH
             // Tip of arrow
             x1 = mPx / 2;
@@ -401,26 +401,23 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             x4 = mArrowHeightPx;
             y4 = (mPx / 2) + (mArrowWidthPx / 2);
         } else {
-            // Below arrow is drawn pointing NE
+            // TODO - fix other directions - for now just draw arrow pointing N
+            // Arrow is drawn pointing NORTH
             // Tip of arrow
-            x1 = mPx;
+            x1 = mPx / 2;
             y1 = 0;
 
-            // Pythagorean theorem
-            float sideLength = (float) Math.sqrt(
-                    (mArrowHeightPx * mArrowHeightPx) + (mArrowWidthPx / 2) * (mArrowWidthPx / 2));
-
             // lower left
-            x2 = mPx - sideLength;
-            y2 = 0;
+            x2 = (mPx / 2) - (mArrowWidthPx / 2);
+            y2 = mArrowHeightPx;
 
-            // TODO - cutout in arrow bottom
-            x3 = mPx - sideLength;
-            y3 = 0;
+            // cutout in arrow bottom
+            x3 = mPx / 2;
+            y3 = mArrowHeightPx - CUTOUT_HEIGHT;
 
             // lower right
-            x4 = mPx;
-            y4 = sideLength;
+            x4 = (mPx / 2) + (mArrowWidthPx / 2);
+            y4 = mArrowHeightPx;
         }
 
         path.setFillType(Path.FillType.EVEN_ODD);

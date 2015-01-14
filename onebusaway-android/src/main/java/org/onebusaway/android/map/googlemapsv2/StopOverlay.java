@@ -299,19 +299,19 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_EAST)) {
-            // TODO - fix this for SE
-            directionAngle = 135f;
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mArrowHeightPx), Bitmap.Config.ARGB_8888);
+            directionAngle = 135f;  // Arrow is drawn N, rotate 135 degrees
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
+                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
+            shape.setBounds(0, 0, mPx, mPx);
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - mBuffer,
+                            bm.getHeight() - mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
+            // Rotate around below coordinates
+            rotationX = (mPx + mBuffer / 2) / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(EAST)) {
             directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
@@ -364,7 +364,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         float x3, y3; // cutout in arrow bottom
         float x4, y4; // lower right
 
-        if (direction.equals(NORTH) || direction.equals(SOUTH) || direction.equals(NORTH_EAST)) {
+        if (direction.equals(NORTH) || direction.equals(SOUTH) ||
+                direction.equals(NORTH_EAST) || direction.equals(SOUTH_EAST)) {
             // Arrow is drawn pointing NORTH
             // Tip of arrow
             x1 = mPx / 2;
@@ -458,7 +459,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(EAST)) {
             return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(NORTH_EAST)) {
@@ -492,7 +493,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         } else if (direction.equals(SOUTH)) {
             return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f - mPercentOffsetNSEW;
         } else if (direction.equals(EAST)) {
             // Middle of icon
             return 0.5f;

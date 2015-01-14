@@ -335,7 +335,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth(), 0, bm.getWidth() - mBuffer, mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
             // Rotate around middle of circle

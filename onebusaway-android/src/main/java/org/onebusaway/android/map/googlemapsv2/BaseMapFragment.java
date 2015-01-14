@@ -140,6 +140,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
 
+    private int mLineWidth;
+
     // We have to convert from LatLng to Location, so hold references to both
     private LatLng mCenter;
 
@@ -197,6 +199,8 @@ public class BaseMapFragment extends SupportMapFragment
         } else {
             MapHelpV2.promptUserInstallGoogleMaps(getActivity());
         }
+
+        mLineWidth = v.getResources().getDimensionPixelSize(R.dimen.map_route_line_width);
 
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create();
@@ -708,6 +712,7 @@ public class BaseMapFragment extends SupportMapFragment
             for (ObaShape s : shapes) {
                 lineOptions = new PolylineOptions();
                 lineOptions.color(lineOverlayColor);
+                lineOptions.width(mLineWidth);
 
                 for (Location l : s.getPoints()) {
                     lineOptions.add(MapHelpV2.makeLatLng(l));

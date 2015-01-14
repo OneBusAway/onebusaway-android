@@ -57,4 +57,7 @@
     <dimen name="map_stop_shadow_size_4">20dp</dimen>
     <dimen name="map_stop_shadow_size_5">21dp</dimen>
     <dimen name="map_stop_shadow_size_6">22dp</dimen>
+
+    <!-- Route lines -->
+    <dimen name="map_route_line_width">5dp</dimen>
 </resources>

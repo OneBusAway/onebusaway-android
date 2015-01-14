@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
@@ -23,7 +22,7 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.core.GoogleApiHelper;
+import org.onebusaway.android.GoogleApiHelper;
 import org.onebusaway.android.core.StarredStops;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;

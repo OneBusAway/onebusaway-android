@@ -1,4 +1,4 @@
-package org.onebusaway.android.core;
+package org.onebusaway.android;
 
 import android.content.Context;
 import android.os.Bundle;

@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.wearable.view.WearableListView;
 import android.util.Log;
-import android.view.View;
 
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -18,13 +17,13 @@ import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.core.GoogleApiHelper;
 import org.onebusaway.android.core.StarredStops;
 import org.onebusaway.android.core.StopData;
+import org.onebusaway.android.util.GoogleApiHelper;
+import org.onebusaway.android.util.StopDataUtil;
 
 import java.util.ArrayList;
 
@@ -111,7 +110,7 @@ public class MainActivity extends Activity implements GoogleApiHelper.OnConnecti
         Log.d(TAG, "updateStarredStops");
         ArrayList<DataMap> stopDataMaps = dataMap.getDataMapArrayList(StarredStops.DATA_MAP_KEY_STARRED_STOPS_LIST);
         for(int i = 0; i < stopDataMaps.size(); i++) {
-            StopData updatedStop = new StopData(stopDataMaps.get(i));
+            StopData updatedStop = StopDataUtil.toDataMap(stopDataMaps.get(i));
             updateStop(updatedStop);
             Log.d(TAG, "updateStarredStops::" + stops.get(i).getUiName());
         }

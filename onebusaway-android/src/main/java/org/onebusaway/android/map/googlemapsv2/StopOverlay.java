@@ -271,7 +271,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             rotationX = bm.getHeight() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_WEST)) {
-            directionAngle = 225f;  // Arrow is drawn N, rotate -135 degrees
+            directionAngle = 225f;  // Arrow is drawn N, rotate 225 degrees
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);

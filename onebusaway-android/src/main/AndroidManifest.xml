@@ -128,7 +128,7 @@
                 android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value=".HomeActivity"/>
+                    android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
         <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>

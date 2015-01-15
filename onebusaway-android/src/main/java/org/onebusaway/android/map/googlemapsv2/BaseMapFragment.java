@@ -142,6 +142,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     private int mLineWidth;
 
+    private int mRoutePadding;
+
     // We have to convert from LatLng to Location, so hold references to both
     private LatLng mCenter;
 
@@ -201,6 +203,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         mLineWidth = v.getResources().getDimensionPixelSize(R.dimen.map_route_line_width);
+        mRoutePadding = v.getResources().getDimensionPixelSize(R.dimen.map_route_padding);
 
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create();
@@ -733,8 +736,7 @@ public class BaseMapFragment extends SupportMapFragment
                 }
             }
 
-            int padding = 0;
-            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), mRoutePadding)));
         }
     }
 

@@ -60,4 +60,5 @@
 
     <!-- Route lines -->
     <dimen name="map_route_line_width">5dp</dimen>
+    <dimen name="map_route_padding">16dp</dimen>
 </resources>

@@ -734,7 +734,7 @@ public class BaseMapFragment extends SupportMapFragment
             }
 
             int padding = 0;
-            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
         }
     }
 

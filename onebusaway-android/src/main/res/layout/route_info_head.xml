@@ -25,7 +25,8 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_column="0"
-                android:singleLine="false">
+                android:singleLine="false"
+                android:padding="10dp">
         </TextView>
         <LinearLayout
                 android:orientation="vertical"

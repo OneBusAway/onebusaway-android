@@ -110,7 +110,8 @@
     <style name="RouteInfoShortName">
         <item name="android:textSize">45sp</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:paddingRight">5dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
     </style>
     <style name="RouteInfoLongName">
         <item name="android:textColor">@android:color/white</item>

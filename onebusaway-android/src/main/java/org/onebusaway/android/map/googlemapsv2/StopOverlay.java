@@ -99,7 +99,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     // % offset used to position the stop icon for N, S, E, and W
 
     private static Paint mArrowPaintStroke;
-            // Stroke color used for outline of directional arrows on stops
+    // Stroke color used for outline of directional arrows on stops
 
     OnFocusChangedListener mOnFocusChangedListener;
 
@@ -170,9 +170,6 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         mArrowWidthPx = mPx / 2f; // half the stop icon size
         mArrowHeightPx = mPx / 3f; // 1/3 the stop icon size
         float arrowSpacingReductionPx = mPx / 10f;
-        Log.d(TAG, "arrow height = " + mArrowHeightPx);
-        Log.d(TAG, "arrow width = " + mArrowWidthPx);
-
         mBuffer = mArrowHeightPx - arrowSpacingReductionPx;
 
         // Set offset used to position the image for N, S, E, and W Markers (see getX/YPercentOffsetForDirection())
@@ -722,9 +719,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
          */
         private void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
             Marker m = mMap.addMarker(new MarkerOptions()
-                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
-                    .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
-                    .flat(true)
+                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                            .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
+                            .flat(true)
                             .anchor(getXPercentOffsetForDirection(stop.getDirection()),
                                     getYPercentOffsetForDirection(stop.getDirection()))
             );

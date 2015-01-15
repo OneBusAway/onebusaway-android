@@ -32,7 +32,7 @@
     <item android:id="@+id/toggle_favorite"
           android:title="@string/stop_info_option_addstar"
           android:icon="@drawable/ic_menu_star"/>
-    <item android:id="@+id/report_problem"
-          android:title="@string/stop_info_option_reportproblem"
+    <item android:id="@+id/report_stop_problem"
+          android:title="@string/stop_info_option_report_problem"
           android:icon="@drawable/ic_menu_report_problem"/>
 </menu>

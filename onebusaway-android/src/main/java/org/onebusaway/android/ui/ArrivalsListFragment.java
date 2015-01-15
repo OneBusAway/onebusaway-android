@@ -532,7 +532,7 @@ public class ArrivalsListFragment extends ListFragment
             if (mHeader != null) {
                 mHeader.refresh();
             }
-        } else if (id == R.id.report_problem) {
+        } else if (id == R.id.report_stop_problem) {
             if (mStop != null) {
                 ReportStopProblemFragment.show(
                         (android.support.v7.app.ActionBarActivity) getActivity(), mStop);

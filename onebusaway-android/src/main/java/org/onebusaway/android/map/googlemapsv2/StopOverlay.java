@@ -95,8 +95,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
     private static float mBuffer = 0;  // Add this to the icon size to get the Bitmap size
 
-    private static float mPercentOffsetNSEW = 0.5f;
-    // % offset used to position the stop icon for N, S, E, and W
+    private static float mPercentOffset = 0.5f;
+    // % offset to position the stop icon, so the selection marker hits the middle of the circle
 
     private static Paint mArrowPaintStroke;
     // Stroke color used for outline of directional arrows on stops
@@ -172,8 +172,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         float arrowSpacingReductionPx = mPx / 10f;
         mBuffer = mArrowHeightPx - arrowSpacingReductionPx;
 
-        // Set offset used to position the image for N, S, E, and W Markers (see getX/YPercentOffsetForDirection())
-        mPercentOffsetNSEW = (mBuffer / (mPx + mBuffer)) * 0.5f;
+        // Set offset used to position the image for markers (see getX/YPercentOffsetForDirection())
+        // This allows the current selection marker to land on the middle of the stop marker circle
+        mPercentOffset = (mBuffer / (mPx + mBuffer)) * 0.5f;
 
         mArrowPaintStroke = new Paint();
         mArrowPaintStroke.setColor(Color.WHITE);
@@ -429,20 +430,20 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_WEST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(WEST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(SOUTH_WEST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(SOUTH)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_EAST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(EAST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(NORTH_EAST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;
@@ -461,23 +462,23 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
      */
     private static float getYPercentOffsetForDirection(String direction) {
         if (direction.equals(NORTH)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(NORTH_WEST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(WEST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_WEST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(SOUTH)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(SOUTH_EAST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(EAST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_EAST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;

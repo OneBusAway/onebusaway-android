@@ -497,6 +497,12 @@ public class ArrivalsListFragment extends ListFragment
         menu.findItem(R.id.toggle_favorite)
                 .setTitle(title)
                 .setTitleCondensed(title);
+        if (mExternalHeader) {
+            // If we're using an external header, it means that this fragment is being shown
+            // in the bottom sliding panel, and therefore the map is already visible.
+            // So, we can remove the "Show Map" option
+            menu.findItem(R.id.show_on_map).setVisible(false);
+        }
     }
 
     @Override

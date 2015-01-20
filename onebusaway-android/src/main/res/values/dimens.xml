@@ -52,7 +52,7 @@
     <!-- Shadows, map stop icon -->
     <dimen name="map_stop_shadow_size_1">@dimen/map_stop_icon_size</dimen>
     <dimen name="map_stop_shadow_size_2">@dimen/map_stop_icon_size</dimen>
-    <!-- Below shadow sizes should each increment fab_size by 1, to form incremental shadows -->
+    <!-- Below shadow sizes should each increment map_stop_icon_size by 1, to form incremental shadows -->
     <dimen name="map_stop_shadow_size_3">19dp</dimen>
     <dimen name="map_stop_shadow_size_4">20dp</dimen>
     <dimen name="map_stop_shadow_size_5">21dp</dimen>

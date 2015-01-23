@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
@@ -225,6 +226,17 @@ public class TripInfoActivity extends SherlockFragmentActivity {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+        }
+
+        @Override
+        public void onStart() {
+            ObaAnalytics.reportActivityStart(getActivity());
+            super.onStart();
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
         }
 
         private boolean initFromBundle(Bundle bundle) {

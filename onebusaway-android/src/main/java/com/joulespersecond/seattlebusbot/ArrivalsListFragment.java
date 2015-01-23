@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.DialogFragment;
@@ -35,6 +36,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -43,6 +45,7 @@ import android.widget.Toast;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.elements.ObaRoute;
@@ -220,6 +223,24 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
         return new ArrivalsListLoader(getActivity(), mStopId);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
+
+        if (Build.VERSION.SDK_INT >= 14) {
+            AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
+                    getActivity().ACCESSIBILITY_SERVICE);
+
+            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+            if (isTalkBackEnabled)
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                        getString(R.string.analytics_action_touch_exploration),
+                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                                + " using TalkBack");
+        }
     }
 
     //
@@ -519,6 +540,12 @@ public class ArrivalsListFragment extends ListFragment
         // Apparently we can't rely on onPrepareOptionsMenu to set the
         // menus like we did before...
         getActivity().supportInvalidateOptionsMenu();
+
+        //Analytics
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getString(R.string.analytics_action_edit_field),
+                getString(R.string.analytics_label_edit_field));
+
         return mFavorite;
     }
 
@@ -670,6 +697,11 @@ public class ArrivalsListFragment extends ListFragment
         getArrivalsLoader().incrementMinutesAfter();
         mLoadedMoreArrivals = true;
         refresh();
+
+        //Analytics
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getActivity().getString(R.string.analytics_action_button_press),
+                getActivity().getString(R.string.analytics_label_button_press));
     }
 
     //

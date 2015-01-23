@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Brian Ferris (bdferris@onebusaway.org)
+ * Copyright (C) 2010-2015 Brian Ferris (bdferris@onebusaway.org), University of South Florida
  * and individual contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@ package com.joulespersecond.seattlebusbot;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.actionbarsherlock.view.Window;
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
@@ -39,6 +41,8 @@ public class PreferencesActivity extends SherlockPreferenceActivity
     Preference regionPref;
 
     Preference customApiUrlPref;
+
+    Preference analyticsPref;
 
     boolean autoSelectInitialValue;
     //Save initial value so we can compare to current value in onDestroy()
@@ -62,6 +66,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         customApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
         customApiUrlPref.setOnPreferenceChangeListener(this);
 
+        analyticsPref = findPreference(getString(R.string.preferences_key_analytics));
+        analyticsPref.setOnPreferenceChangeListener(this);
+
         SharedPreferences settings = Application.getPrefs();
         autoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
@@ -77,6 +84,17 @@ public class PreferencesActivity extends SherlockPreferenceActivity
         super.onResume();
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     /**
@@ -129,6 +147,9 @@ public class PreferencesActivity extends SherlockPreferenceActivity
                 }
                 NavHelp.goHome(this);
             }
+        } else if (preference.equals(analyticsPref) && newValue instanceof Boolean) {
+            Boolean isAnalyticsActive = (Boolean) newValue;
+            GoogleAnalytics.getInstance(this).setAppOptOut(!isAnalyticsActive);
         }
         return true;
     }
@@ -174,12 +195,25 @@ public class PreferencesActivity extends SherlockPreferenceActivity
             task.execute();
 
             // Wait to change the region preference description until the task callback
+
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_experimental) + experimentalServers);
         } else if (key.equals(getString(R.string.preference_key_oba_api_url))) {
             // Change the region preference description to show we're not using a region
             changePreferenceSummary(key);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             // Change the preferred units description
             changePreferenceSummary(key);
+        }else if (key.equalsIgnoreCase(getString(R.string.preference_key_auto_select_region))){
+            //Analytics
+            boolean autoSelect = settings
+                    .getBoolean(getString(R.string.preference_key_auto_select_region), false);
+
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_auto) + autoSelect);
         }
     }
 

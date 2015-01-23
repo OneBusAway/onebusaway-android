@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  * and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import com.google.android.maps.OverlayItem;
 
 import com.actionbarsherlock.app.SherlockMapActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaReferences;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
@@ -53,12 +54,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ZoomControls;
@@ -246,6 +249,16 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         if (mLocationClient != null && !mLocationClient.isConnected()) {
             mLocationClient.connect();
         }
+        ObaAnalytics.reportActivityStart(this);
+        if (Build.VERSION.SDK_INT >= 14) {
+            AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+            if (isTalkBackEnabled)
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                        getString(R.string.analytics_action_touch_exploration),
+                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                                + " using TalkBack");
+        }
     }
 
     @Override
@@ -262,9 +275,17 @@ abstract public class BaseMapActivity extends SherlockMapActivity
         final int id = item.getItemId();
         if (id == R.id.my_location) {
             setMyLocation();
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_location));
             return true;
         } else if (id == R.id.search) {
             onSearchRequested();
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_search_box));
             return true;
         }
         return false;

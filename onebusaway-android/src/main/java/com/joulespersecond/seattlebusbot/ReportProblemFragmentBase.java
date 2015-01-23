@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.request.ObaResponse;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
@@ -116,6 +117,9 @@ public abstract class ReportProblemFragmentBase extends SherlockFragment
     protected void sendReport() {
         UIHelp.showProgress(this, true);
         getLoaderManager().restartLoader(REPORT_LOADER, getArguments(), this);
+
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
     }
 
     @Override

@@ -24,6 +24,7 @@ import android.support.v4.app.FragmentManager;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
@@ -54,6 +55,17 @@ public class RouteInfoActivity extends SherlockFragmentActivity {
 
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override

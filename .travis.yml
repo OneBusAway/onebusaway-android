@@ -1,3 +1,6 @@
+# Test format changes to this .travis.yml file before submitting a PR with:
+# http://lint.travis-ci.org/OneBusAway/onebusaway-android
+
 language: android
 jdk: oraclejdk7
 # Turn off caching to avoid any caching problems

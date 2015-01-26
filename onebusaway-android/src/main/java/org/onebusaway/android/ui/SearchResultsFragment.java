@@ -216,7 +216,6 @@ public class SearchResultsFragment extends ListFragment
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-                        // TODO - Pass in a route mapping?  Can we get away with just a stopId here?
                         ArrivalsListActivity.start(getActivity(), stop.getId());
                         break;
                     case 1:

@@ -2,6 +2,11 @@ language: android
 jdk: oraclejdk7
 env:
   global:
+    # Turn off caching to avoid caching problems
+      - cache: false
+    # Use the Travis Container-Based Infrastructure (see #203)
+      - sudo: false
+    # Android properties
     - ANDROID_API_LEVEL=21
     - ANDROID_BUILD_TOOLS_VERSION=21.1.2
     - ANDROID_ABI=armeabi-v7a

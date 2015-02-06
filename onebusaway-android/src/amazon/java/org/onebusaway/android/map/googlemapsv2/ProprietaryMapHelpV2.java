@@ -9,7 +9,7 @@ import android.content.Context;
 /**
  * Helper methods specific to Amazon Maps API v2
  */
-public class AmazonMapHelpV2 {
+public class ProprietaryMapHelpV2 {
 
     public static boolean isGoogleMapsInstalled(Context context) {
         int resultCode = AmazonMapsRuntimeUtil

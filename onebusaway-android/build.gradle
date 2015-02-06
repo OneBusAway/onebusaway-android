@@ -61,23 +61,20 @@ android {
          * versions.
          */
         google {
-            // Normal OBA Google Play release - see src/google
+            // Normal Google Play release - see src/google
         }
 
         amazon {
             /**
              * Amazon Fire Phone - see src/amazon
+             *
              * If changes are made to classes in src/google/java/org/onebusaway/android/map package,
              * the same classes should be copied to src/amazon/java/org/onebusaway/android/map
              * package.  Then, the Google classes should be replaced with equivalent Amazon
              * classes as specified in http://bit.ly/AmazonMapsMigration.
              *
-             * NOTE:  When doing this copying, do not overwrite the bottom two methods of the
-             * MapHelpV2:
-             *  * isGoogleMapsInstalled()
-             *  * promptUserInstallGoogleMaps()
-             *
-             * These MUST point to the methods of the same name in the AmazonMapHelpV2 class.
+             * NOTE:  When doing this copying, ProprietaryMapHelpV2 should not need to be copied.
+             * It's specific to each platform.
              */
         }
     }

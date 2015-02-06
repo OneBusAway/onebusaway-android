@@ -110,21 +110,16 @@ public class MapHelpV2 {
     }
 
     /**
-     * If copying new code into this class from the default "google" build flavor, the
-     * below two methods should not be overwritten - they should point to AmazonMapHelpV2
-     */
-
-    /**
      * Returns true if Android Maps V2 is installed, false if it is not
      */
     public static boolean isGoogleMapsInstalled(Context context) {
-        return AmazonMapHelpV2.isGoogleMapsInstalled(context);
+        return ProprietaryMapHelpV2.isGoogleMapsInstalled(context);
     }
 
     /**
      * Prompts the user to install Android Maps V2
      */
     public static void promptUserInstallGoogleMaps(final Context context) {
-        AmazonMapHelpV2.promptUserInstallGoogleMaps(context);
+        ProprietaryMapHelpV2.promptUserInstallGoogleMaps(context);
     }
 }

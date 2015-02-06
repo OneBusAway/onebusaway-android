@@ -19,13 +19,15 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0'
+        classpath 'com.amazon.device.tools.build:gradle:1.0.0'
     }
 }
 apply plugin: 'com.android.application'
 
 repositories {
     jcenter()
+    mavenLocal()
+    mavenCentral()
     maven {
         // CUTR SNAPSHOTs
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
@@ -51,6 +53,33 @@ android {
         targetSdkVersion 21
         versionCode 38
         versionName "1.7.2"
+    }
+
+    productFlavors {
+        /**
+         * Currently build flavors are used to manage Maps API v2 dependencies for Google/Amazon
+         * versions.
+         */
+        google {
+            // Normal OBA Google Play release - see src/google
+        }
+
+        amazon {
+            /**
+             * Amazon Fire Phone - see src/amazon
+             * If changes are made to classes in src/google/java/org/onebusaway/android/map package,
+             * the same classes should be copied to src/amazon/java/org/onebusaway/android/map
+             * package.  Then, the Google classes should be replaced with equivalent Amazon
+             * classes as specified in http://bit.ly/AmazonMapsMigration.
+             *
+             * NOTE:  When doing this copying, do not overwrite the bottom two methods of the
+             * MapHelpV2:
+             *  * isGoogleMapsInstalled()
+             *  * promptUserInstallGoogleMaps()
+             *
+             * These MUST point to the methods of the same name in the AmazonMapHelpV2 class.
+             */
+        }
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
@@ -125,4 +154,6 @@ dependencies {
     compile 'com.sothree.slidinguppanel:library:2.0.3'
     // For sorting alphanumeric route names
     compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
+    // Only used on Amazon devices via amazon build flavor
+    amazonCompile('com.amazon.android:amazon-maps-api:2.0')
 }

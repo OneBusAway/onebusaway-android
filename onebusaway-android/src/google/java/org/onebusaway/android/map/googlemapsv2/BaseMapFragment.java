@@ -16,12 +16,7 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -47,6 +42,7 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.UIHelp;
 
 import android.content.Context;
@@ -64,9 +60,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
-
-
 /**
  * The MapFragment class is split into two basic modes:
  * stop mode and route mode. It needs to be able to switch
@@ -80,14 +73,12 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
  * Everything else is handed off to a specific
  * MapFragmentController instance.
  *
- * @author paulw
+ * @author paulw, barbeau
  */
 public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
-        LocationSource, LocationListener, GoogleMap.OnCameraChangeListener,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
+        LocationSource, LocationHelper.Listener, GoogleMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";
@@ -104,18 +95,6 @@ public class BaseMapFragment extends SupportMapFragment
     private static final int CAMERA_MOVE_NOTIFY_THRESHOLD_MS = 500;
 
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
-
-    private static final int MILLISECONDS_PER_SECOND = 1000;
-
-    public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
-
-    private static final long UPDATE_INTERVAL =
-            MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS;
-
-    private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
-
-    private static final long FASTEST_INTERVAL =
-            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
 
     private GoogleMap mMap;
 
@@ -140,19 +119,10 @@ public class BaseMapFragment extends SupportMapFragment
 
     private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
 
-    private int mLineWidth;
-
-    private int mRoutePadding;
-
     // We have to convert from LatLng to Location, so hold references to both
     private LatLng mCenter;
 
     private Location mCenterLocation;
-
-    /**
-     * GoogleApiClient being used for Location Services
-     */
-    protected GoogleApiClient mGoogleApiClient;
 
     private OnLocationChangedListener mListener;
 
@@ -163,6 +133,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     // Listen to map tap events
     OnFocusChangedListener mOnFocusChangedListener;
+
+    LocationHelper locationHelper;
 
     public interface OnFocusChangedListener {
 
@@ -202,17 +174,8 @@ public class BaseMapFragment extends SupportMapFragment
             MapHelpV2.promptUserInstallGoogleMaps(getActivity());
         }
 
-        mLineWidth = v.getResources().getDimensionPixelSize(R.dimen.map_route_line_width);
-        mRoutePadding = v.getResources().getDimensionPixelSize(R.dimen.map_route_padding);
-
-        // Create the LocationRequest object
-        mLocationRequest = LocationRequest.create();
-        // Use high accuracy
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // Set the update interval to 5 seconds
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        // Set the fastest update interval to 1 second
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+        locationHelper = new LocationHelper(getActivity());
+        locationHelper.registerListener(this);
 
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
@@ -224,17 +187,6 @@ public class BaseMapFragment extends SupportMapFragment
                 args = new Bundle();
             }
             initMap(args);
-        }
-
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
-                == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
-            mGoogleApiClient.connect();
         }
 
         return v;
@@ -260,6 +212,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onPause() {
+        locationHelper.onPause();
         if (mController != null) {
             mController.onPause();
         }
@@ -270,6 +223,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onResume() {
+        locationHelper.onResume();
         mRunning = true;
 
         if (mController != null) {
@@ -277,25 +231,6 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         super.onResume();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
     }
 
     @Override
@@ -715,7 +650,6 @@ public class BaseMapFragment extends SupportMapFragment
             for (ObaShape s : shapes) {
                 lineOptions = new PolylineOptions();
                 lineOptions.color(lineOverlayColor);
-                lineOptions.width(mLineWidth);
 
                 for (Location l : s.getPoints()) {
                     lineOptions.add(MapHelpV2.makeLatLng(l));
@@ -736,7 +670,8 @@ public class BaseMapFragment extends SupportMapFragment
                 }
             }
 
-            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), mRoutePadding)));
+            int padding = 0;
+            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
         }
     }
 
@@ -769,32 +704,6 @@ public class BaseMapFragment extends SupportMapFragment
         if (mController != null) {
             mController.notifyMapChanged();
         }
-    }
-
-    /*
-     * Called by Location Services when the request to connect the
-     * client finishes successfully. At this point, you can
-     * request the current location or start periodic updates
-     */
-    @Override
-    public void onConnected(Bundle dataBundle) {
-        Log.d(TAG, "Location Services connected");
-        // Request location updates
-        FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d(TAG, "Location Services connection failed");
-    }
-
-    /*
-     * Called by Location Services if the connection to the
-     * location client drops because of an error.
-     */
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d(TAG, "Location Services disconnected");
     }
 
     /**

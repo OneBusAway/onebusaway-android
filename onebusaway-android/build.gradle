@@ -27,7 +27,6 @@ apply plugin: 'com.android.application'
 repositories {
     jcenter()
     mavenLocal()
-    mavenCentral()
     maven {
         // CUTR SNAPSHOTs
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"

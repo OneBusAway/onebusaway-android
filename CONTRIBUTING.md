@@ -52,11 +52,12 @@ If you can, please submit a pull request with the fix or improvements including 
 1. Fork the project on GitHub
 2. Create a feature branch
 3. Write tests and code
-4. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
-5. If you have multiple commits please combine them into one commit by [squashing them](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits)
-6. Push the commit to your fork
-7. Submit a pull request with a motive for your change and the method you used to achieve it
-8. [Search for issues](https://github.com/OneBusAway/onebusaway-android/search?q=&ref=cmdform&type=Issues) related to your pull request and mention them in the pull request description or comments
+4. Run the unit tests with `gradlew connectedCheck` to make sure you didn't break anything
+5. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
+6. If you have multiple commits please combine them into one commit by [squashing them](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits)
+7. Push the commit to your fork
+8. Submit a pull request with a motive for your change and the method you used to achieve it
+9. [Search for issues](https://github.com/OneBusAway/onebusaway-android/search?q=&ref=cmdform&type=Issues) related to your pull request and mention them in the pull request description or comments
 
 We will accept pull requests if:
 

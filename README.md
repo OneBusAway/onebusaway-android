@@ -25,6 +25,7 @@ also mention how you would build/run the **amazon** flavor.
 ### Prerequisites for both Android Studio and Gradle
 
 1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
+2. If you want to build the Amazon flavor, you need to have [Apache Maven](http://maven.apache.org/download.cgi) installed.  Then, from the root directory of the project run `mvn install:install-file -Dfile=libs/amazon-maps-api-v2.aar -DpomFile=libs/amazon-maps-api-v2.pom` to install the Amazon Maps API v2 library.
 
 ### Building in Android Studio
 

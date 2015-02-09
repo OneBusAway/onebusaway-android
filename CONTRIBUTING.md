@@ -54,7 +54,7 @@ If you can, please submit a pull request with the fix or improvements including 
 3. Write tests and code
 4. Run the unit tests with `gradlew connectedCheck` to make sure you didn't break anything
 5. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
-6. If you have multiple commits please combine them into one commit by [squashing them](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits)
+6. If you have multiple commits please combine them into one commit by squashing them.  See [this article](http://eli.thegreenplace.net/2014/02/19/squashing-github-pull-requests-into-a-single-commit) and [this Git documentation](http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits) for instructions.
 7. Push the commit to your fork
 8. Submit a pull request with a motive for your change and the method you used to achieve it
 9. [Search for issues](https://github.com/OneBusAway/onebusaway-android/search?q=&ref=cmdform&type=Issues) related to your pull request and mention them in the pull request description or comments

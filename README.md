@@ -72,6 +72,17 @@ We welcome contributions to the project! Please see our [Contributing Guide](htt
 
 ## Troubleshooting
 
+### When running the project, I get a NullPointerException in `BaseMapFragment`, related to `mMap`
+
+You're most likely trying to run the `amazon` build variant on an Google Android device, or the `google` build flavor on an Amazon device.
+
+Please be sure to select the correct build flavor for your device/emulator when running the project:
+
+* In Android Studio, you'll see a "Build Variant" button on the very left side of the screen, collapsed in the dock.  Click on this, and select either `googleDebug` for Google devices, or `amazonDebug` for Amazon devices.
+* From the command line, run `gradlew installGoogleDebug` for Google devices, or `gradlew installAmazonDebug` for Amazon devices.
+
+See the documentation at the top of the readme for more information on building via Android Studio or the command line.
+
 ### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."
 
 If you're using Android Studio v0.4.2 or lower, when importing, please be sure to select the `settings.gradle` file in the root, **NOT** the project directory.

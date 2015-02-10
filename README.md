@@ -6,7 +6,9 @@ OneBusAway for Android provides:
 
 1. Real-time bus arrival information for public transit
 2. A browse-able map of nearby stops
-3. The ability to search for nearby stops or routes
+3. A list of favorite bus stops
+4. Reminders to notify you when your bus is arriving
+5. The ability to search for nearby stops or routes
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's Main Menu for any stop or route you choose.
 

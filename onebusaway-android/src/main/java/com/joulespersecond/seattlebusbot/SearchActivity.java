@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import android.support.v4.app.FragmentTransaction;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 
@@ -36,6 +37,17 @@ public class SearchActivity extends SherlockFragmentActivity {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         UIHelp.setupActionBar(this);
         handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override
@@ -62,6 +74,11 @@ public class SearchActivity extends SherlockFragmentActivity {
             finish();
             */
         } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_search_button));
+
             // handles a search query
             String query = intent.getStringExtra(SearchManager.QUERY);
             doSearch(query);

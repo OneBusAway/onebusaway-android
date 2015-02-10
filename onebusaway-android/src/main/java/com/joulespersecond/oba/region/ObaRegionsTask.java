@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com) 
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  * and individual contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.BuildConfig;
@@ -161,6 +162,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
                     }
+                    //Analytics
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                            mContext.getString(R.string.analytics_action_configured_region_auto),
+                            mContext.getString(R.string.analytics_label_region_auto)
+                                    + closestRegion.getName() + "; Old Region: null");
                     doCallback(true);
                 } else {
                     //No region has been set, and we couldn't find a usable region based on RegionUtil.isRegionUsable()
@@ -169,12 +175,20 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 }
             } else if (Application.get().getCurrentRegion() != null && closestRegion != null
                     && !Application.get().getCurrentRegion().equals(closestRegion)) {
+                String oldRegionName = Application.get().getCurrentRegion().getName();
                 //User is closer to a different region than the current region, so change to the closest region
                 Application.get().setCurrentRegion(closestRegion);
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Detected closer region '" + closestRegion.getName()
                             + "', changed to this region.");
                 }
+                //Analytics
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                        mContext.getString(R.string.analytics_action_configured_region_auto)
+                        , mContext.getString(R.string.analytics_label_region_auto)
+                                + closestRegion.getName() + "; Old Region: "
+                                + oldRegionName);
+
                 doCallback(true);
             } else {
                 doCallback(false);

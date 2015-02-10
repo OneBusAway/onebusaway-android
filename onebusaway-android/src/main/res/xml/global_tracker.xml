@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ga_trackingId">UA-2423527-17</string>
+
+    <bool name="ga_autoActivityTracking">true</bool>
+    <bool name="ga_reportUncaughtExceptions">true</bool>
+
+    <item
+        name="ga_dispatchPeriod"
+        format="integer"
+        type="integer">120
+    </item>
+
+    <string name="ga_sampleFrequency">90</string>
+    <bool name="ga_anonymizeIp">true</bool>
+    <bool name="ga_dryRun">false</bool>
+    <string name="ga_sampleFrequency">100.0</string>
+    <integer name="ga_sessionTimeout">500</integer>
+
+    <screenName name="com.joulespersecond.seattlebusbot.SearchActivity">
+        SearchActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.HomeActivity">
+        HomeActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.RouteInfoActivity">
+        RouteInfoActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.TripInfoActivity">
+        TripInfoActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.MyStopsActivity">
+        MyStopsActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.ArrivalsListActivity">
+        ArrivalsListActivity
+    </screenName>
+    <screenName name="com.joulespersecond.seattlebusbot.PreferencesActivity">
+        PreferencesActivity
+    </screenName>
+</resources>

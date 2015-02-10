@@ -53,6 +53,13 @@
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_analytics">
+        <CheckBoxPreference
+            android:key="@string/preferences_key_analytics"
+            android:title="@string/preferences_analytics_title"
+            android:summary="@string/preferences_analytics_summary"
+            android:defaultValue="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced">
         <com.joulespersecond.oba.region.ExperimentalRegionsPreference
                 android:title="@string/preferences_experimental_regions_title"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.joulespersecond.seattlebusbot;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.database.Cursor;
@@ -51,6 +52,12 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onStart() {
+        ObaAnalytics.reportFragmentStart(this);
+        super.onStart();
     }
 
     @Override
@@ -99,6 +106,10 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         @Override
         protected void doClear() {
             ObaContract.Stops.markAsFavorite(getActivity(), ObaContract.Stops.CONTENT_URI, false);
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_edit_field),
+                    getString(R.string.analytics_label_edit_field_bookmark_delete));
         }
     }
 }

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
- *
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,12 +24,16 @@ import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.Tracker;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.ObaApi;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.provider.ObaContract.Regions;
 import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
 
 import java.security.MessageDigest;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class Application extends android.app.Application {
@@ -45,6 +48,16 @@ public class Application extends android.app.Application {
 
     private static Application mApp;
 
+    /**
+     * Google analytics tracker configs
+     */
+    public enum TrackerName {
+        APP_TRACKER, // Tracker used only in this app.
+        GLOBAL_TRACKER, // Tracker used by all the apps from a company. eg: roll-up tracking.
+    }
+
+    HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -58,6 +71,9 @@ public class Application extends android.app.Application {
 
         initOba();
         initObaRegion();
+
+        ObaAnalytics.initAnalytics(this);
+        reportAnalytics();
     }
 
     @Override
@@ -151,7 +167,7 @@ public class Application extends android.app.Application {
 
     private static final String HEXES = "0123456789abcdef";
 
-    private static String getHex(byte[] raw) {
+    public static String getHex(byte[] raw) {
         final StringBuilder hex = new StringBuilder(2 * raw.length);
         for (byte b : raw) {
             hex.append(HEXES.charAt((b & 0xF0) >> 4))
@@ -219,5 +235,57 @@ public class Application extends android.app.Application {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
             System.setProperty("http.keepAlive", "false");
         }
+    }
+
+    public synchronized Tracker getTracker(TrackerName trackerId) {
+        if (!mTrackers.containsKey(trackerId)) {
+
+            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+            Tracker t = (trackerId == TrackerName.APP_TRACKER) ? analytics.newTracker(R.xml.app_tracker)
+                    : (trackerId == TrackerName.GLOBAL_TRACKER) ? analytics.newTracker(R.xml.global_tracker)
+                    : analytics.newTracker(R.xml.global_tracker);
+            mTrackers.put(trackerId, t);
+        }
+        return mTrackers.get(trackerId);
+    }
+
+    private void reportAnalytics() {
+        if (getCustomApiUrl() == null && getCurrentRegion() != null) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
+                            + getCurrentRegion().getName());
+        } else {
+            String customUrl = null;
+            MessageDigest digest = null;
+            try {
+                digest = MessageDigest.getInstance("SHA-1");
+                digest.update(getCustomApiUrl().getBytes());
+                customUrl = getString(R.string.analytics_label_custom_url) +
+                        ": " + getHex(digest.digest());
+            } catch (Exception e) {
+                customUrl = Application.get().getString(R.string.analytics_label_custom_url);
+            }
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
+                            + customUrl);
+        }
+
+        if (getCurrentRegion() != null) {
+            Boolean showExperimentalRegions = getCurrentRegion().getExperimental();
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
+                            + (showExperimentalRegions ? "YES" : "NO"));
+        }
+
+        Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
+                Boolean.FALSE);
+        Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
+                Boolean.FALSE);
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_experimental)
+                        + (experimentalRegions ? "YES" : "NO"));
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_region_auto)
+                        + (autoRegion ? "YES" : "NO"));
     }
 }

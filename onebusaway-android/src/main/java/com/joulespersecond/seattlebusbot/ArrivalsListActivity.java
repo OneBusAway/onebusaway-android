@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import android.support.v4.app.FragmentTransaction;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaStop;
 import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
@@ -145,6 +146,17 @@ public class ArrivalsListActivity extends SherlockFragmentActivity {
             }
             ft.commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        ObaAnalytics.reportActivityStart(this);
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override

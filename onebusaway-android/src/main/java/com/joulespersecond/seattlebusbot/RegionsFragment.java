@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.android.gms.location.LocationClient;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsLoader;
 import com.joulespersecond.oba.region.RegionUtils;
@@ -129,6 +130,11 @@ public class RegionsFragment extends ListFragment
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
         }
+
+        //Analytics
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getString(R.string.analytics_action_set_region),
+                getString(R.string.analytics_label_set_region) + region.getName());
 
         NavHelp.goHome(getActivity());
     }

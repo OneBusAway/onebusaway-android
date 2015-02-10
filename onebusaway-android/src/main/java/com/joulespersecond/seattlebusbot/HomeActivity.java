@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2011-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.region.ObaRegionsTask;
 import com.joulespersecond.seattlebusbot.map.MapParams;
@@ -159,6 +160,9 @@ public class HomeActivity extends BaseMapActivity {
         } else if (id == R.id.find_stop) {
             Intent myIntent = new Intent(this, MyStopsActivity.class);
             startActivity(myIntent);
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_star));
             return true;
         } else if (id == R.id.find_route) {
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
@@ -167,15 +171,24 @@ public class HomeActivity extends BaseMapActivity {
         } else if (id == R.id.view_trips) {
             Intent myIntent = new Intent(this, TripListActivity.class);
             startActivity(myIntent);
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_reminders));
             return true;
         } else if (id == R.id.help) {
             showDialog(HELP_DIALOG);
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_help));
             return true;
         } else if (id == R.id.preferences) {
             Intent preferences = new Intent(
                     HomeActivity.this,
                     PreferencesActivity.class);
             startActivity(preferences);
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_settings));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -210,6 +223,9 @@ public class HomeActivity extends BaseMapActivity {
                                             .getTwitterUrl();
                                 }
                                 UIHelp.goToUrl(HomeActivity.this, twitterUrl);
+                                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                        getString(R.string.analytics_action_switch),
+                                        getString(R.string.analytics_label_app_switch));
                                 break;
                             case 1:
                                 AgenciesActivity.start(HomeActivity.this);
@@ -316,6 +332,10 @@ public class HomeActivity extends BaseMapActivity {
         try {
             ctxt.startActivity(Intent.createChooser(send,
                     ctxt.getString(R.string.bug_report_subject)));
+
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_feedback));
         } catch (ActivityNotFoundException e) {
             Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();

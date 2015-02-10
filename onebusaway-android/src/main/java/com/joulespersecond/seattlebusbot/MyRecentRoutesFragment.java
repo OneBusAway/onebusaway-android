@@ -18,6 +18,7 @@ package com.joulespersecond.seattlebusbot;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.provider.ObaContract;
 
 import android.database.Cursor;
@@ -48,11 +49,17 @@ public class MyRecentRoutesFragment extends MyRouteListFragmentBase {
         setHasOptionsMenu(true);
     }
 
+    @Override
+    public void onStart() {
+        ObaAnalytics.reportFragmentStart(this);
+        super.onStart();
+    }
+
     private static final int CONTEXT_MENU_DELETE = 10;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
+                                    ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.add(0, CONTEXT_MENU_DELETE, 0, R.string.my_context_remove_recent);
     }

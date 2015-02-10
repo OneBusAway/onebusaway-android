@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 
 import android.database.Cursor;
@@ -51,6 +52,12 @@ public class MyRecentStopsFragment extends MyStopListFragmentBase {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onStart() {
+        ObaAnalytics.reportFragmentStart(this);
+        super.onStart();
     }
 
     @Override

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
     and individual contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +27,47 @@
     <string name="preference_key_auto_refresh_regions">preference_auto_refresh_regions</string>
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
+    <string name="preferences_key_analytics">preference_google_analytics</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
 
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
+
+    <!-- Oba Analytics Messages -->
+    <string name="analytics_category_custom_region">CUSTOM</string>
+
+    <string name="analytics_action_configured_region">configured_region</string>
+    <string name="analytics_action_configured_region_auto">configured_region_auto</string>
+    <string name="analytics_action_button_press">button_press</string>
+    <string name="analytics_action_set_region">set_region</string>
+    <string name="analytics_action_edit_field">edit_field</string>
+    <string name="analytics_action_edit_general">general</string>
+    <string name="analytics_action_edit_startup">startup</string>
+    <string name="analytics_action_switch">app_switch</string>
+    <string name="analytics_action_problem">report_problem</string>
+    <string name="analytics_action_touch_exploration">touch_exploration_on</string>
+
+    <string name="analytics_label_region">API Region:\u0020</string>
+    <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
+    <string name="analytics_label_button_press">Clicked load more arrivals button</string>
+    <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
+    <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
+    <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
+    <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
+    <string name="analytics_label_button_press_help">Clicked Help Link</string>
+    <string name="analytics_label_button_press_feedback">Clicked Send Feedback Link</string>
+    <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
+    <string name="analytics_label_button_press_search_box">Search box selected</string>
+    <string name="analytics_label_button_press_search_button">Search button clicked</string>
+    <string name="analytics_label_button_press_location">Clicked My Location Button</string>
+    <string name="analytics_label_button_press_experimental">ExperimentalRegionCell:\u0020</string>
+    <string name="analytics_label_experimental">Show Experimental Regions:\u0020</string>
+    <string name="analytics_label_button_press_auto">Set region automatically:\u0020</string>
+    <string name="analytics_label_edit_field">Edited Bookmark</string>
+    <string name="analytics_label_edit_field_bookmark_delete">Edited Bookmark Group Deleted</string>
+    <string name="analytics_label_set_region">Set Region:\u0020</string>
+    <string name="analytics_label_app_switch">Loaded Twitter via Web</string>
+    <string name="analytics_label_report_problem">Reported Problem</string>
+    <string name="analytics_label_talkback">Loaded view:\u0020</string>
+    <string name="analytics_label_custom_url">Custom URL</string>
 </resources>

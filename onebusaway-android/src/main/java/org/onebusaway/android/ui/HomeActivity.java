@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Paul Watts (paulcwatts@gmail.com),
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com),
  * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +15,6 @@
  * limitations under the License.
  */
 package org.onebusaway.android.ui;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapModeController;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.PreferenceHelp;
-import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -63,12 +40,38 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.UIHelp;
+
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -176,9 +179,9 @@ public class HomeActivity extends ActionBarActivity
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -203,9 +206,9 @@ public class HomeActivity extends ActionBarActivity
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -262,6 +265,16 @@ public class HomeActivity extends ActionBarActivity
         if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();
         }
+        ObaAnalytics.reportActivityStart(this);
+        if (Build.VERSION.SDK_INT >= 14) {
+            AccessibilityManager am = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+            Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
+            if (isTalkBackEnabled)
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.ACCESSIBILITY.toString(),
+                        getString(R.string.analytics_action_touch_exploration),
+                        getString(R.string.analytics_label_talkback) + getClass().getSimpleName()
+                                + " using TalkBack");
+        }
     }
 
     @Override
@@ -303,29 +316,47 @@ public class HomeActivity extends ActionBarActivity
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_STARRED_STOPS) {
                     showStarredStopsFragment();
                     mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_star));
                 }
                 break;
             case NAVDRAWER_ITEM_NEARBY:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
                     mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_nearby));
                 }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_MY_REMINDERS) {
                     showMyRemindersFragment();
                     mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_reminders));
                 }
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_settings));
                 break;
             case NAVDRAWER_ITEM_HELP:
                 showDialog(HELP_DIALOG);
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_help));
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
                 Log.d(TAG, "TODO - show send feedback fragment");
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_feedback));
                 break;
         }
     }
@@ -440,6 +471,10 @@ public class HomeActivity extends ActionBarActivity
         final int id = item.getItemId();
         if (id == R.id.search) {
             onSearchRequested();
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_search_box));
             return true;
         } else if (id == R.id.find_route) {
             Intent myIntent = new Intent(this, MyRoutesActivity.class);
@@ -478,6 +513,9 @@ public class HomeActivity extends ActionBarActivity
                                             .getTwitterUrl();
                                 }
                                 UIHelp.goToUrl(HomeActivity.this, twitterUrl);
+                                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                        getString(R.string.analytics_action_switch),
+                                        getString(R.string.analytics_label_app_switch));
                                 break;
                             case 1:
                                 AgenciesActivity.start(HomeActivity.this);
@@ -563,6 +601,27 @@ public class HomeActivity extends ActionBarActivity
             mFocusedStopId = stop.getId();
             // A stop on the map was just tapped, show it in the sliding panel
             updateArrivalListFragment(stop.getId(), stop, routes);
+
+            ObaRegion region = Application.get().getCurrentRegion();
+            if (region != null && region.getName() != null) {
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_stopinfo) + region.getName());
+            } else {
+                String customUrl = null;
+                MessageDigest digest = null;
+                try {
+                    digest = MessageDigest.getInstance("SHA-1");
+                    digest.update(Application.get().getCustomApiUrl().getBytes());
+                    customUrl = Application.get().getString(R.string.analytics_label_custom_url) +
+                            ": " + Application.getHex(digest.digest());
+                } catch (Exception e) {
+                    customUrl = Application.get().getString(R.string.analytics_label_custom_url);
+                }
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_stopinfo) + customUrl);
+            }
         } else {
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
             // and clear the currently focused stopId
@@ -631,7 +690,7 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private void updateArrivalListFragment(String stopId, ObaStop stop,
-            HashMap<String, ObaRoute> routes) {
+                                           HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -756,6 +815,9 @@ public class HomeActivity extends ActionBarActivity
             public void onClick(View arg0) {
                 if (mMapFragment != null) {
                     mMapFragment.setMyLocation(true, true);
+                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_location));
                 }
             }
         };

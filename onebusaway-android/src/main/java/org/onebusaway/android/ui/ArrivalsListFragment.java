@@ -16,6 +16,21 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -48,21 +63,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -345,6 +345,9 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             mRefreshHandler.postDelayed(mRefresh, newPeriod);
         }
+
+        // Refresh the favorite status and stop name, in case we're returning from another view
+        setUserInfo();
 
         if (mHeader != null) {
             mHeader.onResume();

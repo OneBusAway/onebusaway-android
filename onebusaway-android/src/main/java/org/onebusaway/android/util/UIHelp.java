@@ -25,6 +25,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -60,8 +61,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-import edu.usf.cutr.util.comparators.AlphanumComparator;
 
 public final class UIHelp {
 

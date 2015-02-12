@@ -28,12 +28,8 @@ repositories {
     jcenter()
     mavenLocal()
     maven {
-        // CUTR SNAPSHOTs
-        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
-    }
-    maven {
-        // CUTR Releases
-        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/releases"
+        // OBA Releases - for comparator to sort alphanumeric routes
+        url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
     }
 }
 
@@ -149,7 +145,7 @@ dependencies {
     // Bottom sliding panel
     compile 'com.sothree.slidinguppanel:library:2.0.3'
     // For sorting alphanumeric route names
-    compile 'edu.usf.cutr.util:comparators:0.0.1-SNAPSHOT'
+    compile 'org.onebusaway.util:comparators:1.0.0'
     // Only used on Amazon devices via amazon build flavor
     amazonCompile('com.amazon.android:amazon-maps-api:2.0')
 }

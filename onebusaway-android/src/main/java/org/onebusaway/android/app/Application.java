@@ -19,7 +19,6 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.node.NodeService;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceHelp;
 
@@ -75,8 +74,6 @@ public class Application extends android.app.Application {
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
-
-        NodeService.schedule(this); // @todo: poh - figure out optimal way to start this service
     }
 
     @Override

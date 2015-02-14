@@ -110,7 +110,7 @@ public class MainActivity extends Activity implements GoogleApiHelper.OnConnecti
         Log.d(TAG, "updateStarredStops");
         ArrayList<DataMap> stopDataMaps = dataMap.getDataMapArrayList(StarredStops.DATA_MAP_KEY_STARRED_STOPS_LIST);
         for(int i = 0; i < stopDataMaps.size(); i++) {
-            StopData updatedStop = StopDataUtil.toDataMap(stopDataMaps.get(i));
+            StopData updatedStop = StopDataUtil.toStopData(stopDataMaps.get(i));
             updateStop(updatedStop);
             Log.d(TAG, "updateStarredStops::" + stops.get(i).getUiName());
         }
@@ -218,7 +218,7 @@ public class MainActivity extends Activity implements GoogleApiHelper.OnConnecti
         Log.d(TAG, "reloadStopsAdapter");
         stops.clear();
         for(DataMap dm : dataMaps) {
-            StopData stop = new StopData(dm);
+            StopData stop = StopDataUtil.toStopData(dm);
             stops.add(stop);
             Log.d(TAG, "reloadStopsAdapter::" + stop.getUiName());
         }

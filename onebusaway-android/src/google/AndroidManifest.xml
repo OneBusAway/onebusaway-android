@@ -1,16 +1,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 		  xmlns:tools="http://schemas.android.com/tools"
-		  package="org.onebusaway.android">
+		  package="org.onebusaway.android"
+		>
 
 	<application>
 		<service
 				android:name=".node.NodeService"
 				android:enabled="true"
-				android:permission="com.joulespersecond.seattlebusbot.permission.NODE_SERVICE">
+				android:permission="com.joulespersecond.seattlebusbot.permission.NODE_SERVICE"
+				>
 			<intent-filter>
-				<action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
+				<action android:name="com.joulespersecond.seattlebusbot.BootstrapService" />
 			</intent-filter>
 		</service>
+
+		<meta-data
+				android:name="com.google.android.gms.version"
+				android:value="@integer/google_play_services_version"
+				/>
+		<meta-data
+				android:name="com.google.android.maps.v2.API_KEY"
+				android:value="@string/apiv2_key"
+				/>
+
 	</application>
 
 </manifest>

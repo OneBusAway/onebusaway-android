@@ -32,6 +32,7 @@ import org.onebusaway.android.provider.ObaProvider;
 import org.onebusaway.android.core.StopData;
 import org.onebusaway.android.ui.QueryUtils;
 import org.onebusaway.android.provider.StopDataCursorHelper;
+import org.onebusaway.android.util.*;
 
 import java.util.ArrayList;
 
@@ -175,7 +176,7 @@ public class NodeService extends Service implements QueryUtils.StopList.Columns 
         ArrayList<DataMap> dataMaps = new ArrayList<DataMap>();
         for(int i = 0; i < c.getCount(); i++) {
             StopData data = StopDataCursorHelper.createStopData(c, i);
-            DataMap dataMap = data.toDataMap();
+            DataMap dataMap = StopDataUtil.toDataMap(data);
             Log.d(TAG, "syncing " + data.getUiName());
             dataMaps.add(dataMap);
         }

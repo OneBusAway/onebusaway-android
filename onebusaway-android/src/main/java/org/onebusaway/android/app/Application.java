@@ -35,13 +35,7 @@ import android.util.Log;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.PreferenceHelp;
 
 import java.security.MessageDigest;
 import java.util.HashMap;

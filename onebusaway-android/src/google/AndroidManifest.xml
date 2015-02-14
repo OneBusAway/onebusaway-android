@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+		  xmlns:tools="http://schemas.android.com/tools"
+		  package="org.onebusaway.android">
+
+	<application>
+		<service
+				android:name=".node.NodeService"
+				android:enabled="true"
+				android:permission="com.joulespersecond.seattlebusbot.permission.NODE_SERVICE">
+			<intent-filter>
+				<action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
+			</intent-filter>
+		</service>
+	</application>
+
+</manifest>

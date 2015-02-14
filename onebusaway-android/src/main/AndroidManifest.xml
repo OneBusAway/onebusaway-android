@@ -149,15 +149,6 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".node.NodeService"
-            android:enabled="true"
-            android:permission="com.joulespersecond.seattlebusbot.permission.NODE_SERVICE">
-            <intent-filter>
-                <action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
-            </intent-filter>
-        </service>
-
         <receiver android:name=".tripservice.AlarmReceiver">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->

@@ -280,8 +280,8 @@
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
+    <string name="preferences_category_about">About</string>
     <string name="preferences_category_advanced">Advanced</string>
-    <string name="preferences_category_analytics">Analytics</string>
     <string name="preferences_region_title">Your region</string>
     <string name="preferences_region_summary">%1$s is currently selected</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
@@ -326,4 +326,6 @@
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
+    <string name="preferences_donate_title">Donate</string>
+    <string name="preferences_donate_summary">Support the OneBusAway open-source project</string>
 </resources>

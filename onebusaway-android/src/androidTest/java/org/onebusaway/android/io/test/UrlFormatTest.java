@@ -260,7 +260,7 @@ public class UrlFormatTest extends ObaTestCase {
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getContext());
         for (ObaRegion r : regions) {
             try {
-                if (r.getTwitterUrl() != null) {
+                if (r.getTwitterUrl() != null && !r.getTwitterUrl().isEmpty()) {
                     URL url = new URL(r.getTwitterUrl());
                 }
             } catch (MalformedURLException e) {

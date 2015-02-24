@@ -195,61 +195,13 @@
         "regionName": "Atlanta"
       }, 
       {
-        "siriBaseUrl": "http://oba.mobilitylab.org/nextgen/api/", 
-        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|70fe470458e6b54078e567e0f008a161938a7468", 
-        "supportsSiriRealtimeApis": true, 
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "", 
+        "supportsSiriRealtimeApis": false, 
         "language": "en_US", 
-        "twitterUrl": "http://mobile.twitter.com/mobilitylabteam", 
+        "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
-          {
-            "lat": 39.1922654372773, 
-            "latSpan": 0.19698666650759833, 
-            "lon": -76.7851586402455, 
-            "lonSpan": 0.23177524413500805
-          }, 
-          {
-            "lat": 37.187614999999994, 
-            "latSpan": 0.13692999999999955, 
-            "lon": -80.41169, 
-            "lonSpan": 0.08337999999999113
-          }, 
-          {
-            "lat": 38.8941925, 
-            "latSpan": 0.06883300000000503, 
-            "lon": -77.0180425, 
-            "lonSpan": 0.10683699999999874
-          }, 
-          {
-            "lat": 39.0963510360948, 
-            "latSpan": 0.23640594282640137, 
-            "lon": -76.7502984250321, 
-            "lonSpan": 0.35456249746140145
-          }, 
-          {
-            "lat": 39.406371749910775, 
-            "latSpan": 0.23433081571348424, 
-            "lon": -77.80964031815529, 
-            "lonSpan": 0.36454707384109497
-          }, 
-          {
-            "lat": 38.882281, 
-            "latSpan": 0.08580200000000104, 
-            "lon": -77.107778, 
-            "lonSpan": 0.1089900000000057
-          }, 
-          {
-            "lat": 38.7269105, 
-            "latSpan": 0.4100249999999974, 
-            "lon": -77.29476, 
-            "lonSpan": 0.6090959999999939
-          }, 
-          {
-            "lat": 38.960672, 
-            "latSpan": 1.2862760000000009, 
-            "lon": -77.0174175, 
-            "lonSpan": 1.8884749999999997
-          }, 
           {
             "lat": 38.895090499999995, 
             "latSpan": 0.5927969999999974, 
@@ -257,36 +209,18 @@
             "lonSpan": 0.7805180000000007
           }, 
           {
-            "lat": 39.1120985, 
-            "latSpan": 0.35281899999999666, 
-            "lon": -77.17786100000001, 
-            "lonSpan": 0.48159600000001035
-          }, 
-          {
-            "lat": 38.852059, 
-            "latSpan": 0.32038200000000217, 
-            "lon": -77.257233, 
-            "lonSpan": 0.4162059999999883
-          }, 
-          {
-            "lat": 39.4302745, 
-            "latSpan": 0.10931300000000022, 
-            "lon": -77.40370949999999, 
-            "lonSpan": 0.12437899999999047
-          }, 
-          {
-            "lat": 38.598434499999996, 
-            "latSpan": 0.5997209999999953, 
-            "lon": -77.2656675, 
-            "lonSpan": 0.5209109999999981
+            "lat": 38.8941925, 
+            "latSpan": 0.06883300000000503, 
+            "lon": -77.0180425, 
+            "lonSpan": 0.10683699999999874
           }
         ], 
         "supportsObaDiscoveryApis": true, 
-        "contactEmail": "paul.mackie@mobilitylab.org", 
+        "contactEmail": "kurt@kurtraschke.com", 
         "stopInfoUrl": null, 
         "active": true, 
-        "facebookUrl": "https://www.facebook.com/218056428212495", 
-        "obaBaseUrl": "http://oba.mobilitylab.org/", 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://developer.onebusaway.org/wmata-api/", 
         "id": 4, 
         "experimental": true, 
         "regionName": "Washington, D.C. (beta)"
@@ -340,6 +274,37 @@
         "id": 6, 
         "experimental": true, 
         "regionName": "Bear Transit (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 42.367244, 
+            "latSpan": 0.014910000000000423, 
+            "lon": -71.023894, 
+            "lonSpan": 0.011874000000005935
+          }, 
+          {
+            "lat": 42.1893185, 
+            "latSpan": 1.2170369999999977, 
+            "lon": -71.210252, 
+            "lonSpan": 1.1692720000000065
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "sbrown@camsys.com", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://developer.onebusaway.org/mbta-api/", 
+        "id": 7, 
+        "experimental": true, 
+        "regionName": "Boston (beta)"
       }
     ]
   }

@@ -22,7 +22,9 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -47,6 +49,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference analyticsPref;
 
+    Preference donatePref;
+
     boolean autoSelectInitialValue;
     //Save initial value so we can compare to current value in onDestroy()
 
@@ -68,6 +72,9 @@ public class PreferencesActivity extends PreferenceActivity
 
         analyticsPref = findPreference(getString(R.string.preferences_key_analytics));
         analyticsPref.setOnPreferenceChangeListener(this);
+
+        donatePref = findPreference(getString(R.string.preferences_key_donate));
+        donatePref.setOnPreferenceClickListener(this);
 
         SharedPreferences settings = Application.getPrefs();
         autoSelectInitialValue = settings
@@ -124,6 +131,12 @@ public class PreferencesActivity extends PreferenceActivity
     public boolean onPreferenceClick(Preference pref) {
         if (pref.equals(regionPref)) {
             RegionsActivity.start(this);
+        }else if (pref.equals(donatePref)) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_donate));
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
+            startActivity(intent);
         }
         return true;
     }
@@ -148,7 +161,14 @@ public class PreferencesActivity extends PreferenceActivity
             }
         } else if (preference.equals(analyticsPref) && newValue instanceof Boolean) {
             Boolean isAnalyticsActive = (Boolean) newValue;
-            GoogleAnalytics.getInstance(this).setAppOptOut(!isAnalyticsActive);
+            //Report if the analytics turns off, just before shared preference changed
+            if (!isAnalyticsActive) {
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                        getString(R.string.analytics_action_edit_general),
+                        getString(R.string.analytics_label_analytic_preference)
+                                + (isAnalyticsActive ? "YES" : "NO"));
+                GoogleAnalytics.getInstance(getBaseContext()).dispatchLocalHits();
+            }
         }
         return true;
     }
@@ -213,6 +233,15 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_auto) + autoSelect);
+        } else if (key.equalsIgnoreCase(getString(R.string.preferences_key_analytics))) {
+            Boolean isAnalyticsActive = settings.getBoolean(Application.get().
+                    getString(R.string.preferences_key_analytics), Boolean.FALSE);
+            //Report if the analytics turns on, just after shared preference changed
+            if (isAnalyticsActive)
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                        getString(R.string.analytics_action_edit_general),
+                        getString(R.string.analytics_label_analytic_preference)
+                                + (isAnalyticsActive ? "YES" : "NO"));
         }
     }
 

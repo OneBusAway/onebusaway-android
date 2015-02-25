@@ -28,7 +28,11 @@
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
     <string name="preferences_key_analytics">preference_google_analytics</string>
+    <string name="preferences_key_donate">preference_donate</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
+
+    <!-- Donate URL -->
+    <string name="donate_url">http://onebusaway.org/donate/</string>
 
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
@@ -54,6 +58,7 @@
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
+    <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Send Feedback Link</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
@@ -70,4 +75,5 @@
     <string name="analytics_label_report_problem">Reported Problem</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
+    <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
 </resources>

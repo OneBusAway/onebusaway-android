@@ -15,6 +15,19 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.Window;
+import com.joulespersecond.oba.ObaAnalytics;
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.oba.region.ObaRegionsTask;
+import com.joulespersecond.seattlebusbot.map.MapParams;
+import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
+import com.joulespersecond.seattlebusbot.util.LocationHelp;
+import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
@@ -31,19 +44,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.Window;
-import com.joulespersecond.oba.ObaAnalytics;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.oba.region.ObaRegionsTask;
-import com.joulespersecond.seattlebusbot.map.MapParams;
-import com.joulespersecond.seattlebusbot.map.googlemapsv1.BaseMapActivity;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.PreferenceHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.Date;
 
@@ -279,7 +279,7 @@ public class HomeActivity extends BaseMapActivity {
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
         final int newVer = appInfo.versionCode;
 
-        if ((oldVer > 0) && (oldVer < newVer)) {
+        if (oldVer < newVer) {
             mWhatsNewMessage = R.string.main_help_whatsnew;
             showDialog(WHATSNEW_DIALOG);
 

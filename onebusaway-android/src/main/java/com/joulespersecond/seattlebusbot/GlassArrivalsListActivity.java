@@ -656,8 +656,7 @@ public class GlassArrivalsListActivity extends ListActivity
 
         Log.d(TAG, "Found stops.");
         // Find closest stop
-        ObaStop closestStop;
-        closestStop = UIHelp.getClosestStop(this, response.getStops(), mLastKnownLocation);
+        ObaStop closestStop = UIHelp.getClosestStop(this, response.getStops(), mLastKnownLocation);
 
         if (closestStop != null) {
             Log.d(TAG, "Closest stop is: " + closestStop.getName());

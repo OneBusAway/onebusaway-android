@@ -74,7 +74,17 @@
     <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
-    <string name="main_help_whatsnew">&#8226; Improved location services\n&#8226; Reminder bug fix
+    <string name="main_help_whatsnew">&#8226;<b>Updated arrival time colors</b>:\n
+        \u0020\u0020\u0020\u0020&#8226; Black = Scheduled<i>(new)</i>\n
+        \u0020\u0020\u0020\u0020&#8226; Dark Green = On-time<i>(new)</i>\n
+        \u0020\u0020\u0020\u0020&#8226; Red = Early\n
+        \u0020\u0020\u0020\u0020&#8226; Blue = Late\n
+        &#8226;
+        <b>Anonymous analytics</b>
+        - knowing how OneBusAway is used will help us improve it\n
+        &#8226;
+        <b>Donate button</b>
+        - if you\'d like to support the open-source project\n
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>

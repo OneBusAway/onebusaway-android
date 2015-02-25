@@ -52,6 +52,7 @@
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
+    <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Send Feedback Link</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
@@ -68,5 +69,6 @@
     <string name="analytics_label_report_problem">Reported Problem</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
+    <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
 
 </resources>

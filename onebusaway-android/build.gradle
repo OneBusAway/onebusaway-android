@@ -43,6 +43,11 @@ android {
         exclude 'META-INF/NOTICE'
     }
 
+    // Don't run lint checks on release (see #223 - remove this when Android Studio 1.2 releases)
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
     if (project.hasProperty("secure.properties")
             && new File(project.property("secure.properties")).exists()) {
 

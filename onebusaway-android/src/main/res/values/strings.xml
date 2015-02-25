@@ -75,8 +75,8 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;<b>Updated arrival time colors</b>:\n
-        \u0020\u0020\u0020\u0020&#8226; Black = Scheduled<i>(new)</i>\n
-        \u0020\u0020\u0020\u0020&#8226; Dark Green = On-time<i>(new)</i>\n
+        \u0020\u0020\u0020\u0020&#8226; Black = Scheduled\u0020<i>(new)</i>\n
+        \u0020\u0020\u0020\u0020&#8226; Dark Green = On-time\u0020<i>(new)</i>\n
         \u0020\u0020\u0020\u0020&#8226; Red = Early\n
         \u0020\u0020\u0020\u0020&#8226; Blue = Late\n
         &#8226;

@@ -19,7 +19,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.0'
+        classpath 'com.android.tools.build:gradle:1.1.2'
     }
 }
 apply plugin: 'com.android.application'
@@ -41,11 +41,6 @@ android {
     packagingOptions {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
-    }
-
-    // Don't run lint checks on release (see #223 - remove this when Android Studio 1.2 releases)
-    lintOptions {
-        checkReleaseBuilds false
     }
 
     if (project.hasProperty("secure.properties")

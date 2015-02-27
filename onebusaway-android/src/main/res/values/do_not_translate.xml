@@ -55,7 +55,7 @@
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Send Feedback Link</string>
-    <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
+    <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon from\u0020</string>
     <string name="analytics_label_button_press_search_box">Search box selected</string>
     <string name="analytics_label_button_press_search_button">Search button clicked</string>
     <string name="analytics_label_button_press_location">Clicked My Location Button</string>

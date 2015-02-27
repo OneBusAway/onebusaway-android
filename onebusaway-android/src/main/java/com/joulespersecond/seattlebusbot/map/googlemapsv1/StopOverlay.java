@@ -220,7 +220,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
             if (region != null && region.getName() != null) {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         mActivity.getString(R.string.analytics_action_button_press),
-                        mActivity.getString(R.string.analytics_label_button_press_stopinfo) + region.getName());
+                        mActivity.getString(R.string.analytics_label_button_press_map_icon) + region.getName());
             } else {
                 String customUrl = null;
                 MessageDigest digest = null;
@@ -234,7 +234,7 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
                 }
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         mActivity.getString(R.string.analytics_action_button_press),
-                        mActivity.getString(R.string.analytics_label_button_press_stopinfo) + customUrl);
+                        mActivity.getString(R.string.analytics_label_button_press_map_icon) + customUrl);
             }
             ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
         }

@@ -15,19 +15,20 @@
  */
 package com.joulespersecond.oba;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+
+import com.joulespersecond.oba.elements.ObaRegion;
+import com.joulespersecond.seattlebusbot.Application;
+import com.joulespersecond.seattlebusbot.BuildConfig;
+import com.joulespersecond.seattlebusbot.R;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.support.v4.app.Fragment;
-
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
 
 import java.security.MessageDigest;
 
@@ -41,9 +42,9 @@ import java.security.MessageDigest;
 public class ObaAnalytics {
 
     /**
-     * Users location accuracy should be less then 100m
+     * Users location accuracy should be less then 50m
      */
-    private static final float LOCATION_ACCURACY_THRESHOLD = 100f;
+    private static final float LOCATION_ACCURACY_THRESHOLD = 50f;
 
     /**
      * To measure the distance when the bus stop tapped.

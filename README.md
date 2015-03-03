@@ -1,5 +1,7 @@
 # OneBusAway for Android [![Build Status](https://travis-ci.org/OneBusAway/onebusaway-android.svg?branch=master)](https://travis-ci.org/OneBusAway/onebusaway-android)
 
+[![Join the chat at https://gitter.im/OneBusAway/onebusaway-android](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OneBusAway/onebusaway-android?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is the official Android app for OneBusAway!
 
 OneBusAway for Android provides:

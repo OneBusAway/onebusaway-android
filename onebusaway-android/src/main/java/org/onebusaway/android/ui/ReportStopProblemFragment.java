@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
 import org.onebusaway.android.util.LocationUtil;
@@ -114,6 +115,8 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
         super.sendReport();
     }
 

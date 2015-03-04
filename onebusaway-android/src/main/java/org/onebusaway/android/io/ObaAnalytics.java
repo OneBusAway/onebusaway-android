@@ -41,9 +41,9 @@ import java.security.MessageDigest;
 public class ObaAnalytics {
 
     /**
-     * Users location accuracy should be less then 100m
+     * Users location accuracy should be less then 50f
      */
-    private static final float LOCATION_ACCURACY_THRESHOLD = 100f;
+    private static final float LOCATION_ACCURACY_THRESHOLD = 50f;
 
     /**
      * To measure the distance when the bus stop tapped.
@@ -227,8 +227,6 @@ public class ObaAnalytics {
             } catch (Exception e) {
                 regionName = Application.get().getString(R.string.analytics_label_custom_url);
             }
-        } else {
-            regionName = Application.get().getString(R.string.analytics_label_custom_url);
         }
         return regionName;
     }

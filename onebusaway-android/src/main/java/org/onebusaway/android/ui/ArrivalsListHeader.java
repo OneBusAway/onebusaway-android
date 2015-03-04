@@ -18,6 +18,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.OrientationHelper;
@@ -278,6 +279,11 @@ class ArrivalsListHeader {
                     Intent i = new Intent(Intent.ACTION_VIEW);
                     i.setData(stopInfoBuilder.build());
                     mContext.startActivity(i);
+                    //Analytics
+                    if (obaRegion != null && obaRegion.getName() != null)
+                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                mContext.getString(R.string.analytics_action_button_press),
+                                mContext.getString(R.string.analytics_label_button_press_stopinfo) + obaRegion.getName());
                 }
             });
         }

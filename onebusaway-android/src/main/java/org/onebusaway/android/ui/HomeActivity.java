@@ -602,26 +602,10 @@ public class HomeActivity extends ActionBarActivity
             // A stop on the map was just tapped, show it in the sliding panel
             updateArrivalListFragment(stop.getId(), stop, routes);
 
-            ObaRegion region = Application.get().getCurrentRegion();
-            if (region != null && region.getName() != null) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_stopinfo) + region.getName());
-            } else {
-                String customUrl = null;
-                MessageDigest digest = null;
-                try {
-                    digest = MessageDigest.getInstance("SHA-1");
-                    digest.update(Application.get().getCustomApiUrl().getBytes());
-                    customUrl = Application.get().getString(R.string.analytics_label_custom_url) +
-                            ": " + Application.getHex(digest.digest());
-                } catch (Exception e) {
-                    customUrl = Application.get().getString(R.string.analytics_label_custom_url);
-                }
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_stopinfo) + customUrl);
-            }
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_map_icon));
         } else {
             // A particular stop lost focus (e.g., user tapped on the map), so hide the panel
             // and clear the currently focused stopId

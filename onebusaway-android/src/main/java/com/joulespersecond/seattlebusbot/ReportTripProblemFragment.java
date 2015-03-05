@@ -29,6 +29,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.joulespersecond.oba.ObaAnalytics;
 import com.joulespersecond.oba.elements.ObaArrivalInfo;
 import com.joulespersecond.oba.request.ObaReportProblemWithTripRequest;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
@@ -159,6 +160,8 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
         super.sendReport();
     }
 

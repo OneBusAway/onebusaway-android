@@ -227,8 +227,6 @@ public class ObaAnalytics {
             } catch (Exception e) {
                 regionName = Application.get().getString(R.string.analytics_label_custom_url);
             }
-        } else {
-            regionName = Application.get().getString(R.string.analytics_label_custom_url);
         }
         return regionName;
     }

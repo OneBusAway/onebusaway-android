@@ -26,14 +26,11 @@ import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 import com.joulespersecond.oba.ObaAnalytics;
-import com.joulespersecond.oba.elements.ObaRegion;
 import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.seattlebusbot.Application;
 import com.joulespersecond.seattlebusbot.ArrivalsListActivity;
 import com.joulespersecond.seattlebusbot.R;
 import com.joulespersecond.seattlebusbot.util.LocationHelp;
 
-import java.security.MessageDigest;
 import java.util.List;
 
 public class StopOverlay extends ItemizedOverlay<OverlayItem> {
@@ -214,28 +211,11 @@ public class StopOverlay extends ItemizedOverlay<OverlayItem> {
 
             //Track analytics
             Location myLocation = LocationHelp.getLocation2(mActivity, null);
-            ObaRegion region = Application.get().getCurrentRegion();
             ObaStop stop = mStops.get(index);
             Location stopLocation = stop.getLocation();
-            if (region != null && region.getName() != null) {
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        mActivity.getString(R.string.analytics_action_button_press),
-                        mActivity.getString(R.string.analytics_label_button_press_map_icon) + region.getName());
-            } else {
-                String customUrl = null;
-                MessageDigest digest = null;
-                try {
-                    digest = MessageDigest.getInstance("SHA-1");
-                    digest.update(Application.get().getCustomApiUrl().getBytes());
-                    customUrl = Application.get().getString(R.string.analytics_label_custom_url) +
-                            ": " + Application.getHex(digest.digest());
-                } catch (Exception e) {
-                    customUrl = Application.get().getString(R.string.analytics_label_custom_url);
-                }
-                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        mActivity.getString(R.string.analytics_action_button_press),
-                        mActivity.getString(R.string.analytics_label_button_press_map_icon) + customUrl);
-            }
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    mActivity.getString(R.string.analytics_action_button_press),
+                    mActivity.getString(R.string.analytics_label_button_press_map_icon));
             ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
         }
         return true;

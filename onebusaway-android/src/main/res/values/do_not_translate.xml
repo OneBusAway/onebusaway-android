@@ -54,7 +54,7 @@
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
-    <string name="analytics_label_button_press_feedback">Clicked Send Feedback Link</string>
+    <string name="analytics_label_button_press_feedback">Clicked Email Link</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>
     <string name="analytics_label_button_press_search_box">Search box selected</string>
     <string name="analytics_label_button_press_search_button">Search button clicked</string>
@@ -69,6 +69,8 @@
     <string name="analytics_label_set_region">Set Region:\u0020</string>
     <string name="analytics_label_app_switch">Loaded Twitter via Web</string>
     <string name="analytics_label_report_problem">Reported Problem</string>
+    <string name="analytics_label_report_stop_problem">Reported Stop Problem</string>
+    <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>

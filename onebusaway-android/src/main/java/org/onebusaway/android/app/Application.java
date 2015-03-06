@@ -246,7 +246,7 @@ public class Application extends android.app.Application {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                     getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
                             + getCurrentRegion().getName());
-        } else {
+        } else if (Application.get().getCustomApiUrl() != null) {
             String customUrl = null;
             MessageDigest digest = null;
             try {
@@ -261,14 +261,6 @@ public class Application extends android.app.Application {
                     getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
                             + customUrl);
         }
-
-        if (getCurrentRegion() != null) {
-            Boolean showExperimentalRegions = getCurrentRegion().getExperimental();
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + (showExperimentalRegions ? "YES" : "NO"));
-        }
-
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);
         Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),

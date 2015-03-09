@@ -46,6 +46,11 @@ public class ObaAnalytics {
     private static final float LOCATION_ACCURACY_THRESHOLD = 50f;
 
     /**
+     * Amazon devices manufacturer name
+     */
+    public static final String mAmazonManufacturer = "amazon";
+
+    /**
      * To measure the distance when the bus stop tapped.
      */
     public enum ObaStopDistance {
@@ -201,6 +206,11 @@ public class ObaAnalytics {
         if (BuildConfig.DEBUG) {
             //Disables reporting when app runs on debug
             GoogleAnalytics.getInstance(context).setDryRun(true);
+
+            // Workaround for #243- setDryRun(true) doesn't work on Fire Phone
+            if (android.os.Build.MANUFACTURER.toLowerCase().contains(mAmazonManufacturer)) {
+                GoogleAnalytics.getInstance(context).setAppOptOut(true);
+            }
         }
     }
 

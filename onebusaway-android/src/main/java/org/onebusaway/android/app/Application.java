@@ -15,15 +15,6 @@
  */
 package org.onebusaway.android.app;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
-import android.util.Log;
-
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 
@@ -34,6 +25,15 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceHelp;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -75,6 +75,11 @@ public class Application extends android.app.Application {
         reportAnalytics();
     }
 
+    /**
+     * Per http://developer.android.com/reference/android/app/Application.html#onTerminate(),
+     * this code is only executed in emulated process environments - it will never be called
+     * on a production Android device.
+     */
     @Override
     public void onTerminate() {
         super.onTerminate();

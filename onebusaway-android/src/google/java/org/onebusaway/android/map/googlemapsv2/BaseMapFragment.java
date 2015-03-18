@@ -145,8 +145,9 @@ public class BaseMapFragment extends SupportMapFragment
          *
          * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param location the user touch location on the map
          */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
     @Override
@@ -407,7 +408,7 @@ public class BaseMapFragment extends SupportMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes, final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
@@ -421,7 +422,7 @@ public class BaseMapFragment extends SupportMapFragment
                 }
 
                 // Pass overlay focus event up to listeners for this fragment
-                mOnFocusChangedListener.onFocusChanged(stop, routes);
+                mOnFocusChangedListener.onFocusChanged(stop, routes, location);
             }
         });
     }

@@ -24,8 +24,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -41,9 +41,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.location.Location;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -106,6 +106,8 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
     OnFocusChangedListener mOnFocusChangedListener;
 
+    private boolean mShowCurrentStopMarker = true;
+
     public interface OnFocusChangedListener {
 
         /**
@@ -120,9 +122,16 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
-    public StopOverlay(Activity activity, GoogleMap map) {
+    /**
+     * Instantiates a new StopOverlay
+     *
+     * @param showCurrentStopMarker true if this overlay should show a marker indicating the
+     *                              currently selected stop, false if it should not
+     */
+    public StopOverlay(Activity activity, GoogleMap map, boolean showCurrentStopMarker) {
         mActivity = activity;
         mMap = map;
+        mShowCurrentStopMarker = showCurrentStopMarker;
         loadIcons();
         mMap.setOnMarkerClickListener(this);
         mMap.setOnMapClickListener(this);
@@ -815,9 +824,12 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
             // corresponding stop marker (i.e., so its not identical to stop marker latitude)
             LatLng latLng = new LatLng(stop.getLatitude() - 0.000001, stop.getLongitude());
 
-            mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
-                            .position(latLng)
-            );
+            // If this overlay is supposed to manage the current stop marker, show it
+            if (mShowCurrentStopMarker) {
+                mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                );
+            }
 
             // This doesn't look good since when bouncing, the focus marker is drawn behind
             // the bus stop marker.  If only we could control z-order...

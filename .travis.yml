@@ -40,3 +40,12 @@ before_script:
 script:
   - ./wait_for_emulator
   - ./gradlew connectedCheck -PdisablePreDex
+
+# Integration with Gitter (https://gitter.im/OneBusAway/onebusaway-android)
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/a579a4e7a21ff6ee51a1
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: false     # default: false

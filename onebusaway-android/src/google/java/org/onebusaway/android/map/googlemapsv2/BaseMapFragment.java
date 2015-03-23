@@ -145,8 +145,9 @@ public class BaseMapFragment extends SupportMapFragment
          *
          * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param location the user touch location on the map
          */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
     @Override
@@ -253,7 +254,12 @@ public class BaseMapFragment extends SupportMapFragment
 
     public void setupStopOverlay() {
         if (mStopOverlay == null) {
-            mStopOverlay = new StopOverlay(getActivity(), mMap);
+            // TODO - allow setting boolean value for managing current stop marker in StopOverlay
+            // We can allow external classes to set this via an Intent to BaseMapFragment
+            // See ArrivalListFragment.IntentBuilder for an example of passing a stopId via Intent
+            // We can implement an BaseMapFragment.IntentBuilder to pass the boolean value for
+            // showing current stop marker as part of the stop overlay
+            mStopOverlay = new StopOverlay(getActivity(), mMap, true);
             mStopOverlay.setOnFocusChangeListener(this);
         }
     }
@@ -407,7 +413,7 @@ public class BaseMapFragment extends SupportMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes, final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
@@ -421,7 +427,7 @@ public class BaseMapFragment extends SupportMapFragment
                 }
 
                 // Pass overlay focus event up to listeners for this fragment
-                mOnFocusChangedListener.onFocusChanged(stop, routes);
+                mOnFocusChangedListener.onFocusChanged(stop, routes, location);
             }
         });
     }

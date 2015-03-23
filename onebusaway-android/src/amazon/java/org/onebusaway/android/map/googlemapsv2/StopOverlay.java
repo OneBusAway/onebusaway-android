@@ -116,7 +116,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
          * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
     public StopOverlay(Activity activity, AmazonMap map) {
@@ -630,19 +630,20 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         HashMap<String, ObaRoute> routes = mMarkerData.getCachedRoutes();
 
         // Notify listener
-        mOnFocusChangedListener.onFocusChanged(stop, routes);
+        mOnFocusChangedListener.onFocusChanged(stop, routes, stop.getLocation());
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d(TAG, "Map clicked");
 
-        // Only notify focus changed the first time the map is clicked away from a stop marker
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
-            // Notify listener
-            mOnFocusChangedListener.onFocusChanged(null, null);
         }
+        // Set map clicked location
+        Location location = LocationUtil.makeLocation(latLng.latitude, latLng.longitude);
+        // Notify focus changed every time the map is clicked away from a stop marker
+        mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {

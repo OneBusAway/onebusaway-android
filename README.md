@@ -10,41 +10,51 @@ OneBusAway for Android provides:
 4. Reminders to notify you when your bus is arriving
 5. The ability to search for nearby stops or routes
 
-OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's Main Menu for any stop or route you choose.
+OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
 
 It's available on the [Play Store](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot).
 
 ## Build Setup
 
-We have two [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants):
+We use [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants) to enable a number of different build variants of OneBusAway Android.
+
+We have two Gradle "platform" flavor dimensions:
 
 * **google** = Normal Google Play release
 * **amazon** = Amazon Fire Phone release
 
-The below instructions assume you're going to be building for the **google** flavor by default, but
-also mention how you would build/run the **amazon** flavor.
+...and three Gradle "brand" flavor dimensions:
+
+* **oba** = Original OneBusAway brand
+* **agencyX** = A sample rebranded version of OneBusAway for a fictitious "Agency X"
+* **agencyY** = A sample rebranded version of OneBusAway for a fictitious "Agency Y"
+
+This results in a total of 2 * 3 = 6 core build variants.  Each of these core variants also has a debug/release build type - the end result is that you'll have 12 build variants to choose to build.
+
+The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`), but
+also mention how you would build/run the **amazon** flavor for the **oba** brand (e.g., `obaAmazonDebug`).  If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md).
 
 ### Prerequisites for both Android Studio and Gradle
 
 1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
-2. If you want to build the Amazon flavor, you need to have [Apache Maven](http://maven.apache.org/download.cgi) installed.  Then, from the root directory of the project run `mvn install:install-file -Dfile=libs/amazon-maps-api-v2.aar -DpomFile=libs/amazon-maps-api-v2.pom` to install the Amazon Maps API v2 library.
+2. If you want to build the Amazon platform flavor, you need to have [Apache Maven](http://maven.apache.org/download.cgi) installed.  Then, from the root directory of the project run `mvn install:install-file -Dfile=libs/amazon-maps-api-v2.aar -DpomFile=libs/amazon-maps-api-v2.pom` to install the Amazon Maps API v2 library.
 
 ### Building in Android Studio
 
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 2. Run Android Studio (Windows users may need to `Run as administator` when installing Android SDK components).
 3. At the welcome screen select `Import Project`, browse to the location of this repository and double-click it.
-4. Open the Android SDK Manager (Tools->Andorid->SDK Manager) and under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) add a checkmark next to `Google APIs` then select `Install n packages`. `n` may be 1 or more if other updates are available.
+4. Open the Android SDK Manager (Tools->Android->SDK Manager) and under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) add a checkmark next to `Google APIs` then select `Install n packages`. `n` may be 1 or more if other updates are available.
 5. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
 6. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default).
-7. Chose **googleDebug** to select the Google Play version, or **amazonDebug** to select the Fire Phone
+7. Chose **obaGoogleDebug** to select the Google Play version, or **obaAmazonDebug** to select the Fire Phone
 6. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
 ### Building from the command line using Gradle
 
 1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
 2. Set the `ANDROID_HOME` environmental variable to your Android SDK location.
-3. To build and push the app to the device, run `gradlew installGoogleDebug` from the command line at the root of the project (or `gradlew installAmazonDebug` for Amazon build flavor)
+3. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project (or `gradlew installObaAmazonDebug` for Amazon build flavor)
 4. To start the app, run `adb shell am start -n com.joulespersecond.seattlebusbot/.HomeActivity` (alternately, you can manually start the app)
 
 ### Release builds
@@ -71,6 +81,13 @@ Get early access to new OneBusAway Android versions!  See our [Beta Testing Guid
 ### Contributing
 
 We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
+
+### Deploying OneBusAway Android in Your City
+
+There are two ways to deploy OneBusAway Android in your city:
+
+1. **Join the OneBusAway [multi-region project](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region)** - The easiest way to get started - simply set up your own OneBusAway server with your own transit data, and get added to the OneBusAway apps!  See [this page](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) for details.
+2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play / Amazon App Store based on the OneBusAway Android source code.  See [this page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md) for details.
 
 ## Troubleshooting
 

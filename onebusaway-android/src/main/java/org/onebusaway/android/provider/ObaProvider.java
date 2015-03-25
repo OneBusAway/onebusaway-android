@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.provider;
 
+import org.onebusaway.android.BuildConfig;
+
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -37,7 +39,7 @@ public class ObaProvider extends ContentProvider {
      * The database name cannot be changed.  It needs to remain the same to support backwards
      * compatibility with existing installed apps
      */
-    private static final String DATABASE_NAME = "com.joulespersecond.seattlebusbot.db";
+    private static final String DATABASE_NAME = BuildConfig.APPLICATION_ID + ".db";
 
     private class OpenHelper extends SQLiteOpenHelper {
 

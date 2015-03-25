@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.mock;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.io.ObaApi;
 
 import android.content.Context;
@@ -28,7 +29,7 @@ import java.io.Reader;
 public class Resources {
 
     private static final Uri TEST_RAW_URI =
-            Uri.parse("android.resource://com.joulespersecond.seattlebusbot.test/raw/");
+            Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + ".test/raw/");
 
     public static Uri.Builder buildTestUri() {
         return TEST_RAW_URI.buildUpon();

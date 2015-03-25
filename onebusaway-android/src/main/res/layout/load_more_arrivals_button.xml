@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content">
+    <Button
+            android:id="@+id/load_more_arrivals"
+            android:text="@string/stop_info_load_more_arrivals"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            style="@style/LoadMoreArrivals"/>
+</LinearLayout>

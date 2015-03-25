@@ -13,23 +13,22 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/arrivals_list_footer"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <Button
-            android:id="@+id/load_more_arrivals"
-            android:text="@string/stop_info_load_more_arrivals"
-            style="@style/LoadMoreArrivals"
+    <include
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"/>
+            android:layout_gravity="center_horizontal"
+            layout="@layout/load_more_arrivals_button"/>
+
     <View android:layout_width="fill_parent"
           android:layout_height="1dp"
           android:id="@+id/separator_bottom"
           android:visibility="visible"
-          android:layout_below="@id/load_more_arrivals"
           android:background="@drawable/abc_list_divider_mtrl_alpha"/>
-</RelativeLayout>
+</LinearLayout>

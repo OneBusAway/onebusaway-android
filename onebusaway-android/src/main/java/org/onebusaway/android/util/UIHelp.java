@@ -339,7 +339,7 @@ public final class UIHelp {
         intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
         intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
         Parcelable iconResource = Intent.ShortcutIconResource
-                .fromContext(context, R.drawable.ic_launcher);
+                .fromContext(context, R.mipmap.ic_launcher);
         intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
         return intent;
     }

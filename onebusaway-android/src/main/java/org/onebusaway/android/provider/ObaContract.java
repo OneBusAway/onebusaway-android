@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.provider;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 
@@ -35,15 +36,15 @@ import java.util.ArrayList;
  * This really needs to be documented better.
  *
  * NOTE: The AUTHORITY names in this class cannot be changed.  They need to stay under the
- * "com.joulespersecond.oba" namespace to support backwards compatibility with existing installed
- * apps
+ * BuildConfig.DATABASE_AUTHORITY namespace (for the original OBA brand, "com.joulespersecond.oba")
+ * namespace to support backwards compatibility with existing installed apps
  *
  * @author paulw
  */
 public final class ObaContract {
 
-    /** The authority portion of the URI for the Oba provider */
-    public static final String AUTHORITY = "com.joulespersecond.oba";
+    /** The authority portion of the URI - defined in build.gradle */
+    public static final String AUTHORITY = BuildConfig.DATABASE_AUTHORITY;
 
     /** The base URI for the Oba provider */
     public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
@@ -441,10 +442,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.stop";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".stop";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.stop";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".stop";
 
         public static Uri insertOrUpdate(Context context,
                 String id,
@@ -515,10 +516,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.route";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".route";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.route";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".route";
 
         public static Uri insertOrUpdate(Context context,
                 String id,
@@ -579,7 +580,7 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.stoproutefilter";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".stoproutefilter";
 
         private static final String FILTER_WHERE = STOP_ID + "=?";
 
@@ -659,10 +660,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.trip";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".trip";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.trip";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".trip";
 
         public static final int DAY_MON = 0x1;
 
@@ -796,10 +797,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.trip_alert";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".trip_alert";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.trip_alert";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".trip_alert";
 
         public static final int STATE_SCHEDULED = 0;
 
@@ -876,10 +877,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.service_alert";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".service_alert";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.service_alert";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".service_alert";
 
         public static final Uri buildUri(String situationId) {
             return CONTENT_URI.buildUpon().appendPath(situationId).build();
@@ -933,10 +934,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.region";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".region";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.region";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".region";
 
         public static final Uri buildUri(int id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -1034,10 +1035,10 @@ public final class ObaContract {
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_TYPE
-                = "vnd.android.cursor.item/com.joulespersecond.oba.region_bounds";
+                = "vnd.android.cursor.item/" + BuildConfig.DATABASE_AUTHORITY + ".region_bounds";
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/com.joulespersecond.oba.region_bounds";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".region_bounds";
 
         public static final Uri buildUri(int id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

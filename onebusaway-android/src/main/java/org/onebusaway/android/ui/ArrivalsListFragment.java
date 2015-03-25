@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -26,6 +27,7 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.BuildFlavorConstants;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.MyTextUtils;
@@ -105,7 +107,7 @@ public class ArrivalsListFragment extends ListFragment
 
     private static int ARRIVALS_LIST_LOADER = 2;
 
-    private ArrivalsListAdapter mAdapter;
+    private ArrivalsListAdapterBase mAdapter;
 
     private ArrivalsListHeader mHeader;
 
@@ -278,8 +280,19 @@ public class ArrivalsListFragment extends ListFragment
         setStopId();
         setUserInfo();
 
-        // Create an empty adapter we will use to display the loaded data.
-        mAdapter = new ArrivalsListAdapter(getActivity());
+        // Create an empty adapter we will use to display the loaded data, based on the style defined in the build flavor
+        switch (BuildConfig.ARRIVAL_INFO_STYLE) {
+            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_A:
+                mAdapter = new ArrivalsListAdapterStyleA(getActivity());
+                break;
+            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_B:
+                mAdapter = new ArrivalsListAdapterStyleB(getActivity());
+                ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
+                // We present arrivals as cards, so hide the divider in the listview
+                getListView().setDivider(null);
+                break;
+        }
+
         setListAdapter(mAdapter);
 
         // Start out with a progress indicator.
@@ -486,7 +499,7 @@ public class ArrivalsListFragment extends ListFragment
             // Reset the empty text just in case there is no data.
             setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(),
                     getArrivalsLoader().getMinutesAfter(), false, false));
-            mAdapter.setData(info, mRoutesFilter);
+            mAdapter.setData(info, mRoutesFilter, System.currentTimeMillis());
         }
 
         if (mHeader != null) {
@@ -497,7 +510,7 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
         UIHelp.showProgress(this, false);
-        mAdapter.setData(null, mRoutesFilter);
+        mAdapter.setData(null, mRoutesFilter, System.currentTimeMillis());
 
         mArrivalInfo = null;
 
@@ -569,14 +582,25 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         final ArrivalInfo stop = (ArrivalInfo) getListView().getItemAtPosition(position);
+        showListItemMenu(v, stop);
+    }
+
+    public void showListItemMenu(View v, final ArrivalInfo stop) {
         if (stop == null) {
             return;
         }
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader == null) {
+            return;
+        }
+        ObaArrivalInfoResponse response = loader.getLastGoodResponse();
+        if (response == null) {
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.stop_info_item_options_title);
 
-        ObaArrivalInfoResponse response =
-                getArrivalsLoader().getLastGoodResponse();
         final ObaRoute route = response.getRoute(stop.getInfo().getRouteId());
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
@@ -681,7 +705,7 @@ public class ArrivalsListFragment extends ListFragment
         ArrayList<ArrivalInfo> list = null;
 
         if (mArrivalInfo != null) {
-            list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter);
+            list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter, System.currentTimeMillis());
         }
         return list;
     }
@@ -741,7 +765,7 @@ public class ArrivalsListFragment extends ListFragment
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader != null) {
             ObaArrivalInfoResponse response = loader.getLastGoodResponse();
-            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter);
+            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
         }
     }
 

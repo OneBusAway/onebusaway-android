@@ -16,7 +16,7 @@
           package="org.onebusaway.android">
 
     <permission
-            android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"
+            android:name="${applicationId}.permission.TRIP_SERVICE"
             android:label="@string/trip_service_perm_label"
             android:description="@string/trip_service_perm_description"
             android:protectionLevel="normal"/>
@@ -32,12 +32,12 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-    <uses-permission android:name="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE"/>
+    <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
 
     <application
             android:allowBackup="false"
             android:name="org.onebusaway.android.app.Application"
-            android:icon="@drawable/ic_launcher"
+            android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:theme="@style/Theme.OneBusAway">
         <meta-data
@@ -133,24 +133,25 @@
         <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
 
+        <!-- Provider is defined in build.gradle flavors -->
         <provider
                 android:name="org.onebusaway.android.provider.ObaProvider"
-                android:authorities="com.joulespersecond.oba"/>
+                android:authorities="${databaseAuthority}"/>
 
         <service
                 android:name=".tripservice.TripService"
-                android:permission="com.joulespersecond.seattlebusbot.permission.TRIP_SERVICE">
+                android:permission="${applicationId}.permission.TRIP_SERVICE">
             <intent-filter>
-                <action android:name="com.joulespersecond.seattlebusbot.AlarmReceiver"/>
-                <action android:name="com.joulespersecond.seattlebusbot.BootstrapService"/>
+                <action android:name="${applicationId}.AlarmReceiver"/>
+                <action android:name="${applicationId}.BootstrapService"/>
             </intent-filter>
         </service>
 
         <receiver android:name=".tripservice.AlarmReceiver">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->
-                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
-                <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
+                <action android:name="${applicationId}.action.SCHEDULE"/>
+                <action android:name="${applicationId}.action.POLL"/>
             </intent-filter>
         </receiver>
         <receiver android:name=".tripservice.BootstrapService">

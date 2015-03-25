@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Google Analytics tracker for "unrolled" future use - see
+    https://github.com/OneBusAway/onebusaway-android/issues/105#issuecomment-72217306
+    Unrolled trackers currently required a paid Google Analytics account to roll up
+    -->
     <string name="ga_trackingId">UA-2423527-19</string>
 
     <bool name="ga_autoActivityTracking">true</bool>
     <bool name="ga_reportUncaughtExceptions">true</bool>
 
     <item
-        name="ga_dispatchPeriod"
-        format="integer"
-        type="integer">120
+            name="ga_dispatchPeriod"
+            format="integer"
+            type="integer">120
     </item>
 
     <string name="ga_sampleFrequency">90</string>

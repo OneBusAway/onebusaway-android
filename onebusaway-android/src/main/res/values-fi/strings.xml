@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2014 Turo Ulvinen (turo.ulvinen@gmail.com), 2015 Ari Rusakko (ari.rusakko@octo3.fi)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="app_name">OneBusAway</string>
+
+    <!-- Permissions -->
+    <string name="trip_service_perm_label">käynnistä matkapalvelu</string>
+    <string name="trip_service_perm_description">Salli ohjelman luoda muistutuksia saapuville kulkuneuvoille.
+    </string>
+
+    <!-- Generic -->
+    <string name="generic_comm_error">Olemme pahoillamme, mutta tiedonsiirrossa on häiriö ja pyytämiäsi tietoja ei pystytä näyttämään. Yritä myöhemmin uudestaan.
+    </string>
+    <string name="generic_comm_error_toast">Päivitys epäonnistui. Yritämme uudestaan minuutin kuluttua.</string>
+    <string name="route_not_found_error">Reittiä ei löydy. Jos tämä oli pikakuvake, niin linkkisi voi olla vanhentunut.
+    </string>
+    <string name="stop_not_found_error">Pysäkkiä ei löydy. Jos tämä oli pikakuvake, niin linkkisi voi olla vanhentunut.
+    </string>
+    <string name="internal_error">Hups, jotakin odottamatonta tapahtui. Yritä myöhemmin uudestaan.</string>
+    <string name="out_of_memory_error">Käytettävissä oleva muistin määrä ei riitä pyynnön käsittelyyn.
+    </string>
+    <string name="bad_gateway_error">OneBusAway:n palvelin on ruuhkautunut. Pyydämme anteeksi!
+    </string>
+    <string name="map_generic_error">Pysäkkejä ei pystytä hakemaan.</string>
+    <string name="no_network_error">Internet-yhteyttä ei ole saatavilla.
+    </string>
+    <string name="airplane_mode_error">Et ole yhdistettynä internetiin.\nSuljetaanko lentokone-tila?
+    </string>
+    <string name="direction_n">Pohjoiseen</string>
+    <string name="direction_ne">Koilliseen</string>
+    <string name="direction_e">Itään</string>
+    <string name="direction_se">Kaakkoon</string>
+    <string name="direction_s">Etelään</string>
+    <string name="direction_sw">Lounaaseen</string>
+    <string name="direction_w">Länteen</string>
+    <string name="direction_nw">Luoteeseen</string>
+    <string name="direction_none"></string>
+    <string name="loading">Ladataan&#8230;</string>
+    <string name="browser_error">Selainta ei pystytä avaamaan.</string>
+    <string name="search_hint">Etsi pysäkkejä tai reittejä</string>
+    <string name="search">Haku</string>
+    <string name="checkmark_description">Valintamerkki</string>
+
+    <!--  Option strings -->
+    <string name="map_option_mylocation">Oma sijainti</string>
+    <string name="map_option_search">Haku</string>
+    <string name="main_option_findroute">Omat reitit</string>
+    <string name="main_option_findstop">Omat pysäkit</string>
+    <string name="main_option_viewtrips">Omat muistutukset</string>
+    <string name="main_option_help">Ohje</string>
+    <string name="main_option_preferences">Asetukset</string>
+    <string name="main_arrival_info">Näytä saapuvat</string>
+    <string name="main_show_routes">Näytä reitit</string>
+    <string name="main_hide_routes">Piilota reitit</string>
+    <string name="main_help_title">Ohje</string>
+    <string name="main_help_whatsnew_title">Mitä uutta?</string>
+    <string name="main_help_whatsnew">Korjauksia!\n\nLisätty ominaisuus, joka mahdollistaa saapuvien kulkuneuvojen tarkastelun pitemmällä aikavälillä kuin 30 min.</string>
+    <string name="main_help_close">Sulje</string>
+    <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
+    <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi, sallitaanko?</string>
+    <string name="main_waiting_for_location">Sijaintiasi yritetään paikantaa&#8230;</string>
+    <string name="main_location_unavailable">Sijaintiasi ei pystytty määrittämään.</string>
+    <string name="main_outofrange_title">Ulkona alueelta</string>
+    <string name="main_outofrange">Olet ulkona %1$s palvelualueelta.\n\nHaluatko siirtyä sinne?</string>
+    <string name="main_outofrange_yes">Siirry</string>
+    <string name="main_outofrange_no">Pysy täällä</string>
+
+    <!--  Stop Info -->
+    <string name="stop_info_ontime">Ajallaan</string>
+    <plurals name="stop_info_arrive_delayed">
+        <item quantity="one">1 minuutti myöhässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minuuttia myöhässä</item>
+    </plurals>
+    <plurals name="stop_info_arrive_early">
+        <item quantity="one">1 minuutti edellä</item>
+        <!-- Below element should remain on same line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> minuuttia edellä</item>
+    </plurals>
+    <plurals name="stop_info_depart_delayed">
+        <item quantity="one">Lähti 1 minuutti myöhässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Lähti <xliff:g id="count">%d</xliff:g> minuuttia myöhässä</item>
+    </plurals>
+    <plurals name="stop_info_depart_early">
+        <item quantity="one">Lähti 1 minuutti edellä aikataulua</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Lähti <xliff:g id="count">%d</xliff:g> minuuttia edellä aikataulua</item>
+    </plurals>
+    <string name="stop_info_scheduled_arrival">Aikataulun mukainen saapuminen</string>
+    <string name="stop_info_scheduled_departure">Aikataulun mukainen lähtö</string>
+    <string name="stop_info_frequency_from">Joka %1$d minuutti %2$s lähtien</string>
+    <string name="stop_info_frequency_until">Joka %1$d minuutti %2$s asti</string>
+    <string name="stop_info_eta_now">NYT</string>
+    <string name="stop_info_option_showonmap">Näytä kartalla</string>
+    <string name="stop_info_option_refresh">Päivitä</string>
+    <string name="stop_info_option_filter">Rajaa reittejä</string>
+    <string name="stop_info_option_editname">Muokkaa nimeä</string>
+    <string name="stop_info_option_addstar">Lisää suosikiksi</string>
+    <string name="stop_info_option_removestar">Poista suosikeista</string>
+    <string name="stop_info_option_reportproblem">Ilmoita ongelmasta</string>
+    <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d minuuttiin.</string>
+    <plurals name="stop_info_nodata_hours_minutes">
+        <item quantity="one">Ei saapuvia kulkuneuvoja seuraavaan 1 tuntiin ja %1$d minuuttiin.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Ei saapuvia kulkuneuvoja seuraavaan <xliff:g id="count">%2$d</xliff:g> tuntiin ja %1$d minuuttiin.</item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">Ei saapuvia vuoroja seuraavaan %1$d minuuttiin.</string>
+    <plurals name="stop_info_no_additional_data_hours_minutes">
+        <item quantity="one">Ei saapuvia vuoroja seuraavaan 1 tuntiin ja %1$d minuuttiin.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Ei saapuvia vuoroja seuraavaan <xliff:g id="count">%2$d</xliff:g> tuntiin ja %1$d minuuttiin.</item>
+    </plurals>
+    <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
+    <string name="stop_info_item_options_title">Toiminnot</string>
+    <string name="stop_info_filter_title">Näytä ainoastaan nämä reitit</string>
+    <string name="stop_info_filter_header">Näyttää %1$d / %2$d reiteistä</string>
+    <string name="stop_info_filter_showall">(näytä kaikki)</string>
+    <string name="stop_info_save">Tallenna</string>
+    <string name="stop_info_cancel">Peruuta</string>
+    <string name="stop_info_clear">Tyhjennä</string>
+    <string name="stop_info_old_data">Tiedot päivitetty %s</string>
+    <string name="stop_info_favorite">Suosikkipysäkki</string>
+
+    <!-- Route Info  -->
+    <string name="route_info_context_get_stop_info">Näytä saapuvien tiedot</string>
+    <string name="route_info_context_showonmap">Näytä kartalla</string>
+    <string name="route_info_goto_url">Katso aikataulua</string>
+
+    <!-- My stops/routes -->
+    <string name="my_recent_title">Aiemmat</string>
+    <string name="my_starred_title">Suosikit</string>
+    <string name="my_search_title">Haku</string>
+    <string name="my_no_recent_stops">Sinulla ei ole aiempia pysäkkejä.</string>
+    <string name="my_no_starred_stops">Sinulla ei ole suosikkipysäkkejä.\n\nVoit lisätä pysäkin suosikiksi saapuvien vuorojen näkymässä.</string>
+    <string name="my_no_recent_routes">Sinulla ei ole aiempia reittejä.</string>
+    <!-- <string name="my_no_starred_routes">Sinulla ei ole suosikkireittejä.</string>-->
+
+    <string name="my_option_clear_recent_stops">Tyhjennä aiemmat pysäkit</string>
+    <string name="my_option_clear_recent_routes">Tyhjennä aiemmat reitit</string>
+    <string name="my_option_clear_starred_stops">Poista kaikki suosikkipysäkit</string>
+    <!-- <string name="my_option_clear_starred_routes">Poista kaikki suosikkireitit</string>-->
+    <string name="my_option_clear_confirm">Tätä toimintoa ei voi peruuttaa! Suoritetaanko silti?</string>
+    <string name="my_option_clear_confirm_title">Oletko aivan varma?</string>
+
+    <string name="my_context_get_stop_info">Näytä lähtevien vuorojen tiedot</string>
+    <string name="my_context_get_route_info">Näytä reittitiedot</string>
+    <string name="my_context_create_shortcut">Luo pikakuvake</string>
+    <string name="my_context_showonmap">Näytä kartalla</string>
+    <string name="my_context_remove_recent">Poista aiemmat tiedot</string>
+    <string name="my_context_remove_star">Poista suosikeista</string>
+    <string name="my_context_show_schedule">Näytä aikataulu</string>
+
+    <!-- Find -->
+    <string name="find_hint_nofavoritestops">Etsi pysäkki syöttämällä pysäkin numero hakukenttään.\n\n Pysäkkinumero on 3-5 merkkiä pitkä ja se löytyy pysäkkimerkistä.
+    </string>
+    <string name="find_hint_nofavoriteroutes">Etsi reitti syöttämällä reitin nimi tai numero hakukenttään.</string>
+    <string name="find_hint_noresults">Hakua vastaavia tuloksia ei löytynyt.</string>
+    <string name="search_stop_hint">Syötä pysäkin numero</string>
+    <string name="search_route_hint">Syötä reitin nimi tai numero</string>
+
+    <string name="route_shortcut">OneBusAway reitti</string>
+    <string name="stop_shortcut">OneBusAway pysäkki</string>
+    <string name="recent_stops_shortcut">Aiemmat pysäkit</string>
+    <string name="recent_routes_shortcut">Aiemmat reitit</string>
+    <string name="starred_stops_shortcut">Suosikkipysäkit</string>
+    <!-- <string name="starred_routes_shortcut">Suosikkireitit</string> -->
+    <string name="route_name">Reitti %s</string>
+
+    <!--  Trip info -->
+    <string name="trip_info_name">Muistutuksen nimi</string>
+    <string name="trip_info_name_hint">Lisää muistutuksen nimi</string>
+    <string name="trip_info_route">Reitti %s</string>
+    <string name="trip_info_depart">Lähtee klo %s</string>
+    <string name="trip_info_reminder_header">Muistutusaika</string>
+    <string name="trip_info_reminder_repeat">Toistetaan</string>
+    <string name="trip_info_save">Tallenna</string>
+    <string name="trip_info_cancel">Peruuta</string>
+    <string name="trip_info_delete">Poista</string>
+    <string name="trip_info_saved">Matka tallennettu.</string>
+    <string name="trip_info_dismiss">Poistu</string>
+    <string name="trip_info_delete_trip">Tämä muistutus poistetaan.</string>
+    <string name="trip_info_repeat_every">Joka %s</string>
+    <string name="trip_info_repeat_everyday">Joka päivä</string>
+    <string name="trip_info_repeat_weekdays">Arkisin (ma-pe)</string>
+    <string name="trip_info_repeat_norepeat">Kerran</string>
+    <string name="trip_info_noname">(ei nimeä)</string>
+    <string name="trip_info_option_showroute">Näytä reitti</string>
+    <string name="trip_info_option_showstop">Näytä pysäkki</string>
+    <string name="trip_info_separator">-</string>
+
+    <!--  Trip list -->
+    <string name="trip_list_notrips">Sinulla ei ole yhtään muistutusta.\n\nVoit luoda muistutuksia napauttamalla saapuvaa kulkuneuvoa valitulla pysäkillä.
+    </string>
+    <string name="trip_list_context_edit">Muokkaa matkaa</string>
+    <string name="trip_list_context_delete">Poista matka</string>
+    <string name="trip_list_context_showstop">Näytä pysäkki</string>
+    <string name="trip_list_context_showroute">Näytä reitti</string>
+
+    <!--  Trip notifications -->
+    <string name="trip_stat_gone">Kulkuneuvo %s on lähtenyt.</string>
+    <string name="trip_stat_lessthanone">Kulkuneuvo %s on alle 1 minuutin päässä!</string>
+    <string name="trip_stat_one">Kulkuneuvo %s on 1 minuutin päässä!</string>
+    <string name="trip_stat">Kulkuneuvo %1$s on %2$d minuutin päässä!</string>
+
+    <!-- Report problem -->
+    <string name="report_problem_code">Ongelman kuvaus</string>
+    <string name="report_problem_comment">Muuta lisättävää?</string>
+    <string name="report_problem_comment_hint">vaihtoehtoinen</string>
+    <string name="report_problem_email">Sähköpostisi</string>
+    <string name="report_problem_email_hint">vaihtoehtoinen</string>
+    <string name="report_problem_cancel">Peruuta</string>
+    <string name="report_problem_send">Lähetä</string>
+    <string name="report_problem_hint">Raportit auttavat OneBusAway:tä löytämään ja korjaamaan ongelmia!</string>
+    <string name="report_problem_sent">Raportti lähetetty! Paljon kiitoksia!</string>
+    <string name="report_problem_error">Raporttia ei pystytä lähettämään. Yritetäänkö uudestaan?</string>
+    <!-- TODO: Modes -->
+    <string name="report_problem_onvehicle_bus">Oletko tässä kulkuneuvossa?</string>
+    <string name="report_problem_vehiclenumber_bus">Kulkuneuvon numero</string>
+    <string name="report_problem_uservehicle_hint">vaihtoehtoinen</string>
+
+    <!-- Region list -->
+    <plurals name="region_distance_miles">
+        <item quantity="one">1 mailin päässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> mailin päässä</item>
+    </plurals>
+    <plurals name="region_distance_kilometers">
+        <item quantity="one">1 kilometrin päässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%s</xliff:g> kilometrin päässä</item>
+    </plurals>
+
+    <string name="region_unavailable">Ei saatavilla</string>
+    <string name="region_option_refresh">Päivitä</string>
+    <string name="region_detecting_server">Kulkuyhteyksiä etsitään&#8230;</string>
+    <string name="region_choose_region">Valitse alue</string>
+    <string name="region_disabled_auto_selection">Automaattinen alueen valinta on pois käytöstä. Voit aktivoida sen asetuksista.
+    </string>
+    <string name="region_region_found">Löytyi %1$s aluetta</string>
+
+    <!--  Bug report -->
+    <string name="bug_report_subject">OneBusAway Android: Palaute</string>
+    <string name="bug_report_body">Valitukset, kiitokset ja virheraportit ovat tervetulleita!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Versio: %3$s / %4$d\nLoc: %5$s
+    </string>
+    <string name="bug_report_error">Virheraporttia ei pystytä lähettämään: sopivaa ohjelmaa ei löytynyt.
+    </string>
+
+    <!-- Application Preferences -->
+    <string name="preferences_category_location">Sijainti</string>
+    <string name="preferences_category_display">Näyttö</string>
+    <string name="preferences_category_backup">Varmuuskopio</string>
+    <string name="preferences_category_about">Tietoja sovelluksesta</string>
+    <string name="preferences_category_advanced">Lisäasetukset</string>
+    <string name="preferences_region_title">Alue</string>
+    <string name="preferences_region_summary">%1$s on tällä hetkellä valittuna</string>
+    <string name="preferences_region_summary_custom_api"> Custom API palvelin on käytössä</string>
+    <string name="preferences_auto_refresh_regions_title">Aluelista päivitetään automaattisesti</string>
+    <string name="preferences_auto_refresh_regions_summary">Alueinformaatio päivitetään viikoittain automaattisesti
+    </string>
+    <string name="preferences_auto_select_region_title">Autom. alueen valinta</string>
+    <string name="preferences_auto_select_region_summary">Aseta nykyinen alue sijaintisi perusteella
+    </string>
+
+    <string name="preferences_preferred_units_title">Mittayksiköt</string>
+    <string name="preferences_preferred_units_option_automatic">Automaattinen</string>
+    <string name="preferences_preferred_units_option_metric">Kilometrit ja metrit</string>
+    <string name="preferences_preferred_units_option_imperial">Mailit ja jalat</string>
+
+    <string name="preferences_oba_api_servername_title">OneBusAway API palvelin</string>
+    <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen OneBusAway API kutsuille
+    </string>
+    <string name="preferences_oba_api_servername_hint">esimerkki.onebusaway.org/api</string>
+    <string name="preferences_save_title">Tallenna muistikortille</string>
+    <string name="preferences_save_summary">Tallentaa aiemmat/suosikkipysäkit ja reitit</string>
+    <string name="preferences_restore_title">Palauta muistikortilta</string>
+    <string name="preferences_restore_summary">Palauttaa edellisen tallennuksen</string>
+    <string name="preferences_db_saved">Tallennus onnistui!</string>
+    <string name="preferences_db_save_error">Tallennus epäonnistui: %1$s</string>
+    <string name="preferences_db_restore_warning">Kaikki tämänhetkiset tiedot pyyhitään! Oletko aivan varma?
+    </string>
+    <string name="preferences_db_restored">Palautus onnistui! Käynnistä OneBusAway uudestaan.</string>
+    <string name="preferences_db_restore_error">Palautus epäonnistui: %1$s</string>
+
+    <string name="preferences_experimental_regions_title">Kokeelliset alueet</string>
+    <string name="preferences_experimental_regions_summary">Ottaa käyttöön alueet, jotka saattavat toimia epävakaasti
+    </string>
+    <string name="preferences_experimental_regions_enable_warning">Kokeelliset alueet saattavat toimia epävakaasti ja reaaliaikaista tietoa ei ole ehkä saatavilla! Jatketaanko?
+    </string>
+    <string name="preferences_experimental_regions_disable_warning">Sinun tämänhetkinen kokeellinen alueesi ei ole saatavilla! Jatketaanko?
+    </string>
+    <string name="preferences_analytics_title">Lähetä käyttötietoja</string>
+    <string name="preferences_analytics_summary">Auta meitä parantamaan sovellusta. Tiedot lähetetään anonyymisti.</string>
+    <string name="preferences_donate_title">Lahjoita</string>
+    <string name="preferences_donate_summary">Tue OneBusAwayn avoimen lähdekoodin projektia</string>
+</resources>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2014 Turo Ulvinen (turo.ulvinen@gmail.com), 2015 Ari Rusakko (ari.rusakko@octo3.fi)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources>
+    <string-array name="main_help_options">
+        <item>Twitter</item>
+        <item>Tuetut liikennöitsijät</item>
+        <item>Uutta?</item>
+        <item>Ota yhteyttä</item>
+    </string-array>
+    <string-array name="stop_item_options">
+        <item>Aseta muistutus</item>
+        <item>Näytä reittitiedot</item>
+        <item>Näytä ainoastaan tämä reitti</item>
+        <item>Näytä reitin aikataulu</item>
+        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    </string-array>
+    <string-array name="stop_item_options_edit">
+        <item>Muokkaa muistutusta</item>
+        <item>Näytä reittitiedot</item>
+        <item>Näytä ainoastaan tämä reitti</item>
+        <item>Näytä reitin aikataulu</item>
+        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    </string-array>
+    <string-array name="stop_item_options_noschedule">
+        <item>Aseta muistutus</item>
+        <item>Näytä reittitiedot</item>
+        <item>Näytä ainoastaan tämä reitti</item>
+        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    </string-array>
+    <string-array name="stop_item_options_edit_noschedule">
+        <item>Muokkaa muistutusta</item>
+        <item>Näytä reittitiedot</item>
+        <item>Näytä ainoastaan tämä reitti</item>
+        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    </string-array>
+    <string-array name="search_stop_options">
+        <item>Näytä saapuvat</item>
+        <item>Näytä kartalla</item>
+    </string-array>
+    <string-array name="search_route_options">
+        <item>Näytä lista pysäkeistä</item>
+        <item>Näytä kartalla</item>
+    </string-array>
+    <string-array name="reminder_time">
+        <item>Ei muistutusta</item>
+        <item>1 minuutti</item>
+        <item>3 minuuttia</item>
+        <item>5 minuuttia</item>
+        <item>10 minuuttia</item>
+        <item>15 minuuttia</item>
+        <item>20 minuuttia</item>
+        <item>25 minuuttia</item>
+        <item>30 minuuttia</item>
+    </string-array>
+    <string-array name="reminder_days">
+        <item>Maanantai</item>
+        <item>Tiistai</item>
+        <item>Keskiviikko</item>
+        <item>Torstai</item>
+        <item>Perjantai</item>
+        <item>Lauantai</item>
+        <item>Sunnuntai</item>
+    </string-array>
+    <string-array name="report_stop_problem_code">
+        <item>Valitse yksi</item>
+        <item>Pysäkin nimi on väärä</item>
+        <item>Pysäkin numero on väärä</item>
+        <item>Sijainti on väärä</item>
+        <item>Reitti tai matka puuttuu</item>
+        <item>Jokin muu</item>
+    </string-array>
+    <string-array name="report_trip_problem_code_bus">
+        <item>Valitse yksi</item>
+        <item>Kulkuneuvo ei koskaan saapunut</item>
+        <item>Saapui aikaisemmin kuin oli ennustettu</item>
+        <item>Saapui myöhemmin kuin oli ennustettu</item>
+        <item>Väärä päämäärä ilmoitettu</item>
+        <item>Kulkuneuvo ei pysähdy tässä</item>
+        <item>Jokin muu</item>
+    </string-array>
+    <string-array name="preferred_units_options">
+        <item>@string/preferences_preferred_units_option_automatic</item>
+        <item>@string/preferences_preferred_units_option_metric</item>
+        <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
+</resources>

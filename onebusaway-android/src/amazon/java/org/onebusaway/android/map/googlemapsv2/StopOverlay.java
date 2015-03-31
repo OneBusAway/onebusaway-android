@@ -15,22 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.amazon.geo.mapsv2.AmazonMap;
-import com.amazon.geo.mapsv2.Projection;
-import com.amazon.geo.mapsv2.model.BitmapDescriptor;
-import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
-import com.amazon.geo.mapsv2.model.LatLng;
-import com.amazon.geo.mapsv2.model.Marker;
-import com.amazon.geo.mapsv2.model.MarkerOptions;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationUtil;
-
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -50,6 +34,22 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+
+import com.amazon.geo.mapsv2.AmazonMap;
+import com.amazon.geo.mapsv2.Projection;
+import com.amazon.geo.mapsv2.model.BitmapDescriptor;
+import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
+import com.amazon.geo.mapsv2.model.LatLng;
+import com.amazon.geo.mapsv2.model.Marker;
+import com.amazon.geo.mapsv2.model.MarkerOptions;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.LocationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,7 +116,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
          * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
          */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes);
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
     public StopOverlay(Activity activity, AmazonMap map) {
@@ -630,19 +630,20 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         HashMap<String, ObaRoute> routes = mMarkerData.getCachedRoutes();
 
         // Notify listener
-        mOnFocusChangedListener.onFocusChanged(stop, routes);
+        mOnFocusChangedListener.onFocusChanged(stop, routes, stop.getLocation());
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d(TAG, "Map clicked");
 
-        // Only notify focus changed the first time the map is clicked away from a stop marker
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
-            // Notify listener
-            mOnFocusChangedListener.onFocusChanged(null, null);
         }
+        // Set map clicked location
+        Location location = MapHelpV2.makeLocation(latLng);
+        // Notify focus changed every time the map is clicked away from a stop marker
+        mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {

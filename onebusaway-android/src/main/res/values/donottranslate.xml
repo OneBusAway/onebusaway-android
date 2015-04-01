@@ -66,8 +66,10 @@
     <string name="analytics_label_button_press_search_box">Search box selected</string>
     <string name="analytics_label_button_press_search_button">Search button clicked</string>
     <string name="analytics_label_button_press_location">Clicked My Location Button</string>
-    <string name="analytics_label_button_press_experimental_on">Turned on Experimental Regions</string>
-    <string name="analytics_label_button_press_experimental_off">Turned off Experimental Regions</string>
+    <string name="analytics_label_button_press_experimental_on">Turned on Experimental Regions
+    </string>
+    <string name="analytics_label_button_press_experimental_off">Turned off Experimental Regions
+    </string>
     <string name="analytics_label_experimental">Show Experimental Regions:\u0020</string>
     <string name="analytics_label_button_press_auto">Set region automatically</string>
     <string name="analytics_label_button_press_manual">Set region manually</string>

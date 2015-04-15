@@ -24,8 +24,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -41,9 +41,9 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.location.Location;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -113,8 +113,9 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
          * or when the user taps on an area away from the map for the first time after a stop
          * is already selected, which removes focus
          *
-         * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-         * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes   a HashMap of all route display names that serve this stop - key is
+         *                 routeId
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);

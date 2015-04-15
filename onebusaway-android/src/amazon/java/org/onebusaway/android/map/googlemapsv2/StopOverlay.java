@@ -15,6 +15,22 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.amazon.geo.mapsv2.AmazonMap;
+import com.amazon.geo.mapsv2.Projection;
+import com.amazon.geo.mapsv2.model.BitmapDescriptor;
+import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
+import com.amazon.geo.mapsv2.model.LatLng;
+import com.amazon.geo.mapsv2.model.Marker;
+import com.amazon.geo.mapsv2.model.MarkerOptions;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.LocationUtil;
+
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -34,22 +50,6 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
-
-import com.amazon.geo.mapsv2.AmazonMap;
-import com.amazon.geo.mapsv2.Projection;
-import com.amazon.geo.mapsv2.model.BitmapDescriptor;
-import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
-import com.amazon.geo.mapsv2.model.LatLng;
-import com.amazon.geo.mapsv2.model.Marker;
-import com.amazon.geo.mapsv2.model.MarkerOptions;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,11 +98,11 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
     private static float mBuffer = 0;  // Add this to the icon size to get the Bitmap size
 
-    private static float mPercentOffsetNSEW = 0.5f;
-    // % offset used to position the stop icon for N, S, E, and W
+    private static float mPercentOffset = 0.5f;
+    // % offset to position the stop icon, so the selection marker hits the middle of the circle
 
     private static Paint mArrowPaintStroke;
-            // Stroke color used for outline of directional arrows on stops
+    // Stroke color used for outline of directional arrows on stops
 
     OnFocusChangedListener mOnFocusChangedListener;
 
@@ -115,6 +115,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
          *
          * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
@@ -173,13 +174,11 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         mArrowWidthPx = mPx / 2f; // half the stop icon size
         mArrowHeightPx = mPx / 3f; // 1/3 the stop icon size
         float arrowSpacingReductionPx = mPx / 10f;
-        Log.d(TAG, "arrow height = " + mArrowHeightPx);
-        Log.d(TAG, "arrow width = " + mArrowWidthPx);
-
         mBuffer = mArrowHeightPx - arrowSpacingReductionPx;
 
-        // Set offset used to position the image for N, S, E, and W Markers (see getYPercentOffsetForDirection())
-        mPercentOffsetNSEW = (mBuffer / (mPx + mBuffer)) * 0.5f;
+        // Set offset used to position the image for markers (see getX/YPercentOffsetForDirection())
+        // This allows the current selection marker to land on the middle of the stop marker circle
+        mPercentOffset = (mBuffer / (mPx + mBuffer)) * 0.5f;
 
         mArrowPaintStroke = new Paint();
         mArrowPaintStroke.setColor(Color.WHITE);
@@ -246,20 +245,20 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_WEST)) {
-            // TODO - fix this for NW
-            directionAngle = 315f;
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
+            directionAngle = 315f;  // Arrow is drawn N, rotate 315 degrees
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
+                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
+            shape.setBounds((int) mBuffer, (int) mBuffer, bm.getWidth(), bm.getHeight());
+            // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(0, 0, mBuffer, mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
-            rotationY = bm.getHeight() / 2f;
+            // Rotate around below coordinates (trial and error)
+            rotationX = mPx / 2f + mBuffer / 2f;
+            rotationY = bm.getHeight() / 2f - mBuffer / 2f;
         } else if (direction.equals(WEST)) {
             directionAngle = 0f;  // Arrow is drawn pointing West, so no rotation
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
@@ -274,22 +273,21 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             rotationX = bm.getHeight() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_WEST)) {
-            // TODO - fix this for SW
-            directionAngle = 225f;
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mArrowHeightPx), Bitmap.Config.ARGB_8888);
+            directionAngle = 225f;  // Arrow is drawn N, rotate 225 degrees
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
+                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
+            shape.setBounds((int) mBuffer, 0, bm.getWidth(), mPx);
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(0, bm.getHeight(), mBuffer, bm.getHeight() - mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
-            rotationY = bm.getHeight() / 2f;
+            // Rotate around below coordinates (trial and error)
+            rotationX = bm.getWidth() / 2f - mBuffer / 4f;
+            rotationY = mPx / 2f + mBuffer / 4f;
         } else if (direction.equals(SOUTH)) {
-            directionAngle = 180f;
+            directionAngle = 180f;  // Arrow is drawn N, rotate 180 degrees
             bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
@@ -302,19 +300,19 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(SOUTH_EAST)) {
-            // TODO - fix this for SE
-            directionAngle = 135f;
-            bm = Bitmap.createBitmap(mPx, (int) (mPx + mArrowHeightPx), Bitmap.Config.ARGB_8888);
+            directionAngle = 135f;  // Arrow is drawn N, rotate 135 degrees
+            bm = Bitmap.createBitmap((int) (mPx + mBuffer),
+                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) mArrowHeightPx, bm.getWidth(), bm.getHeight());
-            // TODO - Shade with darkest color at tip of arrow
+            shape.setBounds(0, 0, mPx, mPx);
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - mBuffer,
+                            bm.getHeight() - mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // TODO - Set rotation center
-            rotationX = bm.getWidth() / 2f;
+            // Rotate around below coordinates (trial and error)
+            rotationX = (mPx + mBuffer / 2) / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(EAST)) {
             directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
@@ -330,22 +328,20 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             rotationX = bm.getWidth() / 2f;
             rotationY = bm.getHeight() / 2f;
         } else if (direction.equals(NORTH_EAST)) {
-            directionAngle = 45f;  // Arrow is drawn pointing N
-            // TODO - still need to tweak this, remove multiplier here in favor of overall strategy
-            float bufferMultiplier = 0.8f;
+            directionAngle = 45f;  // Arrow is drawn pointing N, so rotate 45 degrees
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
-                    (int) (mPx + mBuffer * bufferMultiplier), Bitmap.Config.ARGB_8888);
+                    (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
             shape = r.getDrawable(R.drawable.map_stop_icon);
-            shape.setBounds(0, (int) (mBuffer * bufferMultiplier), mPx, bm.getHeight());
+            shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
-                    new LinearGradient(bm.getWidth() / 2, 0, bm.getWidth() / 2, mArrowHeightPx,
+                    new LinearGradient(bm.getWidth(), 0, bm.getWidth() - mBuffer, mBuffer,
                             r.getColor(R.color.theme_primary), r.getColor(R.color.theme_accent),
                             Shader.TileMode.MIRROR));
-            // Middle of image
-            rotationX = bm.getWidth() / 2f;
-            rotationY = bm.getHeight() / 2f;
+            // Rotate around middle of circle
+            rotationX = (float) mPx / 2;
+            rotationY = bm.getHeight() - (float) mPx / 2;
         } else {
             throw new IllegalArgumentException(direction);
         }
@@ -364,12 +360,14 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         // Height of the cutout in the bottom of the triangle that makes it an arrow (0=triangle)
         final float CUTOUT_HEIGHT = mPx / 12;
         Path path = new Path();
-        float x1, y1;  // Tip of arrow
-        float x2, y2;  // lower left
-        float x3, y3; // cutout in arrow bottom
-        float x4, y4; // lower right
+        float x1 = 0, y1 = 0;  // Tip of arrow
+        float x2 = 0, y2 = 0;  // lower left
+        float x3 = 0, y3 = 0; // cutout in arrow bottom
+        float x4 = 0, y4 = 0; // lower right
 
-        if (direction.equals(NORTH) || direction.equals(SOUTH) || direction.equals(NORTH_EAST)) {
+        if (direction.equals(NORTH) || direction.equals(SOUTH) ||
+                direction.equals(NORTH_EAST) || direction.equals(SOUTH_EAST) ||
+                direction.equals(NORTH_WEST) || direction.equals(SOUTH_WEST)) {
             // Arrow is drawn pointing NORTH
             // Tip of arrow
             x1 = mPx / 2;
@@ -403,24 +401,6 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             // lower right
             x4 = mArrowHeightPx;
             y4 = (mPx / 2) + (mArrowWidthPx / 2);
-        } else {
-            // TODO - fix other directions - for now just draw arrow pointing N
-            // Arrow is drawn pointing NORTH
-            // Tip of arrow
-            x1 = mPx / 2;
-            y1 = 0;
-
-            // lower left
-            x2 = (mPx / 2) - (mArrowWidthPx / 2);
-            y2 = mArrowHeightPx;
-
-            // cutout in arrow bottom
-            x3 = mPx / 2;
-            y3 = mArrowHeightPx - CUTOUT_HEIGHT;
-
-            // lower right
-            x4 = (mPx / 2) + (mArrowWidthPx / 2);
-            y4 = mArrowHeightPx;
         }
 
         path.setFillType(Path.FillType.EVEN_ODD);
@@ -454,21 +434,20 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_WEST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(WEST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(SOUTH_WEST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(SOUTH)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(EAST)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(NORTH_EAST)) {
-            // TODO - fix this, its not perfect
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;
@@ -487,23 +466,23 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
      */
     private static float getYPercentOffsetForDirection(String direction) {
         if (direction.equals(NORTH)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(NORTH_WEST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(WEST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(SOUTH_WEST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(SOUTH)) {
-            return 0.5f - mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(SOUTH_EAST)) {
-            return mPercentOffsetNSEW;
+            return 0.5f - mPercentOffset;
         } else if (direction.equals(EAST)) {
             // Middle of icon
             return 0.5f;
         } else if (direction.equals(NORTH_EAST)) {
-            return 0.5f + mPercentOffsetNSEW;
+            return 0.5f + mPercentOffset;
         } else if (direction.equals(NO_DIRECTION)) {
             // Middle of icon
             return 0.5f;
@@ -751,9 +730,9 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
          */
         private void addMarkerToMap(ObaStop stop, List<ObaRoute> routes) {
             Marker m = mMap.addMarker(new MarkerOptions()
-                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
-                    .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
-                    .flat(true)
+                            .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                            .icon(getBitmapDescriptorForBusStopDirection(stop.getDirection()))
+                            .flat(true)
                             .anchor(getXPercentOffsetForDirection(stop.getDirection()),
                                     getYPercentOffsetForDirection(stop.getDirection()))
             );

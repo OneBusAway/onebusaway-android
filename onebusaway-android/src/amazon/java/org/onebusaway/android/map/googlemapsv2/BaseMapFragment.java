@@ -144,8 +144,9 @@ public class BaseMapFragment extends SupportMapFragment
          * or when the user taps on an area away from the map for the first time after a stop
          * is already selected, which removes focus
          *
-         * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-         * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes   a HashMap of all route display names that serve this stop - key is
+         *                 routeId
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
@@ -409,7 +410,8 @@ public class BaseMapFragment extends SupportMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes, final Location location) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
+            final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {

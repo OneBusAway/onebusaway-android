@@ -11,13 +11,13 @@ import android.content.Context;
  */
 public class ProprietaryMapHelpV2 {
 
-    public static boolean isGoogleMapsInstalled(Context context) {
+    public static boolean isMapsInstalled(Context context) {
         int resultCode = AmazonMapsRuntimeUtil
                 .isAmazonMapsRuntimeAvailable(context);
         return resultCode == ConnectionResult.SUCCESS;
     }
 
-    public static void promptUserInstallGoogleMaps(final Context context) {
+    public static void promptUserInstallMaps(final Context context) {
         if (context instanceof Activity) {
             Activity a = (Activity) context;
             int resultCode = AmazonMapsRuntimeUtil

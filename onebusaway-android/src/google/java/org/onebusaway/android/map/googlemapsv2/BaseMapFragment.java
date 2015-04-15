@@ -157,7 +157,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         mMap = getMap();
 
-        if (MapHelpV2.isGoogleMapsInstalled(getActivity())) {
+        if (MapHelpV2.isMapsInstalled(getActivity())) {
             if (mMap != null) {
                 UiSettings uiSettings = mMap.getUiSettings();
                 // Show the location on the map
@@ -172,7 +172,7 @@ public class BaseMapFragment extends SupportMapFragment
                 uiSettings.setZoomControlsEnabled(false);
             }
         } else {
-            MapHelpV2.promptUserInstallGoogleMaps(getActivity());
+            MapHelpV2.promptUserInstallMaps(getActivity());
         }
 
         locationHelper = new LocationHelper(getActivity());

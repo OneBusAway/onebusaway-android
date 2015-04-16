@@ -17,8 +17,6 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.location.LocationRequest;
-
-import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
 import com.amazon.geo.mapsv2.SupportMapFragment;
@@ -79,7 +77,7 @@ import java.util.List;
 public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
-        LocationSource, LocationHelper.Listener, AmazonMap.OnCameraChangeListener,
+        LocationSource, LocationHelper.Listener, com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";
@@ -97,7 +95,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
 
-    private AmazonMap mMap;
+    // Use fully-qualified class name to avoid import statement, because it interferes with scripted
+    // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
+    private com.amazon.geo.mapsv2.AmazonMap mMap;
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 

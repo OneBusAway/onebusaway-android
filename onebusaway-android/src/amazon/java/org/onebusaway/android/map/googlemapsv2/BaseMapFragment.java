@@ -77,7 +77,8 @@ import java.util.List;
 public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
-        LocationSource, LocationHelper.Listener, com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
+        LocationSource, LocationHelper.Listener,
+        com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";

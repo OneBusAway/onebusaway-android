@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.apache.tools.ant.filters.ConcatFilter
 
 buildscript {
     repositories {
@@ -133,6 +134,7 @@ task copyMapsApiV2Classes {
             exclude { details -> details.file.name.equals('ProprietaryMapHelpV2.java') }
             filter { line -> line.replace('com.google.android.gms.maps', 'com.amazon.geo.mapsv2') }
             filter { line -> line.replace('GoogleMap', 'AmazonMap') }
+            filter(ConcatFilter, prepend: file('AmazonMapsFileHeader.txt'))
         }
     }
 }

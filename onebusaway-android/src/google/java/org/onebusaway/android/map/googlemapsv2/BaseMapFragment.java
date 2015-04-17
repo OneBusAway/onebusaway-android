@@ -18,7 +18,6 @@ package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -78,7 +77,8 @@ import java.util.List;
 public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
-        LocationSource, LocationHelper.Listener, GoogleMap.OnCameraChangeListener,
+        LocationSource, LocationHelper.Listener,
+        com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";
@@ -96,7 +96,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
 
-    private GoogleMap mMap;
+    // Use fully-qualified class name to avoid import statement, because it interferes with scripted
+    // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
+    private com.google.android.gms.maps.GoogleMap mMap;
 
     private UIHelp.StopUserInfoMap mStopUserMap;
 
@@ -143,8 +145,9 @@ public class BaseMapFragment extends SupportMapFragment
          * or when the user taps on an area away from the map for the first time after a stop
          * is already selected, which removes focus
          *
-         * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-         * @param routes a HashMap of all route display names that serve this stop - key is routeId
+         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes   a HashMap of all route display names that serve this stop - key is
+         *                 routeId
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
@@ -157,7 +160,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         mMap = getMap();
 
-        if (MapHelpV2.isGoogleMapsInstalled(getActivity())) {
+        if (MapHelpV2.isMapsInstalled(getActivity())) {
             if (mMap != null) {
                 UiSettings uiSettings = mMap.getUiSettings();
                 // Show the location on the map
@@ -172,7 +175,7 @@ public class BaseMapFragment extends SupportMapFragment
                 uiSettings.setZoomControlsEnabled(false);
             }
         } else {
-            MapHelpV2.promptUserInstallGoogleMaps(getActivity());
+            MapHelpV2.promptUserInstallMaps(getActivity());
         }
 
         locationHelper = new LocationHelper(getActivity());
@@ -408,7 +411,8 @@ public class BaseMapFragment extends SupportMapFragment
     //
     final Handler mStopChangedHandler = new Handler();
 
-    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes, final Location location) {
+    public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
+            final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {

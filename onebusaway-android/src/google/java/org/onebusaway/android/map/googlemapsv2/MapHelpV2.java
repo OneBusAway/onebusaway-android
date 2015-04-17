@@ -112,14 +112,14 @@ public class MapHelpV2 {
     /**
      * Returns true if Android Maps V2 is installed, false if it is not
      */
-    public static boolean isGoogleMapsInstalled(Context context) {
-        return ProprietaryMapHelpV2.isGoogleMapsInstalled(context);
+    public static boolean isMapsInstalled(Context context) {
+        return ProprietaryMapHelpV2.isMapsInstalled(context);
     }
 
     /**
      * Prompts the user to install Android Maps V2
      */
-    public static void promptUserInstallGoogleMaps(final Context context) {
-        ProprietaryMapHelpV2.promptUserInstallGoogleMaps(context);
+    public static void promptUserInstallMaps(final Context context) {
+        ProprietaryMapHelpV2.promptUserInstallMaps(context);
     }
 }

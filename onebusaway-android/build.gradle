@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.apache.tools.ant.filters.ConcatFilter
 
 buildscript {
     repositories {
@@ -63,13 +64,12 @@ android {
             /**
              * Amazon Fire Phone - see src/amazon
              *
-             * If changes are made to classes in src/google/java/org/onebusaway/android/map package,
-             * the same classes should be copied to src/amazon/java/org/onebusaway/android/map
-             * package.  Then, the Google classes should be replaced with equivalent Amazon
-             * classes as specified in http://bit.ly/AmazonMapsMigration.
-             *
-             * NOTE:  When doing this copying, ProprietaryMapHelpV2 should not need to be copied.
-             * It's specific to each platform.
+             * NOTE: The "copyMapsApiV2Classes" task automatically copies the classes from
+             * src/google/java/org/onebusaway/android/map package to the
+             * src/amazon/java/org/onebusaway/android/map package (with the exception of
+             * ProprietaryMapHelpV2) when the project is built, and replaces the imports and
+             * GoogleMap class with the Amazon equivalents.  Therefore, the files in
+             * src/amazon/java/org/onebusaway/android/map should not be manually changed.
              */
         }
     }
@@ -117,6 +117,33 @@ android {
     }
 }
 
+/**
+ * Copies our Maps API v2-based classes from the Google build flavor to the Amazon build flavor,
+ * replacing the Google import packages and GoogleMap class with the Amazon import packages and
+ * AmazonMap class.  Copy is only executed if the files in the google build flavor are no longer
+ * equal to the ones in the amazon build flavor.
+ */
+task copyMapsApiV2Classes {
+    inputs.dir 'src/google/java/org/onebusaway/android/map/googlemapsv2'
+    outputs.dir 'src/amazon/java/org/onebusaway/android/map/googlemapsv2'
+    // up-to-date check for outputs
+    doLast {
+        copy {
+            from 'src/google/java/org/onebusaway/android/map/googlemapsv2'
+            into 'src/amazon/java/org/onebusaway/android/map/googlemapsv2'
+            exclude { details -> details.file.name.equals('ProprietaryMapHelpV2.java') }
+            filter { line -> line.replace('com.google.android.gms.maps', 'com.amazon.geo.mapsv2') }
+            filter { line -> line.replace('GoogleMap', 'AmazonMap') }
+            filter(ConcatFilter, prepend: file('AmazonMapsFileHeader.txt'))
+        }
+    }
+}
+
+preBuild.dependsOn copyMapsApiV2Classes
+
+/**
+ * Ask for keystore/key passwords on the command line when running release builds
+ */
 task askForPasswords << {
     // Must create String because System.readPassword() returns char[]
     // (and assigning that below fails silently)

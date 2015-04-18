@@ -49,7 +49,7 @@ also mention how you would build/run the **amazon** flavor.
 
 ### Release builds
 
-To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias. The `gradlew assembleGoogleRelease` command will prompt for your keystore passphrase (for Amazon Fire Phone version, use ``gradlew assembleAmazonRelease`).
+To build a release build, you need to create a `gradle.properties` file that points to a `secure.properties` file, and a `secure.properties` file that points to your keystore and alias. The `gradlew assembleGoogleRelease` command will prompt for your keystore passphrase (for Amazon Fire Phone version, use `gradlew assembleAmazonRelease`).
 
 The `gradle.properties` file is located in the onebusaway-android directory and has the contents:
 ```

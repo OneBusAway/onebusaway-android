@@ -6,7 +6,7 @@
  * If you want to change something in this file, please edit the sources in
  * src/google/java/org/onebusaway/android/map/googlemapsv2 and rebuild the project.  Gradle will
  * detect that the files in the the Google build flavor changed and will re-generate the Amazon
- * build flavor map classes.  See Github Issue #158 and #254 for details.
+ * build flavor map classes.  See Github Issues #158 and #254 for details.
  */
 
 /*

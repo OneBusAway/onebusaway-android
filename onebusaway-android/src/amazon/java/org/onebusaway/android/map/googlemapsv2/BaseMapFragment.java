@@ -27,8 +27,18 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.location.LocationRequest;
+import android.content.Context;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.google.android.gms.location.LocationRequest;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
 import com.amazon.geo.mapsv2.SupportMapFragment;
@@ -36,6 +46,8 @@ import com.amazon.geo.mapsv2.UiSettings;
 import com.amazon.geo.mapsv2.model.CameraPosition;
 import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.LatLngBounds;
+import com.amazon.geo.mapsv2.model.Marker;
+import com.amazon.geo.mapsv2.model.MarkerOptions;
 import com.amazon.geo.mapsv2.model.Polyline;
 import com.amazon.geo.mapsv2.model.PolylineOptions;
 import com.amazon.geo.mapsv2.model.VisibleRegion;
@@ -55,17 +67,6 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.UIHelp;
-
-import android.content.Context;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -167,7 +168,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mMap = getMap();
@@ -424,7 +425,7 @@ public class BaseMapFragment extends SupportMapFragment
     final Handler mStopChangedHandler = new Handler();
 
     public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
-            final Location location) {
+                               final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
@@ -605,7 +606,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void setMapCenter(Location location, boolean animateToLocation,
-            boolean overlayExpanded) {
+                             boolean overlayExpanded) {
         if (mMap != null) {
             CameraPosition cp = mMap.getCameraPosition();
 
@@ -737,6 +738,20 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void deactivate() {
         mListener = null;
+    }
+
+    /**
+     * Adds a marker to the Map
+     *
+     * @param l is the marker's position in the map
+     * @return the added marker object,
+     * the marker object can be used to remove the marker from the map by calling marker.remove()
+     */
+    public Marker addMarker(Location l) {
+        if (getMap() == null) {
+            return null;
+        }
+        return getMap().addMarker(new MarkerOptions().position(MapHelpV2.makeLatLng(l)));
     }
 
     public void onLocationChanged(Location l) {

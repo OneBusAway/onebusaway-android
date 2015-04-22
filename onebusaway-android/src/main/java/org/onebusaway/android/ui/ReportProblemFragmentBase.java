@@ -15,17 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -40,7 +29,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.UIHelp;
 
 import java.util.concurrent.Callable;
 
@@ -54,6 +55,16 @@ public abstract class ReportProblemFragmentBase extends Fragment
      * GoogleApiClient being used for Location Services
      */
     GoogleApiClient mGoogleApiClient;
+
+    /**
+     * Displays the problem categories
+     */
+    Spinner mCodeView;
+
+    /**
+     * Stores the problem category codes
+     */
+    String[] SPINNER_TO_CODE;
 
     @Override
     public void onAttach(Activity activity) {
@@ -114,6 +125,17 @@ public abstract class ReportProblemFragmentBase extends Fragment
             sendReport();
         }
         return false;
+    }
+
+    /**
+     * Validates report arguments before submitting a problem
+     *
+     * @return false if the report is not valid
+     */
+    protected boolean isReportArgumentsValid() {
+        // Check if a user selects a problem category
+        String code = SPINNER_TO_CODE[mCodeView.getSelectedItemPosition()];
+        return code != null;
     }
 
     protected void sendReport() {

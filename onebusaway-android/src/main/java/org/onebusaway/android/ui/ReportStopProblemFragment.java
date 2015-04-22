@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.MyTextUtils;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -34,6 +27,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.MyTextUtils;
 
 public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
@@ -62,8 +63,6 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         ft.addToBackStack(null);
         ft.commit();
     }
-
-    private Spinner mCodeView;
 
     private TextView mUserComment;
 
@@ -100,6 +99,15 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
             CharSequence comment = savedInstanceState.getCharSequence(USER_COMMENT);
             mUserComment.setText(comment);
         }
+
+        SPINNER_TO_CODE = new String[]{
+                null,
+                ObaReportProblemWithStopRequest.NAME_WRONG,
+                ObaReportProblemWithStopRequest.NUMBER_WRONG,
+                ObaReportProblemWithStopRequest.LOCATION_WRONG,
+                ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
+                ObaReportProblemWithStopRequest.OTHER
+        };
     }
 
     @Override
@@ -115,19 +123,17 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
-        super.sendReport();
-    }
 
-    private static final String[] SPINNER_TO_CODE = new String[]{
-            null,
-            ObaReportProblemWithStopRequest.NAME_WRONG,
-            ObaReportProblemWithStopRequest.NUMBER_WRONG,
-            ObaReportProblemWithStopRequest.LOCATION_WRONG,
-            ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
-            ObaReportProblemWithStopRequest.OTHER
-    };
+        if (isReportArgumentsValid()) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
+            super.sendReport();
+        } else {
+            // Show error message if report arguments is not valid
+            Toast.makeText(getActivity(), getString(R.string.report_problem_invalid_argument),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     protected ReportLoader createLoader(Bundle args) {

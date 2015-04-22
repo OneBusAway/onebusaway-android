@@ -15,13 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.MyTextUtils;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -35,6 +28,14 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.MyTextUtils;
 
 public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     //private static final String TAG = "ReportStopProblemFragment";
@@ -77,8 +78,6 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         ft.addToBackStack(null);
         ft.commit();
     }
-
-    private Spinner mCodeView;
 
     private TextView mUserComment;
 
@@ -144,6 +143,16 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
             mUserVehicle.setText(num);
             mUserVehicle.setEnabled(onVehicle);
         }
+
+        SPINNER_TO_CODE = new String[]{
+                null,
+                ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
+                ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
+                ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
+                ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
+                ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
+                ObaReportProblemWithTripRequest.OTHER
+        };
     }
 
     @Override
@@ -161,20 +170,16 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
-        super.sendReport();
+        if (isReportArgumentsValid()) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
+            super.sendReport();
+        } else {
+            // Show error message if report arguments is not valid
+            Toast.makeText(getActivity(), getString(R.string.report_problem_invalid_argument),
+                    Toast.LENGTH_LONG).show();
+        }
     }
-
-    private static final String[] SPINNER_TO_CODE = new String[]{
-            null,
-            ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
-            ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
-            ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
-            ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
-            ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
-            ObaReportProblemWithTripRequest.OTHER
-    };
 
     @Override
     protected ReportLoader createLoader(Bundle args) {

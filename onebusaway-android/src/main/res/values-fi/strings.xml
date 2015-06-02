@@ -68,7 +68,9 @@
     <string name="main_hide_routes">Piilota reitit</string>
     <string name="main_help_title">Ohje</string>
     <string name="main_help_whatsnew_title">Mitä uutta?</string>
-    <string name="main_help_whatsnew">Korjauksia!\n\nLisätty ominaisuus, joka mahdollistaa saapuvien kulkuneuvojen tarkastelun pitemmällä aikavälillä kuin 30 min.</string>
+    <string name="main_help_whatsnew">&#8226;\u0020Suomenkielinen käännös\n&#8226;\u0020Näppäimistön
+        automaattinen piilotus hausta poistuttaessa
+    </string>
     <string name="main_help_close">Sulje</string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
     <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi, sallitaanko?</string>

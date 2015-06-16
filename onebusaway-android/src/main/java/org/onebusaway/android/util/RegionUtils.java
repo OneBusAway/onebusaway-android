@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 public class RegionUtils {
 
@@ -502,10 +503,35 @@ public class RegionUtils {
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
     }
 
+    /**
+     * Retrieves hard-coded region information from the build flavor defined in build.gradle.
+     * If a fixed region is defined in a build flavor, it does not allow region roaming.
+     *
+     * @return hard-coded region information from the build flavor defined in build.gradle
+     */
+    public static ObaRegion getRegionFromBuildFlavor() {
+        final int regionId = Integer.MAX_VALUE; // This doesn't get used, but needs to be positive
+        ObaRegionElement.Bounds[] boundsArray = new ObaRegionElement.Bounds[1];
+        ObaRegionElement.Bounds bounds = new ObaRegionElement.Bounds(
+                BuildConfig.FIXED_REGION_BOUNDS_LAT, BuildConfig.FIXED_REGION_BOUNDS_LON,
+                BuildConfig.FIXED_REGION_BOUNDS_LAT_SPAN, BuildConfig.FIXED_REGION_BOUNDS_LON_SPAN);
+        boundsArray[0] = bounds;
+        ObaRegionElement region = new ObaRegionElement(regionId,
+                BuildConfig.FIXED_REGION_NAME, true,
+                BuildConfig.FIXED_REGION_OBA_BASE_URL, BuildConfig.FIXED_REGION_SIRI_BASE_URL,
+                boundsArray, BuildConfig.FIXED_REGION_LANG, BuildConfig.FIXED_REGION_CONTACT_EMAIL,
+                BuildConfig.FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS,
+                BuildConfig.FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS,
+                BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
+                BuildConfig.FIXED_REGION_TWITTER_URL, false,
+                BuildConfig.FIXED_REGION_STOP_INFO_URL);
+        return region;
+    }
+
     //
     // Saving
     //
-    public synchronized static void saveToProvider(Context context, ArrayList<ObaRegion> regions) {
+    public synchronized static void saveToProvider(Context context, List<ObaRegion> regions) {
         // Delete all the existing regions
         ContentResolver cr = context.getContentResolver();
         cr.delete(ObaContract.Regions.CONTENT_URI, null, null);

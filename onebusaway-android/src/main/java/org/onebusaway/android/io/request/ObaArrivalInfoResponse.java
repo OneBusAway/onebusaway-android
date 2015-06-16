@@ -69,7 +69,12 @@ public final class ObaArrivalInfoResponse extends ObaResponseWithRefs {
      * @return The stop information for this arrival info.
      */
     public ObaStop getStop() {
-        return data.references.getStop(data.entry.stopId);
+        if (data == null || data.references == null || data.entry == null) {
+            // This shouldn't happen, but it is (see #252 comment)
+            return null;
+        } else {
+            return data.references.getStop(data.entry.stopId);
+        }
     }
 
     /**

@@ -18,10 +18,8 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.MyTextUtils;
 
-import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
 import android.text.format.DateUtils;
@@ -30,25 +28,27 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+/**
+ * Original style of arrivals for OBA Android
+ */
+public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalInfo> {
 
-public class ArrivalsListAdapter extends ArrayAdapter<ArrivalInfo> {
-
-    private ContentQueryMap mTripsForStop;
-
-    public ArrivalsListAdapter(Context context) {
+    public ArrivalsListAdapterStyleA(Context context) {
         super(context, R.layout.arrivals_list_item);
     }
 
-    public void setTripsForStop(ContentQueryMap tripsForStop) {
-        mTripsForStop = tripsForStop;
-        notifyDataSetChanged();
-    }
-
-    public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter) {
+    /**
+     * Sets the data to be used with the adapter
+     *
+     * @param routesFilter routeIds to filter for
+     * @param currentTime  current time in milliseconds
+     */
+    public void setData(ObaArrivalInfo[] arrivals, ArrayList<String> routesFilter,
+            long currentTime) {
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
                     ArrivalInfo.convertObaArrivalInfo(getContext(),
-                            arrivals, routesFilter);
+                            arrivals, routesFilter, currentTime);
             setData(list);
         } else {
             setData(null);

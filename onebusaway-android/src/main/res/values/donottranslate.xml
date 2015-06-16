@@ -29,10 +29,14 @@
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>
     <string name="preferences_key_analytics">preference_google_analytics</string>
     <string name="preferences_key_donate">preference_donate</string>
+    <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
 
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>
+
+    <!-- Powered by OBA URL -->
+    <string name="powered_by_oba_url">http://onebusaway.org</string>
 
     <!-- StopInfo project (see #103) -->
     <string name="stop_info_url_path">busstops</string>
@@ -59,6 +63,7 @@
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
+    <string name="analytics_label_button_press_powered_by_oba">Clicked Powered By Oba Link</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Email Link</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>

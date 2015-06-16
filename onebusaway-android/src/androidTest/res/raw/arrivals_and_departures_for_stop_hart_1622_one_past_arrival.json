@@ -1,0 +1,153 @@
+{
+  "code": 200,
+  "currentTime": 1432181982713,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 16,
+          "departureEnabled": true,
+          "distanceFromStop": -1818.2618014723994,
+          "frequency": null,
+          "lastUpdateTime": 1432181977203,
+          "numberOfStopsAway": -4,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1432181724000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1432181724000,
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeLongName": "40th Street",
+          "routeShortName": "5",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1432181724000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1432181724000,
+          "serviceDate": 1432094400000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "Hillsborough Area Regional Transit_1622",
+          "stopSequence": 12,
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripId": "Hillsborough Area Regional Transit_89869",
+          "tripStatus": {
+            "activeTripId": "Hillsborough Area Regional Transit_89869",
+            "blockTripSequence": 16,
+            "closestStop": "Hillsborough Area Regional Transit_1630",
+            "closestStopTimeOffset": 7,
+            "distanceAlongTrip": 6313.524588182627,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 28.03037452697754,
+              "lon": -82.41645812988281
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1432181977203,
+            "nextStop": "Hillsborough Area Regional Transit_1630",
+            "nextStopTimeOffset": 7,
+            "orientation": 269.1211709208805,
+            "phase": "",
+            "position": {
+              "lat": 28.027925208697905,
+              "lon": -82.41647102309521
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 6313.524588182627,
+            "serviceDate": 1432094400000,
+            "situationIds": [],
+            "status": "default",
+            "totalDistanceAlongTrip": 19440.69118417295,
+            "vehicleId": "Hillsborough Area Regional Transit_1017"
+          },
+          "vehicleId": "Hillsborough Area Regional Transit_1017"
+        }
+      ],
+      "nearbyStopIds": ["Hillsborough Area Regional Transit_1618"],
+      "situationIds": [],
+      "stopId": "Hillsborough Area Regional Transit_1622"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "Hillsborough Area Regional Transit",
+          "lang": "en",
+          "name": "Hillsborough Area Regional Transit",
+          "phone": "813-254-4278",
+          "privateService": false,
+          "timezone": "America/New_York",
+          "url": "http://www.gohart.org"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_5",
+          "longName": "40th Street",
+          "shortName": "5",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/routes/hart/05.html"
+        }
+      ],
+      "situations": [],
+      "stops": [
+        {
+          "code": "1622",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_1622",
+          "lat": 28.044154,
+          "locationType": 0,
+          "lon": -82.416414,
+          "name": "Mckinley Dr @ Bougainvillea Av",
+          "routeIds": ["Hillsborough Area Regional Transit_5"],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "1630",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_1630",
+          "lat": 28.027444,
+          "locationType": 0,
+          "lon": -82.41653,
+          "name": "40th St @ Seward St",
+          "routeIds": ["Hillsborough Area Regional Transit_5"],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "1618",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_1618",
+          "lat": 28.044336,
+          "locationType": 0,
+          "lon": -82.416145,
+          "name": "Mckinley Dr @ Bougainvillea Av",
+          "routeIds": ["Hillsborough Area Regional Transit_5"],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "Hillsborough Area Regional Transit_287415",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_89869",
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_37762",
+          "timeZone": "",
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.tripservice;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
 
@@ -44,20 +45,20 @@ public class TripService extends Service {
      * Actions - should match intent-filter actions for AlarmReceiver in AndroidManifest.xml
      *
      * NOTE: The action names in this class should not be changed.  They need to stay under the
-     * "com.joulespersecond.seattlebusbot" namespace to support backwards compatibility with
-     * existing installed apps
+     * BuildConfig.APPLICATION_ID (for the original OBA brand, "com.joulespersecond.seattlebusbot")
+     * namespace to support backwards compatibility with existing installed apps
      */
     public static final String ACTION_SCHEDULE =
-            "com.joulespersecond.seattlebusbot.action.SCHEDULE";
+            BuildConfig.APPLICATION_ID + ".action.SCHEDULE";
 
     public static final String ACTION_POLL =
-            "com.joulespersecond.seattlebusbot.action.POLL";
+            BuildConfig.APPLICATION_ID + ".action.POLL";
 
     public static final String ACTION_NOTIFY =
-            "com.joulespersecond.seattlebusbot.action.NOTIFY";
+            BuildConfig.APPLICATION_ID + ".action.NOTIFY";
 
     public static final String ACTION_CANCEL =
-            "com.joulespersecond.seattlebusbot.action.CANCEL";
+            BuildConfig.APPLICATION_ID + ".action.CANCEL";
 
     private static final String EXTRA_TIMEDIFF = ".timeDiff";
 

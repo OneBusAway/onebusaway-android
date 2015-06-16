@@ -28,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 public class TestHelp {
 
-    static String CATEGORY_TEST = "com.joulespersecond.seattlebusbot.category.TEST";
+    static String CATEGORY_TEST = BuildConfig.APPLICATION_ID + ".category.TEST";
 
-    static String ACTION_LOAD_FINISHED = "com.joulespersecond.seattlebusbot.LOAD_FINISHED";
+    static String ACTION_LOAD_FINISHED = BuildConfig.APPLICATION_ID + ".LOAD_FINISHED";
 
     static void notifyLoadFinished(Context context) {
         sendBroadcast(context, CATEGORY_TEST, ACTION_LOAD_FINISHED);

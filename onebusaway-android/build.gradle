@@ -39,25 +39,22 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        /**
-         * To allow this app to be distributed via Google Play, the applicationId MUST remain the
-         * original package name of the app before it was re-branded to OneBusAway:
-         * com.joulespersecond.seattlebusbot
-         */
-        applicationId "com.joulespersecond.seattlebusbot"
         minSdkVersion 9
         targetSdkVersion 21
         versionCode 38
         versionName "1.7.2"
     }
 
+    /**
+     * brand - how the name, look, and feel of each OneBusAway-based app is presented
+     * platform - Google or Amazon (for Maps API v2 dependencies)
+     */
+    flavorDimensions "brand", "platform"
+
     productFlavors {
-        /**
-         * Currently build flavors are used to manage Maps API v2 dependencies for Google/Amazon
-         * versions.
-         */
         google {
             // Normal Google Play release - see src/google
+            flavorDimension "platform"
         }
 
         amazon {
@@ -71,7 +68,118 @@ android {
              * GoogleMap class with the Amazon equivalents.  Therefore, the files in
              * src/amazon/java/org/onebusaway/android/map should not be manually changed.
              */
+            flavorDimension "platform"
         }
+
+        oba {
+            /**
+             * Original OneBusAway brand
+             *
+             * To allow this app to be distributed via Google Play, the applicationId MUST remain the
+             * original package name of the app before it was re-branded to OneBusAway:
+             * com.joulespersecond.seattlebusbot
+             */
+            flavorDimension "brand"
+            applicationId "com.joulespersecond.seattlebusbot"
+            manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
+            buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
+            // Below fields need to be defined so flavor builds, but will not be used by app
+            buildConfigField "String", "FIXED_REGION_NAME", "null"
+            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0"
+            buildConfigField "String", "FIXED_REGION_LANG", "null"
+            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
+            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+        }
+
+        /**
+         * Rebranded versions of OBA using brand build flavors are below.  To add a new brand:
+         *  1. Add a new brand build flavor variant below
+         *  2. Create a new folder src/{brandName}/res (or copy from one of the samples - src/agencyX or src/agencyY)
+         *  3. Edit resource files in src/{brandName}/res subfolders with the brand information
+         *
+         *  For generating icons for the res/mipmap-* folders, see http://romannurik.github.io/AndroidAssetStudio/icons-launcher.html
+         */
+
+        agencyX {
+            // "Agency X" rebranding OneBusAway as another app - see src/agencyX/res for branded resources
+            flavorDimension "brand"
+            applicationId "org.agencyx.android" // Unique listing of this brand on app store
+            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
+            buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
+            // Below fields need to be defined so flavor builds, but will not be used by app
+            buildConfigField "String", "FIXED_REGION_NAME", "null"
+            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0"
+            buildConfigField "String", "FIXED_REGION_LANG", "null"
+            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
+            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+        }
+
+        agencyY {
+            // "Agency Y" rebranding OneBusAway as another app - see src/agencyY/res for branded resources
+            flavorDimension "brand"
+            applicationId "org.agencyy.android" // Unique listing of this brand on app store
+            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
+            buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
+            // Fixed region info that the app will use
+            buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
+            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
+                    "\"http://api.tampa.onebusaway.org/api\""
+            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "27.976910500000002"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "-82.445851"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0.5424609999999994"
+            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0.576357999999999"
+            buildConfigField "String", "FIXED_REGION_LANG", "\"en_US\""
+            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "\"onebusaway@gohart.org\""
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "String", "FIXED_REGION_TWITTER_URL",
+                    "\"http://mobile.twitter.com/OBA_tampa\""
+            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+        }
+
+        /**
+         * Add more rebranding flavors here...
+         */
+    }
+
+    /**
+     * Set brand BuildConfig.DATABASE_AUTHORITY, used in org.onebusaway.android.provider.ObaContract
+     */
+    applicationVariants.all {
+        variant ->
+            def authority;
+            if (variant.productFlavors.get(0).name == "oba") {
+                authority = '"' + "com.joulespersecond.oba" + '"'
+                // Must keep the original OBA authority
+                variant.buildConfigField "String", "DATABASE_AUTHORITY", authority
+            } else {
+                // It's cleaner to just append ".provider" to the applicationId for brand flavors
+                authority = '"' + applicationId.toString() + '.provider' + '"'
+                variant.buildConfigField "String", "DATABASE_AUTHORITY", authority
+            }
     }
 
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
@@ -163,7 +271,8 @@ tasks.whenTaskAdded { theTask ->
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     compile 'com.google.android.gms:play-services:6.5.87'
-    compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.android.support:cardview-v7:22.0.0'
     compile 'commons-io:commons-io:2.4'
     // JSON data binding for OBA REST API responses
     compile 'com.fasterxml.jackson.core:jackson-core:2.4.2'

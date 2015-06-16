@@ -16,11 +16,14 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BuildFlavorConstants;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -30,12 +33,12 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Window;
 import android.widget.Toast;
-
-import com.google.android.gms.analytics.GoogleAnalytics;
 
 public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -50,6 +53,8 @@ public class PreferencesActivity extends PreferenceActivity
     Preference analyticsPref;
 
     Preference donatePref;
+
+    Preference poweredByObaPref;
 
     boolean autoSelectInitialValue;
     //Save initial value so we can compare to current value in onDestroy()
@@ -76,6 +81,9 @@ public class PreferencesActivity extends PreferenceActivity
         donatePref = findPreference(getString(R.string.preferences_key_donate));
         donatePref.setOnPreferenceClickListener(this);
 
+        poweredByObaPref = findPreference(getString(R.string.preferences_key_powered_by_oba));
+        poweredByObaPref.setOnPreferenceClickListener(this);
+
         SharedPreferences settings = Application.getPrefs();
         autoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
@@ -84,11 +92,36 @@ public class PreferencesActivity extends PreferenceActivity
                 getString(R.string.preference_key_preferred_units));
 
         settings.registerOnSharedPreferenceChangeListener(this);
+
+        PreferenceScreen preferenceScreen = getPreferenceScreen();
+        // Hide any preferences that shouldn't be shown if the region is hard-coded via build flavor
+        if (BuildConfig.USE_FIXED_REGION) {
+            PreferenceCategory regionCategory = (PreferenceCategory)
+                    findPreference(getString(R.string.preferences_category_location));
+            regionCategory.removeAll();
+            preferenceScreen.removePreference(regionCategory);
+            PreferenceCategory advancedCategory = (PreferenceCategory)
+                    findPreference(getString(R.string.preferences_category_advanced));
+            Preference experimentalRegion = findPreference(
+                    getString(R.string.preference_key_experimental_regions));
+            advancedCategory.removePreference(experimentalRegion);
+        }
+
+        // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
+        PreferenceCategory aboutCategory = (PreferenceCategory)
+                findPreference(getString(R.string.preferences_category_about));
+        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorConstants.OBA_FLAVOR_BRAND)) {
+            aboutCategory.removePreference(poweredByObaPref);
+        } else {
+            // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
+            aboutCategory.removePreference(donatePref);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
     }
@@ -129,13 +162,21 @@ public class PreferencesActivity extends PreferenceActivity
 
     @Override
     public boolean onPreferenceClick(Preference pref) {
+        Log.d(TAG, "preference - " + pref.getKey());
         if (pref.equals(regionPref)) {
             RegionsActivity.start(this);
-        }else if (pref.equals(donatePref)) {
+        } else if (pref.equals(donatePref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_donate));
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
+            startActivity(intent);
+        } else if (pref.equals(poweredByObaPref)) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_powered_by_oba));
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse(getString(R.string.powered_by_oba_url)));
             startActivity(intent);
         }
         return true;

@@ -37,12 +37,19 @@ final class ArrivalInfo {
         }
     }
 
+    /**
+     * Converts the ObaArrivalInfo array received from the server to an ArrayList for the adapter
+     * @param context
+     * @param arrivalInfo
+     * @param filter routeIds to filter for
+     * @param ms current time in milliseconds
+     * @return ArrayList of arrival info to be used with the adapter
+     */
     public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
             ObaArrivalInfo[] arrivalInfo,
-            ArrayList<String> filter) {
+            ArrayList<String> filter, long ms) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
-        final long ms = System.currentTimeMillis();
         if (filter != null && filter.size() > 0) {
             for (int i = 0; i < len; ++i) {
                 ObaArrivalInfo arrival = arrivalInfo[i];
@@ -73,6 +80,8 @@ final class ArrivalInfo {
 
     private static final int ms_in_mins = 60 * 1000;
 
+    private final boolean mPredicted;
+
     public ArrivalInfo(Context context, ObaArrivalInfo info, long now) {
         mInfo = info;
         // First, all times have to have to be converted to 'minutes'
@@ -91,9 +100,11 @@ final class ArrivalInfo {
         final long predictedMins = predicted / ms_in_mins;
 
         if (predicted != 0) {
+            mPredicted = true;
             mEta = predictedMins - nowMins;
             mDisplayTime = predicted;
         } else {
+            mPredicted = false;
             mEta = scheduledMins - nowMins;
             mDisplayTime = scheduled;
         }
@@ -236,5 +247,13 @@ final class ArrivalInfo {
      */
     final Integer getColor() {
         return mColor;
+    }
+
+    /**
+     * Returns true if there is real-time arrival info available for this trip, false if there is not
+     * @return true if there is real-time arrival info available for this trip, false if there is not
+     */
+    final boolean getPredicted() {
+        return mPredicted;
     }
 }

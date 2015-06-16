@@ -287,7 +287,8 @@ public class HomeActivity extends ActionBarActivity
 
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
-            mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
+            mArrivalsListHeader.setSlidingPanelCollapsed(
+                    mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
     }
 
@@ -396,7 +397,7 @@ public class HomeActivity extends ActionBarActivity
         showMyLocationButton();
         if (mFocusedStopId != null && mSlidingPanel != null) {
             // if we've focused on a stop, then show the panel that was previously hidden
-            mSlidingPanel.showPanel();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
     }
 
@@ -413,7 +414,7 @@ public class HomeActivity extends ActionBarActivity
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
         }
         if (mSlidingPanel != null) {
-            mSlidingPanel.hidePanel();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         }
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -439,7 +440,7 @@ public class HomeActivity extends ActionBarActivity
             fm.beginTransaction().hide(mMapFragment).commit();
         }
         if (mSlidingPanel != null) {
-            mSlidingPanel.hidePanel();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         }
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -623,7 +624,7 @@ public class HomeActivity extends ActionBarActivity
             // and clear the currently focused stopId
             mFocusedStopId = null;
             moveMyLocationButtonDown();
-            mSlidingPanel.hidePanel();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
             if (mArrivalsListFragment != null) {
                 FragmentManager fm = getSupportFragmentManager();
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
@@ -663,7 +664,7 @@ public class HomeActivity extends ActionBarActivity
             // Since mFocusedStop was null, the layout changed, and we should recenter map on stop
             if (mMapFragment != null && mSlidingPanel != null) {
                 mMapFragment.setMapCenter(mFocusedStop.getLocation(), true,
-                        mSlidingPanel.isPanelAnchored());
+                        mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED);
             }
 
             // ...and we should add a focus marker for this stop
@@ -677,8 +678,9 @@ public class HomeActivity extends ActionBarActivity
     public void onBackPressed() {
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
-            if (mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored()) {
-                mSlidingPanel.collapsePanel();
+            if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED
+                    || mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
                 return;
             }
         }
@@ -697,7 +699,8 @@ public class HomeActivity extends ActionBarActivity
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
-        mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
+        mArrivalsListHeader.setSlidingPanelCollapsed(
+                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED);
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
@@ -711,7 +714,9 @@ public class HomeActivity extends ActionBarActivity
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
-        mSlidingPanel.showPanel();
+        if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
         moveMyLocationButtonUp();
     }
 
@@ -944,7 +949,8 @@ public class HomeActivity extends ActionBarActivity
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
 
-        mSlidingPanel.hidePanel();  // Don't show the panel until we have content
+        mSlidingPanel.setPanelState(
+                SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
         mSlidingPanel.setOverlayed(true);
         mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
         mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
@@ -1013,10 +1019,6 @@ public class HomeActivity extends ActionBarActivity
                 updateArrivalListFragment(stopId, null, null);
             }
         }
-    }
-
-    private boolean isSlidingPanelCollapsed() {
-        return !(mSlidingPanel.isPanelExpanded() || mSlidingPanel.isPanelAnchored());
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

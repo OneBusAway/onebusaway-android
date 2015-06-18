@@ -390,12 +390,24 @@ class ArrivalsListHeader {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     private void doExpandCollapseRotation(boolean collapsed) {
         if (!UIHelp.canAnimateViewModern()) {
             rotateExpandCollapseImageViewLegacy(collapsed);
             return;
         }
+        Log.d(TAG, "Expand/Collapse rotation = " + mExpandCollapse.getRotation());
+        // If there is an ongoing animation, clear/cancel it
+        mExpandCollapse.clearAnimation();
+        if (UIHelp.canCancelAnimation()) {
+            mExpandCollapse.animate().cancel();
+        }
+        // First, reset the rotation if we end up in an awkward state due to simultaneous animations
+        if (mExpandCollapse.getRotation() > ANIM_STATE_NORMAL &&
+                mExpandCollapse.getRotation() < ANIM_STATE_INVERTED) {
+            mExpandCollapse.setRotation(-ANIM_STATE_INVERTED);
+        }
+
         if (!collapsed) {
             // Rotate clockwise
             mExpandCollapse.animate()

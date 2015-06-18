@@ -608,7 +608,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             return false;
         }
 
-        if(BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG) {
             // Show the stop_id in a toast for debug purposes
             Toast.makeText(mActivity, stop.getId(), Toast.LENGTH_SHORT).show();
         }

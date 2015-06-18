@@ -34,6 +34,7 @@ import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.model.MarkerOptions;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -61,6 +62,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -604,6 +606,11 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         if (stop == null) {
             // The marker isn't a stop that is contained in this StopOverlay - return unhandled
             return false;
+        }
+
+        if(BuildConfig.DEBUG) {
+            // Show the stop_id in a toast for debug purposes
+            Toast.makeText(mActivity, stop.getId(), Toast.LENGTH_SHORT).show();
         }
 
         doFocusChange(stop);

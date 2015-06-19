@@ -287,8 +287,7 @@ public class HomeActivity extends ActionBarActivity
 
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
-            mArrivalsListHeader.setSlidingPanelCollapsed(
-                    mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED);
+            mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
     }
 
@@ -699,8 +698,7 @@ public class HomeActivity extends ActionBarActivity
         mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
-        mArrivalsListHeader.setSlidingPanelCollapsed(
-                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED);
+        mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
@@ -1019,6 +1017,21 @@ public class HomeActivity extends ActionBarActivity
                 updateArrivalListFragment(stopId, null, null);
             }
         }
+    }
+
+    /**
+     * Our definition of collapsed is consistent with SlidingPanel pre-v3.0.0 definition - we don't
+     * consider the panel changing from the hidden state to the collapsed state to be a "collapsed"
+     * event.  v3.0.0 and higher fire the "collapsed" event when coming from the hidden state.
+     * This method provides us with a collapsed state that is consistent with the pre-v3.0.0
+     * definition
+     * of a collapse event, to make our event model consistent with post v3.0.0 SlidingPanel.
+     *
+     * @return true if the panel isn't expanded or anchored, false if it is not
+     */
+    private boolean isSlidingPanelCollapsed() {
+        return !(mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED ||
+                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED);
     }
 
     public ArrivalsListFragment getArrivalsListFragment() {

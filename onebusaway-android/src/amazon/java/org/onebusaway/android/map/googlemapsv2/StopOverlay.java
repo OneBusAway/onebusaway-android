@@ -617,7 +617,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
         // Report Stop distance metric
         Location stopLocation = stop.getLocation();
-        Location myLocation = LocationUtil.getLocation2(mActivity, null);
+        Location myLocation = Application.getLastKnownLocation(mActivity, null);
         // Track the users distance to bus stop
         ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
         return true;

@@ -19,7 +19,6 @@ package org.onebusaway.android.map;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.app.Application;
@@ -146,7 +145,7 @@ public class StopMapController implements MapModeController,
 
     private static final int STOPS_LOADER = 5678;
 
-    private final Callback mFragment;
+    private final Callback mCallback;
 
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
@@ -160,17 +159,17 @@ public class StopMapController implements MapModeController,
     GoogleApiClient mGoogleApiClient;
 
     public StopMapController(Callback callback) {
-        mFragment = callback;
+        mCallback = callback;
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mFragment.getActivity())
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mCallback.getActivity())
                 == ConnectionResult.SUCCESS) {
-            Context context = mFragment.getActivity();
+            Context context = mCallback.getActivity();
             mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(context);
             mGoogleApiClient.connect();
         }
 
-        //mFragment.getLoaderManager().initLoader(STOPS_LOADER, null, this);
+        //mCallback.getLoaderManager().initLoader(STOPS_LOADER, null, this);
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
@@ -187,16 +186,16 @@ public class StopMapController implements MapModeController,
             if (lat != 0.0 && lon != 0.0) {
                 center = LocationUtil.makeLocation(lat, lon);
             }
-            mFragment.getMapView().setZoom(mapZoom);
+            mCallback.getMapView().setZoom(mapZoom);
 
             if (center != null) {
-                mFragment.getMapView().setMapCenter(center, false, false);
+                mCallback.getMapView().setMapCenter(center, false, false);
                 onLocation();
             } else {
-                mFragment.setMyLocation(false, true);
+                mCallback.setMyLocation(false, true);
             }
         } else {
-            mFragment.setMyLocation(false, true);
+            mCallback.setMyLocation(false, true);
         }
     }
 
@@ -207,7 +206,7 @@ public class StopMapController implements MapModeController,
 
     @Override
     public void destroy() {
-        //mFragment.getLoaderManager().destroyLoader(STOPS_LOADER);
+        //mCallback.getLoaderManager().destroyLoader(STOPS_LOADER);
         getLoader().reset();
         watchMap(false);
     }
@@ -247,8 +246,8 @@ public class StopMapController implements MapModeController,
 
     @Override
     public Loader<StopsResponse> onCreateLoader(int id, Bundle args) {
-        StopsLoader loader = new StopsLoader(mFragment);
-        StopsRequest req = new StopsRequest(mFragment.getMapView());
+        StopsLoader loader = new StopsLoader(mCallback);
+        StopsRequest req = new StopsRequest(mCallback.getMapView());
         loader.update(req);
         return loader;
     }
@@ -256,19 +255,19 @@ public class StopMapController implements MapModeController,
     @Override
     public void onLoadFinished(Loader<StopsResponse> loader,
             StopsResponse _response) {
-        mFragment.showProgress(false);
+        mCallback.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
         if (response == null) {
             return;
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapFragment.showMapError(mFragment.getActivity(), response);
+            BaseMapFragment.showMapError(mCallback.getActivity(), response);
             return;
         }
 
         if (response.getOutOfRange()) {
-            mFragment.notifyOutOfRange();
+            mCallback.notifyOutOfRange();
             return;
         }
 
@@ -277,7 +276,8 @@ public class StopMapController implements MapModeController,
         //We need to also make sure the list of stops is empty, otherwise we screen out valid responses
         //TODO - After above issue #59 is resolved, we should also only do this check on OBA server
         //versions below the version number in which this is fixed.
-        Location myLocation = LocationUtil.getLocation2(mFragment.getActivity(), mGoogleApiClient);
+        Location myLocation = Application.getLastKnownLocation(mCallback.getActivity(),
+                mGoogleApiClient);
         if (myLocation != null && Application.get().getCurrentRegion() != null) {
             boolean inRegion = true;  // Assume user is in region unless we detect otherwise
             try {
@@ -293,19 +293,19 @@ public class StopMapController implements MapModeController,
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Device location is outside region range, notifying...");
                 }
-                mFragment.notifyOutOfRange();
+                mCallback.notifyOutOfRange();
                 return;
             }
         }
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
-        mFragment.showStops(stops, response);
+        mCallback.showStops(stops, response);
     }
 
     @Override
     public void onLoaderReset(Loader<StopsResponse> loader) {
         // Clear the overlay.
-        mFragment.showStops(null, null);
+        mCallback.showStops(null, null);
     }
 
     // Remove when adding back LoaderManager help.
@@ -320,7 +320,7 @@ public class StopMapController implements MapModeController,
     //
     private StopsLoader getLoader() {
         //Loader<ObaStopsForLocationResponse> l =
-        //        mFragment.getLoaderManager().getLoader(STOPS_LOADER);
+        //        mCallback.getLoaderManager().getLoader(STOPS_LOADER);
         //return (StopsLoader)l;
         return (StopsLoader) mLoader;
     }
@@ -328,15 +328,15 @@ public class StopMapController implements MapModeController,
     private void refresh() {
         // First we need to check to see if the current request we have can handle this.
         // Otherwise, we need to restart the loader with the new request.
-        if (mFragment != null) {
-            Activity a = mFragment.getActivity();
+        if (mCallback != null) {
+            Activity a = mCallback.getActivity();
             if (a != null) {
                 a.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         StopsLoader loader = getLoader();
                         if (loader != null) {
-                            StopsRequest req = new StopsRequest(mFragment.getMapView());
+                            StopsRequest req = new StopsRequest(mCallback.getMapView());
                             loader.update(req);
                         }
                     }
@@ -415,9 +415,9 @@ public class StopMapController implements MapModeController,
     //
     private void watchMap(boolean watch) {
         // Only instantiate our own map watcher if the mapView isn't capable of watching itself
-        if (watch && !mFragment.getMapView().canWatchMapChanges()) {
+        if (watch && !mCallback.getMapView().canWatchMapChanges()) {
             if (mMapWatcher == null) {
-                mMapWatcher = new MapWatcher(mFragment.getMapView(), this);
+                mMapWatcher = new MapWatcher(mCallback.getMapView(), this);
             }
             mMapWatcher.start();
         } else {

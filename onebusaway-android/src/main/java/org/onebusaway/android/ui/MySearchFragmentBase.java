@@ -20,6 +20,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.UIHelp;
 import org.onebusaway.android.view.SearchView;
@@ -214,7 +215,7 @@ abstract class MySearchFragmentBase extends ListFragment
             result = base.getSearchCenter();
         }
         if (result == null) {
-            result = LocationUtil.getLocation(act, mGoogleApiClient);
+            result = Application.getLastKnownLocation(act, mGoogleApiClient);
         }
         return result;
     }

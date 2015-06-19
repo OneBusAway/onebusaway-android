@@ -15,6 +15,13 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
+import org.onebusaway.android.util.MyTextUtils;
+
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
@@ -28,13 +35,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.MyTextUtils;
 
 public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
@@ -155,7 +155,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         }
 
         // Location / Location accuracy
-        Location location = LocationUtil.getLocation2(getActivity(), mGoogleApiClient);
+        Location location = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
         if (location != null) {
             builder.setUserLocation(location.getLatitude(), location.getLongitude());
             if (location.hasAccuracy()) {

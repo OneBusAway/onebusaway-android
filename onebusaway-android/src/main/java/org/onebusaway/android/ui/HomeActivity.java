@@ -719,7 +719,7 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private String getLocationString(Context context) {
-        Location loc = LocationUtil.getLocation2(context, mGoogleApiClient);
+        Location loc = Application.getLastKnownLocation(context, mGoogleApiClient);
         return LocationUtil.printLocationDetails(loc);
     }
 

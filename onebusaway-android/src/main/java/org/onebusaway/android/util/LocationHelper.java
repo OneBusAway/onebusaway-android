@@ -24,7 +24,6 @@ import com.google.android.gms.location.LocationServices;
 import org.onebusaway.android.app.Application;
 
 import android.content.Context;
-import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -57,10 +56,6 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     Context mContext;
 
     LocationManager mLocationManager;
-
-    Location mLastLocation;
-
-    static GeomagneticField mGeomagneticField;
 
     ArrayList<Listener> mListeners = new ArrayList<Listener>();
 
@@ -128,21 +123,18 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
 
     @Override
     public void onLocationChanged(Location location) {
-        final float ACC_THRESHOLD = 50f;
-        // If the new location is the first location, or has an accuracy better than 50m and
-        // is newer than the last location, save it
-        if (mLastLocation == null || (mLastLocation.getAccuracy() < ACC_THRESHOLD
-                && location.getTime() > mLastLocation.getTime())) {
-            mLastLocation = location;
-
-            mGeomagneticField = new GeomagneticField(
-                    (float) location.getLatitude(),
-                    (float) location.getLongitude(),
-                    (float) location.getAltitude(),
-                    System.currentTimeMillis());
-
+        // Offer this location to the centralized location store, it case its better than currently
+        // stored location
+        Application.setLastKnownLocation(location);
+        // Notify listeners with the newest location from the central store (which could be the one
+        // that was just generated above)
+        Location lastLocation = Application.getLastKnownLocation(mContext, mGoogleApiClient);
+        if (lastLocation != null) {
+            // We need to copy the location, it case this object is reset in Application
+            Location locationForListeners = new Location("for listeners");
+            locationForListeners.set(lastLocation);
             for (Listener l : mListeners) {
-                l.onLocationChanged(mLastLocation);
+                l.onLocationChanged(locationForListeners);
             }
         }
     }
@@ -160,23 +152,6 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     @Override
     public void onProviderDisabled(String provider) {
 
-    }
-
-    /**
-     * Returns the declination of the horizontal component of the magnetic field from true north,
-     * in
-     * degrees (i.e. positive means the magnetic field is rotated east that much from true north).
-     *
-     * @return declination of the horizontal component of the magnetic field from true north, in
-     * degrees (i.e. positive means the magnetic field is rotated east that much from true north),
-     * or null if its not available
-     */
-    public static Float getMagneticDeclination() {
-        if (mGeomagneticField != null) {
-            return mGeomagneticField.getDeclination();
-        } else {
-            return null;
-        }
     }
 
     private void registerAllProviders() {

@@ -4,6 +4,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.TestHelp;
 
@@ -49,6 +50,38 @@ public class LocationUtilTest extends AndroidTestCase {
         }
     }
 
+    public void testLocationComparisonByTime() {
+        boolean result;
+        Location a;
+        Location b;
+
+        // Test that non-null location is preferred
+        a = new Location("test");
+        b = null;
+        result = LocationUtil.compareLocationsByTime(a, b);
+        assertTrue(result);
+
+        a = null;
+        b = new Location("test");
+        result = LocationUtil.compareLocationsByTime(a, b);
+        assertFalse(result);
+
+        // Test that location with greater (i.e., newer) timestamp is preferred
+        a = new Location("test");
+        a.setTime(1001);
+        b = new Location("test");
+        b.setTime(1000);
+
+        result = LocationUtil.compareLocationsByTime(a, b);
+        assertTrue(result);
+
+        a.setTime(1000);
+        b.setTime(1001);
+
+        result = LocationUtil.compareLocationsByTime(a, b);
+        assertFalse(result);
+    }
+
     public void testLocationComparison() {
         boolean result;
         Location a;
@@ -65,17 +98,63 @@ public class LocationUtilTest extends AndroidTestCase {
         result = LocationUtil.compareLocations(a, b);
         assertFalse(result);
 
-        // Test that location with greater (i.e., newer) timestamp is preferred
+        long time = System
+                .currentTimeMillis();  // We have to use current time, because of the age threshold evaluation
+
+        // We always want the newer location
         a = new Location("test");
-        a.setTime(1001);
+        a.setTime(time + 1);
         b = new Location("test");
-        b.setTime(1000);
+        b.setTime(time);
 
         result = LocationUtil.compareLocations(a, b);
         assertTrue(result);
 
-        a.setTime(1000);
-        b.setTime(1001);
+        a.setTime(time);
+        b.setTime(time + 1);
+
+        result = LocationUtil.compareLocations(a, b);
+        assertFalse(result);
+
+        // Test that the new location would be saved if the old location is older than the time
+        // threshold, even if the accuracy is worse
+        a = new Location("test");
+        a.setTime(time);  // A is newer
+        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        b = new Location("test");
+        b.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        b.setTime(time - LocationUtil.TIME_THRESHOLD - 1);  // older than time threshold
+
+        result = LocationUtil.compareLocations(a, b);
+        assertTrue(result);
+
+        // A is older, so this should fail, since we never want an older location
+        a = new Location("test");
+        a.setTime(time - LocationUtil.TIME_THRESHOLD - 2);  // A is older
+        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        b = new Location("test");
+        b.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        b.setTime(time - LocationUtil.TIME_THRESHOLD - 1);  // older than time threshold
+
+        result = LocationUtil.compareLocations(a, b);
+        assertFalse(result);
+
+        // Test that location with greater (i.e., newer) timestamp is preferred, as long as it has
+        // a reasonable accuracy
+        a = new Location("test");
+        a.setTime(time + 1);  // A is newer
+        a.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        b = new Location("test");
+        b.setTime(time);
+
+        result = LocationUtil.compareLocations(a, b);
+        assertTrue(result);
+
+        a = new Location("test");
+        a.setTime(time + 1);  // A is newer
+        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        b = new Location("test");
+        b.setTime(time);
 
         result = LocationUtil.compareLocations(a, b);
         assertFalse(result);
@@ -92,7 +171,7 @@ public class LocationUtilTest extends AndroidTestCase {
              * have custom Android framework providers such as "hybrid" that might should up here.
              * So, we can't test for "gps" or "network" specifically.
              */
-            loc = LocationUtil.getLocation2(getContext(), null);
+            loc = Application.getLastKnownLocation(getContext(), null);
             /**
              * On devices that behave correctly the following non-null test should pass.  However, it's
              * possible that it can fail on some devices (e.g., on a fresh reboot on a device without
@@ -114,7 +193,7 @@ public class LocationUtilTest extends AndroidTestCase {
             /**
              * Could return either a fused or Location API v1 location
              */
-            loc = LocationUtil.getLocation2(getContext(), mGoogleApiClient);
+            loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
             assertNotNull(loc);
             Log.d(TAG,
                     "Location Provider for Location Services test is '" + loc.getProvider() + "'");

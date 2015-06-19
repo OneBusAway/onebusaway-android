@@ -107,7 +107,7 @@ public class RegionsFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
-        mLocation = LocationUtil.getLocation2(getActivity(), mGoogleApiClient);
+        mLocation = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
         mCurrentRegion = Application.get().getCurrentRegion();
 
         Bundle args = new Bundle();

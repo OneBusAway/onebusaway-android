@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.util;
 
+import org.onebusaway.android.app.Application;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.hardware.Sensor;
@@ -191,7 +193,7 @@ public class OrientationHelper implements SensorEventListener {
         }
 
         // Use magnetic field to compute true (geographic) north, if data is available
-        Float magneticDeclination = LocationHelper.getMagneticDeclination();
+        Float magneticDeclination = Application.getMagneticDeclination();
         if (magneticDeclination != null) {
             mHeading += magneticDeclination;
         }

@@ -30,7 +30,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationUtil;
 
 import android.app.Activity;
 import android.content.res.Resources;
@@ -606,7 +605,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
 
         // Report Stop distance metric
         Location stopLocation = stop.getLocation();
-        Location myLocation = LocationUtil.getLocation2(mActivity, null);
+        Location myLocation = Application.getLastKnownLocation(mActivity, null);
         // Track the users distance to bus stop
         ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
         return true;

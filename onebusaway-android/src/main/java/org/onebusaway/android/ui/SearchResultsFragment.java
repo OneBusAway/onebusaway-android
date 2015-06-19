@@ -21,6 +21,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaElement;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -143,7 +144,7 @@ public class SearchResultsFragment extends ListFragment
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
         return new MyLoader(getActivity(), query,
-                LocationUtil.getLocation(getActivity(), mGoogleApiClient));
+                Application.getLastKnownLocation(getActivity(), mGoogleApiClient));
     }
 
     @Override

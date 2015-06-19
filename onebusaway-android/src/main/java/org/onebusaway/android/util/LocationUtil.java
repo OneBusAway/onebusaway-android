@@ -16,7 +16,6 @@
 package org.onebusaway.android.util;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
@@ -25,16 +24,12 @@ import org.onebusaway.android.io.elements.ObaRegion;
 
 import android.content.Context;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
-import java.util.Iterator;
-import java.util.List;
-
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities to help obtain and process location data
@@ -49,6 +44,10 @@ public class LocationUtil {
 
     private static final float FUZZY_EQUALS_THRESHOLD = 15.0f;
 
+    public static final float ACC_THRESHOLD = 50f;  // 50 meters
+
+    public static final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(10);  // 10 minutes
+
     public static Location getDefaultSearchCenter() {
         ObaRegion region = Application.get().getCurrentRegion();
         if (region != null) {
@@ -61,94 +60,50 @@ public class LocationUtil {
     }
 
     /**
-     * We need to provide the API for a location used to disambiguate
-     * stop IDs in case of collision, or to provide multiple results
-     * in the case multiple agencies. But we really don't need it to be very
-     * accurate.
-     * <p/>
-     * Note that the GoogleApiClient must already have been initialized and connected prior to
-     * calling
-     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
-     * returns,
-     * which requires additional initialization time (prior to calling this method)
-     *
-     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
-     *               isn't available
-     * @return a recent location, considering both Google Play Services (if available) and the
-     * Android Location API
-     */
-    public static Location getLocation(Context cxt, GoogleApiClient client) {
-        Location last = getLocation2(cxt, client);
-        if (last != null) {
-            return last;
-        } else {
-            return getDefaultSearchCenter();
-        }
-    }
-
-    /**
-     * Returns a location, considering both Google Play Services (if available) and the Android
-     * Location API
-     * <p/>
-     * Note that the GoogleApiClient must already have been initialized and connected prior to
-     * calling
-     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
-     * returns,
-     * which requires additional initialization time (prior to calling this method)
-     *
-     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
-     *               isn't available
-     * @return a recent location, considering both Google Play Services (if available) and the
-     * Android Location API
-     */
-    public static Location getLocation2(Context cxt, GoogleApiClient client) {
-        Location playServices = null;
-        if (client != null &&
-                cxt != null &&
-                GooglePlayServicesUtil.isGooglePlayServicesAvailable(cxt)
-                        == ConnectionResult.SUCCESS
-                && client.isConnected()) {
-            playServices = FusedLocationApi.getLastLocation(client);
-            Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
-        }
-        Location apiV1 = getLocationApiV1(cxt);
-
-        if (compareLocations(playServices, apiV1)) {
-            Log.d(TAG, "Using location from Google Play Services");
-            return playServices;
-        } else {
-            Log.d(TAG, "Using location from Location API v1");
-            return apiV1;
-        }
-    }
-
-    private static Location getLocationApiV1(Context cxt) {
-        if (cxt == null) {
-            return null;
-        }
-        LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
-        List<String> providers = mgr.getProviders(true);
-        Location last = null;
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            Location loc = mgr.getLastKnownLocation(i.next());
-            // If this provider has a last location, and either:
-            // 1. We don't have a last location,
-            // 2. Our last location is older than this location.
-            if (compareLocations(loc, last)) {
-                last = loc;
-            }
-        }
-        return last;
-    }
-
-    /**
      * Compares Location A to Location B - prefers a non-null location that is more recent.  Does
      * NOT take estimated accuracy into account.
+     * @param a first location to compare
+     * @param b second location to compare
+     * @return true if Location a is "better" than b, or false if b is "better" than a
+     */
+    public static boolean compareLocationsByTime(Location a, Location b) {
+        return (a != null && (b == null || a.getTime() > b.getTime()));
+    }
+
+    /**
+     * Compares Location A to Location B, considering timestamps and accuracy of locations.
+     * Typically
+     * this is used to compare a new location delivered by a LocationListener (Location A) to
+     * a previously saved location (Location B).
      *
+     * @param a location to compare
+     * @param b location to compare against
      * @return true if Location a is "better" than b, or false if b is "better" than a
      */
     public static boolean compareLocations(Location a, Location b) {
-        return (a != null && (b == null || a.getTime() > b.getTime()));
+        if (a == null) {
+            // New location isn't valid, return false
+            return false;
+        }
+        // If the new location is the first location, save it
+        if (b == null) {
+            return true;
+        }
+
+        // If the last location is older than TIME_THRESHOLD minutes, and the new location is more recent,
+        // save the new location, even if the accuracy for new location is worse
+        if (System.currentTimeMillis() - b.getTime() > TIME_THRESHOLD
+                && compareLocationsByTime(a, b)) {
+            return true;
+        }
+
+        // If the new location has an accuracy better than ACC_THRESHOLD and is newer than the last location, save it
+        if (a.getAccuracy() < ACC_THRESHOLD && compareLocationsByTime(a, b)) {
+            return true;
+        }
+
+        // If we get this far, A isn't better than B
+        return false;
     }
 
     /**

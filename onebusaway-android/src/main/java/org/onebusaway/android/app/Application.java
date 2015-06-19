@@ -17,6 +17,9 @@ package org.onebusaway.android.app;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
@@ -24,6 +27,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.PreferenceHelp;
 
 import android.content.Context;
@@ -31,13 +35,20 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
+
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 public class Application extends android.app.Application {
 
@@ -50,6 +61,18 @@ public class Application extends android.app.Application {
 
     private static Application mApp;
 
+    /**
+     * We centralize location tracking in the Application class to allow all objects to make
+     * use of the last known location that we've seen.  This is more reliable than using the
+     * getLastKnownLocation() method of the location providers, and allows us to track both
+     * Location
+     * API v1 and fused provider.  It allows us to avoid strange behavior like animating a map view
+     * change when opening a new Activity, even when the previous Activity had a current location.
+     */
+    private static Location mLastKnownLocation = null;
+
+    // Magnetic declination is based on location, so track this centrally too.
+    static GeomagneticField mGeomagneticField = null;
 
     /**
      * Google analytics tracker configs
@@ -95,6 +118,142 @@ public class Application extends android.app.Application {
 
     public static SharedPreferences getPrefs() {
         return get().mPrefs;
+    }
+
+    /**
+     * Returns the last known location that the application has seen, or null if we haven't seen a
+     * location yet.  When trying to get a most recent location in one shot, this method should
+     * always be called.
+     *
+     * @return the last known location that the application has seen, or null if we haven't seen a
+     * location yet
+     */
+    public static synchronized Location getLastKnownLocation(Context cxt, GoogleApiClient client) {
+        if (mLastKnownLocation == null) {
+            // Try to get a last known location from the location providers
+            mLastKnownLocation = getLocation2(cxt, client);
+        }
+        // Pass back last known saved location, hopefully from past location listener updates
+        return mLastKnownLocation;
+    }
+
+    /**
+     * Sets the last known location observed by the application via an instance of LocationHelper
+     *
+     * @param l a location received by a LocationHelper instance
+     */
+    public static synchronized void setLastKnownLocation(Location l) {
+        // If the new location is better than the old one, save it
+        if (LocationUtil.compareLocations(l, mLastKnownLocation)) {
+            if (mLastKnownLocation == null) {
+                mLastKnownLocation = new Location("Last known location");
+            }
+            mLastKnownLocation.set(l);
+            mGeomagneticField = new GeomagneticField(
+                    (float) l.getLatitude(),
+                    (float) l.getLongitude(),
+                    (float) l.getAltitude(),
+                    System.currentTimeMillis());
+            Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
+        }
+    }
+
+    /**
+     * Returns the declination of the horizontal component of the magnetic field from true north,
+     * in
+     * degrees (i.e. positive means the magnetic field is rotated east that much from true north).
+     *
+     * @return declination of the horizontal component of the magnetic field from true north, in
+     * degrees (i.e. positive means the magnetic field is rotated east that much from true north),
+     * or null if its not available
+     */
+    public static Float getMagneticDeclination() {
+        if (mGeomagneticField != null) {
+            return mGeomagneticField.getDeclination();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * We need to provide the API for a location used to disambiguate stop IDs in case of
+     * collision,
+     * or to provide multiple results in the case multiple agencies. But we really don't need it to
+     * be very accurate.
+     * <p/>
+     * Note that the GoogleApiClient must already have been initialized and connected prior to
+     * calling
+     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
+     * returns,
+     * which requires additional initialization time (prior to calling this method)
+     *
+     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
+     *               isn't available
+     * @return a recent location, considering both Google Play Services (if available) and the
+     * Android Location API
+     */
+    private static Location getLocation(Context cxt, GoogleApiClient client) {
+        Location last = getLocation2(cxt, client);
+        if (last != null) {
+            return last;
+        } else {
+            return LocationUtil.getDefaultSearchCenter();
+        }
+    }
+
+    /**
+     * Returns a location, considering both Google Play Services (if available) and the Android
+     * Location API
+     * <p/>
+     * Note that the GoogleApiClient must already have been initialized and connected prior to
+     * calling
+     * this method, since GoogleApiClient.connect() is asynchronous and doesn't connect before it
+     * returns,
+     * which requires additional initialization time (prior to calling this method)
+     *
+     * @param client an initialized and connected GoogleApiClient, or null if Google Play Services
+     *               isn't available
+     * @return a recent location, considering both Google Play Services (if available) and the
+     * Android Location API
+     */
+    private static Location getLocation2(Context cxt, GoogleApiClient client) {
+        Location playServices = null;
+        if (client != null &&
+                cxt != null &&
+                GooglePlayServicesUtil.isGooglePlayServicesAvailable(cxt)
+                        == ConnectionResult.SUCCESS
+                && client.isConnected()) {
+            playServices = FusedLocationApi.getLastLocation(client);
+            Log.d(TAG, "Got location from Google Play Services, testing against API v1...");
+        }
+        Location apiV1 = getLocationApiV1(cxt);
+
+        if (LocationUtil.compareLocationsByTime(playServices, apiV1)) {
+            Log.d(TAG, "Using location from Google Play Services");
+            return playServices;
+        } else {
+            Log.d(TAG, "Using location from Location API v1");
+            return apiV1;
+        }
+    }
+
+    private static Location getLocationApiV1(Context cxt) {
+        if (cxt == null) {
+            return null;
+        }
+        LocationManager mgr = (LocationManager) cxt.getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = mgr.getProviders(true);
+        Location last = null;
+        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+            Location loc = mgr.getLastKnownLocation(i.next());
+            // If this provider has a last location, and either:
+            // 1. We don't have a last location,
+            // 2. Our last location is older than this location.
+            if (LocationUtil.compareLocationsByTime(loc, last)) {
+                last = loc;
+            }
+        }
+        return last;
     }
 
     //

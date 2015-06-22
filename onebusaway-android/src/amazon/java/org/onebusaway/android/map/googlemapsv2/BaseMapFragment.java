@@ -418,7 +418,9 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
         if (currentRegionChanged
-                && Application.getLastKnownLocation(this.getActivity(), mLocationHelper.getGoogleApiClient()) == null) {
+                && Application
+                .getLastKnownLocation(this.getActivity(), mLocationHelper.getGoogleApiClient())
+                == null) {
             // Move map view after a new region has been selected, if we don't have user location
             zoomToRegion();
         }

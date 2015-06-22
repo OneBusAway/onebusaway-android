@@ -932,6 +932,16 @@ public class HomeActivity extends ActionBarActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.nav_drawer_left_pane));
+
+        // Was this activity started to show a route or stop on the map? If so, switch to MapFragment
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+            String routeId = bundle.getString(MapParams.ROUTE_ID);
+            String stopId = bundle.getString(MapParams.STOP_ID);
+            if (routeId != null || stopId != null) {
+                mNavigationDrawerFragment.selectItem(NAVDRAWER_ITEM_NEARBY);
+            }
+        }
     }
 
     private void setupGooglePlayServices() {

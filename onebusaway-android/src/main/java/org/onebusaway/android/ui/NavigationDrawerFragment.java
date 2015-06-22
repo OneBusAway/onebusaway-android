@@ -272,7 +272,15 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    private void selectItem(int position) {
+    /**
+     * Sets the currently selected navigation drawer item, based on the provided position
+     * parameter,
+     * which must be one of the NAVDRAWER_ITEM_* contants in this class.
+     *
+     * @param position the item to select in the navigation drawer - must be one of the
+     *                 NAVDRAWER_ITEM_* contants in this class
+     */
+    public void selectItem(int position) {
         setSelectedNavDrawerItem(position);
         if (mDrawerLayout != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);

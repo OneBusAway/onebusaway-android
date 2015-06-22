@@ -27,7 +27,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.location.LocationRequest;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
 import com.amazon.geo.mapsv2.SupportMapFragment;
@@ -142,15 +141,10 @@ public class BaseMapFragment extends SupportMapFragment
 
     private OnLocationChangedListener mListener;
 
-    LocationRequest mLocationRequest;
-
-    // Use a single location instance over all BaseMapFragments
-    static Location mLastLocation;
-
     // Listen to map tap events
     OnFocusChangedListener mOnFocusChangedListener;
 
-    LocationHelper locationHelper;
+    LocationHelper mLocationHelper;
 
     public interface OnFocusChangedListener {
 
@@ -194,8 +188,8 @@ public class BaseMapFragment extends SupportMapFragment
             MapHelpV2.promptUserInstallMaps(getActivity());
         }
 
-        locationHelper = new LocationHelper(getActivity());
-        locationHelper.registerListener(this);
+        mLocationHelper = new LocationHelper(getActivity());
+        mLocationHelper.registerListener(this);
 
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
@@ -232,7 +226,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onPause() {
-        locationHelper.onPause();
+        mLocationHelper.onPause();
         if (mController != null) {
             mController.onPause();
         }
@@ -243,7 +237,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onResume() {
-        locationHelper.onResume();
+        mLocationHelper.onResume();
         mRunning = true;
 
         if (mController != null) {
@@ -423,7 +417,8 @@ public class BaseMapFragment extends SupportMapFragment
     //
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
-        if (currentRegionChanged && mLastLocation == null) {
+        if (currentRegionChanged
+                && Application.getLastKnownLocation(this.getActivity(), mLocationHelper.getGoogleApiClient()) == null) {
             // Move map view after a new region has been selected, if we don't have user location
             zoomToRegion();
         }
@@ -473,8 +468,8 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     @SuppressWarnings("deprecation")
     public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
-
-        if (mLastLocation == null) {
+        Location lastLocation = Application.getLastKnownLocation(this.getActivity(), null);
+        if (lastLocation == null) {
             Toast.makeText(getActivity(),
                     getResources()
                             .getString(R.string.main_waiting_for_location),
@@ -482,11 +477,11 @@ public class BaseMapFragment extends SupportMapFragment
             return;
         }
 
-        setMyLocation(mLastLocation, useDefaultZoom, animateToLocation);
+        setMyLocation(lastLocation, useDefaultZoom, animateToLocation);
     }
 
     private void setMyLocation(Location l, boolean useDefaultZoom, boolean animateToLocation) {
-        if (mMap != null && mLastLocation != null) {
+        if (mMap != null) {
             // Move camera to current location
             CameraPosition.Builder cameraPosition = new CameraPosition.Builder()
                     .target(MapHelpV2.makeLatLng(l));
@@ -715,7 +710,7 @@ public class BaseMapFragment extends SupportMapFragment
             }
 
             int padding = 0;
-            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
         }
     }
 
@@ -767,20 +762,9 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     public void onLocationChanged(Location l) {
-        boolean firstFix = false;
-        if (mLastLocation == null) {
-            // mLastLocation is static, so this is a first fix across all BaseMapFragments
-            firstFix = true;
-        }
-        mLastLocation = l;
         if (mListener != null) {
             // Show real-time location on map
             mListener.onLocationChanged(l);
-        }
-
-        if (firstFix) {
-            // If its our first location (across all BaseMapFragments), move the camera to it
-            setMyLocation(true, false);
         }
     }
 

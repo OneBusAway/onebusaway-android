@@ -107,6 +107,15 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         }
     }
 
+    /**
+     * Returns the GoogleApiClient being used for fused provider location updates
+     *
+     * @return the GoogleApiClient being used for fused provider location updates
+     */
+    public GoogleApiClient getGoogleApiClient() {
+        return mGoogleApiClient;
+    }
+
     public synchronized void onResume() {
         registerAllProviders();
     }

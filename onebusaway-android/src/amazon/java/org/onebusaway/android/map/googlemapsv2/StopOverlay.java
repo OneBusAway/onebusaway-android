@@ -41,7 +41,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationUtil;
 
 import android.app.Activity;
 import android.content.res.Resources;

@@ -125,6 +125,8 @@ public class Application extends android.app.Application {
      * location yet.  When trying to get a most recent location in one shot, this method should
      * always be called.
      *
+     * @param cxt The Context being used, or null if one isn't available
+     * @param client The GoogleApiClient being used to obtain fused provider updates, or null if one isn't available
      * @return the last known location that the application has seen, or null if we haven't seen a
      * location yet
      */

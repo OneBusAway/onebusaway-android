@@ -192,10 +192,10 @@ public class StopMapController implements MapModeController,
                 mCallback.getMapView().setMapCenter(center, false, false);
                 onLocation();
             } else {
-                mCallback.setMyLocation(false, true);
+                mCallback.setMyLocation(false, false);
             }
         } else {
-            mCallback.setMyLocation(false, true);
+            mCallback.setMyLocation(false, false);
         }
     }
 

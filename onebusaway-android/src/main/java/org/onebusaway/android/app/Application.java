@@ -156,7 +156,7 @@ public class Application extends android.app.Application {
                     (float) l.getLongitude(),
                     (float) l.getAltitude(),
                     System.currentTimeMillis());
-            Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
+            // Log.d(TAG, "Newest best location: " + mLastKnownLocation.toString());
         }
     }
 

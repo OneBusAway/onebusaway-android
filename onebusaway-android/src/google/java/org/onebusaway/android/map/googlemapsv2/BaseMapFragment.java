@@ -57,6 +57,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The MapFragment class is split into two basic modes:
@@ -179,6 +180,16 @@ public class BaseMapFragment extends SupportMapFragment
 
         mLocationHelper = new LocationHelper(getActivity());
         mLocationHelper.registerListener(this);
+
+        // If we have a recent location, show this while we're waiting on the LocationHelper
+        Location l = Application
+                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        if (l != null) {
+            final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
+            if (System.currentTimeMillis() - l.getTime() < TIME_THRESHOLD) {
+                onLocationChanged(l);
+            }
+        }
 
         if (savedInstanceState != null) {
             initMap(savedInstanceState);
@@ -741,17 +752,13 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    /**
-     * Maps V2 Location updates
-     */
+    // Maps V2 Location updates
+
     @Override
     public void activate(OnLocationChangedListener listener) {
         mListener = listener;
     }
 
-    /**
-     * Maps V2 Location updates
-     */
     @Override
     public void deactivate() {
         mListener = null;

@@ -18,3 +18,16 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# For Jackson, using for JSON data binding
+-dontwarn org.w3c.dom.bootstrap.DOMImplementationRegistry
+-keepattributes *Annotation*, EnclosingMethod, Signature
+-keepnames class com.fasterxml.jackson.** { *; }
+-dontwarn com.fasterxml.jackson.databind.**
+-keep class org.codehaus.** { *; }
+-keep class com.fasterxml.jackson.annotation.** { *; }
+-keepclassmembers public final enum org.codehaus.jackson.annotate.JsonAutoDetect$Visibility {
+ public static final org.codehaus.jackson.annotate.JsonAutoDetect$Visibility *; }
+
+# POJOs used for JSON data binding
+-keep class org.onebusaway.android.io.** { *; }

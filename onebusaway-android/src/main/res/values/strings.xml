@@ -215,6 +215,8 @@
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_goto_url">View schedule</string>
+    <string name="route_info_no_shape_data">Sorry, map information isn\'t available for this route
+    </string>
 
     <!-- My stops/routes -->
     <string name="my_recent_title">Recent</string>

@@ -704,15 +704,19 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void zoomToRoute() {
         if (mMap != null) {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            for (Polyline p : mLineOverlay) {
-                for (LatLng l : p.getPoints()) {
-                    builder.include(l);
+            if (!mLineOverlay.isEmpty()) {
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (Polyline p : mLineOverlay) {
+                    for (LatLng l : p.getPoints()) {
+                        builder.include(l);
+                    }
                 }
-            }
 
-            int padding = 0;
-            mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+                int padding = 0;
+                mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+            } else {
+                Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

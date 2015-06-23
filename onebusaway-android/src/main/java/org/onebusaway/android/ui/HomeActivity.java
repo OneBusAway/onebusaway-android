@@ -54,6 +54,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -68,7 +69,6 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -119,7 +119,7 @@ public class HomeActivity extends ActionBarActivity
 
     View mArrivalsListHeaderView;
 
-    private ImageButton mBtnMyLocation;
+    private FloatingActionButton mFabMyLocation;
 
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
 
@@ -820,8 +820,8 @@ public class HomeActivity extends ActionBarActivity
 
     private void setupMyLocationButton() {
         // Initialize the My Location button
-        mBtnMyLocation = (ImageButton) findViewById(R.id.btnMyLocation);
-        View.OnClickListener oclMyLocation = new View.OnClickListener() {
+        mFabMyLocation = (FloatingActionButton) findViewById(R.id.btnMyLocation);
+        mFabMyLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
                 if (mMapFragment != null) {
@@ -832,9 +832,8 @@ public class HomeActivity extends ActionBarActivity
                             getString(R.string.analytics_label_button_press_location));
                 }
             }
-        };
-        mBtnMyLocation.setOnClickListener(oclMyLocation);
-        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+        });
+        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
                 .getLayoutParams();
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
         if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
@@ -845,11 +844,11 @@ public class HomeActivity extends ActionBarActivity
     }
 
     private void moveMyLocationButtonUp() {
-        if (mBtnMyLocation == null) {
+        if (mFabMyLocation == null) {
             return;
         }
 
-        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
                 .getLayoutParams();
 
         if (p.bottomMargin != MY_LOC_DEFAULT_BOTTOM_MARGIN) {
@@ -863,7 +862,7 @@ public class HomeActivity extends ActionBarActivity
         Animation a = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
-                UIHelp.setMargins(mBtnMyLocation,
+                UIHelp.setMargins(mFabMyLocation,
                         p.leftMargin,
                         p.topMargin,
                         p.rightMargin,
@@ -871,15 +870,15 @@ public class HomeActivity extends ActionBarActivity
             }
         };
         a.setDuration(MY_LOC_BTN_ANIM_DURATION);
-        mBtnMyLocation.startAnimation(a);
+        mFabMyLocation.startAnimation(a);
     }
 
     private void moveMyLocationButtonDown() {
-        if (mBtnMyLocation == null) {
+        if (mFabMyLocation == null) {
             return;
         }
 
-        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mBtnMyLocation
+        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
                 .getLayoutParams();
 
         if (p.bottomMargin == MY_LOC_DEFAULT_BOTTOM_MARGIN) {
@@ -894,7 +893,7 @@ public class HomeActivity extends ActionBarActivity
         Animation a = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
-                UIHelp.setMargins(mBtnMyLocation,
+                UIHelp.setMargins(mFabMyLocation,
                         p.leftMargin,
                         p.topMargin,
                         p.rightMargin,
@@ -902,24 +901,24 @@ public class HomeActivity extends ActionBarActivity
             }
         };
         a.setDuration(MY_LOC_BTN_ANIM_DURATION);
-        mBtnMyLocation.startAnimation(a);
+        mFabMyLocation.startAnimation(a);
     }
 
     private void showMyLocationButton() {
-        if (mBtnMyLocation == null) {
+        if (mFabMyLocation == null) {
             return;
         }
-        if (mBtnMyLocation.getVisibility() != View.VISIBLE) {
-            mBtnMyLocation.setVisibility(View.VISIBLE);
+        if (mFabMyLocation.getVisibility() != View.VISIBLE) {
+            mFabMyLocation.setVisibility(View.VISIBLE);
         }
     }
 
     private void hideMyLocationButton() {
-        if (mBtnMyLocation == null) {
+        if (mFabMyLocation == null) {
             return;
         }
-        if (mBtnMyLocation.getVisibility() != View.GONE) {
-            mBtnMyLocation.setVisibility(View.GONE);
+        if (mFabMyLocation.getVisibility() != View.GONE) {
+            mFabMyLocation.setVisibility(View.GONE);
         }
     }
 

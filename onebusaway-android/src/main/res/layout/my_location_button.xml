@@ -14,18 +14,21 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_height="wrap_content"
               android:layout_width="wrap_content"
               android:layout_alignParentRight="true"
               android:layout_alignParentBottom="true"
               android:layout_marginRight="@dimen/fab_margin"
               android:layout_marginBottom="@dimen/fab_margin">
-    <ImageButton
+    <android.support.design.widget.FloatingActionButton
             android:id="@+id/btnMyLocation"
-            android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:background="@drawable/fab_background"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
             android:src="@drawable/ic_maps_my_location"
-            android:contentDescription="@string/map_option_mylocation">
-    </ImageButton>
+            android:contentDescription="@string/map_option_mylocation"
+            app:borderWidth="@dimen/fab_compat_border_width"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"/>
 </LinearLayout>

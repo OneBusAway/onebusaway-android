@@ -701,7 +701,7 @@ public class BaseMapFragment extends SupportMapFragment
                     }
                 }
 
-                int padding = 0;
+                int padding = UIHelp.dpToPixels(getActivity(), 20);
                 mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
             } else {
                 Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data),

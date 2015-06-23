@@ -15,6 +15,6 @@
   -->
 <resources>
     <declare-styleable name="ScrimInsetsView">
-        <attr name="insetForeground" format="reference|color"/>
+        <attr name="obaInsetForeground" format="reference|color"/>
     </declare-styleable>
 </resources>

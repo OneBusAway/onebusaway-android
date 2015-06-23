@@ -52,7 +52,7 @@ import java.util.ArrayList;
  */
 public class NavigationDrawerFragment extends Fragment {
 
-    public static final String TAG = "NavigationDrawerFragment";
+    public static final String TAG = "NavDrawerFragment";
 
     /**
      * Remember the position of the selected item.

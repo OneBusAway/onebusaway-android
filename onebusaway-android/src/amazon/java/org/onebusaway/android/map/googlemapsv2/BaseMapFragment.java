@@ -742,6 +742,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         /**
          * Creates a new dialog of type NOLOCATION_DIALOG or OUTOFRANGE_DIALOG
+         *
          * @param dialogType NOLOCATION_DIALOG to create a no location dialog, or OUTOFRANGE_DIALOG
          *                   to create an out of range dialog
          * @return a fragment to show the dialog
@@ -769,7 +770,8 @@ public class BaseMapFragment extends SupportMapFragment
                 case OUTOFRANGE_DIALOG:
                     return createOutOfRangeDialog();
                 default:
-                    throw new IllegalArgumentException("Invalid map dialog type - " + DIALOG_TYPE_KEY);
+                    throw new IllegalArgumentException(
+                            "Invalid map dialog type - " + DIALOG_TYPE_KEY);
             }
         }
 
@@ -834,7 +836,7 @@ public class BaseMapFragment extends SupportMapFragment
                                 }
                             }
                     );
-                return builder.create();
+            return builder.create();
         }
     }
 }

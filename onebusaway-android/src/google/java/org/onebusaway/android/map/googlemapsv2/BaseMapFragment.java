@@ -43,10 +43,17 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.UIHelp;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -82,10 +89,6 @@ public class BaseMapFragment extends SupportMapFragment
         StopOverlay.OnFocusChangedListener {
 
     private static final String TAG = "BaseMapFragment";
-
-    private static final int NOLOCATION_DIALOG = 103;
-
-    private static final int OUTOFRANGE_DIALOG = 104;
 
     private static final int REQUEST_NO_LOCATION = 41;
 
@@ -276,17 +279,9 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-//    @Override
-//    protected Dialog onCreateDialog(int id) {
-//        switch (id) {
-//            case NOLOCATION_DIALOG:
-//                return createNoLocationDialog();
-//
-//            case OUTOFRANGE_DIALOG:
-//                return createOutOfRangeDialog();
-//        }
-//        return null;
-//    }
+    protected void showDialog(int id) {
+        MapDialogFragment.newInstance(id, this).show(getFragmentManager(), MapDialogFragment.TAG);
+    }
 
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -411,7 +406,7 @@ public class BaseMapFragment extends SupportMapFragment
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
             if (mRunning) {
-                getActivity().showDialog(OUTOFRANGE_DIALOG);
+                showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
     }
@@ -513,70 +508,6 @@ public class BaseMapFragment extends SupportMapFragment
             mController.onLocation();
         }
     }
-
-    //
-    // Dialogs
-    //
-//    @SuppressWarnings("deprecation")
-//    private Dialog createNoLocationDialog() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle(R.string.main_nolocation_title);
-//        builder.setIcon(android.R.drawable.ic_dialog_map);
-//        builder.setMessage(R.string.main_nolocation);
-//        builder.setPositiveButton(android.R.string.yes,
-//                new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        startActivityForResult(
-//                                new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
-//                                REQUEST_NO_LOCATION);
-//                        dismissDialog(NOLOCATION_DIALOG);
-//                    }
-//                }
-//        );
-//        builder.setNegativeButton(android.R.string.no,
-//                new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        // Ok, I suppose we can just try looking from where we
-//                        // are.
-//                        mController.onLocation();
-//                        dismissDialog(NOLOCATION_DIALOG);
-//                    }
-//                }
-//        );
-//        return builder.create();
-//    }
-
-//    @SuppressWarnings("deprecation")
-//    private Dialog createOutOfRangeDialog() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-//                .setTitle(R.string.main_outofrange_title)
-//                .setIcon(android.R.drawable.ic_dialog_map)
-//                .setMessage(getString(R.string.main_outofrange,
-//                        Application.get().getCurrentRegion() != null ?
-//                                Application.get().getCurrentRegion().getName() : ""
-//                ))
-//                .setPositiveButton(R.string.main_outofrange_yes,
-//                        new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                zoomToRegion();
-//                                dismissDialog(OUTOFRANGE_DIALOG);
-//                            }
-//                        }
-//                )
-//                .setNegativeButton(R.string.main_outofrange_no,
-//                        new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                dismissDialog(OUTOFRANGE_DIALOG);
-//                                mWarnOutOfRange = false;
-//                            }
-//                        }
-//                );
-//        return builder.create();
-//    }
 
     void zoomToRegion() {
         // If we have a region, then zoom to it.
@@ -778,5 +709,123 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void postInvalidate() {
         // Do nothing - calling `this.postInvalidate()` causes a StackOverflowError
+    }
+
+    //
+    // Dialogs
+    //
+
+    public static class MapDialogFragment extends android.support.v4.app.DialogFragment {
+
+        private static final String TAG = "MapDialogFragment";
+
+        int mDialogType;
+
+        private static BaseMapFragment mMapFragment;
+
+        private final static String DIALOG_TYPE_KEY = "dialog_type";
+
+        private static final int NOLOCATION_DIALOG = 103;
+
+        private static final int OUTOFRANGE_DIALOG = 104;
+
+        /**
+         * Creates a new dialog of type NOLOCATION_DIALOG or OUTOFRANGE_DIALOG
+         *
+         * @param dialogType NOLOCATION_DIALOG to create a no location dialog, or OUTOFRANGE_DIALOG
+         *                   to create an out of range dialog
+         * @return a fragment to show the dialog
+         */
+        static MapDialogFragment newInstance(int dialogType, BaseMapFragment fragment) {
+            mMapFragment = fragment;
+            MapDialogFragment f = new MapDialogFragment();
+
+            // Provide dialog type as an argument.
+            Bundle args = new Bundle();
+            args.putInt(DIALOG_TYPE_KEY, dialogType);
+            f.setArguments(args);
+            f.setCancelable(false);
+
+            return f;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            mDialogType = getArguments().getInt(DIALOG_TYPE_KEY);
+
+            switch (mDialogType) {
+                case NOLOCATION_DIALOG:
+                    return createNoLocationDialog();
+                case OUTOFRANGE_DIALOG:
+                    return createOutOfRangeDialog();
+                default:
+                    throw new IllegalArgumentException(
+                            "Invalid map dialog type - " + DIALOG_TYPE_KEY);
+            }
+        }
+
+        private Dialog createOutOfRangeDialog() {
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_outofrange_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setMessage(getString(R.string.main_outofrange,
+                            Application.get().getCurrentRegion() != null ?
+                                    Application.get().getCurrentRegion().getName() : ""
+                    ))
+                    .setPositiveButton(R.string.main_outofrange_yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mMapFragment.zoomToRegion();
+                                }
+                            }
+                    )
+                    .setNegativeButton(R.string.main_outofrange_no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mMapFragment.mWarnOutOfRange = false;
+                                }
+                            }
+                    );
+            return builder.create();
+        }
+
+        @SuppressWarnings("deprecation")
+        private Dialog createNoLocationDialog() {
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_nolocation_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setMessage(R.string.main_nolocation)
+                    .setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    startActivityForResult(
+                                            new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS),
+                                            REQUEST_NO_LOCATION);
+                                }
+                            }
+                    )
+                    .setNegativeButton(android.R.string.no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Ok, I suppose we can just try looking from where we
+                                    // are.
+                                    mMapFragment.mController.onLocation();
+                                }
+                            }
+                    );
+            return builder.create();
+        }
     }
 }

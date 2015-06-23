@@ -151,6 +151,10 @@ public class BaseMapFragment extends SupportMapFragment
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
+    public static BaseMapFragment newInstance() {
+        return new BaseMapFragment();
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {

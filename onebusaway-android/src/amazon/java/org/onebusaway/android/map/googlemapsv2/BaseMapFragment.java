@@ -162,6 +162,10 @@ public class BaseMapFragment extends SupportMapFragment
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
 
+    public static BaseMapFragment newInstance() {
+        return new BaseMapFragment();
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -193,7 +197,8 @@ public class BaseMapFragment extends SupportMapFragment
         mLocationHelper.registerListener(this);
 
         // If we have a recent location, show this while we're waiting on the LocationHelper
-        Location l = Application.getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        Location l = Application
+                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
         if (l != null) {
             final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
             if (System.currentTimeMillis() - l.getTime() < TIME_THRESHOLD) {
@@ -762,7 +767,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-     // Maps V2 Location updates
+    // Maps V2 Location updates
 
     @Override
     public void activate(OnLocationChangedListener listener) {

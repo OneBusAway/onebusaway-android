@@ -386,7 +386,7 @@ public class HomeActivity extends ActionBarActivity
          * Show fragment (we use show instead of replace to keep the map state)
          */
         if (mMapFragment == null) {
-            mMapFragment = new BaseMapFragment();
+            mMapFragment = BaseMapFragment.newInstance();
 
             // Register listener for map focus callbacks
             mMapFragment.setOnFocusChangeListener(this);

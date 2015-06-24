@@ -27,6 +27,8 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
@@ -130,6 +132,35 @@ public class LocationUtil {
      */
     public static boolean fuzzyEquals(Location a, Location b) {
         return a.distanceTo(b) <= FUZZY_EQUALS_THRESHOLD;
+    }
+
+    /**
+     * Returns true if the user has enabled location services on their device, false if they have
+     * not
+     *
+     * from http://stackoverflow.com/a/22980843/937715
+     *
+     * @return true if the user has enabled location services on their device, false if they have
+     * not
+     */
+    public static boolean isLocationEnabled(Context context) {
+        int locationMode = Settings.Secure.LOCATION_MODE_OFF;
+        String locationProviders;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            try {
+                locationMode = Settings.Secure
+                        .getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+        } else {
+            locationProviders = Settings.Secure.getString(context.getContentResolver(),
+                    Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
     }
 
     /**

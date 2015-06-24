@@ -52,6 +52,7 @@ import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
+import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.UIHelp;
 
 import android.app.Dialog;
@@ -480,6 +481,11 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     @SuppressWarnings("deprecation")
     public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
+        if (!LocationUtil.isLocationEnabled(getActivity()) && mRunning && UIHelp.canDisplayDialog(getActivity())) {
+            showDialog(MapDialogFragment.NOLOCATION_DIALOG);
+            return;
+        }
+
         Location lastLocation = Application.getLastKnownLocation(this.getActivity(), null);
         if (lastLocation == null) {
             Toast.makeText(getActivity(),

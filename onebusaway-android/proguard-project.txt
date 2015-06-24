@@ -19,6 +19,9 @@
 #   public *;
 #}
 
+# Don't rename class names - this makes stack traces must easier to read/troubleshoot
+-dontobfuscate
+
 # For Jackson, using for JSON data binding
 -dontwarn org.w3c.dom.bootstrap.DOMImplementationRegistry
 -keepattributes *Annotation*, EnclosingMethod, Signature
@@ -29,5 +32,5 @@
 -keepclassmembers public final enum org.codehaus.jackson.annotate.JsonAutoDetect$Visibility {
  public static final org.codehaus.jackson.annotate.JsonAutoDetect$Visibility *; }
 
-# POJOs used for JSON data binding
--keep class org.onebusaway.android.io.** { *; }
+# Keep all OneBusAway Android classes
+-keep class org.onebusaway.android.** { *; }

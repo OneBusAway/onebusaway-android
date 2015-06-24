@@ -209,15 +209,11 @@ abstract class MySearchFragmentBase extends ListFragment
 
     protected final Location getSearchCenter() {
         Activity act = getActivity();
-        Location result = null;
-        if (act instanceof MyTabActivityBase) {
-            MyTabActivityBase base = (MyTabActivityBase) act;
-            result = base.getSearchCenter();
+        Location location = Application.getLastKnownLocation(act, mGoogleApiClient);
+        if (location == null) {
+            location = LocationUtil.getDefaultSearchCenter();
         }
-        if (result == null) {
-            result = Application.getLastKnownLocation(act, mGoogleApiClient);
-        }
-        return result;
+        return location;
     }
 
     private final OnFocusChangeListener mOnQueryTextFocusChangeListener

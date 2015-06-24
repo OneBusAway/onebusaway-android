@@ -143,8 +143,11 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public Loader<SearchResponse> onCreateLoader(int id, Bundle args) {
         String query = args.getString(QUERY_TEXT);
-        return new MyLoader(getActivity(), query,
-                Application.getLastKnownLocation(getActivity(), mGoogleApiClient));
+        Location location = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
+        if (location == null) {
+            location = LocationUtil.getDefaultSearchCenter();
+        }
+        return new MyLoader(getActivity(), query, location);
     }
 
     @Override

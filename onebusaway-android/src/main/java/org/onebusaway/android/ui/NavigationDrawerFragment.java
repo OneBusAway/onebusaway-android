@@ -407,7 +407,8 @@ public class NavigationDrawerFragment extends Fragment {
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SETTINGS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_HELP);
-        mNavDrawerItems.add(NAVDRAWER_ITEM_SEND_FEEDBACK);
+        //TODO - uncomment when we've implemented the new feedback feature - #187
+        //mNavDrawerItems.add(NAVDRAWER_ITEM_SEND_FEEDBACK);
 
         createNavDrawerItems();
     }

@@ -21,12 +21,12 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -115,8 +115,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
     protected void initView(final View view, CombinedArrivalInfoStyleB combinedArrivalInfoStyleB) {
         final ArrivalInfo stopInfo = combinedArrivalInfoStyleB.getArrivalInfoList().get(0);
         final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
+        final Context context = getContext();
 
-        LayoutInflater inflater = LayoutInflater.from(getContext());
+        LayoutInflater inflater = LayoutInflater.from(context);
 
         TextView routeNew = (TextView) view.findViewById(R.id.routeNew);
         TextView destinationNew = (TextView) view.findViewById(R.id.destinationNew);
@@ -146,18 +147,12 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         routeNew.setText(arrivalInfo.getShortName());
         destinationNew.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
-        final Context context = getContext();
 
         // Loop through the arrival times and create the TableRows that contains the data
         for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {
             ArrivalInfo arrivalRow = combinedArrivalInfoStyleB.getArrivalInfoList().get(i);
             final ObaArrivalInfo tempArrivalInfo = arrivalRow.getInfo();
             long scheduledTime = tempArrivalInfo.getScheduledArrivalTime();
-            Log.d(TAG, "ScheduleTime=" + DateUtils.formatDateTime(context,
-                    scheduledTime,
-                    DateUtils.FORMAT_SHOW_TIME |
-                            DateUtils.FORMAT_NO_NOON |
-                            DateUtils.FORMAT_NO_MIDNIGHT));
 
             // Create a new row to be added
             TableRow tr = new TableRow(getContext());
@@ -169,6 +164,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             // Layout and views to inflate from XML templates
             RelativeLayout layout;
             TextView scheduleView, estimatedView;
+            View divider;
 
             if (i == 0) {
                 // Use larger styled layout/view for next arrival time
@@ -222,6 +218,16 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             // Add layout to TableRow
             tr.addView(layout);
+
+            // Add the divider, if its not the first row
+            if (i != 0) {
+                int dividerHeight = UIHelp.dpToPixels(context, 1);
+                divider = inflater.inflate(R.layout.arrivals_list_divider_template_style_b, null);
+                divider.setLayoutParams(
+                        new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,
+                                dividerHeight));
+                arrivalTimesLayout.addView(divider);
+            }
 
             // Add TableRow to container layout
             arrivalTimesLayout.addView(tr,

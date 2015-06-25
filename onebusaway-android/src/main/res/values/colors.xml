@@ -44,10 +44,13 @@
     <color name="route_line_color_default">#00F</color>
     <color name="route_text_color_default">@android:color/black</color>
 
-    <!-- Arrival time colors -->
+    <!-- Arrival time colors for Style A -->
     <color name="stop_info_ontime">@color/theme_primary</color>
     <color name="stop_info_delayed">#0000ff</color>
     <color name="stop_info_early">#ff0000</color>
+
+    <!-- Arrival time color for Style B -->
+    <color name="stop_info_estimated_time_style_b">#777</color>
 
     <!-- Alerts-->
     <color name="alert_error">#FFC4C4</color>

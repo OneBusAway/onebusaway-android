@@ -135,8 +135,7 @@
                         <RelativeLayout
                                 style="@style/ArrivalsListLabel"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                >
+                                android:layout_height="wrap_content">
 
                             <TextView
                                     android:layout_width="wrap_content"
@@ -160,6 +159,8 @@
                             android:id="@+id/arrivalTimeLayout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp"
                             android:stretchColumns="0">
                         <!-- Arrival time data is added here programmatically -->
                     </TableLayout>

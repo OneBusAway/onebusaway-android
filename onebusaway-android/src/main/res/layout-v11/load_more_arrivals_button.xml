@@ -8,5 +8,6 @@
             android:text="@string/stop_info_load_more_arrivals"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/stop_info_estimated_time_style_b"
             style="?android:attr/borderlessButtonStyle"/>
 </LinearLayout>

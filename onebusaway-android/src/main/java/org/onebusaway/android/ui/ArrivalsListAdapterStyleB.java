@@ -26,8 +26,12 @@ import org.onebusaway.util.comparators.AlphanumComparator;
 import android.content.ContentValues;
 import android.content.Context;
 import android.text.format.DateUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -39,6 +43,8 @@ import java.util.Comparator;
  * Styles of arrival times used by York Region Transit
  */
 public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedArrivalInfoStyleB> {
+
+    private static final String TAG = "ArrivalsListAdapStyleB";
 
     AlphanumComparator mAlphanumComparator = new AlphanumComparator();
 
@@ -110,18 +116,14 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         final ArrivalInfo stopInfo = combinedArrivalInfoStyleB.getArrivalInfoList().get(0);
         final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
 
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+
         TextView routeNew = (TextView) view.findViewById(R.id.routeNew);
         TextView destinationNew = (TextView) view.findViewById(R.id.destinationNew);
 
-        TextView scheduledTime1 = (TextView) view.findViewById(R.id.scheduledTime1);
-        TextView arrivalTime1 = (TextView) view.findViewById(R.id.arrivalTime1);
-        TextView scheduledTime2 = (TextView) view.findViewById(R.id.scheduledTime2);
-        TextView arrivalTime2 = (TextView) view.findViewById(R.id.arrivalTime2);
-        TextView scheduledTime3 = (TextView) view.findViewById(R.id.scheduledTime3);
-        TextView arrivalTime3 = (TextView) view.findViewById(R.id.arrivalTime3);
-
-        TableRow arrival2Row = (TableRow) view.findViewById(R.id.arrivalRow2);
-        TableRow arrival3Row = (TableRow) view.findViewById(R.id.arrivalRow3);
+        // TableLayout that we will fill with TableRows of arrival times
+        TableLayout arrivalTimesLayout = (TableLayout) view.findViewById(R.id.arrivalTimeLayout);
+        arrivalTimesLayout.removeAllViews();
 
         ImageView infoImageView = (ImageView) view.findViewById(R.id.infoImageView);
         infoImageView.setColorFilter(infoImageView.getResources().getColor(R.color.theme_primary));
@@ -146,72 +148,85 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         destinationNew.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
         final Context context = getContext();
 
-        for (int i = 0; i <= 2; i++) {
-            if (i + 1 > combinedArrivalInfoStyleB.getArrivalInfoList().size()) {
-                if (i == 1) {
-                    arrival2Row.setVisibility(View.GONE);
-                } else if (i == 2) {
-                    arrival3Row.setVisibility(View.GONE);
-                }
-                continue;
-            }
-
+        // Loop through the arrival times and create the TableRows that contains the data
+        for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {
             ArrivalInfo arrivalRow = combinedArrivalInfoStyleB.getArrivalInfoList().get(i);
             final ObaArrivalInfo tempArrivalInfo = arrivalRow.getInfo();
             long scheduledTime = tempArrivalInfo.getScheduledArrivalTime();
-            if (tempArrivalInfo.getStopSequence() == 0) {
-                tempArrivalInfo.getScheduledDepartureTime();
-            }
+            Log.d(TAG, "ScheduleTime=" + DateUtils.formatDateTime(context,
+                    scheduledTime,
+                    DateUtils.FORMAT_SHOW_TIME |
+                            DateUtils.FORMAT_NO_NOON |
+                            DateUtils.FORMAT_NO_MIDNIGHT));
+
+            // Create a new row to be added
+            TableRow tr = new TableRow(getContext());
+            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,
+                    TableRow.LayoutParams.MATCH_PARENT));
+            tr.setFocusable(false);
+            tr.setClickable(false);
+
+            // Layout and views to inflate from XML templates
+            RelativeLayout layout;
+            TextView scheduleView, estimatedView;
 
             if (i == 0) {
-                scheduledTime1.setText(DateUtils.formatDateTime(context,
-                        scheduledTime,
-                        DateUtils.FORMAT_SHOW_TIME |
-                                DateUtils.FORMAT_NO_NOON |
-                                DateUtils.FORMAT_NO_MIDNIGHT));
-                if (arrivalRow.getPredicted()) {
-                    long eta = arrivalRow.getEta();
-                    if (eta == 0) {
-                        arrivalTime1.setText(R.string.stop_info_eta_now);
-                    } else {
-                        arrivalTime1.setText(String.valueOf(Math.abs(eta)) + " min");
-                    }
+                // Use larger styled layout/view for next arrival time
+                layout = (RelativeLayout) inflater
+                        .inflate(R.layout.arrivals_list_rl_template_style_b_large, null);
+                scheduleView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_schedule_large, null);
+                estimatedView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_estimated_large, null);
+            } else {
+                // Use smaller styled layout/view for further out times
+                layout = (RelativeLayout) inflater
+                        .inflate(R.layout.arrivals_list_rl_template_style_b_small, null);
+                scheduleView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_schedule_small, null);
+                estimatedView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_estimated_small, null);
+            }
+
+            // Add arrival times to schedule/estimated views
+            scheduleView.setText(DateUtils.formatDateTime(context,
+                    scheduledTime,
+                    DateUtils.FORMAT_SHOW_TIME |
+                            DateUtils.FORMAT_NO_NOON |
+                            DateUtils.FORMAT_NO_MIDNIGHT));
+            if (arrivalRow.getPredicted()) {
+                long eta = arrivalRow.getEta();
+                if (eta == 0) {
+                    estimatedView.setText(R.string.stop_info_eta_now);
                 } else {
-                    arrivalTime1.setText(R.string.stop_info_eta_unknown);
-                }
-            } else if (i == 1) {
-                scheduledTime2.setText(DateUtils.formatDateTime(context,
-                        scheduledTime,
-                        DateUtils.FORMAT_SHOW_TIME |
-                                DateUtils.FORMAT_NO_NOON |
-                                DateUtils.FORMAT_NO_MIDNIGHT));
-                if (arrivalRow.getPredicted()) {
-                    long eta = arrivalRow.getEta();
-                    if (eta == 0) {
-                        arrivalTime2.setText(R.string.stop_info_eta_now);
-                    } else {
-                        arrivalTime2.setText(String.valueOf(Math.abs(eta)) + " min");
-                    }
-                } else {
-                    arrivalTime2.setText(R.string.stop_info_eta_unknown);
+                    estimatedView.setText(String.valueOf(Math.abs(eta)) + " min");
                 }
             } else {
-                scheduledTime3.setText(DateUtils.formatDateTime(context,
-                        scheduledTime,
-                        DateUtils.FORMAT_SHOW_TIME |
-                                DateUtils.FORMAT_NO_NOON |
-                                DateUtils.FORMAT_NO_MIDNIGHT));
-                if (arrivalRow.getPredicted()) {
-                    long eta = arrivalRow.getEta();
-                    if (eta == 0) {
-                        arrivalTime3.setText(R.string.stop_info_eta_now);
-                    } else {
-                        arrivalTime3.setText(String.valueOf(Math.abs(eta)) + " min");
-                    }
-                } else {
-                    arrivalTime3.setText(R.string.stop_info_eta_unknown);
-                }
+                estimatedView.setText(R.string.stop_info_eta_unknown);
             }
+
+            // Add TextViews to layout
+            layout.addView(scheduleView);
+            layout.addView(estimatedView);
+
+            // Make sure the TextViews align right/left of parent relative layout
+            RelativeLayout.LayoutParams params1 = (RelativeLayout.LayoutParams) scheduleView
+                    .getLayoutParams();
+            params1.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            scheduleView.setLayoutParams(params1);
+
+            RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) estimatedView
+                    .getLayoutParams();
+            params2.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            estimatedView.setLayoutParams(params2);
+
+            // Add layout to TableRow
+            tr.addView(layout);
+
+            // Add TableRow to container layout
+            arrivalTimesLayout.addView(tr,
+                    new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT,
+                            TableLayout.LayoutParams.MATCH_PARENT));
         }
 
         ContentValues values = null;

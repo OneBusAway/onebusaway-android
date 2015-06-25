@@ -71,6 +71,7 @@
                         android:stretchColumns="0">
 
                     <TableRow
+                            android:id="@+id/table_row_1_route"
                             android:layout_width="fill_parent"
                             android:layout_height="fill_parent">
 
@@ -124,142 +125,44 @@
                     </TableRow>
 
                     <TableRow
-                            android:layout_width="wrap_content"
+                            android:id="@+id/table_row_2_label"
+                            android:layout_width="match_parent"
                             android:paddingLeft="10dp"
                             android:paddingRight="10dp"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            >
 
                         <RelativeLayout
                                 style="@style/ArrivalsListLabel"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content">
-
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                >
 
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Scheduled"
+                                    android:text="@string/arrival_scheduled"
                                     android:id="@+id/textView3"
                                     style="@style/ArrivalsListLabelText"
                                     android:layout_alignParentLeft="true"/>
 
-
                             <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Estimated Arrival"
+                                    android:text="@string/arrival_estimated"
                                     android:id="@+id/textView4"
-                                    android:layout_span="2"
                                     android:layout_alignParentRight="true"
                                     style="@style/ArrivalsListLabelText"/>
                         </RelativeLayout>
                     </TableRow>
 
-                    <TableRow
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:focusable="false"
-                            android:clickable="false">
-
-                        <RelativeLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                style="@style/ArrivalsListNextTime"
-                                android:id="@+id/relativeLayout">
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text"
-                                    android:id="@+id/scheduledTime1"
-                                    style="@style/ArrivalsListNextTimeSched"
-                                    android:layout_alignParentLeft="true"/>
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text 123 123 123 21"
-                                    android:layout_span="2"
-                                    style="@style/ArrivalsListNextTimeETA"
-                                    android:layout_alignParentRight="true"
-                                    android:id="@+id/arrivalTime1"/>
-                        </RelativeLayout>
-                    </TableRow>
-
-                    <TableRow
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:id="@+id/arrivalRow2">
-
-                        <RelativeLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                style="@style/ArrivalsListTime"
-                                android:id="@+id/relativeLayout2">
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text"
-                                    style="@style/ArrivalsListSched"
-                                    android:id="@+id/scheduledTime2"
-                                    android:layout_alignParentLeft="true"/>
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text 123 123 123 21"
-                                    android:layout_span="2"
-                                    style="@style/ArrivalsListETA"
-                                    android:layout_alignParentRight="true"
-                                    android:id="@+id/arrivalTime2"/>
-
-                            <View
-                                    android:layout_width="match_parent"
-                                    android:layout_height="1dp"
-                                    android:background="#ccc"/>
-
-                        </RelativeLayout>
-                    </TableRow>
-
-                    <TableRow
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:focusable="false"
-                            android:clickable="false"
-                            android:id="@+id/arrivalRow3">
-
-                        <RelativeLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                style="@style/ArrivalsListTime"
-                                android:id="@+id/relativeLayout3">
-
-                            <View
-                                    android:layout_width="match_parent"
-                                    android:layout_height="1dp"
-                                    android:background="#ccc"/>
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text"
-                                    style="@style/ArrivalsListSched"
-                                    android:id="@+id/scheduledTime3"
-                                    android:layout_alignParentLeft="true"/>
-
-                            <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="New Text 123 123 123 21"
-                                    android:id="@+id/arrivalTime3"
-                                    style="@style/ArrivalsListETA"
-                                    android:layout_span="2"
-                                    android:layout_alignParentRight="true"/>
-                        </RelativeLayout>
-                    </TableRow>
+                    <TableLayout
+                            android:id="@+id/arrivalTimeLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:stretchColumns="0">
+                        <!-- Arrival time data is added here programmatically -->
+                    </TableLayout>
                 </TableLayout>
             </TableRow>
         </TableLayout>

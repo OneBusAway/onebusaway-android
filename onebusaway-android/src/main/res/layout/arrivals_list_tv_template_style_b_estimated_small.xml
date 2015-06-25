@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="New Text 123 123 123 21"
+          android:id="@+id/arrivalTime3"
+          style="@style/ArrivalsListETA"
+          android:layout_span="2"
+          android:layout_alignParentRight="true"/>

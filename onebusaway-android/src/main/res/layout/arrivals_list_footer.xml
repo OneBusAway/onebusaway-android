@@ -30,5 +30,5 @@
           android:layout_height="1dp"
           android:id="@+id/separator_bottom"
           android:visibility="visible"
-          android:background="@drawable/abc_list_divider_mtrl_alpha"/>
+          android:background="?android:attr/listDivider"/>
 </LinearLayout>

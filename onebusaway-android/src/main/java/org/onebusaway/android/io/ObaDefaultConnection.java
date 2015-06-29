@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import org.onebusaway.android.BuildConfig;
-
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
@@ -42,9 +40,7 @@ public final class ObaDefaultConnection implements ObaConnection {
     private HttpURLConnection mConnection;
 
     ObaDefaultConnection(Uri uri) throws IOException {
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, uri.toString());
-        }
+        Log.d(TAG, uri.toString());
         URL url = new URL(uri.toString());
         mConnection = (HttpURLConnection) url.openConnection();
         mConnection.setReadTimeout(30 * 1000);

@@ -613,10 +613,8 @@ public class ArrivalsListFragment extends ListFragment
         if (stop == null) {
             return;
         }
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Tapped on tripId=" + stop.getInfo().getTripId() + ", vehicleId=" + stop
+        Log.d(TAG, "Tapped on tripId=" + stop.getInfo().getTripId() + ", vehicleId=" + stop
                     .getInfo().getVehicleId());
-        }
 
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader == null) {

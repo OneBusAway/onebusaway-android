@@ -70,16 +70,12 @@ public class RegionUtils {
         }
         double miles;
 
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
-        }
+        Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
 
         for (ObaRegion region : regions) {
             if (!isRegionUsable(region)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Excluding '" + region.getName()
-                            + "' from 'closest region' consideration");
-                }
+                Log.d(TAG,
+                        "Excluding '" + region.getName() + "' from 'closest region' consideration");
                 continue;
             }
 
@@ -89,10 +85,7 @@ public class RegionUtils {
                 continue;
             }
             miles = distToRegion * 0.000621371;
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles)
-                        + " miles away");
-            }
+            Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away");
             if (distToRegion < minDist) {
                 closestRegion = region;
                 minDist = distToRegion;
@@ -244,30 +237,21 @@ public class RegionUtils {
      */
     public static boolean isRegionUsable(ObaRegion region) {
         if (!region.getActive()) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Region '" + region.getName() + "' is not active.");
-            }
+            Log.d(TAG, "Region '" + region.getName() + "' is not active.");
             return false;
         }
         if (!region.getSupportsObaDiscoveryApis()) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG,
-                        "Region '" + region.getName() + "' does not support OBA Discovery APIs.");
-            }
+            Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Discovery APIs.");
             return false;
         }
         if (!region.getSupportsObaRealtimeApis()) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs.");
-            }
+            Log.d(TAG, "Region '" + region.getName() + "' does not support OBA Realtime APIs.");
             return false;
         }
         if (region.getExperimental() && !Application.getPrefs().getBoolean(
                 Application.get().getString(R.string.preference_key_experimental_regions), false)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Region '" + region.getName()
-                        + "' is experimental and user hasn't opted in.");
-            }
+            Log.d(TAG,
+                    "Region '" + region.getName() + "' is experimental and user hasn't opted in.");
             return false;
         }
 
@@ -293,34 +277,24 @@ public class RegionUtils {
             //
             results = RegionUtils.getRegionsFromProvider(context);
             if (results != null) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Retrieved regions from database.");
-                }
+                Log.d(TAG, "Retrieved regions from database.");
                 return results;
             }
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Regions list retrieved from database was null.");
-            }
+            Log.d(TAG, "Regions list retrieved from database was null.");
         }
 
         results = RegionUtils.getRegionsFromServer(context);
         if (results == null || results.isEmpty()) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Regions list retrieved from server was null or empty.");
-            }
+            Log.d(TAG, "Regions list retrieved from server was null or empty.");
 
             if (forceReload) {
                 //If we tried to force a reload from the server, then we haven't tried to reload from local provider yet
                 results = RegionUtils.getRegionsFromProvider(context);
                 if (results != null) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Retrieved regions from database.");
-                    }
+                    Log.d(TAG, "Retrieved regions from database.");
                     return results;
                 } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Regions list retrieved from database was null.");
-                    }
+                    Log.d(TAG, "Regions list retrieved from database was null.");
                 }
             }
 
@@ -331,19 +305,13 @@ public class RegionUtils {
 
             if (results == null) {
                 //This is a complete failure to load region info from all sources, app will be useless
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Regions list retrieved from local resource file was null.");
-                }
+                Log.d(TAG, "Regions list retrieved from local resource file was null.");
                 return results;
             }
 
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Retrieved regions from local resource file.");
-            }
+            Log.d(TAG, "Retrieved regions from local resource file.");
         } else {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Retrieved regions list from server.");
-            }
+            Log.d(TAG, "Retrieved regions list from server.");
             //Update local time for when the last region info was retrieved from the server
             Application.get().setLastRegionUpdateDate(new Date().getTime());
         }
@@ -540,17 +508,12 @@ public class RegionUtils {
 
         for (ObaRegion region : regions) {
             if (!isRegionUsable(region)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Skipping insert of '" + region.getName() + "' to provider...");
-                }
+                Log.d(TAG, "Skipping insert of '" + region.getName() + "' to provider...");
                 continue;
             }
 
             cr.insert(ObaContract.Regions.CONTENT_URI, toContentValues(region));
-            //TODO - We need to save the current date/time along with region info, so later we can refresh based on elapsed time
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Saved region '" + region.getName() + "' to provider");
-            }
+            Log.d(TAG, "Saved region '" + region.getName() + "' to provider");
             long regionId = region.getId();
             // Bulk insert the bounds
             ObaRegion.Bounds[] bounds = region.getBounds();

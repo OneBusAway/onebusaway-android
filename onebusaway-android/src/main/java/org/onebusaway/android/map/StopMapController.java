@@ -20,7 +20,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -290,9 +289,7 @@ public class StopMapController implements MapModeController,
             }
 
             if (!inRegion && Arrays.asList(response.getStops()).isEmpty()) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Device location is outside region range, notifying...");
-                }
+                Log.d(TAG, "Device location is outside region range, notifying...");
                 mCallback.notifyOutOfRange();
                 return;
             }
@@ -367,10 +364,8 @@ public class StopMapController implements MapModeController,
             if (Application.get().getCurrentRegion() == null &&
                     TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Trying to load stops from server without " +
+                Log.d(TAG, "Trying to load stops from server without " +
                             "OBA REST API endpoint, aborting...");
-                }
                 return new StopsResponse(req, null);
             }
             //Make OBA REST API call to the server and return result

@@ -20,7 +20,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -158,9 +157,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 if (closestRegion != null) {
                     //No region has been set, so set region application-wide to closest region
                     Application.get().setCurrentRegion(closestRegion);
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
-                    }
+                    Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
                     //Analytics
                     ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                             mContext.getString(R.string.analytics_action_configured_region_auto),
@@ -177,10 +174,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 //User is closer to a different region than the current region, so change to the closest region
                 String oldRegionName = Application.get().getCurrentRegion().getName();
                 Application.get().setCurrentRegion(closestRegion);
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Detected closer region '" + closestRegion.getName()
+                Log.d(TAG, "Detected closer region '" + closestRegion.getName()
                             + "', changed to this region.");
-                }
                 //Analytics
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                         mContext.getString(R.string.analytics_action_configured_region_auto)
@@ -232,9 +227,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                     if (region.getName().equals(items[item])) {
                         //Set the region application-wide
                         Application.get().setCurrentRegion(region);
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "User chose region '" + items[item] + "'.");
-                        }
+                        Log.d(TAG, "User chose region '" + items[item] + "'.");
                         doCallback(true);
                         break;
                     }

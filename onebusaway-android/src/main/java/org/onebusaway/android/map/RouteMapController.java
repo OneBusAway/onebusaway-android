@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.map;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -246,10 +245,8 @@ public class RouteMapController implements MapModeController,
             if (Application.get().getCurrentRegion() == null &&
                     TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
                 //We don't have region info or manually entered API to know what server to contact
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Trying to load stops for route from server " +
+                Log.d(TAG, "Trying to load stops for route from server " +
                             "without OBA REST API endpoint, aborting...");
-                }
                 return null;
             }
             //Make OBA REST API call to the server and return result

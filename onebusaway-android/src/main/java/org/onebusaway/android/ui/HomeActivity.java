@@ -801,10 +801,8 @@ public class HomeActivity extends ActionBarActivity
                                 > REGION_UPDATE_THRESHOLD)
                 ) {
             forceReload = true;
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG,
+            Log.d(TAG,
                         "Region info has expired (or does not exist), forcing a reload from the server...");
-            }
         }
 
         if (Application.get().getCurrentRegion() != null) {

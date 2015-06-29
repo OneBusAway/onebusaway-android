@@ -190,14 +190,10 @@ public class PreferencesActivity extends PreferenceActivity
             if (!TextUtils.isEmpty(apiUrl)) {
                 //User entered a custom API Url, so set the region info to null
                 Application.get().setCurrentRegion(null);
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "User entered new API URL, set region to null.");
-                }
+                Log.d(TAG, "User entered new API URL, set region to null.");
             } else {
                 //User cleared the API URL preference value, so re-initialize regions
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "User entered blank API URL, re-initializing regions...");
-                }
+                Log.d(TAG, "User entered blank API URL, re-initializing regions...");
                 NavHelp.goHome(this);
             }
         } else if (preference.equals(analyticsPref) && newValue instanceof Boolean) {
@@ -223,10 +219,8 @@ public class PreferencesActivity extends PreferenceActivity
         //If the use has selected to auto-select region, and the previous state of the setting was false, 
         //then run the auto-select by going to HomeFragment
         if (currentValue && !autoSelectInitialValue) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG,
-                        "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
-            }
+            Log.d(TAG,
+                    "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
             NavHelp.goHome(this);
         }
         super.onDestroy();
@@ -239,10 +233,7 @@ public class PreferencesActivity extends PreferenceActivity
         if (key.equals(getString(R.string.preference_key_experimental_regions))) {
             boolean experimentalServers = settings
                     .getBoolean(getString(R.string.preference_key_experimental_regions), false);
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG,
-                        "Experimental regions shared preference changed to " + experimentalServers);
-            }
+            Log.d(TAG, "Experimental regions shared preference changed to " + experimentalServers);
 
             /*
             Force a refresh of the regions list, but don't using blocking progress dialog

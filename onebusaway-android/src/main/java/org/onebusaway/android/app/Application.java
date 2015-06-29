@@ -21,7 +21,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
@@ -378,17 +377,13 @@ public class Application extends android.app.Application {
         // Read the region preference, look it up in the DB, then set the region.
         long id = mPrefs.getLong(getString(R.string.preference_key_region), -1);
         if (id < 0) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Regions preference ID is less than 0, returning...");
-            }
+            Log.d(TAG, "Regions preference ID is less than 0, returning...");
             return;
         }
 
         ObaRegion region = ObaContract.Regions.get(this, (int) id);
         if (region == null) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Regions preference is null, returning...");
-            }
+            Log.d(TAG, "Regions preference is null, returning...");
             return;
         }
 

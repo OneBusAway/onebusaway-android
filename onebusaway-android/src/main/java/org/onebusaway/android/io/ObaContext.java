@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 
@@ -94,9 +93,7 @@ public class ObaContext {
         if (!TextUtils.isEmpty(serverName) || mRegion != null) {
             Uri baseUrl = null;
             if (!TextUtils.isEmpty(serverName)) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
-                }
+                Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
 
                 try {
                     // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
@@ -108,9 +105,7 @@ public class ObaContext {
 
                 baseUrl = Uri.parse(serverName);
             } else if (mRegion != null) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
-                }
+                Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
 
                 baseUrl = Uri.parse(mRegion.getObaBaseUrl());
             }

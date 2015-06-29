@@ -19,7 +19,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -131,9 +130,7 @@ public class RegionsFragment extends ListFragment
                     .show();
         }
 
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
-        }
+        Log.d(TAG, "User manually set region to '" + region.getName() + "'.");
 
         //Analytics
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -208,24 +205,18 @@ public class RegionsFragment extends ListFragment
                 ObaRegion r = iter.next();
                 if (!RegionUtils.isRegionUsable(r)) {
                     iter.remove();
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Removed region '" + r.getName() + "' from adapter.");
-                    }
+                    Log.d(TAG, "Removed region '" + r.getName() + "' from adapter.");
                 }
             }
         } catch (UnsupportedOperationException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(TAG, "Problem removing region from list using iterator: " + e);
-            }
-            //The platform apparently didn't like the "efficient" way to do this, so we'll just 
+            Log.w(TAG, "Problem removing region from list using iterator: " + e);
+            //The platform apparently didn't like the "efficient" way to do this, so we'll just
             //loop through a copy and remove what we don't want from the original
             ArrayList<ObaRegion> copy = new ArrayList<ObaRegion>(results);
             for (ObaRegion r : copy) {
                 if (!RegionUtils.isRegionUsable(r)) {
                     results.remove(r);
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Removed region '" + r.getName() + "' from adapter.");
-                    }
+                    Log.d(TAG, "Removed region '" + r.getName() + "' from adapter.");
                 }
             }
         }

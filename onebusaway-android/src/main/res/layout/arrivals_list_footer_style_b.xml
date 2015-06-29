@@ -13,19 +13,16 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/arrivals_list_footer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="2dp"
-        android:paddingTop="3dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:orientation="vertical">
-
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/stop_info_arrival_list_background"
+              android:paddingBottom="2dp"
+              android:paddingTop="3dp"
+              android:orientation="vertical">
     <android.support.v7.widget.CardView
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/load_arrivals_card_view"
             android:layout_gravity="center"
             android:layout_width="fill_parent"

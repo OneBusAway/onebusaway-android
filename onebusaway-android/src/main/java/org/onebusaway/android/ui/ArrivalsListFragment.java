@@ -257,6 +257,21 @@ public class ArrivalsListFragment extends ListFragment
         getListView().setEmptyView(mEmptyList);
         ((ViewGroup) getListView().getParent()).addView(mEmptyList);
 
+        // Set the list view properties for Style B
+        if (BuildConfig.ARRIVAL_INFO_STYLE == BuildFlavorConstants.ARRIVAL_INFO_STYLE_B) {
+            // Set margins for the CardViews
+            ListView.MarginLayoutParams listParam = (ListView.MarginLayoutParams) getListView()
+                    .getLayoutParams();
+            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
+            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
+            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
+            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
+            getListView().setLayoutParams(listParam);
+            // Set the listview background to give the cards more contrast
+            getListView().setBackgroundColor(
+                    getResources().getColor(R.color.stop_info_arrival_list_background));
+        }
+
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
 

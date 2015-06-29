@@ -31,7 +31,6 @@
                   style="@style/HeaderList"
                   android:layout_width="fill_parent"
                   android:layout_height="fill_parent"/>
-
         <TextView android:id="@+id/internalEmpty"
                   style="@style/ListHintText"
                   android:layout_width="fill_parent"

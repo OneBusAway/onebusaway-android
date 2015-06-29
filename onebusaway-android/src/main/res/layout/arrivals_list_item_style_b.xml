@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
+     University of South Florida (sjbarbeau@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -19,11 +20,10 @@
               android:background="@color/stop_info_arrival_list_background"
               android:paddingBottom="2dp"
               android:paddingTop="3dp"
-              android:paddingLeft="5dp"
-              android:paddingRight="5dp"
               android:orientation="vertical">
 
     <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
             android:id="@+id/arrivals_card_view"
             android:layout_gravity="center"
@@ -51,105 +51,93 @@
                     android:layout_gravity="center_horizontal">
             </TextView>
 
+            <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:text="New Text"
+                        style="@style/ArrivalsListItemRoute"
+                        android:id="@+id/routeNew"/>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@+id/routeNew"
+                        android:text="New Text"
+                        style="@style/ArrivalsListItemDestination"
+                        android:id="@+id/destinationNew"/>
+
+                <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:id="@+id/infoImageView"
+                        android:paddingLeft="12dp"
+                        android:src="@drawable/ic_action_info"
+                        android:background="@drawable/selectable_background_busbot"
+                        android:contentDescription="@string/stop_info_item_options_title"
+                        android:layout_alignBottom="@+id/routeNew"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentEnd="true"/>
+                <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:id="@+id/mapImageView"
+                        android:src="@drawable/ic_arrivals_styleb_action_map"
+                        android:background="@drawable/selectable_background_busbot"
+                        android:contentDescription="@string/route_info_context_showonmap"
+                        android:paddingLeft="5dp"
+                        android:clickable="false"
+                        android:layout_alignBottom="@+id/routeNew"
+                        android:layout_toLeftOf="@+id/infoImageView"
+                        android:layout_toStartOf="@+id/infoImageView"/>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                    style="@style/ArrivalsListLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:paddingLeft="2dp"
+                    android:paddingRight="2dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:text="@string/arrival_scheduled"
+                        android:id="@+id/scheduleLabel"
+                        style="@style/ArrivalsListLabelText"/>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:text="@string/arrival_estimated"
+                        android:id="@+id/estimatedLabel"
+                        style="@style/ArrivalsListLabelText"/>
+            </RelativeLayout>
+
             <TableLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
+                    android:id="@+id/arrivalTimeLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
                     android:stretchColumns="0">
-
-                <TableRow
-                        android:id="@+id/table_row_1_route"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent">
-
-                    <LinearLayout
-                            android:orientation="vertical"
-                            android:layout_height="wrap_content"
-                            android:layout_column="0"
-                            android:layout_width="0dp"
-                            android:paddingLeft="10dp"
-                            android:paddingRight="10dp"
-                            android:layout_weight="1">
-
-                        <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="New Text"
-                                style="@style/ArrivalsListItemRoute"
-                                android:id="@+id/routeNew"/>
-
-                        <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="New Text"
-                                style="@style/ArrivalsListItemDestination"
-                                android:id="@+id/destinationNew"/>
-                    </LinearLayout>
-
-                    <ImageButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/mapImageView"
-                            android:src="@drawable/ic_arrivals_styleb_action_map"
-                            android:background="@drawable/selectable_background_busbot"
-                            android:contentDescription="@string/route_info_context_showonmap"
-                            android:paddingLeft="5dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_column="1"
-                            android:clickable="false"/>
-
-                    <ImageButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/infoImageView"
-                            android:paddingLeft="12dp"
-                            android:paddingRight="10dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_column="2"
-                            android:src="@drawable/ic_action_info"
-                            android:background="@drawable/selectable_background_busbot"
-                            android:contentDescription="@string/stop_info_item_options_title"/>
-                </TableRow>
-
-                <TableRow
-                        android:id="@+id/table_row_2_label"
-                        android:layout_width="match_parent"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp"
-                        android:layout_height="wrap_content"
-                        >
-
-                    <RelativeLayout
-                            style="@style/ArrivalsListLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content">
-
-                        <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/arrival_scheduled"
-                                android:id="@+id/textView3"
-                                style="@style/ArrivalsListLabelText"
-                                android:layout_alignParentLeft="true"/>
-
-                        <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/arrival_estimated"
-                                android:id="@+id/textView4"
-                                android:layout_alignParentRight="true"
-                                style="@style/ArrivalsListLabelText"/>
-                    </RelativeLayout>
-                </TableRow>
-
-                <TableLayout
-                        android:id="@+id/arrivalTimeLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="10dp"
-                        android:stretchColumns="0">
-                    <!-- Arrival time data is added here programmatically -->
-                </TableLayout>
+                <!-- Arrival time data is added here programmatically -->
             </TableLayout>
         </LinearLayout>
     </android.support.v7.widget.CardView>

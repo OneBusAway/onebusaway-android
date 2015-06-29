@@ -238,14 +238,14 @@ public class ArrivalsListFragment extends ListFragment
         switch (BuildConfig.ARRIVAL_INFO_STYLE) {
             case BuildFlavorConstants.ARRIVAL_INFO_STYLE_A:
                 mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
+                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
                 break;
             case BuildFlavorConstants.ARRIVAL_INFO_STYLE_B:
                 // Use a card-styled footer
                 mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
+                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
                 break;
         }
-
-        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 

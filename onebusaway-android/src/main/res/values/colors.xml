@@ -51,6 +51,7 @@
 
     <!-- Arrival time color for Style B -->
     <color name="stop_info_estimated_time_style_b">#777</color>
+    <color name="stop_info_arrival_list_background">#eaeaea</color>
 
     <!-- Alerts-->
     <color name="alert_error">#FFC4C4</color>

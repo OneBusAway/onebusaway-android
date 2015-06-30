@@ -29,6 +29,12 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_display">
         <ListPreference
+                android:key="@string/preference_key_arrival_info_style"
+                android:title="@string/preferences_arrival_info_style_title"
+                android:entries="@array/arrival_info_style_options"
+                android:entryValues="@array/arrival_info_style_options">
+        </ListPreference>
+        <ListPreference
                 android:key="@string/preference_key_preferred_units"
                 android:title="@string/preferences_preferred_units_title"
                 android:entries="@array/preferred_units_options"

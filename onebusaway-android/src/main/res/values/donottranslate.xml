@@ -30,6 +30,7 @@
     <string name="preferences_key_donate">preference_donate</string>
     <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
+    <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

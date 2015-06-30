@@ -23,7 +23,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BuildFlavorConstants;
+import org.onebusaway.android.util.BuildFlavorUtil;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -69,6 +69,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference preferredUnits;
 
+    ListPreference arrivalInfoStyle;
+
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -98,6 +100,8 @@ public class PreferencesActivity extends PreferenceActivity
 
         preferredUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_units));
+        arrivalInfoStyle = (ListPreference) findPreference(
+                getString(R.string.preference_key_arrival_info_style));
 
         settings.registerOnSharedPreferenceChangeListener(this);
 
@@ -118,7 +122,7 @@ public class PreferencesActivity extends PreferenceActivity
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
-        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorConstants.OBA_FLAVOR_BRAND)) {
+        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtil.OBA_FLAVOR_BRAND)) {
             aboutCategory.removePreference(poweredByObaPref);
         } else {
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
@@ -132,6 +136,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+        changePreferenceSummary(getString(R.string.preference_key_arrival_info_style));
     }
 
     @Override
@@ -210,6 +215,9 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             preferredUnits.setSummary(preferredUnits.getValue());
+        } else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
+            arrivalInfoStyle.setSummary(arrivalInfoStyle.getValue());
         }
     }
 
@@ -337,6 +345,9 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.analytics_action_edit_general),
                         getString(R.string.analytics_label_analytic_preference)
                                 + (isAnalyticsActive ? "YES" : "NO"));
+        } else if (key.equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
+            // Change the arrival info description
+            changePreferenceSummary(key);
         }
     }
 

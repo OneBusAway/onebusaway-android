@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -27,7 +26,7 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.BuildFlavorConstants;
+import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.MyTextUtils;
@@ -42,7 +41,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -235,17 +236,8 @@ public class ArrivalsListFragment extends ListFragment
             return null;
         }
 
-        switch (BuildConfig.ARRIVAL_INFO_STYLE) {
-            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_A:
-                mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
-                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
-                break;
-            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_B:
-                // Use a card-styled footer
-                mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
-                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
-                break;
-        }
+        initArrivalInfoViews(BuildFlavorUtil.getArrivalInfoStyleFromPreferences(), inflater);
+
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
 
@@ -253,24 +245,8 @@ public class ArrivalsListFragment extends ListFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        // Set and add the view that is shown if no arrival information is returned by the REST API
-        getListView().setEmptyView(mEmptyList);
-        ((ViewGroup) getListView().getParent()).addView(mEmptyList);
-
         // Set the list view properties for Style B
-        if (BuildConfig.ARRIVAL_INFO_STYLE == BuildFlavorConstants.ARRIVAL_INFO_STYLE_B) {
-            // Set margins for the CardViews
-            ListView.MarginLayoutParams listParam = (ListView.MarginLayoutParams) getListView()
-                    .getLayoutParams();
-            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
-            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
-            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
-            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
-            getListView().setLayoutParams(listParam);
-            // Set the listview background to give the cards more contrast
-            getListView().setBackgroundColor(
-                    getResources().getColor(R.color.stop_info_arrival_list_background));
-        }
+        setListViewProperties(BuildFlavorUtil.getArrivalInfoStyleFromPreferences());
 
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
@@ -280,44 +256,16 @@ public class ArrivalsListFragment extends ListFragment
 
         setupHeader(savedInstanceState);
 
-        // Setup list footer button to load more arrivals (when arrivals are shown)
-        Button loadMoreArrivals = (Button) mFooter.findViewById(R.id.load_more_arrivals);
-        loadMoreArrivals.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadMoreArrivals();
-            }
-        });
-        getListView().addFooterView(mFooter);
+        setupFooter();
 
-        // Repeat for the load more arrivals button in the empty list view
-        Button loadMoreArrivalsEmptyList = (Button) mEmptyList
-                .findViewById(R.id.load_more_arrivals);
-        loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadMoreArrivals();
-            }
-        });
+        setupEmptyList();
 
         // This sets the stopId and uri
         setStopId();
         setUserInfo();
 
-        // Create an empty adapter we will use to display the loaded data, based on the style defined in the build flavor
-        switch (BuildConfig.ARRIVAL_INFO_STYLE) {
-            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_A:
-                mAdapter = new ArrivalsListAdapterStyleA(getActivity());
-                break;
-            case BuildFlavorConstants.ARRIVAL_INFO_STYLE_B:
-                mAdapter = new ArrivalsListAdapterStyleB(getActivity());
-                ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
-                // We present arrivals as cards, so hide the divider in the listview
-                getListView().setDivider(null);
-                break;
-        }
-
-        setListAdapter(mAdapter);
+        // Create an empty adapter we will use to display the loaded data
+        instantiateAdapter(BuildFlavorUtil.getArrivalInfoStyleFromPreferences());
 
         // Start out with a progress indicator.
         setListShown(false);
@@ -355,6 +303,10 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onResume() {
+        // Make sure we're using the correct adapter based on user preferences, in case they changed
+        // after the Fragment was initialized
+        checkAdapterStylePreference();
+
         // Notify listener that ListView is now created
         if (mListener != null) {
             mListener.onListViewCreated(getListView());
@@ -732,7 +684,8 @@ public class ArrivalsListFragment extends ListFragment
         ArrayList<ArrivalInfo> list = null;
 
         if (mArrivalInfo != null) {
-            list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter, System.currentTimeMillis());
+            list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter,
+                    System.currentTimeMillis());
         }
         return list;
     }
@@ -863,6 +816,167 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public AlertList getAlertList() {
         return mAlertList;
+    }
+
+    /**
+     * Checks to see if the user has changed the arrival info style preference after this Fragment
+     * was initialized
+     */
+    private void checkAdapterStylePreference() {
+        int currentArrivalInfoStyle = BuildFlavorUtil.getArrivalInfoStyleFromPreferences();
+
+        if (currentArrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_A &&
+                !(mAdapter instanceof ArrivalsListAdapterStyleA)) {
+            // Change to Style A adapter
+            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtil.ARRIVAL_INFO_STYLE_A);
+        } else if (currentArrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_B &&
+                !(mAdapter instanceof ArrivalsListAdapterStyleB)) {
+            // Change to Style B adapter
+            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtil.ARRIVAL_INFO_STYLE_B);
+        }
+    }
+
+    /**
+     * Reinitializes the adapter style after there has been a preference changed
+     *
+     * @param arrivalInfoStyle the adapter style to change to - should be one of the
+     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
+     */
+    private void reinitAdapterStyleOnPreferenceChange(int arrivalInfoStyle) {
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        // Remove any existing footer view
+        if (mFooter != null) {
+            getListView().removeFooterView(mFooter);
+        }
+        // Remove any existing empty list view
+        if (mEmptyList != null) {
+            ((ViewGroup) getListView().getParent()).removeView(mEmptyList);
+        }
+
+        initArrivalInfoViews(arrivalInfoStyle, inflater);
+        setupFooter();
+        setupEmptyList();
+        setListViewProperties(arrivalInfoStyle);
+        instantiateAdapter(arrivalInfoStyle);
+    }
+
+    /**
+     * Initializes the adapter views
+     *
+     * @param arrivalInfoStyle the adapter style to use - should be one of the
+     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
+     * @param inflater         inflater to use
+     */
+    private void initArrivalInfoViews(int arrivalInfoStyle, LayoutInflater inflater) {
+        switch (arrivalInfoStyle) {
+            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
+                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
+                break;
+            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                // Use a card-styled footer
+                mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
+                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
+                break;
+        }
+    }
+
+    /**
+     * Sets up the footer with the load more arrivals button
+     */
+    private void setupFooter() {
+        // Setup list footer button to load more arrivals (when arrivals are shown)
+        Button loadMoreArrivals = (Button) mFooter.findViewById(R.id.load_more_arrivals);
+        loadMoreArrivals.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadMoreArrivals();
+            }
+        });
+        getListView().addFooterView(mFooter);
+        mFooter.requestLayout();
+    }
+
+    /**
+     * Sets up the load more arrivals button in the empty list view
+     */
+    private void setupEmptyList() {
+        Button loadMoreArrivalsEmptyList = (Button) mEmptyList
+                .findViewById(R.id.load_more_arrivals);
+        loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadMoreArrivals();
+            }
+        });
+        // Set and add the view that is shown if no arrival information is returned by the REST API
+        getListView().setEmptyView(mEmptyList);
+        ((ViewGroup) getListView().getParent()).addView(mEmptyList);
+    }
+
+    /**
+     * Initializes the list view properties
+     *
+     * @param arrivalInfoStyle the adapter style to use - should be one of the
+     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
+     */
+    private void setListViewProperties(int arrivalInfoStyle) {
+        ListView.MarginLayoutParams listParam = (ListView.MarginLayoutParams) getListView()
+                .getLayoutParams();
+        if (arrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_A) {
+            // Set default margins
+            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 0);
+            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 0);
+            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 0);
+            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 0);
+            // Set the listview background to give the cards more contrast
+            getListView().setBackgroundColor(
+                    getResources().getColor(R.color.stop_info_arrival_list_background));
+        }
+        if (arrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_B) {
+            // Set margins for the CardViews
+            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
+            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
+            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
+            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
+            // Set the listview background to give the cards more contrast
+            getListView().setBackgroundColor(
+                    getResources().getColor(R.color.stop_info_arrival_list_background));
+        }
+        // Update the layout parameters
+        getListView().setLayoutParams(listParam);
+    }
+
+    /**
+     * Instantiates the adapter based on the style to be used
+     *
+     * @param arrivalInfoStyle the adapter style to use - should be one of the
+     *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
+     */
+    private void instantiateAdapter(int arrivalInfoStyle) {
+        switch (arrivalInfoStyle) {
+            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                mAdapter = new ArrivalsListAdapterStyleA(getActivity());
+                // Set the list divider if we've previously set it to null for Style B
+                if (getListView().getDivider() == null) {
+                    final TypedArray array = getActivity().getTheme().obtainStyledAttributes(
+                            R.style.Widget_AppCompat_ListView, new int[]{
+                                    android.R.attr.dividerHorizontal
+                            });
+                    Drawable d = array.getDrawable(0);
+                    getListView().setDivider(d);
+                    // Tear down
+                    array.recycle();
+                }
+                break;
+            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                mAdapter = new ArrivalsListAdapterStyleB(getActivity());
+                ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
+                // We present arrivals as cards, so hide the divider in the listview
+                getListView().setDivider(null);
+                break;
+        }
+        setListAdapter(mAdapter);
     }
 
     private void showRoutesFilterDialog() {

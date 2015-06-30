@@ -44,7 +44,9 @@
                     android:id="@+id/destination"
                     style="@style/StopInfoDestination"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:singleLine="true">
             </TextView>
             <TextView
                     android:id="@+id/time"
@@ -60,11 +62,12 @@
             </TextView>
         </LinearLayout>
         <TextView
-                android:layout_column="2"
                 android:id="@+id/eta"
                 style="@style/StopInfoEta"
                 android:maxLines="1"
                 android:gravity="right"
+                android:layout_width="wrap_content"
+                android:layout_marginLeft="2dp"
                 android:paddingRight="10sp">
         </TextView>
     </TableRow>

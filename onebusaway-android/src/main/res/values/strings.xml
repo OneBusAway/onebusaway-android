@@ -393,6 +393,10 @@
     <string name="preferences_preferred_units_option_metric">Metric (km, m)</string>
     <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
 
+    <string name="preferences_arrival_info_style_title">Arrival times style</string>
+    <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
+    <string name="preferences_arrival_info_style_options_b">Cards</string>
+
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway
         API calls

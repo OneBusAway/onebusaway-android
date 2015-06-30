@@ -21,11 +21,13 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.PreferenceHelp;
 
@@ -361,6 +363,8 @@ public class Application extends android.app.Application {
             PreferenceHelp.saveString(APP_UID, uuid);
         }
 
+        checkArrivalStylePreferenceDefault();
+
         // Get the current app version.
         PackageManager pm = getPackageManager();
         PackageInfo appInfo = null;
@@ -371,6 +375,38 @@ public class Application extends android.app.Application {
             return;
         }
         ObaApi.getDefaultContext().setAppInfo(appInfo.versionCode, uuid);
+    }
+
+    private void checkArrivalStylePreferenceDefault() {
+        String arrivalInfoStylePrefKey = getResources()
+                .getString(R.string.preference_key_arrival_info_style);
+        String arrivalInfoStylePref = mPrefs.getString(arrivalInfoStylePrefKey, null);
+        if (arrivalInfoStylePref == null) {
+            // First execution of app - set the default arrival info style based on the BuildConfig value
+            switch (BuildConfig.ARRIVAL_INFO_STYLE) {
+                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                    // Use OBA classic style for default
+                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_A));
+                    Log.d(TAG, "Using arrival info style A (OBA Classic) as default preference");
+                    break;
+                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                    // Use a card-styled footer for default
+                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_B));
+                    Log.d(TAG, "Using arrival info style B (Cards) as default preference");
+                    break;
+                default:
+                    // Use a card-styled footer for default
+                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                            .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
+                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_B));
+                    Log.d(TAG, "Using arrival info style B (Cards) as default preference");
+                    break;
+            }
+        }
     }
 
     private void initObaRegion() {

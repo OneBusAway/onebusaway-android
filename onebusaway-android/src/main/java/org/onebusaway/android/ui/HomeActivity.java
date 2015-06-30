@@ -790,16 +790,11 @@ public class HomeActivity extends ActionBarActivity
         boolean forceReload = false;
         boolean showProgressDialog = true;
 
-        SharedPreferences settings = Application.getPrefs();
-
-        //If we don't have region info selected, or if enough time has passed since last region info update AND user has selected auto-refresh,
+        //If we don't have region info selected, or if enough time has passed since last region info update,
         //force contacting the server again
         if (Application.get().getCurrentRegion() == null ||
-                (settings.getBoolean(getString(R.string.preference_key_auto_refresh_regions), true)
-                        &&
                         new Date().getTime() - Application.get().getLastRegionUpdateDate()
-                                > REGION_UPDATE_THRESHOLD)
-                ) {
+                                > REGION_UPDATE_THRESHOLD) {
             forceReload = true;
             Log.d(TAG,
                         "Region info has expired (or does not exist), forcing a reload from the server...");

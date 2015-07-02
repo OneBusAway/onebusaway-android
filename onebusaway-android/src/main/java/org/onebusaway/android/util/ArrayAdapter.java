@@ -44,6 +44,7 @@ public abstract class ArrayAdapter<T> extends android.widget.ArrayAdapter<T> {
 
     @TargetApi(11)
     public void setData(List<T> data) {
+        setNotifyOnChange(false);  // This prevents list from scrolling back to top on clear()
         clear();
         if (data != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -54,6 +55,8 @@ public abstract class ArrayAdapter<T> extends android.widget.ArrayAdapter<T> {
                 }
             }
         }
+        // Since we're calling setNotifyOnChange(false), we need to call notifyDataSetChanged() ourselves
+        notifyDataSetChanged();
     }
 
     @Override

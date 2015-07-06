@@ -82,7 +82,7 @@ android {
             flavorDimension "brand"
             applicationId "com.joulespersecond.seattlebusbot"
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
-            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
+            buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"

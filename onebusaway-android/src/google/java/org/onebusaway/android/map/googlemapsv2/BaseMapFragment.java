@@ -393,9 +393,6 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    // Apparently you can't show a dialog from within OnLoadFinished?
-    final Handler mShowOutOfRangeHandler = new Handler();
-
     @Override
     @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {

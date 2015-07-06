@@ -394,7 +394,6 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public void notifyOutOfRange() {
         //Before we trigger the out of range warning, make sure we have region info
         //or have a API URL that was custom set by the user in via Preferences

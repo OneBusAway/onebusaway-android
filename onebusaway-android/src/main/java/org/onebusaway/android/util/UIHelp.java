@@ -85,15 +85,18 @@ public final class UIHelp {
         }
     }
 
-    public static void setChildClickable(View parent, int id, ClickableSpan span) {
-        TextView v = (TextView) parent.findViewById(id);
-        setClickable(v, span);
-    }
-
-    public static void setClickable(TextView v, ClickableSpan span) {
+    public static void setClickableSpan(TextView v, ClickableSpan span) {
         Spannable text = (Spannable) v.getText();
         text.setSpan(span, 0, text.length(), 0);
         v.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    public static void removeAllClickableSpans(TextView v) {
+        Spannable text = (Spannable) v.getText();
+        ClickableSpan[] spans = text.getSpans(0, text.length(), ClickableSpan.class);
+        for (ClickableSpan cs : spans) {
+            text.removeSpan(cs);
+        }
     }
 
     public static final int getStopDirectionText(String direction) {

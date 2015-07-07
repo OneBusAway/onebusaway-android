@@ -131,6 +131,10 @@ class ArrivalsListHeader {
 
     private View mFilterGroup;
 
+    private TextView mShowAllView;
+
+    private ClickableSpan mShowAllClick;
+
     private boolean mInNameEdit = false;
 
     private ArrowView mArrowToStopView;
@@ -218,6 +222,17 @@ class ArrivalsListHeader {
         mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
         mRouteDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
+
+        mShowAllView = (TextView) mView.findViewById(R.id.show_all);
+        // Remove any previous clickable spans - we're recycling views between fragments for efficiency
+        UIHelp.removeAllClickableSpans(mShowAllView);
+        mShowAllClick = new ClickableSpan() {
+            public void onClick(View v) {
+                mController.setRoutesFilter(new ArrayList<String>());
+                refreshFilter();
+            }
+        };
+        UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
         mBusStopIconView = (ImageView) mView.findViewById(R.id.header_bus_icon);
         mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
@@ -342,7 +357,6 @@ class ArrivalsListHeader {
                 endNameEdit();
             }
         });
-        UIHelp.setChildClickable(mView, R.id.show_all, mShowAllClick);
     }
 
     /**
@@ -473,13 +487,6 @@ class ArrivalsListHeader {
         r.setFillAfter(true);
         return r;
     }
-
-    private final ClickableSpan mShowAllClick = new ClickableSpan() {
-        public void onClick(View v) {
-            mController.setRoutesFilter(new ArrayList<String>());
-            refreshFilter();
-        }
-    };
 
     void refresh() {
         refreshName();

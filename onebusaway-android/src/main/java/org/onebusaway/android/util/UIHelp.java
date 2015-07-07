@@ -85,11 +85,6 @@ public final class UIHelp {
         }
     }
 
-    public static void setChildClickable(Activity parent, int id, ClickableSpan span) {
-        TextView v = (TextView) parent.findViewById(id);
-        setClickable(v, span);
-    }
-
     public static void setChildClickable(View parent, int id, ClickableSpan span) {
         TextView v = (TextView) parent.findViewById(id);
         setClickable(v, span);

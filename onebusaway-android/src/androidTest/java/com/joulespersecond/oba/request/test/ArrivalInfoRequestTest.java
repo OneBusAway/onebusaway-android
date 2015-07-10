@@ -187,21 +187,30 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         );
     }
 
-    // TODO: get/create situation response (not much of a test, otherwise)
     public void testStopSituation() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         ObaArrivalInfoResponse response =
-                new ObaArrivalInfoRequest.Builder(getContext(), "1_75403").build().call();
+                new ObaArrivalInfoRequest.Builder(getContext(), "PSTA_4077").build().call();
         assertOK(response);
         List<ObaSituation> situations = response.getSituations();
         assertNotNull(situations);
 
-        // This is all test data, we really shouldn't depend on it.
-        // This is why we need a way of inserting canned data for testing.
-        //ObaSituation situation = situations.get(0);
-        //assertEquals("Stop Moved", situation.getSummary());
-        //assertEquals("", situation.getReason());
-        //assertEquals(ObaSituation.REASON_TYPE_UNDEFINED, situation.getReasonType());
+        ObaSituation situation = situations.get(0);
+        assertEquals("PSTA_1", situation.getId());
+        assertEquals("new 29: 29", situation.getSummary());
+        assertEquals("[Low] : 29 updated", situation.getDescription());
+        assertEquals("", situation.getReason());
+        assertEquals(1424788240588l, situation.getCreationTime());
+        assertEquals("", situation.getSeverity());
+        assertEquals("PSTA", situation.getAllAffects()[0].getAgencyId());
+        assertEquals("", situation.getAllAffects()[0].getApplicationId());
+        assertEquals("", situation.getAllAffects()[0].getDirectionId());
+        assertEquals("", situation.getAllAffects()[0].getRouteId());
+        assertEquals("", situation.getAllAffects()[0].getStopId());
+        assertEquals("", situation.getAllAffects()[0].getTripId());
 
+        // TODO - we need valid test responses that include the below situation data
         //ObaSituation.Affects affects = situation.getAffects();
         //assertNotNull(affects);
         //List<String> affectedStops = affects.getStopIds();

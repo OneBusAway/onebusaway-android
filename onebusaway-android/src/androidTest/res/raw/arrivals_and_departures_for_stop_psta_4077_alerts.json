@@ -1,0 +1,367 @@
+{
+  "code": 200,
+  "currentTime": 1424788245637,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 3997.1715107403434,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 15,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "PSTA_52",
+          "routeLongName": "ROUTE 52",
+          "routeShortName": "52",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1424788815000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1424788815000,
+          "serviceDate": 1424754000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_4077",
+          "stopSequence": 131,
+          "tripHeadsign": "ST PETE",
+          "tripId": "PSTA_1136252020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1136252020",
+            "blockTripSequence": 1,
+            "closestStop": "PSTA_3863",
+            "closestStopTimeOffset": 9,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "PSTA_3863",
+            "nextStopTimeOffset": 9,
+            "orientation": 0,
+            "phase": "",
+            "position": {
+              "lat": 27.83547,
+              "lon": -82.69602425744553
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 34839.90238345887,
+            "serviceDate": 1424754000000,
+            "situationIds": [
+              "PSTA_1",
+              "PSTA_3",
+              "PSTA_2"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 51353.931474477125,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 12418.401726783573,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 40,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "PSTA_52",
+          "routeLongName": "ROUTE 52",
+          "routeShortName": "52",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1424790015000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1424790015000,
+          "serviceDate": 1424754000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_4077",
+          "stopSequence": 131,
+          "tripHeadsign": "ST PETE",
+          "tripId": "PSTA_1136359020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1136359020",
+            "blockTripSequence": 1,
+            "closestStop": "PSTA_3889",
+            "closestStopTimeOffset": 10,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "PSTA_3889",
+            "nextStopTimeOffset": 10,
+            "orientation": 90,
+            "phase": "",
+            "position": {
+              "lat": 27.887754229548623,
+              "lon": -82.67973
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 26418.672167415643,
+            "serviceDate": 1424754000000,
+            "situationIds": [
+              "PSTA_1",
+              "PSTA_3",
+              "PSTA_2"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 51353.931474477125,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        }
+      ],
+      "nearbyStopIds": [
+        "PSTA_3853",
+        "PSTA_3854"
+      ],
+      "situationIds": [
+        "PSTA_1",
+        "PSTA_3",
+        "PSTA_2"
+      ],
+      "stopId": "PSTA_4077"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "PSTA",
+          "lang": "en",
+          "name": "PSTA",
+          "phone": "(727) 540-1834",
+          "privateService": false,
+          "timezone": "America/New_York",
+          "url": "http://www.psta.net/"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "PSTA",
+          "color": "FFFFFF",
+          "description": "",
+          "id": "PSTA_52",
+          "longName": "ROUTE 52",
+          "shortName": "52",
+          "textColor": "000000",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "FFFFFF",
+          "description": "",
+          "id": "PSTA_97",
+          "longName": "ROUTE 97",
+          "shortName": "97",
+          "textColor": "000000",
+          "type": 3,
+          "url": ""
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1424788240588,
+          "description": {
+            "lang": "en",
+            "value": "[Low] : 29 updated"
+          },
+          "id": "PSTA_1",
+          "publicationWindows": [],
+          "reason": "",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "new 29: 29"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1424788240590,
+          "description": {
+            "lang": "en",
+            "value": "[Low] : global"
+          },
+          "id": "PSTA_3",
+          "publicationWindows": [],
+          "reason": "",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Global: global"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1424788240589,
+          "description": {
+            "lang": "en",
+            "value": "[Low] Global Bulletin: Global Bulletin"
+          },
+          "id": "PSTA_2",
+          "publicationWindows": [],
+          "reason": "",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Global bulletin: Global Bulletin"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "2534",
+          "direction": "S",
+          "id": "PSTA_4077",
+          "lat": 27.8225,
+          "locationType": 0,
+          "lon": -82.70007,
+          "name": "49TH ST N + 5406",
+          "routeIds": [
+            "PSTA_52",
+            "PSTA_97"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2766",
+          "direction": "E",
+          "id": "PSTA_3863",
+          "lat": 27.83547,
+          "locationType": 0,
+          "lon": -82.69537,
+          "name": "70TH AVE + 46TH ST",
+          "routeIds": [
+            "PSTA_52",
+            "PSTA_97"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6570",
+          "direction": "S",
+          "id": "PSTA_3889",
+          "lat": 27.88762,
+          "locationType": 0,
+          "lon": -82.67938,
+          "name": "PSTA 34TH ST LAYBY - PLATFORM - A",
+          "routeIds": [
+            "PSTA_52"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2523",
+          "direction": "N",
+          "id": "PSTA_3853",
+          "lat": 27.82178,
+          "locationType": 0,
+          "lon": -82.6998,
+          "name": "49TH ST N + 54TH AVE N",
+          "routeIds": [
+            "PSTA_52",
+            "PSTA_97"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2536",
+          "direction": "N",
+          "id": "PSTA_3854",
+          "lat": 27.8231,
+          "locationType": 0,
+          "lon": -82.69982,
+          "name": "49TH ST N + 55TH AVE N",
+          "routeIds": [
+            "PSTA_52",
+            "PSTA_97"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "PSTA_15980702",
+          "directionId": "1",
+          "id": "PSTA_1136252020",
+          "routeId": "PSTA_52",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_52:51",
+          "timeZone": "",
+          "tripHeadsign": "ST PETE",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_15981602",
+          "directionId": "1",
+          "id": "PSTA_1136359020",
+          "routeId": "PSTA_52",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_52:51",
+          "timeZone": "",
+          "tripHeadsign": "ST PETE",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

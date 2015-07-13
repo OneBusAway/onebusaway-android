@@ -64,7 +64,7 @@
                     android:id="@+id/slidingPanel">
 
                 <!-- Header for bottom sliding panel -->
-                <include layout="@layout/arrivals_list_header"/>
+                <include layout="@layout/arrivals_list_header2"/>
 
                 <!-- Content of bottom sliding panel -->
                 <LinearLayout

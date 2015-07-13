@@ -491,8 +491,8 @@ class ArrivalsListHeader {
     void refresh() {
         refreshName();
         refreshArrivalInfo();  // Needs to occur before refreshRouteDisplayNames(), so route name for next arrival is highlighted
-        refreshRouteDisplayNames();
-        refreshDirection();
+        //refreshRouteDisplayNames();
+        //refreshDirection();
         refreshLocation();
         refreshFavorite();
         refreshFilter();

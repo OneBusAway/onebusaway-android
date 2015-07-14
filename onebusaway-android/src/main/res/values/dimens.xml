@@ -44,9 +44,9 @@
     <dimen name="route_button_width">48sp</dimen>
 
     <!-- Arrival List Header -->
-    <dimen name="arrival_header_height">68dp</dimen>
-    <dimen name="arrival_header_height_expanded_filter_routes">93dp</dimen>
-    <dimen name="arrival_header_height_expanded_edit_name">100dp</dimen>
+    <dimen name="arrival_header_height">150dp</dimen>
+    <dimen name="arrival_header_height_expanded_filter_routes">175dp</dimen>
+    <dimen name="arrival_header_height_expanded_edit_name">182dp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
 
     <!-- Map -->

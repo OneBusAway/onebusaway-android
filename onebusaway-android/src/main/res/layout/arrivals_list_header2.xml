@@ -18,8 +18,7 @@
                 android:id="@+id/arrivals_list_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/arrival_header_height"
-                android:orientation="vertical"
-                android:animateLayoutChanges="true">
+                android:orientation="vertical">
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                     style="@style/HeaderItem"
@@ -27,7 +26,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/arrival_header_height"
                     android:layout_alignParentTop="true"
-                    android:orientation="vertical" android:paddingBottom="5dp">
+                    android:orientation="vertical"
+                    android:paddingBottom="5dp">
 
         <LinearLayout
                 android:id="@+id/edit_name_container"
@@ -83,6 +83,88 @@
         </LinearLayout>
 
         <RelativeLayout
+                android:id="@+id/eta2_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_above="@+id/stop_details_container"
+                android:layout_toLeftOf="@+id/right_margin_separator"
+                android:paddingBottom="5dp">
+
+            <ImageButton
+                    android:id="@+id/eta2_route_favorite"
+                    android:src="@drawable/ic_toggle_star_outline"
+                    android:contentDescription="@string/stop_info_favorite"
+                    android:background="@drawable/selectable_background_busbot"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentLeft="true"
+                    android:scaleType="fitCenter"
+                    android:maxHeight="25dp"
+                    android:maxWidth="25dp"
+                    android:adjustViewBounds="true"
+                    android:paddingLeft="1dp"
+                    android:paddingRight="1dp"/>
+
+            <TextView
+                    android:id="@+id/eta2_route_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/eta2_route_favorite"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:textSize="20sp"
+                    android:text="5"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textIsSelectable="false"/>
+            <TextView
+                    android:id="@+id/eta2_route_direction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/eta2_route_name"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="5dp"
+                    android:textSize="13sp"
+                    android:text="Aurora Village Via Aurora Ave."
+                    android:textColor="@android:color/white"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textIsSelectable="false"
+                    android:layout_alignParentBottom="true"/>
+            <TextView
+                    android:id="@+id/eta2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/eta2_min"
+                    android:layout_centerVertical="true"
+                    android:textSize="20sp"
+                    android:text="2"
+                    android:textColor="@android:color/white"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textIsSelectable="false" android:textStyle="bold"/>
+            <TextView
+                    android:id="@+id/eta2_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="bottom"
+                    android:textSize="10sp"
+                    android:text="MIN"
+                    android:textColor="@android:color/white"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textIsSelectable="false"
+                    android:layout_alignBottom="@+id/eta2_route_direction"
+                    android:layout_alignParentRight="true" android:layout_alignParentEnd="true"
+                    android:layout_marginLeft="5dp" android:layout_marginBottom="2dp"/>
+        </RelativeLayout>
+
+        <RelativeLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,7 +204,7 @@
                         android:weightSum="1">
                     <TextView
                             android:id="@+id/stop_name"
-                            android:textSize="12sp"
+                            android:textSize="13sp"
                             android:text="This is a sample route name"
                             android:textColor="@android:color/white"
                             android:ellipsize="end"
@@ -130,7 +212,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="left|center_vertical"
-                            android:layout_weight=".95" android:textIsSelectable="false"/>
+                            android:layout_weight=".95"
+                            android:textIsSelectable="false"/>
 
                     <ImageButton
                             android:id="@+id/stop_info_button"

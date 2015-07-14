@@ -125,10 +125,6 @@ class ArrivalsListHeader {
 
     private ImageButton mFavoriteView;
 
-    private TextView mRouteIdView;
-
-    private View mRouteDirectionView;
-
     private View mFilterGroup;
 
     private TextView mShowAllView;
@@ -219,8 +215,6 @@ class ArrivalsListHeader {
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
-        mRouteIdView = (TextView) mView.findViewById(R.id.routeIds);
-        mRouteDirectionView = mView.findViewById(R.id.direction);
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
@@ -490,9 +484,7 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
-        refreshArrivalInfo();  // Needs to occur before refreshRouteDisplayNames(), so route name for next arrival is highlighted
-        //refreshRouteDisplayNames();
-        //refreshDirection();
+        refreshArrivalInfo();
         refreshLocation();
         refreshFavorite();
         refreshFilter();
@@ -550,59 +542,6 @@ class ArrivalsListHeader {
                     // If we don't have the precise minAfter value, show a generic message
                     mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_later));
                 }
-            }
-        }
-    }
-
-    private void refreshRouteDisplayNames() {
-        List<String> routeDisplayNames = mController.getRouteDisplayNames();
-        ArrayList<String> nextArrivalRouteShortNames = new ArrayList<String>();
-
-        if (mArrivalInfo != null && mArrivalInfo.size() > 0 && routeDisplayNames.size() > 1
-                && mIsSlidingPanelCollapsed) {
-            // Only highlight routes if there is more than one route and the sliding panel is collapsed.
-            // Always highlight the route for the next ETA
-            String firstArrivalShortName = mArrivalInfo.get(0).getInfo().getShortName();
-            long firstEta = mArrivalInfo.get(0).getEta();
-            nextArrivalRouteShortNames.add(firstArrivalShortName);
-
-            // Add the routes for the next X sequential arrivals that have the same eta status
-            // (e.g., "just left", "NOW", "1 min") so we highlight more than one route in the header
-            for (int i = 1; i < mArrivalInfo.size(); i++) {
-                if (mArrivalInfo.get(i).getEta() < 0 && firstEta < 0) {
-                    // All arrival times less than 0 are grouped into the same "Just left" message,
-                    // so add any sequential routes that also have negative ETAs
-                    nextArrivalRouteShortNames.add(mArrivalInfo.get(i).getInfo().getShortName());
-                } else if (mArrivalInfo.get(i).getEta() == firstEta) {
-                    // All ETA == first ETA can also be highlighted
-                    nextArrivalRouteShortNames.add(mArrivalInfo.get(i).getInfo().getShortName());
-                } else {
-                    // No match, so break entirely, since no
-                    break;
-                }
-            }
-        }
-
-        if (routeDisplayNames != null && !mInNameEdit) {
-            mRouteIdView.setText(
-                    mContext.getString(R.string.stop_info_route_ids_label) + " " + UIHelp
-                            .formatRouteDisplayNames(routeDisplayNames,
-                                    nextArrivalRouteShortNames));
-            mRouteIdView.setVisibility(View.VISIBLE);
-        } else {
-            mRouteIdView.setVisibility(View.GONE);
-        }
-    }
-
-    private void refreshDirection() {
-        String direction = mController.getStopDirection();
-        if (direction != null) {
-            final int directionText = UIHelp.getStopDirectionText(direction);
-            ((TextView) mRouteDirectionView).setText(directionText);
-            if (directionText != R.string.direction_none && !mInNameEdit) {
-                mRouteDirectionView.setVisibility(View.VISIBLE);
-            } else {
-                mRouteDirectionView.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -771,7 +710,6 @@ class ArrivalsListHeader {
         // editable, so we should go into edit mode.
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
-        mRouteDirectionView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mFavoriteView.setVisibility(View.GONE);
         mRightMarginSeparatorView.setVisibility(View.GONE);
@@ -808,7 +746,6 @@ class ArrivalsListHeader {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
-        mRouteDirectionView.setVisibility(View.VISIBLE);
         mFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);

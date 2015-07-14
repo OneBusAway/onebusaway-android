@@ -88,7 +88,6 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_above="@+id/stop_details_container"
-                android:layout_toLeftOf="@+id/right_margin_separator"
                 android:paddingBottom="5dp">
 
             <ImageButton
@@ -115,53 +114,61 @@
                     android:layout_centerVertical="true"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
-                    android:textSize="20sp"
+                    android:textSize="35sp"
                     android:text="5"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:ellipsize="end"
                     android:singleLine="true"
-                    android:textIsSelectable="false"/>
+                    android:textIsSelectable="true"/>
             <TextView
                     android:id="@+id/eta2_route_direction"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_toRightOf="@+id/eta2_route_name"
                     android:layout_centerVertical="true"
-                    android:layout_marginLeft="5dp"
-                    android:textSize="13sp"
+                    android:layout_marginLeft="10dp"
+                    android:textSize="15sp"
                     android:text="Aurora Village Via Aurora Ave."
                     android:textColor="@android:color/white"
                     android:ellipsize="end"
                     android:singleLine="true"
-                    android:textIsSelectable="false"
-                    android:layout_alignParentBottom="true"/>
-            <TextView
-                    android:id="@+id/eta2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@+id/eta2_min"
-                    android:layout_centerVertical="true"
-                    android:textSize="20sp"
-                    android:text="2"
-                    android:textColor="@android:color/white"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:textIsSelectable="false" android:textStyle="bold"/>
-            <TextView
-                    android:id="@+id/eta2_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="bottom"
-                    android:textSize="10sp"
-                    android:text="MIN"
-                    android:textColor="@android:color/white"
-                    android:ellipsize="end"
-                    android:singleLine="true"
-                    android:textIsSelectable="false"
-                    android:layout_alignBottom="@+id/eta2_route_direction"
-                    android:layout_alignParentRight="true" android:layout_alignParentEnd="true"
-                    android:layout_marginLeft="5dp" android:layout_marginBottom="2dp"/>
+                    android:textIsSelectable="true"
+                    android:layout_alignParentBottom="true" android:textStyle="bold"/>
+
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                            android:id="@+id/eta_and_min"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentRight="true"
+                            android:orientation="horizontal">
+                <TextView
+                        android:id="@+id/eta2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="35sp"
+                        android:textStyle="bold"
+                        android:text="2"
+                        android:textColor="@android:color/white"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textIsSelectable="false"/>
+                <TextView
+                        android:id="@+id/eta2_min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="10sp"
+                        android:text="MIN"
+                        android:textColor="@android:color/white"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textIsSelectable="false"
+                        android:layout_toRightOf="@id/eta2"
+                        android:layout_alignBaseline="@id/eta2"
+                        android:layout_marginLeft="5dp"
+                        android:gravity="bottom"/>
+            </RelativeLayout>
         </RelativeLayout>
 
         <RelativeLayout
@@ -247,7 +254,8 @@
                 android:layout_marginRight="4dp"
                 android:layout_marginLeft="10dp"
                 android:layout_toLeftOf="@+id/right_margin_container1"
-                android:background="@drawable/white_transparent_gradient"/>
+                android:background="@drawable/white_transparent_gradient"
+                android:visibility="gone"/>
 
         <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are
              used to avoid shifting of UI elements when cross-fading between arrow/distance to stop
@@ -330,7 +338,8 @@
                 android:paddingBottom="5dp"
                 android:layout_alignParentRight="true"
                 android:layout_gravity="center"
-                android:visibility="visible"/>
+                android:visibility="visible" android:layout_alignParentBottom="false"
+                android:layout_alignBottom="@+id/eta2_container"/>
 
         <ImageView
                 android:id="@+id/expand_collapse"

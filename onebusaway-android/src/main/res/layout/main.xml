@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="bottom"
-                sothree:umanoPanelHeight="68dp"
+                sothree:umanoPanelHeight="@dimen/arrival_header_height"
                 sothree:umanoShadowHeight="5dp"
                 sothree:umanoParalaxOffset="100dp"
                 sothree:umanoFadeColor="@android:color/transparent"

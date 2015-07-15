@@ -137,7 +137,7 @@
                     android:layout_alignParentBottom="true" android:textStyle="bold"/>
 
             <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                            android:id="@+id/eta_and_min"
+                            android:id="@+id/eta2_and_min"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerVertical="true"

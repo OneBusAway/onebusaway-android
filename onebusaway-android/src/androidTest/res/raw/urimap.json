@@ -54,6 +54,8 @@
 
     "/api/where/stop/404test.json": "test_404_1",
     "/api/where/foo/1_29261.json": "__404__",
-    "/api/where/stop/1_29261.xml": "test_badjson"
+    "/api/where/stop/1_29261.xml": "test_badjson",
+    "/api/where/report-problem-with-stop/1_75403.json": "report_problem_with_stop_1_75403",
+    "/api/where/report-problem-with-trip/1_28322560.json": "report_problem_with_trip_1_28322560"
   }
 }

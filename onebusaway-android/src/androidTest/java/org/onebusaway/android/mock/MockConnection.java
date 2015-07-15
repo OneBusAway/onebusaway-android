@@ -64,7 +64,13 @@ public class MockConnection implements ObaConnection {
 
     @Override
     public Reader post(String string) throws IOException {
-        throw new RuntimeException("Not implemented");
+        Log.d(TAG, "Post URI: " + mUri);
+        String response = mUriMap.getUri(mUri);
+        if ("__404__".equals(response)) {
+            mResponseCode = HttpURLConnection.HTTP_NOT_FOUND;
+            throw new FileNotFoundException();
+        }
+        return Resources.read(mContext, Resources.getTestUri(response));
     }
 
     @Override

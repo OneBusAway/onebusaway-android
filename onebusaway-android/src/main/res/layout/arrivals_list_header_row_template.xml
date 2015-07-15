@@ -47,7 +47,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textIsSelectable="true"
-            android:layout_alignParentBottom="true" android:textStyle="bold"/>
+            android:textStyle="bold"/>
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/eta_and_min"

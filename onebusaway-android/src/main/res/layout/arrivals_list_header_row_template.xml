@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+    <ImageButton
+            android:id="@+id/eta_route_favorite"
+            android:src="@drawable/ic_toggle_star_outline"
+            android:contentDescription="@string/stop_info_favorite"
+            android:background="@drawable/selectable_background_busbot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:scaleType="fitCenter"
+            android:maxHeight="25dp"
+            android:maxWidth="25dp"
+            android:adjustViewBounds="true"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"/>
+
+    <TextView
+            android:id="@+id/eta_route_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/eta_route_favorite"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:textSize="35sp"
+            android:text="5"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textIsSelectable="true"/>
+    <TextView
+            android:id="@+id/eta_route_direction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/eta_route_name"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:textSize="15sp"
+            android:text="Aurora Village Via Aurora Ave."
+            android:textColor="@android:color/white"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textIsSelectable="true"
+            android:layout_alignParentBottom="true" android:textStyle="bold"/>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:id="@+id/eta_and_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentRight="true"
+                    android:orientation="horizontal">
+        <TextView
+                android:id="@+id/eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="35sp"
+                android:textStyle="bold"
+                android:text="2"
+                android:textColor="@android:color/white"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textIsSelectable="false"/>
+        <TextView
+                android:id="@+id/eta_min"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:text="MIN"
+                android:textColor="@android:color/white"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:textIsSelectable="false"
+                android:layout_toRightOf="@id/eta"
+                android:layout_alignBaseline="@id/eta"
+                android:layout_marginLeft="5dp"
+                android:gravity="bottom"/>
+    </RelativeLayout>
+</RelativeLayout>

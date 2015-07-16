@@ -99,7 +99,7 @@
         <!-- First ETA row -->
         <include android:id="@+id/eta_container1"
                  layout="@layout/arrivals_list_header_row_template"
-                 android:layout_above="@+id/separator_eta"
+                 android:layout_above="@+id/eta_separator"
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
                  android:layout_alignParentLeft="true"
@@ -111,7 +111,7 @@
               android:layout_above="@+id/eta_container2"
               android:layout_marginLeft="@dimen/keyline_1"
               android:layout_marginRight="@dimen/keyline_1"
-              android:id="@+id/separator_eta"
+              android:id="@+id/eta_separator"
               android:visibility="visible"
               android:background="#50ffffff"/>
 

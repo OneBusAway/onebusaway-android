@@ -82,6 +82,19 @@
             </LinearLayout>
         </LinearLayout>
 
+        <TextView
+                android:id="@+id/eta_arrives_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/eta_container1"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="@dimen/keyline_1"
+                android:textSize="10sp"
+                android:text="@string/arrivals_list_header_arrives_in"
+                android:textColor="@android:color/white"
+                android:singleLine="true"
+                android:textIsSelectable="false"/>
+
         <!-- First ETA row -->
         <include android:id="@+id/eta_container1"
                  layout="@layout/arrivals_list_header_row_template"
@@ -117,7 +130,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:layout_toLeftOf="@+id/right_margin_separator"
-                android:paddingBottom="5dp">
+                android:paddingBottom="5dp" android:visibility="visible">
 
             <ImageButton
                     android:id="@+id/stop_favorite"
@@ -177,8 +190,7 @@
                             android:minHeight="17dp"
                             android:maxHeight="17dp"
                             android:scaleType="fitCenter"
-                            android:adjustViewBounds="true"
-                            />
+                            android:adjustViewBounds="true"/>
                 </LinearLayout>
             </RelativeLayout>
 

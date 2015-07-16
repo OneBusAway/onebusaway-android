@@ -209,6 +209,7 @@
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_header_later">later</string>
     <string name="stop_info_button_content_description">About this stop</string>
+    <string name="arrivals_list_header_arrives_in">Arrives in</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>

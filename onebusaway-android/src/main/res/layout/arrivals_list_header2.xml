@@ -168,7 +168,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="left|center_vertical"
                         android:layout_weight=".95"
-                        android:textIsSelectable="false" android:textStyle="bold"
+                        android:textIsSelectable="false"
                         android:layout_marginLeft="1dp"/>
 
                 <ImageButton

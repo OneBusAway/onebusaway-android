@@ -30,7 +30,6 @@
             android:textSize="35sp"
             android:text="5"
             android:textColor="@android:color/white"
-            android:textStyle="bold"
             android:ellipsize="end"
             android:singleLine="true"
             android:textIsSelectable="true"/>
@@ -56,7 +55,6 @@
                 android:layout_centerVertical="true"
                 android:layout_marginRight="@dimen/keyline_1"
                 android:textSize="35sp"
-                android:textStyle="bold"
                 android:text="2"
                 android:textColor="@android:color/white"
                 android:ellipsize="end"

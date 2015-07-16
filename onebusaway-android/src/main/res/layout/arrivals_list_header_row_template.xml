@@ -13,8 +13,8 @@
             android:layout_centerVertical="true"
             android:layout_alignParentLeft="true"
             android:scaleType="fitCenter"
-            android:maxHeight="25dp"
-            android:maxWidth="25dp"
+            android:maxHeight="28dp"
+            android:maxWidth="28dp"
             android:adjustViewBounds="true"
             android:paddingLeft="1dp"
             android:paddingRight="1dp"/>

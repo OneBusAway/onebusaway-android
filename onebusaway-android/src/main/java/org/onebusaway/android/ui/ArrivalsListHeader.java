@@ -198,7 +198,8 @@ class ArrivalsListHeader {
         mArrivalInfo = null;
 
         // Cache the ArrivalsListHeader height values
-        DEFAULT_HEADER_HEIGHT_DP = view.getResources().getDimension(R.dimen.arrival_header_height)
+        DEFAULT_HEADER_HEIGHT_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
                 / view.getResources().getDisplayMetrics().density;
         EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = view.getResources()
                 .getDimension(R.dimen.arrival_header_height_expanded_filter_routes)

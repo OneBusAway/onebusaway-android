@@ -98,14 +98,14 @@
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
                  android:layout_alignParentLeft="true"
-                 android:paddingBottom="5dp"/>
+                 android:paddingBottom="10dp" android:layout_marginBottom="10dp"/>
 
         <!-- Stop name, star, and stopinfo button  -->
         <RelativeLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentLeft="false"
                 android:layout_alignParentBottom="true"
                 android:layout_toLeftOf="@+id/right_margin_separator"
                 android:paddingBottom="5dp">
@@ -118,8 +118,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:scaleType="fitCenter"
-                    android:maxHeight="25dp"
-                    android:maxWidth="25dp"
+                    android:maxHeight="30dp"
+                    android:maxWidth="30dp"
                     android:adjustViewBounds="true"
                     android:paddingLeft="1dp"
                     android:paddingRight="1dp"
@@ -141,8 +141,8 @@
                         android:weightSum="1">
                     <TextView
                             android:id="@+id/stop_name"
-                            android:textSize="13sp"
-                            android:text="This is a sample route name"
+                            android:textSize="15sp"
+                            android:text="University Area Transit Center"
                             android:textColor="@android:color/white"
                             android:ellipsize="end"
                             android:singleLine="true"
@@ -276,9 +276,10 @@
                 android:src="@drawable/ic_action_expand_edited"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
-                android:layout_marginBottom="1dp"
+                android:layout_marginBottom="6dp"
                 android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true" android:layout_marginRight="5dp"/>
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="@dimen/keyline_1"/>
     </RelativeLayout>
 
     <!-- Filter by route -->

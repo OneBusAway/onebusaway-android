@@ -80,6 +80,7 @@
                 android:layout_toRightOf="@id/eta"
                 android:layout_alignBaseline="@id/eta"
                 android:layout_marginLeft="5dp"
+                android:layout_marginRight="@dimen/keyline_1"
                 android:gravity="bottom"/>
     </RelativeLayout>
 </RelativeLayout>

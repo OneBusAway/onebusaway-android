@@ -251,21 +251,6 @@
                 android:paddingBottom="5dp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true">
-
-            <ImageView
-                    android:id="@+id/header_bus_icon"
-                    android:src="@drawable/ic_bus_white"
-                    android:background="@null"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:maxWidth="25dp"
-                    android:maxHeight="25dp"
-                    android:scaleType="fitCenter"
-                    android:adjustViewBounds="true"
-                    android:paddingLeft="1dp"
-                    android:paddingRight="1dp"
-                    android:visibility="gone"/>
             <TextView
                     android:id="@+id/header_arrival_info"
                     style="@style/Header3Text"
@@ -284,10 +269,8 @@
                 android:layout_marginLeft="8dp"
                 android:paddingRight="8dp"
                 android:paddingBottom="5dp"
-                android:layout_alignParentRight="true"
-                android:layout_gravity="center"
-                android:visibility="visible" android:layout_alignParentBottom="false"
-                android:layout_alignBottom="@+id/eta2_container"/>
+                android:visibility="visible"
+                android:layout_marginTop="8dp" android:layout_centerInParent="true"/>
 
         <ImageView
                 android:id="@+id/expand_collapse"

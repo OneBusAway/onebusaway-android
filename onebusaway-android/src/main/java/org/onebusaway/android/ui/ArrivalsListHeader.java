@@ -142,8 +142,6 @@ class ArrivalsListHeader {
 
     private int mShortAnimationDuration;
 
-    private ImageView mBusStopIconView;
-
     private TextView mArrivalInfoView;
 
     private ProgressBar mProgressBar;
@@ -229,7 +227,6 @@ class ArrivalsListHeader {
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
-        mBusStopIconView = (ImageView) mView.findViewById(R.id.header_bus_icon);
         mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
@@ -264,7 +261,6 @@ class ArrivalsListHeader {
         UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
 
         // Initialize stop info view
         final ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -602,14 +598,12 @@ class ArrivalsListHeader {
                 return;
             }
             UIHelp.showViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
 
             // Hide progress bar
             UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
         } else {
             // Cross-fade in direction arrow and distance to stop, and hide bus icon and arrival info
             UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mBusStopIconView, mShortAnimationDuration);
 
             if (!mArrowToStopView.isInitialized() || !mDistanceToStopView.isInitialized()) {
                 // At least one of the views isn't ready yet, so make sure the progress bar is running
@@ -716,7 +710,6 @@ class ArrivalsListHeader {
         mRightMarginSeparatorView.setVisibility(View.GONE);
         mDistanceToStopView.setVisibility(View.GONE);
         mArrowToStopView.setVisibility(View.GONE);
-        mBusStopIconView.setVisibility(View.GONE);
         mArrivalInfoView.setVisibility(View.GONE);
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();

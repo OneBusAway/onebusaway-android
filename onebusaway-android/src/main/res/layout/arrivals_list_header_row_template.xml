@@ -48,17 +48,13 @@
             android:singleLine="true"
             android:textIsSelectable="true"/>
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/eta_and_min"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentRight="true"
-                    android:orientation="horizontal">
         <TextView
                 android:id="@+id/eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="@dimen/keyline_1"
                 android:textSize="35sp"
                 android:textStyle="bold"
                 android:text="2"
@@ -66,20 +62,4 @@
                 android:ellipsize="end"
                 android:singleLine="true"
                 android:textIsSelectable="false"/>
-        <TextView
-                android:id="@+id/eta_min"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="10sp"
-                android:text="MIN"
-                android:textColor="@android:color/white"
-                android:ellipsize="end"
-                android:singleLine="true"
-                android:textIsSelectable="false"
-                android:layout_toRightOf="@id/eta"
-                android:layout_alignBaseline="@id/eta"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="@dimen/keyline_1"
-                android:gravity="bottom"/>
-    </RelativeLayout>
 </RelativeLayout>

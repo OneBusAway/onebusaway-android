@@ -108,14 +108,13 @@
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
                  android:layout_alignParentLeft="true"
-                 android:paddingBottom="10dp" android:layout_marginBottom="10dp"/>
+                 android:paddingBottom="10dp"/>
 
         <!-- Stop name, star, and stopinfo button  -->
         <RelativeLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="false"
                 android:layout_alignParentBottom="true"
                 android:layout_toLeftOf="@+id/right_margin_separator"
                 android:paddingBottom="5dp">

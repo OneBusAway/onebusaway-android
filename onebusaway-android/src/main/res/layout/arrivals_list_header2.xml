@@ -129,8 +129,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
                 android:layout_toLeftOf="@+id/right_margin_separator"
-                android:paddingBottom="5dp" android:visibility="visible">
+                android:layout_marginLeft="@dimen/keyline_1"
+                android:paddingBottom="5dp">
 
             <ImageButton
                     android:id="@+id/stop_favorite"
@@ -143,7 +145,6 @@
                     android:maxHeight="@dimen/arrival_header_star_size"
                     android:maxWidth="@dimen/arrival_header_star_size"
                     android:adjustViewBounds="true"
-                    android:paddingLeft="1dp"
                     android:paddingRight="1dp"
                     android:layout_centerVertical="true"
                     android:layout_alignParentLeft="true"/>

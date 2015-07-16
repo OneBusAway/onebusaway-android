@@ -10,14 +10,14 @@
             android:background="@drawable/selectable_background_busbot"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"
             android:scaleType="fitCenter"
             android:maxHeight="@dimen/arrival_header_star_size"
             android:maxWidth="@dimen/arrival_header_star_size"
             android:adjustViewBounds="true"
             android:layout_marginLeft="@dimen/keyline_1"
-            android:paddingRight="1dp"/>
+            android:paddingRight="1dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"/>
 
     <TextView
             android:id="@+id/eta_route_name"

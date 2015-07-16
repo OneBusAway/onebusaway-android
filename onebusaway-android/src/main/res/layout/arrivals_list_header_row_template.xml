@@ -13,8 +13,8 @@
             android:layout_centerVertical="true"
             android:layout_alignParentLeft="true"
             android:scaleType="fitCenter"
-            android:maxHeight="28dp"
-            android:maxWidth="28dp"
+            android:maxHeight="@dimen/arrival_header_star_size"
+            android:maxWidth="@dimen/arrival_header_star_size"
             android:adjustViewBounds="true"
             android:layout_marginLeft="@dimen/keyline_1"
             android:paddingRight="1dp"/>

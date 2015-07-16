@@ -11,8 +11,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="fitCenter"
-            android:maxHeight="@dimen/arrival_header_star_size"
-            android:maxWidth="@dimen/arrival_header_star_size"
             android:adjustViewBounds="true"
             android:layout_marginLeft="@dimen/keyline_1"
             android:paddingRight="1dp"

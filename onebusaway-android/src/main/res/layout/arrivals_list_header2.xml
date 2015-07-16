@@ -143,8 +143,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:scaleType="fitCenter"
-                    android:maxHeight="@dimen/arrival_header_star_size"
-                    android:maxWidth="@dimen/arrival_header_star_size"
                     android:adjustViewBounds="true"
                     android:paddingRight="1dp"
                     android:layout_centerVertical="true"

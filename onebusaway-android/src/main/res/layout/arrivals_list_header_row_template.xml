@@ -25,8 +25,8 @@
             android:layout_height="wrap_content"
             android:layout_toRightOf="@+id/eta_route_favorite"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:textSize="35sp"
             android:text="5"
             android:textColor="@android:color/white"
@@ -40,14 +40,13 @@
             android:layout_height="wrap_content"
             android:layout_toRightOf="@+id/eta_route_name"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="5dp"
             android:textSize="15sp"
             android:text="Aurora Village Via Aurora Ave."
             android:textColor="@android:color/white"
             android:ellipsize="end"
             android:singleLine="true"
-            android:textIsSelectable="true"
-            android:textStyle="bold"/>
+            android:textIsSelectable="true"/>
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/eta_and_min"

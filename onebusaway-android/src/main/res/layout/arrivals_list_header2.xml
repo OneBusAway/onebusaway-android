@@ -150,7 +150,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="left|center_vertical"
                             android:layout_weight=".95"
-                            android:textIsSelectable="false"/>
+                            android:textIsSelectable="false" android:textStyle="bold"/>
 
                     <ImageButton
                             android:id="@+id/stop_info_button"

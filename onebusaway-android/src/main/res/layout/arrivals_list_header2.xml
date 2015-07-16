@@ -100,6 +100,7 @@
                  android:layout_alignParentLeft="true"
                  android:paddingBottom="5dp"/>
 
+        <!-- Stop name, star, and stopinfo button  -->
         <RelativeLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"

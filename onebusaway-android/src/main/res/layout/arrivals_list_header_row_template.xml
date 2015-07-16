@@ -16,7 +16,7 @@
             android:maxHeight="28dp"
             android:maxWidth="28dp"
             android:adjustViewBounds="true"
-            android:paddingLeft="1dp"
+            android:layout_marginLeft="@dimen/keyline_1"
             android:paddingRight="1dp"/>
 
     <TextView
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_toRightOf="@+id/eta_route_favorite"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="5dp"
             android:layout_marginRight="10dp"
             android:textSize="35sp"
             android:text="5"

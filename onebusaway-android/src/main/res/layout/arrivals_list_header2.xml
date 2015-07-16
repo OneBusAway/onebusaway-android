@@ -85,11 +85,21 @@
         <!-- First ETA row -->
         <include android:id="@+id/eta_container1"
                  layout="@layout/arrivals_list_header_row_template"
-                 android:layout_above="@+id/eta_container2"
+                 android:layout_above="@+id/separator_eta"
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
                  android:layout_alignParentLeft="true"
                  android:paddingBottom="5dp"/>
+
+        <!-- Line separator -->
+        <View android:layout_width="match_parent"
+              android:layout_height="1dp"
+              android:layout_above="@+id/eta_container2"
+              android:layout_marginLeft="@dimen/keyline_1"
+              android:layout_marginRight="@dimen/keyline_1"
+              android:id="@+id/separator_eta"
+              android:visibility="visible"
+              android:background="#50ffffff"/>
 
         <!-- Second ETA row -->
         <include android:id="@+id/eta_container2"
@@ -184,7 +194,7 @@
                 android:layout_marginRight="4dp"
                 android:layout_marginLeft="10dp"
                 android:layout_toLeftOf="@+id/right_margin_container1"
-                android:background="@drawable/white_transparent_gradient"
+                android:background="#50ffffff"
                 android:visibility="gone"/>
 
         <!-- Layout container for arrow and distance to stop. Two right_margin_container layouts are

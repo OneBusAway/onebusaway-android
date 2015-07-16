@@ -131,6 +131,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_toLeftOf="@+id/right_margin_separator"
                 android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginTop="1dp"
                 android:paddingBottom="5dp">
 
             <ImageButton
@@ -167,7 +168,8 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="left|center_vertical"
                         android:layout_weight=".95"
-                        android:textIsSelectable="false" android:textStyle="bold"/>
+                        android:textIsSelectable="false" android:textStyle="bold"
+                        android:layout_marginLeft="1dp"/>
 
                 <ImageButton
                         android:id="@+id/stop_info_button"

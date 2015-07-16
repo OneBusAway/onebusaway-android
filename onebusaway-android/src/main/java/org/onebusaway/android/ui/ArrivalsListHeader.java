@@ -210,7 +210,7 @@ class ArrivalsListHeader {
         // Init views
         mView = view;
         mMainContainerView = mView.findViewById(R.id.main_header_content);
-        mNameContainerView = mView.findViewById(R.id.name_container);
+        mNameContainerView = mView.findViewById(R.id.stop_name_and_info_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);

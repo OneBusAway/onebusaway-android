@@ -149,51 +149,45 @@
                     android:layout_centerVertical="true"
                     android:layout_alignParentLeft="true"/>
 
-            <RelativeLayout
-                    android:id="@+id/name_container"
+            <LinearLayout
+                    android:id="@+id/stop_name_and_info_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toRightOf="@+id/stop_favorite"
                     android:layout_centerVertical="true"
-                    android:paddingLeft="@dimen/arrivals_header_pad_left">
-
-                <LinearLayout
-                        android:id="@+id/stop_name_and_info_container"
+                    android:layout_toRightOf="@+id/stop_favorite"
+                    android:layout_marginLeft="@dimen/arrivals_header_pad_left"
+                    android:weightSum="1">
+                <TextView
+                        android:id="@+id/stop_name"
+                        android:textSize="15sp"
+                        android:text="University Area Transit Center"
+                        android:textColor="@android:color/white"
+                        android:ellipsize="end"
+                        android:singleLine="true"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:weightSum="1">
-                    <TextView
-                            android:id="@+id/stop_name"
-                            android:textSize="15sp"
-                            android:text="University Area Transit Center"
-                            android:textColor="@android:color/white"
-                            android:ellipsize="end"
-                            android:singleLine="true"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="left|center_vertical"
-                            android:layout_weight=".95"
-                            android:textIsSelectable="false" android:textStyle="bold"/>
+                        android:layout_gravity="left|center_vertical"
+                        android:layout_weight=".95"
+                        android:textIsSelectable="false" android:textStyle="bold"/>
 
-                    <ImageButton
-                            android:id="@+id/stop_info_button"
-                            android:background="@drawable/selectable_background_busbot"
-                            android:src="@drawable/ic_stop_info"
-                            android:contentDescription="@string/stop_info_button_content_description"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="5dp"
-                            android:layout_marginRight="2dp"
-                            android:layout_weight=".05"
-                            android:layout_gravity="top"
-                            android:minWidth="17dp"
-                            android:maxWidth="17dp"
-                            android:minHeight="17dp"
-                            android:maxHeight="17dp"
-                            android:scaleType="fitCenter"
-                            android:adjustViewBounds="true"/>
-                </LinearLayout>
-            </RelativeLayout>
+                <ImageButton
+                        android:id="@+id/stop_info_button"
+                        android:background="@drawable/selectable_background_busbot"
+                        android:src="@drawable/ic_stop_info"
+                        android:contentDescription="@string/stop_info_button_content_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="2dp"
+                        android:layout_weight=".05"
+                        android:layout_gravity="top"
+                        android:minWidth="17dp"
+                        android:maxWidth="17dp"
+                        android:minHeight="17dp"
+                        android:maxHeight="17dp"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"/>
+            </LinearLayout>
 
         </RelativeLayout>
 

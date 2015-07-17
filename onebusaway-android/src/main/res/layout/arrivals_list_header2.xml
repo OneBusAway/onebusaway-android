@@ -92,7 +92,7 @@
                 android:layout_marginRight="@dimen/keyline_1"
                 android:textSize="10sp"
                 android:text="@string/arrivals_list_header_arrives_in"
-                android:textColor="@android:color/white"
+                android:textColor="@color/header_text_color"
                 android:singleLine="true"
                 android:textIsSelectable="false"/>
 
@@ -160,7 +160,7 @@
                         android:id="@+id/stop_name"
                         android:textSize="15sp"
                         android:text="University Area Transit Center"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/header_text_color"
                         android:ellipsize="end"
                         android:singleLine="true"
                         android:layout_width="wrap_content"
@@ -249,14 +249,6 @@
                 android:paddingBottom="5dp"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true">
-            <TextView
-                    android:id="@+id/header_arrival_info"
-                    style="@style/Header3Text"
-                    android:layout_marginTop="4dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:visibility="gone"/>
         </LinearLayout>
 
         <ProgressBar

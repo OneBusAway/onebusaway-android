@@ -123,7 +123,7 @@ class ArrivalsListHeader {
 
     private EditText mEditNameView;
 
-    private ImageButton mFavoriteView;
+    private ImageButton mStopFavoriteView;
 
     private View mFilterGroup;
 
@@ -142,8 +142,6 @@ class ArrivalsListHeader {
 
     private int mShortAnimationDuration;
 
-    private TextView mArrivalInfoView;
-
     private ProgressBar mProgressBar;
 
     private ImageButton mStopInfo;
@@ -151,6 +149,35 @@ class ArrivalsListHeader {
     private ImageView mExpandCollapse;
 
     private View mRightMarginSeparatorView;
+
+    /**
+     * Views to show ETA information in header
+     */
+    // Row 1
+    private View mEtaContainer1;
+
+    private ImageButton mEtaRouteFavorite1;
+
+    private TextView mEtaRouteName1;
+
+    private TextView mEtaRouteDirection1;
+
+    private TextView mEtaArrivalInfo1;
+
+    private ImageButton mEtaMoreVert1;
+
+    // Row 2
+    private View mEtaContainer2;
+
+    private ImageButton mEtaRouteFavorite2;
+
+    private TextView mEtaRouteName2;
+
+    private TextView mEtaRouteDirection2;
+
+    private TextView mEtaArrivalInfo2;
+
+    private ImageButton mEtaMoreVert2;
 
     // Utility classes to help with managing location and orientation for the arrow/distance views
     OrientationHelper mOrientationHelper;
@@ -213,7 +240,8 @@ class ArrivalsListHeader {
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
-        mFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
+        mStopFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
+        mStopFavoriteView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
@@ -227,7 +255,19 @@ class ArrivalsListHeader {
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
-        mArrivalInfoView = (TextView) mView.findViewById(R.id.header_arrival_info);
+        // First ETA row
+        mEtaContainer1 = mView.findViewById(R.id.eta_container1);
+        mEtaRouteFavorite1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_route_favorite);
+        mEtaRouteFavorite1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
+        mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
+        mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
+        mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        // TODO - set up listeners for row 1 image buttons
+
+        // Second ETA row - TODO
+        mEtaContainer2 = mView.findViewById(R.id.eta_container2);
+
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
@@ -260,7 +300,7 @@ class ArrivalsListHeader {
 
         UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
 
         // Initialize stop info view
         final ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -294,7 +334,7 @@ class ArrivalsListHeader {
             });
         }
 
-        mFavoriteView.setOnClickListener(new View.OnClickListener() {
+        mStopFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mController.setFavorite(!mController.isFavorite());
@@ -506,38 +546,27 @@ class ArrivalsListHeader {
     private void refreshArrivalInfo() {
         mArrivalInfo = mController.getArrivalInfo();
 
-        StringBuilder arrivalInfo = new StringBuilder();
-
-        if (mController != null & mController.getRouteDisplayNames() != null &&
-                mController.getRouteDisplayNames().size() > 1) {
-            // More than one route will be displayed, so add highlight
-            arrivalInfo.append("* ");
-        }
-
         if (mArrivalInfo != null && !mInNameEdit) {
             if (mArrivalInfo.size() > 0) {
                 // We have arrival info for at least one bus
                 long eta = mArrivalInfo.get(0).getEta();
                 if (eta == 0) {
-                    arrivalInfo.append(mContext.getString(R.string.stop_info_eta_now));
-                    mArrivalInfoView.setText(arrivalInfo);
+                    mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
                 } else if (eta > 0) {
-                    arrivalInfo.append(mContext.getString(R.string.stop_info_header_arrival_info,
-                            eta));
-                    mArrivalInfoView.setText(arrivalInfo);
+                    mEtaArrivalInfo1.setText(Long.toString(eta));
                 } else if (eta < 0) {
-                    arrivalInfo.append(mContext.getString(R.string.stop_info_header_just_left));
-                    mArrivalInfoView.setText(arrivalInfo);
+                    // TODO - handle this - we should only be showing positive arrival times in the header
                 }
             } else if (mArrivalInfo.size() == 0) {
+                // TODO - Change this to message in the header itself for no upcoming arrivals
                 // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
                 int minAfter = mController.getMinutesAfter();
                 if (minAfter != -1) {
-                    mArrivalInfoView
+                    mEtaArrivalInfo1
                             .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, true));
                 } else {
                     // If we don't have the precise minAfter value, show a generic message
-                    mArrivalInfoView.setText(mContext.getString(R.string.stop_info_header_later));
+                    mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_header_later));
                 }
             }
         }
@@ -552,7 +581,7 @@ class ArrivalsListHeader {
     }
 
     private void refreshFavorite() {
-        mFavoriteView.setImageResource(mController.isFavorite() ?
+        mStopFavoriteView.setImageResource(mController.isFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
     }
@@ -597,13 +626,13 @@ class ArrivalsListHeader {
                 UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
                 return;
             }
-            UIHelp.showViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
 
             // Hide progress bar
             UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
         } else {
             // Cross-fade in direction arrow and distance to stop, and hide bus icon and arrival info
-            UIHelp.hideViewWithAnimation(mArrivalInfoView, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
 
             if (!mArrowToStopView.isInitialized() || !mDistanceToStopView.isInitialized()) {
                 // At least one of the views isn't ready yet, so make sure the progress bar is running
@@ -706,11 +735,11 @@ class ArrivalsListHeader {
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
-        mFavoriteView.setVisibility(View.GONE);
+        mStopFavoriteView.setVisibility(View.GONE);
         mRightMarginSeparatorView.setVisibility(View.GONE);
         mDistanceToStopView.setVisibility(View.GONE);
         mArrowToStopView.setVisibility(View.GONE);
-        mArrivalInfoView.setVisibility(View.GONE);
+        mEtaArrivalInfo1.setVisibility(View.GONE);
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
         if (!UIHelp.canAnimateViewModern()) {
@@ -740,7 +769,7 @@ class ArrivalsListHeader {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
-        mFavoriteView.setVisibility(View.VISIBLE);
+        mStopFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Set the entire header size

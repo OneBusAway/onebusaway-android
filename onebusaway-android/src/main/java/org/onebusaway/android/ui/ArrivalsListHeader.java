@@ -153,6 +153,9 @@ class ArrivalsListHeader {
     /**
      * Views to show ETA information in header
      */
+    // Number of arrival current shown in the header - needed for various header view sizing.
+    int mNumHeaderArrivals = -1;  // -1 if mArrivalInfo hasn't been refreshed
+
     // Row 1
     private TextView mEtaArrivesIn;
 
@@ -200,9 +203,9 @@ class ArrivalsListHeader {
     // Manages header size in "stop name edit mode"
     private int cachedExpandCollapseViewVisibility;
 
-    private static float DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP;
+    private static float DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP;
 
-    private static float HEADER_HEIGHT_ONE_ARRIVAL_DP;
+    private static float HEADER_HEIGHT_TWO_ARRIVALS_DP;
 
     private static float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP;
 
@@ -227,13 +230,14 @@ class ArrivalsListHeader {
     void initView(View view) {
         // Clear any existing arrival info
         mArrivalInfo = null;
+        mNumHeaderArrivals = -1;
 
         // Cache the ArrivalsListHeader height values
-        DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP =
-                view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
-                / view.getResources().getDisplayMetrics().density;
-        HEADER_HEIGHT_ONE_ARRIVAL_DP =
+        DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_one_arrival)
+                / view.getResources().getDisplayMetrics().density;
+        HEADER_HEIGHT_TWO_ARRIVALS_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
                         / view.getResources().getDisplayMetrics().density;
         EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = view.getResources()
                 .getDimension(R.dimen.arrival_header_height_expanded_filter_routes)
@@ -551,7 +555,7 @@ class ArrivalsListHeader {
         refreshFavorite();
         refreshFilter();
         refreshError();
-        refreshRightMarginContainer();
+        refreshArrivalInfoViews();
     }
 
     private void refreshName() {
@@ -566,7 +570,8 @@ class ArrivalsListHeader {
     }
 
     /**
-     * Retrieves a sorted list of arrival times for the current stop
+     * Refreshes the arrival info text to be displayed in the header based on the most recent
+     * arrival info, and sets the number of arrival rows that should be displayed in the header
      */
     private void refreshArrivalInfoText() {
         mArrivalInfo = mController.getArrivalInfo();
@@ -597,6 +602,9 @@ class ArrivalsListHeader {
                     } else if (eta > 0) {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
                     }
+                    mNumHeaderArrivals = 2;
+                } else {
+                    mNumHeaderArrivals = 1;
                 }
             } else {
                 // TODO - Change this to message in the header itself for no upcoming arrivals
@@ -609,6 +617,7 @@ class ArrivalsListHeader {
                     // If we don't have the precise minAfter value, show a generic message
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_header_later));
                 }
+                mNumHeaderArrivals = 0;
             }
         }
     }
@@ -627,6 +636,9 @@ class ArrivalsListHeader {
                 R.drawable.focus_star_off);
     }
 
+    /**
+     * Refreshes the routes filter, and displayes/hides it if necessary
+     */
     private void refreshFilter() {
         TextView v = (TextView) mView.findViewById(R.id.filter_text);
         ArrayList<String> routesFilter = mController.getRoutesFilter();
@@ -643,17 +655,18 @@ class ArrivalsListHeader {
                 mFilterGroup.setVisibility(View.VISIBLE);
             }
         } else {
-            setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
+            // Size the header appropriately based on the number of displayed arrivals
+            setHeaderSizeWhenCollapsed();
             mFilterGroup.setVisibility(View.GONE);
         }
     }
 
     /**
      * Hides the progress bar, and replaces it with the correct content depending on sliding
-     * panel state
+     * panel state and arrival info
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void refreshRightMarginContainer() {
+    private void refreshArrivalInfoViews() {
         if (mInNameEdit) {
             // If the user is editing a stop name, we shouldn't show any of these views
             return;
@@ -671,25 +684,22 @@ class ArrivalsListHeader {
             UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             if (mArrivalInfo != null) {
-                if (mArrivalInfo.size() == 0) {
+                if (mNumHeaderArrivals == 0) {
+                    // TODO - display a proper "no arrivals in 35+ min" message
                     // "no routes" message is shown in mEtaArrivalInfo1, hide all others
+                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
                     UIHelp.hideViewWithAnimation(mEtaRouteName1, mShortAnimationDuration);
                     UIHelp.hideViewWithAnimation(mEtaRouteDirection1, mShortAnimationDuration);
-                    UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                    // Show only the first row of arrival info
-                    setHeaderSize(HEADER_HEIGHT_ONE_ARRIVAL_DP);
-                } else if (mArrivalInfo.size() == 1) {
+                } else if (mNumHeaderArrivals == 1) {
                     // Show the first row of arrival info
-                    setHeaderSize(HEADER_HEIGHT_ONE_ARRIVAL_DP);
                     UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                } else if (mArrivalInfo.size() >= 2) {
-                    setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
+                } else if (mNumHeaderArrivals == 2) {
                     // Show the 2nd row of arrival info
                     UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
                     UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
                     UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
                 }
+                setHeaderSizeWhenCollapsed();
             }
 
             // Hide progress bar
@@ -824,9 +834,6 @@ class ArrivalsListHeader {
 
         // Set the entire header size
         setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
-        // Set the main container view size to be the same
-        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
-                EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());
@@ -846,15 +853,25 @@ class ArrivalsListHeader {
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Set the entire header size
-        setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
-        // Set the main container view size to be the same
-        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
-                DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
+        setHeaderSize(DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP);
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
         refresh();
+    }
+
+    /**
+     * Sets the collapsed header to the correct size based on the number of arrivals currently
+     * shown
+     * in the header
+     */
+    void setHeaderSizeWhenCollapsed() {
+        if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
+            setHeaderSize(DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP);
+        } else if (mNumHeaderArrivals == 2) {
+            setHeaderSize(HEADER_HEIGHT_TWO_ARRIVALS_DP);
+        }
     }
 
     /**
@@ -870,5 +887,7 @@ class ArrivalsListHeader {
                     .setPanelHeightPixels(UIHelp.dpToPixels(mContext,
                             newHeightDp));
         }
+        // Set the main container view size to be the same
+        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext, newHeightDp);
     }
 }

@@ -25,7 +25,7 @@
                     style="@style/HeaderItem"
                     android:id="@+id/main_header_content"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/arrival_header_height_two_arrivals"
+                    android:layout_height="@dimen/arrival_header_height_one_arrival"
                     android:layout_alignParentTop="true"
                     android:orientation="vertical"
                     android:paddingBottom="5dp">

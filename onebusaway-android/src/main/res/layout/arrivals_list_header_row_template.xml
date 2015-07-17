@@ -58,4 +58,19 @@
                 android:ellipsize="end"
                 android:singleLine="true"
                 android:textIsSelectable="false"/>
+
+        <ImageButton
+                android:id="@+id/more_vert"
+                android:src="@drawable/ic_navigation_more_vert"
+                android:contentDescription="@string/stop_info_item_options_title"
+                android:background="@drawable/selectable_background_busbot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="-2dp"
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
+                android:maxHeight="16dp"
+                android:maxWidth="16dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"/>
 </RelativeLayout>

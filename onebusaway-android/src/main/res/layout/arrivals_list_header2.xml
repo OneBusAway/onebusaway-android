@@ -113,7 +113,7 @@
               android:layout_marginRight="@dimen/keyline_1"
               android:id="@+id/eta_separator"
               android:visibility="visible"
-              android:background="#50ffffff"/>
+              android:background="@color/header_faded_color"/>
 
         <!-- Second ETA row -->
         <include android:id="@+id/eta_container2"

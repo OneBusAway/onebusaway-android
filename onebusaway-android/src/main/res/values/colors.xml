@@ -44,6 +44,9 @@
     <color name="route_line_color_default">#00F</color>
     <color name="route_text_color_default">@android:color/black</color>
 
+    <!-- Arrival times header -->
+    <color name="header_faded_color">#50ffffff</color>
+
     <!-- Arrival time colors for Style A -->
     <color name="stop_info_ontime">@color/theme_primary</color>
     <color name="stop_info_delayed">#0000ff</color>

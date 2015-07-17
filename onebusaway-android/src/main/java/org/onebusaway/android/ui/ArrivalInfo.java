@@ -68,6 +68,27 @@ final class ArrivalInfo {
         return result;
     }
 
+
+    /**
+     * Returns the index in the provided infoList for the first non-negative arrival ETA in the
+     * list, or -1 if no non-negative ETAs exist in the list
+     *
+     * @param infoList list to search for non-negative arrival times
+     * @return the index in the provided infoList for the first non-negative arrival ETA in the
+     * list, or -1 if no non-negative ETAs exist in the list
+     */
+    public static int findFirstNonNegativeArrival(ArrayList<ArrivalInfo> infoList) {
+        for (int i = 0; i < infoList.size(); i++) {
+            ArrivalInfo info = infoList.get(i);
+            if (info.getEta() >= 0) {
+                return i;
+            }
+        }
+        // We didn't find any non-negative ETAs
+        return -1;
+    }
+
+
     private final ObaArrivalInfo mInfo;
 
     private final long mEta;

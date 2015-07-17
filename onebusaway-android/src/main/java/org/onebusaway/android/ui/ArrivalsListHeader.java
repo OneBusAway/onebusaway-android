@@ -572,32 +572,33 @@ class ArrivalsListHeader {
         mArrivalInfo = mController.getArrivalInfo();
 
         if (mArrivalInfo != null && !mInNameEdit) {
-            if (mArrivalInfo.size() > 0) {
-                // We have arrival info for at least one bus - fill the first arrival row
-                mEtaRouteName1.setText(mArrivalInfo.get(0).getInfo().getShortName());
-                mEtaRouteDirection1.setText(mArrivalInfo.get(0).getInfo().getHeadsign());
-                long eta = mArrivalInfo.get(0).getEta();
+            int indexFirstEta = ArrivalInfo.findFirstNonNegativeArrival(mArrivalInfo);
+            if (indexFirstEta >= 0) {
+                // We have a non-negative ETA for at least one bus - fill the first arrival row
+                mEtaRouteName1.setText(mArrivalInfo.get(indexFirstEta).getInfo().getShortName());
+                mEtaRouteDirection1
+                        .setText(mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign());
+                long eta = mArrivalInfo.get(indexFirstEta).getEta();
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
                 } else if (eta > 0) {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
-                } else if (eta < 0) {
-                    // TODO - handle this - we should only be showing positive arrival times in the header
                 }
-                if (mArrivalInfo.size() >= 2) {
-                    // Fill the 2nd arrival row
-                    mEtaRouteName2.setText(mArrivalInfo.get(1).getInfo().getShortName());
-                    mEtaRouteDirection2.setText(mArrivalInfo.get(1).getInfo().getHeadsign());
-                    eta = mArrivalInfo.get(1).getEta();
+                // If there is another arrival, fill the second row with it
+                int indexSecondEta = indexFirstEta + 1;
+                if (indexSecondEta < mArrivalInfo.size()) {
+                    mEtaRouteName2
+                            .setText(mArrivalInfo.get(indexSecondEta).getInfo().getShortName());
+                    mEtaRouteDirection2
+                            .setText(mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign());
+                    eta = mArrivalInfo.get(indexSecondEta).getEta();
                     if (eta == 0) {
                         mEtaArrivalInfo2.setText(mContext.getString(R.string.stop_info_eta_now));
                     } else if (eta > 0) {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
-                    } else if (eta < 0) {
-                        // TODO - handle this - we should only be showing positive arrival times in the header
                     }
                 }
-            } else if (mArrivalInfo.size() == 0) {
+            } else {
                 // TODO - Change this to message in the header itself for no upcoming arrivals
                 // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
                 int minAfter = mController.getMinutesAfter();

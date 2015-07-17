@@ -94,7 +94,8 @@
                 android:text="@string/arrivals_list_header_arrives_in"
                 android:textColor="@color/header_text_color"
                 android:singleLine="true"
-                android:textIsSelectable="false"/>
+                android:textIsSelectable="false"
+                android:visibility="gone"/>
 
         <!-- First ETA row -->
         <include android:id="@+id/eta_container1"
@@ -103,17 +104,18 @@
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
                  android:layout_alignParentLeft="true"
-                 android:paddingBottom="5dp"/>
+                 android:paddingBottom="5dp"
+                 android:visibility="gone"/>
 
         <!-- Line separator -->
-        <View android:layout_width="match_parent"
+        <View android:id="@+id/eta_separator"
+              android:layout_width="match_parent"
               android:layout_height="1dp"
               android:layout_above="@+id/eta_container2"
               android:layout_marginLeft="@dimen/keyline_1"
               android:layout_marginRight="@dimen/keyline_1"
-              android:id="@+id/eta_separator"
-              android:visibility="visible"
-              android:background="@color/header_faded_color"/>
+              android:background="@color/header_faded_color"
+              android:visibility="gone"/>
 
         <!-- Second ETA row -->
         <include android:id="@+id/eta_container2"
@@ -121,7 +123,8 @@
                  android:layout_above="@+id/stop_details_container"
                  android:layout_width="match_parent"
                  android:layout_height="wrap_content"
-                 android:layout_alignParentLeft="true"/>
+                 android:layout_alignParentLeft="true"
+                 android:visibility="gone"/>
 
         <!-- Stop name, star, and stopinfo button  -->
         <RelativeLayout

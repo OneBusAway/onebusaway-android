@@ -154,6 +154,8 @@ class ArrivalsListHeader {
      * Views to show ETA information in header
      */
     // Row 1
+    private TextView mEtaArrivesIn;
+
     private View mEtaContainer1;
 
     private ImageButton mEtaRouteFavorite1;
@@ -165,6 +167,8 @@ class ArrivalsListHeader {
     private TextView mEtaArrivalInfo1;
 
     private ImageButton mEtaMoreVert1;
+
+    private View mEtaSeparator;
 
     // Row 2
     private View mEtaContainer2;
@@ -196,7 +200,9 @@ class ArrivalsListHeader {
     // Manages header size in "stop name edit mode"
     private int cachedExpandCollapseViewVisibility;
 
-    private static float DEFAULT_HEADER_HEIGHT_DP;
+    private static float DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP;
+
+    private static float HEADER_HEIGHT_ONE_ARRIVAL_DP;
 
     private static float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP;
 
@@ -223,9 +229,12 @@ class ArrivalsListHeader {
         mArrivalInfo = null;
 
         // Cache the ArrivalsListHeader height values
-        DEFAULT_HEADER_HEIGHT_DP =
+        DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
                 / view.getResources().getDisplayMetrics().density;
+        HEADER_HEIGHT_ONE_ARRIVAL_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_one_arrival)
+                        / view.getResources().getDisplayMetrics().density;
         EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = view.getResources()
                 .getDimension(R.dimen.arrival_header_height_expanded_filter_routes)
                 / view.getResources().getDisplayMetrics().density;
@@ -255,18 +264,31 @@ class ArrivalsListHeader {
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
+        mEtaArrivesIn = (TextView) mView.findViewById(R.id.eta_arrives_in);
+
         // First ETA row
         mEtaContainer1 = mView.findViewById(R.id.eta_container1);
         mEtaRouteFavorite1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_route_favorite);
         mEtaRouteFavorite1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
+        mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         // TODO - set up listeners for row 1 image buttons
 
-        // Second ETA row - TODO
+        mEtaSeparator = mView.findViewById(R.id.eta_separator);
+
+        // Second ETA row
         mEtaContainer2 = mView.findViewById(R.id.eta_container2);
+        mEtaRouteFavorite2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_route_favorite);
+        mEtaRouteFavorite2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaRouteName2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_name);
+        mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
+        mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
+        mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
+        mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        // TODO - set up listeners for row 2 image buttons
 
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
@@ -300,7 +322,10 @@ class ArrivalsListHeader {
 
         UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+        UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
 
         // Initialize stop info view
         final ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -521,7 +546,7 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
-        refreshArrivalInfo();
+        refreshArrivalInfoText();
         refreshLocation();
         refreshFavorite();
         refreshFilter();
@@ -543,12 +568,14 @@ class ArrivalsListHeader {
     /**
      * Retrieves a sorted list of arrival times for the current stop
      */
-    private void refreshArrivalInfo() {
+    private void refreshArrivalInfoText() {
         mArrivalInfo = mController.getArrivalInfo();
 
         if (mArrivalInfo != null && !mInNameEdit) {
             if (mArrivalInfo.size() > 0) {
-                // We have arrival info for at least one bus
+                // We have arrival info for at least one bus - fill the first arrival row
+                mEtaRouteName1.setText(mArrivalInfo.get(0).getInfo().getShortName());
+                mEtaRouteDirection1.setText(mArrivalInfo.get(0).getInfo().getHeadsign());
                 long eta = mArrivalInfo.get(0).getEta();
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
@@ -556,6 +583,19 @@ class ArrivalsListHeader {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
                 } else if (eta < 0) {
                     // TODO - handle this - we should only be showing positive arrival times in the header
+                }
+                if (mArrivalInfo.size() >= 2) {
+                    // Fill the 2nd arrival row
+                    mEtaRouteName2.setText(mArrivalInfo.get(1).getInfo().getShortName());
+                    mEtaRouteDirection2.setText(mArrivalInfo.get(1).getInfo().getHeadsign());
+                    eta = mArrivalInfo.get(1).getEta();
+                    if (eta == 0) {
+                        mEtaArrivalInfo2.setText(mContext.getString(R.string.stop_info_eta_now));
+                    } else if (eta > 0) {
+                        mEtaArrivalInfo2.setText(Long.toString(eta));
+                    } else if (eta < 0) {
+                        // TODO - handle this - we should only be showing positive arrival times in the header
+                    }
                 }
             } else if (mArrivalInfo.size() == 0) {
                 // TODO - Change this to message in the header itself for no upcoming arrivals
@@ -602,7 +642,7 @@ class ArrivalsListHeader {
                 mFilterGroup.setVisibility(View.VISIBLE);
             }
         } else {
-            setHeaderSize(DEFAULT_HEADER_HEIGHT_DP);
+            setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
             mFilterGroup.setVisibility(View.GONE);
         }
     }
@@ -618,7 +658,7 @@ class ArrivalsListHeader {
             return;
         }
         if (mIsSlidingPanelCollapsed) {
-            // Cross-fade in bus icon and arrival info, and hide direction arrow and distance to stop
+            // Cross-fade in arrival info, and hide direction arrow and distance to stop
             UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
             if (mArrivalInfo == null) {
@@ -626,13 +666,41 @@ class ArrivalsListHeader {
                 UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
                 return;
             }
-            UIHelp.showViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
+
+            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            if (mArrivalInfo != null) {
+                if (mArrivalInfo.size() == 0) {
+                    // "no routes" message is shown in mEtaArrivalInfo1, hide all others
+                    UIHelp.hideViewWithAnimation(mEtaRouteName1, mShortAnimationDuration);
+                    UIHelp.hideViewWithAnimation(mEtaRouteDirection1, mShortAnimationDuration);
+                    UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                    // Show only the first row of arrival info
+                    setHeaderSize(HEADER_HEIGHT_ONE_ARRIVAL_DP);
+                } else if (mArrivalInfo.size() == 1) {
+                    // Show the first row of arrival info
+                    setHeaderSize(HEADER_HEIGHT_ONE_ARRIVAL_DP);
+                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                } else if (mArrivalInfo.size() >= 2) {
+                    setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
+                    // Show the 2nd row of arrival info
+                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                    UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+                    UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+                }
+            }
 
             // Hide progress bar
             UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+
+            // TODO - move the location button "up" again, to position it above the header
         } else {
-            // Cross-fade in direction arrow and distance to stop, and hide bus icon and arrival info
-            UIHelp.hideViewWithAnimation(mEtaArrivalInfo1, mShortAnimationDuration);
+            // Cross-fade in direction arrow and distance to stop, and hide arrival info
+            UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
 
             if (!mArrowToStopView.isInitialized() || !mDistanceToStopView.isInitialized()) {
                 // At least one of the views isn't ready yet, so make sure the progress bar is running
@@ -739,7 +807,11 @@ class ArrivalsListHeader {
         mRightMarginSeparatorView.setVisibility(View.GONE);
         mDistanceToStopView.setVisibility(View.GONE);
         mArrowToStopView.setVisibility(View.GONE);
-        mEtaArrivalInfo1.setVisibility(View.GONE);
+        mEtaArrivesIn.setVisibility(View.GONE);
+        mEtaContainer1.setVisibility(View.GONE);
+        mEtaSeparator.setVisibility(View.GONE);
+        mEtaContainer2.setVisibility(View.GONE);
+
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
         if (!UIHelp.canAnimateViewModern()) {
@@ -773,10 +845,10 @@ class ArrivalsListHeader {
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Set the entire header size
-        setHeaderSize(DEFAULT_HEADER_HEIGHT_DP);
+        setHeaderSize(DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
         // Set the main container view size to be the same
         mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
-                DEFAULT_HEADER_HEIGHT_DP);
+                DEFAULT_HEADER_HEIGHT_TWO_ARRIVALS_DP);
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

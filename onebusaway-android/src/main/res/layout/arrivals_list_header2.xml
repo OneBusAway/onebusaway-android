@@ -133,7 +133,7 @@
                 android:layout_toLeftOf="@+id/right_margin_separator"
                 android:layout_marginLeft="@dimen/keyline_1"
                 android:layout_marginTop="1dp"
-                android:paddingBottom="5dp">
+                android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
 
             <ImageButton
                     android:id="@+id/stop_favorite"
@@ -146,7 +146,7 @@
                     android:adjustViewBounds="true"
                     android:paddingRight="1dp"
                     android:layout_centerVertical="true"
-                    android:layout_alignParentLeft="true"/>
+                    android:layout_alignParentLeft="true" android:paddingBottom="4dp"/>
 
             <LinearLayout
                     android:id="@+id/stop_name_and_info_container"

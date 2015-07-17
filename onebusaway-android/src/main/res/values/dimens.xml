@@ -49,7 +49,7 @@
     <dimen name="arrival_header_height_expanded_filter_routes">175dp</dimen>
     <dimen name="arrival_header_height_expanded_edit_name">100dp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
-    <dimen name="arrival_header_star_size">28dp</dimen>
+    <dimen name="arrival_header_bottom_margin">5dp</dimen>
 
     <!-- Map -->
     <dimen name="map_stop_icon_size">19dp</dimen>

@@ -36,8 +36,7 @@
                 sothree:umanoShadowHeight="5dp"
                 sothree:umanoParalaxOffset="100dp"
                 sothree:umanoFadeColor="@android:color/transparent"
-                sothree:umanoInitialState="hidden"
-                sothree:umanoScrollableView="@+id/slidingPanel">
+                sothree:umanoInitialState="hidden">
 
             <!-- MAIN CONTENT -->
             <RelativeLayout

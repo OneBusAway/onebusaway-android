@@ -639,7 +639,7 @@ public class HomeActivity extends ActionBarActivity
     @Override
     public void onListViewCreated(ListView listView) {
         // Set the scrollable view in the sliding panel
-        //mSlidingPanel.setScrollableView(listView);
+        mSlidingPanel.setScrollableView(listView);
     }
 
     /**

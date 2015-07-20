@@ -284,7 +284,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.5.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.5.3'
     // Bottom sliding panel
-    compile 'com.sothree.slidinguppanel:library:3.0.0'
+    compile 'com.sothree.slidinguppanel:library:3.1.0'
     // For sorting alphanumeric route names
     compile 'org.onebusaway.util:comparators:1.0.0'
     // Only used on Amazon devices via amazon build flavor

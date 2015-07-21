@@ -27,8 +27,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/arrival_header_height_one_arrival"
                     android:layout_alignParentTop="true"
-                    android:orientation="vertical"
-                    android:paddingBottom="5dp">
+                    android:layout_above="@+id/filter_group"
+                    android:orientation="vertical">
 
         <LinearLayout
                 android:id="@+id/edit_name_container"
@@ -282,7 +282,6 @@
             style="@style/Header3Text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
             android:layout_alignParentBottom="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"

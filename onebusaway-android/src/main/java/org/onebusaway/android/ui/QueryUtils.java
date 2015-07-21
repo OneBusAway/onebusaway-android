@@ -167,6 +167,9 @@ public final class QueryUtils {
                         ImageView favorite = (ImageView) view.findViewById(R.id.stop_favorite);
                         if (cursor.getInt(columnIndex) == 1) {
                             favorite.setVisibility(View.VISIBLE);
+                            // Make sure the star is visible against white background
+                            favorite.setColorFilter(
+                                    favorite.getResources().getColor(R.color.theme_primary));
                         } else {
                             favorite.setVisibility(View.GONE);
                         }

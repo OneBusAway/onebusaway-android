@@ -203,13 +203,15 @@ class ArrivalsListHeader {
     // Manages header size in "stop name edit mode"
     private int cachedExpandCollapseViewVisibility;
 
-    private static float DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP;
+    private static float HEADER_HEIGHT_ONE_ARRIVAL_DP;
 
     private static float HEADER_HEIGHT_TWO_ARRIVALS_DP;
 
-    private static float EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP;
+    private static float HEADER_HEIGHT_EDIT_NAME_DP;
 
-    private static float EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP;
+    private static float HEADER_OFFSET_FILTER_ROUTES_DP;
+
+    private static float HEADER_HEIGHT_SMALL_DP;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -233,17 +235,20 @@ class ArrivalsListHeader {
         mNumHeaderArrivals = -1;
 
         // Cache the ArrivalsListHeader height values
-        DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP =
+        HEADER_HEIGHT_ONE_ARRIVAL_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_one_arrival)
                 / view.getResources().getDisplayMetrics().density;
         HEADER_HEIGHT_TWO_ARRIVALS_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_two_arrivals)
                         / view.getResources().getDisplayMetrics().density;
-        EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP = view.getResources()
-                .getDimension(R.dimen.arrival_header_height_expanded_filter_routes)
+        HEADER_OFFSET_FILTER_ROUTES_DP = view.getResources()
+                .getDimension(R.dimen.arrival_header_height_offset_filter_routes)
                 / view.getResources().getDisplayMetrics().density;
-        EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP =
-                view.getResources().getDimension(R.dimen.arrival_header_height_expanded_edit_name)
+        HEADER_HEIGHT_EDIT_NAME_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_edit_name)
+                        / view.getResources().getDisplayMetrics().density;
+        HEADER_HEIGHT_SMALL_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_small)
                         / view.getResources().getDisplayMetrics().density;
 
         // Init views
@@ -556,6 +561,7 @@ class ArrivalsListHeader {
         refreshFilter();
         refreshError();
         refreshArrivalInfoViews();
+        refreshHeaderSize();
     }
 
     private void refreshName() {
@@ -649,15 +655,26 @@ class ArrivalsListHeader {
             // Show the filter text (except when in name edit mode)
             if (mInNameEdit) {
                 mFilterGroup.setVisibility(View.GONE);
-                setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
             } else {
-                setHeaderSize(EXPANDED_HEADER_HEIGHT_FILTER_STOPS_DP);
                 mFilterGroup.setVisibility(View.VISIBLE);
             }
         } else {
-            // Size the header appropriately based on the number of displayed arrivals
-            setHeaderSizeWhenCollapsed();
             mFilterGroup.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Returns true if we're filtering routes from the user's view, or false if we're not
+     *
+     * @return true if we're filtering routes from the user's view, or false if we're not
+     */
+    private boolean isFilteringRoutes() {
+        ArrayList<String> routesFilter = mController.getRoutesFilter();
+        final int num = (routesFilter != null) ? routesFilter.size() : 0;
+        if (num > 0) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -699,7 +716,6 @@ class ArrivalsListHeader {
                     UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
                     UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
                 }
-                setHeaderSizeWhenCollapsed();
             }
 
             // Hide progress bar
@@ -725,6 +741,59 @@ class ArrivalsListHeader {
             // Hide progress bar
             UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
         }
+    }
+
+    /**
+     * Sets the header to the correct size based on the number of arrivals currently
+     * shown in the header, and whether the panel is collapsed, anchored, or expanded.
+     */
+    void refreshHeaderSize() {
+        if (mInNameEdit) {
+            // When editing the stop name, the header size is always the same
+            setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+            return;
+        }
+
+        float newSize = 0;
+
+        // Change the header size based on sliding panel state and if a route filter is used
+        if (mIsSlidingPanelCollapsed) {
+            if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
+                newSize = HEADER_HEIGHT_ONE_ARRIVAL_DP;
+            } else if (mNumHeaderArrivals == 2) {
+                newSize = HEADER_HEIGHT_TWO_ARRIVALS_DP;
+            }
+        } else {
+            // If the panel is anchored or expanded, make the header small
+            newSize = HEADER_HEIGHT_SMALL_DP;
+        }
+
+        // If we're showing the route filter, than add the offset so this filter view has room
+        if (isFilteringRoutes()) {
+            newSize += HEADER_OFFSET_FILTER_ROUTES_DP;
+        }
+
+        if (newSize != 0) {
+            setHeaderSize(newSize);
+        }
+    }
+
+
+    /**
+     * Re-size the header layout to the provided size, in dp
+     *
+     * @param newHeightDp the new header layout, in dp
+     */
+    void setHeaderSize(float newHeightDp) {
+        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
+                newHeightDp);
+        if (mSlidingPanelController != null) {
+            mSlidingPanelController
+                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext,
+                            newHeightDp));
+        }
+        // Set the main container view size to be the same
+        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext, newHeightDp);
     }
 
     private static class ResponseError implements AlertList.Alert {
@@ -833,7 +902,7 @@ class ArrivalsListHeader {
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
         // Set the entire header size
-        setHeaderSize(EXPANDED_HEADER_HEIGHT_EDIT_NAME_DP);
+        setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());
@@ -852,42 +921,12 @@ class ArrivalsListHeader {
         mStopFavoriteView.setVisibility(View.VISIBLE);
         mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
-        // Set the entire header size
-        setHeaderSize(DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP);
+        // Reset the header size
+        refreshHeaderSize();
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
         refresh();
-    }
-
-    /**
-     * Sets the collapsed header to the correct size based on the number of arrivals currently
-     * shown
-     * in the header
-     */
-    void setHeaderSizeWhenCollapsed() {
-        if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
-            setHeaderSize(DEFAULT_HEADER_HEIGHT_ONE_ARRIVAL_DP);
-        } else if (mNumHeaderArrivals == 2) {
-            setHeaderSize(HEADER_HEIGHT_TWO_ARRIVALS_DP);
-        }
-    }
-
-    /**
-     * Re-size the header layout to the provided size, in dp
-     *
-     * @param newHeightDp the new header layout, in dp
-     */
-    void setHeaderSize(float newHeightDp) {
-        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
-                newHeightDp);
-        if (mSlidingPanelController != null) {
-            mSlidingPanelController
-                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext,
-                            newHeightDp));
-        }
-        // Set the main container view size to be the same
-        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext, newHeightDp);
     }
 }

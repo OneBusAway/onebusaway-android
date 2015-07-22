@@ -89,7 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_above="@+id/eta_container1"
                 android:layout_alignParentRight="true"
-                android:layout_marginRight="@dimen/keyline_1"
+                android:layout_marginRight="36dp"
                 android:textSize="10sp"
                 android:text="@string/arrivals_list_header_arrives_in"
                 android:textColor="@color/header_text_color"

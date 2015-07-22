@@ -5,15 +5,16 @@
 
     <ImageButton
             android:id="@+id/eta_route_favorite"
-            android:src="@drawable/ic_toggle_star_outline"
+            android:src="@drawable/ic_toggle_star"
             android:contentDescription="@string/stop_info_favorite"
             android:background="@drawable/selectable_background_busbot"
+            android:maxHeight="10dp"
+            android:maxWidth="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:layout_marginLeft="@dimen/keyline_1"
-            android:paddingRight="1dp"
+            android:layout_marginLeft="4dp"
             android:layout_centerVertical="true"
             android:layout_alignParentLeft="true"/>
 
@@ -21,9 +22,9 @@
             android:id="@+id/eta_route_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/eta_route_favorite"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="5dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="@dimen/keyline_1"
             android:layout_marginRight="10dp"
             android:textSize="35sp"
             android:text="5"
@@ -31,6 +32,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textIsSelectable="true"/>
+
     <TextView
             android:id="@+id/eta_route_direction"
             android:layout_width="wrap_content"
@@ -50,9 +52,8 @@
                 android:id="@+id/eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_toLeftOf="@+id/eta_more_vert"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="@dimen/keyline_1"
                 android:textSize="35sp"
                 android:text="2"
                 android:textColor="@color/header_text_color"
@@ -67,7 +68,8 @@
                 android:background="@drawable/selectable_background_busbot"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="-2dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="10dp"
                 android:layout_centerVertical="true"
                 android:layout_alignParentRight="true"
                 android:maxHeight="16dp"

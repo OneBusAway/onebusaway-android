@@ -556,7 +556,7 @@ class ArrivalsListHeader {
     void refresh() {
         refreshName();
         refreshArrivalInfoText();
-        refreshLocation();
+        refreshLocationArrow();
         refreshFavorite();
         refreshFilter();
         refreshError();
@@ -628,11 +628,16 @@ class ArrivalsListHeader {
         }
     }
 
-    private void refreshLocation() {
+    private void refreshLocationArrow() {
         Location location = mController.getStopLocation();
         if (location != null) {
             mArrowToStopView.setStopLocation(location);
             mDistanceToStopView.setStopLocation(location);
+        }
+        if (mIsSlidingPanelCollapsed) {
+            UIHelp.hideViewWithAnimation(mRightMarginSeparatorView, mShortAnimationDuration);
+        } else {
+            UIHelp.showViewWithAnimation(mRightMarginSeparatorView, mShortAnimationDuration);
         }
     }
 

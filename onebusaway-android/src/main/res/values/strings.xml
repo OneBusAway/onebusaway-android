@@ -207,7 +207,6 @@
     <string name="stop_info_route_ids_label">Routes:</string>
     <string name="stop_info_header_arrival_info">%1$d min</string>
     <string name="stop_info_header_just_left">just left</string>
-    <string name="stop_info_header_later">later</string>
     <string name="stop_info_button_content_description">About this stop</string>
     <string name="arrivals_list_header_arrives_in">Arrives in</string>
 

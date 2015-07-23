@@ -146,9 +146,11 @@ class ArrivalsListHeader {
     // Number of arrival current shown in the header - needed for various header view sizing.
     int mNumHeaderArrivals = -1;  // -1 if mArrivalInfo hasn't been refreshed
 
-    // Row 1
+    private TextView mNoArrivals;
+
     private TextView mEtaArrivesIn;
 
+    // Row 1
     private View mEtaContainer1;
 
     private ImageButton mEtaRouteFavorite1;
@@ -255,6 +257,7 @@ class ArrivalsListHeader {
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
         mEtaArrivesIn = (TextView) mView.findViewById(R.id.eta_arrives_in);
+        mNoArrivals = (TextView) mView.findViewById(R.id.no_arrivals);
 
         // First ETA row
         mEtaContainer1 = mView.findViewById(R.id.eta_container1);
@@ -553,15 +556,15 @@ class ArrivalsListHeader {
                     mNumHeaderArrivals = 1;
                 }
             } else {
-                // TODO - Change this to message in the header itself for no upcoming arrivals
                 // Show abbreviated "no upcoming arrivals" message (e.g., "35+ min")
                 int minAfter = mController.getMinutesAfter();
                 if (minAfter != -1) {
-                    mEtaArrivalInfo1
-                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, true));
+                    mNoArrivals
+                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, false));
                 } else {
-                    // If we don't have the precise minAfter value, show a generic message
-                    mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_header_later));
+                    minAfter = 35;  // Assume 35 minutes, because that's the API default
+                    mNoArrivals
+                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, false));
                 }
                 mNumHeaderArrivals = 0;
             }
@@ -623,23 +626,26 @@ class ArrivalsListHeader {
         if (mArrivalInfo == null) {
             // We don't have any arrival info yet, so make sure the progress bar is running
             UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             return;
         }
 
-        UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-        UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
         if (mArrivalInfo != null) {
             if (mNumHeaderArrivals == 0) {
                 // TODO - display a proper "no arrivals in 35+ min" message
                 // "no routes" message is shown in mEtaArrivalInfo1, hide all others
-                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                UIHelp.hideViewWithAnimation(mEtaRouteName1, mShortAnimationDuration);
-                UIHelp.hideViewWithAnimation(mEtaRouteDirection1, mShortAnimationDuration);
+                UIHelp.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+                UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             } else if (mNumHeaderArrivals == 1) {
                 // Show the first row of arrival info
+                UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
                 UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             } else if (mNumHeaderArrivals == 2) {
                 // Show the 2nd row of arrival info
+                UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
                 UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
                 UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
                 UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);

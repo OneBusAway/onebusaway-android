@@ -206,6 +206,22 @@
                 android:layout_marginTop="8dp"
                 android:layout_centerInParent="true"/>
 
+        <TextView
+                android:id="@+id/no_arrivals"
+                android:textSize="18sp"
+                android:text="No arrivals in the next 35 minutes"
+                android:textColor="@color/header_text_color"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:layout_above="@+id/stop_details_container"
+                android:textIsSelectable="false" android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"
+                android:visibility="gone"/>
+
         <ImageView
                 android:id="@+id/expand_collapse"
                 android:src="@drawable/ic_navigation_expand_more"

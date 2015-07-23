@@ -48,7 +48,7 @@
     <dimen name="arrival_header_height_two_arrivals">150dp</dimen>
     <dimen name="arrival_header_height_offset_filter_routes">25dp</dimen>
     <dimen name="arrival_header_height_edit_name">100dp</dimen>
-    <dimen name="arrival_header_height_small">68dp</dimen>
+    <dimen name="arrival_header_height_not_collapsed">68dp</dimen>
     <dimen name="arrivals_header_pad_left">5dp</dimen>
     <dimen name="arrival_header_bottom_margin">5dp</dimen>
 

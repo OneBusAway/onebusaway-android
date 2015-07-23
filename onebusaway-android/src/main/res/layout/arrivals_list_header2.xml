@@ -133,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentLeft="true"
-                android:layout_toLeftOf="@+id/right_margin_separator"
+                android:layout_toLeftOf="@+id/expand_collapse"
                 android:layout_marginLeft="@dimen/keyline_1"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
@@ -193,48 +193,6 @@
             </LinearLayout>
 
         </RelativeLayout>
-
-        <View
-                android:id="@+id/right_margin_separator"
-                android:layout_width="1dp"
-                android:layout_height="fill_parent"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginRight="4dp"
-                android:layout_marginLeft="10dp"
-                android:layout_toLeftOf="@+id/right_margin_container1"
-                android:background="#50ffffff"
-                android:visibility="gone"/>
-
-        <!-- Layout container for arrow and distance to stop -->
-        <LinearLayout
-                android:id="@+id/right_margin_container1"
-                android:orientation="vertical"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="60dp"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_marginBottom="5dp"
-                android:layout_alignParentBottom="true"
-                android:layout_toLeftOf="@+id/expand_collapse">
-
-            <org.onebusaway.android.view.ArrowView
-                    android:id="@+id/arrow"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_gravity="center_horizontal"
-                    android:visibility="gone"/>
-
-            <org.onebusaway.android.view.DistanceToStopView
-                    android:id="@+id/dist_to_stop"
-                    style="@style/Header3Text"
-                    android:layout_marginTop="2dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:visibility="gone"/>
-        </LinearLayout>
 
         <ProgressBar
                 android:id="@+id/header_loading_spinner"

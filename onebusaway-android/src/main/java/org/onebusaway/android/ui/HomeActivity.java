@@ -96,6 +96,15 @@ public class HomeActivity extends ActionBarActivity
          * @param heightInPixels height of panel in pixels
          */
         void setPanelHeightPixels(int heightInPixels);
+
+        /**
+         * Returns the current height of the sliding panel in pixels, or -1 if the panel isn't yet
+         * initialized
+         *
+         * @return the current height of the sliding panel in pixels, or -1 if the panel isn't yet
+         * initialized
+         */
+        int getPanelHeightPixels();
     }
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
@@ -1005,6 +1014,14 @@ public class HomeActivity extends ActionBarActivity
                 if (mSlidingPanel != null) {
                     mSlidingPanel.setPanelHeight(heightInPixels);
                 }
+            }
+
+            @Override
+            public int getPanelHeightPixels() {
+                if (mSlidingPanel != null) {
+                    return mSlidingPanel.getPanelHeight();
+                }
+                return -1;
             }
         };
 

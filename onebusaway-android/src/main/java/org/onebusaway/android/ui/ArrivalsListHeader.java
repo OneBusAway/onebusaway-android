@@ -20,11 +20,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.LocationHelper;
-import org.onebusaway.android.util.OrientationHelper;
 import org.onebusaway.android.util.UIHelp;
-import org.onebusaway.android.view.ArrowView;
-import org.onebusaway.android.view.DistanceToStopView;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -133,10 +129,6 @@ class ArrivalsListHeader {
 
     private boolean mInNameEdit = false;
 
-    private ArrowView mArrowToStopView;
-
-    private DistanceToStopView mDistanceToStopView;
-
     // Default state for the header is inside a sliding fragment
     private boolean mIsSlidingPanelCollapsed = true;
 
@@ -147,8 +139,6 @@ class ArrivalsListHeader {
     private ImageButton mStopInfo;
 
     private ImageView mExpandCollapse;
-
-    private View mRightMarginSeparatorView;
 
     /**
      * Views to show ETA information in header
@@ -186,11 +176,6 @@ class ArrivalsListHeader {
 
     private ImageButton mEtaMoreVert2;
 
-    // Utility classes to help with managing location and orientation for the arrow/distance views
-    OrientationHelper mOrientationHelper;
-
-    LocationHelper mLocationHelper;
-
     // Animations
     private static final float ANIM_PIVOT_VALUE = 0.5f;  // 50%
 
@@ -211,7 +196,7 @@ class ArrivalsListHeader {
 
     private static float HEADER_OFFSET_FILTER_ROUTES_DP;
 
-    private static float HEADER_HEIGHT_SMALL_DP;
+    private static float HEADER_HEIGHT_NOT_COLLAPSED_DP;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -219,10 +204,6 @@ class ArrivalsListHeader {
     ArrivalsListHeader(Context context, Controller controller) {
         mController = controller;
         mContext = context;
-
-        // Start helpers to monitor location and orientation
-        mOrientationHelper = new OrientationHelper(mContext);
-        mLocationHelper = new LocationHelper(mContext);
 
         // Retrieve and cache the system's default "short" animation time.
         mShortAnimationDuration = mContext.getResources().getInteger(
@@ -247,8 +228,8 @@ class ArrivalsListHeader {
         HEADER_HEIGHT_EDIT_NAME_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_edit_name)
                         / view.getResources().getDisplayMetrics().density;
-        HEADER_HEIGHT_SMALL_DP =
-                view.getResources().getDimension(R.dimen.arrival_header_height_small)
+        HEADER_HEIGHT_NOT_COLLAPSED_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_not_collapsed)
                         / view.getResources().getDisplayMetrics().density;
 
         // Init views
@@ -303,34 +284,10 @@ class ArrivalsListHeader {
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
         resetExpandCollapseAnimation();
-        mRightMarginSeparatorView = mView.findViewById(R.id.right_margin_separator);
-
-        mDistanceToStopView = (DistanceToStopView) mView.findViewById(R.id.dist_to_stop);
-        // Register to be notified when the ArrowView and DistanceToStopView are completely initialized
-        mDistanceToStopView.registerListener(new DistanceToStopView.Listener() {
-            @Override
-            public void onInitializationComplete() {
-                refresh();
-            }
-        });
-        mArrowToStopView = (ArrowView) mView.findViewById(R.id.arrow);
-        mArrowToStopView.registerListener(new ArrowView.Listener() {
-            @Override
-            public void onInitializationComplete() {
-                refresh();
-            }
-        });
-
-        // Register views for location and orientation updates
-        mOrientationHelper.registerListener(mArrowToStopView);
-        mLocationHelper.registerListener(mArrowToStopView);
-        mLocationHelper.registerListener(mDistanceToStopView);
 
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
 
-        UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
@@ -433,25 +390,9 @@ class ArrivalsListHeader {
     }
 
     /**
-     * Should be called from onResume() of context hosting this header
-     */
-    public void onResume() {
-        // Resume monitoring of sensors and location
-        mOrientationHelper.onResume();
-        mLocationHelper.onResume();
-
-        // Refresh preference for units
-        mDistanceToStopView.refreshUnitsPreference();
-    }
-
-    /**
      * Should be called from onPause() of context hosting this header
      */
     public void onPause() {
-        // Pause monitoring of sensors and location
-        mOrientationHelper.onPause();
-        mLocationHelper.onPause();
-
         // If we're editing a stop name, close out the editing session
         if (mInNameEdit) {
             mController.setUserStopName(null);
@@ -556,7 +497,6 @@ class ArrivalsListHeader {
     void refresh() {
         refreshName();
         refreshArrivalInfoText();
-        refreshLocationArrow();
         refreshFavorite();
         refreshFilter();
         refreshError();
@@ -628,19 +568,6 @@ class ArrivalsListHeader {
         }
     }
 
-    private void refreshLocationArrow() {
-        Location location = mController.getStopLocation();
-        if (location != null) {
-            mArrowToStopView.setStopLocation(location);
-            mDistanceToStopView.setStopLocation(location);
-        }
-        if (mIsSlidingPanelCollapsed) {
-            UIHelp.hideViewWithAnimation(mRightMarginSeparatorView, mShortAnimationDuration);
-        } else {
-            UIHelp.showViewWithAnimation(mRightMarginSeparatorView, mShortAnimationDuration);
-        }
-    }
-
     private void refreshFavorite() {
         mStopFavoriteView.setImageResource(mController.isFavorite() ?
                 R.drawable.focus_star_on :
@@ -693,59 +620,36 @@ class ArrivalsListHeader {
             // If the user is editing a stop name, we shouldn't show any of these views
             return;
         }
-        if (mIsSlidingPanelCollapsed) {
-            // Cross-fade in arrival info, and hide direction arrow and distance to stop
-            UIHelp.hideViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
-            if (mArrivalInfo == null) {
-                // We don't have any arrival info yet, so make sure the progress bar is running
-                UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
-                return;
-            }
-
-            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            if (mArrivalInfo != null) {
-                if (mNumHeaderArrivals == 0) {
-                    // TODO - display a proper "no arrivals in 35+ min" message
-                    // "no routes" message is shown in mEtaArrivalInfo1, hide all others
-                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                    UIHelp.hideViewWithAnimation(mEtaRouteName1, mShortAnimationDuration);
-                    UIHelp.hideViewWithAnimation(mEtaRouteDirection1, mShortAnimationDuration);
-                } else if (mNumHeaderArrivals == 1) {
-                    // Show the first row of arrival info
-                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                } else if (mNumHeaderArrivals == 2) {
-                    // Show the 2nd row of arrival info
-                    UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                    UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-                    UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-                }
-            }
-
-            // Hide progress bar
-            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
-
-            // TODO - move the location button "up" again, to position it above the header
-        } else {
-            // Cross-fade in direction arrow and distance to stop, and hide arrival info
-            UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-
-            if (!mArrowToStopView.isInitialized() || !mDistanceToStopView.isInitialized()) {
-                // At least one of the views isn't ready yet, so make sure the progress bar is running
-                UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
-                return;
-            }
-
-            UIHelp.showViewWithAnimation(mArrowToStopView, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mDistanceToStopView, mShortAnimationDuration);
-
-            // Hide progress bar
-            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+        if (mArrivalInfo == null) {
+            // We don't have any arrival info yet, so make sure the progress bar is running
+            UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            return;
         }
+
+        UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+        UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+        if (mArrivalInfo != null) {
+            if (mNumHeaderArrivals == 0) {
+                // TODO - display a proper "no arrivals in 35+ min" message
+                // "no routes" message is shown in mEtaArrivalInfo1, hide all others
+                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                UIHelp.hideViewWithAnimation(mEtaRouteName1, mShortAnimationDuration);
+                UIHelp.hideViewWithAnimation(mEtaRouteDirection1, mShortAnimationDuration);
+            } else if (mNumHeaderArrivals == 1) {
+                // Show the first row of arrival info
+                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            } else if (mNumHeaderArrivals == 2) {
+                // Show the 2nd row of arrival info
+                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+                UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+                UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            }
+        }
+
+        // Hide progress bar
+        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+
+        // TODO - move the location button "up" again, to position it above the header
     }
 
     /**
@@ -761,16 +665,11 @@ class ArrivalsListHeader {
 
         float newSize = 0;
 
-        // Change the header size based on sliding panel state and if a route filter is used
-        if (mIsSlidingPanelCollapsed) {
-            if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
-                newSize = HEADER_HEIGHT_ONE_ARRIVAL_DP;
-            } else if (mNumHeaderArrivals == 2) {
-                newSize = HEADER_HEIGHT_TWO_ARRIVALS_DP;
-            }
-        } else {
-            // If the panel is anchored or expanded, make the header small
-            newSize = HEADER_HEIGHT_SMALL_DP;
+        // Change the header size based on arrival info and if a route filter is used
+        if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
+            newSize = HEADER_HEIGHT_ONE_ARRIVAL_DP;
+        } else if (mNumHeaderArrivals == 2) {
+            newSize = HEADER_HEIGHT_TWO_ARRIVALS_DP;
         }
 
         // If we're showing the route filter, than add the offset so this filter view has room
@@ -790,15 +689,26 @@ class ArrivalsListHeader {
      * @param newHeightDp the new header layout, in dp
      */
     void setHeaderSize(float newHeightDp) {
-        mView.getLayoutParams().height = UIHelp.dpToPixels(mContext,
+        int newHeightPixels = UIHelp.dpToPixels(mContext,
                 newHeightDp);
+        // Assume that the sliding panel isn't the same if it's not initialized
+        boolean isSlidingPanelSame = false;
         if (mSlidingPanelController != null) {
-            mSlidingPanelController
-                    .setPanelHeightPixels(UIHelp.dpToPixels(mContext,
-                            newHeightDp));
+            isSlidingPanelSame = mSlidingPanelController.getPanelHeightPixels() == newHeightPixels;
+        }
+        if (mMainContainerView.getLayoutParams().height == newHeightPixels
+                && mView.getLayoutParams().height == newHeightPixels
+                && isSlidingPanelSame) {
+            // If the header is already this size, do nothing
+            return;
+        }
+
+        mView.getLayoutParams().height = newHeightPixels;
+        if (mSlidingPanelController != null) {
+            mSlidingPanelController.setPanelHeightPixels(newHeightPixels);
         }
         // Set the main container view size to be the same
-        mMainContainerView.getLayoutParams().height = UIHelp.dpToPixels(mContext, newHeightDp);
+        mMainContainerView.getLayoutParams().height = newHeightPixels;
     }
 
     private static class ResponseError implements AlertList.Alert {
@@ -889,9 +799,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mStopFavoriteView.setVisibility(View.GONE);
-        mRightMarginSeparatorView.setVisibility(View.GONE);
-        mDistanceToStopView.setVisibility(View.GONE);
-        mArrowToStopView.setVisibility(View.GONE);
         mEtaArrivesIn.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
@@ -924,7 +831,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mStopFavoriteView.setVisibility(View.VISIBLE);
-        mRightMarginSeparatorView.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Reset the header size
         refreshHeaderSize();

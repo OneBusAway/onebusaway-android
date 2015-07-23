@@ -339,7 +339,6 @@ public class ArrivalsListFragment extends ListFragment
         setUserInfo();
 
         if (mHeader != null) {
-            mHeader.onResume();
             mHeader.refresh();
         }
 

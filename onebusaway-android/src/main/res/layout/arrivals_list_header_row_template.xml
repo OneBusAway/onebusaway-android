@@ -41,7 +41,7 @@
             android:layout_toLeftOf="@+id/eta"
             android:layout_centerVertical="true"
             android:layout_marginLeft="5dp"
-            android:textSize="15sp"
+            android:textSize="18sp"
             android:text="Aurora Village Via Aurora Ave."
             android:textColor="@color/header_text_color"
             android:ellipsize="end"

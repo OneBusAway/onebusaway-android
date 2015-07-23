@@ -41,6 +41,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.UIHelp;
 
 import android.app.Activity;
 import android.content.res.Resources;
@@ -819,14 +820,22 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             }
             mCurrentFocusStop = stop;
 
+            // Route list for display in current focus marker
+            ArrayList<String> displayNames = new ArrayList<String>();
+
             // Save a copy of ObaRoute references for this stop, so we have them when clearing cache
             String[] routeIds = stop.getRouteIds();
             for (int i = 0; i < routeIds.length; i++) {
                 ObaRoute route = mStopRoutes.get(routeIds[i]);
                 if (route != null) {
                     mFocusedRoutes.put(routeIds[i], route);
+                    // Save the route display name for the current focus marker
+                    displayNames.add(UIHelp.getRouteDisplayName(route));
                 }
             }
+
+            // Get the formatted routes that visit the currently focused stop
+            String routeString = UIHelp.formatRouteDisplayNames(displayNames, null);
 
             // Reduce focus marker latitude by small amount to ensure it is always on top of the
             // corresponding stop marker (i.e., so its not identical to stop marker latitude)
@@ -834,7 +843,10 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
             mCurrentFocusMarker = mMap.addMarker(new MarkerOptions()
                             .position(latLng)
+                            .title(Application.get().getResources().getString(R.string.stop_info_route_ids_label))
+                            .snippet(routeString)
             );
+            mCurrentFocusMarker.showInfoWindow();
 
             // This doesn't look good since when bouncing, the focus marker is drawn behind
             // the bus stop marker.  If only we could control z-order...

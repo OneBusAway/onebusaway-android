@@ -292,7 +292,7 @@ public final class UIHelp {
      * @param routeDisplayNames          list of route display names
      * @param nextArrivalRouteShortNames the short route names of the next X arrivals at the stop
      *                                   that are the same.  These will be highlighted in the
-     *                                   results.
+     *                                   results.  If null, no routes will be highlighted
      * @return a formatted and sorted list of route display names for presentation in a single line
      */
     public static String formatRouteDisplayNames(List<String> routeDisplayNames,
@@ -303,10 +303,12 @@ public final class UIHelp {
         for (int i = 0; i < routeDisplayNames.size(); i++) {
             boolean match = false;
 
-            for (String nextArrivalRouteShortName : nextArrivalRouteShortNames) {
-                if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
-                    match = true;
-                    break;
+            if (nextArrivalRouteShortNames != null) {
+                for (String nextArrivalRouteShortName : nextArrivalRouteShortNames) {
+                    if (routeDisplayNames.get(i).equalsIgnoreCase(nextArrivalRouteShortName)) {
+                        match = true;
+                        break;
+                    }
                 }
             }
 

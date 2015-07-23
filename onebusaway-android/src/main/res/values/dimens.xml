@@ -24,6 +24,7 @@
     <dimen name="navigation_drawer_width">260dp</dimen>
 
     <dimen name="keyline_1">16dp</dimen>
+    <dimen name="keyline_2">40dp</dimen>
 
     <!-- Floating action button (FAB) dimensions -->
     <dimen name="fab_size">56dp</dimen>

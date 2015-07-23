@@ -208,7 +208,6 @@
         <TextView
                 android:id="@+id/no_arrivals"
                 android:textSize="18sp"
-                android:text="No arrivals in the next 35 minutes"
                 android:textColor="@color/header_text_color"
                 android:ellipsize="end"
                 android:singleLine="true"

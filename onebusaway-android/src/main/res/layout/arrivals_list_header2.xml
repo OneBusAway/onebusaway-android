@@ -87,7 +87,7 @@
                 android:id="@+id/eta_arrives_in"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_above="@+id/eta_container1"
+                android:layout_above="@+id/eta_table"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="36dp"
                 android:textSize="10sp"
@@ -97,34 +97,42 @@
                 android:textIsSelectable="false"
                 android:visibility="gone"/>
 
-        <!-- First ETA row -->
-        <include android:id="@+id/eta_container1"
-                 layout="@layout/arrivals_list_header_row_template"
-                 android:layout_above="@+id/eta_separator"
-                 android:layout_width="match_parent"
-                 android:layout_height="wrap_content"
-                 android:layout_alignParentLeft="true"
-                 android:paddingBottom="5dp"
-                 android:visibility="gone"/>
+        <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                     android:id="@+id/eta_table"
+                     android:layout_width="fill_parent"
+                     android:layout_height="wrap_content"
+                     android:layout_above="@+id/stop_details_container"
+                     android:stretchColumns="1,3"
+                     android:shrinkColumns="0,2">
 
-        <!-- Line separator -->
-        <View android:id="@+id/eta_separator"
-              android:layout_width="match_parent"
-              android:layout_height="1dp"
-              android:layout_above="@+id/eta_container2"
-              android:layout_marginLeft="@dimen/keyline_1"
-              android:layout_marginRight="@dimen/keyline_1"
-              android:background="@color/header_faded_color"
-              android:visibility="gone"/>
+            <!-- First ETA row -->
+            <include android:id="@+id/eta_container1"
+                     layout="@layout/arrivals_list_header_row_template"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:paddingBottom="5dp"
+                     android:visibility="gone"/>
 
-        <!-- Second ETA row -->
-        <include android:id="@+id/eta_container2"
-                 layout="@layout/arrivals_list_header_row_template"
-                 android:layout_above="@+id/stop_details_container"
-                 android:layout_width="match_parent"
-                 android:layout_height="wrap_content"
-                 android:layout_alignParentLeft="true"
-                 android:visibility="gone"/>
+            <!-- Line separator -->
+            <TableRow
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:gravity="center_vertical">
+                <View android:id="@+id/eta_separator"
+                      android:layout_width="match_parent"
+                      android:layout_height="1dp"
+                      android:layout_marginLeft="@dimen/keyline_1"
+                      android:layout_marginRight="@dimen/keyline_1"
+                      android:background="@color/header_faded_color"
+                      android:visibility="gone"/>
+            </TableRow>
+
+            <!-- Second ETA row -->
+            <include android:id="@+id/eta_container2"
+                     layout="@layout/arrivals_list_header_row_template"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:visibility="gone"/>
+        </TableLayout>
 
         <!-- Stop name, star, and stopinfo button  -->
         <RelativeLayout

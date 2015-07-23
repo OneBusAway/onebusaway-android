@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
+<TableRow
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:gravity="center_vertical">
     <ImageButton
             android:id="@+id/eta_route_favorite"
             android:src="@drawable/ic_toggle_star"
@@ -14,18 +13,15 @@
             android:layout_height="wrap_content"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:layout_marginLeft="4dp"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"/>
+            android:layout_column="0"
+            android:gravity="center"/>
 
     <TextView
             android:id="@+id/eta_route_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_alignParentLeft="true"
-            android:layout_marginLeft="@dimen/keyline_1"
-            android:layout_marginRight="10dp"
+            android:layout_column="1"
+            android:gravity="center"
             android:textSize="35sp"
             android:text="5"
             android:textColor="@color/header_text_color"
@@ -37,9 +33,8 @@
             android:id="@+id/eta_route_direction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/eta_route_name"
-            android:layout_toLeftOf="@+id/eta"
-            android:layout_centerVertical="true"
+            android:layout_column="2"
+            android:gravity="left"
             android:layout_marginLeft="5dp"
             android:textSize="18sp"
             android:text="Aurora Village Via Aurora Ave."
@@ -52,8 +47,9 @@
                 android:id="@+id/eta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/eta_more_vert"
-                android:layout_centerVertical="true"
+                android:layout_column="3"
+                android:layout_marginLeft="5dp"
+                android:gravity="center"
                 android:textSize="35sp"
                 android:text="2"
                 android:textColor="@color/header_text_color"
@@ -68,12 +64,12 @@
                 android:background="@drawable/selectable_background_busbot"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_column="4"
+                android:gravity="right"
                 android:layout_marginLeft="8dp"
                 android:layout_marginRight="10dp"
-                android:layout_centerVertical="true"
-                android:layout_alignParentRight="true"
                 android:maxHeight="16dp"
                 android:maxWidth="16dp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"/>
-</RelativeLayout>
+</TableRow>

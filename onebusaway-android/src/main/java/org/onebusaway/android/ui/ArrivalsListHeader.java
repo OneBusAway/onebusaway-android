@@ -626,30 +626,39 @@ class ArrivalsListHeader {
         if (mArrivalInfo == null) {
             // We don't have any arrival info yet, so make sure the progress bar is running
             UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            // Hide all the arrival views
+            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             return;
         }
 
-        if (mArrivalInfo != null) {
-            if (mNumHeaderArrivals == 0) {
-                // TODO - display a proper "no arrivals in 35+ min" message
-                // "no routes" message is shown in mEtaArrivalInfo1, hide all others
-                UIHelp.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
-                UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-            } else if (mNumHeaderArrivals == 1) {
-                // Show the first row of arrival info
-                UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            } else if (mNumHeaderArrivals == 2) {
-                // Show the 2nd row of arrival info
-                UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-                UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-                UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-                UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-            }
+        if (mNumHeaderArrivals == 0) {
+            // "No routes" message should be shown
+            UIHelp.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+            // Hide all others
+            UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+        } else if (mNumHeaderArrivals == 1) {
+            // Show the first row of arrival info
+            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            // Hide the 2nd row
+            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            // Hide no arrivals
+            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+        } else if (mNumHeaderArrivals == 2) {
+            // Show the 2nd row of arrival info
+            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            // Hide no arrivals
+            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
         }
 
         // Hide progress bar

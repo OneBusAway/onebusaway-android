@@ -9,25 +9,24 @@
             android:background="@drawable/selectable_background_busbot"
             android:maxHeight="10dp"
             android:maxWidth="10dp"
+            android:minHeight="10dp"
+            android:minWidth="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_column="0"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:layout_column="0"
             android:gravity="center"/>
 
     <TextView
             android:id="@+id/eta_route_name"
-            android:layout_width="wrap_content"
+            android:layout_width="60sp"
             android:layout_height="wrap_content"
             android:layout_column="1"
             android:gravity="center"
             android:textSize="35sp"
             android:text="5"
-            android:textColor="@color/header_text_color"
-            android:ellipsize="end"
-            android:singleLine="true"
-            android:textIsSelectable="true"/>
+            android:textColor="@color/header_text_color"/>
 
     <TextView
             android:id="@+id/eta_route_direction"
@@ -36,12 +35,11 @@
             android:layout_column="2"
             android:gravity="left"
             android:layout_marginLeft="5dp"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:text="Aurora Village Via Aurora Ave."
             android:textColor="@color/header_text_color"
             android:ellipsize="end"
-            android:singleLine="true"
-            android:textIsSelectable="true"/>
+            android:singleLine="true"/>
 
         <TextView
                 android:id="@+id/eta"
@@ -49,13 +47,12 @@
                 android:layout_height="wrap_content"
                 android:layout_column="3"
                 android:layout_marginLeft="5dp"
-                android:gravity="center"
+                android:gravity="right"
                 android:textSize="35sp"
                 android:text="2"
                 android:textColor="@color/header_text_color"
                 android:ellipsize="end"
-                android:singleLine="true"
-                android:textIsSelectable="false"/>
+                android:singleLine="true"/>
 
         <ImageButton
                 android:id="@+id/eta_more_vert"

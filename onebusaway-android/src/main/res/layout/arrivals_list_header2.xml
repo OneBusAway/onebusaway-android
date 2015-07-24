@@ -89,7 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_above="@+id/eta_table"
                 android:layout_alignParentRight="true"
-                android:layout_marginRight="36dp"
+                android:layout_marginRight="34dp"
                 android:textSize="10sp"
                 android:text="@string/arrivals_list_header_arrives_in"
                 android:textColor="@color/header_text_color"
@@ -99,11 +99,11 @@
 
         <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
                      android:id="@+id/eta_table"
-                     android:layout_width="fill_parent"
+                     android:layout_width="match_parent"
                      android:layout_height="wrap_content"
-                     android:layout_above="@+id/stop_details_container"
                      android:stretchColumns="1,3"
-                     android:shrinkColumns="0,2">
+                     android:shrinkColumns="2"
+                     android:layout_above="@+id/stop_details_container">
 
             <!-- First ETA row -->
             <include android:id="@+id/eta_container1"
@@ -171,6 +171,7 @@
                         android:textSize="15sp"
                         android:text="University Area Transit Center"
                         android:textColor="@color/header_text_color"
+                        android:textStyle="bold"
                         android:ellipsize="end"
                         android:singleLine="true"
                         android:layout_width="wrap_content"

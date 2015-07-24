@@ -116,14 +116,29 @@
             <!-- Line separator -->
             <TableRow
                     xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:gravity="center_vertical">
-                <View android:id="@+id/eta_separator"
-                      android:layout_width="match_parent"
+                    android:gravity="center_vertical"
+                    android:id="@+id/eta_separator"
+                    android:visibility="gone">
+                <!-- Because the other TableRows arrivals_list_header_row_template have 5 columns,
+                 we need to break up the line separator into the same, otherwise it makes
+                 the first favorites column bigger than it needs to be -->
+                <View android:layout_width="match_parent"
                       android:layout_height="1dp"
                       android:layout_marginLeft="@dimen/keyline_1"
+                      android:background="@color/header_faded_color"/>
+                <View android:layout_width="match_parent"
+                      android:layout_height="1dp"
+                      android:background="@color/header_faded_color"/>
+                <View android:layout_width="match_parent"
+                      android:layout_height="1dp"
+                      android:background="@color/header_faded_color"/>
+                <View android:layout_width="match_parent"
+                      android:layout_height="1dp"
+                      android:background="@color/header_faded_color"/>
+                <View android:layout_width="match_parent"
+                      android:layout_height="1dp"
                       android:layout_marginRight="@dimen/keyline_1"
-                      android:background="@color/header_faded_color"
-                      android:visibility="gone"/>
+                      android:background="@color/header_faded_color"/>
             </TableRow>
 
             <!-- Second ETA row -->

@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_column="2"
             android:gravity="left"
-            android:layout_marginLeft="5dp"
+            android:layout_marginLeft="8dp"
             android:textSize="16sp"
             android:text="Aurora Village Via Aurora Ave."
             android:textColor="@color/header_text_color"

@@ -13,6 +13,7 @@
             android:minWidth="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/keyline_1"
             android:layout_column="0"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"

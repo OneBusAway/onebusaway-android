@@ -54,6 +54,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -133,6 +134,8 @@ public class HomeActivity extends ActionBarActivity
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
 
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
+
+    Animation mMyLocationAnimation;
 
     /**
      * GoogleApiClient being used for Location Services
@@ -631,7 +634,7 @@ public class HomeActivity extends ActionBarActivity
             // No stop is in focus (e.g., user tapped on the map), so hide the panel
             // and clear the currently focused stopId
             mFocusedStopId = null;
-            moveMyLocationButtonDown();
+            moveMyLocationButton();
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
             if (mArrivalsListFragment != null) {
                 FragmentManager fm = getSupportFragmentManager();
@@ -680,6 +683,9 @@ public class HomeActivity extends ActionBarActivity
                 mMapFragment.setFocusStop(mFocusedStop, response.getRoutes());
             }
         }
+
+        // Header might have changed height, so make sure my location button is set above the header
+        moveMyLocationButton();
     }
 
     @Override
@@ -724,7 +730,7 @@ public class HomeActivity extends ActionBarActivity
         if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
-        moveMyLocationButtonUp();
+        moveMyLocationButton();
     }
 
     private String getLocationString(Context context) {
@@ -845,65 +851,71 @@ public class HomeActivity extends ActionBarActivity
         }
     }
 
-    private void moveMyLocationButtonUp() {
+    synchronized private void moveMyLocationButton() {
         if (mFabMyLocation == null) {
             return;
         }
-
-        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
-                .getLayoutParams();
-
-        if (p.bottomMargin != MY_LOC_DEFAULT_BOTTOM_MARGIN) {
-            // Button was already moved, do nothing
+        if (mMyLocationAnimation != null &&
+                (mMyLocationAnimation.hasStarted() && !mMyLocationAnimation.hasEnded())) {
+            // We're already animating - do nothing
             return;
         }
 
-        // Move My Location button above the sliding panel header, so its still visible
-        final int bottomMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN + mSlidingPanel.getPanelHeight();
+        if (mMyLocationAnimation != null) {
+            mMyLocationAnimation.reset();
+        }
 
-        Animation a = new Animation() {
+        // Post this to a handler to allow the header to settle before animating the button
+        final Handler h = new Handler();
+        h.postDelayed(new Runnable() {
             @Override
-            protected void applyTransformation(float interpolatedTime, Transformation t) {
-                UIHelp.setMargins(mFabMyLocation,
-                        p.leftMargin,
-                        p.topMargin,
-                        p.rightMargin,
-                        (int) (bottomMargin * interpolatedTime));
+            public void run() {
+                final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
+                        .getLayoutParams();
+
+                int tempMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN;
+
+                if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                    tempMargin += mSlidingPanel.getPanelHeight();
+                    if (p.bottomMargin == tempMargin) {
+                        // Button is already in the right position, do nothing
+                        return;
+                    }
+                } else {
+                    if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                        if (p.bottomMargin == tempMargin) {
+                            // Button is already in the right position, do nothing
+                            return;
+                        }
+                    }
+                }
+
+                final int goalMargin = tempMargin;
+                final int currentMargin = p.bottomMargin;
+
+                // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
+                mMyLocationAnimation = new Animation() {
+                    @Override
+                    protected void applyTransformation(float interpolatedTime, Transformation t) {
+                        int bottom;
+                        if (goalMargin > currentMargin) {
+                            bottom = currentMargin + (int) (Math.abs(currentMargin - goalMargin)
+                                    * interpolatedTime);
+                        } else {
+                            bottom = currentMargin - (int) (Math.abs(currentMargin - goalMargin)
+                                    * interpolatedTime);
+                        }
+                        UIHelp.setMargins(mFabMyLocation,
+                                p.leftMargin,
+                                p.topMargin,
+                                p.rightMargin,
+                                bottom);
+                    }
+                };
+                mMyLocationAnimation.setDuration(MY_LOC_BTN_ANIM_DURATION);
+                mFabMyLocation.startAnimation(mMyLocationAnimation);
             }
-        };
-        a.setDuration(MY_LOC_BTN_ANIM_DURATION);
-        mFabMyLocation.startAnimation(a);
-    }
-
-    private void moveMyLocationButtonDown() {
-        if (mFabMyLocation == null) {
-            return;
-        }
-
-        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
-                .getLayoutParams();
-
-        if (p.bottomMargin == MY_LOC_DEFAULT_BOTTOM_MARGIN) {
-            // Button is already in default state, do nothing
-            return;
-        }
-
-        // Move My Location button back to its default position
-        final int bottomMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN;
-
-        // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
-        Animation a = new Animation() {
-            @Override
-            protected void applyTransformation(float interpolatedTime, Transformation t) {
-                UIHelp.setMargins(mFabMyLocation,
-                        p.leftMargin,
-                        p.topMargin,
-                        p.rightMargin,
-                        (int) (bottomMargin * interpolatedTime));
-            }
-        };
-        a.setDuration(MY_LOC_BTN_ANIM_DURATION);
-        mFabMyLocation.startAnimation(a);
+        }, 100);
     }
 
     private void showMyLocationButton() {
@@ -984,6 +996,7 @@ public class HomeActivity extends ActionBarActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
                     mArrivalsListHeader.refresh();
                 }
+                moveMyLocationButton();
             }
 
             @Override
@@ -996,7 +1009,6 @@ public class HomeActivity extends ActionBarActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
                     mArrivalsListHeader.refresh();
                 }
-                moveMyLocationButtonUp();
             }
 
             @Override

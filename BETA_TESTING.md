@@ -14,6 +14,8 @@ You only have to complete the above steps once.  Unless you opt-out (using the s
 
 Please note that you need to use the same Google account for all three steps above, or you won't get access to the beta.
 
+Note that as a beta tester you'll automatically get production releases too.
+
 ## Register as an alpha tester
 
 We also offer very early access to new OneBusAway releases in alpha versions.  Please note that these early versions will likely still contain bugs and will not be as polished as beta or production releases.  However, if you're willing to put up with these quirks, we'd love to get feedback on early designs and new features.
@@ -22,11 +24,17 @@ To register for alpha versions, the process is basically the same as the beta re
 
 1. Join the [onebusaway-developers Google Group](https://groups.google.com/forum/#!forum/onebusaway-developers) using a Google account
 2. Go to https://play.google.com/apps/testing/com.joulespersecond.seattlebusbot and opt in for testing (using the same Google account)
-3. Download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot) (using the same Google account) - you'll now have access to the beta version!
+3. Download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot) (using the same Google account) - you'll now have access to the alpha version!
+
+You only have to complete the above steps once.  Unless you opt-out (using the same link in #2 above), you'll continue to receive new alpha versions as they are released.
+
+Please note that you need to use the same Google account for all three steps above, or you won't get access to the alpha.
+
+Note that as an alpha tester you'll automatically get beta and production releases too.
 
 ## How to provide feedback
 
-Please let us know if you experience problems with a beta, or would like to give general feedback (good and bad)!
+Please let us know if you experience problems with a beta or alpha, or would like to give general feedback (good and bad)!
 
 You can reach us via:
 

@@ -157,8 +157,8 @@
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter Routes</string>
     <string name="stop_info_option_editname">Edit Name</string>
-    <string name="stop_info_option_addstar">Add Star</string>
-    <string name="stop_info_option_removestar">Remove Star</string>
+    <string name="stop_info_option_addstar">Add Star To Stop</string>
+    <string name="stop_info_option_removestar">Remove Star From Stop</string>
     <string name="stop_info_option_report_problem">Report Stop Problem</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d minutes.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>

@@ -1270,8 +1270,9 @@ public class ArrivalsListFragment extends ListFragment
         public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
             ContentQueryMap map =
                     new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
-            // Call back into the fragment and say we've finished this.
+            // Call back into the adapter and header and say we've finished this.
             mAdapter.setTripsForStop(map);
+            mHeader.setTripsForStop(map);
         }
 
         @Override

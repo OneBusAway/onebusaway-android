@@ -237,6 +237,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                             TableLayout.LayoutParams.MATCH_PARENT));
         }
 
+        // Show or hide reminder for this trip
         ContentValues values = null;
         if (mTripsForStop != null) {
             values = mTripsForStop.getValues(arrivalInfo.getTripId());

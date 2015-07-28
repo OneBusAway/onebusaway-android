@@ -23,6 +23,8 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.UIHelp;
 
 import android.annotation.TargetApi;
+import android.content.ContentQueryMap;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -110,12 +112,6 @@ class ArrivalsListHeader {
 
     private Context mContext;
 
-    // All arrival info returned by the adapter
-    private ArrayList<ArrivalInfo> mArrivalInfo;
-
-    // Arrival info for the two rows of arrival info in the header
-    private ArrayList<ArrivalInfo> mHeaderArrivalInfo = new ArrayList<>(2);
-
     //
     // Cached views
     //
@@ -151,6 +147,15 @@ class ArrivalsListHeader {
     private ImageButton mStopInfo;
 
     private ImageView mExpandCollapse;
+
+    // All arrival info returned by the adapter
+    private ArrayList<ArrivalInfo> mArrivalInfo;
+
+    // Arrival info for the two rows of arrival info in the header
+    private ArrayList<ArrivalInfo> mHeaderArrivalInfo = new ArrayList<>(2);
+
+    // Trip (e.g., reminder) content for this stop
+    protected ContentQueryMap mTripsForStop;
 
     /**
      * Views to show ETA information in header
@@ -432,6 +437,14 @@ class ArrivalsListHeader {
         }
     }
 
+    /**
+     * Sets the trip details (e.g., reminders) for this stop
+     */
+    public void setTripsForStop(ContentQueryMap tripsForStop) {
+        mTripsForStop = tripsForStop;
+        refreshArrivalInfoViews();
+    }
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     private void doExpandCollapseRotation(boolean collapsed) {
         if (!UIHelp.canAnimateViewModern()) {
@@ -685,6 +698,10 @@ class ArrivalsListHeader {
                     mController.showListItemMenu(mEtaContainer1, mHeaderArrivalInfo.get(0));
                 }
             });
+
+            // Show or hide reminder for first row
+            View r = mEtaContainer1.findViewById(R.id.reminder);
+            refreshReminder(mHeaderArrivalInfo.get(0).getInfo().getTripId(), r);
         } else if (mNumHeaderArrivals == 2) {
             // Show the 2nd row of arrival info
             UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
@@ -702,6 +719,10 @@ class ArrivalsListHeader {
                 }
             });
 
+            // Show or hide reminder for first row
+            View r = mEtaContainer1.findViewById(R.id.reminder);
+            refreshReminder(mHeaderArrivalInfo.get(0).getInfo().getTripId(), r);
+
             // Setup "more" button click for second row
             mEtaMoreVert2.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -709,10 +730,34 @@ class ArrivalsListHeader {
                     mController.showListItemMenu(mEtaContainer2, mHeaderArrivalInfo.get(1));
                 }
             });
+
+            // Show or hide reminder for second row
+            r = mEtaContainer2.findViewById(R.id.reminder);
+            refreshReminder(mHeaderArrivalInfo.get(1).getInfo().getTripId(), r);
         }
 
         // Hide progress bar
         UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+    }
+
+    /**
+     * Shows or hides a reminder in the header, based on whether there is a saved reminder for
+     * the given tripId and the current stop
+     * @param tripId tripId to search for reminders for in the database
+     * @param v reminder view to show or hide, based on whether the there is or isn't a reminder for
+     *          this tripId and stop
+     */
+    void refreshReminder(String tripId, View v) {
+        ContentValues values = null;
+        if (mTripsForStop != null) {
+            values = mTripsForStop.getValues(tripId);
+        }
+        if (values != null) {
+            // A reminder exists for this trip
+            v.setVisibility(View.VISIBLE);
+        } else {
+            v.setVisibility(View.GONE);
+        }
     }
 
     /**

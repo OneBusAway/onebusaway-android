@@ -80,9 +80,9 @@ class ArrivalsListHeader {
 
         int getNumRoutes();
 
-        boolean isFavorite();
+        boolean isFavoriteStop();
 
-        boolean setFavorite(boolean favorite);
+        boolean setFavoriteStop(boolean favorite);
 
         AlertList getAlertList();
 
@@ -355,7 +355,7 @@ class ArrivalsListHeader {
         mStopFavoriteView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mController.setFavorite(!mController.isFavorite());
+                mController.setFavoriteStop(!mController.isFavoriteStop());
                 refreshStopFavorite();
             }
         });
@@ -611,7 +611,7 @@ class ArrivalsListHeader {
     }
 
     private void refreshStopFavorite() {
-        mStopFavoriteView.setImageResource(mController.isFavorite() ?
+        mStopFavoriteView.setImageResource(mController.isFavoriteStop() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
     }

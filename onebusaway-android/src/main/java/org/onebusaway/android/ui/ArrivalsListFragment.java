@@ -541,7 +541,7 @@ public class ArrivalsListFragment extends ListFragment
                 mHeader.beginNameEdit(null);
             }
         } else if (id == R.id.toggle_favorite) {
-            setFavorite(!mFavorite);
+            setFavoriteStop(!mFavorite);
             if (mHeader != null) {
                 mHeader.refresh();
             }
@@ -792,12 +792,12 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     @Override
-    public boolean isFavorite() {
+    public boolean isFavoriteStop() {
         return mFavorite;
     }
 
     @Override
-    public boolean setFavorite(boolean favorite) {
+    public boolean setFavoriteStop(boolean favorite) {
         if (ObaContract.Stops.markAsFavorite(getActivity(), mStopUri, favorite)) {
             mFavorite = favorite;
         }

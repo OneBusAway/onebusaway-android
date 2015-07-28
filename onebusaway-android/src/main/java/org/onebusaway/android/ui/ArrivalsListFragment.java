@@ -564,7 +564,8 @@ public class ArrivalsListFragment extends ListFragment
         if (stop == null) {
             return;
         }
-        Log.d(TAG, "Tapped on tripId=" + stop.getInfo().getTripId() + ", vehicleId=" + stop
+        Log.d(TAG, "Tapped on route=" + stop.getInfo().getShortName() + ", tripId=" + stop.getInfo()
+                .getTripId() + ", vehicleId=" + stop
                     .getInfo().getVehicleId());
 
         ArrivalsListLoader loader = getArrivalsLoader();
@@ -586,7 +587,7 @@ public class ArrivalsListFragment extends ListFragment
         // (we don't have any other state, so this is good enough)
         int options;
         View tripView = v.findViewById(R.id.trip_info);
-        if (tripView.getVisibility() != View.GONE) {
+        if (tripView != null && tripView.getVisibility() != View.GONE) {
             if (hasUrl) {
                 options = R.array.stop_item_options_edit;
             } else {

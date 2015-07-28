@@ -94,6 +94,14 @@ class ArrivalsListHeader {
          * "minutesAfter" minutes), or -1 if this information isn't available
          */
         int getMinutesAfter();
+
+        /**
+         * Shows the list item menu for the given view and arrival info
+         *
+         * @param v    view for the container of the arrival info
+         * @param stop arrival info to show a list for
+         */
+        void showListItemMenu(View v, final ArrivalInfo stop);
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -102,7 +110,11 @@ class ArrivalsListHeader {
 
     private Context mContext;
 
+    // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
+
+    // Arrival info for the two rows of arrival info in the header
+    private ArrayList<ArrivalInfo> mHeaderArrivalInfo = new ArrayList<>(2);
 
     //
     // Cached views
@@ -215,6 +227,7 @@ class ArrivalsListHeader {
     void initView(View view) {
         // Clear any existing arrival info
         mArrivalInfo = null;
+        mHeaderArrivalInfo.clear();
         mNumHeaderArrivals = -1;
 
         // Cache the ArrivalsListHeader height values
@@ -524,6 +537,7 @@ class ArrivalsListHeader {
      */
     private void refreshArrivalInfoText() {
         mArrivalInfo = mController.getArrivalInfo();
+        mHeaderArrivalInfo.clear();
 
         if (mArrivalInfo != null && !mInNameEdit) {
             int indexFirstEta = ArrivalInfo.findFirstNonNegativeArrival(mArrivalInfo);
@@ -538,6 +552,9 @@ class ArrivalsListHeader {
                 } else if (eta > 0) {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
                 }
+                // Save the arrival info for the options menu later
+                mHeaderArrivalInfo.add(mArrivalInfo.get(indexFirstEta));
+
                 // If there is another arrival, fill the second row with it
                 int indexSecondEta = indexFirstEta + 1;
                 if (indexSecondEta < mArrivalInfo.size()) {
@@ -552,6 +569,9 @@ class ArrivalsListHeader {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
                     }
                     mNumHeaderArrivals = 2;
+
+                    // Save the arrival info for the options menu later
+                    mHeaderArrivalInfo.add(mArrivalInfo.get(indexSecondEta));
                 } else {
                     mNumHeaderArrivals = 1;
                 }
@@ -651,6 +671,14 @@ class ArrivalsListHeader {
             UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             // Hide no arrivals
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+
+            // Setup "more" button click for first row
+            mEtaMoreVert1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mController.showListItemMenu(mEtaContainer1, mHeaderArrivalInfo.get(0));
+                }
+            });
         } else if (mNumHeaderArrivals == 2) {
             // Show the 2nd row of arrival info
             UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
@@ -659,12 +687,26 @@ class ArrivalsListHeader {
             UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             // Hide no arrivals
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+
+            // Setup "more" button click for first row
+            mEtaMoreVert1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mController.showListItemMenu(mEtaContainer1, mHeaderArrivalInfo.get(0));
+                }
+            });
+
+            // Setup "more" button click for second row
+            mEtaMoreVert2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mController.showListItemMenu(mEtaContainer2, mHeaderArrivalInfo.get(1));
+                }
+            });
         }
 
         // Hide progress bar
         UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
-
-        // TODO - move the location button "up" again, to position it above the header
     }
 
     /**

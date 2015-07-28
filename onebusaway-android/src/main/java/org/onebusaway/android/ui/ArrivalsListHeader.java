@@ -273,7 +273,7 @@ class ArrivalsListHeader {
         mShowAllClick = new ClickableSpan() {
             public void onClick(View v) {
                 mController.setRoutesFilter(new ArrayList<String>());
-                refreshFilter();
+                refresh();
             }
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
@@ -617,7 +617,7 @@ class ArrivalsListHeader {
     }
 
     /**
-     * Refreshes the routes filter, and displayes/hides it if necessary
+     * Refreshes the routes filter, and displays/hides it if necessary
      */
     private void refreshFilter() {
         TextView v = (TextView) mView.findViewById(R.id.filter_text);

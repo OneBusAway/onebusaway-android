@@ -560,13 +560,13 @@ public class ArrivalsListFragment extends ListFragment
         showListItemMenu(v, stop);
     }
 
-    public void showListItemMenu(View v, final ArrivalInfo stop) {
-        if (stop == null) {
+    public void showListItemMenu(View v, final ArrivalInfo arrivalInfo) {
+        if (arrivalInfo == null) {
             return;
         }
-        Log.d(TAG, "Tapped on route=" + stop.getInfo().getShortName() + ", tripId=" + stop.getInfo()
-                .getTripId() + ", vehicleId=" + stop
-                    .getInfo().getVehicleId());
+        Log.d(TAG, "Tapped on route=" + arrivalInfo.getInfo().getShortName() +
+                ", tripId=" + arrivalInfo.getInfo().getTripId() +
+                ", vehicleId=" + arrivalInfo.getInfo().getVehicleId());
 
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader == null) {
@@ -580,7 +580,7 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.stop_info_item_options_title);
 
-        final ObaRoute route = response.getRoute(stop.getInfo().getRouteId());
+        final ObaRoute route = response.getRoute(arrivalInfo.getInfo().getRouteId());
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
         // Check to see if the trip name is visible.
@@ -601,12 +601,12 @@ public class ArrivalsListFragment extends ListFragment
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
-                    goToTrip(stop);
+                    goToTrip(arrivalInfo);
                 } else if (which == 1) {
-                    goToRoute(stop);
+                    goToRoute(arrivalInfo);
                 } else if (which == 2) {
                     ArrayList<String> routes = new ArrayList<String>(1);
-                    routes.add(stop.getInfo().getRouteId());
+                    routes.add(arrivalInfo.getInfo().getRouteId());
                     setRoutesFilter(routes);
                     if (mHeader != null) {
                         mHeader.refresh();
@@ -616,7 +616,7 @@ public class ArrivalsListFragment extends ListFragment
                 } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
                     ReportTripProblemFragment.show(
                             (android.support.v7.app.ActionBarActivity) getActivity(),
-                            stop.getInfo());
+                            arrivalInfo.getInfo());
                 }
             }
         });

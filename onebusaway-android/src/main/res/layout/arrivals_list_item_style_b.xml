@@ -40,8 +40,9 @@
                 android:orientation="vertical">
 
             <TextView
-                    android:id="@+id/trip_info"
-                    android:drawableLeft="@drawable/ic_notification_list_icon"
+                    android:id="@+id/reminder"
+                    android:drawableLeft="@drawable/ic_action_announcement"
+                    android:contentDescription="@string/trip_info_reminder_content_description"
                     android:drawablePadding="5dp"
                     android:paddingBottom="0dp"
                     style="@style/StopInfoDestination"

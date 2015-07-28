@@ -22,6 +22,8 @@ import org.onebusaway.android.util.MyTextUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
@@ -96,19 +98,24 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
             values = mTripsForStop.getValues(arrivalInfo.getTripId());
         }
         if (values != null) {
-            String tripName = values.getAsString(ObaContract.Trips.NAME);
+            String reminderName = values.getAsString(ObaContract.Trips.NAME);
 
-            TextView tripInfo = (TextView) view.findViewById(R.id.trip_info);
-            if (tripName.length() == 0) {
-                tripName = context.getString(R.string.trip_info_noname);
+            TextView reminder = (TextView) view.findViewById(R.id.reminder);
+            if (reminderName.length() == 0) {
+                reminderName = context.getString(R.string.trip_info_noname);
             }
-            tripInfo.setText(tripName);
-            tripInfo.setVisibility(View.VISIBLE);
+            reminder.setText(reminderName);
+            Drawable d = reminder.getCompoundDrawables()[0];
+            d = DrawableCompat.wrap(d);
+            DrawableCompat.setTint(d.mutate(),
+                    view.getResources().getColor(R.color.button_material_dark));
+            reminder.setCompoundDrawables(d, null, null, null);
+            reminder.setVisibility(View.VISIBLE);
         } else {
             // Explicitly set this to invisible because we might be reusing
             // this view.
-            View tripInfo = view.findViewById(R.id.trip_info);
-            tripInfo.setVisibility(View.GONE);
+            View reminder = view.findViewById(R.id.reminder);
+            reminder.setVisibility(View.GONE);
         }
     }
 }

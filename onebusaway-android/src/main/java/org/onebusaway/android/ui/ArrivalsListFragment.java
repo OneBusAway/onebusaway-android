@@ -586,7 +586,7 @@ public class ArrivalsListFragment extends ListFragment
         // Check to see if the trip name is visible.
         // (we don't have any other state, so this is good enough)
         int options;
-        View tripView = v.findViewById(R.id.trip_info);
+        View tripView = v.findViewById(R.id.reminder);
         if (tripView != null && tripView.getVisibility() != View.GONE) {
             if (hasUrl) {
                 options = R.array.stop_item_options_edit;

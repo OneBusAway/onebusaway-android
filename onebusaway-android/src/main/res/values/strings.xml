@@ -264,6 +264,7 @@
 
     <!--  Trip info -->
     <string name="trip_info_name">Reminder name</string>
+    <string name="trip_info_reminder_content_description">Reminder</string>
     <string name="trip_info_name_hint">Add a reminder name</string>
     <string name="trip_info_route">Route %s</string>
     <string name="trip_info_depart">Departs at %s</string>

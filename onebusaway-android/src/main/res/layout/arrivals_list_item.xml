@@ -32,8 +32,9 @@
                 android:layout_column="1"
                 android:gravity="left">
             <TextView
-                    android:id="@+id/trip_info"
-                    android:drawableLeft="@drawable/ic_notification_list_icon"
+                    android:id="@+id/reminder"
+                    android:drawableLeft="@drawable/ic_action_announcement"
+                    android:contentDescription="@string/trip_info_reminder_content_description"
                     android:visibility="gone"
                     style="@style/StopInfoDestination"
                     android:layout_width="wrap_content"

@@ -167,6 +167,8 @@ class ArrivalsListHeader {
 
     private ImageButton mEtaRouteFavorite1;
 
+    private ImageButton mEtaReminder1;
+
     private TextView mEtaRouteName1;
 
     private TextView mEtaRouteDirection1;
@@ -181,6 +183,8 @@ class ArrivalsListHeader {
     private View mEtaContainer2;
 
     private ImageButton mEtaRouteFavorite2;
+
+    private ImageButton mEtaReminder2;
 
     private TextView mEtaRouteName2;
 
@@ -276,12 +280,13 @@ class ArrivalsListHeader {
         mEtaContainer1 = mView.findViewById(R.id.eta_container1);
         mEtaRouteFavorite1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_route_favorite);
         mEtaRouteFavorite1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaReminder1 = (ImageButton) mEtaContainer1.findViewById(R.id.reminder);
+        mEtaReminder1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        // TODO - set up listeners for row 1 image buttons
 
         mEtaSeparator = mView.findViewById(R.id.eta_separator);
 
@@ -289,12 +294,13 @@ class ArrivalsListHeader {
         mEtaContainer2 = mView.findViewById(R.id.eta_container2);
         mEtaRouteFavorite2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_route_favorite);
         mEtaRouteFavorite2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mEtaReminder2 = (ImageButton) mEtaContainer2.findViewById(R.id.reminder);
+        mEtaReminder2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mEtaRouteName2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_name);
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
         mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
         mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        // TODO - set up listeners for row 2 image buttons
 
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);

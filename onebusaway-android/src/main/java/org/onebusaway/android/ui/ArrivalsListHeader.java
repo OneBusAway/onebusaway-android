@@ -356,7 +356,7 @@ class ArrivalsListHeader {
             @Override
             public void onClick(View v) {
                 mController.setFavorite(!mController.isFavorite());
-                refreshFavorite();
+                refreshStopFavorite();
             }
         });
 
@@ -531,8 +531,8 @@ class ArrivalsListHeader {
 
     void refresh() {
         refreshName();
-        refreshArrivalInfoText();
-        refreshFavorite();
+        refreshArrivalInfoData();
+        refreshStopFavorite();
         refreshFilter();
         refreshError();
         refreshArrivalInfoViews();
@@ -551,10 +551,10 @@ class ArrivalsListHeader {
     }
 
     /**
-     * Refreshes the arrival info text to be displayed in the header based on the most recent
+     * Refreshes the arrival info data to be displayed in the header based on the most recent
      * arrival info, and sets the number of arrival rows that should be displayed in the header
      */
-    private void refreshArrivalInfoText() {
+    private void refreshArrivalInfoData() {
         mArrivalInfo = mController.getArrivalInfo();
         mHeaderArrivalInfo.clear();
 
@@ -610,7 +610,7 @@ class ArrivalsListHeader {
         }
     }
 
-    private void refreshFavorite() {
+    private void refreshStopFavorite() {
         mStopFavoriteView.setImageResource(mController.isFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);

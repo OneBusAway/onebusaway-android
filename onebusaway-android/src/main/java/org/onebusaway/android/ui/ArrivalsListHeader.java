@@ -681,13 +681,13 @@ class ArrivalsListHeader {
             UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-        } else if (mNumHeaderArrivals == 1) {
+        }
+
+        // Show at least the first row of arrival info, if we have one or more records
+        if (mNumHeaderArrivals >= 1) {
             // Show the first row of arrival info
             UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            // Hide the 2nd row
-            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             // Hide no arrivals
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
 
@@ -702,26 +702,12 @@ class ArrivalsListHeader {
             // Show or hide reminder for first row
             View r = mEtaContainer1.findViewById(R.id.reminder);
             refreshReminder(mHeaderArrivalInfo.get(0).getInfo().getTripId(), r);
-        } else if (mNumHeaderArrivals == 2) {
-            // Show the 2nd row of arrival info
-            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+        }
+
+        if (mNumHeaderArrivals >= 2) {
+            // Also show the 2nd row of arrival info
             UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
-            // Hide no arrivals
-            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
-
-            // Setup "more" button click for first row
-            mEtaMoreVert1.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mController.showListItemMenu(mEtaContainer1, mHeaderArrivalInfo.get(0));
-                }
-            });
-
-            // Show or hide reminder for first row
-            View r = mEtaContainer1.findViewById(R.id.reminder);
-            refreshReminder(mHeaderArrivalInfo.get(0).getInfo().getTripId(), r);
 
             // Setup "more" button click for second row
             mEtaMoreVert2.setOnClickListener(new View.OnClickListener() {
@@ -732,8 +718,12 @@ class ArrivalsListHeader {
             });
 
             // Show or hide reminder for second row
-            r = mEtaContainer2.findViewById(R.id.reminder);
+            View r = mEtaContainer2.findViewById(R.id.reminder);
             refreshReminder(mHeaderArrivalInfo.get(1).getInfo().getTripId(), r);
+        } else {
+            // Hide the 2nd row of arrival info and related views - we only had one arrival info
+            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
         }
 
         // Hide progress bar

@@ -557,6 +557,15 @@ public final class ObaContract {
             return result;
         }
 
+        public static boolean markAsFavorite(Context context,
+                Uri uri,
+                boolean favorite) {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ObaContract.Routes.FAVORITE, favorite ? 1 : 0);
+            return cr.update(uri, values, null, null) > 0;
+        }
+
         public static boolean markAsUnused(Context context, Uri uri) {
             ContentResolver cr = context.getContentResolver();
             ContentValues values = new ContentValues();

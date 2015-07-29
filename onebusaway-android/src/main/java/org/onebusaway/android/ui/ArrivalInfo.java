@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 
-final class ArrivalInfo {
+public final class ArrivalInfo {
 
     final static class InfoComparator implements Comparator<ArrivalInfo> {
 
@@ -243,7 +243,7 @@ final class ArrivalInfo {
         }
     }
 
-    final ObaArrivalInfo getInfo() {
+    public final ObaArrivalInfo getInfo() {
         return mInfo;
     }
 

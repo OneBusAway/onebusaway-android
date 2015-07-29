@@ -756,4 +756,30 @@ public final class UIHelp {
             view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         }
     }
+
+    /**
+     * Builds the array of CharSequences that should be shown for a given trip, provided the
+     * arguments for that trip
+     *
+     * @param hasUrl            true if the route provides a URL for schedule data, false if it does
+     *                          not
+     * @param isReminderVisible true if the reminder is currently visible for a trip, false if it
+     *                          is
+     *                          not
+     * @return the array of CharSequences that should be shown for a given trip, provided the
+     * arguments for that trip
+     */
+    public static int buildTripOptions(boolean hasUrl, boolean isReminderVisible) {
+        if (isReminderVisible) {
+            if (hasUrl) {
+                return R.array.stop_item_options_edit;
+            } else {
+                return R.array.stop_item_options_edit_noschedule;
+            }
+        } else if (hasUrl) {
+            return R.array.stop_item_options;
+        } else {
+            return R.array.stop_item_options_noschedule;
+        }
+    }
 }

@@ -583,21 +583,11 @@ public class ArrivalsListFragment extends ListFragment
         final ObaRoute route = response.getRoute(arrivalInfo.getInfo().getRouteId());
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
-        // Check to see if the trip name is visible.
+        // Check to see if the reminder is visible, for whether we show "add" or "edit" reminder
         // (we don't have any other state, so this is good enough)
-        int options;
         View tripView = v.findViewById(R.id.reminder);
-        if (tripView != null && tripView.getVisibility() != View.GONE) {
-            if (hasUrl) {
-                options = R.array.stop_item_options_edit;
-            } else {
-                options = R.array.stop_item_options_edit_noschedule;
-            }
-        } else if (hasUrl) {
-            options = R.array.stop_item_options;
-        } else {
-            options = R.array.stop_item_options_noschedule;
-        }
+        boolean isReminderVisible = tripView != null && tripView.getVisibility() != View.GONE;
+        int options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {

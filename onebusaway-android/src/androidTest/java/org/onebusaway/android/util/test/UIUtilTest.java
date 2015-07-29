@@ -20,6 +20,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_EDIT_REMINDER;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SET_REMINDER;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ROUTE_INFO;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE;
+
 /**
  * Tests to evaluate utility methods related to the presentation of information to the user in the
  * UI
@@ -122,27 +129,24 @@ public class UIUtilTest extends ObaTestCase {
 
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
-        int options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
-        String[] array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Set a reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Show route schedule");
-        assertEquals(array[4], "Report problem with trip");
+        CharSequence[] options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        assertEquals(options[0], TRIP_MENU_OPTION_SET_REMINDER);
+        assertEquals(options[1], TRIP_MENU_OPTION_SHOW_ROUTE_INFO);
+        assertEquals(options[2], TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE);
+        assertEquals(options[3], TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE);
+        assertEquals(options[4], TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM);
 
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
         options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
-        array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Edit this reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Show route schedule");
-        assertEquals(array[4], "Report problem with trip");
+        assertEquals(options[0], TRIP_MENU_OPTION_EDIT_REMINDER);
+        assertEquals(options[1], TRIP_MENU_OPTION_SHOW_ROUTE_INFO);
+        assertEquals(options[2], TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE);
+        assertEquals(options[3], TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE);
+        assertEquals(options[4], TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM);
 
         // Get a PSTA response - PSTA test data doesn't include route schedule URLs
-        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         response =
                 new ObaArrivalInfoRequest.Builder(getContext(), "PSTA_4077").build().call();
         assertOK(response);
@@ -168,20 +172,18 @@ public class UIUtilTest extends ObaTestCase {
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
         options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
-        array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Set a reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Report problem with trip");
+        assertEquals(options[0], TRIP_MENU_OPTION_SET_REMINDER);
+        assertEquals(options[1], TRIP_MENU_OPTION_SHOW_ROUTE_INFO);
+        assertEquals(options[2], TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE);
+        assertEquals(options[3], TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM);
 
         isReminderVisible = true;
 
         // Now we should see *edit* the reminder, and still no route schedule
         options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
-        array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Edit this reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Report problem with trip");
+        assertEquals(options[0], TRIP_MENU_OPTION_EDIT_REMINDER);
+        assertEquals(options[1], TRIP_MENU_OPTION_SHOW_ROUTE_INFO);
+        assertEquals(options[2], TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE);
+        assertEquals(options[3], TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM);
     }
 }

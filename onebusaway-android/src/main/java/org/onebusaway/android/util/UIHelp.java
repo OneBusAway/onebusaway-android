@@ -37,6 +37,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -57,10 +58,18 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_EDIT_REMINDER;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SET_REMINDER;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ROUTE_INFO;
+import static org.onebusaway.android.ui.ArrivalsListFragment.TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE;
 
 public final class UIHelp {
 
@@ -766,20 +775,27 @@ public final class UIHelp {
      * @param isReminderVisible true if the reminder is currently visible for a trip, false if it
      *                          is
      *                          not
-     * @return the array of CharSequences that should be shown for a given trip, provided the
+     * @return the array of CharSequence that should be shown for a given trip, provided the
      * arguments for that trip
      */
-    public static int buildTripOptions(boolean hasUrl, boolean isReminderVisible) {
-        if (isReminderVisible) {
-            if (hasUrl) {
-                return R.array.stop_item_options_edit;
-            } else {
-                return R.array.stop_item_options_edit_noschedule;
-            }
-        } else if (hasUrl) {
-            return R.array.stop_item_options;
+    public static CharSequence[] buildTripOptions(boolean hasUrl, boolean isReminderVisible) {
+        Resources r = Application.get().getResources();
+
+        ArrayList<CharSequence> options = new ArrayList<>(5);
+        if (!isReminderVisible) {
+            options.add(TRIP_MENU_OPTION_SET_REMINDER);
         } else {
-            return R.array.stop_item_options_noschedule;
+            options.add(TRIP_MENU_OPTION_EDIT_REMINDER);
         }
+
+        options.add(TRIP_MENU_OPTION_SHOW_ROUTE_INFO);
+        options.add(TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE);
+
+        if (hasUrl) {
+            options.add(TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE);
+        }
+
+        options.add(TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM);
+        return options.toArray(new CharSequence[options.size()]);
     }
 }

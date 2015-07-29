@@ -102,6 +102,21 @@ public class ArrivalsListFragment extends ListFragment
      */
     public static final String EXTERNAL_HEADER = ".ExternalHeader";
 
+    /**
+     * Menu Options - put them here instead of strings.xml so we can use a switch statement
+     */
+    public static final String TRIP_MENU_OPTION_SET_REMINDER = "Set a reminder";
+
+    public static final String TRIP_MENU_OPTION_EDIT_REMINDER = "Edit this reminder";
+
+    public static final String TRIP_MENU_OPTION_SHOW_ROUTE_INFO = "Show route information";
+
+    public static final String TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE = "Show only this route";
+
+    public static final String TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE = "Show route schedule";
+
+    public static final String TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM = "Report problem with trip";
+
     private static final long RefreshPeriod = 60 * 1000;
 
     private static int TRIPS_FOR_STOP_LOADER = 1;
@@ -587,26 +602,35 @@ public class ArrivalsListFragment extends ListFragment
         // (we don't have any other state, so this is good enough)
         View tripView = v.findViewById(R.id.reminder);
         boolean isReminderVisible = tripView != null && tripView.getVisibility() != View.GONE;
-        int options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+
+        final CharSequence[] options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                if (which == 0) {
-                    goToTrip(arrivalInfo);
-                } else if (which == 1) {
-                    goToRoute(arrivalInfo);
-                } else if (which == 2) {
-                    ArrayList<String> routes = new ArrayList<String>(1);
-                    routes.add(arrivalInfo.getInfo().getRouteId());
-                    setRoutesFilter(routes);
-                    if (mHeader != null) {
-                        mHeader.refresh();
-                    }
-                } else if (hasUrl && which == 3) {
-                    UIHelp.goToUrl(getActivity(), url);
-                } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
-                    ReportTripProblemFragment.show(
-                            (android.support.v7.app.ActionBarActivity) getActivity(),
-                            arrivalInfo.getInfo());
+                switch (options[which].toString()) {
+                    case TRIP_MENU_OPTION_SET_REMINDER:
+                    case TRIP_MENU_OPTION_EDIT_REMINDER:
+                        goToTrip(arrivalInfo);
+                        break;
+                    case TRIP_MENU_OPTION_SHOW_ROUTE_INFO:
+                        goToRoute(arrivalInfo);
+                        break;
+                    case TRIP_MENU_OPTION_SHOW_ONLY_THIS_ROUTE:
+                        ArrayList<String> routes = new ArrayList<String>(1);
+                        routes.add(arrivalInfo.getInfo().getRouteId());
+                        setRoutesFilter(routes);
+                        if (mHeader != null) {
+                            mHeader.refresh();
+                        }
+                        break;
+                    case TRIP_MENU_OPTION_SHOW_ROUTE_SCHEDULE:
+                        UIHelp.goToUrl(getActivity(), url);
+                        break;
+                    case TRIP_MENU_OPTION_REPORT_TRIP_PROBLEM:
+                        ReportTripProblemFragment.show(
+                                (android.support.v7.app.ActionBarActivity) getActivity(),
+                                arrivalInfo.getInfo());
+                        break;
                 }
             }
         });

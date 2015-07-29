@@ -18,7 +18,7 @@
               android:layout_width="fill_parent"
               android:layout_height="fill_parent">
 
-    <include layout="@layout/arrivals_list_header2"/>
+    <include layout="@layout/arrivals_list_header"/>
     <include layout="@layout/alert_list"/>
 
     <include layout="@layout/loading"/>

@@ -529,7 +529,7 @@ class ArrivalsListHeader {
         return r;
     }
 
-    void refresh() {
+    synchronized void refresh() {
         refreshName();
         refreshArrivalInfoData();
         refreshStopFavorite();

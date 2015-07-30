@@ -58,39 +58,41 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp">
 
+                <RelativeLayout
+                        android:id="@+id/routeNameContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentStart="true">
                 <TextView
+                        android:id="@+id/routeName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
+                        android:layout_centerVertical="true"
                         android:text="New Text"
-                        style="@style/ArrivalsListItemRoute"
-                        android:id="@+id/routeName"/>
+                        style="@style/ArrivalsListItemRoute"/>
 
-                <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_below="@+id/routeName"
-                        android:text="New Text"
-                        style="@style/ArrivalsListItemDestination"
-                        android:id="@+id/routeDestination"/>
                 <ImageButton
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
+                        android:layout_centerVertical="true"
                         android:id="@+id/mapImageView"
                         android:src="@drawable/ic_arrivals_styleb_action_map"
                         android:background="@drawable/selectable_background_busbot"
                         android:contentDescription="@string/route_info_context_showonmap"
                         android:paddingLeft="5dp"
-                        android:clickable="false"
-                        android:layout_alignBottom="@+id/routeName"
                         android:layout_toLeftOf="@+id/infoImageView"
                         android:layout_toStartOf="@+id/infoImageView"/>
                 <ImageButton
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:gravity="center_vertical"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_marginRight="-8dp"
+                        android:layout_marginLeft="4dp"
                         android:id="@+id/infoImageView"
                         android:src="@drawable/ic_navigation_more_vert"
                         android:maxHeight="18dp"
@@ -99,13 +101,18 @@
                         android:adjustViewBounds="true"
                         android:background="@drawable/selectable_background_busbot"
                         android:contentDescription="@string/stop_info_item_options_title"
-                        android:layout_alignTop="@+id/mapImageView"
-                        android:layout_alignParentRight="true"
-                        android:layout_alignParentEnd="true"
-                        android:layout_marginRight="-8dp"
-                        android:layout_marginLeft="4dp"
                         android:paddingLeft="4dp"
                         android:paddingRight="4dp"/>
+                </RelativeLayout>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@+id/routeNameContainer"
+                        android:text="New Text"
+                        style="@style/ArrivalsListItemDestination"
+                        android:id="@+id/routeDestination"/>
             </RelativeLayout>
 
             <RelativeLayout

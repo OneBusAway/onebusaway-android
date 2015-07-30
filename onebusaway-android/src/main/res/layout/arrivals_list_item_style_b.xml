@@ -74,7 +74,19 @@
                         android:text="New Text"
                         style="@style/ArrivalsListItemDestination"
                         android:id="@+id/destinationNew"/>
-
+                <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:id="@+id/mapImageView"
+                        android:src="@drawable/ic_arrivals_styleb_action_map"
+                        android:background="@drawable/selectable_background_busbot"
+                        android:contentDescription="@string/route_info_context_showonmap"
+                        android:paddingLeft="5dp"
+                        android:clickable="false"
+                        android:layout_alignBottom="@+id/routeNew"
+                        android:layout_toLeftOf="@+id/infoImageView"
+                        android:layout_toStartOf="@+id/infoImageView"/>
                 <ImageButton
                         android:layout_width="30dp"
                         android:layout_height="30dp"
@@ -92,20 +104,6 @@
                         android:layout_alignParentEnd="true"
                         android:layout_marginLeft="8dp"
                         android:padding="5dp"/>
-                <ImageButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:id="@+id/mapImageView"
-                        android:src="@drawable/ic_arrivals_styleb_action_map"
-                        android:background="@drawable/selectable_background_busbot"
-                        android:contentDescription="@string/route_info_context_showonmap"
-                        android:paddingLeft="5dp"
-                        android:clickable="false"
-                        android:layout_alignBottom="@+id/routeNew"
-                        android:layout_toLeftOf="@+id/infoImageView"
-                        android:layout_toStartOf="@+id/infoImageView"/>
-
             </RelativeLayout>
 
             <RelativeLayout

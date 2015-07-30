@@ -761,6 +761,7 @@ public final class UIHelp {
      * Builds the array of CharSequences that should be shown for a given trip, provided the
      * arguments for that trip
      *
+     * @param isRouteFavorite   true if this route is a user favorite, false if it is not
      * @param hasUrl            true if the route provides a URL for schedule data, false if it does
      *                          not
      * @param isReminderVisible true if the reminder is currently visible for a trip, false if it
@@ -769,17 +770,32 @@ public final class UIHelp {
      * @return the array of CharSequences that should be shown for a given trip, provided the
      * arguments for that trip
      */
-    public static int buildTripOptions(boolean hasUrl, boolean isReminderVisible) {
-        if (isReminderVisible) {
-            if (hasUrl) {
-                return R.array.stop_item_options_edit;
+    public static int buildTripOptions(boolean isRouteFavorite, boolean hasUrl,
+            boolean isReminderVisible) {
+        if (!isRouteFavorite) {
+            if (isReminderVisible) {
+                if (hasUrl) {
+                    return R.array.stop_item_options_edit;
+                } else {
+                    return R.array.stop_item_options_edit_noschedule;
+                }
+            } else if (hasUrl) {
+                return R.array.stop_item_options;
             } else {
-                return R.array.stop_item_options_edit_noschedule;
+                return R.array.stop_item_options_noschedule;
             }
-        } else if (hasUrl) {
-            return R.array.stop_item_options;
         } else {
-            return R.array.stop_item_options_noschedule;
+            if (isReminderVisible) {
+                if (hasUrl) {
+                    return R.array.stop_item_options_edit_favorite;
+                } else {
+                    return R.array.stop_item_options_edit_noschedule_favorite;
+                }
+            } else if (hasUrl) {
+                return R.array.stop_item_options_favorite;
+            } else {
+                return R.array.stop_item_options_noschedule_favorite;
+            }
         }
     }
 }

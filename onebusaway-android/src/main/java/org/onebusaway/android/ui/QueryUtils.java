@@ -20,6 +20,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -204,5 +205,32 @@ public final class QueryUtils {
     public static String getRegionWhere(String regionFieldName, long regionId) {
         return "(" + regionFieldName + "=" + regionId +
                 " OR " + regionFieldName + " IS NULL)";
+    }
+
+
+    private static final String[] ROUTE_USER_PROJECTION = {
+            ObaContract.Routes.FAVORITE,
+    };
+
+    /**
+     * Returns true if this route is a favorite, false if it does not
+     *
+     * @param routeUri Uri for a route
+     * @return true if this route is a favorite, false if it does not
+     */
+    public static boolean isFavoriteRoute(Context context, Uri routeUri) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(routeUri, ROUTE_USER_PROJECTION, null, null, null);
+        if (c != null) {
+            try {
+                if (c.moveToNext()) {
+                    return (c.getInt(0) == 1);
+                }
+            } finally {
+                c.close();
+            }
+        }
+        // If we get this far, assume its not
+        return false;
     }
 }

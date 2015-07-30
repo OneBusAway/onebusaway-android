@@ -92,6 +92,9 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("1*, 5, 8a, 8b*, 15*", formattedString);
     }
 
+    /**
+     * Tests building the trip options menu, based on various route/trip parameters
+     */
     public void testBuildTripOptions() {
         // Initial setup to get an ObaArrivalInfo object from a test response
         ObaRegion tampa = MockRegion.getTampa(getContext());
@@ -119,69 +122,126 @@ public class UIUtilTest extends ObaTestCase {
         String url = route != null ? route.getUrl() : null;
         boolean hasUrl = !TextUtils.isEmpty(url);
         boolean isReminderVisible = false;  // We don't have views here, so just fake it
+        boolean isRouteFavorite = false;  // We'll fake this too, for our purposes
 
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
-        int options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
         String[] array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Set a reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Show route schedule");
-        assertEquals(array[4], "Report problem with trip");
+        assertEquals(array[0], "Add star to route");
+        assertEquals(array[1], "Set a reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Show route schedule");
+        assertEquals(array[5], "Report problem with trip");
 
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
-        options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
         array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Edit this reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Show route schedule");
-        assertEquals(array[4], "Report problem with trip");
+        assertEquals(array[0], "Add star to route");
+        assertEquals(array[1], "Edit this reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Show route schedule");
+        assertEquals(array[5], "Report problem with trip");
 
         // Get a PSTA response - PSTA test data doesn't include route schedule URLs
-        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
-        response =
+        ObaArrivalInfoResponse response2 =
                 new ObaArrivalInfoRequest.Builder(getContext(), "PSTA_4077").build().call();
-        assertOK(response);
+        assertOK(response2);
 
-        stop = response.getStop();
+        stop = response2.getStop();
         assertNotNull(stop);
         assertEquals("PSTA_4077", stop.getId());
-        routes = response.getRoutes(stop.getRouteIds());
+        routes = response2.getRoutes(stop.getRouteIds());
         assertTrue(routes.size() > 0);
-        agency = response.getAgency(routes.get(0).getAgencyId());
+        agency = response2.getAgency(routes.get(0).getAgencyId());
         assertEquals("PSTA", agency.getId());
 
-        arrivals = response.getArrivalInfo();
+        arrivals = response2.getArrivalInfo();
         assertNotNull(arrivals);
         arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
-                arrivals, null, response.getCurrentTime());
+                arrivals, null, response2.getCurrentTime());
 
-        route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
+        route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
         url = route != null ? route.getUrl() : null;
-        hasUrl = !TextUtils.isEmpty(url);
+        boolean hasUrl2 = !TextUtils.isEmpty(url);
         isReminderVisible = false;  // We don't have views here, so just fake it
 
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
-        options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl2, isReminderVisible);
         array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Set a reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Report problem with trip");
+        assertEquals(array[0], "Add star to route");
+        assertEquals(array[1], "Set a reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Report problem with trip");
 
         isReminderVisible = true;
 
         // Now we should see *edit* the reminder, and still no route schedule
-        options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl2, isReminderVisible);
         array = getContext().getResources().getStringArray(options);
-        assertEquals(array[0], "Edit this reminder");
-        assertEquals(array[1], "Show route information");
-        assertEquals(array[2], "Show only this route");
-        assertEquals(array[3], "Report problem with trip");
+        assertEquals(array[0], "Add star to route");
+        assertEquals(array[1], "Edit this reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Report problem with trip");
+
+        // Now change route to favorite, and do all the above over again
+        isRouteFavorite = true;
+
+        // HART
+        isReminderVisible = false;  // We don't have views here, so just fake it
+
+        // HART has route schedule URLs in test data, so below options should allow the user to set
+        // a reminder and view the route schedule
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
+        array = getContext().getResources().getStringArray(options);
+        assertEquals(array[0], "Remove star from route");
+        assertEquals(array[1], "Set a reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Show route schedule");
+        assertEquals(array[5], "Report problem with trip");
+
+        isReminderVisible = true;
+
+        // Now we should see route schedules and *edit* the reminder
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
+        array = getContext().getResources().getStringArray(options);
+        assertEquals(array[0], "Remove star from route");
+        assertEquals(array[1], "Edit this reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Show route schedule");
+        assertEquals(array[5], "Report problem with trip");
+
+        // PSTA
+        isReminderVisible = false;  // We don't have views here, so just fake it
+
+        // PSTA does not have route schedule URLs in test data, so below options should allow the
+        // user to set a reminder but NOT view the route schedule
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl2, isReminderVisible);
+        array = getContext().getResources().getStringArray(options);
+        assertEquals(array[0], "Remove star from route");
+        assertEquals(array[1], "Set a reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Report problem with trip");
+
+        isReminderVisible = true;
+
+        // Now we should see *edit* the reminder, and still no route schedule
+        options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl2, isReminderVisible);
+        array = getContext().getResources().getStringArray(options);
+        assertEquals(array[0], "Remove star from route");
+        assertEquals(array[1], "Edit this reminder");
+        assertEquals(array[2], "Show route information");
+        assertEquals(array[3], "Show only this route");
+        assertEquals(array[4], "Report problem with trip");
     }
 }

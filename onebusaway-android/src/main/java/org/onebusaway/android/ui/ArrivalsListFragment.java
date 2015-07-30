@@ -580,30 +580,39 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.stop_info_item_options_title);
 
-        final ObaRoute route = response.getRoute(arrivalInfo.getInfo().getRouteId());
+        String routeId = arrivalInfo.getInfo().getRouteId();
+        final ObaRoute route = response.getRoute(routeId);
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
         // Check to see if the reminder is visible, for whether we show "add" or "edit" reminder
         // (we don't have any other state, so this is good enough)
         View tripView = v.findViewById(R.id.reminder);
         boolean isReminderVisible = tripView != null && tripView.getVisibility() != View.GONE;
-        int options = UIHelp.buildTripOptions(hasUrl, isReminderVisible);
+        // Check route favorite, for whether we show "Add star" or "Remove star"
+        final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
+        final boolean isRouteFavorite = QueryUtils.isFavoriteRoute(getActivity(), routeUri);
+
+        int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
+
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
-                    goToTrip(arrivalInfo);
+                    // Toggle favorite
+                    ObaContract.Routes.markAsFavorite(getActivity(), routeUri, !isRouteFavorite);
                 } else if (which == 1) {
-                    goToRoute(arrivalInfo);
+                    goToTrip(arrivalInfo);
                 } else if (which == 2) {
+                    goToRoute(arrivalInfo);
+                } else if (which == 3) {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(arrivalInfo.getInfo().getRouteId());
                     setRoutesFilter(routes);
                     if (mHeader != null) {
                         mHeader.refresh();
                     }
-                } else if (hasUrl && which == 3) {
+                } else if (hasUrl && which == 4) {
                     UIHelp.goToUrl(getActivity(), url);
-                } else if ((!hasUrl && which == 3) || (hasUrl && which == 4)) {
+                } else if ((!hasUrl && which == 4) || (hasUrl && which == 5)) {
                     ReportTripProblemFragment.show(
                             (android.support.v7.app.ActionBarActivity) getActivity(),
                             arrivalInfo.getInfo());

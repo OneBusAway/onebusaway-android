@@ -16,13 +16,14 @@
                         android:maxWidth="14dp"
                         android:minHeight="14dp"
                         android:minWidth="14dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
                         android:layout_marginBottom="1dp"
                         android:layout_marginLeft="@dimen/keyline_1"
                         android:scaleType="fitCenter"
                         android:adjustViewBounds="true"
-                        android:gravity="center"/>
+                        android:gravity="center"
+                        android:padding="5dp"/>
                 <ImageButton
                         android:id="@+id/reminder"
                         android:src="@drawable/ic_action_announcement"

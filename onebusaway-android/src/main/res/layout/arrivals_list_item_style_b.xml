@@ -65,61 +65,61 @@
                         android:layout_alignParentTop="true"
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentStart="true">
-                <TextView
-                        android:id="@+id/routeName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_centerVertical="true"
-                        android:layout_toLeftOf="@+id/route_star"
-                        android:text="5"
-                        style="@style/ArrivalsListItemRoute" android:singleLine="true"
-                        android:ellipsize="end"/>
+                    <TextView
+                            android:id="@+id/routeName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentLeft="true"
+                            android:layout_centerVertical="true"
+                            android:layout_toLeftOf="@+id/route_star"
+                            android:text="5"
+                            style="@style/ArrivalsListItemRoute" android:singleLine="true"
+                            android:ellipsize="end"/>
 
-                <ImageButton
-                        android:id="@+id/route_star"
-                        android:src="@drawable/ic_toggle_star"
-                        android:contentDescription="@string/stop_info_favorite"
-                        android:background="@drawable/selectable_background_busbot"
-                        android:maxHeight="20dp"
-                        android:maxWidth="20dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_toLeftOf="@+id/mapImageBtn"
-                        android:scaleType="fitCenter"
-                        android:adjustViewBounds="true"/>
+                    <ImageButton
+                            android:id="@+id/route_star"
+                            android:src="@drawable/ic_toggle_star"
+                            android:contentDescription="@string/stop_info_favorite"
+                            android:background="@drawable/selectable_background_busbot"
+                            android:maxHeight="20dp"
+                            android:maxWidth="20dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_toLeftOf="@+id/mapImageBtn"
+                            android:scaleType="fitCenter"
+                            android:adjustViewBounds="true"/>
 
                     <ImageButton
                             android:id="@+id/mapImageBtn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerVertical="true"
-                        android:src="@drawable/ic_arrivals_styleb_action_map"
-                        android:background="@drawable/selectable_background_busbot"
-                        android:contentDescription="@string/route_info_context_showonmap"
+                            android:src="@drawable/ic_arrivals_styleb_action_map"
+                            android:background="@drawable/selectable_background_busbot"
+                            android:contentDescription="@string/route_info_context_showonmap"
                             android:layout_marginLeft="4dp"
-                        android:paddingLeft="5dp"
+                            android:paddingLeft="5dp"
                             android:layout_toLeftOf="@+id/route_more_info"
                             android:layout_toStartOf="@+id/route_more_info"/>
-                <ImageButton
-                        android:id="@+id/route_more_info"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_centerVertical="true"
-                        android:layout_alignParentRight="true"
-                        android:layout_alignParentEnd="true"
-                        android:layout_marginRight="-8dp"
-                        android:layout_marginLeft="4dp"
-                        android:src="@drawable/ic_navigation_more_vert"
-                        android:maxHeight="18dp"
-                        android:maxWidth="18dp"
-                        android:scaleType="fitCenter"
-                        android:adjustViewBounds="true"
-                        android:background="@drawable/selectable_background_busbot"
-                        android:contentDescription="@string/stop_info_item_options_title"
-                        android:paddingLeft="4dp"
-                        android:paddingRight="4dp"/>
+                    <ImageButton
+                            android:id="@+id/route_more_info"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentRight="true"
+                            android:layout_alignParentEnd="true"
+                            android:layout_marginRight="-8dp"
+                            android:layout_marginLeft="4dp"
+                            android:src="@drawable/ic_navigation_more_vert"
+                            android:maxHeight="18dp"
+                            android:maxWidth="18dp"
+                            android:scaleType="fitCenter"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/selectable_background_busbot"
+                            android:contentDescription="@string/stop_info_item_options_title"
+                            android:paddingLeft="4dp"
+                            android:paddingRight="4dp"/>
                 </RelativeLayout>
 
                 <TextView

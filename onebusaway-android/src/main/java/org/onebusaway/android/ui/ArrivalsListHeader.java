@@ -20,6 +20,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
 
 import android.annotation.TargetApi;
@@ -442,7 +443,7 @@ class ArrivalsListHeader {
      */
     public void setTripsForStop(ContentQueryMap tripsForStop) {
         mTripsForStop = tripsForStop;
-        refreshArrivalInfoViews();
+        refreshArrivalInfoVisibilityAndListeners();
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
@@ -535,7 +536,7 @@ class ArrivalsListHeader {
         refreshStopFavorite();
         refreshFilter();
         refreshError();
-        refreshArrivalInfoViews();
+        refreshArrivalInfoVisibilityAndListeners();
         refreshHeaderSize();
     }
 
@@ -562,6 +563,13 @@ class ArrivalsListHeader {
             int indexFirstEta = ArrivalInfo.findFirstNonNegativeArrival(mArrivalInfo);
             if (indexFirstEta >= 0) {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
+                final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                        mArrivalInfo.get(indexFirstEta).getInfo().getRouteId());
+                boolean isFavorite = QueryUtils.isFavoriteRoute(mContext, routeUri);
+                mEtaRouteFavorite1.setImageResource(isFavorite ?
+                        R.drawable.focus_star_on :
+                        R.drawable.focus_star_off);
+
                 mEtaRouteName1.setText(mArrivalInfo.get(indexFirstEta).getInfo().getShortName());
                 mEtaRouteDirection1
                         .setText(mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign());
@@ -577,6 +585,12 @@ class ArrivalsListHeader {
                 // If there is another arrival, fill the second row with it
                 int indexSecondEta = indexFirstEta + 1;
                 if (indexSecondEta < mArrivalInfo.size()) {
+                    final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                            mArrivalInfo.get(indexSecondEta).getInfo().getRouteId());
+                    boolean isFavorite2 = QueryUtils.isFavoriteRoute(mContext, routeUri2);
+                    mEtaRouteFavorite2.setImageResource(isFavorite2 ?
+                            R.drawable.focus_star_on :
+                            R.drawable.focus_star_off);
                     mEtaRouteName2
                             .setText(mArrivalInfo.get(indexSecondEta).getInfo().getShortName());
                     mEtaRouteDirection2
@@ -657,7 +671,7 @@ class ArrivalsListHeader {
      * panel state and arrival info
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void refreshArrivalInfoViews() {
+    private void refreshArrivalInfoVisibilityAndListeners() {
         if (mInNameEdit) {
             // If the user is editing a stop name, we shouldn't show any of these views
             return;
@@ -691,6 +705,19 @@ class ArrivalsListHeader {
             // Hide no arrivals
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
 
+            // Setup tapping on star for first row
+            final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                    mHeaderArrivalInfo.get(0).getInfo().getRouteId());
+            final boolean isRouteFavorite = QueryUtils.isFavoriteRoute(mContext, routeUri);
+            mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Toggle route favorite
+                    ObaContract.Routes.markAsFavorite(mContext, routeUri, !isRouteFavorite);
+                    refresh();
+                }
+            });
+
             // Setup "more" button click for first row
             mEtaMoreVert1.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -708,6 +735,19 @@ class ArrivalsListHeader {
             // Also show the 2nd row of arrival info
             UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+
+            // Setup tapping on star for second row
+            final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                    mHeaderArrivalInfo.get(1).getInfo().getRouteId());
+            final boolean isRouteFavorite2 = QueryUtils.isFavoriteRoute(mContext, routeUri2);
+            mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Toggle route favorite
+                    ObaContract.Routes.markAsFavorite(mContext, routeUri2, !isRouteFavorite2);
+                    refresh();
+                }
+            });
 
             // Setup "more" button click for second row
             mEtaMoreVert2.setOnClickListener(new View.OnClickListener() {

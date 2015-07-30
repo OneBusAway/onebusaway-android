@@ -64,16 +64,16 @@
                         android:layout_alignParentLeft="true"
                         android:text="New Text"
                         style="@style/ArrivalsListItemRoute"
-                        android:id="@+id/routeNew"/>
+                        android:id="@+id/routeName"/>
 
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
-                        android:layout_below="@+id/routeNew"
+                        android:layout_below="@+id/routeName"
                         android:text="New Text"
                         style="@style/ArrivalsListItemDestination"
-                        android:id="@+id/destinationNew"/>
+                        android:id="@+id/routeDestination"/>
                 <ImageButton
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
                         android:contentDescription="@string/route_info_context_showonmap"
                         android:paddingLeft="5dp"
                         android:clickable="false"
-                        android:layout_alignBottom="@+id/routeNew"
+                        android:layout_alignBottom="@+id/routeName"
                         android:layout_toLeftOf="@+id/infoImageView"
                         android:layout_toStartOf="@+id/infoImageView"/>
                 <ImageButton

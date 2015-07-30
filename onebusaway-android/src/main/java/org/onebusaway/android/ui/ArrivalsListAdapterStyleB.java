@@ -121,8 +121,8 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        TextView routeNew = (TextView) view.findViewById(R.id.routeNew);
-        TextView destinationNew = (TextView) view.findViewById(R.id.destinationNew);
+        TextView routeNew = (TextView) view.findViewById(R.id.routeName);
+        TextView destinationNew = (TextView) view.findViewById(R.id.routeDestination);
 
         // TableLayout that we will fill with TableRows of arrival times
         TableLayout arrivalTimesLayout = (TableLayout) view.findViewById(R.id.arrivalTimeLayout);

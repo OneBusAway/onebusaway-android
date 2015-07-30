@@ -75,10 +75,10 @@
                         style="@style/ArrivalsListItemRoute"/>
 
                 <ImageButton
+                        android:id="@+id/mapImageView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
-                        android:id="@+id/mapImageView"
                         android:src="@drawable/ic_arrivals_styleb_action_map"
                         android:background="@drawable/selectable_background_busbot"
                         android:contentDescription="@string/route_info_context_showonmap"
@@ -86,6 +86,7 @@
                         android:layout_toLeftOf="@+id/infoImageView"
                         android:layout_toStartOf="@+id/infoImageView"/>
                 <ImageButton
+                        android:id="@+id/infoImageView"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_centerVertical="true"
@@ -93,7 +94,6 @@
                         android:layout_alignParentEnd="true"
                         android:layout_marginRight="-8dp"
                         android:layout_marginLeft="4dp"
-                        android:id="@+id/infoImageView"
                         android:src="@drawable/ic_navigation_more_vert"
                         android:maxHeight="18dp"
                         android:maxWidth="18dp"
@@ -106,13 +106,13 @@
                 </RelativeLayout>
 
                 <TextView
+                        android:id="@+id/routeDestination"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@+id/routeNameContainer"
                         android:text="New Text"
-                        style="@style/ArrivalsListItemDestination"
-                        android:id="@+id/routeDestination"/>
+                        style="@style/ArrivalsListItemDestination"/>
             </RelativeLayout>
 
             <RelativeLayout
@@ -127,11 +127,11 @@
                     android:paddingBottom="2dp">
 
                 <TextView
+                        android:id="@+id/scheduleLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:text="@string/arrival_scheduled"
-                        android:id="@+id/scheduleLabel"
                         style="@style/ArrivalsListLabelText"/>
 
                 <TextView

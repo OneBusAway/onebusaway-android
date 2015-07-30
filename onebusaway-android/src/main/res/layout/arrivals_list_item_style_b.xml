@@ -81,36 +81,37 @@
                             android:src="@drawable/ic_toggle_star"
                             android:contentDescription="@string/stop_info_favorite"
                             android:background="?attr/selectableItemBackground"
-                            android:maxHeight="20dp"
-                            android:maxWidth="20dp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:maxHeight="25dp"
+                            android:maxWidth="25dp"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
                             android:layout_centerVertical="true"
                             android:layout_toLeftOf="@+id/mapImageBtn"
                             android:scaleType="fitCenter"
-                            android:adjustViewBounds="true"/>
+                            android:adjustViewBounds="true"
+                            android:padding="5dp"/>
 
                     <ImageButton
                             android:id="@+id/mapImageBtn"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
                             android:layout_centerVertical="true"
                             android:src="@drawable/ic_arrivals_styleb_action_map"
                             android:background="?attr/selectableItemBackground"
                             android:contentDescription="@string/route_info_context_showonmap"
-                            android:layout_marginLeft="4dp"
-                            android:paddingLeft="5dp"
+                            android:maxHeight="25dp"
+                            android:maxWidth="25dp"
                             android:layout_toLeftOf="@+id/route_more_info"
-                            android:layout_toStartOf="@+id/route_more_info"/>
+                            android:layout_toStartOf="@+id/route_more_info"
+                            android:layout_marginLeft="10dp"/>
                     <ImageButton
                             android:id="@+id/route_more_info"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="30dp"
+                            android:layout_height="35dp"
                             android:layout_centerVertical="true"
                             android:layout_alignParentRight="true"
                             android:layout_alignParentEnd="true"
                             android:layout_marginRight="-8dp"
-                            android:layout_marginLeft="4dp"
                             android:src="@drawable/ic_navigation_more_vert"
                             android:maxHeight="18dp"
                             android:maxWidth="18dp"
@@ -118,7 +119,7 @@
                             android:adjustViewBounds="true"
                             android:background="?attr/selectableItemBackground"
                             android:contentDescription="@string/stop_info_item_options_title"
-                            android:paddingLeft="4dp"
+                            android:paddingLeft="10dp"
                             android:paddingRight="4dp"/>
                 </RelativeLayout>
 

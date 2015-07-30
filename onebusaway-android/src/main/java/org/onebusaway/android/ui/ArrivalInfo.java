@@ -18,9 +18,11 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
+import org.onebusaway.android.provider.ObaContract;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.net.Uri;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -103,6 +105,8 @@ public final class ArrivalInfo {
 
     private final boolean mPredicted;
 
+    private final boolean mIsRouteFavorite;
+
     public ArrivalInfo(Context context, ObaArrivalInfo info, long now) {
         mInfo = info;
         // First, all times have to have to be converted to 'minutes'
@@ -135,6 +139,10 @@ public final class ArrivalInfo {
         mStatusText = computeStatusLabel(context, info, now, predicted,
                 scheduledMins, predictedMins);
 
+        // Check if the user has marked this route as a favorite
+        final Uri routeUri = Uri
+                .withAppendedPath(ObaContract.Routes.CONTENT_URI, info.getRouteId());
+        mIsRouteFavorite = QueryUtils.isFavoriteRoute(context, routeUri);
     }
 
     private Integer computeColor(final long scheduled, final long predicted) {
@@ -276,5 +284,14 @@ public final class ArrivalInfo {
      */
     final boolean getPredicted() {
         return mPredicted;
+    }
+
+    /**
+     * Returns true if this route is a user-designated favorite, false if it is not
+     *
+     * @return true if this route is a user-designated favorite, false if it is not
+     */
+    final boolean isRouteFavorite() {
+        return mIsRouteFavorite;
     }
 }

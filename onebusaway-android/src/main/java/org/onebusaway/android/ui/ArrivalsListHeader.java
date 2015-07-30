@@ -105,6 +105,12 @@ class ArrivalsListHeader {
          * @param stop arrival info to show a list for
          */
         void showListItemMenu(View v, final ArrivalInfo stop);
+
+        /**
+         * Triggers a local refresh of the controller content (i.e., does not trigger another
+         * call to the server)
+         */
+        void refreshLocal();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -274,7 +280,6 @@ class ArrivalsListHeader {
         mShowAllClick = new ClickableSpan() {
             public void onClick(View v) {
                 mController.setRoutesFilter(new ArrayList<String>());
-                refresh();
             }
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
@@ -714,7 +719,7 @@ class ArrivalsListHeader {
                 public void onClick(View v) {
                     // Toggle route favorite
                     ObaContract.Routes.markAsFavorite(mContext, routeUri, !isRouteFavorite);
-                    refresh();
+                    mController.refreshLocal();
                 }
             });
 
@@ -745,7 +750,7 @@ class ArrivalsListHeader {
                 public void onClick(View v) {
                     // Toggle route favorite
                     ObaContract.Routes.markAsFavorite(mContext, routeUri2, !isRouteFavorite2);
-                    refresh();
+                    mController.refreshLocal();
                 }
             });
 

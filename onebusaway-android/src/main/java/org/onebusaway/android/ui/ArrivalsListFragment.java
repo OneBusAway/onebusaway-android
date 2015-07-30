@@ -572,7 +572,7 @@ public class ArrivalsListFragment extends ListFragment
         if (loader == null) {
             return;
         }
-        ObaArrivalInfoResponse response = loader.getLastGoodResponse();
+        final ObaArrivalInfoResponse response = loader.getLastGoodResponse();
         if (response == null) {
             return;
         }
@@ -599,9 +599,7 @@ public class ArrivalsListFragment extends ListFragment
                 if (which == 0) {
                     // Toggle route favorite
                     ObaContract.Routes.markAsFavorite(getActivity(), routeUri, !isRouteFavorite);
-                    if (mHeader != null) {
-                        mHeader.refresh();
-                    }
+                    refreshLocal();
                 } else if (which == 1) {
                     goToTrip(arrivalInfo);
                 } else if (which == 2) {
@@ -744,11 +742,7 @@ public class ArrivalsListFragment extends ListFragment
     public void setRoutesFilter(ArrayList<String> routes) {
         mRoutesFilter = routes;
         ObaContract.StopRouteFilters.set(getActivity(), mStopId, mRoutesFilter);
-        ArrivalsListLoader loader = getArrivalsLoader();
-        if (loader != null) {
-            ObaArrivalInfoResponse response = loader.getLastGoodResponse();
-            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
-        }
+        refreshLocal();
     }
 
     @Override
@@ -1122,9 +1116,6 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         setRoutesFilter(newFilter);
-        if (mHeader != null) {
-            mHeader.refresh();
-        }
     }
 
     //
@@ -1177,9 +1168,9 @@ public class ArrivalsListFragment extends ListFragment
                 getActivity().getString(R.string.analytics_label_button_press));
     }
 
-    //
-    // Refreshing!
-    //
+    /**
+     * Full refresh of data from the OBA server
+     */
     private void refresh() {
         if (isAdded()) {
             UIHelp.showProgress(this, true);
@@ -1191,6 +1182,21 @@ public class ArrivalsListFragment extends ListFragment
                 mLastResponseLength = lastGood.getArrivalInfo().length;
             }
             getArrivalsLoader().onContentChanged();
+        }
+    }
+
+    /**
+     * Refreshes ListFragment content using the most recent server response.  Does not trigger
+     * another call to the OBA server.
+     */
+    public void refreshLocal() {
+        ArrivalsListLoader loader = getArrivalsLoader();
+        if (loader != null) {
+            ObaArrivalInfoResponse response = loader.getLastGoodResponse();
+            mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
+        }
+        if (mHeader != null) {
+            mHeader.refresh();
         }
     }
 

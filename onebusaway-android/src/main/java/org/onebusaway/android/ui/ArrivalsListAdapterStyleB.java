@@ -26,12 +26,14 @@ import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -121,34 +123,58 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        TextView routeNew = (TextView) view.findViewById(R.id.routeName);
-        TextView destinationNew = (TextView) view.findViewById(R.id.routeDestination);
+        TextView routeName = (TextView) view.findViewById(R.id.routeName);
+        TextView destination = (TextView) view.findViewById(R.id.routeDestination);
 
         // TableLayout that we will fill with TableRows of arrival times
         TableLayout arrivalTimesLayout = (TableLayout) view.findViewById(R.id.arrivalTimeLayout);
         arrivalTimesLayout.removeAllViews();
 
-        ImageView infoImageView = (ImageView) view.findViewById(R.id.infoImageView);
-        infoImageView.setColorFilter(infoImageView.getResources().getColor(R.color.theme_primary));
-        ImageView mapImageView = (ImageView) view.findViewById(R.id.mapImageView);
-        mapImageView.setColorFilter(mapImageView.getResources().getColor(R.color.theme_primary));
+        Resources r = view.getResources();
 
-        infoImageView.setOnClickListener(new View.OnClickListener() {
+        ImageButton starBtn = (ImageButton) view.findViewById(R.id.route_star);
+        starBtn.setColorFilter(r.getColor(R.color.theme_primary));
+
+        ImageButton mapImageBtn = (ImageButton) view.findViewById(R.id.mapImageBtn);
+        mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
+
+        ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
+        routeMoreInfo.setColorFilter(r.getColor(R.color.theme_primary));
+
+        starBtn.setImageResource(stopInfo.isRouteFavorite() ?
+                R.drawable.focus_star_on :
+                R.drawable.focus_star_off);
+
+        starBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mFragment.showListItemMenu(view, stopInfo);
+                // Toggle route favorite
+                final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
+                        stopInfo.getInfo().getRouteId());
+                ObaContract.Routes
+                        .markAsFavorite(getContext(), routeUri, !stopInfo.isRouteFavorite());
+                mFragment.refreshLocal();
             }
         });
 
-        mapImageView.setOnClickListener(new View.OnClickListener() {
+        // Setup map
+        mapImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 HomeActivity.start(getContext(), stopInfo.getInfo().getRouteId());
             }
         });
 
-        routeNew.setText(arrivalInfo.getShortName());
-        destinationNew.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
+        // Setup more
+        routeMoreInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFragment.showListItemMenu(view, stopInfo);
+            }
+        });
+
+        routeName.setText(arrivalInfo.getShortName());
+        destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
 
         // Loop through the arrival times and create the TableRows that contains the data
         for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {

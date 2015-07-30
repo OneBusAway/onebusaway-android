@@ -71,22 +71,39 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_centerVertical="true"
-                        android:text="New Text"
-                        style="@style/ArrivalsListItemRoute"/>
+                        android:layout_toLeftOf="@+id/route_star"
+                        android:text="5"
+                        style="@style/ArrivalsListItemRoute" android:singleLine="true"
+                        android:ellipsize="end"/>
 
                 <ImageButton
-                        android:id="@+id/mapImageView"
+                        android:id="@+id/route_star"
+                        android:src="@drawable/ic_toggle_star"
+                        android:contentDescription="@string/stop_info_favorite"
+                        android:background="@drawable/selectable_background_busbot"
+                        android:maxHeight="20dp"
+                        android:maxWidth="20dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
+                        android:layout_toLeftOf="@+id/mapImageBtn"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"/>
+
+                    <ImageButton
+                            android:id="@+id/mapImageBtn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
                         android:src="@drawable/ic_arrivals_styleb_action_map"
                         android:background="@drawable/selectable_background_busbot"
                         android:contentDescription="@string/route_info_context_showonmap"
+                            android:layout_marginLeft="4dp"
                         android:paddingLeft="5dp"
-                        android:layout_toLeftOf="@+id/infoImageView"
-                        android:layout_toStartOf="@+id/infoImageView"/>
+                            android:layout_toLeftOf="@+id/route_more_info"
+                            android:layout_toStartOf="@+id/route_more_info"/>
                 <ImageButton
-                        android:id="@+id/infoImageView"
+                        android:id="@+id/route_more_info"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_centerVertical="true"
@@ -111,7 +128,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@+id/routeNameContainer"
-                        android:text="New Text"
+                        android:text="North to University Area TC"
                         style="@style/ArrivalsListItemDestination"/>
             </RelativeLayout>
 

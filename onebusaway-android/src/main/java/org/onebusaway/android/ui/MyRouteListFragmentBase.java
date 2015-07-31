@@ -50,7 +50,7 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
 
-        // Get the cursor and fetch the stop ID from that.
+        // Get the cursor and fetch the route ID from that.
         SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
         Cursor c = cursorAdapter.getCursor();
         c.moveToPosition(position - l.getHeaderViewsCount());

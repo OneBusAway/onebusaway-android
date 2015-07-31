@@ -598,7 +598,12 @@ public class ArrivalsListFragment extends ListFragment
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
                     // Toggle route favorite
-                    ObaContract.Routes.markAsFavorite(getActivity(), routeUri, !isRouteFavorite);
+                    ContentValues values = new ContentValues();
+                    values.put(ObaContract.Routes.SHORTNAME, route.getShortName());
+                    values.put(ObaContract.Routes.LONGNAME, route.getLongName());
+                    values.put(ObaContract.Routes.URL, route.getUrl());
+                    QueryUtils.insertOrUpdateFavoriteRoute(getActivity(), routeUri, values,
+                            !isRouteFavorite);
                     refreshLocal();
                 } else if (which == 1) {
                     goToTrip(arrivalInfo);

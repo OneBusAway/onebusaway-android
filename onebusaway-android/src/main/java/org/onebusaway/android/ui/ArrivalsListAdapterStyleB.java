@@ -151,8 +151,13 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 // Toggle route favorite
                 final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
                         stopInfo.getInfo().getRouteId());
-                ObaContract.Routes
-                        .markAsFavorite(getContext(), routeUri, !stopInfo.isRouteFavorite());
+
+                // Toggle route favorite
+                ContentValues values = new ContentValues();
+                values.put(ObaContract.Routes.SHORTNAME, stopInfo.getInfo().getShortName());
+                values.put(ObaContract.Routes.LONGNAME, stopInfo.getInfo().getRouteLongName());
+                QueryUtils.insertOrUpdateFavoriteRoute(getContext(), routeUri, values,
+                        !stopInfo.isRouteFavorite());
                 mFragment.refreshLocal();
             }
         });

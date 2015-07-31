@@ -718,7 +718,14 @@ class ArrivalsListHeader {
                 @Override
                 public void onClick(View v) {
                     // Toggle route favorite
-                    ObaContract.Routes.markAsFavorite(mContext, routeUri, !isRouteFavorite);
+                    ContentValues values = new ContentValues();
+                    values.put(ObaContract.Routes.SHORTNAME,
+                            mHeaderArrivalInfo.get(0).getInfo().getShortName());
+                    values.put(ObaContract.Routes.LONGNAME,
+                            mHeaderArrivalInfo.get(0).getInfo().getRouteLongName());
+                    QueryUtils.insertOrUpdateFavoriteRoute(mContext, routeUri, values,
+                            !isRouteFavorite);
+
                     mController.refreshLocal();
                 }
             });
@@ -749,7 +756,14 @@ class ArrivalsListHeader {
                 @Override
                 public void onClick(View v) {
                     // Toggle route favorite
-                    ObaContract.Routes.markAsFavorite(mContext, routeUri2, !isRouteFavorite2);
+                    ContentValues values = new ContentValues();
+                    values.put(ObaContract.Routes.SHORTNAME,
+                            mHeaderArrivalInfo.get(1).getInfo().getShortName());
+                    values.put(ObaContract.Routes.LONGNAME,
+                            mHeaderArrivalInfo.get(1).getInfo().getRouteLongName());
+                    QueryUtils.insertOrUpdateFavoriteRoute(mContext, routeUri2, values,
+                            !isRouteFavorite2);
+
                     mController.refreshLocal();
                 }
             });

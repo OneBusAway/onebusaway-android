@@ -21,6 +21,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -232,5 +233,31 @@ public final class QueryUtils {
         }
         // If we get this far, assume its not
         return false;
+    }
+
+    /**
+     * Sets the given route as a favorite, including checking to make sure that the route has
+     * already been added to the local provider
+     *
+     * @param routeUri Uri for the route to be added
+     * @param values   content values to be set for the route details (see ObaContract.RouteColumns)
+     *                 (may be null)
+     * @param favorite true if this route should be marked as a favorite, false if it has not
+     * @return true if the route was successfully marked as a favorite, false if it was not
+     */
+    public static boolean insertOrUpdateFavoriteRoute(Context context, Uri routeUri,
+            ContentValues values, boolean favorite) {
+        if (values == null) {
+            values = new ContentValues();
+        }
+        if (Application.get().getCurrentRegion() != null) {
+            values.put(ObaContract.Routes.REGION_ID,
+                    Application.get().getCurrentRegion().getId());
+        }
+
+        String routeId = routeUri.getLastPathSegment();
+        ObaContract.Routes.insertOrUpdate(context, routeId, values, true);
+
+        return ObaContract.Routes.markAsFavorite(context, routeUri, favorite);
     }
 }

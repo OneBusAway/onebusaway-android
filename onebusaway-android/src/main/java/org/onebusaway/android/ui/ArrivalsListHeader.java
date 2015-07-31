@@ -568,9 +568,9 @@ class ArrivalsListHeader {
             int indexFirstEta = ArrivalInfo.findFirstNonNegativeArrival(mArrivalInfo);
             if (indexFirstEta >= 0) {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
-                final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                        mArrivalInfo.get(indexFirstEta).getInfo().getRouteId());
-                boolean isFavorite = QueryUtils.isFavoriteRoute(mContext, routeUri);
+                boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                        mArrivalInfo.get(indexFirstEta).getInfo().getRouteId(),
+                        mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign());
                 mEtaRouteFavorite1.setImageResource(isFavorite ?
                         R.drawable.focus_star_on :
                         R.drawable.focus_star_off);
@@ -590,9 +590,9 @@ class ArrivalsListHeader {
                 // If there is another arrival, fill the second row with it
                 int indexSecondEta = indexFirstEta + 1;
                 if (indexSecondEta < mArrivalInfo.size()) {
-                    final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                            mArrivalInfo.get(indexSecondEta).getInfo().getRouteId());
-                    boolean isFavorite2 = QueryUtils.isFavoriteRoute(mContext, routeUri2);
+                    boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                            mArrivalInfo.get(indexSecondEta).getInfo().getRouteId(),
+                            mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign());
                     mEtaRouteFavorite2.setImageResource(isFavorite2 ?
                             R.drawable.focus_star_on :
                             R.drawable.focus_star_off);
@@ -713,7 +713,9 @@ class ArrivalsListHeader {
             // Setup tapping on star for first row
             final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
                     mHeaderArrivalInfo.get(0).getInfo().getRouteId());
-            final boolean isRouteFavorite = QueryUtils.isFavoriteRoute(mContext, routeUri);
+            final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                    mHeaderArrivalInfo.get(0).getInfo().getRouteId(),
+                    mHeaderArrivalInfo.get(0).getInfo().getHeadsign());
             mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -723,7 +725,8 @@ class ArrivalsListHeader {
                             mHeaderArrivalInfo.get(0).getInfo().getShortName());
                     values.put(ObaContract.Routes.LONGNAME,
                             mHeaderArrivalInfo.get(0).getInfo().getRouteLongName());
-                    QueryUtils.insertOrUpdateFavoriteRoute(mContext, routeUri, values,
+                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri,
+                            mHeaderArrivalInfo.get(0).getInfo().getHeadsign(), values,
                             !isRouteFavorite);
 
                     mController.refreshLocal();
@@ -751,7 +754,9 @@ class ArrivalsListHeader {
             // Setup tapping on star for second row
             final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
                     mHeaderArrivalInfo.get(1).getInfo().getRouteId());
-            final boolean isRouteFavorite2 = QueryUtils.isFavoriteRoute(mContext, routeUri2);
+            final boolean isRouteFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                    mHeaderArrivalInfo.get(1).getInfo().getRouteId(),
+                    mHeaderArrivalInfo.get(1).getInfo().getHeadsign());
             mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -761,7 +766,8 @@ class ArrivalsListHeader {
                             mHeaderArrivalInfo.get(1).getInfo().getShortName());
                     values.put(ObaContract.Routes.LONGNAME,
                             mHeaderArrivalInfo.get(1).getInfo().getRouteLongName());
-                    QueryUtils.insertOrUpdateFavoriteRoute(mContext, routeUri2, values,
+                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri2,
+                            mHeaderArrivalInfo.get(1).getInfo().getHeadsign(), values,
                             !isRouteFavorite2);
 
                     mController.refreshLocal();

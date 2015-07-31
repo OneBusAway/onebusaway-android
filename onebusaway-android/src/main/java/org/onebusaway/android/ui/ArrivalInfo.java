@@ -22,7 +22,6 @@ import org.onebusaway.android.provider.ObaContract;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.net.Uri;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -105,7 +104,7 @@ public final class ArrivalInfo {
 
     private final boolean mPredicted;
 
-    private final boolean mIsRouteFavorite;
+    private final boolean mIsRouteAndHeadsignFavorite;
 
     public ArrivalInfo(Context context, ObaArrivalInfo info, long now) {
         mInfo = info;
@@ -140,9 +139,9 @@ public final class ArrivalInfo {
                 scheduledMins, predictedMins);
 
         // Check if the user has marked this route as a favorite
-        final Uri routeUri = Uri
-                .withAppendedPath(ObaContract.Routes.CONTENT_URI, info.getRouteId());
-        mIsRouteFavorite = QueryUtils.isFavoriteRoute(context, routeUri);
+        mIsRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
+                .isFavorite(context, info.getRouteId(),
+                        info.getHeadsign());
     }
 
     private Integer computeColor(final long scheduled, final long predicted) {
@@ -291,7 +290,7 @@ public final class ArrivalInfo {
      *
      * @return true if this route is a user-designated favorite, false if it is not
      */
-    final boolean isRouteFavorite() {
-        return mIsRouteFavorite;
+    final boolean isRouteAndHeadsignFavorite() {
+        return mIsRouteAndHeadsignFavorite;
     }
 }

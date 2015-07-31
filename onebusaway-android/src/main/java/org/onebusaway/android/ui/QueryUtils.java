@@ -20,7 +20,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -208,56 +207,32 @@ public final class QueryUtils {
                 " OR " + regionFieldName + " IS NULL)";
     }
 
-
-    private static final String[] ROUTE_USER_PROJECTION = {
-            ObaContract.Routes.FAVORITE,
-    };
-
     /**
-     * Returns true if this route is a favorite, false if it does not
-     *
-     * @param routeUri Uri for a route
-     * @return true if this route is a favorite, false if it does not
-     */
-    public static boolean isFavoriteRoute(Context context, Uri routeUri) {
-        ContentResolver cr = context.getContentResolver();
-        Cursor c = cr.query(routeUri, ROUTE_USER_PROJECTION, null, null, null);
-        if (c != null) {
-            try {
-                if (c.moveToNext()) {
-                    return (c.getInt(0) == 1);
-                }
-            } finally {
-                c.close();
-            }
-        }
-        // If we get this far, assume its not
-        return false;
-    }
-
-    /**
-     * Sets the given route as a favorite, including checking to make sure that the route has
-     * already been added to the local provider
+     * Sets the given route and headsign as a favorite, including checking to make sure that the
+     * route has already been added to the local provider
      *
      * @param routeUri Uri for the route to be added
-     * @param values   content values to be set for the route details (see ObaContract.RouteColumns)
+     * @param headsign the headsign to be marked as favorite, along with the routeUri
+     * @param routeValues   content routeValues to be set for the route details (see ObaContract.RouteColumns)
      *                 (may be null)
-     * @param favorite true if this route should be marked as a favorite, false if it has not
-     * @return true if the route was successfully marked as a favorite, false if it was not
+     * @param favorite true if this route/headsign should be marked as a favorite, false if it
+     *                 should not
      */
-    public static boolean insertOrUpdateFavoriteRoute(Context context, Uri routeUri,
-            ContentValues values, boolean favorite) {
-        if (values == null) {
-            values = new ContentValues();
+    public static void setFavoriteRouteAndHeadsign(Context context, Uri routeUri,
+            String headsign, ContentValues routeValues, boolean favorite) {
+        if (routeValues == null) {
+            routeValues = new ContentValues();
         }
         if (Application.get().getCurrentRegion() != null) {
-            values.put(ObaContract.Routes.REGION_ID,
+            routeValues.put(ObaContract.Routes.REGION_ID,
                     Application.get().getCurrentRegion().getId());
         }
 
         String routeId = routeUri.getLastPathSegment();
-        ObaContract.Routes.insertOrUpdate(context, routeId, values, true);
 
-        return ObaContract.Routes.markAsFavorite(context, routeUri, favorite);
+        // Make sure this route has been inserted into the routes table
+        ObaContract.Routes.insertOrUpdate(context, routeId, routeValues, true);
+        // Mark the combination of route and headsign as a favorite or not favorite
+        ObaContract.RouteHeadsignFavorites.markAsFavorite(context, routeId, headsign, favorite);
     }
 }

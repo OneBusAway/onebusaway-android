@@ -27,6 +27,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -42,6 +43,8 @@ import java.util.ArrayList;
  * @author paulw
  */
 public final class ObaContract {
+
+    public static final String TAG = "ObaContract";
 
     /** The authority portion of the URI - defined in build.gradle */
     public static final String AUTHORITY = BuildConfig.DATABASE_AUTHORITY;
@@ -428,6 +431,27 @@ public final class ObaContract {
 
     }
 
+    protected interface RouteHeadsignKeyColumns {
+
+        /**
+         * The referenced Route ID. This may or may not represent a key in the
+         * Routes table.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String ROUTE_ID = "route_id";
+
+        /**
+         * The referenced headsign. This may or may not represent a value in the
+         * Trips table.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String HEADSIGN = "headsign";
+    }
+
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
 
         // Cannot be instantiated
@@ -557,7 +581,7 @@ public final class ObaContract {
             return result;
         }
 
-        public static boolean markAsFavorite(Context context,
+        protected static boolean markAsFavorite(Context context,
                 Uri uri,
                 boolean favorite) {
             ContentResolver cr = context.getContentResolver();
@@ -572,6 +596,33 @@ public final class ObaContract {
             values.put(ObaContract.Routes.USE_COUNT, 0);
             values.putNull(ObaContract.Routes.ACCESS_TIME);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        /**
+         * Returns true if this route is a favorite, false if it does not
+         *
+         * Note that this is NOT specific to headsign.  If you want to know of a combination of a
+         * routeId and headsign is a user favorite, see
+         * RouteHeadsignFavorites.isFavorite(context, routeId, headsign).
+         *
+         * @param routeUri Uri for a route
+         * @return true if this route is a favorite, false if it does not
+         */
+        public static boolean isFavoriteRoute(Context context, Uri routeUri) {
+            ContentResolver cr = context.getContentResolver();
+            String[] ROUTE_USER_PROJECTION = {ObaContract.Routes.FAVORITE};
+            Cursor c = cr.query(routeUri, ROUTE_USER_PROJECTION, null, null, null);
+            if (c != null) {
+                try {
+                    if (c.moveToNext()) {
+                        return (c.getInt(0) == 1);
+                    }
+                } finally {
+                    c.close();
+                }
+            }
+            // If we get this far, assume its not
+            return false;
         }
     }
 
@@ -1087,6 +1138,112 @@ public final class ObaContract {
                 }
             }
             return null;
+        }
+    }
+
+    public static class RouteHeadsignFavorites implements RouteHeadsignKeyColumns, UserColumns {
+
+        // Cannot be instantiated
+        private RouteHeadsignFavorites() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "route_headsign_favorites";
+
+        /** The content:// style URI for this table */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".routeheadsignfavorites";
+
+        private static final String FILTER_WHERE = ROUTE_ID + "=? AND " + HEADSIGN + "=?";
+
+        /**
+         * Set the specified route and headsign combination as a favorite.  Note that this will
+         * also
+         * handle the marking/unmarking of the designated route as the favorite as well.  The route
+         * is marked as not a favorite when no more routeId/headsign combinations remain.
+         *
+         * @param routeId  routeId to be marked as favorite, in combination with headsign
+         * @param headsign headsign to be marked as favorite, in combination with routeId
+         * @param favorite true if this route and headsign combination should be marked as a
+         *                 favorite,
+         *                 false if it should not
+         */
+        public static void markAsFavorite(Context context, String routeId, String headsign,
+                boolean favorite) {
+            if (context == null) {
+                return;
+            }
+
+            ContentResolver cr = context.getContentResolver();
+            Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
+
+            if (favorite) {
+                // Mark as favorite by inserting a record for this route/headsign combo
+                ContentValues values = new ContentValues();
+                values.put(ROUTE_ID, routeId);
+                values.put(HEADSIGN, headsign);
+                cr.insert(CONTENT_URI, values);
+
+                // Mark the route as a favorite also in the routes table
+                Routes.markAsFavorite(context, routeUri, true);
+            } else {
+                // Deselect it as favorite by deleting all records for this route/headsign combo
+                final String[] selectionArgs = {routeId, headsign};
+                int count = cr.delete(CONTENT_URI, FILTER_WHERE, selectionArgs);
+                Log.d(TAG, "For route_headsign_favorite, deleted " + count);
+
+                // If there are no more route/headsign combinations that are favorites for this route,
+                // then mark the route as not a favorite
+                if (!isFavorite(context, routeId)) {
+                    Routes.markAsFavorite(context, routeUri, false);
+                }
+            }
+        }
+
+        /**
+         * Returns true if this combination of routeId and headsign is a favorite, false if it is
+         * not
+         *
+         * @param routeId  The routeId to check for favorite
+         * @param headsign The headsign to check for favorite
+         * @return true if this combination of routeId and headsign is a favorite, false if it is
+         * not
+         */
+        public static boolean isFavorite(Context context, String routeId, String headsign) {
+            final String[] selection = {ROUTE_ID, HEADSIGN};
+            final String[] selectionArgs = {routeId, headsign};
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE,
+                    selectionArgs, null);
+            if (c != null && c.getCount() > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Returns true if this routeId is listed as a favorite for at least one headsign, or false
+         * if it is not
+         *
+         * @param routeId The routeId to check for favorite
+         * @return true if this routeId is listed as a favorite for at least one headsign, or false
+         * if it is not
+         */
+        private static boolean isFavorite(Context context, String routeId) {
+            final String[] selection = {ROUTE_ID};
+            final String[] selectionArgs = {routeId};
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE,
+                    selectionArgs, null);
+            if (c != null && c.getCount() > 0) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 }

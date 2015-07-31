@@ -155,7 +155,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.theme_primary));
 
-        starBtn.setImageResource(stopInfo.isRouteFavorite() ?
+        starBtn.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
 
@@ -170,8 +170,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 ContentValues values = new ContentValues();
                 values.put(ObaContract.Routes.SHORTNAME, stopInfo.getInfo().getShortName());
                 values.put(ObaContract.Routes.LONGNAME, stopInfo.getInfo().getRouteLongName());
-                QueryUtils.insertOrUpdateFavoriteRoute(getContext(), routeUri, values,
-                        !stopInfo.isRouteFavorite());
+                QueryUtils.setFavoriteRouteAndHeadsign(getContext(), routeUri,
+                        stopInfo.getInfo().getHeadsign(), values,
+                        !stopInfo.isRouteAndHeadsignFavorite());
                 mFragment.refreshLocal();
             }
         });

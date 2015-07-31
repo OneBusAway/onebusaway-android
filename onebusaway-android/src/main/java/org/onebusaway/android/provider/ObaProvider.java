@@ -633,7 +633,7 @@ public class ObaProvider extends ContentProvider {
                     throw new IllegalArgumentException("Need a route ID to insert! " + uri);
                 }
                 result = Uri.withAppendedPath(ObaContract.RouteHeadsignFavorites.CONTENT_URI, id);
-                mFilterInserter.insert(values);
+                mRouteHeadsignFavoritesInserter.insert(values);
                 return result;
 
             // What would these mean, anyway??

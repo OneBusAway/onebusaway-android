@@ -75,12 +75,19 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                     ArrivalInfo.convertObaArrivalInfo(getContext(),
                             arrivals, routesFilter, currentTime);
 
-            // Sort list by route
+            // Sort list by route and headsign, in that order
             Collections.sort(list, new Comparator<ArrivalInfo>() {
                 @Override
                 public int compare(ArrivalInfo s1, ArrivalInfo s2) {
-                    return mAlphanumComparator
+                    int routeCompare = mAlphanumComparator
                             .compare(s1.getInfo().getRouteId(), s2.getInfo().getRouteId());
+                    if (routeCompare != 0) {
+                        return routeCompare;
+                    } else {
+                        // Compare headsigns when the route is the same
+                        return mAlphanumComparator
+                                .compare(s1.getInfo().getHeadsign(), s2.getInfo().getHeadsign());
+                    }
                 }
             });
 
@@ -88,18 +95,25 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 ArrayList<CombinedArrivalInfoStyleB> newList
                         = new ArrayList<CombinedArrivalInfoStyleB>();
                 String currentRouteName = null;
+                String currentHeadsign = null;
                 CombinedArrivalInfoStyleB cArrivalInfo = new CombinedArrivalInfoStyleB();
                 for (int i = 0; i < list.size(); i++) {
+                    // Skip all negative arrivals
                     if (list.get(i).getEta() < 0)
                         continue;
 
                     if (currentRouteName == null) {
+                        // Initialize fields
                         currentRouteName = list.get(i).getInfo().getRouteId();
+                        currentHeadsign = list.get(i).getInfo().getHeadsign();
                     } else {
-                        if (!currentRouteName.equals(list.get(i).getInfo().getRouteId())) {
+                        if (!currentRouteName.equals(list.get(i).getInfo().getRouteId()) ||
+                                !currentHeadsign.equals(list.get(i).getInfo().getHeadsign())) {
+                            // Create a new card
                             newList.add(cArrivalInfo);
                             cArrivalInfo = new CombinedArrivalInfoStyleB();
                             currentRouteName = list.get(i).getInfo().getRouteId();
+                            currentHeadsign = list.get(i).getInfo().getHeadsign();
                         }
                     }
                     cArrivalInfo.getArrivalInfoList().add(list.get(i));

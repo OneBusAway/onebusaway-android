@@ -896,7 +896,7 @@ public class ObaProvider extends ContentProvider {
                         whereLong(ObaContract.RegionBounds._ID, uri), selectionArgs);
 
             case ROUTE_HEADSIGN_FAVORITES:
-                return db.delete(ObaContract.StopRouteFilters.PATH, selection, selectionArgs);
+                return db.delete(ObaContract.RouteHeadsignFavorites.PATH, selection, selectionArgs);
 
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);

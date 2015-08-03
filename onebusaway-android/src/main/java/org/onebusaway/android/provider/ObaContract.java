@@ -608,7 +608,7 @@ public final class ObaContract {
          * @param routeUri Uri for a route
          * @return true if this route is a favorite, false if it does not
          */
-        public static boolean isFavoriteRoute(Context context, Uri routeUri) {
+        public static boolean isFavorite(Context context, Uri routeUri) {
             ContentResolver cr = context.getContentResolver();
             String[] ROUTE_USER_PROJECTION = {ObaContract.Routes.FAVORITE};
             Cursor c = cr.query(routeUri, ROUTE_USER_PROJECTION, null, null, null);

@@ -81,6 +81,10 @@
         <item>Show only this route</item>
         <item>Report problem with trip</item>
     </string-array>
+    <string-array name="route_favorite_options">
+        <item>All stops</item>
+        <item>This stop</item>
+    </string-array>
     <string-array name="search_stop_options">
         <item>Show arrivals</item>
         <item>Show on map</item>

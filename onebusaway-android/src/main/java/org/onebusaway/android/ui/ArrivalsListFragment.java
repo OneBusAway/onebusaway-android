@@ -40,6 +40,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.database.Cursor;
@@ -580,7 +581,7 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.stop_info_item_options_title);
 
-        String routeId = arrivalInfo.getInfo().getRouteId();
+        final String routeId = arrivalInfo.getInfo().getRouteId();
         final ObaRoute route = response.getRoute(routeId);
         final String url = route != null ? route.getUrl() : null;
         final boolean hasUrl = !TextUtils.isEmpty(url);
@@ -598,15 +599,26 @@ public class ArrivalsListFragment extends ListFragment
         builder.setItems(options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
-                    // Toggle route favorite
-                    ContentValues values = new ContentValues();
-                    values.put(ObaContract.Routes.SHORTNAME, route.getShortName());
-                    values.put(ObaContract.Routes.LONGNAME, route.getLongName());
-                    values.put(ObaContract.Routes.URL, route.getUrl());
-                    QueryUtils.setFavoriteRouteAndHeadsign(getActivity(), routeUri,
-                            arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId(),
-                            values, !isRouteFavorite);
-                    refreshLocal();
+                    // Show dialog for setting route favorite
+                    RouteFavoriteDialogFragment routeDialog
+                            = new RouteFavoriteDialogFragment.Builder(
+                            route.getId(), arrivalInfo.getInfo().getHeadsign())
+                            .setRouteShortName(route.getShortName())
+                            .setRouteLongName(arrivalInfo.getInfo().getRouteLongName())
+                            .setRouteUrl(route.getUrl())
+                            .setStopId(arrivalInfo.getInfo().getStopId())
+                            .setFavorite(!isRouteFavorite)
+                            .build();
+
+                    routeDialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
+                        @Override
+                        public void onSelectionComplete(boolean savedFavorite) {
+                            if (savedFavorite) {
+                                refreshLocal();
+                            }
+                        }
+                    });
+                    routeDialog.show(getFragmentManager(), RouteFavoriteDialogFragment.TAG);
                 } else if (which == 1) {
                     goToTrip(arrivalInfo);
                 } else if (which == 2) {
@@ -1030,7 +1042,7 @@ public class ArrivalsListFragment extends ListFragment
         if (mHeader == null && mExternalHeader == false) {
             // We should use the header contained in this fragment's layout, if none was provided
             // by the Activity via setHeader()
-            mHeader = new ArrivalsListHeader(getActivity(), this);
+            mHeader = new ArrivalsListHeader(getActivity(), this, getFragmentManager());
             mHeaderView = getView().findViewById(R.id.arrivals_list_header);
             mHeader.initView(mHeaderView);
             mHeader.showExpandCollapseIndicator(false);
@@ -1047,7 +1059,7 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     public static class RoutesFilterDialog extends DialogFragment
-            implements DialogInterface.OnMultiChoiceClickListener,
+            implements OnMultiChoiceClickListener,
             DialogInterface.OnClickListener {
 
         static final String ITEMS = ".items";

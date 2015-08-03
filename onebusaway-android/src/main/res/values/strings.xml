@@ -227,6 +227,8 @@
     </string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->
+    <string name="route_favorite_options_title_star">Add star to this route for:</string>
+    <string name="route_favorite_options_title_unstar">Remove star from this route for:</string>
 
     <string name="my_option_clear_recent_stops">Clear recent stops</string>
     <string name="my_option_clear_recent_routes">Clear recent routes</string>

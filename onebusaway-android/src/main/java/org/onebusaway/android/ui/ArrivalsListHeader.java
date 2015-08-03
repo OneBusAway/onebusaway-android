@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
@@ -119,6 +120,8 @@ class ArrivalsListHeader {
     private Controller mController;
 
     private Context mContext;
+
+    private FragmentManager mFragmentManager;
 
     //
     // Cached views
@@ -232,9 +235,10 @@ class ArrivalsListHeader {
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
 
-    ArrivalsListHeader(Context context, Controller controller) {
+    ArrivalsListHeader(Context context, Controller controller, FragmentManager fm) {
         mController = controller;
         mContext = context;
+        mFragmentManager = fm;
 
         // Retrieve and cache the system's default "short" animation time.
         mShortAnimationDuration = mContext.getResources().getInteger(
@@ -722,14 +726,25 @@ class ArrivalsListHeader {
             mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Toggle route favorite
-                    ContentValues values = new ContentValues();
-                    values.put(ObaContract.Routes.SHORTNAME, info1.getShortName());
-                    values.put(ObaContract.Routes.LONGNAME, info1.getRouteLongName());
-                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri,
-                            info1.getHeadsign(), info1.getStopId(), values, !isRouteFavorite);
+                    // Show dialog for setting route favorite
+                    RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
+                            info1.getRouteId(), info1.getHeadsign())
+                            .setRouteShortName(info1.getShortName())
+                            .setRouteLongName(info1.getRouteLongName())
+                            .setStopId(info1.getStopId())
+                            .setFavorite(!isRouteFavorite)
+                            .build();
 
-                    mController.refreshLocal();
+                    dialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
+                        @Override
+                        public void onSelectionComplete(boolean savedFavorite) {
+                            if (savedFavorite) {
+                                mController.refreshLocal();
+                            }
+                        }
+                    });
+                    dialog.show(mFragmentManager, RouteFavoriteDialogFragment.TAG);
+
                 }
             });
 
@@ -761,14 +776,24 @@ class ArrivalsListHeader {
             mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Toggle route favorite
-                    ContentValues values = new ContentValues();
-                    values.put(ObaContract.Routes.SHORTNAME, info2.getShortName());
-                    values.put(ObaContract.Routes.LONGNAME, info2.getRouteLongName());
-                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri2, info2.getHeadsign(),
-                            info2.getStopId(), values, !isRouteFavorite2);
+                    // Show dialog for setting route favorite
+                    RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
+                            info2.getRouteId(), info2.getHeadsign())
+                            .setRouteShortName(info2.getShortName())
+                            .setRouteLongName(info2.getRouteLongName())
+                            .setStopId(info2.getStopId())
+                            .setFavorite(!isRouteFavorite2)
+                            .build();
 
-                    mController.refreshLocal();
+                    dialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
+                        @Override
+                        public void onSelectionComplete(boolean savedFavorite) {
+                            if (savedFavorite) {
+                                mController.refreshLocal();
+                            }
+                        }
+                    });
+                    dialog.show(mFragmentManager, RouteFavoriteDialogFragment.TAG);
                 }
             });
 

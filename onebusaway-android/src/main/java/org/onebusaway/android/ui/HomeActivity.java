@@ -710,7 +710,8 @@ public class HomeActivity extends ActionBarActivity
         mArrivalsListFragment.setListener(this);
 
         // Set the header for the arrival list to be the top of the sliding panel
-        mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment);
+        mArrivalsListHeader = new ArrivalsListHeader(this, mArrivalsListFragment,
+                getSupportFragmentManager());
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());

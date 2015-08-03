@@ -28,7 +28,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -162,18 +161,24 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         starBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Toggle route favorite
-                final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                        stopInfo.getInfo().getRouteId());
+                // Show dialog for setting route favorite
+                RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
+                        stopInfo.getInfo().getRouteId(), stopInfo.getInfo().getHeadsign())
+                        .setRouteShortName(stopInfo.getInfo().getShortName())
+                        .setRouteLongName(stopInfo.getInfo().getRouteLongName())
+                        .setStopId(stopInfo.getInfo().getStopId())
+                        .setFavorite(!stopInfo.isRouteAndHeadsignFavorite())
+                        .build();
 
-                // Toggle route favorite
-                ContentValues values = new ContentValues();
-                values.put(ObaContract.Routes.SHORTNAME, stopInfo.getInfo().getShortName());
-                values.put(ObaContract.Routes.LONGNAME, stopInfo.getInfo().getRouteLongName());
-                QueryUtils.setFavoriteRouteAndHeadsign(getContext(), routeUri,
-                        stopInfo.getInfo().getHeadsign(), stopInfo.getInfo().getStopId(), values,
-                        !stopInfo.isRouteAndHeadsignFavorite());
-                mFragment.refreshLocal();
+                dialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
+                    @Override
+                    public void onSelectionComplete(boolean savedFavorite) {
+                        if (savedFavorite) {
+                            mFragment.refreshLocal();
+                        }
+                    }
+                });
+                dialog.show(mFragment.getFragmentManager(), RouteFavoriteDialogFragment.TAG);
             }
         });
 

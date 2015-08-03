@@ -19,6 +19,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIHelp;
@@ -570,7 +571,8 @@ class ArrivalsListHeader {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
                 boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                         mArrivalInfo.get(indexFirstEta).getInfo().getRouteId(),
-                        mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign());
+                        mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign(),
+                        mArrivalInfo.get(indexFirstEta).getInfo().getStopId());
                 mEtaRouteFavorite1.setImageResource(isFavorite ?
                         R.drawable.focus_star_on :
                         R.drawable.focus_star_off);
@@ -592,7 +594,8 @@ class ArrivalsListHeader {
                 if (indexSecondEta < mArrivalInfo.size()) {
                     boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                             mArrivalInfo.get(indexSecondEta).getInfo().getRouteId(),
-                            mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign());
+                            mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign(),
+                            mArrivalInfo.get(indexSecondEta).getInfo().getStopId());
                     mEtaRouteFavorite2.setImageResource(isFavorite2 ?
                             R.drawable.focus_star_on :
                             R.drawable.focus_star_off);
@@ -711,23 +714,20 @@ class ArrivalsListHeader {
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
 
             // Setup tapping on star for first row
+            final ObaArrivalInfo info1 = mHeaderArrivalInfo.get(0).getInfo();
             final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                    mHeaderArrivalInfo.get(0).getInfo().getRouteId());
+                    info1.getRouteId());
             final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
-                    mHeaderArrivalInfo.get(0).getInfo().getRouteId(),
-                    mHeaderArrivalInfo.get(0).getInfo().getHeadsign());
+                    info1.getRouteId(), info1.getHeadsign(), info1.getStopId());
             mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // Toggle route favorite
                     ContentValues values = new ContentValues();
-                    values.put(ObaContract.Routes.SHORTNAME,
-                            mHeaderArrivalInfo.get(0).getInfo().getShortName());
-                    values.put(ObaContract.Routes.LONGNAME,
-                            mHeaderArrivalInfo.get(0).getInfo().getRouteLongName());
+                    values.put(ObaContract.Routes.SHORTNAME, info1.getShortName());
+                    values.put(ObaContract.Routes.LONGNAME, info1.getRouteLongName());
                     QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri,
-                            mHeaderArrivalInfo.get(0).getInfo().getHeadsign(), values,
-                            !isRouteFavorite);
+                            info1.getHeadsign(), info1.getStopId(), values, !isRouteFavorite);
 
                     mController.refreshLocal();
                 }
@@ -752,23 +752,21 @@ class ArrivalsListHeader {
             UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
 
             // Setup tapping on star for second row
+            final ObaArrivalInfo info2 = mHeaderArrivalInfo.get(1).getInfo();
+
             final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                    mHeaderArrivalInfo.get(1).getInfo().getRouteId());
+                    info2.getRouteId());
             final boolean isRouteFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
-                    mHeaderArrivalInfo.get(1).getInfo().getRouteId(),
-                    mHeaderArrivalInfo.get(1).getInfo().getHeadsign());
+                    info2.getRouteId(), info2.getHeadsign(), info2.getStopId());
             mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // Toggle route favorite
                     ContentValues values = new ContentValues();
-                    values.put(ObaContract.Routes.SHORTNAME,
-                            mHeaderArrivalInfo.get(1).getInfo().getShortName());
-                    values.put(ObaContract.Routes.LONGNAME,
-                            mHeaderArrivalInfo.get(1).getInfo().getRouteLongName());
-                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri2,
-                            mHeaderArrivalInfo.get(1).getInfo().getHeadsign(), values,
-                            !isRouteFavorite2);
+                    values.put(ObaContract.Routes.SHORTNAME, info2.getShortName());
+                    values.put(ObaContract.Routes.LONGNAME, info2.getRouteLongName());
+                    QueryUtils.setFavoriteRouteAndHeadsign(mContext, routeUri2, info2.getHeadsign(),
+                            info2.getStopId(), values, !isRouteFavorite2);
 
                     mController.refreshLocal();
                 }

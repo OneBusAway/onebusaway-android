@@ -27,7 +27,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -431,16 +430,7 @@ public final class ObaContract {
 
     }
 
-    protected interface RouteHeadsignKeyColumns {
-
-        /**
-         * The referenced Route ID. This may or may not represent a key in the
-         * Routes table.
-         * <P>
-         * Type: TEXT
-         * </P>
-         */
-        public static final String ROUTE_ID = "route_id";
+    protected interface RouteHeadsignKeyColumns extends StopRouteKeyColumns {
 
         /**
          * The referenced headsign. This may or may not represent a value in the
@@ -1141,6 +1131,16 @@ public final class ObaContract {
         }
     }
 
+    /**
+     * Supports storing user-defined favorites for route/headsign/stop combinations.  When the user
+     * favorites a route/headsign combination in the ArrivalsListFragment/Header, they are prompted
+     * if they would like to make it a favorite for the current stop, or for all stops.  If they
+     * make it a favorite for the current stop, a record with routeId/headsign/stopId is created.
+     * If they make it a favorite for all stops, a record with routeId/headsign/ALL_STOPS is
+     * created.  When arrival times are displayed for a given stopId, if a record in the database
+     * with routeId/headsign/ALL_STOPS or routeId?headsign/stopId matches, then it is shown as a
+     * favorite.  Otherwise, it is not shown as a favorite.
+     */
     public static class RouteHeadsignFavorites implements RouteHeadsignKeyColumns, UserColumns {
 
         // Cannot be instantiated
@@ -1157,22 +1157,28 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".routeheadsignfavorites";
 
-        private static final String FILTER_WHERE = ROUTE_ID + "=? AND " + HEADSIGN + "=?";
+        private static final String FILTER_WHERE = ROUTE_ID + "=? AND " + HEADSIGN + "=? AND "
+                + STOP_ID + "=?";
+
+        // String used to indicate that a route/headsign combination is a favorite for all stops
+        private static final String ALL_STOPS = "all";
 
         /**
-         * Set the specified route and headsign combination as a favorite.  Note that this will
-         * also
-         * handle the marking/unmarking of the designated route as the favorite as well.  The route
-         * is marked as not a favorite when no more routeId/headsign combinations remain.
+         * Set the specified route and headsign combination as a favorite, optionally for a specific
+         * stop.  Note that this will also handle the marking/unmarking of the designated route as
+         * the favorite as well.  The route is marked as not a favorite when no more
+         * routeId/headsign combinations remain.  If marking the route/headsign as favorite for
+         * all stops, then stopId should be null.
          *
          * @param routeId  routeId to be marked as favorite, in combination with headsign
          * @param headsign headsign to be marked as favorite, in combination with routeId
+         * @param stopId stopId to be marked as a favorite, or null if all stopIds should be marked
+         *               for this routeId/headsign combo.
          * @param favorite true if this route and headsign combination should be marked as a
-         *                 favorite,
-         *                 false if it should not
+         *                 favorite, false if it should not
          */
-        public static void markAsFavorite(Context context, String routeId, String headsign,
-                boolean favorite) {
+        public static void markAsFavorite(Context context, String routeId, String headsign, String
+                stopId, boolean favorite) {
             if (context == null) {
                 return;
             }
@@ -1180,20 +1186,27 @@ public final class ObaContract {
             ContentResolver cr = context.getContentResolver();
             Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
 
+            String stopIdInternal;
+            if (stopId != null) {
+                stopIdInternal = stopId;
+            } else {
+                stopIdInternal = ALL_STOPS;
+            }
+
             if (favorite) {
                 // Mark as favorite by inserting a record for this route/headsign combo
                 ContentValues values = new ContentValues();
                 values.put(ROUTE_ID, routeId);
                 values.put(HEADSIGN, headsign);
+                values.put(STOP_ID, stopIdInternal);
                 cr.insert(CONTENT_URI, values);
 
                 // Mark the route as a favorite also in the routes table
                 Routes.markAsFavorite(context, routeUri, true);
             } else {
                 // Deselect it as favorite by deleting all records for this route/headsign combo
-                final String[] selectionArgs = {routeId, headsign};
+                final String[] selectionArgs = {routeId, headsign, stopIdInternal};
                 int count = cr.delete(CONTENT_URI, FILTER_WHERE, selectionArgs);
-                Log.d(TAG, "For route_headsign_favorite, deleted " + count);
 
                 // If there are no more route/headsign combinations that are favorites for this route,
                 // then mark the route as not a favorite
@@ -1204,25 +1217,34 @@ public final class ObaContract {
         }
 
         /**
-         * Returns true if this combination of routeId and headsign is a favorite, false if it is
-         * not
+         * Returns true if this combination of routeId and headsign is a favorite for this stop
+         * or all stops, false if it is not
          *
          * @param routeId  The routeId to check for favorite
          * @param headsign The headsign to check for favorite
-         * @return true if this combination of routeId and headsign is a favorite, false if it is
-         * not
+         * @param stopId The stopId to check for favorite
+         * @return true if this combination of routeId and headsign is a favorite for this stop
+         * or all stops, false if it is not
          */
-        public static boolean isFavorite(Context context, String routeId, String headsign) {
-            final String[] selection = {ROUTE_ID, HEADSIGN};
-            final String[] selectionArgs = {routeId, headsign};
+        public static boolean isFavorite(Context context, String routeId, String headsign,
+                String stopId) {
+            final String[] selection = {ROUTE_ID, HEADSIGN, STOP_ID};
+            final String[] selectionArgs = {routeId, headsign, stopId};
             ContentResolver cr = context.getContentResolver();
             Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE,
                     selectionArgs, null);
-            boolean favorite = false;
+            boolean favorite;
             if (c != null && c.getCount() > 0) {
                 favorite = true;
             } else {
-                favorite = false;
+                // Check again to see if the user has favorited this route/headsign combo for all stops
+                final String[] selectionArgs2 = {routeId, headsign, ALL_STOPS};
+                Cursor c2 = cr.query(CONTENT_URI, selection, FILTER_WHERE,
+                        selectionArgs2, null);
+                favorite = c2 != null && c2.getCount() > 0;
+                if (c2 != null) {
+                    c2.close();
+                }
             }
             if (c != null) {
                 c.close();

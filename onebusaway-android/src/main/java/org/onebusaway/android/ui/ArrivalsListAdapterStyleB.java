@@ -171,7 +171,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 values.put(ObaContract.Routes.SHORTNAME, stopInfo.getInfo().getShortName());
                 values.put(ObaContract.Routes.LONGNAME, stopInfo.getInfo().getRouteLongName());
                 QueryUtils.setFavoriteRouteAndHeadsign(getContext(), routeUri,
-                        stopInfo.getInfo().getHeadsign(), values,
+                        stopInfo.getInfo().getHeadsign(), stopInfo.getInfo().getStopId(), values,
                         !stopInfo.isRouteAndHeadsignFavorite());
                 mFragment.refreshLocal();
             }

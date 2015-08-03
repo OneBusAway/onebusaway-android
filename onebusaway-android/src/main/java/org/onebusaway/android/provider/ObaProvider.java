@@ -203,7 +203,9 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.RouteHeadsignFavorites.PATH + " (" +
                                 ObaContract.RouteHeadsignFavorites.ROUTE_ID + " VARCHAR NOT NULL, "
                                 +
-                                ObaContract.RouteHeadsignFavorites.HEADSIGN + " VARCHAR NOT NULL" +
+                                ObaContract.RouteHeadsignFavorites.HEADSIGN + " VARCHAR NOT NULL, "
+                                +
+                                ObaContract.RouteHeadsignFavorites.STOP_ID + " VARCHAR NOT NULL" +
                                 ");");
             }
         }

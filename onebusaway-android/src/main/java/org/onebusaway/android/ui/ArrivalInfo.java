@@ -138,10 +138,10 @@ public final class ArrivalInfo {
         mStatusText = computeStatusLabel(context, info, now, predicted,
                 scheduledMins, predictedMins);
 
-        // Check if the user has marked this route as a favorite
+        // Check if the user has marked this routeId/headsign/stopId as a favorite
         mIsRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
                 .isFavorite(context, info.getRouteId(),
-                        info.getHeadsign());
+                        info.getHeadsign(), info.getStopId());
     }
 
     private Integer computeColor(final long scheduled, final long predicted) {

@@ -208,18 +208,21 @@ public final class QueryUtils {
     }
 
     /**
-     * Sets the given route and headsign as a favorite, including checking to make sure that the
-     * route has already been added to the local provider
+     * Sets the given route and headsign and stop as a favorite, including checking to make sure that the
+     * route has already been added to the local provider.  If this route/headsign should be marked
+     * as a favorite for all stops, stopId should be null.
      *
      * @param routeUri Uri for the route to be added
      * @param headsign the headsign to be marked as favorite, along with the routeUri
+     * @param stopId the stopId to be marked as a favorite, along with with route and headsign.  If
+     *               this route/headsign should be marked for all stops, then stopId should be null
      * @param routeValues   content routeValues to be set for the route details (see ObaContract.RouteColumns)
      *                 (may be null)
      * @param favorite true if this route/headsign should be marked as a favorite, false if it
      *                 should not
      */
     public static void setFavoriteRouteAndHeadsign(Context context, Uri routeUri,
-            String headsign, ContentValues routeValues, boolean favorite) {
+            String headsign, String stopId, ContentValues routeValues, boolean favorite) {
         if (routeValues == null) {
             routeValues = new ContentValues();
         }
@@ -233,6 +236,7 @@ public final class QueryUtils {
         // Make sure this route has been inserted into the routes table
         ObaContract.Routes.insertOrUpdate(context, routeId, routeValues, true);
         // Mark the combination of route and headsign as a favorite or not favorite
-        ObaContract.RouteHeadsignFavorites.markAsFavorite(context, routeId, headsign, favorite);
+        ObaContract.RouteHeadsignFavorites
+                .markAsFavorite(context, routeId, headsign, stopId, favorite);
     }
 }

@@ -591,7 +591,7 @@ public class ArrivalsListFragment extends ListFragment
         // Check route favorite, for whether we show "Add star" or "Remove star"
         final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(getActivity(),
-                routeId, arrivalInfo.getInfo().getHeadsign());
+                routeId, arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 
         int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
 
@@ -604,7 +604,8 @@ public class ArrivalsListFragment extends ListFragment
                     values.put(ObaContract.Routes.LONGNAME, route.getLongName());
                     values.put(ObaContract.Routes.URL, route.getUrl());
                     QueryUtils.setFavoriteRouteAndHeadsign(getActivity(), routeUri,
-                            arrivalInfo.getInfo().getHeadsign(), values, !isRouteFavorite);
+                            arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId(),
+                            values, !isRouteFavorite);
                     refreshLocal();
                 } else if (which == 1) {
                     goToTrip(arrivalInfo);

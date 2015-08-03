@@ -1218,11 +1218,16 @@ public final class ObaContract {
             ContentResolver cr = context.getContentResolver();
             Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE,
                     selectionArgs, null);
+            boolean favorite = false;
             if (c != null && c.getCount() > 0) {
-                return true;
+                favorite = true;
             } else {
-                return false;
+                favorite = false;
             }
+            if (c != null) {
+                c.close();
+            }
+            return favorite;
         }
 
         /**
@@ -1239,11 +1244,16 @@ public final class ObaContract {
             ContentResolver cr = context.getContentResolver();
             Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE,
                     selectionArgs, null);
+            boolean favorite = false;
             if (c != null && c.getCount() > 0) {
-                return true;
+                favorite = true;
             } else {
-                return false;
+                favorite = false;
             }
+            if (c != null) {
+                c.close();
+            }
+            return favorite;
         }
     }
 }

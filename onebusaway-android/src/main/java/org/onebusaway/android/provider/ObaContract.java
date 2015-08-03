@@ -601,7 +601,7 @@ public final class ObaContract {
         /**
          * Returns true if this route is a favorite, false if it does not
          *
-         * Note that this is NOT specific to headsign.  If you want to know of a combination of a
+         * Note that this is NOT specific to headsign.  If you want to know if a combination of a
          * routeId and headsign is a user favorite, see
          * RouteHeadsignFavorites.isFavorite(context, routeId, headsign).
          *

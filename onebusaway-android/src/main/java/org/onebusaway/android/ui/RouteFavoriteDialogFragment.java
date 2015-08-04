@@ -31,9 +31,9 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
     private static final String KEY_FAVORITE = "favorite";
 
     // Selections need to match strings.xml "route_favorite_options"
-    private static final int SELECTION_ALL_STOPS = 0;
+    private static final int SELECTION_THIS_STOP = 0;
 
-    private static final int SELECTION_THIS_STOP = 1;
+    private static final int SELECTION_ALL_STOPS = 1;
 
     private Callback mCallback;
 
@@ -160,8 +160,8 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        // Default to the first element in the list, which is "All stops"
-        mSelectedItem = SELECTION_ALL_STOPS;
+        // Default to the first element in the list, which is "This stop"
+        mSelectedItem = SELECTION_THIS_STOP;
         int title;
         if (favorite) {
             title = R.string.route_favorite_options_title_star;
@@ -180,17 +180,17 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int id) {
-                                if (mSelectedItem == SELECTION_ALL_STOPS) {
-                                    Log.d(TAG, "All stops");
-                                    // Saved the favorite for all stops by passing null as stopId
-                                    QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
-                                            routeUri, headsign, null, values, favorite);
-                                    mCallback.onSelectionComplete(true);
-                                } else {
+                                if (mSelectedItem == SELECTION_THIS_STOP) {
                                     Log.d(TAG, "This stop");
                                     // Saved the favorite for just this stop
                                     QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
                                             routeUri, headsign, stopId, values, favorite);
+                                    mCallback.onSelectionComplete(true);
+                                } else {
+                                    Log.d(TAG, "All stops");
+                                    // Saved the favorite for all stops by passing null as stopId
+                                    QueryUtils.setFavoriteRouteAndHeadsign(getActivity(),
+                                            routeUri, headsign, null, values, favorite);
                                     mCallback.onSelectionComplete(true);
                                 }
                             }

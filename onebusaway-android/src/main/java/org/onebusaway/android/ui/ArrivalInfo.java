@@ -74,7 +74,8 @@ public final class ArrivalInfo {
      * Returns the index in the provided infoList for the first non-negative arrival ETA in the
      * list, or -1 if no non-negative ETAs exist in the list
      *
-     * @param infoList list to search for non-negative arrival times
+     * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
+     *                 negative infinity to positive infinity
      * @return the index in the provided infoList for the first non-negative arrival ETA in the
      * list, or -1 if no non-negative ETAs exist in the list
      */
@@ -87,6 +88,57 @@ public final class ArrivalInfo {
         }
         // We didn't find any non-negative ETAs
         return -1;
+    }
+
+    /**
+     * Returns the indexes in the provided infoList for the preferred route/headsign combinations
+     * to be prioritized for displayed in the header, or null if no non-negative ETAs exist in the
+     * list.  If no route/headsign combinations are favorited, the indexes returned may simply be
+     * the indexes of the first (and second, if it exists) non-negative arrival times.
+     *
+     * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
+     *                 negative infinity to positive infinity
+     * @return the indexes in the provided infoList for the preferred route/headsign combinations
+     * to be prioritized for displayed in the header, or null if no non-negative ETAs exist in the
+     * list
+     */
+    public static ArrayList<Integer> findPreferredArrivalIndexes(ArrayList<ArrivalInfo> infoList) {
+        // Start by getting the index of the first non-negative arrival time
+        int firstIndex = findFirstNonNegativeArrival(infoList);
+        if (firstIndex == -1) {
+            return null;
+        }
+        // Find any favorites
+        ArrayList<Integer> preferredIndexes = new ArrayList<>();
+        for (int i = firstIndex; i < infoList.size(); i++) {
+            ArrivalInfo info = infoList.get(i);
+            if (info.isRouteAndHeadsignFavorite()) {
+                preferredIndexes.add(i);
+            }
+        }
+
+        // If we have at least two favorites, that's enough to fill the header - return them
+        if (preferredIndexes.size() >= 2) {
+            return preferredIndexes;
+        }
+
+        // If we have one favorite, and the index is different from the firstIndex, then add the firstIndex and return
+        if (preferredIndexes.size() == 1 && preferredIndexes.get(0) != firstIndex) {
+            preferredIndexes.add(firstIndex);
+        }
+
+        // If we have no preferred indexes (i.e., starred route/headsigns) at this point, then add the firstIndex
+        if (preferredIndexes.size() == 0) {
+            preferredIndexes.add(firstIndex);
+
+            // If there is another non-negative arrival time, then add it too
+            int secondIndex = firstIndex + 1;
+            if (secondIndex < infoList.size()) {
+                preferredIndexes.add(secondIndex);
+            }
+        }
+
+        return preferredIndexes;
     }
 
 
@@ -254,7 +306,7 @@ public final class ArrivalInfo {
         return mInfo;
     }
 
-    final long getEta() {
+    public final long getEta() {
         return mEta;
     }
 
@@ -290,7 +342,7 @@ public final class ArrivalInfo {
      *
      * @return true if this route is a user-designated favorite, false if it is not
      */
-    final boolean isRouteAndHeadsignFavorite() {
+    public final boolean isRouteAndHeadsignFavorite() {
         return mIsRouteAndHeadsignFavorite;
     }
 }

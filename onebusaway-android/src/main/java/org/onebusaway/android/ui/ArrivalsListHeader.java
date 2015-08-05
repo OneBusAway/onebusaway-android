@@ -570,9 +570,11 @@ class ArrivalsListHeader {
         mHeaderArrivalInfo.clear();
 
         if (mArrivalInfo != null && !mInNameEdit) {
-            int indexFirstEta = ArrivalInfo.findFirstNonNegativeArrival(mArrivalInfo);
-            if (indexFirstEta >= 0) {
+            // Get the indexes for arrival times that should be featured in the header
+            ArrayList<Integer> etaIndexes = ArrivalInfo.findPreferredArrivalIndexes(mArrivalInfo);
+            if (etaIndexes != null) {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
+                int indexFirstEta = etaIndexes.get(0);
                 boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                         mArrivalInfo.get(indexFirstEta).getInfo().getRouteId(),
                         mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign(),
@@ -594,8 +596,8 @@ class ArrivalsListHeader {
                 mHeaderArrivalInfo.add(mArrivalInfo.get(indexFirstEta));
 
                 // If there is another arrival, fill the second row with it
-                int indexSecondEta = indexFirstEta + 1;
-                if (indexSecondEta < mArrivalInfo.size()) {
+                if (etaIndexes.size() >= 2) {
+                    int indexSecondEta = etaIndexes.get(1);
                     boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                             mArrivalInfo.get(indexSecondEta).getInfo().getRouteId(),
                             mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign(),

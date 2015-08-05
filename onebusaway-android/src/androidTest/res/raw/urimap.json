@@ -11,6 +11,7 @@
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json": "arrivals_and_departures_for_stop_hart_3105",
     "/api/where/arrivals-and-departures-for-stop/1_75403.json": "arrivals_and_departures_for_stop_1_75403",
     "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_1622.json": "arrivals_and_departures_for_stop_hart_1622_one_past_arrival",
+    "/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_6497.json": "arrivals_and_departures_for_stop_hart_6497",
     "/api/api/where/arrivals-and-departures-for-stop/PSTA_4077.json": "arrivals_and_departures_for_stop_psta_4077_alerts",
 
     "/api/where/current-time.json": "current_time",

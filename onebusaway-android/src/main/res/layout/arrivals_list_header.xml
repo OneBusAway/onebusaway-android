@@ -157,6 +157,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_centerInParent="true"
                 android:layout_marginLeft="@dimen/keyline_1"
+                android:layout_marginRight="@dimen/keyline_1"
                 android:layout_marginTop="1dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
 
@@ -165,13 +166,18 @@
                     android:src="@drawable/ic_toggle_star_outline"
                     android:contentDescription="@string/stop_info_favorite"
                     android:background="?attr/selectableItemBackground"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:maxHeight="14dp"
+                    android:maxWidth="14dp"
+                    android:minHeight="14dp"
+                    android:minWidth="14dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentLeft="true"
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
-                    android:paddingRight="1dp"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentLeft="true" android:paddingBottom="4dp"/>
+                    android:gravity="center"
+                    android:padding="5dp"/>
 
             <LinearLayout
                     android:id="@+id/stop_name_and_info_container"
@@ -179,14 +185,13 @@
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_toRightOf="@+id/stop_favorite"
-                    android:layout_marginLeft="@dimen/arrivals_header_pad_left"
+                    android:layout_marginLeft="@dimen/arrival_header_pad_left"
                     android:weightSum="1">
                 <TextView
                         android:id="@+id/stop_name"
                         android:textSize="15sp"
                         android:text="University Area Transit Center"
                         android:textColor="@color/header_text_color"
-                        android:textStyle="bold"
                         android:ellipsize="end"
                         android:singleLine="true"
                         android:layout_width="wrap_content"
@@ -249,7 +254,7 @@
                 android:src="@drawable/ic_navigation_expand_more"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="@dimen/arrival_header_bottom_margin"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="@dimen/keyline_1"/>

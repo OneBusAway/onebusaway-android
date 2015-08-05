@@ -145,6 +145,20 @@ public final class ObaSituationElement implements ObaSituation {
         }
     }
 
+    public static final class ActiveWindowElement implements ActiveWindow {
+
+        public static final ActiveWindowElement[] EMPTY_ARRAY = new ActiveWindowElement[]{};
+
+        private long to, from;
+
+        ActiveWindowElement() {
+            to = 0;
+            from = 0;
+        }
+
+        public long getTo() {return to;}
+        public long getFrom() {return from;}
+    }
 
     private final String id;
 
@@ -165,6 +179,8 @@ public final class ObaSituationElement implements ObaSituation {
 
     private final String severity;
 
+    private final ActiveWindowElement[] activeWindows;
+
     ObaSituationElement() {
         id = "";
         summary = null;
@@ -175,6 +191,7 @@ public final class ObaSituationElement implements ObaSituation {
         creationTime = 0;
         allAffects = AllAffectsElement.EMPTY_ARRAY;
         consequences = ConsequenceElement.EMPTY_ARRAY;
+        activeWindows = ActiveWindowElement.EMPTY_ARRAY;
         severity = "";
     }
 
@@ -222,4 +239,7 @@ public final class ObaSituationElement implements ObaSituation {
     public String getSeverity() {
         return severity;
     }
+
+    @Override
+    public ActiveWindow[] getActiveWindows() { return activeWindows; }
 }

@@ -1475,10 +1475,11 @@ public class ArrivalsListFragment extends ListFragment
         mSituationAlerts = new ArrayList<SituationAlert>();
 
         for (ObaSituation situation : situations) {
-            SituationAlert alert = new SituationAlert(situation);
-            mSituationAlerts.add(alert);
+            if (UIHelp.isActiveWindowForSituation(situation, System.currentTimeMillis())) {
+                SituationAlert alert = new SituationAlert(situation);
+                mSituationAlerts.add(alert);
+            }
         }
         mAlertList.addAll(mSituationAlerts);
     }
-
 }

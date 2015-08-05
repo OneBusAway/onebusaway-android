@@ -55,6 +55,7 @@ import com.joulespersecond.oba.provider.ObaContract;
 import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
 import com.joulespersecond.seattlebusbot.util.MyTextUtils;
 import com.joulespersecond.seattlebusbot.util.UIHelp;
+import com.joulespersecond.oba.elements.ObaSituation.ActiveWindow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -891,10 +892,26 @@ public class ArrivalsListFragment extends ListFragment
         mSituationAlerts = new ArrayList<SituationAlert>();
 
         for (ObaSituation situation : situations) {
-            SituationAlert alert = new SituationAlert(situation);
-            mSituationAlerts.add(alert);
+            if(isActiveWindowForSituation(situation)) {
+                SituationAlert alert = new SituationAlert(situation);
+                mSituationAlerts.add(alert);
+            }
         }
         mAlertList.addAll(mSituationAlerts);
     }
 
+    private boolean isActiveWindowForSituation(ObaSituation situation) {
+        boolean isActiveWindowForSituation = situation.getActiveWindows().length == 0;
+        for (ActiveWindow activeWindow : situation.getActiveWindows()) {
+                long from = activeWindow.getFrom();
+                long to = activeWindow.getTo();
+                long now = System.currentTimeMillis();
+                if(from <= now && now <= to) {
+                    isActiveWindowForSituation = true;
+                    break;
+            }
+        }
+
+        return isActiveWindowForSituation;
+    }
 }

@@ -187,7 +187,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         );
     }
 
-    public void testStopSituation() throws Exception {
+    public void testStopSituationPsta() throws Exception {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
         ObaArrivalInfoResponse response =
@@ -232,6 +232,33 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         //assertEquals(1, consequences.length);
         //assertEquals("diversion", consequences[0].getCondition());
     }
+
+    public void testStopSituationDart() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("dart.onebusaway.org/api");
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "DART_4041").build().call();
+        assertOK(response);
+        List<ObaSituation> situations = response.getSituations();
+        assertNotNull(situations);
+
+        ObaSituation situation = situations.get(0);
+        assertEquals("DART_54", situation.getId());
+        assertEquals("No DART bus service on Saturday, July 4, 2015", situation.getSummary());
+        assertEquals(
+                "DART will not operate bus service on Saturday, July 4, 2015 in observation of Independence Day.\n\nDART will operate Saturday service on Friday, July 3, 2015 for the day before the holiday. Hours for the customer service window and phones are 8 a.m. to 4 p.m. and Administrative offices are also closed on Friday, July 3, 2015.\n\nThe following routes will not operate on Friday, July 3, 2015:\n\n· Local Routes 5, 8, 11, 13, 51\n\n· Express Routes\n\n· Flex Routes 73, 74\n\n· D-Line Downtown Shuttle\n\n· The LINK Shuttle\n\n· On Call Services\n\nFor more information, contact DART Customer Service at 515-283-8100 or by email at dart@ridedart.com..",
+                situation.getDescription());
+        assertEquals("", situation.getReason());
+        assertEquals(1436072383004L, situation.getCreationTime());
+        assertEquals("", situation.getSeverity());
+        assertEquals("DART", situation.getAllAffects()[0].getAgencyId());
+        assertEquals("", situation.getAllAffects()[0].getApplicationId());
+        assertEquals("", situation.getAllAffects()[0].getDirectionId());
+        assertEquals("", situation.getAllAffects()[0].getRouteId());
+        assertEquals("", situation.getAllAffects()[0].getStopId());
+        assertEquals("", situation.getAllAffects()[0].getTripId());
+    }
+
 
     // TODO: get/create situation response
     /*

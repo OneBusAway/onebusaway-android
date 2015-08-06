@@ -1,0 +1,109 @@
+{
+  "code": 200,
+  "currentTime": 1438749126726,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [],
+      "nearbyStopIds": [
+        "DART_4053"
+      ],
+      "situationIds": [
+        "DART_54"
+      ],
+      "stopId": "DART_4041"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "DART",
+          "lang": "en",
+          "name": "Des Moines Area Regional Transit Authority",
+          "phone": "515-283-8100",
+          "privateService": false,
+          "timezone": "America/Chicago",
+          "url": "http://www.ridedart.com"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "DART",
+          "color": "996600",
+          "description": "",
+          "id": "DART_17",
+          "longName": "HUBBELL AVE / ALTOONA",
+          "shortName": "17",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [
+            {
+              "from": 1435005045,
+              "to": 1436072372
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "DART",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1436072383004,
+          "description": {
+            "lang": "en",
+            "value": "DART will not operate bus service on Saturday, July 4, 2015 in observation of Independence Day.\n\nDART will operate Saturday service on Friday, July 3, 2015 for the day before the holiday. Hours for the customer service window and phones are 8 a.m. to 4 p.m. and Administrative offices are also closed on Friday, July 3, 2015.\n\nThe following routes will not operate on Friday, July 3, 2015:\n\n· Local Routes 5, 8, 11, 13, 51\n\n· Express Routes\n\n· Flex Routes 73, 74\n\n· D-Line Downtown Shuttle\n\n· The LINK Shuttle\n\n· On Call Services\n\nFor more information, contact DART Customer Service at 515-283-8100 or by email at dart@ridedart.com.."
+          },
+          "id": "DART_54",
+          "publicationWindows": [],
+          "reason": "",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "No DART bus service on Saturday, July 4, 2015"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "3790",
+          "direction": "E",
+          "id": "DART_4041",
+          "lat": 41.600276,
+          "locationType": 0,
+          "lon": -93.609101,
+          "name": "UNIVERSITY AVE / PENNSYLVANIA AVE, DSM",
+          "routeIds": [
+            "DART_17"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "3802",
+          "direction": "W",
+          "id": "DART_4053",
+          "lat": 41.600464,
+          "locationType": 0,
+          "lon": -93.60921,
+          "name": "E UNIVERSITY AVE / PENN AVE, DSM",
+          "routeIds": [
+            "DART_17"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": []
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

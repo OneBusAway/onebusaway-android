@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.test;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
@@ -33,6 +34,9 @@ public class ObaTestCase extends AndroidTestCase {
 
     @Override
     protected void setUp() {
+        // The theme needs to be set when using "attr/?" elements - see #279
+        mContext.setTheme(R.style.Theme_OneBusAway);
+
         mMock = new ObaMock(getContext());
 
         /*

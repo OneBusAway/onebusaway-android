@@ -278,7 +278,7 @@ dependencies {
     // Google Play Services Location (we need this on Amazon flavor too)
     compile 'com.google.android.gms:play-services-location:7.5.0'
     // Support libraries
-    compile 'com.android.support:cardview-v7:22.2.0'
+    compile 'com.android.support:cardview-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'
     compile 'commons-io:commons-io:2.4'
     // JSON data binding for OBA REST API responses

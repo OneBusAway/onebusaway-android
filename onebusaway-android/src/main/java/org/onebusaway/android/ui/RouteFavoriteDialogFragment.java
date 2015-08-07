@@ -162,11 +162,15 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
 
         // Default to the first element in the list, which is "This stop"
         mSelectedItem = SELECTION_THIS_STOP;
-        int title;
+
+        // Show the route name in title
+        String routeTitle = buildRouteTitle(routeShortName, headsign);
+
+        String title;
         if (favorite) {
-            title = R.string.route_favorite_options_title_star;
+            title = getString(R.string.route_favorite_options_title_star, routeTitle);
         } else {
-            title = R.string.route_favorite_options_title_unstar;
+            title = getString(R.string.route_favorite_options_title_unstar, routeTitle);
         }
         builder.setTitle(title)
                 .setSingleChoiceItems(R.array.route_favorite_options, mSelectedItem,
@@ -206,19 +210,34 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
         return builder.create();
     }
 
-    private void showConfirmRemoveAllDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Are you sure?")
-                .setPositiveButton("yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // FIRE ZE MISSILES!
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
-                });
-        builder.create().show();
+    /**
+     * Returns the route shortname (possibly truncated) concatenated with headsign (possibly
+     * truncated) plus an ellipse
+     *
+     * @return the route shortname (possibly truncated) concatenated with headsign (possibly
+     * truncated) plus an ellipse
+     */
+    private String buildRouteTitle(String routeShortName, String headsign) {
+        StringBuilder routeTitle = new StringBuilder();
+        if (routeShortName != null && !routeShortName.isEmpty()) {
+            if (routeShortName.length() > 3) {
+                routeTitle.append(routeShortName.substring(0, 3));
+                routeTitle.append("...");
+            } else {
+                routeTitle.append(routeShortName);
+            }
+
+            routeTitle.append(" - ");
+        }
+        if (headsign != null && !headsign.isEmpty()) {
+            if (headsign.length() > 8) {
+                routeTitle.append(headsign.substring(0, 8));
+                routeTitle.append("...");
+            } else {
+                routeTitle.append(headsign);
+            }
+
+        }
+        return routeTitle.toString();
     }
 }

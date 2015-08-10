@@ -138,7 +138,7 @@ class ArrivalsListHeader {
 
     private EditText mEditNameView;
 
-    private ImageButton mStopFavoriteView;
+    private ImageButton mStopFavorite;
 
     private View mFilterGroup;
 
@@ -156,6 +156,8 @@ class ArrivalsListHeader {
     private ProgressBar mProgressBar;
 
     private ImageButton mStopInfo;
+
+    private ImageButton mPlaceIcon;
 
     private ImageView mExpandCollapse;
 
@@ -275,8 +277,10 @@ class ArrivalsListHeader {
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
-        mStopFavoriteView = (ImageButton) mView.findViewById(R.id.stop_favorite);
-        mStopFavoriteView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
+        mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mPlaceIcon = (ImageButton) mView.findViewById(R.id.place_icon);
+        mPlaceIcon.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
@@ -363,7 +367,15 @@ class ArrivalsListHeader {
             });
         }
 
-        mStopFavoriteView.setOnClickListener(new View.OnClickListener() {
+        mStopFavorite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mController.setFavoriteStop(!mController.isFavoriteStop());
+                refreshStopFavorite();
+            }
+        });
+
+        mPlaceIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mController.setFavoriteStop(!mController.isFavoriteStop());
@@ -639,7 +651,7 @@ class ArrivalsListHeader {
     }
 
     private void refreshStopFavorite() {
-        mStopFavoriteView.setImageResource(mController.isFavoriteStop() ?
+        mStopFavorite.setImageResource(mController.isFavoriteStop() ?
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
     }
@@ -986,7 +998,8 @@ class ArrivalsListHeader {
         mEditNameView.setText((initial != null) ? initial : mNameView.getText());
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
-        mStopFavoriteView.setVisibility(View.GONE);
+        mStopFavorite.setVisibility(View.GONE);
+        mPlaceIcon.setVisibility(View.GONE);
         mEtaArrivesIn.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
@@ -1018,7 +1031,8 @@ class ArrivalsListHeader {
         mInNameEdit = false;
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
-        mStopFavoriteView.setVisibility(View.VISIBLE);
+        mStopFavorite.setVisibility(View.VISIBLE);
+        mPlaceIcon.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Reset the header size
         refreshHeaderSize();

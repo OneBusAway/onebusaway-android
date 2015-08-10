@@ -162,8 +162,8 @@
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
 
             <ImageButton
-                    android:id="@+id/stop_favorite"
-                    android:src="@drawable/ic_toggle_star_outline"
+                    android:id="@+id/place_icon"
+                    android:src="@drawable/ic_drawer_maps_place"
                     android:contentDescription="@string/stop_info_favorite"
                     android:background="?attr/selectableItemBackground"
                     android:maxHeight="14dp"
@@ -184,14 +184,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:layout_toRightOf="@+id/stop_favorite"
-                    android:layout_marginLeft="@dimen/arrival_header_pad_left"
+                    android:layout_toRightOf="@+id/place_icon"
                     android:weightSum="1">
                 <TextView
                         android:id="@+id/stop_name"
                         android:textSize="15sp"
                         android:text="University Area Transit Center"
                         android:textColor="@color/header_text_color"
+                        android:textStyle="bold"
                         android:ellipsize="end"
                         android:singleLine="true"
                         android:layout_width="wrap_content"
@@ -202,22 +202,40 @@
                         android:layout_marginLeft="1dp"/>
 
                 <ImageButton
+                        android:id="@+id/stop_favorite"
+                        android:src="@drawable/ic_toggle_star_outline"
+                        android:contentDescription="@string/stop_info_favorite"
+                        android:background="?attr/selectableItemBackground"
+                        android:maxHeight="14dp"
+                        android:maxWidth="14dp"
+                        android:minHeight="14dp"
+                        android:minWidth="14dp"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_marginLeft="2dp"
+                        android:layout_gravity="center_vertical"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"
+                        android:gravity="center"
+                        android:padding="5dp"/>
+
+                <ImageButton
                         android:id="@+id/stop_info_button"
                         android:background="?attr/selectableItemBackground"
                         android:src="@drawable/ic_stop_info"
                         android:contentDescription="@string/stop_info_button_content_description"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="5dp"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
                         android:layout_marginRight="2dp"
                         android:layout_weight=".05"
-                        android:layout_gravity="top"
-                        android:minWidth="17dp"
-                        android:maxWidth="17dp"
-                        android:minHeight="17dp"
-                        android:maxHeight="17dp"
+                        android:layout_gravity="center_vertical"
+                        android:minWidth="12dp"
+                        android:maxWidth="12dp"
+                        android:minHeight="12dp"
+                        android:maxHeight="12dp"
                         android:scaleType="fitCenter"
-                        android:adjustViewBounds="true"/>
+                        android:adjustViewBounds="true"
+                        android:padding="5dp"/>
             </LinearLayout>
 
         </RelativeLayout>

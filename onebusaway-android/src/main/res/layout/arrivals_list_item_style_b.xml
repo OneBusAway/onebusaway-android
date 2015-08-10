@@ -72,8 +72,10 @@
                             android:layout_alignParentLeft="true"
                             android:layout_centerVertical="true"
                             android:layout_toLeftOf="@+id/route_star"
+                            style="@style/ArrivalsListItemRouteName"
+                            android:textColor="@color/theme_primary"
                             android:text="5"
-                            style="@style/ArrivalsListItemRoute" android:singleLine="true"
+                            android:singleLine="true"
                             android:ellipsize="end"/>
 
                     <ImageButton
@@ -129,6 +131,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_below="@+id/routeNameContainer"
+                        android:layout_marginBottom="8dp"
                         android:text="North to University Area TC"
                         style="@style/ArrivalsListItemDestination"/>
             </RelativeLayout>

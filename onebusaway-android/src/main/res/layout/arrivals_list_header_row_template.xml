@@ -19,7 +19,7 @@
                         android:layout_width="25dp"
                         android:layout_height="25dp"
                         android:layout_marginBottom="1dp"
-                        android:layout_marginLeft="@dimen/keyline_1"
+                        android:layout_marginLeft="@dimen/arrival_header_left_margin"
                         android:scaleType="fitCenter"
                         android:adjustViewBounds="true"
                         android:gravity="center"
@@ -35,8 +35,8 @@
                         android:minWidth="12dp"
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:layout_marginTop="-4dp"
-                        android:layout_marginLeft="@dimen/keyline_1"
+                        android:layout_marginTop="-6dp"
+                        android:layout_marginLeft="@dimen/arrival_header_left_margin"
                         android:layout_marginBottom="-1dp"
                         android:scaleType="fitCenter"
                         android:adjustViewBounds="true"
@@ -46,42 +46,73 @@
                         android:visibility="gone"/>
         </LinearLayout>
 
-    <TextView
-            android:id="@+id/eta_route_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="2dp"
-            android:layout_column="1"
-            android:gravity="center"
-            android:textSize="28sp"
-            android:text="5"
-            android:textColor="@color/header_text_color"/>
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                        android:id="@+id/route_name_and_direction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@+id/eta_and_min"
+                        android:layout_column="1"
+                        android:gravity="left"
+                        android:orientation="horizontal">
 
-    <TextView
-            android:id="@+id/eta_route_direction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="2"
-            android:gravity="left"
-            android:layout_marginLeft="16dp"
-            android:textSize="16sp"
-            android:text="Aurora Village Via Aurora Ave."
-            android:textColor="@color/header_text_color"
-            android:ellipsize="end"
-            android:singleLine="true"/>
+                <TextView
+                        android:id="@+id/eta_route_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="2dp"
+                        android:text="5"
+                        style="@style/ArrivalsListItemRouteName"
+                        android:textColor="@color/header_text_color"/>
 
-        <TextView
-                android:id="@+id/eta"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_column="3"
-                android:layout_marginLeft="10dp"
-                android:gravity="right"
-                android:textSize="28sp"
-                android:text="2"
-                android:textColor="@color/header_text_color"
-                android:ellipsize="end"
-                android:singleLine="true"/>
+                <TextView
+                        android:id="@+id/eta_route_direction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="Aurora Village Via Aurora Ave."
+                        android:textColor="@color/header_text_faded_color"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textIsSelectable="false"
+                        android:layout_marginLeft="8dp"
+                        android:layout_toRightOf="@id/eta_route_name"
+                        android:layout_alignBaseline="@id/eta_route_name"
+                        android:gravity="bottom"/>
+        </RelativeLayout>
+
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                        android:id="@+id/eta_and_min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_column="2"
+                        android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                        android:gravity="right"
+                        android:orientation="horizontal">
+                <TextView
+                        android:id="@+id/eta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2"
+                        android:textColor="@color/header_text_color"
+                        android:textStyle="bold"
+                        android:ellipsize="end"
+                        android:singleLine="true"/>
+                <TextView
+                        android:id="@+id/eta_min"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:text="min"
+                        android:textColor="@color/header_text_faded_color"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:textIsSelectable="false"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@id/eta"
+                        android:layout_alignBaseline="@id/eta"
+                        android:gravity="bottom"/>
+
+        </RelativeLayout>
 
         <ImageButton
                 android:id="@+id/eta_more_vert"
@@ -90,14 +121,14 @@
                 android:background="?attr/selectableItemBackground"
                 android:layout_width="24dp"
                 android:layout_height="match_parent"
-                android:layout_column="4"
-                android:gravity="center_vertical"
-                android:paddingRight="4dp"
-                android:paddingLeft="4dp"
-                android:layout_marginLeft="4dp"
+                android:layout_column="3"
+                android:gravity="bottom|right"
+                android:paddingRight="6dp"
+                android:paddingLeft="6dp"
                 android:layout_marginRight="6dp"
-                android:maxHeight="18dp"
-                android:maxWidth="18dp"
+                android:layout_marginBottom="-6dp"
+                android:maxHeight="16dp"
+                android:maxWidth="16dp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"/>
 </TableRow>

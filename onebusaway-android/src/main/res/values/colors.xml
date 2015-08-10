@@ -46,7 +46,7 @@
 
     <!-- Arrival times header -->
     <color name="header_text_color">@android:color/white</color>
-    <color name="header_faded_color">#50ffffff</color>
+    <color name="header_text_faded_color">#bbffffff</color>
 
     <!-- Arrival time colors for Style A -->
     <color name="stop_info_ontime">@color/theme_primary</color>

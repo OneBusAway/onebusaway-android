@@ -2,14 +2,12 @@
 <resources>
 
     <!-- Arrivals list styles -->
-    <style name="ArrivalsListItemRoute">
+    <style name="ArrivalsListItemRouteName">
         <item name="android:textSize">28sp</item>
-        <item name="android:textColor">@color/theme_primary</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="ArrivalsListItemDestination">
         <item name="android:textSize">12sp</item>
-        <item name="android:layout_marginBottom">8dp</item>
     </style>
     <style name="ArrivalsListLabel">
         <item name="android:background">@color/theme_primary</item>

@@ -157,8 +157,6 @@ class ArrivalsListHeader {
 
     private ImageButton mStopInfo;
 
-    private ImageButton mPlaceIcon;
-
     private ImageView mExpandCollapse;
 
     // All arrival info returned by the adapter
@@ -178,7 +176,9 @@ class ArrivalsListHeader {
 
     private TextView mNoArrivals;
 
-    private TextView mEtaArrivesIn;
+    private final float ETA_TEXT_SIZE_SP = 30;
+
+    private final float ETA_TEXT_NOW_SIZE_SP = 28;
 
     // Row 1
     private View mEtaContainer1;
@@ -192,6 +192,8 @@ class ArrivalsListHeader {
     private TextView mEtaRouteDirection1;
 
     private TextView mEtaArrivalInfo1;
+
+    private TextView mEtaMin1;
 
     private ImageButton mEtaMoreVert1;
 
@@ -209,6 +211,8 @@ class ArrivalsListHeader {
     private TextView mEtaRouteDirection2;
 
     private TextView mEtaArrivalInfo2;
+
+    private TextView mEtaMin2;
 
     private ImageButton mEtaMoreVert2;
 
@@ -231,8 +235,6 @@ class ArrivalsListHeader {
     private static float HEADER_HEIGHT_EDIT_NAME_DP;
 
     private static float HEADER_OFFSET_FILTER_ROUTES_DP;
-
-    private static float HEADER_HEIGHT_NOT_COLLAPSED_DP;
 
     // Controller to change parent sliding panel
     HomeActivity.SlidingPanelController mSlidingPanelController;
@@ -266,9 +268,6 @@ class ArrivalsListHeader {
         HEADER_HEIGHT_EDIT_NAME_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_edit_name)
                         / view.getResources().getDisplayMetrics().density;
-        HEADER_HEIGHT_NOT_COLLAPSED_DP =
-                view.getResources().getDimension(R.dimen.arrival_header_height_not_collapsed)
-                        / view.getResources().getDisplayMetrics().density;
 
         // Init views
         mView = view;
@@ -279,8 +278,6 @@ class ArrivalsListHeader {
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        mPlaceIcon = (ImageButton) mView.findViewById(R.id.place_icon);
-        mPlaceIcon.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
@@ -293,7 +290,6 @@ class ArrivalsListHeader {
         };
         UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
 
-        mEtaArrivesIn = (TextView) mView.findViewById(R.id.eta_arrives_in);
         mNoArrivals = (TextView) mView.findViewById(R.id.no_arrivals);
 
         // First ETA row
@@ -305,6 +301,7 @@ class ArrivalsListHeader {
         mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
+        mEtaMin1 = (TextView) mEtaContainer1.findViewById(R.id.eta_min);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -319,6 +316,7 @@ class ArrivalsListHeader {
         mEtaRouteName2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_name);
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
+        mEtaMin2 = (TextView) mEtaContainer2.findViewById(R.id.eta_min);
         mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
         mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -330,7 +328,6 @@ class ArrivalsListHeader {
         // Initialize right margin view visibilities
         UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
 
-        UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
         UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
@@ -368,14 +365,6 @@ class ArrivalsListHeader {
         }
 
         mStopFavorite.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mController.setFavoriteStop(!mController.isFavoriteStop());
-                refreshStopFavorite();
-            }
-        });
-
-        mPlaceIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mController.setFavoriteStop(!mController.isFavoriteStop());
@@ -601,8 +590,12 @@ class ArrivalsListHeader {
                 long eta = mArrivalInfo.get(indexFirstEta).getEta();
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
+                    mEtaArrivalInfo1.setTextSize(ETA_TEXT_NOW_SIZE_SP);
+                    mEtaMin1.setVisibility(View.GONE);
                 } else if (eta > 0) {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
+                    mEtaArrivalInfo1.setTextSize(ETA_TEXT_SIZE_SP);
+                    mEtaMin1.setVisibility(View.VISIBLE);
                 }
                 // Save the arrival info for the options menu later
                 mHeaderArrivalInfo.add(mArrivalInfo.get(indexFirstEta));
@@ -624,8 +617,12 @@ class ArrivalsListHeader {
                     eta = mArrivalInfo.get(indexSecondEta).getEta();
                     if (eta == 0) {
                         mEtaArrivalInfo2.setText(mContext.getString(R.string.stop_info_eta_now));
+                        mEtaArrivalInfo2.setTextSize(ETA_TEXT_NOW_SIZE_SP);
+                        mEtaMin2.setVisibility(View.GONE);
                     } else if (eta > 0) {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
+                        mEtaArrivalInfo2.setTextSize(ETA_TEXT_SIZE_SP);
+                        mEtaMin2.setVisibility(View.VISIBLE);
                     }
                     mNumHeaderArrivals = 2;
 
@@ -717,7 +714,6 @@ class ArrivalsListHeader {
             // "No routes" message should be shown
             UIHelp.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
             // Hide all others
-            UIHelp.hideViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
             UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
@@ -726,7 +722,6 @@ class ArrivalsListHeader {
         // Show at least the first row of arrival info, if we have one or more records
         if (mNumHeaderArrivals >= 1) {
             // Show the first row of arrival info
-            UIHelp.showViewWithAnimation(mEtaArrivesIn, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             // Hide no arrivals
             UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
@@ -999,8 +994,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.GONE);
-        mPlaceIcon.setVisibility(View.GONE);
-        mEtaArrivesIn.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
         mEtaContainer2.setVisibility(View.GONE);
@@ -1032,7 +1025,6 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.VISIBLE);
-        mPlaceIcon.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         // Reset the header size
         refreshHeaderSize();

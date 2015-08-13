@@ -85,6 +85,20 @@ public interface ObaSituation extends ObaElement {
         public ConditionDetails getDetails();
     }
 
+    public interface ActiveWindow {
+
+        /**
+         * @return the starting time of the active window for this situation
+         */
+        public long getFrom();
+
+        /**
+         *
+         * @return the ending time of the active window for this situation
+         */
+        public long getTo();
+    }
+
     /**
      * @return Optional short summary of the situation.
      */
@@ -124,4 +138,9 @@ public interface ObaSituation extends ObaElement {
      * @return The severity of the situation.
      */
     public String getSeverity();
+
+    /*
+     * @return An array of active windows of this situation
+     */
+    public ActiveWindow[] getActiveWindows();
 }

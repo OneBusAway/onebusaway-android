@@ -16,6 +16,20 @@
  */
 package com.joulespersecond.seattlebusbot;
 
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuInflater;
+import com.actionbarsherlock.view.MenuItem;
+import com.joulespersecond.oba.ObaAnalytics;
+import com.joulespersecond.oba.ObaApi;
+import com.joulespersecond.oba.elements.ObaArrivalInfo;
+import com.joulespersecond.oba.elements.ObaRoute;
+import com.joulespersecond.oba.elements.ObaSituation;
+import com.joulespersecond.oba.elements.ObaStop;
+import com.joulespersecond.oba.provider.ObaContract;
+import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
+import com.joulespersecond.seattlebusbot.util.MyTextUtils;
+import com.joulespersecond.seattlebusbot.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentQueryMap;
@@ -41,20 +55,6 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.joulespersecond.oba.ObaAnalytics;
-import com.joulespersecond.oba.ObaApi;
-import com.joulespersecond.oba.elements.ObaArrivalInfo;
-import com.joulespersecond.oba.elements.ObaRoute;
-import com.joulespersecond.oba.elements.ObaSituation;
-import com.joulespersecond.oba.elements.ObaStop;
-import com.joulespersecond.oba.provider.ObaContract;
-import com.joulespersecond.oba.request.ObaArrivalInfoResponse;
-import com.joulespersecond.seattlebusbot.util.MyTextUtils;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -891,10 +891,11 @@ public class ArrivalsListFragment extends ListFragment
         mSituationAlerts = new ArrayList<SituationAlert>();
 
         for (ObaSituation situation : situations) {
-            SituationAlert alert = new SituationAlert(situation);
-            mSituationAlerts.add(alert);
+            if (UIHelp.isActiveWindowForSituation(situation, System.currentTimeMillis())) {
+                SituationAlert alert = new SituationAlert(situation);
+                mSituationAlerts.add(alert);
+            }
         }
         mAlertList.addAll(mSituationAlerts);
     }
-
 }

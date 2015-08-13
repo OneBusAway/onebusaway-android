@@ -172,6 +172,13 @@ public class HomeActivity extends ActionBarActivity
     private CharSequence mTitle;
 
     /**
+     * Control which menu options are shown per fragment menu groups
+     */
+    private boolean mShowStarredStopsMenu = false;
+
+    private boolean mShowArrivalsMenu = false;
+
+    /**
      * Stop that has current focus on the map.  We retain a reference to the StopId,
      * since during rapid rotations its possible that a reference to a ObaStop object in
      * mFocusedStop can still be null, and we don't want to lose the state of which stopId is in
@@ -381,6 +388,7 @@ public class HomeActivity extends ActionBarActivity
                                 getString(R.string.analytics_label_button_press_feedback));
                 break;
         }
+        invalidateOptionsMenu();
     }
 
     private void showMapFragment() {
@@ -394,6 +402,7 @@ public class HomeActivity extends ActionBarActivity
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
         }
+        mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -406,6 +415,7 @@ public class HomeActivity extends ActionBarActivity
         }
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
         showMyLocationButton();
+        mShowArrivalsMenu = true;
         if (mFocusedStopId != null && mSlidingPanel != null) {
             // if we've focused on a stop, then show the panel that was previously hidden
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
@@ -427,9 +437,11 @@ public class HomeActivity extends ActionBarActivity
         if (mSlidingPanel != null) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         }
+        mShowArrivalsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
+        mShowStarredStopsMenu = true;
         if (mMyStarredStopsFragment == null) {
             mMyStarredStopsFragment = new MyStarredStopsFragment();
             fm.beginTransaction().add(R.id.main_fragment_container, mMyStarredStopsFragment)
@@ -453,6 +465,8 @@ public class HomeActivity extends ActionBarActivity
         if (mSlidingPanel != null) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         }
+        mShowArrivalsMenu = false;
+        mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
          */
@@ -472,18 +486,20 @@ public class HomeActivity extends ActionBarActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-//        MenuInflater inflater = getMenuInflater();
-//        inflater.inflate(R.menu.main_options, menu);
-//        return true;
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main_options, menu);
-            restoreActionBar();
-            return true;
-        }
+        getMenuInflater().inflate(R.menu.main_options, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+        // Manage fragment menu visibility here, so we don't have overlap between the various fragments
+        menu.setGroupVisible(R.id.main_options_menu_group, true);
+        menu.setGroupVisible(R.id.arrival_list_menu_group, mShowArrivalsMenu);
+        menu.setGroupVisible(R.id.starred_stop_menu_group, mShowStarredStopsMenu);
+
+        return true;
     }
 
     @Override
@@ -640,6 +656,7 @@ public class HomeActivity extends ActionBarActivity
                 FragmentManager fm = getSupportFragmentManager();
                 fm.beginTransaction().remove(mArrivalsListFragment).commit();
             }
+            mShowArrivalsMenu = false;
         }
     }
 
@@ -715,6 +732,7 @@ public class HomeActivity extends ActionBarActivity
         mArrivalsListFragment.setHeader(mArrivalsListHeader, mArrivalsListHeaderView);
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
+        mShowArrivalsMenu = true;
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields

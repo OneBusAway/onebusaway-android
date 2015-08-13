@@ -15,24 +15,27 @@
 -->
 <menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
       xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/refresh"
-          android:title="@string/stop_info_option_refresh"
-          android:icon="@drawable/ic_action_navigation_refresh"
-          onebusaway:showAsAction="ifRoom"/>
-    <item android:id="@+id/show_on_map"
-          android:title="@string/stop_info_option_showonmap"
-          android:icon="@drawable/ic_action_location_map"
-          onebusaway:showAsAction="ifRoom"/>
-    <item android:id="@+id/filter"
-          android:title="@string/stop_info_option_filter"
-          android:icon="@drawable/ic_menu_trip"/>
-    <item android:id="@+id/edit_name"
-          android:title="@string/stop_info_option_editname"
-          android:icon="@drawable/android:ic_menu_edit"/>
-    <item android:id="@+id/toggle_favorite"
-          android:title="@string/stop_info_option_addstar"
-          android:icon="@drawable/ic_menu_star"/>
-    <item android:id="@+id/report_stop_problem"
-          android:title="@string/stop_info_option_report_problem"
-          android:icon="@drawable/ic_menu_report_problem"/>
+    <group
+            android:id="@+id/arrival_list_menu_group">
+        <item android:id="@+id/refresh"
+              android:title="@string/stop_info_option_refresh"
+              android:icon="@drawable/ic_action_navigation_refresh"
+              onebusaway:showAsAction="ifRoom"/>
+        <item android:id="@+id/show_on_map"
+              android:title="@string/stop_info_option_showonmap"
+              android:icon="@drawable/ic_action_location_map"
+              onebusaway:showAsAction="ifRoom"/>
+        <item android:id="@+id/filter"
+              android:title="@string/stop_info_option_filter"
+              android:icon="@drawable/ic_menu_trip"/>
+        <item android:id="@+id/edit_name"
+              android:title="@string/stop_info_option_editname"
+              android:icon="@drawable/android:ic_menu_edit"/>
+        <item android:id="@+id/toggle_favorite"
+              android:title="@string/stop_info_option_addstar"
+              android:icon="@drawable/ic_menu_star"/>
+        <item android:id="@+id/report_stop_problem"
+              android:title="@string/stop_info_option_report_problem"
+              android:icon="@drawable/ic_menu_report_problem"/>
+    </group>
 </menu>

@@ -209,6 +209,10 @@
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
 
+    <!-- Arrival Time Style B -->
+    <string name="arrival_estimated">Real-time Estimate</string>
+    <string name="arrival_scheduled">Scheduled</string>
+
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
@@ -440,6 +444,4 @@
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="arrival_estimated">Estimated Arrival</string>
-    <string name="arrival_scheduled">Scheduled</string>
 </resources>

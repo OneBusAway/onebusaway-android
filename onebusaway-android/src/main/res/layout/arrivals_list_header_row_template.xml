@@ -111,7 +111,14 @@
                         android:layout_toRightOf="@id/eta"
                         android:layout_alignBaseline="@id/eta"
                         android:gravity="bottom"/>
-
+                <include
+                        android:id="@+id/eta_realtime_indicator"
+                        layout="@layout/realtime_indicator"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_toRightOf="@id/eta_min"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginLeft="1dp"/>
         </RelativeLayout>
 
         <ImageButton

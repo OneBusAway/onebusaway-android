@@ -15,11 +15,11 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:RealtimeIndicatorView="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/realtimeIndicatorContainer"
+                android:id="@+id/realtime_indicator_container"
                 android:layout_width="8dp"
                 android:layout_height="8dp">
     <org.onebusaway.android.view.RealtimeIndicatorView
-            android:id="@+id/realtime_indicator"
+            android:id="@+id/realtime_indicator1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerVertical="true"

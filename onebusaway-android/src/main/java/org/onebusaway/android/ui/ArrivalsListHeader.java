@@ -195,6 +195,8 @@ class ArrivalsListHeader {
 
     private TextView mEtaMin1;
 
+    private View mEtaRealtime1;
+
     private ImageButton mEtaMoreVert1;
 
     private View mEtaSeparator;
@@ -213,6 +215,8 @@ class ArrivalsListHeader {
     private TextView mEtaArrivalInfo2;
 
     private TextView mEtaMin2;
+
+    private View mEtaRealtime2;
 
     private ImageButton mEtaMoreVert2;
 
@@ -302,6 +306,7 @@ class ArrivalsListHeader {
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
         mEtaMin1 = (TextView) mEtaContainer1.findViewById(R.id.eta_min);
+        mEtaRealtime1 = mEtaContainer1.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -317,6 +322,7 @@ class ArrivalsListHeader {
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
         mEtaMin2 = (TextView) mEtaContainer2.findViewById(R.id.eta_min);
+        mEtaRealtime2 = mEtaContainer2.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
         mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -591,11 +597,19 @@ class ArrivalsListHeader {
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
                     mEtaArrivalInfo1.setTextSize(ETA_TEXT_NOW_SIZE_SP);
-                    mEtaMin1.setVisibility(View.GONE);
+                    UIHelp.hideViewWithAnimation(mEtaMin1, mShortAnimationDuration);
                 } else if (eta > 0) {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
                     mEtaArrivalInfo1.setTextSize(ETA_TEXT_SIZE_SP);
-                    mEtaMin1.setVisibility(View.VISIBLE);
+                    UIHelp.showViewWithAnimation(mEtaMin1, mShortAnimationDuration);
+                }
+
+                if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
+                    // We have real-time data - show the indicator
+                    UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
+                } else {
+                    // We only have schedule data - hide the indicator
+                    UIHelp.hideViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 }
                 // Save the arrival info for the options menu later
                 mHeaderArrivalInfo.add(mArrivalInfo.get(indexFirstEta));
@@ -615,15 +629,25 @@ class ArrivalsListHeader {
                     mEtaRouteDirection2
                             .setText(mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign());
                     eta = mArrivalInfo.get(indexSecondEta).getEta();
+
                     if (eta == 0) {
                         mEtaArrivalInfo2.setText(mContext.getString(R.string.stop_info_eta_now));
                         mEtaArrivalInfo2.setTextSize(ETA_TEXT_NOW_SIZE_SP);
-                        mEtaMin2.setVisibility(View.GONE);
+                        UIHelp.hideViewWithAnimation(mEtaMin2, mShortAnimationDuration);
                     } else if (eta > 0) {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
                         mEtaArrivalInfo2.setTextSize(ETA_TEXT_SIZE_SP);
-                        mEtaMin2.setVisibility(View.VISIBLE);
+                        UIHelp.showViewWithAnimation(mEtaMin2, mShortAnimationDuration);
                     }
+
+                    if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
+                        // We have real-time data - show the indicator
+                        UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
+                    } else {
+                        // We only have schedule data - hide the indicator
+                        UIHelp.hideViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
+                    }
+
                     mNumHeaderArrivals = 2;
 
                     // Save the arrival info for the options menu later

@@ -96,7 +96,7 @@ public class RealtimeIndicatorView extends View {
             public void onGlobalLayout() {
                 removeOnGlobalLayoutListener(this);
 
-                // First circle
+                // Animate circle expand/contract
                 mAnimation1 = new Animation() {
                     @Override
                     protected void applyTransformation(float interpolatedTime, Transformation t) {
@@ -135,5 +135,14 @@ public class RealtimeIndicatorView extends View {
 
         canvas.drawCircle(x, y, mNewRadius * SCALE, mFillPaint);
         canvas.drawCircle(x, y, mNewRadius * SCALE, mLinePaint);
+    }
+
+    /**
+     * Starts the animation
+     */
+    public void startAnimation() {
+        if (mAnimation1 != null) {
+            startAnimation(mAnimation1);
+        }
     }
 }

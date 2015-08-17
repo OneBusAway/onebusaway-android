@@ -161,7 +161,8 @@
                         android:layout_height="8dp"
                         android:layout_centerVertical="true"
                         android:layout_toLeftOf="@+id/estimatedLabel"
-                        android:layout_marginRight="4dp"/>
+                        android:layout_marginRight="4dp"
+                        android:visibility="visible"/>
 
                 <TextView
                         android:layout_width="wrap_content"

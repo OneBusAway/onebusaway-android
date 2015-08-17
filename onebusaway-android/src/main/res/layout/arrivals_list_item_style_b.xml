@@ -155,6 +155,14 @@
                         android:text="@string/arrival_scheduled"
                         style="@style/ArrivalsListLabelText"/>
 
+                <include
+                        layout="@layout/realtime_indicator"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_centerVertical="true"
+                        android:layout_toLeftOf="@+id/estimatedLabel"
+                        android:layout_marginRight="4dp"/>
+
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

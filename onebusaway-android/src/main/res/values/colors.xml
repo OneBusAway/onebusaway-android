@@ -57,6 +57,9 @@
     <color name="stop_info_estimated_time_style_b">#777</color>
     <color name="stop_info_arrival_list_background">#eaeaea</color>
 
+    <color name="realtime_indicator_fill">@android:color/transparent</color>
+    <color name="realtime_indicator_line">@android:color/white</color>
+
     <!-- Alerts-->
     <color name="alert_error">#FFC4C4</color>
     <color name="alert_warning">#FFFF99</color>

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.UIHelp;
 
 import android.content.res.Resources;
@@ -62,6 +63,12 @@ public class MyStopsActivity extends MyTabActivityBase {
         restoreDefaultTab();
 
         UIHelp.setupActionBar(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.UIHelp;
 
 import android.content.res.Resources;
@@ -62,4 +63,9 @@ public class MyRoutesActivity extends MyTabActivityBase {
         return "MyRoutesActivity.LastTab";
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
+    }
 }

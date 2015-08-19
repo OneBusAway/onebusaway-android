@@ -22,7 +22,6 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIHelp;
-import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.content.ContentValues;
@@ -199,9 +198,6 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
         });
 
-        // Make sure the realtime indicator view animation is running
-        startRealtimeAnimation(view);
-
         routeName.setText(arrivalInfo.getShortName());
         destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
 
@@ -316,17 +312,5 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             View reminder = view.findViewById(R.id.reminder);
             reminder.setVisibility(View.GONE);
         }
-    }
-
-    void startRealtimeAnimation(View v) {
-        View rContainer = v.findViewById(R.id.realtime_indicator_container);
-        UIHelp.showViewWithAnimation(rContainer, v.getResources().getInteger(
-                android.R.integer.config_shortAnimTime));
-        RealtimeIndicatorView r1 = (RealtimeIndicatorView) v.findViewById(R.id.realtime_indicator1);
-        r1.startAnimation();
-        RealtimeIndicatorView r2 = (RealtimeIndicatorView) v.findViewById(R.id.realtime_indicator2);
-        r2.startAnimation();
-        RealtimeIndicatorView r3 = (RealtimeIndicatorView) v.findViewById(R.id.realtime_indicator3);
-        r3.startAnimation();
     }
 }

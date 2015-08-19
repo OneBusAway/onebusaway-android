@@ -64,6 +64,11 @@ public class RealtimeIndicatorView extends View {
      */
     private int mDuration = 1000;  // ms
 
+    /**
+     * Set to true after the animation has been initialized
+     */
+    private boolean mInitComplete = false;
+
     public RealtimeIndicatorView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -87,32 +92,18 @@ public class RealtimeIndicatorView extends View {
         mLinePaint.setAntiAlias(true);
 
         setOnMeasureCallback();
+        ensureInit();
     }
 
     private void setOnMeasureCallback() {
-        ViewTreeObserver vto = getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                removeOnGlobalLayoutListener(this);
-
-                // Animate circle expand/contract
-                mAnimation1 = new Animation() {
+        getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
-                    protected void applyTransformation(float interpolatedTime, Transformation t) {
-                        int height = getHeight();
-                        mNewRadius = height * interpolatedTime;
-                        invalidate();
+                    public void onGlobalLayout() {
+                        removeOnGlobalLayoutListener(this);
+                        initAnimation();
                     }
-                };
-
-                mAnimation1.setDuration(mDuration);
-                mAnimation1.setRepeatMode(Animation.REVERSE);
-                mAnimation1.setInterpolator(new FastOutLinearInInterpolator());
-                mAnimation1.setRepeatCount(Animation.INFINITE);
-                startAnimation(mAnimation1);
-            }
-        });
+                });
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -122,6 +113,44 @@ public class RealtimeIndicatorView extends View {
         } else {
             getViewTreeObserver().removeOnGlobalLayoutListener(listener);
         }
+    }
+
+    /**
+     * Makes sure the animation has been initialized.  This is a workaround to make sure
+     * the animation is shown when this view is used within a list with an adapter.
+     */
+    private synchronized void ensureInit() {
+        initAnimation();
+        this.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (!mInitComplete) {
+                    initAnimation();
+                }
+            }
+        }, 500);
+    }
+
+    /**
+     * Setup the animation
+     */
+    private synchronized void initAnimation() {
+        // Animate circle expand/contract
+        mAnimation1 = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                int height = getHeight();
+                mNewRadius = height * interpolatedTime;
+                invalidate();
+            }
+        };
+
+        mAnimation1.setDuration(mDuration);
+        mAnimation1.setRepeatMode(Animation.REVERSE);
+        mAnimation1.setInterpolator(new FastOutLinearInInterpolator());
+        mAnimation1.setRepeatCount(Animation.INFINITE);
+        startAnimation(mAnimation1);
+        mInitComplete = true;
     }
 
     @Override
@@ -135,14 +164,5 @@ public class RealtimeIndicatorView extends View {
 
         canvas.drawCircle(x, y, mNewRadius * SCALE, mFillPaint);
         canvas.drawCircle(x, y, mNewRadius * SCALE, mLinePaint);
-    }
-
-    /**
-     * Starts the animation
-     */
-    public void startAnimation() {
-        if (mAnimation1 != null) {
-            startAnimation(mAnimation1);
-        }
     }
 }

@@ -15,14 +15,15 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.util.UIHelp;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
+
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.UIHelp;
 
 public class RegionsActivity extends ActionBarActivity {
     /*
@@ -58,6 +59,12 @@ public class RegionsActivity extends ActionBarActivity {
 
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
     }
 
     @Override

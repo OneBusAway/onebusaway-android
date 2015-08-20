@@ -29,7 +29,6 @@
     <!-- Floating action button (FAB) dimensions -->
     <dimen name="fab_size">56dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
-    <dimen name="fab_compat_border_width">0dp</dimen>
 
     <!-- Shadows, for FAB on platforms before Lollipop -->
     <dimen name="fab_shadow_size_1">@dimen/fab_size</dimen>

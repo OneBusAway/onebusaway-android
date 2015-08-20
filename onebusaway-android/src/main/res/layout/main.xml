@@ -40,6 +40,7 @@
 
             <!-- MAIN CONTENT -->
             <RelativeLayout
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
                     android:id="@+id/main_content"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -50,7 +51,18 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
                 <!-- Floating Action Button for My Location, overlaid on map -->
-                <include layout="@layout/my_location_button"/>
+                <android.support.design.widget.FloatingActionButton
+                        android:id="@+id/btnMyLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginRight="@dimen/fab_margin"
+                        android:layout_marginBottom="@dimen/fab_margin"
+                        android:src="@drawable/ic_maps_my_location"
+                        android:contentDescription="@string/map_option_mylocation"
+                        app:elevation="6dp"
+                        app:pressedTranslationZ="12dp"/>
             </RelativeLayout>
 
             <!-- BOTTOM SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->

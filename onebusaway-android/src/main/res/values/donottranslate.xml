@@ -90,5 +90,8 @@
     <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
+    <string name="analytics_label_star_route">Starred route</string>
+    <string name="analytics_label_unstar_route">Unstarred route</string>
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
+    <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
 </resources>

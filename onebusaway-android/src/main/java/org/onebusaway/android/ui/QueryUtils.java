@@ -170,7 +170,7 @@ public final class QueryUtils {
                             favorite.setVisibility(View.VISIBLE);
                             // Make sure the star is visible against white background
                             favorite.setColorFilter(
-                                    favorite.getResources().getColor(R.color.theme_primary));
+                                    favorite.getResources().getColor(R.color.navdrawer_icon_tint));
                         } else {
                             favorite.setVisibility(View.GONE);
                         }

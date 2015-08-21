@@ -63,6 +63,14 @@
                         android:contentDescription="@string/map_option_mylocation"
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
+                <!-- ROUTE MODE HEADER -->
+                <include android:id="@+id/route_info"
+                         layout="@layout/route_info_head"
+                         android:layout_width="fill_parent"
+                         android:layout_height="wrap_content"
+                         android:layout_alignParentTop="true"
+                         android:layout_alignParentLeft="true"
+                         android:visibility="gone"/>
             </RelativeLayout>
 
             <!-- BOTTOM SLIDING PANEL (FOR ROUTE AND STOP-RELATED LISTS) -->

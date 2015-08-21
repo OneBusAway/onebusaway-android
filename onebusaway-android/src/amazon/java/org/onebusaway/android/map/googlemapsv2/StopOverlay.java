@@ -922,7 +922,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
                 mStops = null;
             }
             if (mStopRoutes != null) {
-                mStops.clear();
+                mStopRoutes.clear();
                 mStopRoutes = null;
             }
             removeFocus();

@@ -911,7 +911,7 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
                 mStops = null;
             }
             if (mStopRoutes != null) {
-                mStops.clear();
+                mStopRoutes.clear();
                 mStopRoutes = null;
             }
             removeFocus();

@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaStopGroup;
@@ -188,6 +189,12 @@ public class RouteInfoListFragment extends ListFragment {
             default:
                 return super.onContextItemSelected(item);
         }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
     }
 
     private void showArrivals(View v) {

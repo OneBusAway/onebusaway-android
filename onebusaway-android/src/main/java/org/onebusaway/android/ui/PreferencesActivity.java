@@ -218,6 +218,10 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
             arrivalInfoStyle.setSummary(arrivalInfoStyle.getValue());
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_edit_general),
+                    getString(R.string.analytics_label_arrival_info_style)
+                            + arrivalInfoStyle.getValue());
         }
     }
 

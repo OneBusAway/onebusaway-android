@@ -17,6 +17,8 @@
 package org.onebusaway.android.provider;
 
 import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
 
@@ -1255,6 +1257,23 @@ public final class ObaContract {
                     cr.insert(CONTENT_URI, values);
                 }
             }
+
+            StringBuilder analyicsLabel = new StringBuilder();
+            if (favorite) {
+                analyicsLabel.append(context.getString(R.string.analytics_label_star_route));
+            } else {
+                analyicsLabel.append(context.getString(R.string.analytics_label_unstar_route));
+            }
+            analyicsLabel.append(" ").append(routeId).append("_").append(headsign).append(" for ");
+            if (stopId != null) {
+                analyicsLabel.append(stopId);
+            } else {
+                analyicsLabel.append("all stops");
+            }
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    context.getString(R.string.analytics_action_edit_field),
+                    analyicsLabel.toString());
         }
 
         /**

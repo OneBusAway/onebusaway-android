@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaSituation;
 
 import android.os.Bundle;
@@ -72,5 +73,11 @@ public class SituationFragment extends Fragment {
 
         TextView desc = (TextView) view.findViewById(R.id.alert_description);
         desc.setText(args.getString(DESCRIPTION));
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
     }
 }

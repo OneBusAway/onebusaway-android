@@ -40,7 +40,7 @@ before_script:
 # Only run tests on the main two OneBusAway brand flavors
 script:
   - ./wait_for_emulator
-  - ./gradlew connectedAndroidTestObaGoogleDebug connectedAndroidTestObaAmazonDebug -PdisablePreDex
+  - ./gradlew connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest -PdisablePreDex
 
 # Integration with Gitter (https://gitter.im/OneBusAway/onebusaway-android)
 notifications:

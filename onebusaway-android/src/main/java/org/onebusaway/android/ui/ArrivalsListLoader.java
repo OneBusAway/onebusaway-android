@@ -34,10 +34,10 @@ class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> {
 
     private long mLastGoodResponseTime = 0;
 
-    private int mMinutesAfter = 35;
-    // includes vehicles arriving or departing in the next minutesAfter minutes
+    // Shows vehicles arriving or departing in the next "mMinutesAfter" minutes
+    private int mMinutesAfter = 65;
 
-    private static final int MINUTES_INCREMENT = 30; // minutes
+    private static final int MINUTES_INCREMENT = 60; // minutes
 
     public ArrivalsListLoader(Context context, String stopId) {
         super(context);

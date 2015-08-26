@@ -46,7 +46,7 @@ Here are the high-level steps to add a new brand, for a new brand name `newBrand
 For Step 1, you new entry in `build.gradle` will look something like:
 
     newBrandName {
-        flavorDimension "brand"  // This line is always the same for all brands - it tells Gradle that this entry is for a brand
+        dimension "brand"  // This line is always the same for all brands - it tells Gradle that this entry is for a brand
         applicationId "com.newbrandname.android" // This is the unique identifier for the listing of this brand on Google Play (typically its your unique domain name in reverse) - you would find this app at https://play.google.com/store/apps/details?id=com.newbrandname.android
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']  // This line is always the same for all brands - it tells Gradle how to set up the database authority field for the brand
         ...
@@ -85,7 +85,7 @@ Valid values are `0` and `1` - The way that estimated arrival information is sho
 Here's an example of how configuration options are set up for the sample agency "Agency X" in `build.gradle`:
 
     agencyX {
-        flavorDimension "brand"  // This line is always the same for all brands - it tells Gradle that this entry is for a brand
+        dimension "brand"  // This line is always the same for all brands - it tells Gradle that this entry is for a brand
         applicationId "org.agencyx.android" // This is the unique identifier for the listing of this brand on Google Play (typically its your unique domain name in reverse) - you can find this app at https://play.google.com/store/apps/details?id=org.agencyx.android
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']  // This line is always the same for all brands - it tells Gradle how to set up the database authority field for the brand
         buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Use the original OneBusAway presentation of arrival times (i.e., Style A)
@@ -98,7 +98,7 @@ So, Agency X has elected to stick with the normal OneBusAway arrival time presen
 The Agency Y sample has chosen different options - they are using `ARRIVAL_INFO_STYLE_B`, and have their app fixed to the region info provided in their brand flavor dimension entry:
 
     agencyY {
-        flavorDimension "brand" // Always the same for all brands
+        dimension "brand" // Always the same for all brands
         applicationId "org.agencyy.android" // Unique listing of this brand on app store
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider'] // Always the same for all brands
         buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Use the York Region Transit presentation of arrival times (i.e., Style B)

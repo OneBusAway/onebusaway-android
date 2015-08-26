@@ -54,7 +54,7 @@ android {
     productFlavors {
         google {
             // Normal Google Play release - see src/google
-            flavorDimension "platform"
+            dimension "platform"
         }
 
         amazon {
@@ -68,7 +68,7 @@ android {
              * GoogleMap class with the Amazon equivalents.  Therefore, the files in
              * src/amazon/java/org/onebusaway/android/map should not be manually changed.
              */
-            flavorDimension "platform"
+            dimension "platform"
         }
 
         oba {
@@ -79,7 +79,7 @@ android {
              * original package name of the app before it was re-branded to OneBusAway:
              * com.joulespersecond.seattlebusbot
              */
-            flavorDimension "brand"
+            dimension "brand"
             applicationId "com.joulespersecond.seattlebusbot"
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
@@ -112,7 +112,7 @@ android {
 
         agencyX {
             // "Agency X" rebranding OneBusAway as another app - see src/agencyX/res for branded resources
-            flavorDimension "brand"
+            dimension "brand"
             applicationId "org.agencyx.android" // Unique listing of this brand on app store
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
@@ -136,7 +136,7 @@ android {
 
         agencyY {
             // "Agency Y" rebranding OneBusAway as another app - see src/agencyY/res for branded resources
-            flavorDimension "brand"
+            dimension "brand"
             applicationId "org.agencyy.android" // Unique listing of this brand on app store
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants

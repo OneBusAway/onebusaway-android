@@ -49,10 +49,12 @@
                 android:id="@+id/cancel_route_mode"
                 android:contentDescription="@android:string/cancel"
                 android:visibility="gone"
-                android:background="@drawable/ic_action_cancel_dark"
+                android:src="@drawable/ic_navigation_close"
+                android:background="?attr/selectableItemBackground"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:layout_marginRight="@dimen/keyline_1"
                 android:layout_column="2"/>
     </TableRow>
 </TableLayout>

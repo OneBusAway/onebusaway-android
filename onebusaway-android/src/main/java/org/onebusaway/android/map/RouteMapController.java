@@ -58,6 +58,8 @@ public class RouteMapController implements MapModeController,
 
     private RoutePopup mRoutePopup;
 
+    private int mShortAnimationDuration;
+
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
     private Loader<ObaStopsForRouteResponse> mLoader;
@@ -67,6 +69,8 @@ public class RouteMapController implements MapModeController,
         mLineOverlayColor = mFragment.getActivity()
                 .getResources()
                 .getColor(R.color.route_line_color_default);
+        mShortAnimationDuration = mFragment.getActivity().getResources().getInteger(
+                android.R.integer.config_shortAnimTime);
         mRoutePopup = new RoutePopup();
     }
 
@@ -217,20 +221,20 @@ public class RouteMapController implements MapModeController,
         }
 
         void showLoading() {
-            mRouteShortName.setVisibility(View.GONE);
+            UIHelp.hideViewWithoutAnimation(mRouteShortName);
             mRouteLongName.setText(R.string.loading);
-            mView.setVisibility(View.VISIBLE);
+            UIHelp.showViewWithoutAnimation(mView);
         }
 
         void show(ObaRoute route) {
             mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
             mRouteLongName.setText(UIHelp.getRouteDescription(route));
-            mRouteShortName.setVisibility(View.VISIBLE);
-            mView.setVisibility(View.VISIBLE);
+            UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
         }
 
         void hide() {
-            mView.setVisibility(View.GONE);
+            UIHelp.hideViewWithAnimation(mView, mShortAnimationDuration);
         }
     }
 

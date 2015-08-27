@@ -103,8 +103,8 @@
     <string name="main_help_whatsnew">&#8226;\u0020<b>Fresh new look!</b>\n&#8226;
         <b>Route favorites</b>
         - Star a route to pin it to the arrivals list header\n&#8226;
-        <b>More arrivals!</b>
-        - Now shows next 65 min of arrivals by default (load more in 60 min increments)
+        <b>More arrivals</b>
+        - Now shows next 65 min of arrivals by default
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>

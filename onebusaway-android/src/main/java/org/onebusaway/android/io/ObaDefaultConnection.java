@@ -16,22 +16,15 @@
 package org.onebusaway.android.io;
 
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 public final class ObaDefaultConnection implements ObaConnection {
 
@@ -53,11 +46,8 @@ public final class ObaDefaultConnection implements ObaConnection {
 
     @Override
     public Reader get() throws IOException {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            return get_Gingerbread();
-        } else {
-            return get_Froyo();
-        }
+        return new InputStreamReader(
+                new BufferedInputStream(mConnection.getInputStream(), 8 * 1024));
     }
 
     @Override
@@ -76,49 +66,6 @@ public final class ObaDefaultConnection implements ObaConnection {
 
         return new InputStreamReader(
                 new BufferedInputStream(mConnection.getInputStream(), 8 * 1024));
-    }
-
-    //
-    // Gingerbread and above support Gzip natively.
-    //
-    private Reader get_Gingerbread() throws IOException {
-        return new InputStreamReader(
-                new BufferedInputStream(mConnection.getInputStream(), 8 * 1024));
-    }
-
-    private Reader get_Froyo() throws IOException {
-        boolean useGzip = false;
-        mConnection.setRequestProperty("Accept-Encoding", "gzip");
-
-        InputStream in = mConnection.getInputStream();
-
-        final Map<String, List<String>> headers = mConnection.getHeaderFields();
-        // This is a map, but we can't assume the key we're looking for
-        // is in normal casing. So it's really not a good map, is it?
-        final Set<Map.Entry<String, List<String>>> set = headers.entrySet();
-        for (Iterator<Map.Entry<String, List<String>>> i = set.iterator(); i.hasNext(); ) {
-            Map.Entry<String, List<String>> entry = i.next();
-            if ("Content-Encoding".equalsIgnoreCase(entry.getKey())) {
-                for (Iterator<String> j = entry.getValue().iterator(); j.hasNext(); ) {
-                    String str = j.next();
-                    if (str.equalsIgnoreCase("gzip")) {
-                        useGzip = true;
-                        break;
-                    }
-                }
-                // Break out of outer loop.
-                if (useGzip) {
-                    break;
-                }
-            }
-        }
-
-        if (useGzip) {
-            return new InputStreamReader(
-                    new BufferedInputStream(new GZIPInputStream(in), 8 * 1024));
-        } else {
-            return new InputStreamReader(new BufferedInputStream(in, 8 * 1024));
-        }
     }
 
     @Override

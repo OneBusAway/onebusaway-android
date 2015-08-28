@@ -50,7 +50,7 @@ public class SavePreference extends Preference {
     @Override
     public boolean isEnabled() {
         // This is only enabled if the SD card is attached.
-        return Backup.isBackupEnabled() && Environment.MEDIA_MOUNTED
+        return Environment.MEDIA_MOUNTED
                 .equals(Environment.getExternalStorageState());
     }
 

@@ -43,6 +43,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -58,6 +59,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
@@ -220,12 +222,13 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
      * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
      * if direction is NO_DIRECTION
      */
-    private static Bitmap createBusStopIcon(String direction) {
+    private static Bitmap createBusStopIcon(String direction) throws NullPointerException {
         if (direction == null) {
             throw new IllegalArgumentException(direction);
         }
 
         Resources r = Application.get().getResources();
+        Context context = Application.get();
 
         Float directionAngle = null;  // 0-360 degrees
         Bitmap bm;
@@ -241,13 +244,13 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             // Don't draw the arrow
             bm = Bitmap.createBitmap(mPx, mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
         } else if (direction.equals(NORTH)) {
             directionAngle = 0f;
             bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
@@ -262,7 +265,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, (int) mBuffer, bm.getWidth(), bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(
@@ -276,7 +279,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             directionAngle = 0f;  // Arrow is drawn pointing West, so no rotation
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, 0, bm.getWidth(), bm.getHeight());
             arrowPaintFill.setShader(
                     new LinearGradient(0, bm.getHeight() / 2, mArrowHeightPx, bm.getHeight() / 2,
@@ -290,7 +293,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds((int) mBuffer, 0, bm.getWidth(), mPx);
             arrowPaintFill.setShader(
                     new LinearGradient(0, bm.getHeight(), mBuffer, bm.getHeight() - mBuffer,
@@ -303,7 +306,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             directionAngle = 180f;  // Arrow is drawn N, rotate 180 degrees
             bm = Bitmap.createBitmap(mPx, (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, 0, bm.getWidth(), (int) (bm.getHeight() - mBuffer));
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth() / 2, bm.getHeight(), bm.getWidth() / 2,
@@ -317,7 +320,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, 0, mPx, mPx);
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth(), bm.getHeight(), bm.getWidth() - mBuffer,
@@ -331,7 +334,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             directionAngle = 180f;  // Arrow is drawn pointing West, so rotate 180
             bm = Bitmap.createBitmap((int) (mPx + mBuffer), mPx, Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, 0, mPx, bm.getHeight());
             arrowPaintFill.setShader(
                     new LinearGradient(bm.getWidth(), bm.getHeight() / 2,
@@ -345,7 +348,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             bm = Bitmap.createBitmap((int) (mPx + mBuffer),
                     (int) (mPx + mBuffer), Bitmap.Config.ARGB_8888);
             c = new Canvas(bm);
-            shape = r.getDrawable(R.drawable.map_stop_icon);
+            shape = ContextCompat.getDrawable(context, R.drawable.map_stop_icon);
             shape.setBounds(0, (int) mBuffer, mPx, bm.getHeight());
             // Shade with darkest color at tip of arrow
             arrowPaintFill.setShader(

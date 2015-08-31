@@ -101,7 +101,7 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
     private static final int NUM_DIRECTIONS = 9; // 8 directions + undirected mStops
 
-    private static BitmapDescriptor[] bus_stop_icons = new BitmapDescriptor[NUM_DIRECTIONS];
+    private static Bitmap[] bus_stop_icons = new Bitmap[NUM_DIRECTIONS];
 
     private static int mPx; // Bus stop icon size
 
@@ -201,15 +201,15 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         mArrowPaintStroke.setStrokeWidth(1.0f);
         mArrowPaintStroke.setAntiAlias(true);
 
-        bus_stop_icons[0] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH));
-        bus_stop_icons[1] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH_WEST));
-        bus_stop_icons[2] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(WEST));
-        bus_stop_icons[3] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH_WEST));
-        bus_stop_icons[4] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH));
-        bus_stop_icons[5] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(SOUTH_EAST));
-        bus_stop_icons[6] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(EAST));
-        bus_stop_icons[7] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NORTH_EAST));
-        bus_stop_icons[8] = BitmapDescriptorFactory.fromBitmap(createBusStopIcon(NO_DIRECTION));
+        bus_stop_icons[0] = createBusStopIcon(NORTH);
+        bus_stop_icons[1] = createBusStopIcon(NORTH_WEST);
+        bus_stop_icons[2] = createBusStopIcon(WEST);
+        bus_stop_icons[3] = createBusStopIcon(SOUTH_WEST);
+        bus_stop_icons[4] = createBusStopIcon(SOUTH);
+        bus_stop_icons[5] = createBusStopIcon(SOUTH_EAST);
+        bus_stop_icons[6] = createBusStopIcon(EAST);
+        bus_stop_icons[7] = createBusStopIcon(NORTH_EAST);
+        bus_stop_icons[8] = createBusStopIcon(NO_DIRECTION);
     }
 
     /**
@@ -517,25 +517,25 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
      */
     private static BitmapDescriptor getBitmapDescriptorForBusStopDirection(String direction) {
         if (direction.equals(NORTH)) {
-            return bus_stop_icons[0];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[0]);
         } else if (direction.equals(NORTH_WEST)) {
-            return bus_stop_icons[1];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[1]);
         } else if (direction.equals(WEST)) {
-            return bus_stop_icons[2];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[2]);
         } else if (direction.equals(SOUTH_WEST)) {
-            return bus_stop_icons[3];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[3]);
         } else if (direction.equals(SOUTH)) {
-            return bus_stop_icons[4];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[4]);
         } else if (direction.equals(SOUTH_EAST)) {
-            return bus_stop_icons[5];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[5]);
         } else if (direction.equals(EAST)) {
-            return bus_stop_icons[6];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[6]);
         } else if (direction.equals(NORTH_EAST)) {
-            return bus_stop_icons[7];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[7]);
         } else if (direction.equals(NO_DIRECTION)) {
-            return bus_stop_icons[8];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[8]);
         } else {
-            return bus_stop_icons[8];
+            return BitmapDescriptorFactory.fromBitmap(bus_stop_icons[8]);
         }
     }
 

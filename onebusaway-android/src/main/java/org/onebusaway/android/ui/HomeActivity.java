@@ -487,6 +487,9 @@ public class HomeActivity extends ActionBarActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_options, menu);
+
+        UIHelp.setupSearch(this, menu);
+
         return super.onCreateOptionsMenu(menu);
     }
 

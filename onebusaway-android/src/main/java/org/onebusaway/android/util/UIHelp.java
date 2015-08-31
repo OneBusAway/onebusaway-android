@@ -31,6 +31,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
 import android.content.ContentResolver;
@@ -47,11 +48,13 @@ import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -76,6 +79,20 @@ public final class UIHelp {
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
+    }
+
+    /**
+     * Sets up the search view in the action bar
+     */
+    public static void setupSearch(Activity activity, Menu menu) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            SearchManager searchManager =
+                    (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
+            SearchView searchView =
+                    (SearchView) menu.findItem(R.id.search).getActionView();
+            searchView.setSearchableInfo(
+                    searchManager.getSearchableInfo(activity.getComponentName()));
+        }
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {

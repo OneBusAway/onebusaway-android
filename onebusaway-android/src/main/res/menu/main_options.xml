@@ -13,14 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
-      xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/tools">
     <group
             android:id="@+id/main_options_menu_group">
-        <item android:id="@+id/search"
+        <item android:id="@+id/action_search"
               android:title="@string/map_option_search"
               android:icon="@drawable/ic_action_search"
-              onebusaway:showAsAction="collapseActionView|ifRoom"/>
+              app:showAsAction="collapseActionView|ifRoom"
+              app:actionViewClass="android.support.v7.widget.SearchView"/>
         <item android:id="@+id/find_route"
               android:title="@string/main_option_findroute"
               android:icon="@drawable/ic_menu_trip"/>

@@ -46,6 +46,7 @@ import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
@@ -55,6 +56,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -88,8 +90,8 @@ public final class UIHelp {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             SearchManager searchManager =
                     (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-            SearchView searchView =
-                    (SearchView) menu.findItem(R.id.search).getActionView();
+            MenuItem menuItem = menu.findItem(R.id.action_search);
+            SearchView searchView = (SearchView) MenuItemCompat.getActionView(menuItem);
             searchView.setSearchableInfo(
                     searchManager.getSearchableInfo(activity.getComponentName()));
         }

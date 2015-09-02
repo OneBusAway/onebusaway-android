@@ -50,6 +50,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
+import android.text.InputType;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -94,6 +95,8 @@ public final class UIHelp {
             SearchView searchView = (SearchView) MenuItemCompat.getActionView(menuItem);
             searchView.setSearchableInfo(
                     searchManager.getSearchableInfo(activity.getComponentName()));
+            // Default to numeric input, because we're searching for stop/route numbers
+            searchView.setInputType(InputType.TYPE_CLASS_NUMBER);
         }
     }
 

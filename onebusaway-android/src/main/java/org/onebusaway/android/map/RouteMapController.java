@@ -149,7 +149,7 @@ public class RouteMapController implements MapModeController,
 
         ObaRoute route = response.getRoute(response.getRouteId());
 
-        mRoutePopup.show(route);
+        mRoutePopup.show(route, response.getAgency(route.getAgencyId()).getName());
 
         if (route.getColor() != null) {
             mLineOverlayColor = route.getColor();
@@ -195,13 +195,15 @@ public class RouteMapController implements MapModeController,
 
         private final TextView mRouteLongName;
 
+        private final TextView mAgencyName;
+
         RoutePopup() {
             mActivity = mFragment.getActivity();
             mView = mActivity.findViewById(R.id.route_info);
             mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
             mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
-            TextView agency = (TextView) mView.findViewById(R.id.agency);
-            agency.setVisibility(View.GONE);
+            mAgencyName = (TextView) mView.findViewById(R.id.agency);
+
             // Make sure the cancel button is shown
             View cancel = mView.findViewById(R.id.cancel_route_mode);
             cancel.setVisibility(View.VISIBLE);
@@ -226,9 +228,10 @@ public class RouteMapController implements MapModeController,
             UIHelp.showViewWithoutAnimation(mView);
         }
 
-        void show(ObaRoute route) {
+        void show(ObaRoute route, String agencyName) {
             mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
             mRouteLongName.setText(UIHelp.getRouteDescription(route));
+            mAgencyName.setText(agencyName);
             UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
         }

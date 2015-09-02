@@ -13,48 +13,65 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             style="@style/HeaderItem"
-             android:layout_width="fill_parent"
-             android:layout_height="wrap_content"
-             android:orientation="vertical">
-    <TableRow>
-        <TextView
-                android:id="@+id/short_name"
-                style="@style/RouteInfoShortName"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_column="0"
-                android:singleLine="false">
-        </TextView>
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_gravity="center_vertical"
-                android:layout_column="1"
-                android:layout_weight="1">
+                style="@style/HeaderItem">
+    <ProgressBar
+            android:id="@+id/route_info_loading_spinner"
+            style="?android:progressBarStyleLarge"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="5dp"
+            android:visibility="visible"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"/>
+    <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
+        <TableRow>
             <TextView
-                    android:id="@+id/long_name"
-                    style="@style/RouteInfoLongName"
+                    android:id="@+id/short_name"
+                    style="@style/RouteInfoShortName"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_column="0"
+                    android:singleLine="false">
             </TextView>
-            <TextView
-                    android:id="@+id/agency"
-                    style="@style/RouteInfoAgency"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
-        </LinearLayout>
-        <ImageButton
-                android:id="@+id/cancel_route_mode"
-                android:contentDescription="@android:string/cancel"
-                android:visibility="gone"
-                android:src="@drawable/ic_navigation_close"
-                android:background="?attr/selectableItemBackground"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginRight="@dimen/keyline_1"
-                android:layout_column="2"/>
-    </TableRow>
-</TableLayout>
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_gravity="center_vertical"
+                    android:layout_column="1"
+                    android:layout_weight="1">
+                <TextView
+                        android:id="@+id/long_name"
+                        style="@style/RouteInfoLongName"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content">
+                </TextView>
+                <TextView
+                        android:id="@+id/agency"
+                        style="@style/RouteInfoAgency"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content">
+                </TextView>
+            </LinearLayout>
+            <ImageButton
+                    android:id="@+id/cancel_route_mode"
+                    android:contentDescription="@android:string/cancel"
+                    android:visibility="gone"
+                    android:src="@drawable/ic_navigation_close"
+                    android:background="?attr/selectableItemBackground"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginRight="@dimen/keyline_1"
+                    android:layout_column="2"/>
+        </TableRow>
+    </TableLayout>
+</RelativeLayout>

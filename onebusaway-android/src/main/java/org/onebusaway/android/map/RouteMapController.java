@@ -36,6 +36,7 @@ import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.List;
@@ -197,12 +198,15 @@ public class RouteMapController implements MapModeController,
 
         private final TextView mAgencyName;
 
+        private final ProgressBar mProgressBar;
+
         RoutePopup() {
             mActivity = mFragment.getActivity();
             mView = mActivity.findViewById(R.id.route_info);
             mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
             mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
             mAgencyName = (TextView) mView.findViewById(R.id.agency);
+            mProgressBar = (ProgressBar) mView.findViewById(R.id.route_info_loading_spinner);
 
             // Make sure the cancel button is shown
             View cancel = mView.findViewById(R.id.cancel_route_mode);
@@ -224,15 +228,18 @@ public class RouteMapController implements MapModeController,
 
         void showLoading() {
             UIHelp.hideViewWithoutAnimation(mRouteShortName);
-            mRouteLongName.setText(R.string.loading);
+            UIHelp.hideViewWithoutAnimation(mRouteLongName);
             UIHelp.showViewWithoutAnimation(mView);
+            UIHelp.showViewWithoutAnimation(mProgressBar);
         }
 
         void show(ObaRoute route, String agencyName) {
             mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
             mRouteLongName.setText(UIHelp.getRouteDescription(route));
             mAgencyName.setText(agencyName);
+            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
+            UIHelp.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
         }
 

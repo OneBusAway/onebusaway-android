@@ -23,7 +23,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.UIHelp;
-import org.onebusaway.android.view.SearchView;
+import org.onebusaway.android.view.SearchViewV1;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -41,12 +41,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 abstract class MySearchFragmentBase extends ListFragment
-        implements SearchView.OnQueryTextListener, MyListConstants {
+        implements SearchViewV1.OnQueryTextListener, MyListConstants {
     //private static final String TAG = "MySearchFragmentBase";
 
     private Timer mSearchTimer;
 
-    private SearchView mSearchView;
+    private SearchViewV1 mSearchViewV1;
 
     private static final int DELAYED_SEARCH_TIMEOUT = 1000;
 
@@ -78,15 +78,15 @@ abstract class MySearchFragmentBase extends ListFragment
         // Set empty text
         setEmptyText(getHintText());
 
-        mSearchView.setQueryHint(getString(getEditBoxHintText()));
-        mSearchView.setOnQueryTextListener(this);
-        mSearchView.setOnQueryTextFocusChangeListener(mOnQueryTextFocusChangeListener);
+        mSearchViewV1.setQueryHint(getString(getEditBoxHintText()));
+        mSearchViewV1.setOnQueryTextListener(this);
+        mSearchViewV1.setOnQueryTextFocusChangeListener(mOnQueryTextFocusChangeListener);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mSearchView = (SearchView) getView().findViewById(R.id.search);
+        mSearchViewV1 = (SearchViewV1) getView().findViewById(R.id.search);
     }
 
     @Override
@@ -171,8 +171,8 @@ abstract class MySearchFragmentBase extends ListFragment
         }
     }
 
-    protected SearchView getSearchView() {
-        return mSearchView;
+    protected SearchViewV1 getSearchViewV1() {
+        return mSearchViewV1;
     }
 
     /*

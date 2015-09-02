@@ -18,7 +18,7 @@
               android:layout_width="fill_parent"
               android:layout_height="fill_parent">
 
-    <org.onebusaway.android.view.SearchView
+    <org.onebusaway.android.view.SearchViewV1
             android:id="@+id/search"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>

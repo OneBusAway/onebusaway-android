@@ -36,8 +36,9 @@ import android.widget.TextView.OnEditorActionListener;
  * the Honeycomb SearchView.
  *
  * @author paulw
+ * @deprecated
  */
-public class SearchView extends LinearLayout {
+public class SearchViewV1 extends LinearLayout {
 
     private OnQueryTextListener mOnQueryChangeListener;
 
@@ -80,11 +81,11 @@ public class SearchView extends LinearLayout {
         boolean onQueryTextChange(String newText);
     }
 
-    public SearchView(Context context) {
+    public SearchViewV1(Context context) {
         this(context, null);
     }
 
-    public SearchView(Context context, AttributeSet attrs) {
+    public SearchViewV1(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         LayoutInflater inflater = (LayoutInflater) context
@@ -107,7 +108,7 @@ public class SearchView extends LinearLayout {
 
             public void onFocusChange(View v, boolean hasFocus) {
                 if (mOnQueryTextFocusChangeListener != null) {
-                    mOnQueryTextFocusChangeListener.onFocusChange(SearchView.this, hasFocus);
+                    mOnQueryTextFocusChangeListener.onFocusChange(SearchViewV1.this, hasFocus);
                 }
             }
         });
@@ -184,7 +185,7 @@ public class SearchView extends LinearLayout {
 
         public void onTextChanged(CharSequence s, int start,
                 int before, int after) {
-            SearchView.this.onTextChanged(s);
+            SearchViewV1.this.onTextChanged(s);
         }
 
         public void afterTextChanged(Editable s) {

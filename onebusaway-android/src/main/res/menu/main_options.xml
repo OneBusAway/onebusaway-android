@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/tools">
+      xmlns:app="http://schemas.android.com/apk/res-auto">
     <group
             android:id="@+id/main_options_menu_group">
         <item android:id="@+id/action_search"

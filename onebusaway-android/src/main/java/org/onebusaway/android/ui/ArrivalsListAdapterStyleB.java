@@ -216,7 +216,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             // Layout and views to inflate from XML templates
             RelativeLayout layout;
-            TextView scheduleView, estimatedView;
+            TextView scheduleView, estimatedView, statusView;
             View divider;
 
             if (i == 0) {
@@ -227,6 +227,8 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                         .inflate(R.layout.arrivals_list_tv_template_style_b_schedule_large, null);
                 estimatedView = (TextView) inflater
                         .inflate(R.layout.arrivals_list_tv_template_style_b_estimated_large, null);
+                statusView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_status_large, null);
             } else {
                 // Use smaller styled layout/view for further out times
                 layout = (RelativeLayout) inflater
@@ -235,9 +237,11 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                         .inflate(R.layout.arrivals_list_tv_template_style_b_schedule_small, null);
                 estimatedView = (TextView) inflater
                         .inflate(R.layout.arrivals_list_tv_template_style_b_estimated_small, null);
+                statusView = (TextView) inflater
+                        .inflate(R.layout.arrivals_list_tv_template_style_b_status_small, null);
             }
 
-            // Add arrival times to schedule/estimated views
+            // Set arrival times and status in views
             scheduleView.setText(DateUtils.formatDateTime(context,
                     scheduledTime,
                     DateUtils.FORMAT_SHOW_TIME |
@@ -253,21 +257,33 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             } else {
                 estimatedView.setText(R.string.stop_info_eta_unknown);
             }
+            statusView.setText(arrivalRow.getStatusText());
+            Integer colorCode = arrivalRow.getColor();
+            if (colorCode != null) {
+                int color = context.getResources().getColor(colorCode);
+                statusView.setTextColor(color);
+            }
 
             // Add TextViews to layout
             layout.addView(scheduleView);
+            layout.addView(statusView);
             layout.addView(estimatedView);
 
-            // Make sure the TextViews align right/left of parent relative layout
+            // Make sure the TextViews align left/center/right of parent relative layout
             RelativeLayout.LayoutParams params1 = (RelativeLayout.LayoutParams) scheduleView
                     .getLayoutParams();
             params1.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
             scheduleView.setLayoutParams(params1);
 
-            RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) estimatedView
+            RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) statusView
                     .getLayoutParams();
-            params2.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            estimatedView.setLayoutParams(params2);
+            params2.addRule(RelativeLayout.CENTER_IN_PARENT);
+            statusView.setLayoutParams(params2);
+
+            RelativeLayout.LayoutParams params3 = (RelativeLayout.LayoutParams) estimatedView
+                    .getLayoutParams();
+            params3.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            estimatedView.setLayoutParams(params3);
 
             // Add layout to TableRow
             tr.addView(layout);
@@ -307,7 +323,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             reminder.setCompoundDrawables(d, null, null, null);
             reminder.setVisibility(View.VISIBLE);
         } else {
-            // Explicitly set this to invisible because we might be reusing
+            // Explicitly set reminder to invisible because we might be reusing
             // this view.
             View reminder = view.findViewById(R.id.reminder);
             reminder.setVisibility(View.GONE);

@@ -43,4 +43,17 @@
         <item name="android:paddingTop">1dp</item>
         <item name="android:paddingBottom">1dp</item>
     </style>
+    <style name="ArrivalsListStatusLarge">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/stop_info_estimated_time_style_b</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingTop">1dp</item>
+        <item name="android:paddingBottom">1dp</item>
+    </style>
+    <style name="ArrivalsListStatusSmall">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/stop_info_estimated_time_style_b</item>
+        <item name="android:paddingTop">1dp</item>
+        <item name="android:paddingBottom">1dp</item>
+    </style>
 </resources>

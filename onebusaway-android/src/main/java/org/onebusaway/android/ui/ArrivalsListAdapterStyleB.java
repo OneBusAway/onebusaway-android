@@ -260,7 +260,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
             statusView.setText(arrivalRow.getStatusText());
             Integer colorCode = arrivalRow.getColorStyleB();
-            statusView.setBackgroundResource(R.drawable.round_corners);
+            statusView.setBackgroundResource(R.drawable.round_corners_style_b_status);
             GradientDrawable d = (GradientDrawable) statusView.getBackground();
             if (colorCode != null) {
                 // Set real-time color
@@ -271,11 +271,15 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                         context.getResources().getColor(R.color.stop_info_estimated_time_style_b));
             }
 
-            // Set status background transparency on smaller rows
-            if (i != 0) {
-                int alpha = 187;
-                d.setAlpha(alpha);
+            int alpha;
+            if (i == 0) {
+                // Set next arrival
+                alpha = (int) (.85f * 255);  // X percent transparency
+            } else {
+                // Set smaller rows
+                alpha = (int) (.35f * 255);  // X percent transparency
             }
+            d.setAlpha(alpha);
 
             // Set padding on status view
             int pSides = UIHelp.dpToPixels(context, 5);

@@ -9,4 +9,4 @@
           style="@style/ArrivalsListStatusSmall"
           android:layout_span="2"
           android:layout_alignParentRight="true"
-          android:background="@drawable/round_corners"/>
+          android:background="@drawable/round_corners_style_b_status"/>

@@ -259,7 +259,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 estimatedView.setText(R.string.stop_info_eta_unknown);
             }
             statusView.setText(arrivalRow.getStatusText());
-            Integer colorCode = arrivalRow.getColor();
+            Integer colorCode = arrivalRow.getColorStyleB();
             statusView.setBackgroundResource(R.drawable.round_corners);
             GradientDrawable d = (GradientDrawable) statusView.getBackground();
             if (colorCode != null) {
@@ -269,6 +269,12 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 // Set scheduled color
                 d.setColor(
                         context.getResources().getColor(R.color.stop_info_estimated_time_style_b));
+            }
+
+            // Set status background transparency on smaller rows
+            if (i != 0) {
+                int alpha = 187;
+                d.setAlpha(alpha);
             }
 
             // Set padding on status view
@@ -285,19 +291,21 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             RelativeLayout.LayoutParams params1 = (RelativeLayout.LayoutParams) scheduleView
                     .getLayoutParams();
             params1.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            params1.addRule(RelativeLayout.CENTER_VERTICAL);
             scheduleView.setLayoutParams(params1);
 
             RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) statusView
                     .getLayoutParams();
             params2.addRule(RelativeLayout.CENTER_IN_PARENT);
             // Give status view a little extra margin
-            int p = UIHelp.dpToPixels(context, 2);
+            int p = UIHelp.dpToPixels(context, 3);
             params2.setMargins(p, p, p, p);
             statusView.setLayoutParams(params2);
 
             RelativeLayout.LayoutParams params3 = (RelativeLayout.LayoutParams) estimatedView
                     .getLayoutParams();
             params3.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            params3.addRule(RelativeLayout.CENTER_VERTICAL);
             estimatedView.setLayoutParams(params3);
 
             // Add layout to TableRow

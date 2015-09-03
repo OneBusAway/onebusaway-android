@@ -150,7 +150,9 @@ public final class ArrivalInfo {
 
     private final String mStatusText;
 
-    private final Integer mColor;
+    private final Integer mColorStyleA;
+
+    private final Integer mColorStyleB;
 
     private static final int ms_in_mins = 60 * 1000;
 
@@ -185,7 +187,8 @@ public final class ArrivalInfo {
             mDisplayTime = scheduled;
         }
 
-        mColor = computeColor(scheduled, predicted);
+        mColorStyleA = computeColorStyleA(scheduled, predicted);
+        mColorStyleB = computeColorStyleB(scheduled, predicted);
 
         mStatusText = computeStatusLabel(context, info, now, predicted,
                 scheduledMins, predictedMins);
@@ -196,20 +199,41 @@ public final class ArrivalInfo {
                         info.getHeadsign(), info.getStopId());
     }
 
-    private Integer computeColor(final long scheduled, final long predicted) {
+    private Integer computeColorStyleA(final long scheduled, final long predicted) {
         if (predicted != 0) {
             long delay = predicted - scheduled;
 
             // Bus is arriving
             if (delay > 0) {
                 // Arriving delayed
-                return R.color.stop_info_delayed;
+                return R.color.stop_info_delayed_style_a;
             } else if (delay < 0) {
                 // Arriving early
-                return R.color.stop_info_early;
+                return R.color.stop_info_early_style_a;
             } else {
                 // Arriving on time
-                return R.color.stop_info_ontime;
+                return R.color.stop_info_ontime_style_a;
+            }
+        } else {
+            // The default color for the UI element should be used, so return null
+            return null;
+        }
+    }
+
+    private Integer computeColorStyleB(final long scheduled, final long predicted) {
+        if (predicted != 0) {
+            long delay = predicted - scheduled;
+
+            // Bus is arriving
+            if (delay > 0) {
+                // Arriving delayed
+                return R.color.stop_info_delayed_style_b;
+            } else if (delay < 0) {
+                // Arriving early
+                return R.color.stop_info_early_style_b;
+            } else {
+                // Arriving on time
+                return R.color.stop_info_ontime_style_b;
             }
         } else {
             // The default color for the UI element should be used, so return null
@@ -319,14 +343,26 @@ public final class ArrivalInfo {
     }
 
     /**
-     * Returns the resource code for the color that should be used for the arrival time, or null if
-     * the default color for UI element (e.g., Heading1 TextBox) should be used
+     * Returns the resource code for the color that should be used for the arrival time for style A,
+     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
      *
-     * @return the resource code for the color that should be used for the arrival time, or null if
-     * the default color for UI element (e.g., Heading1 TextBox) should be used
+     * @return the resource code for the color that should be used for the arrival time for style A,
+     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
      */
-    final Integer getColor() {
-        return mColor;
+    final Integer getColorStyleA() {
+        return mColorStyleA;
+    }
+
+    /**
+     * Returns the resource code for the color that should be used for the arrival time for style
+     * B,
+     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
+     *
+     * @return the resource code for the color that should be used for the arrival time for style B,
+     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
+     */
+    final Integer getColorStyleB() {
+        return mColorStyleB;
     }
 
     /**

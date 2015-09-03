@@ -79,7 +79,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
             etaView.setText(String.valueOf(eta));
         }
 
-        Integer colorCode = stopInfo.getColor();
+        Integer colorCode = stopInfo.getColorStyleA();
         if (colorCode != null) {
             int color = context.getResources().getColor(colorCode);
             status.setTextColor(color);

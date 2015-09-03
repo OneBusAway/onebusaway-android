@@ -52,6 +52,9 @@
     <dimen name="arrival_header_bottom_margin_expand_collapse">10dp</dimen>
     <dimen name="arrival_header_text_pad_left">10dp</dimen>
 
+    <!-- Arrivals Style B -->
+    <dimen name="arrival_style_b_status_min_width">77dp</dimen>
+
     <!-- Map -->
     <dimen name="map_stop_icon_size">19dp</dimen>
     <dimen name="map_stop_icon_size_fill">15dp</dimen>

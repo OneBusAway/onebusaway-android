@@ -28,6 +28,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -259,10 +260,21 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
             statusView.setText(arrivalRow.getStatusText());
             Integer colorCode = arrivalRow.getColor();
+            statusView.setBackgroundResource(R.drawable.round_corners);
+            GradientDrawable d = (GradientDrawable) statusView.getBackground();
             if (colorCode != null) {
-                int color = context.getResources().getColor(colorCode);
-                statusView.setTextColor(color);
+                // Set real-time color
+                d.setColor(context.getResources().getColor(colorCode));
+            } else {
+                // Set scheduled color
+                d.setColor(
+                        context.getResources().getColor(R.color.stop_info_estimated_time_style_b));
             }
+
+            // Set padding on status view
+            int pSides = UIHelp.dpToPixels(context, 5);
+            int pTopBottom = UIHelp.dpToPixels(context, 2);
+            statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
             // Add TextViews to layout
             layout.addView(scheduleView);
@@ -278,6 +290,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             RelativeLayout.LayoutParams params2 = (RelativeLayout.LayoutParams) statusView
                     .getLayoutParams();
             params2.addRule(RelativeLayout.CENTER_IN_PARENT);
+            // Give status view a little extra margin
+            int p = UIHelp.dpToPixels(context, 2);
+            params2.setMargins(p, p, p, p);
             statusView.setLayoutParams(params2);
 
             RelativeLayout.LayoutParams params3 = (RelativeLayout.LayoutParams) estimatedView

@@ -274,7 +274,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             int alpha;
             if (i == 0) {
                 // Set next arrival
-                alpha = (int) (.85f * 255);  // X percent transparency
+                alpha = (int) (1.0f * 255);  // X percent transparency
             } else {
                 // Set smaller rows
                 alpha = (int) (.35f * 255);  // X percent transparency

@@ -165,4 +165,31 @@ public class RealtimeIndicatorView extends View {
         canvas.drawCircle(x, y, mNewRadius * SCALE, mFillPaint);
         canvas.drawCircle(x, y, mNewRadius * SCALE, mLinePaint);
     }
+
+    /**
+     * Set the fill color to be used when drawing the expanding/contracting circle, in the format
+     * 0xbbFFFFFF.
+     *
+     * @param color the fill color to be used when drawing the expanding/contracting circle, in the
+     *              format
+     *              0xbbFFFFFF.
+     */
+    public void setFillColor(int color) {
+        mFillColor = color;
+        mFillPaint.setColor(color);
+    }
+
+    /**
+     * Set the line (i.e., stroke) color to be used when drawing the expanding/contracting circle,
+     * in the format
+     * 0xbbFFFFFF.
+     *
+     * @param color the line (i.e., stroke) to be used when drawing the expanding/contracting
+     *              circle, in the format
+     *              0xbbFFFFFF.
+     */
+    public void setLineColor(int color) {
+        mLineColor = color;
+        mLinePaint.setColor(color);
+    }
 }

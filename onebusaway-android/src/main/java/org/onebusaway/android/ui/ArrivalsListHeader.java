@@ -39,6 +39,7 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.view.inputmethod.EditorInfo;
@@ -195,7 +196,7 @@ class ArrivalsListHeader {
 
     private TextView mEtaMin1;
 
-    private View mEtaRealtime1;
+    private ViewGroup mEtaRealtime1;
 
     private ImageButton mEtaMoreVert1;
 
@@ -216,7 +217,7 @@ class ArrivalsListHeader {
 
     private TextView mEtaMin2;
 
-    private View mEtaRealtime2;
+    private ViewGroup mEtaRealtime2;
 
     private ImageButton mEtaMoreVert2;
 
@@ -306,7 +307,7 @@ class ArrivalsListHeader {
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
         mEtaMin1 = (TextView) mEtaContainer1.findViewById(R.id.eta_min);
-        mEtaRealtime1 = mEtaContainer1.findViewById(R.id.eta_realtime_indicator);
+        mEtaRealtime1 = (ViewGroup) mEtaContainer1.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert1 = (ImageButton) mEtaContainer1.findViewById(R.id.eta_more_vert);
         mEtaMoreVert1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -322,7 +323,7 @@ class ArrivalsListHeader {
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
         mEtaMin2 = (TextView) mEtaContainer2.findViewById(R.id.eta_min);
-        mEtaRealtime2 = mEtaContainer2.findViewById(R.id.eta_realtime_indicator);
+        mEtaRealtime2 = (ViewGroup) mEtaContainer2.findViewById(R.id.eta_realtime_indicator);
         mEtaMoreVert2 = (ImageButton) mEtaContainer2.findViewById(R.id.eta_more_vert);
         mEtaMoreVert2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
 
@@ -605,7 +606,17 @@ class ArrivalsListHeader {
                 }
 
                 if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
-                    // We have real-time data - show the indicator
+                    // We have real-time data - set the color and show the indicator
+                    Integer color = mArrivalInfo.get(indexFirstEta).getColorStyleB();
+                    if (color != R.color.stop_info_ontime_style_b) {
+                        // Show early/late color
+                        UIHelp.setRealtimeIndicatorColor(mEtaRealtime1, color, color);
+                    } else {
+                        // For on-time, use header text default color
+                        UIHelp.setRealtimeIndicatorColor(mEtaRealtime1,
+                                R.color.header_text_color,
+                                R.color.realtime_indicator_fill);
+                    }
                     UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
                     // We only have schedule data - hide the indicator
@@ -641,7 +652,17 @@ class ArrivalsListHeader {
                     }
 
                     if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
-                        // We have real-time data - show the indicator
+                        // We have real-time data - set the color and show the indicator
+                        Integer color = mArrivalInfo.get(indexSecondEta).getColorStyleB();
+                        if (color != R.color.stop_info_ontime_style_b) {
+                            // Show early/late color
+                            UIHelp.setRealtimeIndicatorColor(mEtaRealtime2, color, color);
+                        } else {
+                            // For on-time, use header text default color
+                            UIHelp.setRealtimeIndicatorColor(mEtaRealtime2,
+                                    R.color.header_text_color,
+                                    R.color.realtime_indicator_fill);
+                        }
                         UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {
                         // We only have schedule data - hide the indicator

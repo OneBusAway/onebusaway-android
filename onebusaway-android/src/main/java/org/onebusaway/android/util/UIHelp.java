@@ -25,6 +25,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.animation.Animator;
@@ -38,6 +39,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -814,6 +816,41 @@ public final class UIHelp {
                 return R.array.stop_item_options_favorite;
             } else {
                 return R.array.stop_item_options_noschedule_favorite;
+            }
+        }
+    }
+
+    /**
+     * Sets the line and fill colors for real-time indicator circles contained in the provided
+     * realtime_indicator.xml layout.  There are several circles, so each needs to be set
+     * individually.
+     *
+     * @param vg        realtime_indicator.xml layout
+     * @param lineColor resource code color to be used as line color, or null to use the default
+     *                  colors
+     * @param fillColor resource code color to be used as fill color, or null to use the default
+     *                  colors
+     */
+    public static void setRealtimeIndicatorColor(ViewGroup vg, Integer lineColor,
+            Integer fillColor) {
+        Resources r = vg.getResources();
+        for (int i = 0; i < vg.getChildCount(); i++) {
+            View v = vg.getChildAt(i);
+            if (v instanceof RealtimeIndicatorView) {
+                if (lineColor != null) {
+                    ((RealtimeIndicatorView) v).setLineColor(r.getColor(lineColor));
+                } else {
+                    // Use default color
+                    ((RealtimeIndicatorView) v).setLineColor(r.getColor(
+                            R.color.realtime_indicator_line));
+                }
+                if (fillColor != null) {
+                    ((RealtimeIndicatorView) v).setFillColor(r.getColor(fillColor));
+                } else {
+                    // Use default color
+                    ((RealtimeIndicatorView) v).setLineColor(r.getColor(
+                            R.color.realtime_indicator_fill));
+                }
             }
         }
     }

@@ -29,6 +29,7 @@ import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.net.Uri;
@@ -39,6 +40,7 @@ import android.text.format.DateUtils;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -48,6 +50,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -590,7 +593,7 @@ class ArrivalsListHeader {
             ArrayList<Integer> etaIndexes = ArrivalInfo.findPreferredArrivalIndexes(mArrivalInfo);
             if (etaIndexes != null) {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
-                int indexFirstEta = etaIndexes.get(0);
+                final int indexFirstEta = etaIndexes.get(0);
                 boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                         mArrivalInfo.get(indexFirstEta).getInfo().getRouteId(),
                         mArrivalInfo.get(indexFirstEta).getInfo().getHeadsign(),
@@ -615,7 +618,7 @@ class ArrivalsListHeader {
 
                 if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
                     // We have real-time data - set the color and show the indicator
-                    Integer color = mArrivalInfo.get(indexFirstEta).getColorStyleB();
+                    final Integer color = mArrivalInfo.get(indexFirstEta).getColorStyleB();
                     mEtaAndMin1.setBackgroundResource(
                             R.drawable.round_corners_style_b_header_status);
                     GradientDrawable d = (GradientDrawable) mEtaAndMin1.getBackground();
@@ -626,6 +629,39 @@ class ArrivalsListHeader {
                         // For on-time, use header default color
                         d.setColor(mContext.getResources().getColor(R.color.theme_primary));
                     }
+                    mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            LayoutInflater inflater = LayoutInflater.from(mContext);
+                            TextView statusView = (TextView) inflater
+                                    .inflate(
+                                            R.layout.arrivals_list_tv_template_style_b_status_large,
+                                            null);
+                            statusView.setBackgroundResource(
+                                    R.drawable.round_corners_style_b_status);
+                            GradientDrawable d = (GradientDrawable) statusView.getBackground();
+                            if (color != R.color.stop_info_ontime_style_b) {
+                                // Show early/late color
+                                d.setColor(mContext.getResources().getColor(color));
+                            } else {
+                                // For on-time, use header default color
+                                d.setColor(mContext.getResources().getColor(R.color.theme_primary));
+                            }
+                            statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
+                                    TextView.MeasureSpec.UNSPECIFIED);
+                            statusView.setText(mArrivalInfo.get(indexFirstEta).getStatusText());
+                            final PopupWindow p = new PopupWindow(statusView, statusView.getWidth(),
+                                    statusView
+                                            .getHeight());
+                            p.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                    ViewGroup.LayoutParams.WRAP_CONTENT);
+                            p.setBackgroundDrawable(
+                                    new ColorDrawable(mContext.getResources()
+                                            .getColor(android.R.color.transparent)));
+                            p.setOutsideTouchable(true);
+                            p.showAsDropDown(mEtaAndMin1);
+                        }
+                    });
                     UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
                     // We only have schedule data - hide the indicator
@@ -636,7 +672,7 @@ class ArrivalsListHeader {
 
                 // If there is another arrival, fill the second row with it
                 if (etaIndexes.size() >= 2) {
-                    int indexSecondEta = etaIndexes.get(1);
+                    final int indexSecondEta = etaIndexes.get(1);
                     boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                             mArrivalInfo.get(indexSecondEta).getInfo().getRouteId(),
                             mArrivalInfo.get(indexSecondEta).getInfo().getHeadsign(),
@@ -662,7 +698,7 @@ class ArrivalsListHeader {
 
                     if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
                         // We have real-time data - set the color and show the indicator
-                        Integer color = mArrivalInfo.get(indexSecondEta).getColorStyleB();
+                        final Integer color = mArrivalInfo.get(indexSecondEta).getColorStyleB();
                         mEtaAndMin2.setBackgroundResource(
                                 R.drawable.round_corners_style_b_header_status);
                         GradientDrawable d = (GradientDrawable) mEtaAndMin2.getBackground();
@@ -673,6 +709,41 @@ class ArrivalsListHeader {
                             // For on-time, use header default color
                             d.setColor(mContext.getResources().getColor(R.color.theme_primary));
                         }
+                        mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                LayoutInflater inflater = LayoutInflater.from(mContext);
+                                TextView statusView = (TextView) inflater
+                                        .inflate(
+                                                R.layout.arrivals_list_tv_template_style_b_status_large,
+                                                null);
+                                statusView.setBackgroundResource(
+                                        R.drawable.round_corners_style_b_status);
+                                GradientDrawable d = (GradientDrawable) statusView.getBackground();
+                                if (color != R.color.stop_info_ontime_style_b) {
+                                    // Show early/late color
+                                    d.setColor(mContext.getResources().getColor(color));
+                                } else {
+                                    // For on-time, use header default color
+                                    d.setColor(mContext.getResources()
+                                            .getColor(R.color.theme_primary));
+                                }
+                                statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
+                                        TextView.MeasureSpec.UNSPECIFIED);
+                                statusView
+                                        .setText(mArrivalInfo.get(indexSecondEta).getStatusText());
+                                final PopupWindow p = new PopupWindow(statusView,
+                                        statusView.getWidth(), statusView
+                                        .getHeight());
+                                p.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                                p.setBackgroundDrawable(
+                                        new ColorDrawable(mContext.getResources()
+                                                .getColor(android.R.color.transparent)));
+                                p.setOutsideTouchable(true);
+                                p.showAsDropDown(mEtaAndMin2);
+                            }
+                        });
                         UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {
                         // We only have schedule data - hide the indicator

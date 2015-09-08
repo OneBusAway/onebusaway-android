@@ -647,6 +647,11 @@ class ArrivalsListHeader {
                                 // For on-time, use header default color
                                 d.setColor(mContext.getResources().getColor(R.color.theme_primary));
                             }
+                            d.setStroke(UIHelp.dpToPixels(mContext, 1),
+                                    mContext.getResources().getColor(R.color.header_text_color));
+                            int pSides = UIHelp.dpToPixels(mContext, 5);
+                            int pTopBottom = UIHelp.dpToPixels(mContext, 2);
+                            statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
                             statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
                                     TextView.MeasureSpec.UNSPECIFIED);
                             statusView.setText(mArrivalInfo.get(indexFirstEta).getStatusText());
@@ -728,6 +733,12 @@ class ArrivalsListHeader {
                                     d.setColor(mContext.getResources()
                                             .getColor(R.color.theme_primary));
                                 }
+                                d.setStroke(UIHelp.dpToPixels(mContext, 1),
+                                        mContext.getResources()
+                                                .getColor(R.color.header_text_color));
+                                int pSides = UIHelp.dpToPixels(mContext, 5);
+                                int pTopBottom = UIHelp.dpToPixels(mContext, 2);
+                                statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
                                 statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
                                         TextView.MeasureSpec.UNSPECIFIED);
                                 statusView

@@ -29,6 +29,7 @@ import android.content.ContentQueryMap;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -48,6 +49,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -192,6 +194,8 @@ class ArrivalsListHeader {
 
     private TextView mEtaRouteDirection1;
 
+    private RelativeLayout mEtaAndMin1;
+
     private TextView mEtaArrivalInfo1;
 
     private TextView mEtaMin1;
@@ -212,6 +216,8 @@ class ArrivalsListHeader {
     private TextView mEtaRouteName2;
 
     private TextView mEtaRouteDirection2;
+
+    private RelativeLayout mEtaAndMin2;
 
     private TextView mEtaArrivalInfo2;
 
@@ -305,6 +311,7 @@ class ArrivalsListHeader {
         mEtaReminder1.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mEtaRouteName1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_name);
         mEtaRouteDirection1 = (TextView) mEtaContainer1.findViewById(R.id.eta_route_direction);
+        mEtaAndMin1 = (RelativeLayout) mEtaContainer1.findViewById(R.id.eta_and_min);
         mEtaArrivalInfo1 = (TextView) mEtaContainer1.findViewById(R.id.eta);
         mEtaMin1 = (TextView) mEtaContainer1.findViewById(R.id.eta_min);
         mEtaRealtime1 = (ViewGroup) mEtaContainer1.findViewById(R.id.eta_realtime_indicator);
@@ -320,6 +327,7 @@ class ArrivalsListHeader {
         mEtaReminder2 = (ImageButton) mEtaContainer2.findViewById(R.id.reminder);
         mEtaReminder2.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mEtaRouteName2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_name);
+        mEtaAndMin2 = (RelativeLayout) mEtaContainer2.findViewById(R.id.eta_and_min);
         mEtaRouteDirection2 = (TextView) mEtaContainer2.findViewById(R.id.eta_route_direction);
         mEtaArrivalInfo2 = (TextView) mEtaContainer2.findViewById(R.id.eta);
         mEtaMin2 = (TextView) mEtaContainer2.findViewById(R.id.eta_min);
@@ -608,14 +616,15 @@ class ArrivalsListHeader {
                 if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
                     // We have real-time data - set the color and show the indicator
                     Integer color = mArrivalInfo.get(indexFirstEta).getColorStyleB();
+                    mEtaAndMin1.setBackgroundResource(
+                            R.drawable.round_corners_style_b_header_status);
+                    GradientDrawable d = (GradientDrawable) mEtaAndMin1.getBackground();
                     if (color != R.color.stop_info_ontime_style_b) {
                         // Show early/late color
-                        UIHelp.setRealtimeIndicatorColor(mEtaRealtime1, color, color);
+                        d.setColor(mContext.getResources().getColor(color));
                     } else {
-                        // For on-time, use header text default color
-                        UIHelp.setRealtimeIndicatorColor(mEtaRealtime1,
-                                R.color.header_text_color,
-                                R.color.realtime_indicator_fill);
+                        // For on-time, use header default color
+                        d.setColor(mContext.getResources().getColor(R.color.theme_primary));
                     }
                     UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
@@ -654,14 +663,15 @@ class ArrivalsListHeader {
                     if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
                         // We have real-time data - set the color and show the indicator
                         Integer color = mArrivalInfo.get(indexSecondEta).getColorStyleB();
+                        mEtaAndMin2.setBackgroundResource(
+                                R.drawable.round_corners_style_b_header_status);
+                        GradientDrawable d = (GradientDrawable) mEtaAndMin2.getBackground();
                         if (color != R.color.stop_info_ontime_style_b) {
                             // Show early/late color
-                            UIHelp.setRealtimeIndicatorColor(mEtaRealtime2, color, color);
+                            d.setColor(mContext.getResources().getColor(color));
                         } else {
-                            // For on-time, use header text default color
-                            UIHelp.setRealtimeIndicatorColor(mEtaRealtime2,
-                                    R.color.header_text_color,
-                                    R.color.realtime_indicator_fill);
+                            // For on-time, use header default color
+                            d.setColor(mContext.getResources().getColor(R.color.theme_primary));
                         }
                         UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {

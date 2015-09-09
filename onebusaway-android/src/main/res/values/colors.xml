@@ -67,5 +67,5 @@
     <!-- Alerts-->
     <color name="alert_error">#FFC4C4</color>
     <color name="alert_warning">#FFFF99</color>
-    <color name="alert_info">#f0f0f0</color>
+    <color name="alert_info">@color/theme_primary_dark</color>
 </resources>

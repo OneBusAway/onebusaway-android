@@ -16,10 +16,15 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.ArrayAdapter;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -66,27 +71,41 @@ class AlertList {
             int bg = R.color.alert_error;
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
             int type = alert.getType();
+            Resources r = Application.get().getResources();
+
+            int drawableRight = clickable ? R.drawable.ic_navigation_chevron_right : 0;
+            int iconColor = R.color.header_text_color;
+            Drawable drawable = ContextCompat
+                    .getDrawable(Application.get().getApplicationContext(), drawableRight);
+            Drawable wrappedDrawable = DrawableCompat.wrap(drawable);
+            wrappedDrawable = wrappedDrawable.mutate();
 
             switch (type) {
                 case Alert.TYPE_ERROR:
                     //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_error;
+                    iconColor = R.color.abc_primary_text_material_light;
+
                     break;
                 case Alert.TYPE_WARNING:
                     //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_warning;
+                    iconColor = R.color.abc_primary_text_material_light;
                     break;
                 case Alert.TYPE_INFO:
                 default:
                     //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_info;
+                    iconColor = R.color.header_text_color;
                     break;
             }
+            // Set text color
+            text.setTextColor(r.getColor(iconColor));
+            // Tint the icon
+            DrawableCompat.setTint(wrappedDrawable, r.getColor(iconColor));
+            text.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
+            // Set the background color
             view.setBackgroundResource(bg);
-
-            int drawableRight = clickable ? R.drawable.ic_action_alert_more : 0;
-            text.setCompoundDrawablesWithIntrinsicBounds(drawableLeft, 0,
-                    drawableRight, 0);
 
             // Even if we don't think it's clickable, we still need to
             // reset the onclick listener because we could be reusing this view.

@@ -98,10 +98,6 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 String currentHeadsign = null;
                 CombinedArrivalInfoStyleB cArrivalInfo = new CombinedArrivalInfoStyleB();
                 for (int i = 0; i < list.size(); i++) {
-                    // Skip all negative arrivals
-                    if (list.get(i).getEta() < 0)
-                        continue;
-
                     if (currentRouteName == null) {
                         // Initialize fields
                         currentRouteName = list.get(i).getInfo().getRouteId();
@@ -253,7 +249,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 if (eta == 0) {
                     estimatedView.setText(R.string.stop_info_eta_now);
                 } else {
-                    estimatedView.setText(String.valueOf(Math.abs(eta)) + " min");
+                    estimatedView.setText(eta + " min");
                 }
             } else {
                 estimatedView.setText(R.string.stop_info_eta_unknown);

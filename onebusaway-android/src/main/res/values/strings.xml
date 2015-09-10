@@ -405,6 +405,11 @@
     <string name="preferences_preferred_units_option_metric">Metric (km, m)</string>
     <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
 
+    <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
+    <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
+        negative arrival times
+    </string>
+
     <string name="preferences_arrival_info_style_title">Arrival times style</string>
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
     <string name="preferences_arrival_info_style_options_b">Cards</string>

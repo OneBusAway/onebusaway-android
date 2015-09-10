@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
 import org.onebusaway.android.provider.ObaContract;
@@ -52,15 +53,23 @@ public final class ArrivalInfo {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
         if (filter != null && filter.size() > 0) {
+            // Only add routes that haven't been filtered out
             for (int i = 0; i < len; ++i) {
                 ObaArrivalInfo arrival = arrivalInfo[i];
                 if (filter.contains(arrival.getRouteId())) {
-                    result.add(new ArrivalInfo(context, arrival, ms));
+                    ArrivalInfo info = new ArrivalInfo(context, arrival, ms);
+                    if (shouldAddEta(info)) {
+                        result.add(info);
+                    }
                 }
             }
         } else {
+            // Add arrivals for all routes
             for (int i = 0; i < len; ++i) {
-                result.add(new ArrivalInfo(context, arrivalInfo[i], ms));
+                ArrivalInfo info = new ArrivalInfo(context, arrivalInfo[i], ms);
+                if (shouldAddEta(info)) {
+                    result.add(info);
+                }
             }
         }
 
@@ -69,6 +78,29 @@ public final class ArrivalInfo {
         return result;
     }
 
+    /**
+     * Returns true if this ETA should be added based on the user preference for adding negative
+     * arrival times, and false if it should not
+     *
+     * @param info info that includes the ETA to be evaluated
+     * @return true if this ETA should be added based on the user preference for adding negative
+     * arrival times, and false if it should not
+     */
+    private static boolean shouldAddEta(ArrivalInfo info) {
+        boolean showNegativeArrivals = Application.getPrefs()
+                .getBoolean(Application.get().getResources()
+                        .getString(R.string.preference_key_show_negative_arrivals), true);
+        if (info.getEta() >= 0) {
+            // Always add positive ETAs
+            return true;
+        } else {
+            // Only add negative ETAs based on setting
+            if (showNegativeArrivals) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Returns the index in the provided infoList for the first non-negative arrival ETA in the

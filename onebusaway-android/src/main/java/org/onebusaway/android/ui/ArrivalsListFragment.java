@@ -30,6 +30,7 @@ import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.PreferenceHelp;
 import org.onebusaway.android.util.UIHelp;
 
 import android.app.Activity;
@@ -533,6 +534,8 @@ public class ArrivalsListFragment extends ListFragment
         } else if (id == R.id.refresh) {
             refresh();
             return true;
+        } else if (id == R.id.sort_arrivals) {
+            showSortByDialog();
         } else if (id == R.id.filter) {
             if (mStop != null) {
                 showRoutesFilterDialog();
@@ -992,6 +995,36 @@ public class ArrivalsListFragment extends ListFragment
                 break;
         }
         setListAdapter(mAdapter);
+    }
+
+    private void showSortByDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.stop_info_option_sort_arrivals);
+
+        int currentArrivalInfoStyle = BuildFlavorUtil.getArrivalInfoStyleFromPreferences();
+        builder.setSingleChoiceItems(R.array.sort_arrivals, currentArrivalInfoStyle,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int index) {
+                        if (index == 0) {
+                            // Sort by route
+                            Log.d(TAG, "Sort by route");
+                        } else if (index == 1) {
+                            // Sort by eta
+                            Log.d(TAG, "Sort by ETA");
+                        }
+                        String[] styles = getResources()
+                                .getStringArray(R.array.arrival_info_style_options);
+                        PreferenceHelp.saveString(getResources()
+                                .getString(R.string.preference_key_arrival_info_style),
+                                styles[index]);
+                        checkAdapterStylePreference();
+                        refreshLocal();
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.setOwnerActivity(getActivity());
+        dialog.show();
     }
 
     private void showRoutesFilterDialog() {

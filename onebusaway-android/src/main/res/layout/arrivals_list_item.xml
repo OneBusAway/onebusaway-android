@@ -67,20 +67,20 @@
                             android:ellipsize="end"
                             android:singleLine="true">
                     </TextView>
+                    <include
+                            android:id="@+id/status"
+                            layout="@layout/arrivals_list_tv_template_style_a_status_small"
+                            android:layout_marginTop="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
                     <TextView
                             android:id="@+id/time"
                             style="@style/StopInfoTime"
                             android:text="11:46 AM"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" android:layout_marginTop="1dp"
-                            android:layout_marginBottom="1dp">
+                            android:layout_height="wrap_content">
                     </TextView>
-                    <include
-                            android:id="@+id/status"
-                            layout="@layout/arrivals_list_tv_template_style_a_status_small"
-                            android:layout_marginTop="2dp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
                 </LinearLayout>
                 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                                 android:id="@+id/eta_and_min"

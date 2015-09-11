@@ -616,18 +616,19 @@ class ArrivalsListHeader {
                     UIHelp.showViewWithAnimation(mEtaMin1, mShortAnimationDuration);
                 }
 
+                mEtaAndMin1.setBackgroundResource(
+                        R.drawable.round_corners_style_b_header_status);
+                GradientDrawable d1 = (GradientDrawable) mEtaAndMin1.getBackground();
+
                 if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
                     // We have real-time data - set the color and show the indicator
                     final Integer color = mArrivalInfo.get(indexFirstEta).getColor();
-                    mEtaAndMin1.setBackgroundResource(
-                            R.drawable.round_corners_style_b_header_status);
-                    GradientDrawable d = (GradientDrawable) mEtaAndMin1.getBackground();
                     if (color != R.color.stop_info_ontime) {
                         // Show early/late color
-                        d.setColor(mContext.getResources().getColor(color));
+                        d1.setColor(mContext.getResources().getColor(color));
                     } else {
                         // For on-time, use header default color
-                        d.setColor(mContext.getResources().getColor(R.color.theme_primary));
+                        d1.setColor(mContext.getResources().getColor(R.color.theme_primary));
                     }
                     mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -670,7 +671,9 @@ class ArrivalsListHeader {
                     UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
                     // We only have schedule data - hide the indicator
-                    UIHelp.hideViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
+                    mEtaRealtime1.setVisibility(View.INVISIBLE);
+                    // Set the default header color
+                    d1.setColor(mContext.getResources().getColor(R.color.theme_primary));
                 }
                 // Save the arrival info for the options menu later
                 mHeaderArrivalInfo.add(mArrivalInfo.get(indexFirstEta));
@@ -700,19 +703,19 @@ class ArrivalsListHeader {
                         mEtaArrivalInfo2.setTextSize(ETA_TEXT_SIZE_SP);
                         UIHelp.showViewWithAnimation(mEtaMin2, mShortAnimationDuration);
                     }
+                    mEtaAndMin2.setBackgroundResource(
+                            R.drawable.round_corners_style_b_header_status);
+                    GradientDrawable d2 = (GradientDrawable) mEtaAndMin2.getBackground();
 
                     if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
                         // We have real-time data - set the color and show the indicator
                         final Integer color = mArrivalInfo.get(indexSecondEta).getColor();
-                        mEtaAndMin2.setBackgroundResource(
-                                R.drawable.round_corners_style_b_header_status);
-                        GradientDrawable d = (GradientDrawable) mEtaAndMin2.getBackground();
                         if (color != R.color.stop_info_ontime) {
                             // Show early/late color
-                            d.setColor(mContext.getResources().getColor(color));
+                            d2.setColor(mContext.getResources().getColor(color));
                         } else {
                             // For on-time, use header default color
-                            d.setColor(mContext.getResources().getColor(R.color.theme_primary));
+                            d2.setColor(mContext.getResources().getColor(R.color.theme_primary));
                         }
                         mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -758,7 +761,9 @@ class ArrivalsListHeader {
                         UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {
                         // We only have schedule data - hide the indicator
-                        UIHelp.hideViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
+                        mEtaRealtime2.setVisibility(View.INVISIBLE);
+                        // Set the default header color
+                        d2.setColor(mContext.getResources().getColor(R.color.theme_primary));
                     }
 
                     mNumHeaderArrivals = 2;

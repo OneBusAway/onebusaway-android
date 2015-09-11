@@ -49,7 +49,7 @@
     <color name="header_text_faded_color">#bbffffff</color>
 
     <!-- Arrival time colors -->
-    <color name="stop_info_estimated_time">#777</color>
+    <color name="stop_info_scheduled_time">#777</color>
     <color name="stop_info_ontime">@color/theme_primary</color>
     <color name="stop_info_delayed">#504caf</color>
     <color name="stop_info_early">#af504c</color>

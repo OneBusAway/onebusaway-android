@@ -264,7 +264,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             } else {
                 // Set scheduled color
                 d.setColor(
-                        context.getResources().getColor(R.color.stop_info_estimated_time));
+                        context.getResources().getColor(R.color.stop_info_scheduled_time));
             }
 
             int alpha;

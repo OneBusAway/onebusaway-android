@@ -98,7 +98,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
             realtimeView.setVisibility(View.VISIBLE);
         } else {
             // Use scheduled color
-            color = context.getResources().getColor(R.color.stop_info_estimated_time);
+            color = context.getResources().getColor(R.color.stop_info_scheduled_time);
             realtimeView.setVisibility(View.INVISIBLE);
         }
 

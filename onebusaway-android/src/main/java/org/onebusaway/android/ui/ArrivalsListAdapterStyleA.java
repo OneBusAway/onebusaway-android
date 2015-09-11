@@ -28,6 +28,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -66,6 +67,8 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         TextView time = (TextView) view.findViewById(R.id.time);
         TextView status = (TextView) view.findViewById(R.id.status);
         TextView etaView = (TextView) view.findViewById(R.id.eta);
+        TextView minView = (TextView) view.findViewById(R.id.eta_min);
+        ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
 
         final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
         final Context context = getContext();
@@ -77,26 +80,31 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         long eta = stopInfo.getEta();
         if (eta == 0) {
             etaView.setText(R.string.stop_info_eta_now);
+            minView.setVisibility(View.GONE);
         } else {
             etaView.setText(String.valueOf(eta));
+            minView.setVisibility(View.VISIBLE);
         }
+
+        status.setBackgroundResource(R.drawable.round_corners_style_b_status);
+        GradientDrawable d = (GradientDrawable) status.getBackground();
 
         Integer colorCode = stopInfo.getColor();
+        int color;
         if (colorCode != null) {
-            int color = context.getResources().getColor(colorCode);
-            etaView.setTextColor(color);
-
-            status.setBackgroundResource(R.drawable.round_corners_style_b_status);
-            GradientDrawable d = (GradientDrawable) status.getBackground();
-            if (colorCode != null) {
-                // Set real-time color
-                d.setColor(context.getResources().getColor(colorCode));
-            } else {
-                // Set scheduled color
-                d.setColor(
-                        context.getResources().getColor(R.color.stop_info_estimated_time));
-            }
+            // Use real-time color
+            color = context.getResources().getColor(colorCode);
+            UIHelp.setRealtimeIndicatorColor(realtimeView, colorCode, android.R.color.transparent);
+            realtimeView.setVisibility(View.VISIBLE);
+        } else {
+            // Use scheduled color
+            color = context.getResources().getColor(R.color.stop_info_estimated_time);
+            realtimeView.setVisibility(View.INVISIBLE);
         }
+
+        etaView.setTextColor(color);
+        minView.setTextColor(color);
+        d.setColor(color);
 
         // Set padding on status view
         int pSides = UIHelp.dpToPixels(context, 5);
@@ -122,11 +130,11 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
                 reminderName = context.getString(R.string.trip_info_noname);
             }
             reminder.setText(reminderName);
-            Drawable d = reminder.getCompoundDrawables()[0];
-            d = DrawableCompat.wrap(d);
-            DrawableCompat.setTint(d.mutate(),
+            Drawable d2 = reminder.getCompoundDrawables()[0];
+            d2 = DrawableCompat.wrap(d2);
+            DrawableCompat.setTint(d2.mutate(),
                     view.getResources().getColor(R.color.button_material_dark));
-            reminder.setCompoundDrawables(d, null, null, null);
+            reminder.setCompoundDrawables(d2, null, null, null);
             reminder.setVisibility(View.VISIBLE);
         } else {
             // Explicitly set this to invisible because we might be reusing

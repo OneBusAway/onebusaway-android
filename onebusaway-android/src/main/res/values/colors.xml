@@ -48,16 +48,11 @@
     <color name="header_text_color">@android:color/white</color>
     <color name="header_text_faded_color">#bbffffff</color>
 
-    <!-- Arrival time colors for Style A -->
-    <color name="stop_info_ontime_style_a">@color/theme_primary</color>
-    <color name="stop_info_delayed_style_a">#0000ff</color>
-    <color name="stop_info_early_style_a">#ff0000</color>
-
-    <!-- Arrival time color for Style B -->
-    <color name="stop_info_estimated_time_style_b">#777</color>
-    <color name="stop_info_ontime_style_b">@color/theme_primary</color>
-    <color name="stop_info_delayed_style_b">#504caf</color>
-    <color name="stop_info_early_style_b">#af504c</color>
+    <!-- Arrival time colors -->
+    <color name="stop_info_estimated_time">#777</color>
+    <color name="stop_info_ontime">@color/theme_primary</color>
+    <color name="stop_info_delayed">#504caf</color>
+    <color name="stop_info_early">#af504c</color>
 
     <color name="stop_info_arrival_list_background">#eaeaea</color>
 

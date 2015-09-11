@@ -87,7 +87,7 @@
     <!-- StopInfo -->
     <style name="StopInfoRoute">
         <item name="android:textSize">36sp</item>
-        <item name="android:paddingLeft">5dp</item>
+        <item name="android:textStyle">bold</item>
     </style>
     <style name="StopInfoDestination">
         <item name="android:textStyle">bold</item>
@@ -100,6 +100,7 @@
     </style>
     <style name="StopInfoEta">
         <item name="android:textSize">36sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
     <style name="LoadMoreArrivals">
         <item name="android:textSize">18sp</item>
@@ -130,5 +131,69 @@
         <item name="android:paddingBottom">8dp</item>
         <item name="android:paddingLeft">4dip</item>
         <item name="android:paddingRight">4dip</item>
+    </style>
+
+    <!-- Arrivals list styles -->
+    <style name="ArrivalsListItemRouteName">
+        <item name="android:textSize">28sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ArrivalsListItemDestination">
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="ArrivalsListLabel">
+        <item name="android:background">@color/theme_primary</item>
+        <item name="android:paddingRight">20dp</item>
+    </style>
+    <style name="ArrivalsListLabelText">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ArrivalsListNextTime">
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+    <style name="ArrivalsListNextTimeETA">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/stop_info_estimated_time</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ArrivalsListNextTimeSched">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ArrivalsListSched">
+        <item name="android:textSize">12sp</item>
+        <item name="android:paddingTop">1dp</item>
+        <item name="android:paddingBottom">1dp</item>
+    </style>
+    <style name="ArrivalsListETA">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/stop_info_estimated_time</item>
+        <item name="android:paddingTop">1dp</item>
+        <item name="android:paddingBottom">1dp</item>
+    </style>
+    <style name="ArrivalsListStatusLarge">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:padding">2dp</item>
+    </style>
+    <style name="ArrivalsListStatusSmall">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/header_text_faded_color</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
+    </style>
+    <style name="ArrivalsListStatusSmallStyleA">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/header_text_color</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
     </style>
 </resources>

@@ -43,9 +43,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
-import android.content.res.TypedArray;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -886,17 +884,9 @@ public class ArrivalsListFragment extends ListFragment
      * @param inflater         inflater to use
      */
     private void initArrivalInfoViews(int arrivalInfoStyle, LayoutInflater inflater) {
-        switch (arrivalInfoStyle) {
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
-                mFooter = inflater.inflate(R.layout.arrivals_list_footer, null);
-                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty, null);
-                break;
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
-                // Use a card-styled footer
-                mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
-                mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
-                break;
-        }
+        // Use a card-styled footer
+        mFooter = inflater.inflate(R.layout.arrivals_list_footer_style_b, null);
+        mEmptyList = inflater.inflate(R.layout.arrivals_list_empty_style_b, null);
     }
 
     /**
@@ -941,26 +931,14 @@ public class ArrivalsListFragment extends ListFragment
     private void setListViewProperties(int arrivalInfoStyle) {
         ListView.MarginLayoutParams listParam = (ListView.MarginLayoutParams) getListView()
                 .getLayoutParams();
-        if (arrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_A) {
-            // Set default margins
-            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 0);
-            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 0);
-            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 0);
-            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 0);
-            // Set the listview background to give the cards more contrast
-            getListView().setBackgroundColor(
-                    getResources().getColor(R.color.stop_info_arrival_list_background));
-        }
-        if (arrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_B) {
-            // Set margins for the CardViews
-            listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
-            listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
-            listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
-            listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
-            // Set the listview background to give the cards more contrast
-            getListView().setBackgroundColor(
-                    getResources().getColor(R.color.stop_info_arrival_list_background));
-        }
+        // Set margins for the CardViews
+        listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
+        listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
+        listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
+        listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
+        // Set the listview background to give the cards more contrast
+        getListView().setBackgroundColor(
+                getResources().getColor(R.color.stop_info_arrival_list_background));
         // Update the layout parameters
         getListView().setLayoutParams(listParam);
     }
@@ -975,25 +953,15 @@ public class ArrivalsListFragment extends ListFragment
         switch (arrivalInfoStyle) {
             case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
                 mAdapter = new ArrivalsListAdapterStyleA(getActivity());
-                // Set the list divider if we've previously set it to null for Style B
-                if (getListView().getDivider() == null) {
-                    final TypedArray array = getActivity().getTheme().obtainStyledAttributes(
-                            R.style.Widget_AppCompat_ListView, new int[]{
-                                    android.R.attr.dividerHorizontal
-                            });
-                    Drawable d = array.getDrawable(0);
-                    getListView().setDivider(d);
-                    // Tear down
-                    array.recycle();
-                }
                 break;
             case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
                 mAdapter = new ArrivalsListAdapterStyleB(getActivity());
                 ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
-                // We present arrivals as cards, so hide the divider in the listview
-                getListView().setDivider(null);
                 break;
         }
+
+        // We present arrivals as cards, so hide the divider in the listview
+        getListView().setDivider(null);
         setListAdapter(mAdapter);
     }
 

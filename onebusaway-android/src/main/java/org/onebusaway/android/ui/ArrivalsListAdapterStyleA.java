@@ -19,10 +19,12 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -79,12 +81,27 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
             etaView.setText(String.valueOf(eta));
         }
 
-        Integer colorCode = stopInfo.getColorStyleA();
+        Integer colorCode = stopInfo.getColor();
         if (colorCode != null) {
             int color = context.getResources().getColor(colorCode);
-            status.setTextColor(color);
             etaView.setTextColor(color);
+
+            status.setBackgroundResource(R.drawable.round_corners_style_b_status);
+            GradientDrawable d = (GradientDrawable) status.getBackground();
+            if (colorCode != null) {
+                // Set real-time color
+                d.setColor(context.getResources().getColor(colorCode));
+            } else {
+                // Set scheduled color
+                d.setColor(
+                        context.getResources().getColor(R.color.stop_info_estimated_time));
+            }
         }
+
+        // Set padding on status view
+        int pSides = UIHelp.dpToPixels(context, 5);
+        int pTopBottom = UIHelp.dpToPixels(context, 2);
+        status.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
         time.setText(DateUtils.formatDateTime(context,
                 stopInfo.getDisplayTime(),

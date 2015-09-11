@@ -255,7 +255,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 estimatedView.setText(R.string.stop_info_eta_unknown);
             }
             statusView.setText(arrivalRow.getStatusText());
-            Integer colorCode = arrivalRow.getColorStyleB();
+            Integer colorCode = arrivalRow.getColor();
             statusView.setBackgroundResource(R.drawable.round_corners_style_b_status);
             GradientDrawable d = (GradientDrawable) statusView.getBackground();
             if (colorCode != null) {
@@ -264,7 +264,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             } else {
                 // Set scheduled color
                 d.setColor(
-                        context.getResources().getColor(R.color.stop_info_estimated_time_style_b));
+                        context.getResources().getColor(R.color.stop_info_estimated_time));
             }
 
             int alpha;

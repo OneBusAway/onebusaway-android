@@ -618,11 +618,11 @@ class ArrivalsListHeader {
 
                 if (mArrivalInfo.get(indexFirstEta).getPredicted()) {
                     // We have real-time data - set the color and show the indicator
-                    final Integer color = mArrivalInfo.get(indexFirstEta).getColorStyleB();
+                    final Integer color = mArrivalInfo.get(indexFirstEta).getColor();
                     mEtaAndMin1.setBackgroundResource(
                             R.drawable.round_corners_style_b_header_status);
                     GradientDrawable d = (GradientDrawable) mEtaAndMin1.getBackground();
-                    if (color != R.color.stop_info_ontime_style_b) {
+                    if (color != R.color.stop_info_ontime) {
                         // Show early/late color
                         d.setColor(mContext.getResources().getColor(color));
                     } else {
@@ -640,7 +640,7 @@ class ArrivalsListHeader {
                             statusView.setBackgroundResource(
                                     R.drawable.round_corners_style_b_status);
                             GradientDrawable d = (GradientDrawable) statusView.getBackground();
-                            if (color != R.color.stop_info_ontime_style_b) {
+                            if (color != R.color.stop_info_ontime) {
                                 // Show early/late color
                                 d.setColor(mContext.getResources().getColor(color));
                             } else {
@@ -703,11 +703,11 @@ class ArrivalsListHeader {
 
                     if (mArrivalInfo.get(indexSecondEta).getPredicted()) {
                         // We have real-time data - set the color and show the indicator
-                        final Integer color = mArrivalInfo.get(indexSecondEta).getColorStyleB();
+                        final Integer color = mArrivalInfo.get(indexSecondEta).getColor();
                         mEtaAndMin2.setBackgroundResource(
                                 R.drawable.round_corners_style_b_header_status);
                         GradientDrawable d = (GradientDrawable) mEtaAndMin2.getBackground();
-                        if (color != R.color.stop_info_ontime_style_b) {
+                        if (color != R.color.stop_info_ontime) {
                             // Show early/late color
                             d.setColor(mContext.getResources().getColor(color));
                         } else {
@@ -725,7 +725,7 @@ class ArrivalsListHeader {
                                 statusView.setBackgroundResource(
                                         R.drawable.round_corners_style_b_status);
                                 GradientDrawable d = (GradientDrawable) statusView.getBackground();
-                                if (color != R.color.stop_info_ontime_style_b) {
+                                if (color != R.color.stop_info_ontime) {
                                     // Show early/late color
                                     d.setColor(mContext.getResources().getColor(color));
                                 } else {

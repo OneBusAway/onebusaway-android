@@ -41,7 +41,7 @@
 
             <TextView
                     android:id="@+id/reminder"
-                    android:drawableLeft="@drawable/ic_action_announcement"
+                    android:drawableLeft="@drawable/ic_drawer_alarm"
                     android:contentDescription="@string/trip_info_reminder_content_description"
                     android:drawablePadding="5dp"
                     android:paddingBottom="0dp"

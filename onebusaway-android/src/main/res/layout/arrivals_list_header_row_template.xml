@@ -26,7 +26,7 @@
                         android:padding="5dp"/>
                 <ImageButton
                         android:id="@+id/reminder"
-                        android:src="@drawable/ic_action_announcement"
+                        android:src="@drawable/ic_drawer_alarm"
                         android:contentDescription="@string/trip_info_reminder_content_description"
                         android:background="?attr/selectableItemBackground"
                         android:maxHeight="12dp"

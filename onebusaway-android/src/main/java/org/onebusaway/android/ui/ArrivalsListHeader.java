@@ -623,29 +623,27 @@ class ArrivalsListHeader {
                 mEtaAndMin1.setBackgroundResource(
                         R.drawable.round_corners_style_b_header_status);
                 GradientDrawable d1 = (GradientDrawable) mEtaAndMin1.getBackground();
+                final int c1 = mArrivalInfo.get(i1).getColor();
+                if (c1 != R.color.stop_info_ontime) {
+                    // Show early/late/scheduled color
+                    d1.setColor(mResources.getColor(c1));
+                } else {
+                    // For on-time, use header default color
+                    d1.setColor(mResources.getColor(R.color.theme_primary));
+                }
+                mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        setupPopup(mEtaAndMin1, c1, mArrivalInfo.get(i1).getStatusText());
+                    }
+                });
 
                 if (mArrivalInfo.get(i1).getPredicted()) {
-                    // We have real-time data - set the color and show the indicator
-                    final Integer color = mArrivalInfo.get(i1).getColor();
-                    if (color != R.color.stop_info_ontime) {
-                        // Show early/late color
-                        d1.setColor(mResources.getColor(color));
-                    } else {
-                        // For on-time, use header default color
-                        d1.setColor(mResources.getColor(R.color.theme_primary));
-                    }
-                    mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            setupPopup(mEtaAndMin1, color, mArrivalInfo.get(i1).getStatusText());
-                        }
-                    });
+                    // We have real-time data - show the indicator
                     UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
                     // We only have schedule data - hide the indicator
                     mEtaRealtime1.setVisibility(View.INVISIBLE);
-                    // Set the default header color
-                    d1.setColor(mResources.getColor(R.color.theme_primary));
                 }
                 // Save the arrival info for the options menu later
                 mHeaderArrivalInfo.add(mArrivalInfo.get(i1));
@@ -677,30 +675,28 @@ class ArrivalsListHeader {
                     mEtaAndMin2.setBackgroundResource(
                             R.drawable.round_corners_style_b_header_status);
                     GradientDrawable d2 = (GradientDrawable) mEtaAndMin2.getBackground();
+                    final int c2 = mArrivalInfo.get(i2).getColor();
+                    if (c2 != R.color.stop_info_ontime) {
+                        // Show early/late/scheduled color
+                        d2.setColor(mResources.getColor(c2));
+                    } else {
+                        // For on-time, use header default color
+                        d2.setColor(mResources.getColor(R.color.theme_primary));
+                    }
+                    mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            setupPopup(mEtaAndMin2, c2,
+                                    mArrivalInfo.get(i2).getStatusText());
+                        }
+                    });
 
                     if (mArrivalInfo.get(i2).getPredicted()) {
-                        // We have real-time data - set the color and show the indicator
-                        final Integer color = mArrivalInfo.get(i2).getColor();
-                        if (color != R.color.stop_info_ontime) {
-                            // Show early/late color
-                            d2.setColor(mResources.getColor(color));
-                        } else {
-                            // For on-time, use header default color
-                            d2.setColor(mResources.getColor(R.color.theme_primary));
-                        }
-                        mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                setupPopup(mEtaAndMin2, color,
-                                        mArrivalInfo.get(i2).getStatusText());
-                            }
-                        });
+                        // We have real-time data - show the indicator
                         UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {
                         // We only have schedule data - hide the indicator
                         mEtaRealtime2.setVisibility(View.INVISIBLE);
-                        // Set the default header color
-                        d2.setColor(mResources.getColor(R.color.theme_primary));
                     }
 
                     mNumHeaderArrivals = 2;

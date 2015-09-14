@@ -90,15 +90,12 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         GradientDrawable d = (GradientDrawable) status.getBackground();
 
         Integer colorCode = stopInfo.getColor();
-        int color;
-        if (colorCode != null) {
-            // Use real-time color
-            color = context.getResources().getColor(colorCode);
+        int color = context.getResources().getColor(colorCode);
+        if (stopInfo.getPredicted()) {
+            // Show real-time indicator
             UIHelp.setRealtimeIndicatorColor(realtimeView, colorCode, android.R.color.transparent);
             realtimeView.setVisibility(View.VISIBLE);
         } else {
-            // Use scheduled color
-            color = context.getResources().getColor(R.color.stop_info_scheduled_time);
             realtimeView.setVisibility(View.INVISIBLE);
         }
 

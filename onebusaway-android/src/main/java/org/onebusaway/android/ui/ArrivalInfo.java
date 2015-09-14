@@ -182,7 +182,7 @@ public final class ArrivalInfo {
 
     private final String mStatusText;
 
-    private final Integer mColor;
+    private final int mColor;
 
     private static final int ms_in_mins = 60 * 1000;
 
@@ -228,7 +228,7 @@ public final class ArrivalInfo {
                         info.getHeadsign(), info.getStopId());
     }
 
-    private Integer computeColor(final long scheduled, final long predicted) {
+    private int computeColor(final long scheduled, final long predicted) {
         if (predicted != 0) {
             long delay = predicted - scheduled;
 
@@ -244,8 +244,8 @@ public final class ArrivalInfo {
                 return R.color.stop_info_ontime;
             }
         } else {
-            // The default color for the UI element should be used, so return null
-            return null;
+            // Use scheduled color
+            return R.color.stop_info_scheduled_time;
         }
     }
 
@@ -351,13 +351,11 @@ public final class ArrivalInfo {
     }
 
     /**
-     * Returns the resource code for the color that should be used for the arrival time,
-     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
+     * Returns the resource code for the color that should be used for the arrival time
      *
-     * @return the resource code for the color that should be used for the arrival time,
-     * or null if the default color for UI element (e.g., Heading1 TextBox) should be used
+     * @return the resource code for the color that should be used for the arrival time
      */
-    final Integer getColor() {
+    final int getColor() {
         return mColor;
     }
 

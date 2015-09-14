@@ -992,6 +992,28 @@ public class HomeActivity extends ActionBarActivity
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
 
+        /**
+         * If we can listen for layout changes, resize the header views after the sliding panel
+         * has finished resizing.  Otherwise, we have to resize all three from within
+         * ArrivalListHeader and strange things happen (e.g., transparent header).
+         */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            mSlidingPanel.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                        int oldLeft,
+                        int oldTop, int oldRight, int oldBottom) {
+                    mArrivalsListHeaderView.getLayoutParams().height = mSlidingPanel
+                            .getPanelHeight();
+                    View mMainContainerView = mArrivalsListHeaderView
+                            .findViewById(R.id.main_header_content);
+                    mMainContainerView.getLayoutParams().height = mSlidingPanel.getPanelHeight();
+                    mArrivalsListHeaderView.requestLayout();
+                }
+            });
+        }
+
+
         mSlidingPanel.setPanelState(
                 SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
         mSlidingPanel.setOverlayed(true);

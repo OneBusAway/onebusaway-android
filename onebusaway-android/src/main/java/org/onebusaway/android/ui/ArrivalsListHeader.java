@@ -1010,12 +1010,19 @@ class ArrivalsListHeader {
             return;
         }
 
-        mView.getLayoutParams().height = newHeightPixels;
         if (mSlidingPanelController != null) {
             mSlidingPanelController.setPanelHeightPixels(newHeightPixels);
         }
-        // Set the main container view size to be the same
-        mMainContainerView.getLayoutParams().height = newHeightPixels;
+        /**
+         * If we can't listen for layout changes of the sliding panel in HomeActivity, resize the
+         * header views here.  Note that this can result in strange behavior
+         * (e.g., transparent header)
+         */
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            // Set the main container view size to be the same
+            mView.getLayoutParams().height = newHeightPixels;
+            mMainContainerView.getLayoutParams().height = newHeightPixels;
+        }
     }
 
     private static class ResponseError implements AlertList.Alert {

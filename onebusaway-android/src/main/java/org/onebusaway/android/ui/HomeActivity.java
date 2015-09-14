@@ -1003,12 +1003,17 @@ public class HomeActivity extends ActionBarActivity
                 public void onLayoutChange(View v, int left, int top, int right, int bottom,
                         int oldLeft,
                         int oldTop, int oldRight, int oldBottom) {
-                    mArrivalsListHeaderView.getLayoutParams().height = mSlidingPanel
-                            .getPanelHeight();
-                    View mMainContainerView = mArrivalsListHeaderView
-                            .findViewById(R.id.main_header_content);
-                    mMainContainerView.getLayoutParams().height = mSlidingPanel.getPanelHeight();
-                    mArrivalsListHeaderView.requestLayout();
+                    // Only resize and call requestLayout() if the view heights aren't the same.
+                    if (mArrivalsListHeaderView.getLayoutParams().height != mSlidingPanel
+                            .getPanelHeight()) {
+                        mArrivalsListHeaderView.getLayoutParams().height = mSlidingPanel
+                                .getPanelHeight();
+                        View mMainContainerView = mArrivalsListHeaderView
+                                .findViewById(R.id.main_header_content);
+                        mMainContainerView.getLayoutParams().height = mSlidingPanel
+                                .getPanelHeight();
+                        mArrivalsListHeaderView.requestLayout();
+                    }
                 }
             });
         }

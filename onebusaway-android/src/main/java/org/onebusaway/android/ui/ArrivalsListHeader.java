@@ -1014,11 +1014,13 @@ class ArrivalsListHeader {
             mSlidingPanelController.setPanelHeightPixels(newHeightPixels);
         }
         /**
-         * If we can't listen for layout changes of the sliding panel in HomeActivity, resize the
-         * header views here.  Note that this can result in strange behavior
+         * If we can't listen for layout changes of the sliding panel in HomeActivity, or if
+         * this header isn't in the sliding panel, resize the header views here.  Note that when inside
+         * the sliding panel on API levels less that Honeycomb this can result in strange behavior
          * (e.g., transparent header)
          */
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
+                || mSlidingPanelController == null) {
             // Set the main container view size to be the same
             mView.getLayoutParams().height = newHeightPixels;
             mMainContainerView.getLayoutParams().height = newHeightPixels;

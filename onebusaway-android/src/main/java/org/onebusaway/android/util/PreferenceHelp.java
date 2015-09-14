@@ -15,10 +15,12 @@
  */
 package org.onebusaway.android.util;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Build;
 
 public class PreferenceHelp {
@@ -85,5 +87,24 @@ public class PreferenceHelp {
 
     public static void saveBoolean(String key, boolean value) {
         saveBoolean(Application.getPrefs(), key, value);
+    }
+
+    /**
+     * Returns the currently selected stop sort order as the index in R.array.sort_stops
+     *
+     * @return the currently selected stop sort order as the index in R.array.sort_stops
+     */
+    public static int getStopSortOrderFromPreferences() {
+        Resources r = Application.get().getResources();
+        SharedPreferences settings = Application.getPrefs();
+        String[] sortOptions = r.getStringArray(R.array.sort_stops);
+        String sortPref = settings.getString(r.getString(
+                R.string.preference_key_default_stop_sort), sortOptions[0]);
+        if (sortPref.equalsIgnoreCase(sortOptions[0])) {
+            return 0;
+        } else if (sortPref.equalsIgnoreCase(sortOptions[1])) {
+            return 1;
+        }
+        return 0;  // Default to the first option
     }
 }

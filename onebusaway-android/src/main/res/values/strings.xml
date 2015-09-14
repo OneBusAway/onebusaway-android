@@ -159,7 +159,7 @@
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Show On Map</string>
-    <string name="stop_info_option_sort_arrivals">Sort by</string>
+    <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_sort_eta">Sorting by estimated arrival…</string>
     <string name="stop_info_option_sort_route">Sorting by route…</string>
     <string name="stop_info_option_refresh">Refresh</string>

@@ -19,12 +19,16 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.PreferenceHelp;
 
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -35,10 +39,17 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
+    public static final String TAG = "MyStarredStopsFragment";
     public static final String TAB_NAME = "starred";
+
+    private static String sortBy;
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // Set the sort by clause, in case its the first execution and none is set
+        final int currentStopOrder = PreferenceHelp.getStopSortOrderFromPreferences();
+        setSortByClause(currentStopOrder);
+
         return new CursorLoader(getActivity(),
                 ObaContract.Stops.CONTENT_URI,
                 PROJECTION,
@@ -46,8 +57,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                         (Application.get().getCurrentRegion() == null ? "" : " AND " +
                                 QueryUtils.getRegionWhere(ObaContract.Stops.REGION_ID,
                                         Application.get().getCurrentRegion().getId())),
-                null,
-                ObaContract.Stops.USE_COUNT + " desc");
+                null, sortBy);
     }
 
     @Override
@@ -90,12 +100,65 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.clear_starred) {
+        final int id = item.getItemId();
+        if (id == R.id.clear_starred) {
             new ClearDialog()
                     .show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
             return true;
+        } else if (id == R.id.sort_stops) {
+            showSortByDialog();
         }
         return false;
+    }
+
+    private void showSortByDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.menu_option_sort_by);
+
+        final int currentStopOrder = PreferenceHelp.getStopSortOrderFromPreferences();
+
+        builder.setSingleChoiceItems(R.array.sort_stops, currentStopOrder,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int index) {
+                        // If the user picked a different option, change the sort order
+                        if (currentStopOrder != index) {
+                            setSortByClause(index);
+
+                            // Restart the loader with the new sorting
+                            getLoaderManager().restartLoader(0, null, MyStarredStopsFragment.this);
+                        }
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.setOwnerActivity(getActivity());
+        dialog.show();
+    }
+
+    /**
+     * Sets the "sort by" string for ordering the stops, based on the given index of
+     * R.array.sort_stops.  It also saves the sort by order to preferences.
+     *
+     * @param index the index of R.array.sort_stops that should be set
+     */
+    private void setSortByClause(int index) {
+        switch (index) {
+            case 0:
+                // Sort by name
+                Log.d(TAG, "Sort by name");
+                sortBy = ObaContract.Stops.UI_NAME + " asc";
+                break;
+            case 1:
+                // Sort by frequently used
+                Log.d(TAG, "Sort by frequently used");
+                sortBy = ObaContract.Stops.USE_COUNT + " desc";
+                break;
+        }
+        // Set the sort option to preferences
+        final String[] sortOptions = getResources().getStringArray(R.array.sort_stops);
+        PreferenceHelp.saveString(getResources()
+                        .getString(R.string.preference_key_default_stop_sort),
+                sortOptions[index]);
     }
 
     @Override

@@ -32,6 +32,7 @@
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
+    <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

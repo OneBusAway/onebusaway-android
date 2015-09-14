@@ -13,9 +13,14 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:onebusaway="http://schemas.android.com/apk/res-auto">
     <group
             android:id="@+id/starred_stop_menu_group">
+        <item android:id="@+id/sort_stops"
+              android:title="@string/menu_option_sort_by"
+              android:icon="@drawable/ic_action_content_sort"
+              onebusaway:showAsAction="ifRoom"/>
         <item android:id="@+id/clear_starred"
               android:title="@string/my_option_clear_starred_stops"
               android:icon="@drawable/android:ic_menu_close_clear_cancel"/>

@@ -22,7 +22,7 @@
               android:icon="@drawable/ic_action_navigation_refresh"
               onebusaway:showAsAction="ifRoom"/>
         <item android:id="@+id/sort_arrivals"
-              android:title="@string/stop_info_option_sort_arrivals"
+              android:title="@string/menu_option_sort_by"
               android:icon="@drawable/ic_action_content_sort"
               onebusaway:showAsAction="ifRoom"/>
         <item android:id="@+id/show_on_map"

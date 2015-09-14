@@ -43,6 +43,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
@@ -533,7 +535,7 @@ public class ArrivalsListFragment extends ListFragment
             refresh();
             return true;
         } else if (id == R.id.sort_arrivals) {
-            showSortByDialog();
+            doSortBy();
         } else if (id == R.id.filter) {
             if (mStop != null) {
                 showRoutesFilterDialog();
@@ -965,34 +967,33 @@ public class ArrivalsListFragment extends ListFragment
         setListAdapter(mAdapter);
     }
 
-    private void showSortByDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.stop_info_option_sort_arrivals);
+    private void doSortBy() {
+        // Switch sort order and show Toast
+        Resources r = getActivity().getResources();
+        SharedPreferences settings = Application.getPrefs();
+        String currentValue = settings
+                .getString(getString(R.string.preference_key_arrival_info_style), null);
+        String[] styles = getResources()
+                .getStringArray(R.array.arrival_info_style_options);
+        int newValue;
 
-        int currentArrivalInfoStyle = BuildFlavorUtil.getArrivalInfoStyleFromPreferences();
-        builder.setSingleChoiceItems(R.array.sort_arrivals, currentArrivalInfoStyle,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int index) {
-                        if (index == 0) {
-                            // Sort by route
-                            Log.d(TAG, "Sort by route");
-                        } else if (index == 1) {
-                            // Sort by eta
-                            Log.d(TAG, "Sort by ETA");
-                        }
-                        String[] styles = getResources()
-                                .getStringArray(R.array.arrival_info_style_options);
-                        PreferenceHelp.saveString(getResources()
-                                .getString(R.string.preference_key_arrival_info_style),
-                                styles[index]);
-                        checkAdapterStylePreference();
-                        refreshLocal();
-                        dialog.dismiss();
-                    }
-                });
-        AlertDialog dialog = builder.create();
-        dialog.setOwnerActivity(getActivity());
-        dialog.show();
+        if (currentValue.equalsIgnoreCase(styles[0])) {
+            // Currently we're sorting by ETA - change to sorting by route
+            Toast.makeText(getActivity(), r.getString(R.string.stop_info_option_sort_route),
+                    Toast.LENGTH_SHORT).show();
+            newValue = 1;
+        } else {
+            // Currently we're sorting by route - change to sorting by eta
+            newValue = 0;
+            Toast.makeText(getActivity(), r.getString(R.string.stop_info_option_sort_eta),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        PreferenceHelp.saveString(getResources()
+                        .getString(R.string.preference_key_arrival_info_style),
+                styles[newValue]);
+        checkAdapterStylePreference();
+        refreshLocal();
     }
 
     private void showRoutesFilterDialog() {

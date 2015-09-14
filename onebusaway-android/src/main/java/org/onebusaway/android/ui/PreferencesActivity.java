@@ -69,8 +69,6 @@ public class PreferencesActivity extends PreferenceActivity
 
     ListPreference preferredUnits;
 
-    ListPreference arrivalInfoStyle;
-
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -100,8 +98,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         preferredUnits = (ListPreference) findPreference(
                 getString(R.string.preference_key_preferred_units));
-        arrivalInfoStyle = (ListPreference) findPreference(
-                getString(R.string.preference_key_arrival_info_style));
 
         settings.registerOnSharedPreferenceChangeListener(this);
 
@@ -136,7 +132,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
-        changePreferenceSummary(getString(R.string.preference_key_arrival_info_style));
     }
 
     @Override
@@ -215,13 +210,6 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             preferredUnits.setSummary(preferredUnits.getValue());
-        } else if (preferenceKey
-                .equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
-            arrivalInfoStyle.setSummary(arrivalInfoStyle.getValue());
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_edit_general),
-                    getString(R.string.analytics_label_arrival_info_style)
-                            + arrivalInfoStyle.getValue());
         }
     }
 

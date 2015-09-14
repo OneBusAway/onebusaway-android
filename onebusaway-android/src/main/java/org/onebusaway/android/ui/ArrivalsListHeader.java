@@ -845,8 +845,6 @@ class ArrivalsListHeader {
 
             // Setup tapping on star for first row
             final ObaArrivalInfo info1 = mHeaderArrivalInfo.get(0).getInfo();
-            final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                    info1.getRouteId());
             final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                     info1.getRouteId(), info1.getHeadsign(), info1.getStopId());
             mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
@@ -894,9 +892,6 @@ class ArrivalsListHeader {
 
             // Setup tapping on star for second row
             final ObaArrivalInfo info2 = mHeaderArrivalInfo.get(1).getInfo();
-
-            final Uri routeUri2 = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI,
-                    info2.getRouteId());
             final boolean isRouteFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
                     info2.getRouteId(), info2.getHeadsign(), info2.getStopId());
             mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {

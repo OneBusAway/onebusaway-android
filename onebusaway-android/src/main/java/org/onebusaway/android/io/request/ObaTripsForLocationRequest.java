@@ -43,7 +43,7 @@ public final class ObaTripsForLocationRequest extends RequestBase
         }
 
         /**
-         * An alternative to {@link #setRadius(int)} to set the search bounding box
+         * Sets the search bounding box
          *
          * @param latSpan The latitude span of the bounding box.
          * @param lonSpan The longitude span of the bounding box.

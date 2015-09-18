@@ -50,8 +50,8 @@ public final class ObaShapeRequest extends RequestBase implements Callable<ObaSh
      * @param shapeId The shapeId to request.
      * @return The new request instance.
      */
-    public static ObaShapeRequest newRequest(Context context, String stopId) {
-        return new Builder(context, stopId).build();
+    public static ObaShapeRequest newRequest(Context context, String shapeId) {
+        return new Builder(context, shapeId).build();
     }
 
     @Override

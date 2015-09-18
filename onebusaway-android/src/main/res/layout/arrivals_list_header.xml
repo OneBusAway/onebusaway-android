@@ -17,7 +17,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:id="@+id/arrivals_list_header"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/arrival_header_height_two_arrivals"
+                android:layout_height="@dimen/arrival_header_height_one_arrival"
                 android:orientation="vertical"
                 android:animateLayoutChanges="true">
 

@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve a shape (the path traveled by a transit vehicle) by ID.
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_Shape}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/shape.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

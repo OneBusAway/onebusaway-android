@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve the set of stops serving a particular route
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_StopsForRoute}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/stops-for-route.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

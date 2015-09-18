@@ -28,6 +28,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.Callable;
 
+/**
+ * Retrieves the current list of OneBusAway regions.
+ * {https://github.com/OneBusAway/onebusaway/wiki/Multi-Region#regions-rest-api}
+ *
+ * @author Paul Watts (paulcwatts@gmail.com)
+ */
 public final class ObaRegionsRequest extends RequestBase implements
         Callable<ObaRegionsResponse> {
 

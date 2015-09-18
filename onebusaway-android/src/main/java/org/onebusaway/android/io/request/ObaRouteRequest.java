@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve info about a specific route
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_Route}
+ * {@link http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/route.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

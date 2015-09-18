@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve the current system time.
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_CurrentTime}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/current-time.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

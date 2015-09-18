@@ -20,6 +20,12 @@ import android.net.Uri;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Report a problem with a trip.
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/report-problem-with-trip.html}
+ *
+ * @author Paul Watts (paulcwatts@gmail.com)
+ */
 public final class ObaReportProblemWithTripRequest extends RequestBase
         implements Callable<ObaReportProblemWithTripResponse> {
 

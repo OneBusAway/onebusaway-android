@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve the list of all stops for a particular agency by ID.
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_StopIdsForAgency}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/stop-ids-for-agency.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

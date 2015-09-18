@@ -20,6 +20,12 @@ import android.net.Uri;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Report a problem with a stop.
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/report-problem-with-stop.html}
+ *
+ * @author Paul Watts (paulcwatts@gmail.com)
+ */
 public final class ObaReportProblemWithStopRequest extends RequestBase
         implements Callable<ObaReportProblemWithStopResponse> {
     //private static final String TAG = "ObaReportProblemWithStopRequest";

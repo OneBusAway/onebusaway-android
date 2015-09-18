@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Search for active trips near a specific location
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_TripsForLocation}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/trips-for-location.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

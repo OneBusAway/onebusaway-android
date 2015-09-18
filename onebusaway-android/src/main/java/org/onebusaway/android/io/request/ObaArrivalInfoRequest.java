@@ -21,6 +21,12 @@ import android.net.Uri;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Request arrival information for a stop.
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/arrivals-and-departures-for-stop.html}
+ *
+ * @author Paul Watts (paulcwatts@gmail.com)
+ */
 public final class ObaArrivalInfoRequest extends RequestBase implements
         Callable<ObaArrivalInfoResponse> {
 

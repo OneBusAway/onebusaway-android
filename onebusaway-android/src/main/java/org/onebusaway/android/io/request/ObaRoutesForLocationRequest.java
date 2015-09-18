@@ -22,8 +22,8 @@ import android.net.Uri;
 import java.util.concurrent.Callable;
 
 /**
- * Retrieve info about a specific route
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_Route}
+ * Retrieve info about routes near a location
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/routes-for-location.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve the full schedule for a stop on a particular day
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_ScheduleForStop}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/schedule-for-stop.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

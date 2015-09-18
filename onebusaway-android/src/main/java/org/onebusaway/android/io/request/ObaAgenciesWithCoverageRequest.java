@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * List all supported agencies along with the center of their coverage area.
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_AgenciesWithCoverage}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/agencies-with-coverage.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

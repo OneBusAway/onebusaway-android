@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 
 /**
  * Retrieve info for a specific transit agency
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_Agency}
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/agency.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

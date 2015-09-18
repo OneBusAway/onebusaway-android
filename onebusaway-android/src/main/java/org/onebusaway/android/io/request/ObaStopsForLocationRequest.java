@@ -22,8 +22,8 @@ import android.net.Uri;
 import java.util.concurrent.Callable;
 
 /**
- * Search for stops near a specific location, optionally by stop code
- * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_StopsForLocation}
+ * Search for stops near a specific location, optionally by stop code (used for search)
+ * {http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/stops-for-location.html}
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */

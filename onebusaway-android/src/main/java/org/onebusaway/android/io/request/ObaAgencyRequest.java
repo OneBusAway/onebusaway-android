@@ -47,7 +47,7 @@ public final class ObaAgencyRequest extends RequestBase implements Callable<ObaA
      * Helper method for constructing new instances.
      *
      * @param context The package context.
-     * @param routeId The agency Id to request.
+     * @param agency The agency Id to request.
      * @return The new request instance.
      */
     public static ObaAgencyRequest newRequest(Context context, String agency) {

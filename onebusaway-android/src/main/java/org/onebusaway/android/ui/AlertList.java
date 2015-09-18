@@ -67,43 +67,46 @@ class AlertList {
         protected void initView(View view, final Alert alert) {
             TextView text = (TextView) view.findViewById(android.R.id.text1);
             text.setText(alert.getString());
-            int drawableLeft = 0; //R.drawable.ic_action_alert_error;
-            int bg = R.color.alert_error;
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
             int type = alert.getType();
             Resources r = Application.get().getResources();
 
-            int drawableRight = clickable ? R.drawable.ic_navigation_chevron_right : 0;
-            int iconColor = R.color.header_text_color;
-            Drawable drawable = ContextCompat
-                    .getDrawable(Application.get().getApplicationContext(), drawableRight);
-            Drawable wrappedDrawable = DrawableCompat.wrap(drawable);
-            wrappedDrawable = wrappedDrawable.mutate();
+            int bg;
+            int iconColor;
 
             switch (type) {
                 case Alert.TYPE_ERROR:
-                    //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_error;
                     iconColor = R.color.abc_primary_text_material_light;
-
                     break;
                 case Alert.TYPE_WARNING:
-                    //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_warning;
                     iconColor = R.color.abc_primary_text_material_light;
                     break;
                 case Alert.TYPE_INFO:
                 default:
-                    //drawableLeft = R.drawable.ic_action_alert_error;
                     bg = R.color.alert_info;
                     iconColor = R.color.header_text_color;
                     break;
             }
             // Set text color
             text.setTextColor(r.getColor(iconColor));
-            // Tint the icon
-            DrawableCompat.setTint(wrappedDrawable, r.getColor(iconColor));
-            text.setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
+
+            Drawable drawable;
+            Drawable wrappedDrawable = null;
+            int drawableRight = clickable ? R.drawable.ic_navigation_chevron_right : 0;
+            
+            if (drawableRight != 0) {
+                drawable = ContextCompat
+                        .getDrawable(Application.get().getApplicationContext(), drawableRight);
+                wrappedDrawable = DrawableCompat.wrap(drawable);
+                wrappedDrawable = wrappedDrawable.mutate();
+                // Tint the icon
+                DrawableCompat.setTint(wrappedDrawable, r.getColor(iconColor));
+            }
+
+            text.setCompoundDrawablesWithIntrinsicBounds(null, null, wrappedDrawable, null);
+
             // Set the background color
             view.setBackgroundResource(bg);
 

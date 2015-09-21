@@ -129,6 +129,8 @@ public class HomeActivity extends ActionBarActivity
 
     View mArrivalsListHeaderView;
 
+    View mArrivalsListHeaderSubView;
+
     private FloatingActionButton mFabMyLocation;
 
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
@@ -991,6 +993,7 @@ public class HomeActivity extends ActionBarActivity
     private void setupSlidingPanel(Bundle bundle) {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
+        mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
 
         mSlidingPanel.setPanelState(
                 SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
@@ -1046,7 +1049,17 @@ public class HomeActivity extends ActionBarActivity
             @Override
             public void setPanelHeightPixels(int heightInPixels) {
                 if (mSlidingPanel != null) {
-                    mSlidingPanel.setPanelHeight(heightInPixels);
+                    if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.DRAGGING ||
+                            mSlidingPanel.getPanelState()
+                                    == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                        // Don't resize header yet - see #294 - header size will be refreshed on panel state change
+                        return;
+                    }
+                    if (mSlidingPanel.getPanelHeight() != heightInPixels) {
+                        mSlidingPanel.setPanelHeight(heightInPixels);
+                        mArrivalsListHeaderView.getLayoutParams().height = heightInPixels;
+                        mArrivalsListHeaderSubView.getLayoutParams().height = heightInPixels;
+                    }
                 }
             }
 

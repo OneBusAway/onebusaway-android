@@ -997,11 +997,9 @@ class ArrivalsListHeader {
      */
     void setHeaderSize(float newHeightDp) {
         int heightPixels = UIHelp.dpToPixels(mContext, newHeightDp);
-        mView.getLayoutParams().height = heightPixels;
         if (mSlidingPanelController != null) {
             mSlidingPanelController.setPanelHeightPixels(heightPixels);
         }
-        mMainContainerView.getLayoutParams().height = heightPixels;
     }
 
     private static class ResponseError implements AlertList.Alert {

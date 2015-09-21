@@ -29,6 +29,7 @@ package org.onebusaway.android.map.googlemapsv2;
 
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
+import com.amazon.geo.mapsv2.OnMapReadyCallback;
 import com.amazon.geo.mapsv2.SupportMapFragment;
 import com.amazon.geo.mapsv2.UiSettings;
 import com.amazon.geo.mapsv2.model.CameraPosition;
@@ -98,7 +99,7 @@ public class BaseMapFragment extends SupportMapFragment
         MapModeController.ObaMapView,
         LocationSource, LocationHelper.Listener,
         com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
-        StopOverlay.OnFocusChangedListener {
+        StopOverlay.OnFocusChangedListener, OnMapReadyCallback {
 
     private static final String TAG = "BaseMapFragment";
 
@@ -151,6 +152,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     LocationHelper mLocationHelper;
 
+    Bundle mLastSavedInstanceState;
+
     public interface OnFocusChangedListener {
 
         /**
@@ -179,19 +182,12 @@ public class BaseMapFragment extends SupportMapFragment
 
         if (MapHelpV2.isMapsInstalled(getActivity())) {
             if (mMap != null) {
-                UiSettings uiSettings = mMap.getUiSettings();
-                // Show the location on the map
-                mMap.setMyLocationEnabled(true);
-                // Set location source
-                mMap.setLocationSource(this);
-                // Listener for camera changes
-                mMap.setOnCameraChangeListener(this);
-                // Hide MyLocation button on map, since we have our own button
-                uiSettings.setMyLocationButtonEnabled(false);
-                // Hide Zoom controls
-                uiSettings.setZoomControlsEnabled(false);
-                // Instantiate class that holds generic markers to be added by outside classes
-                mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
+                initMap(savedInstanceState);
+            } else {
+                // Save the savedInstanceState
+                mLastSavedInstanceState = savedInstanceState;
+                // Register for an async callback when the map is ready
+                getMapAsync(this);
             }
         } else {
             MapHelpV2.promptUserInstallMaps(getActivity());
@@ -210,8 +206,31 @@ public class BaseMapFragment extends SupportMapFragment
             }
         }
 
+        return v;
+    }
+
+    @Override
+    public void onMapReady(com.amazon.geo.mapsv2.AmazonMap map) {
+        initMap(mLastSavedInstanceState);
+    }
+
+    private void initMap(Bundle savedInstanceState) {
+        UiSettings uiSettings = mMap.getUiSettings();
+        // Show the location on the map
+        mMap.setMyLocationEnabled(true);
+        // Set location source
+        mMap.setLocationSource(this);
+        // Listener for camera changes
+        mMap.setOnCameraChangeListener(this);
+        // Hide MyLocation button on map, since we have our own button
+        uiSettings.setMyLocationButtonEnabled(false);
+        // Hide Zoom controls
+        uiSettings.setZoomControlsEnabled(false);
+        // Instantiate class that holds generic markers to be added by outside classes
+        mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
+
         if (savedInstanceState != null) {
-            initMap(savedInstanceState);
+            initMapState(savedInstanceState);
         } else {
             Bundle args = getActivity().getIntent().getExtras();
             // The rest of this code assumes a bundle exists,
@@ -219,13 +238,11 @@ public class BaseMapFragment extends SupportMapFragment
             if (args == null) {
                 args = new Bundle();
             }
-            initMap(args);
+            initMapState(args);
         }
-
-        return v;
     }
 
-    private void initMap(Bundle args) {
+    private void initMapState(Bundle args) {
         mFocusStopId = args.getString(MapParams.STOP_ID);
 
         String mode = args.getString(MapParams.MODE);
@@ -274,9 +291,11 @@ public class BaseMapFragment extends SupportMapFragment
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
         Location center = getMapCenterAsLocation();
-        outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
-        outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
-        outState.putFloat(MapParams.ZOOM, getZoomLevelAsFloat());
+        if (mMap != null) {
+            outState.putDouble(MapParams.CENTER_LAT, center.getLatitude());
+            outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
+            outState.putFloat(MapParams.ZOOM, getZoomLevelAsFloat());
+        }
     }
 
     public boolean isRouteDisplayed() {

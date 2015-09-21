@@ -993,38 +993,15 @@ class ArrivalsListHeader {
     /**
      * Re-size the header layout to the provided size, in dp
      *
-     * @param newHeightDp the new header layout, in dp
+     * @param newHeightDp the new header layout height, in dp
      */
     void setHeaderSize(float newHeightDp) {
-        int newHeightPixels = UIHelp.dpToPixels(mContext,
-                newHeightDp);
-        // Assume that the sliding panel isn't the same if it's not initialized
-        boolean isSlidingPanelSame = false;
+        int heightPixels = UIHelp.dpToPixels(mContext, newHeightDp);
+        mView.getLayoutParams().height = heightPixels;
         if (mSlidingPanelController != null) {
-            isSlidingPanelSame = mSlidingPanelController.getPanelHeightPixels() == newHeightPixels;
+            mSlidingPanelController.setPanelHeightPixels(heightPixels);
         }
-        if (mMainContainerView.getLayoutParams().height == newHeightPixels
-                && mView.getLayoutParams().height == newHeightPixels
-                && isSlidingPanelSame) {
-            // If the header is already this size, do nothing
-            return;
-        }
-
-        if (mSlidingPanelController != null) {
-            mSlidingPanelController.setPanelHeightPixels(newHeightPixels);
-        }
-        /**
-         * If we can't listen for layout changes of the sliding panel in HomeActivity, or if
-         * this header isn't in the sliding panel, resize the header views here.  Note that when inside
-         * the sliding panel on API levels less that Honeycomb this can result in strange behavior
-         * (e.g., transparent header)
-         */
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
-                || mSlidingPanelController == null) {
-            // Set the main container view size to be the same
-            mView.getLayoutParams().height = newHeightPixels;
-            mMainContainerView.getLayoutParams().height = newHeightPixels;
-        }
+        mMainContainerView.getLayoutParams().height = heightPixels;
     }
 
     private static class ResponseError implements AlertList.Alert {

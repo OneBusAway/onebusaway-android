@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="bottom"
-                sothree:umanoPanelHeight="@dimen/arrival_header_height_one_arrival"
+                sothree:umanoPanelHeight="@dimen/arrival_header_height_two_arrivals"
                 sothree:umanoShadowHeight="5dp"
                 sothree:umanoParalaxOffset="100dp"
                 sothree:umanoFadeColor="@android:color/transparent"
@@ -89,9 +89,7 @@
                 <!-- Content of bottom sliding panel -->
                 <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:scaleType="fitStart"
+                        android:layout_height="match_parent"
                         android:id="@+id/slidingFragment"
                         android:orientation="horizontal">
                     <!-- Fragment is added here programmatically -->

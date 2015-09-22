@@ -750,6 +750,9 @@ class ArrivalsListHeader {
         int pSides = UIHelp.dpToPixels(mContext, 5);
         int pTopBottom = UIHelp.dpToPixels(mContext, 2);
         statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
+        statusView.setLayoutParams(
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
         statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
                 TextView.MeasureSpec.UNSPECIFIED);
         statusView.setText(statusText);

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 
@@ -100,7 +101,7 @@ public class ObaContext {
                     URL url = new URL(serverName);
                 } catch (MalformedURLException e) {
                     // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                    serverName = "http://" + serverName;
+                    serverName = context.getString(R.string.http_prefix) + serverName;
                 }
 
                 baseUrl = Uri.parse(serverName);

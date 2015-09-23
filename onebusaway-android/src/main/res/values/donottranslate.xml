@@ -96,4 +96,5 @@
     <string name="analytics_label_unstar_route">Unstarred route</string>
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
     <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
+    <string name="http_prefix">http://</string>
 </resources>

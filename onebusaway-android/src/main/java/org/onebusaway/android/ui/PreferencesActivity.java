@@ -39,6 +39,7 @@ import android.preference.PreferenceScreen;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +48,9 @@ import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -241,6 +245,12 @@ public class PreferencesActivity extends PreferenceActivity
             String apiUrl = (String) newValue;
 
             if (!TextUtils.isEmpty(apiUrl)) {
+                boolean validUrl = validateUrl(apiUrl);
+                if (!validUrl) {
+                    Toast.makeText(this, getString(R.string.custom_api_url_error),
+                            Toast.LENGTH_SHORT).show();
+                    return false;
+                }
                 //User entered a custom API Url, so set the region info to null
                 Application.get().setCurrentRegion(null);
                 Log.d(TAG, "User entered new API URL, set region to null.");
@@ -341,6 +351,23 @@ public class PreferencesActivity extends PreferenceActivity
             // Change the arrival info description
             changePreferenceSummary(key);
         }
+    }
+
+    /**
+     * Returns true if the provided apiUrl could be a valid URL, false if it could not
+     *
+     * @param apiUrl the URL to validate
+     * @return true if the provided apiUrl could be a valid URL, false if it could not
+     */
+    private boolean validateUrl(String apiUrl) {
+        try {
+            // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+            URL url = new URL(apiUrl);
+        } catch (MalformedURLException e) {
+            // Assume HTTP scheme if none is provided
+            apiUrl = getString(R.string.http_prefix) + apiUrl;
+        }
+        return Patterns.WEB_URL.matcher(apiUrl).matches();
     }
 
     //

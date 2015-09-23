@@ -72,6 +72,8 @@
     <string name="airplane_mode_error">You are not connected to the network.\nTurn off Airplane
         Mode?
     </string>
+    <string name="custom_api_url_error">Invalid URL. Please enter a working OneBusAway server.
+    </string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>

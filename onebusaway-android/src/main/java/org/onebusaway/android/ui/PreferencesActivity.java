@@ -340,6 +340,13 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_arrival_info_style))) {
             // Change the arrival info description
             changePreferenceSummary(key);
+        } else if (key.equalsIgnoreCase(getString(R.string.preference_key_show_negative_arrivals))) {
+            boolean showDepartedBuses = settings.getBoolean(Application.get().
+                    getString(R.string.preference_key_show_negative_arrivals), Boolean.FALSE);
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_edit_general),
+                    getString(R.string.analytics_label_show_departed_bus_preference)
+                            + (showDepartedBuses ? "YES" : "NO"));
         }
     }
 

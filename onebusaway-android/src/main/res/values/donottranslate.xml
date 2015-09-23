@@ -63,6 +63,18 @@
     <string name="analytics_label_region">API Region:\u0020</string>
     <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
     <string name="analytics_label_button_press">Clicked load more arrivals button</string>
+    <string name="analytics_label_sort_by_eta_arrival">Clicked sort by ETA from
+        ArrivalsListFragment
+    </string>
+    <string name="analytics_label_sort_by_route_arrival">Clicked sort by route from
+        ArrivalsListFragment
+    </string>
+    <string name="analytics_label_sort_by_name_stops">Clicked sort by name from
+        MyStarredStopsFragment
+    </string>
+    <string name="analytics_label_sort_by_mfu_stops">Clicked sort by most frequently used from
+        MyStarredStopsFragment
+    </string>
     <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
@@ -95,5 +107,6 @@
     <string name="analytics_label_star_route">Starred route</string>
     <string name="analytics_label_unstar_route">Unstarred route</string>
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
+    <string name="analytics_label_show_departed_bus_preference">Show Departed Buses:\u0020</string>
     <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
 </resources>

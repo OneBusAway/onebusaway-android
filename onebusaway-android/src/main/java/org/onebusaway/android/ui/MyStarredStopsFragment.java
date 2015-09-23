@@ -147,11 +147,17 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                 // Sort by name
                 Log.d(TAG, "Sort by name");
                 sortBy = ObaContract.Stops.UI_NAME + " asc";
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getActivity().getString(R.string.analytics_action_button_press),
+                        getActivity().getString(R.string.analytics_label_sort_by_name_stops));
                 break;
             case 1:
                 // Sort by frequently used
                 Log.d(TAG, "Sort by frequently used");
                 sortBy = ObaContract.Stops.USE_COUNT + " desc";
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getActivity().getString(R.string.analytics_action_button_press),
+                        getActivity().getString(R.string.analytics_label_sort_by_mfu_stops));
                 break;
         }
         // Set the sort option to preferences

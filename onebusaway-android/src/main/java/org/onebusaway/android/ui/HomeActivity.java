@@ -543,7 +543,15 @@ public class HomeActivity extends ActionBarActivity
     private Dialog createHelpDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_title);
-        builder.setItems(R.array.main_help_options,
+        // If a custom API URL is set, hide Contact Us, as we don't have a contact email to use
+        int options;
+        if (TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
+            options = R.array.main_help_options;
+        } else {
+            // Hide "Contact Us"
+            options = R.array.main_help_options_no_contact_us;
+        }
+        builder.setItems(options,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {

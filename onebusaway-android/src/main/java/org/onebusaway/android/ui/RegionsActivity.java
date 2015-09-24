@@ -15,17 +15,17 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.UIHelp;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.UIHelp;
-
-public class RegionsActivity extends ActionBarActivity {
+public class RegionsActivity extends AppCompatActivity {
     /*
     public static final String RETURN_MODE = ".Return";
     public static final String RESULT_LAT = ".lat";

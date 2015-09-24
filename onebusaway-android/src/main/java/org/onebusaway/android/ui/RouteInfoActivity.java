@@ -16,21 +16,21 @@
 
 package org.onebusaway.android.ui;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBarActivity;
-import android.view.MenuItem;
-
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIHelp;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
-public class RouteInfoActivity extends ActionBarActivity {
+
+public class RouteInfoActivity extends AppCompatActivity {
 
     public static void start(Context context, String routeId) {
         context.startActivity(makeIntent(context, routeId));

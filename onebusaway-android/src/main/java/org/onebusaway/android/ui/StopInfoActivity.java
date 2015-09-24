@@ -19,7 +19,7 @@ package org.onebusaway.android.ui;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 /**
@@ -29,7 +29,7 @@ import android.util.Log;
  * @author paulw
  */
 @Deprecated
-public class StopInfoActivity extends ActionBarActivity {
+public class StopInfoActivity extends AppCompatActivity {
 
     private static final String TAG = "StopInfoActivity";
 

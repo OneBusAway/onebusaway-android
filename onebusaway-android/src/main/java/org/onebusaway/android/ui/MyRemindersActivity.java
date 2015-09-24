@@ -20,10 +20,10 @@ import org.onebusaway.android.util.UIHelp;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-public class MyRemindersActivity extends ActionBarActivity {
+public class MyRemindersActivity extends AppCompatActivity {
     // private static final String TAG = "TripListActivity";
 
 

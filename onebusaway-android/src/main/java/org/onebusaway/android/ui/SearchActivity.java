@@ -24,14 +24,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.Window;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
 
-
-public class SearchActivity extends ActionBarActivity {
+public class SearchActivity extends AppCompatActivity {
     //private static final String TAG = "SearchActivity";
 
     @Override

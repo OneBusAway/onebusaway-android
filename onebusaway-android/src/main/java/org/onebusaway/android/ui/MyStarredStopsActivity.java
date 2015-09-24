@@ -21,9 +21,9 @@ import org.onebusaway.android.util.UIHelp;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 
-public class MyStarredStopsActivity extends ActionBarActivity {
+public class MyStarredStopsActivity extends AppCompatActivity {
 
     //
     // The only thing this is used for anymore is to create

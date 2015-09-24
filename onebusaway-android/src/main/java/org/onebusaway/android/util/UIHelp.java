@@ -50,7 +50,7 @@ import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.text.Spannable;
 import android.text.TextUtils;
@@ -73,7 +73,7 @@ public final class UIHelp {
 
     private static final String TAG = "UIHelp";
 
-    public static void setupActionBar(ActionBarActivity activity) {
+    public static void setupActionBar(AppCompatActivity activity) {
         ActionBar bar = activity.getSupportActionBar();
         bar.setIcon(android.R.color.transparent);
         bar.setDisplayShowTitleEnabled(true);
@@ -100,7 +100,7 @@ public final class UIHelp {
     }
 
     public static void showProgress(Fragment fragment, boolean visible) {
-        ActionBarActivity act = (ActionBarActivity) fragment.getActivity();
+        AppCompatActivity act = (AppCompatActivity) fragment.getActivity();
         if (act != null) {
             act.setSupportProgressBarIndeterminateVisibility(visible);
         }

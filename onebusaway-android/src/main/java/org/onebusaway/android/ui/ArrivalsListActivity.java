@@ -28,14 +28,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.Window;
 
 import java.util.HashMap;
 
 
-public class ArrivalsListActivity extends ActionBarActivity {
+public class ArrivalsListActivity extends AppCompatActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static class Builder {

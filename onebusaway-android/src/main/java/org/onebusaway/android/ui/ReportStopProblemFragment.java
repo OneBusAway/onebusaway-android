@@ -27,7 +27,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -46,7 +46,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     private static final String USER_COMMENT = ".UserComment";
 
-    static void show(ActionBarActivity activity, ObaStop stop) {
+    static void show(AppCompatActivity activity, ObaStop stop) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();

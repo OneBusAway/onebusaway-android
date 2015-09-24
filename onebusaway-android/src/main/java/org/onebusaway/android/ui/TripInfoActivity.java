@@ -15,6 +15,14 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIHelp;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -32,7 +40,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,17 +55,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
-
 import java.util.List;
 
-public class TripInfoActivity extends ActionBarActivity {
+public class TripInfoActivity extends AppCompatActivity {
 
     private static final String TAG = "TripInfoActivity";
 

@@ -34,3 +34,6 @@
 
 # Keep all OneBusAway Android classes
 -keep class org.onebusaway.android.** { *; }
+
+# SearchView
+-keep class android.support.v7.widget.SearchView { *; }

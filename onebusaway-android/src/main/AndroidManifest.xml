@@ -176,6 +176,14 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
+        <activity
+                android:name="org.onebusaway.android.ui.TripPlanActivity"
+                android:label="@string/title_activity_trip_plan"
+                android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
         <!-- Provider is defined in build.gradle flavors -->
         <provider
                 android:name="org.onebusaway.android.provider.ObaProvider"

@@ -81,6 +81,11 @@
         </activity>
         <activity android:name="org.onebusaway.android.ui.TripInfoActivity"/>
         <activity android:name=".ui.MyRemindersActivity"/>
+        <activity android:name="org.onebusaway.android.ui.TripDetailsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
 
         <activity
                 android:name="org.onebusaway.android.ui.MyStopsActivity"

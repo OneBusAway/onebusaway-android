@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
     and individual contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -464,4 +465,15 @@
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Trip Details -->
+    <string name="trip_details_vehicle">Vehicle: %1$s</string>
+    <string name="trip_details_scheduled_data">Scheduled data</string>
+    <string name="trip_details_real_time_sec_late">%1$d sec late (Last update: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d sec late (Last update: %3$s)
+    </string>
+    <string name="trip_details_real_time_sec_early">%1$d sec early (Last update: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d sec early (Last update:
+        %3$s)
+    </string>
 </resources>

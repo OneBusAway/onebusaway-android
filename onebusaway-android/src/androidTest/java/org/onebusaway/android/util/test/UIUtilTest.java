@@ -131,7 +131,7 @@ public class UIUtilTest extends ObaTestCase {
         String[] array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Add star to route");
         assertEquals(array[1], "Set a reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Show route schedule");
         assertEquals(array[5], "Report problem with trip");
@@ -143,7 +143,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Add star to route");
         assertEquals(array[1], "Edit this reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Show route schedule");
         assertEquals(array[5], "Report problem with trip");
@@ -177,7 +177,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Add star to route");
         assertEquals(array[1], "Set a reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Report problem with trip");
 
@@ -188,7 +188,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Add star to route");
         assertEquals(array[1], "Edit this reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Report problem with trip");
 
@@ -204,7 +204,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Remove star from route");
         assertEquals(array[1], "Set a reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Show route schedule");
         assertEquals(array[5], "Report problem with trip");
@@ -216,7 +216,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Remove star from route");
         assertEquals(array[1], "Edit this reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Show route schedule");
         assertEquals(array[5], "Report problem with trip");
@@ -230,7 +230,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Remove star from route");
         assertEquals(array[1], "Set a reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Report problem with trip");
 
@@ -241,7 +241,7 @@ public class UIUtilTest extends ObaTestCase {
         array = getContext().getResources().getStringArray(options);
         assertEquals(array[0], "Remove star from route");
         assertEquals(array[1], "Edit this reminder");
-        assertEquals(array[2], "Show route information");
+        assertEquals(array[2], "Show trip details");
         assertEquals(array[3], "Show only this route");
         assertEquals(array[4], "Report problem with trip");
     }

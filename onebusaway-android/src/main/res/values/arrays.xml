@@ -29,7 +29,7 @@
     <string-array name="stop_item_options">
         <item>Add star to route</item>
         <item>Set a reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
         <item>Report problem with trip</item>
@@ -37,7 +37,7 @@
     <string-array name="stop_item_options_edit">
         <item>Add star to route</item>
         <item>Edit this reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
         <item>Report problem with trip</item>
@@ -45,21 +45,21 @@
     <string-array name="stop_item_options_noschedule">
         <item>Add star to route</item>
         <item>Set a reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_edit_noschedule">
         <item>Add star to route</item>
         <item>Edit this reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_favorite">
         <item>Remove star from route</item>
         <item>Set a reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
         <item>Report problem with trip</item>
@@ -67,7 +67,7 @@
     <string-array name="stop_item_options_edit_favorite">
         <item>Remove star from route</item>
         <item>Edit this reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Show route schedule</item>
         <item>Report problem with trip</item>
@@ -75,14 +75,14 @@
     <string-array name="stop_item_options_noschedule_favorite">
         <item>Remove star from route</item>
         <item>Set a reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Report problem with trip</item>
     </string-array>
     <string-array name="stop_item_options_edit_noschedule_favorite">
         <item>Remove star from route</item>
         <item>Edit this reminder</item>
-        <item>Show route information</item>
+        <item>Show trip details</item>
         <item>Show only this route</item>
         <item>Report problem with trip</item>
     </string-array>

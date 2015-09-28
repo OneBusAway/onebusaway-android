@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
- * and individual contributors.
+ * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida,
+ * Benjamin Du (bendu@me.com), and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -625,7 +625,7 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (which == 1) {
                     goToTrip(arrivalInfo);
                 } else if (which == 2) {
-                    goToRoute(arrivalInfo);
+                    goToTripDetails(arrivalInfo);
                 } else if (which == 3) {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(arrivalInfo.getInfo().getRouteId());
@@ -1160,6 +1160,11 @@ public class ArrivalsListFragment extends ListFragment
                 mStop.getName(),
                 stopInfo.getScheduledDepartureTime(),
                 stopInfo.getHeadsign());
+    }
+
+    private void goToTripDetails(ArrivalInfo stop) {
+        TripDetailsActivity.start(getActivity(),
+                stop.getInfo().getTripId(), stop.getInfo().getStopId());
     }
 
     private void goToRoute(ArrivalInfo stop) {

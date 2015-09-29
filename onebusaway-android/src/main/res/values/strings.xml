@@ -468,7 +468,7 @@
 
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
-    <string name="trip_details_scheduled_data">Scheduled data</string>
+    <string name="trip_details_scheduled_data">Schedule data</string>
     <string name="trip_details_real_time_sec_late">%1$d sec late (Last update: %2$s)</string>
     <string name="trip_details_real_time_min_sec_late">%1$d min %2$d sec late (Last update: %3$s)
     </string>

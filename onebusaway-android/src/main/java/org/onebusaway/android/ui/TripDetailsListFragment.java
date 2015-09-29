@@ -350,6 +350,9 @@ public class TripDetailsListFragment extends ListFragment {
                                    ObaTripDetailsResponse data) {
             setTripDetails(data);
 
+            // Clear any pending refreshes
+            mRefreshHandler.removeCallbacks(mRefresh);
+
             // Post an update
             mRefreshHandler.postDelayed(mRefresh, REFRESH_PERIOD);
         }

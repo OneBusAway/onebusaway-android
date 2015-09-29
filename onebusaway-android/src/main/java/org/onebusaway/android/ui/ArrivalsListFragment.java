@@ -417,6 +417,9 @@ public class ArrivalsListFragment extends ListFragment
             setListShownNoAnimation(true);
         }
 
+        // Clear any pending refreshes
+        mRefreshHandler.removeCallbacks(mRefresh);
+
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
 

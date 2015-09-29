@@ -23,6 +23,8 @@
         <TextView
                 android:id="@+id/short_name"
                 style="@style/RouteInfoShortName"
+                android:layout_marginLeft="6dp"
+                android:layout_gravity="center_vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_column="0"
@@ -31,6 +33,9 @@
         <LinearLayout
                 android:orientation="vertical"
                 android:layout_gravity="center_vertical"
+                android:layout_marginLeft="6dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
                 android:layout_column="1"
                 android:layout_weight="1">
             <TextView

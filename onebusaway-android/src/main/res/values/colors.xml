@@ -65,6 +65,6 @@
     <color name="alert_info">@color/theme_primary_dark</color>
 
     <!-- Trip details colors -->
-    <color name="trip_details_passed">@color/body_text_3</color>
+    <color name="trip_details_passed">@color/body_text_disabled</color>
     <color name="trip_details_not_passed">@color/body_text_2</color>
 </resources>

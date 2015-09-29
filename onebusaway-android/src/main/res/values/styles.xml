@@ -53,6 +53,10 @@
         <item name="android:textSize">16sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+    <style name="TripDetailsLine1Text">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
     <style name="Line2Text">
     </style>
     <style name="LoadingProgress" parent="@style/Widget.AppCompat.ProgressBar">

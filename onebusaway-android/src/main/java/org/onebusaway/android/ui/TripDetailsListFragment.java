@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,9 +46,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -197,7 +200,7 @@ public class TripDetailsListFragment extends ListFragment {
 
         if (mAdapter == null) {  // first time displaying list
             mAdapter = new TripDetailsAdapter();
-            setListAdapater(mAdapter);
+            setListAdapter(mAdapter);
 
             // Scroll to stop if we have the stopId available
             if (mStopId != null) {
@@ -227,7 +230,14 @@ public class TripDetailsListFragment extends ListFragment {
 
         Context context = getActivity();
 
-        String tripId = status.getActiveTripId();
+        String tripId;
+        if (status != null) {
+            // Use active trip Id
+            tripId = status.getActiveTripId();
+        } else {
+            // If we don't have real-time status, use tripId passed into Fragment
+            tripId = mTripId;
+        }
         ObaTrip trip = refs.getTrip(tripId);
         ObaRoute route = refs.getRoute(trip.getRouteId());
         TextView shortName = (TextView) getView().findViewById(R.id.short_name);
@@ -239,44 +249,51 @@ public class TripDetailsListFragment extends ListFragment {
         TextView agency = (TextView) getView().findViewById(R.id.agency);
         agency.setText(refs.getAgency(route.getAgencyId()).getName());
 
-        String vehicleId = status.getVehicleId();
         TextView vehicleView = (TextView) getView().findViewById(R.id.vehicle);
-        if (vehicleId != null && !vehicleId.equals("")) {
-            vehicleView.setText(context.getString(R.string.trip_details_vehicle, vehicleId));
-            vehicleView.setVisibility(View.VISIBLE);
-        } else {
+        TextView vehicleDeviation = (TextView) getView().findViewById(R.id.status);
+
+        if (status == null || !status.isPredicted() || TextUtils.isEmpty(status.getVehicleId())) {
+            // Show schedule info only
             vehicleView.setText(null);
             vehicleView.setVisibility(View.GONE);
+            vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            return;
         }
 
-        TextView vehicleDeviation = (TextView) getView().findViewById(R.id.status);
-        if (status.isPredicted()) {
-            long deviation = status.getScheduleDeviation();
-            long minutes = Math.abs(deviation) / 60;
-            long seconds = Math.abs(deviation) % 60;
-            String lastUpdate = DateUtils.formatDateTime(getActivity(),
-                    status.getLastUpdateTime(),
-                    DateUtils.FORMAT_SHOW_TIME |
-                            DateUtils.FORMAT_NO_NOON |
-                            DateUtils.FORMAT_NO_MIDNIGHT
-            );
-            if (deviation >= 0) {
-                if (deviation < 60) {
-                    vehicleDeviation.setText(context.getString(R.string.trip_details_real_time_sec_late, seconds, lastUpdate));
-                } else {
-                    vehicleDeviation.setText(
-                            context.getString(R.string.trip_details_real_time_min_sec_late,
-                                    minutes, seconds, lastUpdate));
-                }
+        // Show real-time vehicle info
+        vehicleView
+                .setText(context.getString(R.string.trip_details_vehicle, status.getVehicleId()));
+        vehicleView.setVisibility(View.VISIBLE);
+
+        long deviation = status.getScheduleDeviation();
+        long minutes = Math.abs(deviation) / 60;
+        long seconds = Math.abs(deviation) % 60;
+        String lastUpdate = DateUtils.formatDateTime(getActivity(),
+                status.getLastUpdateTime(),
+                DateUtils.FORMAT_SHOW_TIME |
+                        DateUtils.FORMAT_NO_NOON |
+                        DateUtils.FORMAT_NO_MIDNIGHT
+        );
+        if (deviation >= 0) {
+            if (deviation < 60) {
+                vehicleDeviation.setText(
+                        context.getString(R.string.trip_details_real_time_sec_late, seconds,
+                                lastUpdate));
             } else {
-                if (deviation > -60) {
-                    vehicleDeviation.setText(context.getString(R.string.trip_details_real_time_sec_early, seconds, lastUpdate));
-                } else {
-                    vehicleDeviation.setText(context.getString(R.string.trip_details_real_time_min_sec_early, minutes, seconds, lastUpdate));
-                }
+                vehicleDeviation.setText(
+                        context.getString(R.string.trip_details_real_time_min_sec_late,
+                                minutes, seconds, lastUpdate));
             }
         } else {
-            vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            if (deviation > -60) {
+                vehicleDeviation.setText(
+                        context.getString(R.string.trip_details_real_time_sec_early, seconds,
+                                lastUpdate));
+            } else {
+                vehicleDeviation.setText(
+                        context.getString(R.string.trip_details_real_time_min_sec_early, minutes,
+                                seconds, lastUpdate));
+            }
         }
     }
 
@@ -287,15 +304,6 @@ public class TripDetailsListFragment extends ListFragment {
             }
         }
         return -1;
-    }
-
-    private void setListAdapater(ListAdapter adapater) {
-        ListView list = getListView();
-
-        if (list != null) {
-            list.setAdapter(adapater);
-            setListShown(true);
-        }
     }
 
     private void showArrivals(String stopId) {
@@ -419,7 +427,7 @@ public class TripDetailsListFragment extends ListFragment {
         ObaReferences mRefs;
         ObaTripStatus mStatus;
 
-        int mNextStopIndex;
+        Integer mNextStopIndex;
 
         public TripDetailsAdapter() {
             this.mInflater = LayoutInflater.from(TripDetailsListFragment.this.getActivity());
@@ -432,8 +440,14 @@ public class TripDetailsListFragment extends ListFragment {
             this.mRefs = mTripInfo.getRefs();
             this.mStatus = mTripInfo.getStatus();
 
-            String stopId = mStatus.getNextStop();
+            if (mStatus == null) {
+                // We don't have real-time data - clear next stop index
+                mNextStopIndex = null;
+                return;
+            }
 
+            // Based on real-time data, set the index for the next stop
+            String stopId = mStatus.getNextStop();
             int i;
             for (i = 0; i < mSchedule.getStopTimes().length; i++) {
                 ObaTripSchedule.StopTime time = mSchedule.getStopTimes()[i];
@@ -478,15 +492,32 @@ public class TripDetailsListFragment extends ListFragment {
             name.setText(stop.getName());
 
             TextView time = (TextView) convertView.findViewById(R.id.time);
+
+            long date;
+            long deviation = 0;
+            if (mStatus != null) {
+                // If we have real-time info, use that
+                date = mStatus.getServiceDate();
+                deviation = mStatus.getScheduleDeviation();
+            } else {
+                // Use current date - its only to offset time correctly from midnight
+                Calendar cal = new GregorianCalendar();
+                // Reset to midnight of today
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                date = cal.getTime().getTime();
+            }
             time.setText(DateUtils.formatDateTime(getActivity(),
-                    mStatus.getServiceDate() + stopTime.getArrivalTime() * 1000
-                            + mStatus.getScheduleDeviation() * 1000,
+                    date + stopTime.getArrivalTime() * 1000
+                            + deviation * 1000,
                     DateUtils.FORMAT_SHOW_TIME |
                             DateUtils.FORMAT_NO_NOON |
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
 
-            if (position < mNextStopIndex) {  // bus passed stop
+            if (mNextStopIndex != null && position < mNextStopIndex) {  // bus passed stop
                 name.setTextColor(getResources().getColor(R.color.trip_details_passed));
                 time.setTextColor(getResources().getColor(R.color.trip_details_passed));
             } else {

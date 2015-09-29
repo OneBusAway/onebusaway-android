@@ -46,6 +46,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -200,6 +201,7 @@ public class TripDetailsListFragment extends ListFragment {
 
         if (mAdapter == null) {  // first time displaying list
             mAdapter = new TripDetailsAdapter();
+            getListView().setDivider(null);
             setListAdapter(mAdapter);
 
             // Scroll to stop if we have the stopId available
@@ -489,6 +491,8 @@ public class TripDetailsListFragment extends ListFragment {
 
             ObaTripSchedule.StopTime stopTime = mSchedule.getStopTimes()[position];
             ObaStop stop = mRefs.getStop(stopTime.getStopId());
+            ObaTrip trip = mRefs.getTrip(mTripId);
+            ObaRoute route = mRefs.getRoute(trip.getRouteId());
 
             TextView name = (TextView) convertView.findViewById(R.id.stop_name);
             name.setText(stop.getName());
@@ -519,14 +523,60 @@ public class TripDetailsListFragment extends ListFragment {
                             DateUtils.FORMAT_NO_MIDNIGHT
             ));
 
-            if (mNextStopIndex != null && position < mNextStopIndex) {  // bus passed stop
-                name.setTextColor(getResources().getColor(R.color.trip_details_passed));
-                time.setTextColor(getResources().getColor(R.color.trip_details_passed));
+            ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
+            ImageView topLine = (ImageView) convertView.findViewById(R.id.top_line);
+            ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
+            ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
+
+            int routeColor;
+            // If a route color (other than the default white) is included in the API response, then use it
+            if (route.getColor() != null && route.getColor() != android.R.color.white) {
+                routeColor = route.getColor();
             } else {
-                name.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
-                time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                // Use the theme color
+                routeColor = getResources().getColor(R.color.theme_primary);
             }
 
+            bus.setColorFilter(routeColor);
+            topLine.setColorFilter(routeColor);
+            bottomLine.setColorFilter(routeColor);
+            transitStop.setColorFilter(routeColor);
+
+            if (position == 0) {
+                // First stop in trip - hide the top half of the transit line
+                topLine.setVisibility(View.INVISIBLE);
+                bottomLine.setVisibility(View.VISIBLE);
+            } else if (position == mSchedule.getStopTimes().length - 1) {
+                // Last stop in trip - hide the bottom half of the transit line
+                topLine.setVisibility(View.VISIBLE);
+                bottomLine.setVisibility(View.INVISIBLE);
+            } else {
+                // Middle of trip - show top and bottom transit lines
+                topLine.setVisibility(View.VISIBLE);
+                bottomLine.setVisibility(View.VISIBLE);
+            }
+
+            if (mNextStopIndex != null) {
+                if (position == mNextStopIndex - 1) {
+                    // The bus just passed this stop - show the bus icon here
+                    bus.setVisibility(View.VISIBLE);
+                } else {
+                    bus.setVisibility(View.INVISIBLE);
+                }
+
+                if (position < mNextStopIndex) {
+                    // Bus passed stop - fade out these stops
+                    name.setTextColor(getResources().getColor(R.color.trip_details_passed));
+                    time.setTextColor(getResources().getColor(R.color.trip_details_passed));
+                } else {
+                    // Bus hasn't yet passed this stop - leave full color
+                    name.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                    time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                }
+            } else {
+                // No real-time info - hide the bus icon
+                bus.setVisibility(View.INVISIBLE);
+            }
             return convertView;
         }
     }

@@ -358,6 +358,13 @@ public class TripDetailsListFragment extends ListFragment {
                                    ObaTripDetailsResponse data) {
             setTripDetails(data);
 
+            // The list should now be shown.
+            if (isResumed()) {
+                setListShown(true);
+            } else {
+                setListShownNoAnimation(true);
+            }
+
             // Clear any pending refreshes
             mRefreshHandler.removeCallbacks(mRefresh);
 
@@ -384,11 +391,6 @@ public class TripDetailsListFragment extends ListFragment {
         TripDetailsLoader(Context context, String tripId) {
             super(context);
             mTripId = tripId;
-        }
-
-        @Override
-        public void onStartLoading() {
-            forceLoad();
         }
 
         @Override

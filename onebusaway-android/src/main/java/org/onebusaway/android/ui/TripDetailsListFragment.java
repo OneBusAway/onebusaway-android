@@ -254,6 +254,9 @@ public class TripDetailsListFragment extends ListFragment {
 
         TextView vehicleView = (TextView) getView().findViewById(R.id.vehicle);
         TextView vehicleDeviation = (TextView) getView().findViewById(R.id.status);
+        ViewGroup realtime = (ViewGroup) getView().findViewById(
+                R.id.eta_realtime_indicator);
+        realtime.setVisibility(View.GONE);
 
         if (status == null) {
             // Show schedule info only
@@ -278,6 +281,8 @@ public class TripDetailsListFragment extends ListFragment {
             vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
             return;
         }
+
+        realtime.setVisibility(View.VISIBLE);
 
         long deviation = status.getScheduleDeviation();
         long minutes = Math.abs(deviation) / 60;
@@ -510,6 +515,9 @@ public class TripDetailsListFragment extends ListFragment {
             name.setText(stop.getName());
 
             TextView time = (TextView) convertView.findViewById(R.id.time);
+            ViewGroup realtime = (ViewGroup) convertView.findViewById(
+                    R.id.eta_realtime_indicator);
+            realtime.setVisibility(View.GONE);
 
             long date;
             long deviation = 0;
@@ -553,6 +561,7 @@ public class TripDetailsListFragment extends ListFragment {
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
+            UIHelp.setRealtimeIndicatorColor(realtime, routeColor, android.R.color.transparent);
 
             if (position == 0) {
                 // First stop in trip - hide the top half of the transit line
@@ -572,6 +581,11 @@ public class TripDetailsListFragment extends ListFragment {
                 if (position == mNextStopIndex - 1) {
                     // The bus just passed this stop - show the bus icon here
                     bus.setVisibility(View.VISIBLE);
+
+                    if (mStatus != null && mStatus.isPredicted()) {
+                        // Show realtime indicator
+                        realtime.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     bus.setVisibility(View.INVISIBLE);
                 }

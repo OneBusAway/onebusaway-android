@@ -18,6 +18,15 @@
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
                 android:orientation="horizontal">
+    <include
+            android:id="@+id/eta_realtime_indicator"
+            layout="@layout/realtime_indicator"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="11dp"
+            android:layout_marginBottom="-28dp"
+            android:layout_above="@+id/bus_icon"/>
     <ImageView
             android:id="@+id/bus_icon"
             android:src="@drawable/ic_maps_directions_bus"

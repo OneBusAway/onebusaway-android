@@ -93,7 +93,8 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         int color = context.getResources().getColor(colorCode);
         if (stopInfo.getPredicted()) {
             // Show real-time indicator
-            UIHelp.setRealtimeIndicatorColor(realtimeView, colorCode, android.R.color.transparent);
+            UIHelp.setRealtimeIndicatorColorByResourceCode(realtimeView, colorCode,
+                    android.R.color.transparent);
             realtimeView.setVisibility(View.VISIBLE);
         } else {
             realtimeView.setVisibility(View.INVISIBLE);

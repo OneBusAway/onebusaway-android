@@ -255,7 +255,7 @@ public class TripDetailsListFragment extends ListFragment {
         TextView vehicleView = (TextView) getView().findViewById(R.id.vehicle);
         TextView vehicleDeviation = (TextView) getView().findViewById(R.id.status);
 
-        if (status == null || !status.isPredicted() || TextUtils.isEmpty(status.getVehicleId())) {
+        if (status == null) {
             // Show schedule info only
             vehicleView.setText(null);
             vehicleView.setVisibility(View.GONE);
@@ -263,10 +263,21 @@ public class TripDetailsListFragment extends ListFragment {
             return;
         }
 
-        // Show real-time vehicle info
-        vehicleView
-                .setText(context.getString(R.string.trip_details_vehicle, status.getVehicleId()));
-        vehicleView.setVisibility(View.VISIBLE);
+        if (!TextUtils.isEmpty(status.getVehicleId())) {
+            // Show vehicle info
+            vehicleView
+                    .setText(context.getString(R.string.trip_details_vehicle,
+                            status.getVehicleId()));
+            vehicleView.setVisibility(View.VISIBLE);
+        } else {
+            vehicleView.setVisibility(View.GONE);
+        }
+
+        if (!status.isPredicted()) {
+            // We have only schedule info, but the bus position can still be interpolated
+            vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            return;
+        }
 
         long deviation = status.getScheduleDeviation();
         long minutes = Math.abs(deviation) / 60;
@@ -445,9 +456,9 @@ public class TripDetailsListFragment extends ListFragment {
             this.mRefs = mTripInfo.getRefs();
             this.mStatus = mTripInfo.getStatus();
 
+            mNextStopIndex = null;
             if (mStatus == null) {
                 // We don't have real-time data - clear next stop index
-                mNextStopIndex = null;
                 return;
             }
 
@@ -457,10 +468,10 @@ public class TripDetailsListFragment extends ListFragment {
             for (i = 0; i < mSchedule.getStopTimes().length; i++) {
                 ObaTripSchedule.StopTime time = mSchedule.getStopTimes()[i];
                 if (time.getStopId().equals(stopId)) {
+                    mNextStopIndex = i;
                     break;
                 }
             }
-            mNextStopIndex = i;
         }
 
         @Override
@@ -577,6 +588,9 @@ public class TripDetailsListFragment extends ListFragment {
             } else {
                 // No real-time info - hide the bus icon
                 bus.setVisibility(View.INVISIBLE);
+                // Bus hasn't passed this stop - leave full color
+                name.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
             }
             return convertView;
         }

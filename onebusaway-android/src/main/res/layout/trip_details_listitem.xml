@@ -25,7 +25,7 @@
             android:layout_height="6dp"
             android:layout_alignParentLeft="true"
             android:layout_marginLeft="11dp"
-            android:layout_marginBottom="-28dp"
+            android:layout_marginBottom="-24dp"
             android:layout_above="@+id/bus_icon"/>
     <ImageView
             android:id="@+id/bus_icon"
@@ -75,8 +75,10 @@
             android:orientation="vertical" android:layout_centerVertical="true">
         <TextView
                 android:id="@+id/stop_name"
-                style="@style/TripDetailsLine1Text"
+                style="@style/Line1Text"
                 android:text="Stop name"
+                android:ellipsize="end"
+                android:singleLine="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         <TextView

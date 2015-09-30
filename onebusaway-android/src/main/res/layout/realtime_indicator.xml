@@ -17,7 +17,8 @@
                 xmlns:RealtimeIndicatorView="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/realtime_indicator_container"
                 android:layout_width="8dp"
-                android:layout_height="8dp">
+                android:layout_height="8dp"
+                android:visibility="gone">
     <org.onebusaway.android.view.RealtimeIndicatorView
             android:id="@+id/realtime_indicator1"
             android:layout_width="match_parent"

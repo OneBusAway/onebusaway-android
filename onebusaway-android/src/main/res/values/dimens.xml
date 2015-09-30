@@ -57,7 +57,7 @@
 
     <!-- Trip details - transit stop and line -->
     <dimen name="trip_details_transit_line_width">3dp</dimen>
-    <dimen name="trip_details_transit_line_height">75dp</dimen>
+    <dimen name="trip_details_transit_line_height">65dp</dimen>
     <dimen name="trip_details_transit_stop_width">13dp</dimen>
     <dimen name="trip_details_transit_stop_width_focused">16dp</dimen>
     <dimen name="trip_details_transit_bus_icon">18dp</dimen>

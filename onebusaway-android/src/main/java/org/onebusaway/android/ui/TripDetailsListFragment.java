@@ -216,6 +216,7 @@ public class TripDetailsListFragment extends ListFragment {
                     });
                 }
             }
+            mAdapter.notifyDataSetChanged();
         } else {  // refresh, keep scroll position
             int index = listView.getFirstVisiblePosition();
             View v = listView.getChildAt(0);

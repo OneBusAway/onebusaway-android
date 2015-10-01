@@ -1108,6 +1108,7 @@ class ArrivalsListHeader {
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
         mEtaContainer2.setVisibility(View.GONE);
+        mNoArrivals.setVisibility(View.GONE);
 
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
@@ -1137,6 +1138,7 @@ class ArrivalsListHeader {
         mEditNameContainerView.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
+        mNoArrivals.setVisibility(View.VISIBLE);
         // Reset the header size
         refreshHeaderSize();
         // Hide soft keyboard

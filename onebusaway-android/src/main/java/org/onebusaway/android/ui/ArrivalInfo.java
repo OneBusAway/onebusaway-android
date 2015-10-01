@@ -228,24 +228,50 @@ public final class ArrivalInfo {
                         info.getHeadsign(), info.getStopId());
     }
 
-    private int computeColor(final long scheduled, final long predicted) {
+    /**
+     * Returns the status color to be used, depending on whether the vehicle is running early,
+     * late,
+     * ontime,
+     * or if we don't have real-time info (i.e., scheduled)
+     *
+     * @param scheduled the scheduled time
+     * @param predicted the predicted time
+     * @return the status color to be used, depending on whether the vehicle is running early, late,
+     * ontime,
+     * or if we don't have real-time info (i.e., scheduled)
+     */
+    public static int computeColor(final long scheduled, final long predicted) {
         if (predicted != 0) {
-            long delay = predicted - scheduled;
-
-            // Bus is arriving
-            if (delay > 0) {
-                // Arriving delayed
-                return R.color.stop_info_delayed;
-            } else if (delay < 0) {
-                // Arriving early
-                return R.color.stop_info_early;
-            } else {
-                // Arriving on time
-                return R.color.stop_info_ontime;
-            }
+            return computeColorFromDeviation(predicted - scheduled);
         } else {
             // Use scheduled color
             return R.color.stop_info_scheduled_time;
+        }
+    }
+
+    /**
+     * Returns the status color to be used, depending on whether the vehicle is running early,
+     * late,
+     * ontime,
+     * or if we don't have real-time info (i.e., scheduled)
+     *
+     * @param delay the deviation from the scheduled time - positive means bus is running late,
+     *              negative means early
+     * @return the status color to be used, depending on whether the vehicle is running early, late,
+     * ontime,
+     * or if we don't have real-time info (i.e., scheduled)
+     */
+    public static int computeColorFromDeviation(final long delay) {
+        // Bus is arriving
+        if (delay > 0) {
+            // Arriving delayed
+            return R.color.stop_info_delayed;
+        } else if (delay < 0) {
+            // Arriving early
+            return R.color.stop_info_early;
+        } else {
+            // Arriving on time
+            return R.color.stop_info_ontime;
         }
     }
 

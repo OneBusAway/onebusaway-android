@@ -30,6 +30,7 @@ import org.onebusaway.android.util.UIHelp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
@@ -259,6 +260,8 @@ public class TripDetailsListFragment extends ListFragment {
         ViewGroup realtime = (ViewGroup) getView().findViewById(
                 R.id.eta_realtime_indicator);
         realtime.setVisibility(View.GONE);
+        ViewGroup statusLayout = (ViewGroup) getView().findViewById(
+                R.id.status_layout);
 
         if (status == null) {
             // Show schedule info only
@@ -278,12 +281,24 @@ public class TripDetailsListFragment extends ListFragment {
             vehicleView.setVisibility(View.GONE);
         }
 
+        // Set status color in header
+        statusLayout.setBackgroundResource(
+                R.drawable.round_corners_style_b_header_status);
+        GradientDrawable d = (GradientDrawable) statusLayout.getBackground();
+
+        int statusColor;
+
         if (!status.isPredicted()) {
             // We have only schedule info, but the bus position can still be interpolated
             vehicleDeviation.setText(context.getString(R.string.trip_details_scheduled_data));
+            statusColor = R.color.stop_info_scheduled_time;
+            d.setColor(getResources().getColor(statusColor));
             return;
         }
 
+        /**
+         * We have real-time info
+         */
         realtime.setVisibility(View.VISIBLE);
 
         long deviation = status.getScheduleDeviation();
@@ -295,6 +310,16 @@ public class TripDetailsListFragment extends ListFragment {
                         DateUtils.FORMAT_NO_NOON |
                         DateUtils.FORMAT_NO_MIDNIGHT
         );
+
+        statusColor = ArrivalInfo.computeColorFromDeviation(deviation);
+        if (statusColor != R.color.stop_info_ontime) {
+            // Show early/late/scheduled color
+            d.setColor(getResources().getColor(statusColor));
+        } else {
+            // For on-time, use header default color
+            d.setColor(getResources().getColor(R.color.theme_primary));
+        }
+
         if (deviation >= 0) {
             if (deviation < 60) {
                 vehicleDeviation.setText(
@@ -523,10 +548,16 @@ public class TripDetailsListFragment extends ListFragment {
 
             long date;
             long deviation = 0;
+            int statusColor;
             if (mStatus != null) {
                 // If we have real-time info, use that
                 date = mStatus.getServiceDate();
                 deviation = mStatus.getScheduleDeviation();
+                if (mStatus.isPredicted()) {
+                    statusColor = ArrivalInfo.computeColorFromDeviation(deviation);
+                } else {
+                    statusColor = R.color.stop_info_scheduled_time;
+                }
             } else {
                 // Use current date - its only to offset time correctly from midnight
                 Calendar cal = new GregorianCalendar();
@@ -536,6 +567,7 @@ public class TripDetailsListFragment extends ListFragment {
                 cal.set(Calendar.SECOND, 0);
                 cal.set(Calendar.MILLISECOND, 0);
                 date = cal.getTime().getTime();
+                statusColor = R.color.stop_info_scheduled_time;
             }
             time.setText(DateUtils.formatDateTime(getActivity(),
                     date + stopTime.getArrivalTime() * 1000
@@ -551,6 +583,11 @@ public class TripDetailsListFragment extends ListFragment {
             ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
 
+            // Set bus and realtime indicator to match status color
+            bus.setColorFilter(getResources().getColor(statusColor));
+            UIHelp.setRealtimeIndicatorColor(realtime, getResources().getColor(statusColor),
+                    android.R.color.transparent);
+
             int routeColor;
             // If a route color (other than the default white) is included in the API response, then use it
             if (route.getColor() != null && route.getColor() != android.R.color.white) {
@@ -560,12 +597,10 @@ public class TripDetailsListFragment extends ListFragment {
                 routeColor = getResources().getColor(R.color.theme_primary);
             }
 
-            bus.setColorFilter(routeColor);
             stopIcon.setColorFilter(routeColor);
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
-            UIHelp.setRealtimeIndicatorColor(realtime, routeColor, android.R.color.transparent);
 
             if (position == 0) {
                 // First stop in trip - hide the top half of the transit line
@@ -611,7 +646,7 @@ public class TripDetailsListFragment extends ListFragment {
                     time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
                 }
             } else {
-                // No real-time info - hide the bus icon
+                // No "next stop" info - hide the bus icon
                 bus.setVisibility(View.INVISIBLE);
                 // Bus hasn't passed this stop - leave full color
                 stopName.setTextColor(getResources().getColor(R.color.trip_details_not_passed));

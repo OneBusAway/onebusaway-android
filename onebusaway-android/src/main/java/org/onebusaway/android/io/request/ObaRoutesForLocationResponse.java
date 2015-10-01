@@ -57,7 +57,13 @@ public final class ObaRoutesForLocationResponse extends ObaResponseWithRefs {
      * @return The list of routes.
      */
     public ObaRoute[] getRoutesForLocation() {
-        return data.list;
+        if (data != null) {
+            if (data.list != null) {
+                return data.list;
+            }
+        }
+        // This shouldn't be happening, but data or data.list are sometimes null - see #277
+        return new ObaRouteElement[]{};
     }
 
     /**

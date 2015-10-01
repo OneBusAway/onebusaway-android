@@ -644,6 +644,12 @@ class ArrivalsListHeader {
                 } else {
                     // We only have schedule data - hide the indicator
                     mEtaRealtime1.setVisibility(View.INVISIBLE);
+                    // If this is frequency-based data, indicate that arrival is approximate
+                    if (mArrivalInfo.get(i1).getInfo().getFrequency() != null) {
+                        mEtaArrivalInfo1.setText(
+                                mResources.getString(R.string.stop_info_frequency_approximate)
+                                        + mEtaArrivalInfo1.getText());
+                    }
                 }
                 // Save the arrival info for the options menu later
                 mHeaderArrivalInfo.add(mArrivalInfo.get(i1));
@@ -697,6 +703,12 @@ class ArrivalsListHeader {
                     } else {
                         // We only have schedule data - hide the indicator
                         mEtaRealtime2.setVisibility(View.INVISIBLE);
+                        // If this is frequency-based data, indicate that arrival is approximate
+                        if (mArrivalInfo.get(i2).getInfo().getFrequency() != null) {
+                            mEtaArrivalInfo2.setText(
+                                    mResources.getString(R.string.stop_info_frequency_approximate)
+                                            + mEtaArrivalInfo2.getText());
+                        }
                     }
 
                     mNumHeaderArrivals = 2;

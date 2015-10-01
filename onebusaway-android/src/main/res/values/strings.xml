@@ -224,6 +224,7 @@
     <string name="stop_info_header_arrival_info">%1$d min</string>
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
+    <string name="stop_info_frequency_approximate">~</string>
 
     <!-- Arrival Time Style B -->
     <string name="arrival_estimated">Real-time Estimate</string>

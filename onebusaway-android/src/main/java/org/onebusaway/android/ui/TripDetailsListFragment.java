@@ -236,14 +236,8 @@ public class TripDetailsListFragment extends ListFragment {
 
         Context context = getActivity();
 
-        String tripId;
-        if (status != null) {
-            // Use active trip Id
-            tripId = status.getActiveTripId();
-        } else {
-            // If we don't have real-time status, use tripId passed into Fragment
-            tripId = mTripId;
-        }
+        String tripId = mTripInfo.getId();
+
         ObaTrip trip = refs.getTrip(tripId);
         ObaRoute route = refs.getRoute(trip.getRouteId());
         TextView shortName = (TextView) getView().findViewById(R.id.short_name);

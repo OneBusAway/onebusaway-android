@@ -69,6 +69,8 @@ public class TripDetailsListFragment extends ListFragment {
 
     private String mStopId;
 
+    private Integer mStopIndex;
+
     private ObaTripDetailsResponse mTripInfo;
 
     private TripDetailsAdapter mAdapter;
@@ -206,12 +208,12 @@ public class TripDetailsListFragment extends ListFragment {
 
             // Scroll to stop if we have the stopId available
             if (mStopId != null) {
-                final int stopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
-                if (stopIndex != -1) {
+                mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                if (mStopIndex != null) {
                     listView.post(new Runnable() {
                         @Override
                         public void run() {
-                            listView.setSelection(stopIndex);
+                            listView.setSelection(mStopIndex);
                         }
                     });
                 }
@@ -316,13 +318,13 @@ public class TripDetailsListFragment extends ListFragment {
         }
     }
 
-    private int findIndexForStop(ObaTripSchedule.StopTime[] stopTimes, String stopId) {
+    private Integer findIndexForStop(ObaTripSchedule.StopTime[] stopTimes, String stopId) {
         for (int i = 0; i < stopTimes.length; i++) {
             if (stopId.equals(stopTimes[i].getStopId())) {
                 return i;
             }
         }
-        return -1;
+        return null;
     }
 
     private void showArrivals(String stopId) {
@@ -511,8 +513,8 @@ public class TripDetailsListFragment extends ListFragment {
             ObaTrip trip = mRefs.getTrip(mTripId);
             ObaRoute route = mRefs.getRoute(trip.getRouteId());
 
-            TextView name = (TextView) convertView.findViewById(R.id.stop_name);
-            name.setText(stop.getName());
+            TextView stopName = (TextView) convertView.findViewById(R.id.stop_name);
+            stopName.setText(stop.getName());
 
             TextView time = (TextView) convertView.findViewById(R.id.time);
             ViewGroup realtime = (ViewGroup) convertView.findViewById(
@@ -544,6 +546,7 @@ public class TripDetailsListFragment extends ListFragment {
             ));
 
             ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
+            ImageView stopIcon = (ImageView) convertView.findViewById(R.id.stop_icon);
             ImageView topLine = (ImageView) convertView.findViewById(R.id.top_line);
             ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
@@ -558,6 +561,7 @@ public class TripDetailsListFragment extends ListFragment {
             }
 
             bus.setColorFilter(routeColor);
+            stopIcon.setColorFilter(routeColor);
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
@@ -577,6 +581,13 @@ public class TripDetailsListFragment extends ListFragment {
                 bottomLine.setVisibility(View.VISIBLE);
             }
 
+            if (mStopIndex != null && mStopIndex == position) {
+                // Show the selected stop
+                stopIcon.setVisibility(View.VISIBLE);
+            } else {
+                stopIcon.setVisibility(View.GONE);
+            }
+
             if (mNextStopIndex != null) {
                 if (position == mNextStopIndex - 1) {
                     // The bus just passed this stop - show the bus icon here
@@ -592,18 +603,18 @@ public class TripDetailsListFragment extends ListFragment {
 
                 if (position < mNextStopIndex) {
                     // Bus passed stop - fade out these stops
-                    name.setTextColor(getResources().getColor(R.color.trip_details_passed));
+                    stopName.setTextColor(getResources().getColor(R.color.trip_details_passed));
                     time.setTextColor(getResources().getColor(R.color.trip_details_passed));
                 } else {
                     // Bus hasn't yet passed this stop - leave full color
-                    name.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                    stopName.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
                     time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
                 }
             } else {
                 // No real-time info - hide the bus icon
                 bus.setVisibility(View.INVISIBLE);
                 // Bus hasn't passed this stop - leave full color
-                name.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
+                stopName.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
                 time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
             }
             return convertView;

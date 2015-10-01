@@ -36,6 +36,15 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="5dp"/>
 
+    <ImageView
+            android:id="@+id/stop_icon"
+            android:src="@drawable/ic_drawer_maps_place"
+            android:layout_width="@dimen/trip_details_transit_stop_icon"
+            android:layout_height="@dimen/trip_details_transit_stop_icon"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"/>
+
     <LinearLayout
             android:id="@+id/transit_line"
             android:layout_width="wrap_content"

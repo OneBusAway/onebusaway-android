@@ -79,8 +79,8 @@ public class TripDetailsListFragment extends ListFragment {
     private final TripDetailsLoaderCallback mTripDetailsCallback = new TripDetailsLoaderCallback();
 
     /**
-     * Builds an intent used to set the trip and stop for the ArrivalListFragment directly
-     * (i.e., when ArrivalsListActivity is not used)
+     * Builds an intent used to set the trip and stop for the TripDetailsListFragment directly
+     * (i.e., when TripDetailsActivity is not used)
      */
     public static class IntentBuilder {
 
@@ -183,6 +183,15 @@ public class TripDetailsListFragment extends ListFragment {
         final int id = item.getItemId();
         if (id == R.id.refresh) {
             refresh();
+            return true;
+        } else if (id == R.id.show_on_map) {
+            if (mTripInfo != null) {
+                String tripId = mTripInfo.getId();
+                ObaReferences refs = mTripInfo.getRefs();
+                ObaTrip trip = refs.getTrip(tripId);
+                ObaRoute route = refs.getRoute(trip.getRouteId());
+                HomeActivity.start(getActivity(), route.getId());
+            }
             return true;
         }
         return false;

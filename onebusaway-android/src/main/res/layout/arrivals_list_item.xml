@@ -130,5 +130,17 @@
                 </RelativeLayout>
             </TableRow>
         </TableLayout>
+        <ImageView
+                android:id="@+id/more_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_navigation_more_horiz"
+                android:maxHeight="25dp"
+                android:maxWidth="25dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:layout_gravity="right|top"
+                android:paddingTop="4dp"
+                android:paddingRight="9dp"/>
     </android.support.v7.widget.CardView>
 </LinearLayout>

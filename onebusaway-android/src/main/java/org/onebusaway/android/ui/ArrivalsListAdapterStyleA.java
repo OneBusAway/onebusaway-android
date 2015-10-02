@@ -29,6 +29,7 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -62,6 +63,9 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
 
     @Override
     protected void initView(View view, ArrivalInfo stopInfo) {
+        final Context context = getContext();
+        final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
+
         TextView route = (TextView) view.findViewById(R.id.route);
         TextView destination = (TextView) view.findViewById(R.id.destination);
         TextView time = (TextView) view.findViewById(R.id.time);
@@ -69,9 +73,9 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         TextView etaView = (TextView) view.findViewById(R.id.eta);
         TextView minView = (TextView) view.findViewById(R.id.eta_min);
         ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
-
-        final ObaArrivalInfo arrivalInfo = stopInfo.getInfo();
-        final Context context = getContext();
+        ImageView moreView = (ImageView) view.findViewById(R.id.more_horizontal);
+        moreView.setColorFilter(
+                context.getResources().getColor(R.color.switch_thumb_normal_material_dark));
 
         route.setText(arrivalInfo.getShortName());
         destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));

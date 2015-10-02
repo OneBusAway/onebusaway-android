@@ -31,6 +31,10 @@ public class RegionUtilTest extends AndroidTestCase {
 
     Location mAtlantaLoc;
 
+    Location mLondonLoc;
+
+    Location mOriginLoc;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -38,9 +42,14 @@ public class RegionUtilTest extends AndroidTestCase {
         mTampaRegion = MockRegion.getTampa(getContext());
         mAtlantaRegion = MockRegion.getAtlanta(getContext());
 
+        // Region locations
         mSeattleLoc = LocationUtil.makeLocation(47.6097, -122.3331);
         mTampaLoc = LocationUtil.makeLocation(27.9681, -82.4764);
         mAtlantaLoc = LocationUtil.makeLocation(33.7550, -84.3900);
+
+        // Far locations
+        mLondonLoc = LocationUtil.makeLocation(51.5072, -0.1275);
+        mOriginLoc = LocationUtil.makeLocation(0, 0);
     }
 
     public void testGetDistanceAway() {
@@ -60,14 +69,51 @@ public class RegionUtilTest extends AndroidTestCase {
         list.add(mTampaRegion);
         list.add(mAtlantaRegion);
 
-        ObaRegion closestRegion = RegionUtils.getClosestRegion(list, mSeattleLoc);
+        boolean useLimiter = false;
+
+        /**
+         * Without distance limiter - this should always return a region, no matter how far away
+         * it is
+         */
+        // Close to region
+        ObaRegion closestRegion = RegionUtils.getClosestRegion(list, mSeattleLoc, useLimiter);
         assertEquals(closestRegion.getId(), MockRegion.PUGET_SOUND_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc);
+        closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc, useLimiter);
         assertEquals(closestRegion.getId(), MockRegion.TAMPA_REGION_ID);
 
-        closestRegion = RegionUtils.getClosestRegion(list, mAtlantaLoc);
+        closestRegion = RegionUtils.getClosestRegion(list, mAtlantaLoc, useLimiter);
         assertEquals(closestRegion.getId(), MockRegion.ATLANTA_REGION_ID);
+
+        // Far from region
+        closestRegion = RegionUtils.getClosestRegion(list, mLondonLoc, useLimiter);
+        assertEquals(closestRegion.getId(), MockRegion.ATLANTA_REGION_ID);
+
+        closestRegion = RegionUtils.getClosestRegion(list, mOriginLoc, useLimiter);
+        assertEquals(closestRegion.getId(), MockRegion.TAMPA_REGION_ID);
+
+        /**
+         * With distance limiter - this should only return a region if its within
+         * the RegionUtils.DISTANCE_LIMITER threshold, otherwise null should be returned
+         */
+        useLimiter = true;
+
+        // Close to region
+        closestRegion = RegionUtils.getClosestRegion(list, mSeattleLoc, useLimiter);
+        assertEquals(closestRegion.getId(), MockRegion.PUGET_SOUND_REGION_ID);
+
+        closestRegion = RegionUtils.getClosestRegion(list, mTampaLoc, useLimiter);
+        assertEquals(closestRegion.getId(), MockRegion.TAMPA_REGION_ID);
+
+        closestRegion = RegionUtils.getClosestRegion(list, mAtlantaLoc, useLimiter);
+        assertEquals(closestRegion.getId(), MockRegion.ATLANTA_REGION_ID);
+
+        // Far from region
+        closestRegion = RegionUtils.getClosestRegion(list, mLondonLoc, useLimiter);
+        assertNull(closestRegion);
+
+        closestRegion = RegionUtils.getClosestRegion(list, mOriginLoc, useLimiter);
+        assertNull(closestRegion);
     }
 
     public void testGetRegionSpan() {

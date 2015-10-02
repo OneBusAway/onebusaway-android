@@ -151,7 +151,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
             // Pass in the GoogleApiClient initialized in constructor
             Location myLocation = Application.getLastKnownLocation(mContext, mGoogleApiClient);
 
-            ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
+            ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation, true);
 
             if (Application.get().getCurrentRegion() == null) {
                 if (closestRegion != null) {

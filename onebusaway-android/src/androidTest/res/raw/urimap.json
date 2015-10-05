@@ -52,6 +52,8 @@
 
     "/api/where/trips-for-location.json?lat=47.653&lon=-122.307": "trips_for_location_test1",
     "/api/where/trips-for-location.json?lat=48.85808&lon=2.29498": "trips_for_location_outofrange",
+    "/api/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json": "trips_for_route_hart_5_no_status",
+    "/api/api/where/trips-for-route/Hillsborough%20Area%20Regional%20Transit_5.json?includeStatus=true": "trips_for_route_hart_5",
 
     "/api/where/stop/404test.json": "test_404_1",
     "/api/where/foo/1_29261.json": "__404__",

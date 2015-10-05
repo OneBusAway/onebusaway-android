@@ -1,0 +1,2924 @@
+{
+  "code": 200,
+  "currentTime": 1444073094612,
+  "data": {
+    "limitExceeded": false,
+    "list": [
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_101446",
+          "blockTripSequence": 8,
+          "closestStop": "Hillsborough Area Regional Transit_4706",
+          "closestStopTimeOffset": -13,
+          "distanceAlongTrip": 857.661738417286,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.065561294555664,
+            "lon": -82.4344711303711
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_4707",
+          "nextStopTimeOffset": 46,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.063130557136404,
+            "lon": -82.43457
+          },
+          "predicted": true,
+          "scheduleDeviation": 420,
+          "scheduledDistanceAlongTrip": 857.661738417286,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 23220.832205772822,
+          "vehicleId": "Hillsborough Area Regional Transit_2415"
+        },
+        "tripId": "Hillsborough Area Regional Transit_101446"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98718",
+          "blockTripSequence": 8,
+          "closestStop": "Hillsborough Area Regional Transit_4559",
+          "closestStopTimeOffset": 25,
+          "distanceAlongTrip": 7767.281145230052,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.0184268951416,
+            "lon": -82.41433715820312
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087131,
+          "nextStop": "Hillsborough Area Regional Transit_4559",
+          "nextStopTimeOffset": 25,
+          "orientation": 257.59258147363477,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.015291472896244,
+            "lon": -82.41461105596282
+          },
+          "predicted": true,
+          "scheduleDeviation": 420,
+          "scheduledDistanceAlongTrip": 7767.281145230052,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19440.69118417295,
+          "vehicleId": "Hillsborough Area Regional Transit_2321"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98718"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98684",
+          "blockTripSequence": 8,
+          "closestStop": "Hillsborough Area Regional Transit_2982",
+          "closestStopTimeOffset": -4,
+          "distanceAlongTrip": 7022.496607917914,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.98124122619629,
+            "lon": -82.42235565185547
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_4534",
+          "nextStopTimeOffset": 36,
+          "orientation": 90.81845546195026,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.984746906972703,
+            "lon": -82.4223749558139
+          },
+          "predicted": true,
+          "scheduleDeviation": 240,
+          "scheduledDistanceAlongTrip": 7022.496607917914,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 18710.563037074742,
+          "vehicleId": "Hillsborough Area Regional Transit_2401"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98684"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99282",
+          "blockTripSequence": 11,
+          "closestStop": "Hillsborough Area Regional Transit_7043",
+          "closestStopTimeOffset": -36,
+          "distanceAlongTrip": 2506.2488887140644,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.9632625579834,
+            "lon": -82.44573211669922
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087132,
+          "nextStop": "Hillsborough Area Regional Transit_765",
+          "nextStopTimeOffset": 66,
+          "orientation": 32.73522627181366,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.963761014152517,
+            "lon": -82.44333475576276
+          },
+          "predicted": true,
+          "scheduleDeviation": 180,
+          "scheduledDistanceAlongTrip": 2506.2488887140644,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 21051.99236295506,
+          "vehicleId": "Hillsborough Area Regional Transit_1501"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99282"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99908",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_2740",
+          "closestStopTimeOffset": -18,
+          "distanceAlongTrip": 21170.487273567443,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.962310791015625,
+            "lon": -82.4541244506836
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_2742",
+          "nextStopTimeOffset": 58,
+          "orientation": 180.46543070047406,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.962242979879907,
+            "lon": -82.45619317678381
+          },
+          "predicted": true,
+          "scheduleDeviation": 420,
+          "scheduledDistanceAlongTrip": 21170.487273567443,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 22769.949306527073,
+          "vehicleId": "Hillsborough Area Regional Transit_2307"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99908"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99542",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_546",
+          "closestStopTimeOffset": -17,
+          "distanceAlongTrip": 16418.692571141262,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.9537410736084,
+            "lon": -82.45133209228516
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087130,
+          "nextStop": "Hillsborough Area Regional Transit_7470",
+          "nextStopTimeOffset": 34,
+          "orientation": 188.6028090817826,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.953245163399288,
+            "lon": -82.45181096993072
+          },
+          "predicted": true,
+          "scheduleDeviation": 360,
+          "scheduledDistanceAlongTrip": 16418.692571141262,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 17334.655174006934,
+          "vehicleId": "Hillsborough Area Regional Transit_2607"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99542"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_100094",
+          "blockTripSequence": 16,
+          "closestStop": "Hillsborough Area Regional Transit_3274",
+          "closestStopTimeOffset": 5,
+          "distanceAlongTrip": 5722.908596385503,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.942596435546875,
+            "lon": -82.46279907226562
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087129,
+          "nextStop": "Hillsborough Area Regional Transit_3274",
+          "nextStopTimeOffset": 5,
+          "orientation": 179.0592671457765,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.94318293413977,
+            "lon": -82.47020868911184
+          },
+          "predicted": true,
+          "scheduleDeviation": 240,
+          "scheduledDistanceAlongTrip": 5722.908596385503,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 13231.917317472326,
+          "vehicleId": "Hillsborough Area Regional Transit_2501"
+        },
+        "tripId": "Hillsborough Area Regional Transit_100094"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98480",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_455",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 9601.567329244077,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.032489776611328,
+            "lon": -82.45120239257812
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_455",
+          "nextStopTimeOffset": 6,
+          "orientation": 90,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.031696438291902,
+            "lon": -82.45126
+          },
+          "predicted": true,
+          "scheduleDeviation": 180,
+          "scheduledDistanceAlongTrip": 9601.567329244077,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 16099.779813459285,
+          "vehicleId": "Hillsborough Area Regional Transit_2325"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98480"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99495",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_665",
+          "closestStopTimeOffset": -5,
+          "distanceAlongTrip": 4820.439741551934,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.970752716064453,
+            "lon": -82.43476867675781
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087125,
+          "nextStop": "Hillsborough Area Regional Transit_4445",
+          "nextStopTimeOffset": 22,
+          "orientation": 90,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.9746868719484,
+            "lon": -82.43475
+          },
+          "predicted": true,
+          "scheduleDeviation": 540,
+          "scheduledDistanceAlongTrip": 4820.439741551934,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 17013.515749015707,
+          "vehicleId": "Hillsborough Area Regional Transit_2402"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99495"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102387",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 19550.25113408605,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.955280303955078,
+            "lon": -82.45864868164062
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073012126,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 6,
+          "orientation": 90,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.954929,
+            "lon": -82.458519
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 19550.25113408605,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19542.765572739438,
+          "vehicleId": "Hillsborough Area Regional Transit_1502"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102387"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99340",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_2051",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 5127.876761740801,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.952150344848633,
+            "lon": -82.50113677978516
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_2051",
+          "nextStopTimeOffset": 6,
+          "orientation": 178.5311992855654,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.95215600522671,
+            "lon": -82.50545320384165
+          },
+          "predicted": true,
+          "scheduleDeviation": 60,
+          "scheduledDistanceAlongTrip": 5127.876761740801,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 10086.226317539116,
+          "vehicleId": "Hillsborough Area Regional Transit_2902"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99340"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102384",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_708",
+          "closestStopTimeOffset": -37,
+          "distanceAlongTrip": 2113.5335884110245,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.077131271362305,
+            "lon": -82.43449401855469
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087125,
+          "nextStop": "Hillsborough Area Regional Transit_6578",
+          "nextStopTimeOffset": 54,
+          "orientation": 179.70930853424704,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.08035292362586,
+            "lon": -82.43533524665706
+          },
+          "predicted": true,
+          "scheduleDeviation": 180,
+          "scheduledDistanceAlongTrip": 2113.5335884110245,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19542.765572739438,
+          "vehicleId": "Hillsborough Area Regional Transit_1024"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102384"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99316",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_4289",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 18344.191204230156,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.96803092956543,
+            "lon": -82.44424438476562
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_4289",
+          "nextStopTimeOffset": 6,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.966891181730524,
+            "lon": -82.444209
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 18344.191204230156,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 21144.522607312516,
+          "vehicleId": "Hillsborough Area Regional Transit_2324"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99316"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98526",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 16210.849822368793,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.955265045166016,
+            "lon": -82.45822143554688
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 6,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.954680782153837,
+            "lon": -82.45838
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 16210.849822368793,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 16210.936794043659,
+          "vehicleId": "Hillsborough Area Regional Transit_1310"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98526"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_100431",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_4880",
+          "closestStopTimeOffset": 14,
+          "distanceAlongTrip": 8427.025881095673,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.944841384887695,
+            "lon": -82.5220947265625
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087131,
+          "nextStop": "Hillsborough Area Regional Transit_4880",
+          "nextStopTimeOffset": 14,
+          "orientation": 87.28659055410904,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.945525322513685,
+            "lon": -82.52422301315102
+          },
+          "predicted": true,
+          "scheduleDeviation": -60,
+          "scheduledDistanceAlongTrip": 8427.025881095673,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 30364.182597682866,
+          "vehicleId": "Hillsborough Area Regional Transit_1307"
+        },
+        "tripId": "Hillsborough Area Regional Transit_100431"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98685",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_6497",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 18690.522075554414,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.065643310546875,
+            "lon": -82.42745971679688
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_6497",
+          "nextStopTimeOffset": 6,
+          "orientation": 180,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.065519,
+            "lon": -82.42921474984361
+          },
+          "predicted": true,
+          "scheduleDeviation": 240,
+          "scheduledDistanceAlongTrip": 18690.522075554414,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 18710.563037074742,
+          "vehicleId": "Hillsborough Area Regional Transit_2924"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98685"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102333",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_574",
+          "closestStopTimeOffset": 7,
+          "distanceAlongTrip": 5211.426820071472,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.998252868652344,
+            "lon": -82.45939636230469
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_574",
+          "nextStopTimeOffset": 7,
+          "orientation": 90.61605990859455,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.00118934130015,
+            "lon": -82.45944613270215
+          },
+          "predicted": true,
+          "scheduleDeviation": 120,
+          "scheduledDistanceAlongTrip": 5211.426820071472,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19216.580386934176,
+          "vehicleId": "Hillsborough Area Regional Transit_2106"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102333"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99198",
+          "blockTripSequence": 6,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 306,
+          "distanceAlongTrip": 30835.49500678369,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.954790115356445,
+            "lon": -82.45829772949219
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087129,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 306,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.954819,
+            "lon": -82.45838
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 30835.49500678369,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 30825.68506132018,
+          "vehicleId": "Hillsborough Area Regional Transit_2326"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99198"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_101484",
+          "blockTripSequence": 6,
+          "closestStop": "Hillsborough Area Regional Transit_7280",
+          "closestStopTimeOffset": -59,
+          "distanceAlongTrip": 7691.940561739553,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.937023162841797,
+            "lon": -82.43512725830078
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_7283",
+          "nextStopTimeOffset": 229,
+          "orientation": 320.58857057810263,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.93362248658056,
+            "lon": -82.43151556591032
+          },
+          "predicted": true,
+          "scheduleDeviation": 120,
+          "scheduledDistanceAlongTrip": 7691.940561739553,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 31554.090356612276,
+          "vehicleId": "Hillsborough Area Regional Transit_1015"
+        },
+        "tripId": "Hillsborough Area Regional Transit_101484"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99162",
+          "blockTripSequence": 6,
+          "closestStop": "Hillsborough Area Regional Transit_4735",
+          "closestStopTimeOffset": 22,
+          "distanceAlongTrip": 7376.37855164599,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.96016502380371,
+            "lon": -82.41706848144531
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_4735",
+          "nextStopTimeOffset": 22,
+          "orientation": 0.3732571268581277,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.960182274752096,
+            "lon": -82.41376982555346
+          },
+          "predicted": true,
+          "scheduleDeviation": 60,
+          "scheduledDistanceAlongTrip": 7376.37855164599,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 31084.182603634727,
+          "vehicleId": "Hillsborough Area Regional Transit_1011"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99162"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99315",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_7723",
+          "closestStopTimeOffset": -27,
+          "distanceAlongTrip": 4167.217167337745,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.043092727661133,
+            "lon": -82.44293975830078
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_6606",
+          "nextStopTimeOffset": 36,
+          "orientation": 179.25594079714236,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.039913577811276,
+            "lon": -82.44467449146842
+          },
+          "predicted": true,
+          "scheduleDeviation": 540,
+          "scheduledDistanceAlongTrip": 4167.217167337745,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 21144.522607312516,
+          "vehicleId": "Hillsborough Area Regional Transit_2507"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99315"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102515",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": -114,
+          "distanceAlongTrip": 17477.012710105046,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.955673217773438,
+            "lon": -82.45825958251953
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 306,
+          "orientation": 21.42045911908465,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.95528880439398,
+            "lon": -82.45858951821143
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 17477.012710105046,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 17500.333576571687,
+          "vehicleId": "Hillsborough Area Regional Transit_1205"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102515"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_100430",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 306,
+          "distanceAlongTrip": 120.32860455292393,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.954591751098633,
+            "lon": -82.45867156982422
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444072802239,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 306,
+          "orientation": 12.727387689397165,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.955304057214143,
+            "lon": -82.45848478485343
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 120.32860455292393,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 30364.182597682866,
+          "vehicleId": "Hillsborough Area Regional Transit_1028"
+        },
+        "tripId": "Hillsborough Area Regional Transit_100430"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99031",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_3366",
+          "closestStopTimeOffset": -24,
+          "distanceAlongTrip": 3800.287615592795,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.957149505615234,
+            "lon": -82.48033142089844
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087130,
+          "nextStop": "Hillsborough Area Regional Transit_3307",
+          "nextStopTimeOffset": 33,
+          "orientation": 89.29364946340928,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.95822674938359,
+            "lon": -82.48290495925418
+          },
+          "predicted": true,
+          "scheduleDeviation": 840,
+          "scheduledDistanceAlongTrip": 3800.287615592795,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 8270.685168407923,
+          "vehicleId": "Hillsborough Area Regional Transit_2906"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99031"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99046",
+          "blockTripSequence": 1,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 306,
+          "distanceAlongTrip": 48.344242473194754,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.954919815063477,
+            "lon": -82.4581298828125
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087129,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 306,
+          "orientation": 282.23611150942764,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.955227519703264,
+            "lon": -82.45822666692361
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 48.344242473194754,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 22988.79860641839,
+          "vehicleId": "Hillsborough Area Regional Transit_1518"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99046"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102385",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_6916",
+          "closestStopTimeOffset": 15,
+          "distanceAlongTrip": 7980.621903422056,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.052974700927734,
+            "lon": -82.45950317382812
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_6916",
+          "nextStopTimeOffset": 15,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.048912254957113,
+            "lon": -82.4594
+          },
+          "predicted": true,
+          "scheduleDeviation": 60,
+          "scheduledDistanceAlongTrip": 7980.621903422056,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19542.765572739438,
+          "vehicleId": "Hillsborough Area Regional Transit_1522"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102385"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_101413",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_6497",
+          "closestStopTimeOffset": 306,
+          "distanceAlongTrip": 22798.9402019243,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.066102981567383,
+            "lon": -82.43006134033203
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087131,
+          "nextStop": "Hillsborough Area Regional Transit_6497",
+          "nextStopTimeOffset": 306,
+          "orientation": 0,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.065519,
+            "lon": -82.429419
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 22798.9402019243,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 22592.01844231245,
+          "vehicleId": "Hillsborough Area Regional Transit_1026"
+        },
+        "tripId": "Hillsborough Area Regional Transit_101413"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102429",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_407",
+          "closestStopTimeOffset": -69,
+          "distanceAlongTrip": 2880.43612111485,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.958738327026367,
+            "lon": -82.45126342773438
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_7824",
+          "nextStopTimeOffset": 83,
+          "orientation": 90,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.962062691584837,
+            "lon": -82.45126
+          },
+          "predicted": true,
+          "scheduleDeviation": 120,
+          "scheduledDistanceAlongTrip": 2880.43612111485,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 17224.357669805333,
+          "vehicleId": "Hillsborough Area Regional Transit_1210"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102429"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98580",
+          "blockTripSequence": 11,
+          "closestStop": "Hillsborough Area Regional Transit_7751",
+          "closestStopTimeOffset": -29,
+          "distanceAlongTrip": 8987.183762795321,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.946266174316406,
+            "lon": -82.45630645751953
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087128,
+          "nextStop": "Hillsborough Area Regional Transit_4242",
+          "nextStopTimeOffset": 126,
+          "orientation": 13.134022306539265,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.943618736740763,
+            "lon": -82.45236441396816
+          },
+          "predicted": true,
+          "scheduleDeviation": 240,
+          "scheduledDistanceAlongTrip": 8987.183762795321,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 10724.337858795614,
+          "vehicleId": "Hillsborough Area Regional Transit_1023"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98580"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99873",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_3528",
+          "closestStopTimeOffset": 13,
+          "distanceAlongTrip": 5796.478465883818,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.977569580078125,
+            "lon": -82.42803192138672
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087130,
+          "nextStop": "Hillsborough Area Regional Transit_3528",
+          "nextStopTimeOffset": 13,
+          "orientation": 89.14951783421267,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.979111648324025,
+            "lon": -82.4280212022516
+          },
+          "predicted": true,
+          "scheduleDeviation": 240,
+          "scheduledDistanceAlongTrip": 5796.478465883818,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 21967.210579320963,
+          "vehicleId": "Hillsborough Area Regional Transit_2922"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99873"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98719",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_4479",
+          "closestStopTimeOffset": -45,
+          "distanceAlongTrip": 18944.770369527774,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.959476470947266,
+            "lon": -82.4596176147461
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087125,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 66,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.957068975854966,
+            "lon": -82.45878
+          },
+          "predicted": true,
+          "scheduleDeviation": 420,
+          "scheduledDistanceAlongTrip": 18944.770369527774,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 19440.69118417295,
+          "vehicleId": "Hillsborough Area Regional Transit_2912"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98719"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98902",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_2420",
+          "closestStopTimeOffset": 3,
+          "distanceAlongTrip": 5471.66633453939,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.97042465209961,
+            "lon": -82.42781066894531
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087127,
+          "nextStop": "Hillsborough Area Regional Transit_2420",
+          "nextStopTimeOffset": 3,
+          "orientation": 2.789467691772593,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.970419103296464,
+            "lon": -82.42276787996302
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 5471.66633453939,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 25499.935940670617,
+          "vehicleId": "Hillsborough Area Regional Transit_2930"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98902"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102670",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_4478",
+          "closestStopTimeOffset": 24,
+          "distanceAlongTrip": 23820.24181778109,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.97098159790039,
+            "lon": -82.45943450927734
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_4478",
+          "nextStopTimeOffset": 24,
+          "orientation": 269.26803799350427,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.967819995599157,
+            "lon": -82.46088973176354
+          },
+          "predicted": true,
+          "scheduleDeviation": 420,
+          "scheduledDistanceAlongTrip": 23820.24181778109,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 25691.90211866376,
+          "vehicleId": "Hillsborough Area Regional Transit_2319"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102670"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_103215",
+          "blockTripSequence": 12,
+          "closestStop": "Hillsborough Area Regional Transit_7375",
+          "closestStopTimeOffset": -6,
+          "distanceAlongTrip": 1711.9323459973675,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.95088768005371,
+            "lon": -82.47258758544922
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087126,
+          "nextStop": "Hillsborough Area Regional Transit_5238",
+          "nextStopTimeOffset": 38,
+          "orientation": 88.80899112887388,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.952109829465893,
+            "lon": -82.46845707215248
+          },
+          "predicted": true,
+          "scheduleDeviation": 300,
+          "scheduledDistanceAlongTrip": 1711.9323459973675,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 16922.22142883817,
+          "vehicleId": "Hillsborough Area Regional Transit_2409"
+        },
+        "tripId": "Hillsborough Area Regional Transit_103215"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_99284",
+          "blockTripSequence": 9,
+          "closestStop": "Hillsborough Area Regional Transit_4821",
+          "closestStopTimeOffset": 23,
+          "distanceAlongTrip": 20484.796327649907,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.06551170349121,
+            "lon": -82.43891906738281
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087130,
+          "nextStop": "Hillsborough Area Regional Transit_4821",
+          "nextStopTimeOffset": 23,
+          "orientation": 359.4464348140377,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.065534957061647,
+            "lon": -82.43620055588042
+          },
+          "predicted": true,
+          "scheduleDeviation": 360,
+          "scheduledDistanceAlongTrip": 20484.796327649907,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 21051.99236295506,
+          "vehicleId": "Hillsborough Area Regional Transit_1008"
+        },
+        "tripId": "Hillsborough Area Regional Transit_99284"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_98904",
+          "blockTripSequence": 7,
+          "closestStop": "Hillsborough Area Regional Transit_4598",
+          "closestStopTimeOffset": 24,
+          "distanceAlongTrip": 20696.116625133058,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.05453109741211,
+            "lon": -82.4052734375
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087129,
+          "nextStop": "Hillsborough Area Regional Transit_4598",
+          "nextStopTimeOffset": 24,
+          "orientation": 89.46454101502746,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.05719135174558,
+            "lon": -82.40184008082481
+          },
+          "predicted": true,
+          "scheduleDeviation": 1200,
+          "scheduledDistanceAlongTrip": 20696.116625133058,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 25499.935940670617,
+          "vehicleId": "Hillsborough Area Regional Transit_2611"
+        },
+        "tripId": "Hillsborough Area Regional Transit_98904"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_100130",
+          "blockTripSequence": 15,
+          "closestStop": "Hillsborough Area Regional Transit_6968",
+          "closestStopTimeOffset": 306,
+          "distanceAlongTrip": 13314.419028764503,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 27.954673767089844,
+            "lon": -82.45823669433594
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087132,
+          "nextStop": "Hillsborough Area Regional Transit_6968",
+          "nextStopTimeOffset": 306,
+          "orientation": 270,
+          "phase": "in_progress",
+          "position": {
+            "lat": 27.95468,
+            "lon": -82.45838
+          },
+          "predicted": true,
+          "scheduleDeviation": 0,
+          "scheduledDistanceAlongTrip": 13314.419028764503,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 13312.952612495494,
+          "vehicleId": "Hillsborough Area Regional Transit_2928"
+        },
+        "tripId": "Hillsborough Area Regional Transit_100130"
+      },
+      {
+        "frequency": null,
+        "schedule": null,
+        "serviceDate": 1444017600000,
+        "situationIds": [],
+        "status": {
+          "activeTripId": "Hillsborough Area Regional Transit_102457",
+          "blockTripSequence": 10,
+          "closestStop": "Hillsborough Area Regional Transit_7796",
+          "closestStopTimeOffset": 6,
+          "distanceAlongTrip": 10821.65121854184,
+          "frequency": null,
+          "lastKnownDistanceAlongTrip": 0,
+          "lastKnownLocation": {
+            "lat": 28.031652450561523,
+            "lon": -82.45120239257812
+          },
+          "lastKnownOrientation": 0,
+          "lastLocationUpdateTime": 0,
+          "lastUpdateTime": 1444073087129,
+          "nextStop": "Hillsborough Area Regional Transit_7796",
+          "nextStopTimeOffset": 6,
+          "orientation": 90,
+          "phase": "in_progress",
+          "position": {
+            "lat": 28.033468537365255,
+            "lon": -82.451229
+          },
+          "predicted": true,
+          "scheduleDeviation": -120,
+          "scheduledDistanceAlongTrip": 10821.65121854184,
+          "serviceDate": 1444017600000,
+          "situationIds": [],
+          "status": "default",
+          "totalDistanceAlongTrip": 35961.97995582935,
+          "vehicleId": "Hillsborough Area Regional Transit_1209"
+        },
+        "tripId": "Hillsborough Area Regional Transit_102457"
+      }
+    ],
+    "outOfRange": false,
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "Hillsborough Area Regional Transit",
+          "lang": "en",
+          "name": "Hillsborough Area Regional Transit",
+          "phone": "813-254-4278",
+          "privateService": false,
+          "timezone": "America/New_York",
+          "url": "http://www.gohart.org"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_45",
+          "longName": "UATC - Westshore Plaza - Rome Ave",
+          "shortName": "45",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_12",
+          "longName": "22nd Street",
+          "shortName": "12",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_5",
+          "longName": "40th Street",
+          "shortName": "5",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_9",
+          "longName": "15th Street",
+          "shortName": "9",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_18",
+          "longName": "30th Street",
+          "shortName": "18",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_2",
+          "longName": "Nebraska Avenue",
+          "shortName": "2",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_19",
+          "longName": "Port Tampa",
+          "shortName": "19",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_39",
+          "longName": "Busch Boulevard",
+          "shortName": "39",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_1",
+          "longName": "Florida Avenue",
+          "shortName": "1",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_4",
+          "longName": "Palma Ceia-South Tampa",
+          "shortName": "4",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_6",
+          "longName": "56th Street",
+          "shortName": "6",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_7",
+          "longName": "West Tampa - Citrus Park",
+          "shortName": "7",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_8",
+          "longName": "Progress Village/Brandon",
+          "shortName": "8",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_10",
+          "longName": "Cypress Street",
+          "shortName": "10",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_14",
+          "longName": "Armenia Avenue",
+          "shortName": "14",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_20",
+          "longName": "Pasco - Lutz Express",
+          "shortName": "20",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_21",
+          "longName": "56th Street LX",
+          "shortName": "21",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_22",
+          "longName": "Dover - Brandon Express",
+          "shortName": "22",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_27",
+          "longName": "Riverview-Fishhawk-Brandon LX",
+          "shortName": "27",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_28",
+          "longName": "East County Express",
+          "shortName": "28",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_30",
+          "longName": "Town 'N Country",
+          "shortName": "30",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_46",
+          "longName": "Downtown To Dover Rd",
+          "shortName": "46",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_47",
+          "longName": "Southshore LX",
+          "shortName": "47",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_51",
+          "longName": "New Tampa - Pasco Express",
+          "shortName": "51",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_61",
+          "longName": "Northwest LX",
+          "shortName": "61",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "3C2D90",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_96",
+          "longName": "In-Town Trolley Purple Line",
+          "shortName": "96",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "A81534",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_200",
+          "longName": "Clearwater Express",
+          "shortName": "200",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "2EB135",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_400",
+          "longName": "Metrorapid North-South",
+          "shortName": "400",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        },
+        {
+          "agencyId": "Hillsborough Area Regional Transit",
+          "color": "09346D",
+          "description": "",
+          "id": "Hillsborough Area Regional Transit_57",
+          "longName": "UATC - Temple Terrace - Netp@Rk",
+          "shortName": "57",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.gohart.org/Pages/maps-schedules.aspx"
+        }
+      ],
+      "situations": [],
+      "stops": [
+        {
+          "code": "4706",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4706",
+          "lat": 28.063647,
+          "locationType": 0,
+          "lon": -82.434598,
+          "name": "22nd St @Villas",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_12",
+            "Hillsborough Area Regional Transit_45"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4707",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4707",
+          "lat": 28.061295,
+          "locationType": 0,
+          "lon": -82.4346,
+          "name": "22nd St @ 12401 University Village",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_12",
+            "Hillsborough Area Regional Transit_45"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4559",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4559",
+          "lat": 28.013634,
+          "locationType": 0,
+          "lon": -82.414953,
+          "name": "40th St @ Flora St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2982",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_2982",
+          "lat": 27.984519,
+          "locationType": 0,
+          "lon": -82.422325,
+          "name": "34th St @ Genessee St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4534",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_4534",
+          "lat": 27.986808,
+          "locationType": 0,
+          "lon": -82.42241,
+          "name": "34th St @ Palifox St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7043",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_7043",
+          "lat": 27.963219,
+          "locationType": 0,
+          "lon": -82.445527,
+          "name": "Nuccio Pkwy @ 13th St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "765",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_765",
+          "lat": 27.967327,
+          "locationType": 0,
+          "lon": -82.442925,
+          "name": "15th St @ 17th Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9",
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2740",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_2740",
+          "lat": 27.962311,
+          "locationType": 0,
+          "lon": -82.455231,
+          "name": "Palm Av @ Central Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5",
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2742",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_2742",
+          "lat": 27.962248,
+          "locationType": 0,
+          "lon": -82.459288,
+          "name": "Palm Av @ Florida Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5",
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "546",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_546",
+          "lat": 27.953618,
+          "locationType": 0,
+          "lon": -82.451312,
+          "name": "Nebraska Av @ Cass St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_2",
+            "Hillsborough Area Regional Transit_12"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7470",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_7470",
+          "lat": 27.953065,
+          "locationType": 0,
+          "lon": -82.453575,
+          "name": "Cass St @ Governor St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_2",
+            "Hillsborough Area Regional Transit_9",
+            "Hillsborough Area Regional Transit_12"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "3274",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_3274",
+          "lat": 27.94322,
+          "locationType": 0,
+          "lon": -82.470489,
+          "name": "Cleveland St @ Delaware Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_19"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "455",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_455",
+          "lat": 28.031937,
+          "locationType": 0,
+          "lon": -82.451106,
+          "name": "Nebraska Av @ Skagway Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_2",
+            "Hillsborough Area Regional Transit_39"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "665",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_665",
+          "lat": 27.974459,
+          "locationType": 0,
+          "lon": -82.434672,
+          "name": "22nd St @ 26th Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_12"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4445",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_4445",
+          "lat": 27.975696,
+          "locationType": 0,
+          "lon": -82.434743,
+          "name": "22nd St @ 28th Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_12"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6968",
+          "direction": "",
+          "id": "Hillsborough Area Regional Transit_6968",
+          "lat": 27.954758,
+          "locationType": 0,
+          "lon": -82.458284,
+          "name": "Marion Transit Center",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1",
+            "Hillsborough Area Regional Transit_2",
+            "Hillsborough Area Regional Transit_4",
+            "Hillsborough Area Regional Transit_5",
+            "Hillsborough Area Regional Transit_6",
+            "Hillsborough Area Regional Transit_7",
+            "Hillsborough Area Regional Transit_8",
+            "Hillsborough Area Regional Transit_9",
+            "Hillsborough Area Regional Transit_10",
+            "Hillsborough Area Regional Transit_12",
+            "Hillsborough Area Regional Transit_14",
+            "Hillsborough Area Regional Transit_18",
+            "Hillsborough Area Regional Transit_19",
+            "Hillsborough Area Regional Transit_20",
+            "Hillsborough Area Regional Transit_21",
+            "Hillsborough Area Regional Transit_22",
+            "Hillsborough Area Regional Transit_27",
+            "Hillsborough Area Regional Transit_28",
+            "Hillsborough Area Regional Transit_30",
+            "Hillsborough Area Regional Transit_46",
+            "Hillsborough Area Regional Transit_47",
+            "Hillsborough Area Regional Transit_51",
+            "Hillsborough Area Regional Transit_61",
+            "Hillsborough Area Regional Transit_96",
+            "Hillsborough Area Regional Transit_200",
+            "Hillsborough Area Regional Transit_400"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2051",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_2051",
+          "lat": 27.952184,
+          "locationType": 0,
+          "lon": -82.505848,
+          "name": "Cypress St @ Dale Mabry Hwy",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_10"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "708",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_708",
+          "lat": 28.079114,
+          "locationType": 0,
+          "lon": -82.434565,
+          "name": "22nd St @ Rae Ct",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6578",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_6578",
+          "lat": 28.080511,
+          "locationType": 0,
+          "lon": -82.438237,
+          "name": "Bearss Av @ Gregory Dr",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4289",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4289",
+          "lat": 27.966534,
+          "locationType": 0,
+          "lon": -82.444312,
+          "name": "Republica De Cuba @ Columbus Dr",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9",
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4880",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_4880",
+          "lat": 27.946329,
+          "locationType": 0,
+          "lon": -82.524056,
+          "name": "Westshore Blvd @ North B St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_30"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6497",
+          "direction": "",
+          "id": "Hillsborough Area Regional Transit_6497",
+          "lat": 28.066419,
+          "locationType": 0,
+          "lon": -82.429872,
+          "name": "University Area Transit Center",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1",
+            "Hillsborough Area Regional Transit_2",
+            "Hillsborough Area Regional Transit_5",
+            "Hillsborough Area Regional Transit_6",
+            "Hillsborough Area Regional Transit_9",
+            "Hillsborough Area Regional Transit_12",
+            "Hillsborough Area Regional Transit_18",
+            "Hillsborough Area Regional Transit_21",
+            "Hillsborough Area Regional Transit_45",
+            "Hillsborough Area Regional Transit_57"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "574",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_574",
+          "lat": 28.001527,
+          "locationType": 0,
+          "lon": -82.459328,
+          "name": "Florida Av @ Idlewild Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7280",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_7280",
+          "lat": 27.938275,
+          "locationType": 0,
+          "lon": -82.434805,
+          "name": "22nd St @ Hemlock St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_46"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7283",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_7283",
+          "lat": 27.922935,
+          "locationType": 0,
+          "lon": -82.407823,
+          "name": "Causeway Blvd @ 45th St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_46"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4735",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_4735",
+          "lat": 27.9601,
+          "locationType": 0,
+          "lon": -82.412386,
+          "name": "7th Av @ 4100",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_8"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7723",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_7723",
+          "lat": 28.03997,
+          "locationType": 0,
+          "lon": -82.443141,
+          "name": "Linebaugh Av @ 15th St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6606",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_6606",
+          "lat": 28.039947,
+          "locationType": 0,
+          "lon": -82.446717,
+          "name": "Linebaugh Av @ Lantana St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "3366",
+          "direction": "W",
+          "id": "Hillsborough Area Regional Transit_3366",
+          "lat": 27.957207,
+          "locationType": 0,
+          "lon": -82.48272,
+          "name": "Main St @ Howard Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_7"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "3307",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_3307",
+          "lat": 27.959921,
+          "locationType": 0,
+          "lon": -82.482848,
+          "name": "Howard Av @ Walnut St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_7"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6916",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_6916",
+          "lat": 28.048091,
+          "locationType": 0,
+          "lon": -82.459491,
+          "name": "Florida Av @ 111th Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "407",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_407",
+          "lat": 27.958418,
+          "locationType": 0,
+          "lon": -82.451116,
+          "name": "Neb @ Estelle Mr N-S Sta 5",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_12",
+            "Hillsborough Area Regional Transit_400"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7824",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_7824",
+          "lat": 27.966443,
+          "locationType": 0,
+          "lon": -82.451107,
+          "name": "Neb @ Columbus Mr N-S Sta 7",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_400"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7751",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_7751",
+          "lat": 27.942957,
+          "locationType": 0,
+          "lon": -82.454019,
+          "name": "Channelside Dr @ Florida Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_4",
+            "Hillsborough Area Regional Transit_19"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4242",
+          "direction": "NW",
+          "id": "Hillsborough Area Regional Transit_4242",
+          "lat": 27.947177,
+          "locationType": 0,
+          "lon": -82.45566,
+          "name": "Marion St @ Washington St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_4",
+            "Hillsborough Area Regional Transit_8",
+            "Hillsborough Area Regional Transit_19",
+            "Hillsborough Area Regional Transit_20",
+            "Hillsborough Area Regional Transit_21",
+            "Hillsborough Area Regional Transit_22",
+            "Hillsborough Area Regional Transit_27",
+            "Hillsborough Area Regional Transit_28",
+            "Hillsborough Area Regional Transit_30",
+            "Hillsborough Area Regional Transit_47",
+            "Hillsborough Area Regional Transit_51",
+            "Hillsborough Area Regional Transit_61",
+            "Hillsborough Area Regional Transit_200"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "3528",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_3528",
+          "lat": 27.979911,
+          "locationType": 0,
+          "lon": -82.428012,
+          "name": "29th St @ Lindell Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4479",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4479",
+          "lat": 27.959069,
+          "locationType": 0,
+          "lon": -82.458872,
+          "name": "Marion St @ Henderson Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_5",
+            "Hillsborough Area Regional Transit_18"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2420",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_2420",
+          "lat": 27.970345,
+          "locationType": 0,
+          "lon": -82.42255,
+          "name": "21St Av @ 34th St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_6"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4478",
+          "direction": "S",
+          "id": "Hillsborough Area Regional Transit_4478",
+          "lat": 27.966242,
+          "locationType": 0,
+          "lon": -82.46097,
+          "name": "Tampa St @ Amelia Av",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_1",
+            "Hillsborough Area Regional Transit_6"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7375",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_7375",
+          "lat": 27.951807,
+          "locationType": 0,
+          "lon": -82.468374,
+          "name": "N Boulevard @ Cypress St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_7",
+            "Hillsborough Area Regional Transit_14"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "5238",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_5238",
+          "lat": 27.954028,
+          "locationType": 0,
+          "lon": -82.468351,
+          "name": "N Boulevard @ Arch St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_7",
+            "Hillsborough Area Regional Transit_14"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4821",
+          "direction": "E",
+          "id": "Hillsborough Area Regional Transit_4821",
+          "lat": 28.065441,
+          "locationType": 0,
+          "lon": -82.434931,
+          "name": "131St Av @ 22nd St",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_9"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "4598",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_4598",
+          "lat": 28.05849,
+          "locationType": 0,
+          "lon": -82.401762,
+          "name": "50th St @ Sun Ridge Condos",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_6"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "7796",
+          "direction": "N",
+          "id": "Hillsborough Area Regional Transit_7796",
+          "lat": 28.033848,
+          "locationType": 0,
+          "lon": -82.451076,
+          "name": "Neb @ 93Rd Mr N-S Sta 25",
+          "routeIds": [
+            "Hillsborough Area Regional Transit_400"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "Hillsborough Area Regional Transit_288272",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_101446",
+          "routeId": "Hillsborough Area Regional Transit_45",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38109",
+          "timeZone": "",
+          "tripHeadsign": "South to Westshore TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288269",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_98718",
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38033",
+          "timeZone": "",
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288270",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_98684",
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38032",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288318",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99282",
+          "routeId": "Hillsborough Area Regional Transit_9",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38042",
+          "timeZone": "",
+          "tripHeadsign": "Downtown to UATC via 15th St",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288257",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_99908",
+          "routeId": "Hillsborough Area Regional Transit_18",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38057",
+          "timeZone": "",
+          "tripHeadsign": "South to UATC/Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288336",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_99542",
+          "routeId": "Hillsborough Area Regional Transit_12",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38047",
+          "timeZone": "",
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288386",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_100094",
+          "routeId": "Hillsborough Area Regional Transit_19",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38060",
+          "timeZone": "",
+          "tripHeadsign": "South to Britton Plaza",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288251",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_98480",
+          "routeId": "Hillsborough Area Regional Transit_2",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38024",
+          "timeZone": "",
+          "tripHeadsign": "Downtown to UATC via Nebraska Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288333",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99495",
+          "routeId": "Hillsborough Area Regional Transit_12",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38046",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288635",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_102387",
+          "routeId": "Hillsborough Area Regional Transit_1",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38023",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via Florida Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288321",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99340",
+          "routeId": "Hillsborough Area Regional Transit_10",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38044",
+          "timeZone": "",
+          "tripHeadsign": "West to Frontage Rd @ Laurel St",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288639",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_102384",
+          "routeId": "Hillsborough Area Regional Transit_1",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38023",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via Florida Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288320",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_99316",
+          "routeId": "Hillsborough Area Regional Transit_9",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38043",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via 15th St",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288253",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_98526",
+          "routeId": "Hillsborough Area Regional Transit_2",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38025",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via Nebraska Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288443",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_100431",
+          "routeId": "Hillsborough Area Regional Transit_30",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38083",
+          "timeZone": "",
+          "tripHeadsign": "West to TIA/Northwest TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288271",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_98685",
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38032",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288633",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_102333",
+          "routeId": "Hillsborough Area Regional Transit_1",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38022",
+          "timeZone": "",
+          "tripHeadsign": "Downtown to UATC via Florida Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288315",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_99198",
+          "routeId": "Hillsborough Area Regional Transit_8",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38041",
+          "timeZone": "",
+          "tripHeadsign": "Westfield Mall to Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288506",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_101484",
+          "routeId": "Hillsborough Area Regional Transit_46",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38111",
+          "timeZone": "",
+          "tripHeadsign": "EB Brandon Mall/Downtown",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288313",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99162",
+          "routeId": "Hillsborough Area Regional Transit_8",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38040",
+          "timeZone": "",
+          "tripHeadsign": "Downtown to Westfield Mall",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288319",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_99315",
+          "routeId": "Hillsborough Area Regional Transit_9",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38043",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via 15th St",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288642",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_102515",
+          "routeId": "Hillsborough Area Regional Transit_400",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38129",
+          "timeZone": "",
+          "tripHeadsign": "South to UATC/ MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288446",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_100430",
+          "routeId": "Hillsborough Area Regional Transit_30",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38083",
+          "timeZone": "",
+          "tripHeadsign": "West to TIA/Northwest TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288300",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99031",
+          "routeId": "Hillsborough Area Regional Transit_7",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38036",
+          "timeZone": "",
+          "tripHeadsign": "North to West Tampa TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288298",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99046",
+          "routeId": "Hillsborough Area Regional Transit_7",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38037",
+          "timeZone": "",
+          "tripHeadsign": "North to Citrus Park/ HCC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288637",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_102385",
+          "routeId": "Hillsborough Area Regional Transit_1",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38023",
+          "timeZone": "",
+          "tripHeadsign": "UATC to Downtown via Florida Ave",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288277",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_101413",
+          "routeId": "Hillsborough Area Regional Transit_45",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38108",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288647",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_102429",
+          "routeId": "Hillsborough Area Regional Transit_400",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38126",
+          "timeZone": "",
+          "tripHeadsign": "North to UATC/Hidden River PnR",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288259",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_98580",
+          "routeId": "Hillsborough Area Regional Transit_4",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38029",
+          "timeZone": "",
+          "tripHeadsign": "North to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288255",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99873",
+          "routeId": "Hillsborough Area Regional Transit_18",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38056",
+          "timeZone": "",
+          "tripHeadsign": "North to UATC/Livingston",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288278",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_98719",
+          "routeId": "Hillsborough Area Regional Transit_5",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38033",
+          "timeZone": "",
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288670",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_98902",
+          "routeId": "Hillsborough Area Regional Transit_6",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38034",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288665",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_102670",
+          "routeId": "Hillsborough Area Regional Transit_6",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38035",
+          "timeZone": "",
+          "tripHeadsign": "South to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288735",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_103215",
+          "routeId": "Hillsborough Area Regional Transit_14",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38048",
+          "timeZone": "",
+          "tripHeadsign": "North to Yukon TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288322",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_99284",
+          "routeId": "Hillsborough Area Regional Transit_9",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38042",
+          "timeZone": "",
+          "tripHeadsign": "Downtown to UATC via 15th St",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288671",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_98904",
+          "routeId": "Hillsborough Area Regional Transit_6",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38034",
+          "timeZone": "",
+          "tripHeadsign": "North to University Area TC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288388",
+          "directionId": "1",
+          "id": "Hillsborough Area Regional Transit_100130",
+          "routeId": "Hillsborough Area Regional Transit_19",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38063",
+          "timeZone": "",
+          "tripHeadsign": "North to Downtown/MTC",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "Hillsborough Area Regional Transit_288643",
+          "directionId": "0",
+          "id": "Hillsborough Area Regional Transit_102457",
+          "routeId": "Hillsborough Area Regional Transit_400",
+          "routeShortName": "",
+          "serviceId": "Hillsborough Area Regional Transit_We",
+          "shapeId": "Hillsborough Area Regional Transit_38127",
+          "timeZone": "",
+          "tripHeadsign": "North to UATC/Hidden River PnR",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

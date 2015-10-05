@@ -152,8 +152,9 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals("Hillsborough Area Regional Transit", agency.getId());
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
-        // Uhh, this will vary considerably depending on when this is run.
         assertNotNull(arrivals);
+        assertEquals(27.982215585882088, arrivals[0].getTripStatus().getPosition().getLatitude());
+        assertEquals(-82.4224, arrivals[0].getTripStatus().getPosition().getLongitude());
 
         final List<ObaStop> nearbyStops = response.getNearbyStops();
         assertTrue(nearbyStops.size() > 0);

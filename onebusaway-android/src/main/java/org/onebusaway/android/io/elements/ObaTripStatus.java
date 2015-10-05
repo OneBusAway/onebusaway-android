@@ -23,9 +23,9 @@ public interface ObaTripStatus {
 
     public static final class Position {
 
-        private final double lat = 0;
+        private double lat = 0;
 
-        private final double lon = 0;
+        private double lon = 0;
 
         public double getLat() {
             return lat;

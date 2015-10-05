@@ -76,6 +76,11 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         ImageView moreView = (ImageView) view.findViewById(R.id.more_horizontal);
         moreView.setColorFilter(
                 context.getResources().getColor(R.color.switch_thumb_normal_material_dark));
+        ImageView starView = (ImageView) view.findViewById(R.id.route_favorite);
+        starView.setColorFilter(context.getResources().getColor(R.color.navdrawer_icon_tint));
+        starView.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
+                R.drawable.focus_star_on :
+                R.drawable.focus_star_off);
 
         route.setText(arrivalInfo.getShortName());
         destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));

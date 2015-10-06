@@ -137,7 +137,14 @@
         </activity>
         <activity android:name="org.onebusaway.android.ui.RegionsActivity"/>
         <activity android:name="org.onebusaway.android.ui.AgenciesActivity"/>
-
+        <activity android:name="org.onebusaway.android.ui.SituationActivity"
+                  android:label="@string/situation_activity_label"
+                  android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="org.onebusaway.android.ui.HomeActivity"/>
+        </activity>
         <!-- Provider is defined in build.gradle flavors -->
         <provider
                 android:name="org.onebusaway.android.provider.ObaProvider"

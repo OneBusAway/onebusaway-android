@@ -1364,8 +1364,7 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            SituationFragment
-                    .show((android.support.v7.app.AppCompatActivity) getActivity(), mSituation);
+            SituationActivity.start(getActivity(), mSituation);
         }
 
         @Override

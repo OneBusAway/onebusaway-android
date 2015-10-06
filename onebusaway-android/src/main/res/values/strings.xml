@@ -265,6 +265,9 @@
     <string name="my_context_remove_star">Remove star</string>
     <string name="my_context_show_schedule">Show schedule</string>
 
+    <!-- Service Alerts  -->
+    <string name="situation_activity_label">Service Alert</string>
+
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search
         box.\n\nThe stop number is 3 to 5 digits and can be found on the stop signpost or shelter.

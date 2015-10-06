@@ -31,9 +31,9 @@ import android.widget.TextView;
 
 public class SituationFragment extends Fragment {
 
-    private static final String TITLE = ".Title";
+    public static final String TITLE = ".Title";
 
-    private static final String DESCRIPTION = ".Description";
+    public static final String DESCRIPTION = ".Description";
 
     static void show(AppCompatActivity activity, ObaSituation situation) {
         FragmentManager fm = activity.getSupportFragmentManager();

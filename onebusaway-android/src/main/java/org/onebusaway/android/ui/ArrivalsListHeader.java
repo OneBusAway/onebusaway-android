@@ -1018,6 +1018,10 @@ class ArrivalsListHeader {
         int heightPixels = UIHelp.dpToPixels(mContext, newHeightDp);
         if (mSlidingPanelController != null) {
             mSlidingPanelController.setPanelHeightPixels(heightPixels);
+        } else {
+            // If we're in the ArrivalListActivity and not the sliding panel, resize the header here
+            mView.getLayoutParams().height = heightPixels;
+            mMainContainerView.getLayoutParams().height = heightPixels;
         }
     }
 

@@ -168,6 +168,8 @@ class ArrivalsListHeader {
 
     private ImageView mExpandCollapse;
 
+    private ImageView mAlertView;
+
     // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
 
@@ -345,6 +347,8 @@ class ArrivalsListHeader {
         mProgressBar = (ProgressBar) mView.findViewById(R.id.header_loading_spinner);
         mStopInfo = (ImageButton) mView.findViewById(R.id.stop_info_button);
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
+        mAlertView = (ImageView) mView.findViewById(R.id.alert);
+        mAlertView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         resetExpandCollapseAnimation();
 
         // Initialize right margin view visibilities
@@ -1095,6 +1099,35 @@ class ArrivalsListHeader {
                     relativeTime);
             mResponseError = new ResponseError(s);
             alerts.insert(mResponseError, 0);
+        }
+
+        // If there is a warning or error alert, and show the alert icon in the header
+        boolean hasWarning = false;
+        boolean hasError = false;
+        for (int i = 0; i < alerts.getCount(); i++) {
+            AlertList.Alert a = alerts.getItem(i);
+            if (a.getType() == AlertList.Alert.TYPE_WARNING) {
+                hasWarning = true;
+            }
+            if (a.getType() == AlertList.Alert.TYPE_ERROR) {
+                hasError = true;
+            }
+        }
+
+        if (hasError) {
+            UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setColorFilter(mResources.getColor(R.color.alert_icon_error));
+            mAlertView.setContentDescription(
+                    mResources.getString(R.string.alert_content_description_error));
+        } else if (hasWarning) {
+            UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setColorFilter(mResources.getColor(R.color.alert_icon_warning));
+            mAlertView.setContentDescription(
+                    mResources.getString(R.string.alert_content_description_warning));
+        } else {
+            // Don't show the header icon for info-level or no alerts
+            UIHelp.hideViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setContentDescription("");
         }
     }
 

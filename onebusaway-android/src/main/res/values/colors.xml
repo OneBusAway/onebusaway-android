@@ -60,9 +60,17 @@
     <color name="realtime_indicator_line">@android:color/white</color>
 
     <!-- Alerts-->
-    <color name="alert_error">#FFC4C4</color>
-    <color name="alert_warning">#FFFF99</color>
-    <color name="alert_info">@color/theme_primary_dark</color>
+    <color name="alert_text_background_error">#ff9999</color>
+    <color name="alert_text_background_warning">#999900</color>
+    <color name="alert_text_background_info">@color/theme_primary_dark</color>
+
+    <color name="alert_text_color_error">#101000</color>
+    <color name="alert_text_color_warning">@color/header_text_color</color>
+    <color name="alert_text_color_info">@color/header_text_color</color>
+
+    <color name="alert_icon_error">@color/stop_info_early</color>
+    <color name="alert_icon_warning">#fbfb00</color>
+    <color name="alert_icon_info">@color/header_text_color</color>
 
     <!-- Trip details colors -->
     <color name="trip_details_passed">@color/body_text_disabled</color>

@@ -19,6 +19,14 @@ import java.util.List;
 
 public interface ObaSituation extends ObaElement {
 
+    String SEVERITY_UNKNOWN = "unknown";
+    String SEVERITY_NO_IMPACT = "noImpact";
+    String SEVERITY_VERY_SLIGHT = "verySlight";
+    String SEVERITY_SLIGHT = "slight";
+    String SEVERITY_NORMAL = "normal";
+    String SEVERITY_SEVERE = "severe";
+    String SEVERITY_VERY_SEVERE = "verySevere";
+
     public interface AllAffects {
 
         /**

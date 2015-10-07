@@ -267,6 +267,12 @@
 
     <!-- Service Alerts  -->
     <string name="situation_activity_label">Service Alert</string>
+    <string name="alert_content_description_warning">Service alert warning - tap to slide up panel
+        and reveal more info.
+    </string>
+    <string name="alert_content_description_error">Severe service alert - tap to slide up panel and
+        reveal more info.
+    </string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search

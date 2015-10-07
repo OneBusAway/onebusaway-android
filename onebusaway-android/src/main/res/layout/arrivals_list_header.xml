@@ -239,6 +239,17 @@
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="@dimen/keyline_1"/>
+
+        <ImageView
+                android:id="@+id/alert"
+                android:src="@drawable/ic_alert_warning"
+                android:layout_width="23dp"
+                android:layout_height="23dp"
+                android:layout_marginBottom="@dimen/arrival_header_bottom_margin_expand_collapse"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="@dimen/keyline_1"
+                android:visibility="gone"/>
     </RelativeLayout>
 
     <!-- Filter by route -->

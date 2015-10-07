@@ -72,40 +72,58 @@ class AlertList {
             Resources r = Application.get().getResources();
 
             int bg;
-            int iconColor;
+            int arrowColor;
+            int alertColor = R.color.alert_icon_info;
+            int resourceIdAlert = 0;
 
             switch (type) {
                 case Alert.TYPE_ERROR:
-                    bg = R.color.alert_error;
-                    iconColor = R.color.abc_primary_text_material_light;
+                    bg = R.color.alert_text_background_error;
+                    arrowColor = R.color.alert_text_color_error;
+                    resourceIdAlert = R.drawable.ic_alert_warning;
+                    alertColor = R.color.alert_icon_error;
                     break;
                 case Alert.TYPE_WARNING:
-                    bg = R.color.alert_warning;
-                    iconColor = R.color.abc_primary_text_material_light;
+                    bg = R.color.alert_text_background_warning;
+                    arrowColor = R.color.alert_text_color_warning;
+                    resourceIdAlert = R.drawable.ic_alert_warning;
+                    alertColor = R.color.alert_icon_warning;
                     break;
                 case Alert.TYPE_INFO:
                 default:
-                    bg = R.color.alert_info;
-                    iconColor = R.color.header_text_color;
+                    bg = R.color.alert_text_background_info;
+                    arrowColor = R.color.alert_text_color_info;
                     break;
             }
-            // Set text color
-            text.setTextColor(r.getColor(iconColor));
+            // Set text color to same as arrow color
+            text.setTextColor(r.getColor(arrowColor));
 
-            Drawable drawable;
-            Drawable wrappedDrawable = null;
-            int drawableRight = clickable ? R.drawable.ic_navigation_chevron_right : 0;
-            
-            if (drawableRight != 0) {
-                drawable = ContextCompat
-                        .getDrawable(Application.get().getApplicationContext(), drawableRight);
-                wrappedDrawable = DrawableCompat.wrap(drawable);
-                wrappedDrawable = wrappedDrawable.mutate();
+            Drawable dWarning;
+            Drawable wdWarning = null;
+
+            if (resourceIdAlert != 0) {
+                dWarning = ContextCompat
+                        .getDrawable(Application.get().getApplicationContext(), resourceIdAlert);
+                wdWarning = DrawableCompat.wrap(dWarning);
+                wdWarning = wdWarning.mutate();
                 // Tint the icon
-                DrawableCompat.setTint(wrappedDrawable, r.getColor(iconColor));
+                DrawableCompat.setTint(wdWarning, r.getColor(alertColor));
             }
 
-            text.setCompoundDrawablesWithIntrinsicBounds(null, null, wrappedDrawable, null);
+            Drawable dArrow;
+            Drawable wdArrow = null;
+            int resourceIdArrow = clickable ? R.drawable.ic_navigation_chevron_right : 0;
+
+            if (resourceIdArrow != 0) {
+                dArrow = ContextCompat
+                        .getDrawable(Application.get().getApplicationContext(), resourceIdArrow);
+                wdArrow = DrawableCompat.wrap(dArrow);
+                wdArrow = wdArrow.mutate();
+                // Tint the icon
+                DrawableCompat.setTint(wdArrow, r.getColor(arrowColor));
+            }
+
+            text.setCompoundDrawablesWithIntrinsicBounds(wdWarning, null, wdArrow, null);
 
             // Set the background color
             view.setBackgroundResource(bg);
@@ -164,5 +182,13 @@ class AlertList {
 
     void remove(Alert alert) {
         mAdapter.remove(alert);
+    }
+
+    int getCount() {
+        return mAdapter.getCount();
+    }
+
+    Alert getItem(int position) {
+        return mAdapter.getItem(position);
     }
 }

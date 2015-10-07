@@ -1343,11 +1343,14 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public int getType() {
-            if ("noImpact".equals(mSituation.getSeverity())) {
+            if (ObaSituation.SEVERITY_NO_IMPACT.equals(mSituation.getSeverity())) {
                 return TYPE_INFO;
-            } else if ("severe".equals(mSituation.getSeverity())) {
+            } else if (ObaSituation.SEVERITY_SEVERE.equals(mSituation.getSeverity())
+                    || ObaSituation.SEVERITY_VERY_SEVERE.equals(
+                    mSituation.getSeverity())) {
                 return TYPE_ERROR;
             } else {
+                // Treat all other ObaSituation.SEVERITY_* types as a warning
                 return TYPE_WARNING;
             }
         }

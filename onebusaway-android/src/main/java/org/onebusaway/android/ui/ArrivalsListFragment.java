@@ -554,8 +554,7 @@ public class ArrivalsListFragment extends ListFragment
             }
         } else if (id == R.id.report_stop_problem) {
             if (mStop != null) {
-                ReportStopProblemFragment.show(
-                        (android.support.v7.app.AppCompatActivity) getActivity(), mStop);
+                ReportStopProblemActivity.start(getActivity(), mStop);
             }
         }
         return false;
@@ -639,9 +638,7 @@ public class ArrivalsListFragment extends ListFragment
                 } else if (hasUrl && which == 4) {
                     UIHelp.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 4) || (hasUrl && which == 5)) {
-                    ReportTripProblemFragment.show(
-                            (android.support.v7.app.AppCompatActivity) getActivity(),
-                            arrivalInfo.getInfo());
+                    ReportTripProblemActivity.start(getActivity(), arrivalInfo.getInfo());
                 }
             }
         });

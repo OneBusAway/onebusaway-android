@@ -347,6 +347,8 @@
     <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
     <string name="report_problem_vehiclenumber_bus">Bus number</string>
     <string name="report_problem_uservehicle_hint">optional</string>
+    <string name="report_problem_stop_activity_label">Report Stop Problem</string>
+    <string name="report_problem_trip_activity_label">Report Trip Problem</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">

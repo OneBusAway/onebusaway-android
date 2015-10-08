@@ -15,6 +15,17 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.UIHelp;
+
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -31,17 +42,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
 
 import java.util.concurrent.Callable;
 
@@ -157,7 +157,14 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
         if ((response != null) && (response.getCode() == ObaApi.OBA_OK)) {
             Toast.makeText(getActivity(), R.string.report_problem_sent, Toast.LENGTH_LONG).show();
-            mGoBackHandler.postDelayed(mGoBack, 100);
+            // If we're in our own activity specific to the fragment, then close it.
+            if (getActivity() instanceof ReportStopProblemActivity
+                    || getActivity() instanceof ReportTripProblemActivity) {
+                getActivity().finish();
+            } else {
+                // Manage the fragment backstack
+                mGoBackHandler.postDelayed(mGoBack, 100);
+            }
         } else {
             Toast.makeText(getActivity(), R.string.report_problem_error, Toast.LENGTH_LONG).show();
         }

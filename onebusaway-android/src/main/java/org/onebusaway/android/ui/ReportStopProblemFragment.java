@@ -38,13 +38,13 @@ import android.widget.Toast;
 
 public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
-    private static final String STOP_ID = ".StopId";
+    public static final String STOP_ID = ".StopId";
 
-    private static final String STOP_NAME = ".StopName";
+    public static final String STOP_NAME = ".StopName";
 
-    private static final String CODE = ".Code";
+    public static final String CODE = ".Code";
 
-    private static final String USER_COMMENT = ".UserComment";
+    public static final String USER_COMMENT = ".UserComment";
 
     static void show(AppCompatActivity activity, ObaStop stop) {
         FragmentManager fm = activity.getSupportFragmentManager();

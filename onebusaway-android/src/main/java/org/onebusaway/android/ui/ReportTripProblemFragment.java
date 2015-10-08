@@ -38,25 +38,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class ReportTripProblemFragment extends ReportProblemFragmentBase {
-    //private static final String TAG = "ReportStopProblemFragment";
+    //private static final String TAG = "ReportTripProblemFragment";
 
-    private static final String TRIP_ID = ".TripId";
+    public static final String TRIP_ID = ".TripId";
 
-    private static final String STOP_ID = ".StopId";
+    public static final String STOP_ID = ".StopId";
 
-    private static final String TRIP_NAME = ".TripName";
+    public static final String TRIP_NAME = ".TripName";
 
-    private static final String TRIP_SERVICE_DATE = ".ServiceDate";
+    public static final String TRIP_SERVICE_DATE = ".ServiceDate";
 
-    private static final String TRIP_VEHICLE_ID = ".VehicleId";
+    public static final String TRIP_VEHICLE_ID = ".VehicleId";
 
-    private static final String CODE = ".Code";
+    public static final String CODE = ".Code";
 
-    private static final String USER_COMMENT = ".UserComment";
+    public static final String USER_COMMENT = ".UserComment";
 
-    private static final String USER_ON_VEHICLE = ".UserOnVehicle";
+    public static final String USER_ON_VEHICLE = ".UserOnVehicle";
 
-    private static final String USER_VEHICLE_NUM = ".UserVehicleNum";
+    public static final String USER_VEHICLE_NUM = ".UserVehicleNum";
 
     static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
         FragmentManager fm = activity.getSupportFragmentManager();

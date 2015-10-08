@@ -7,7 +7,7 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": true, 
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "supportsObaRealtimeApis": true, 
@@ -135,7 +135,7 @@
       }, 
       {
         "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.8-SNAPSHOT|1|1|8|SNAPSHOT|877d870ac5c5f64607113d08d6d362925839719e", 
+        "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41", 
         "supportsSiriRealtimeApis": false, 
         "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
@@ -189,7 +189,7 @@
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "https://www.facebook.com/pages/ObaAtlanta/136662306506627", 
-        "obaBaseUrl": "http://onebusaway.gatech.edu/api/", 
+        "obaBaseUrl": "http://atlanta.onebusaway.org/api/", 
         "id": 3, 
         "experimental": false, 
         "regionName": "Atlanta"
@@ -305,6 +305,56 @@
         "id": 7, 
         "experimental": true, 
         "regionName": "Boston (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "fi_FI", 
+        "twitterUrl": "", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 61.05999415916385, 
+            "latSpan": 0.07303466470629871, 
+            "lon": 28.197898391353952, 
+            "lonSpan": 0.2674852336517013
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "obasupport@octo3.fi", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://194.89.230.196:8080/", 
+        "id": 8, 
+        "experimental": true, 
+        "regionName": "Lappeenranta (beta)"
+      }, 
+      {
+        "siriBaseUrl": null, 
+        "obaVersionInfo": "", 
+        "supportsSiriRealtimeApis": false, 
+        "language": "en_US", 
+        "twitterUrl": "", 
+        "supportsObaRealtimeApis": true, 
+        "bounds": [
+          {
+            "lat": 42.309802394046, 
+            "latSpan": 0.2679752119080021, 
+            "lon": -122.82026350000001, 
+            "lonSpan": 0.2974530000000044
+          }
+        ], 
+        "supportsObaDiscoveryApis": true, 
+        "contactEmail": "info@rvtd.org", 
+        "stopInfoUrl": null, 
+        "active": true, 
+        "facebookUrl": "", 
+        "obaBaseUrl": "http://oba.rvtd.org:8080/onebusaway-api-webapp/", 
+        "id": 9, 
+        "experimental": false, 
+        "regionName": "Rogue Valley, Oregon"
       }
     ]
   }

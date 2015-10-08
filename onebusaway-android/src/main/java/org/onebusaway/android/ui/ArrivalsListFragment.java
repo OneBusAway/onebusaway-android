@@ -26,6 +26,7 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
@@ -65,6 +66,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -600,8 +602,15 @@ public class ArrivalsListFragment extends ListFragment
                 routeId, arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 
         int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
+        String[] items = getResources().getStringArray(options);
+        // TODO - create util method to build the icon list
+        Integer[] icons = new Integer[]{R.drawable.focus_star_on, R.drawable.ic_drawer_alarm,
+                R.drawable.ic_trip_details,
+                R.drawable.ic_content_filter_list, R.drawable.ic_notification_event_note,
+                R.drawable.ic_alert_warning};
+        ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
 
-        builder.setItems(options, new DialogInterface.OnClickListener() {
+        builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (which == 0) {
                     // Show dialog for setting route favorite

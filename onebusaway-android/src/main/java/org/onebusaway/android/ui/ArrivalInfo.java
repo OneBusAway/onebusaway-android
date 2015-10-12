@@ -315,22 +315,7 @@ public final class ArrivalInfo {
 
             if (mEta >= 0) {
                 // Bus is arriving
-                if (delay > 0) {
-                    // Arriving delayed
-                    return res.getQuantityString(
-                            R.plurals.stop_info_arrive_delayed, (int) delay,
-                            delay);
-                } else if (delay < 0) {
-                    // Arriving early
-                    delay = -delay;
-                    return res
-                            .getQuantityString(
-                                    R.plurals.stop_info_arrive_early,
-                                    (int) delay, delay);
-                } else {
-                    // Arriving on time
-                    return context.getString(R.string.stop_info_ontime);
-                }
+                return computeArrivalLabelFromDelay(res, delay);
             } else {
                 // Bus is departing
                 if (delay > 0) {
@@ -357,6 +342,34 @@ public final class ArrivalInfo {
                 return context
                         .getString(R.string.stop_info_scheduled_departure);
             }
+        }
+    }
+
+    /**
+     * Computes the arrival status label from the delay (i.e., schedule deviation), where positive
+     * means the bus is running late and negative means the bus is running ahead of schedule
+     *
+     * @param delay schedule deviation, in minutes, for this vehicle where positive
+     *              means the bus is running late and negative means the bus is running ahead of
+     *              schedule
+     * @return the arrival status label based on the deviation
+     */
+    public static String computeArrivalLabelFromDelay(Resources res, long delay) {
+        if (delay > 0) {
+            // Arriving delayed
+            return res.getQuantityString(
+                    R.plurals.stop_info_arrive_delayed, (int) delay,
+                    delay);
+        } else if (delay < 0) {
+            // Arriving early
+            delay = -delay;
+            return res
+                    .getQuantityString(
+                            R.plurals.stop_info_arrive_early,
+                            (int) delay, delay);
+        } else {
+            // Arriving on time
+            return res.getString(R.string.stop_info_ontime);
         }
     }
 

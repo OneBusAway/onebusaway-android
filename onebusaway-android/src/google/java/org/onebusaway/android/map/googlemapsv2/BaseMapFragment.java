@@ -36,6 +36,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
@@ -45,6 +46,7 @@ import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.UIHelp;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -65,6 +67,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -116,6 +119,8 @@ public class BaseMapFragment extends SupportMapFragment
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
     private StopOverlay mStopOverlay;
+
+    private VehicleOverlay mVehicleOverlay;
 
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
@@ -215,6 +220,8 @@ public class BaseMapFragment extends SupportMapFragment
         uiSettings.setMyLocationButtonEnabled(false);
         // Hide Zoom controls
         uiSettings.setZoomControlsEnabled(false);
+        // Hide Toolbar
+        uiSettings.setMapToolbarEnabled(false);
         // Instantiate class that holds generic markers to be added by outside classes
         mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
 
@@ -296,6 +303,12 @@ public class BaseMapFragment extends SupportMapFragment
         if (mStopOverlay == null) {
             mStopOverlay = new StopOverlay(getActivity(), mMap);
             mStopOverlay.setOnFocusChangeListener(this);
+        }
+    }
+
+    public void setupVehicleOverlay() {
+        if (mVehicleOverlay == null) {
+            mVehicleOverlay = new VehicleOverlay(getActivity(), mMap);
         }
     }
 
@@ -657,6 +670,27 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
+    /**
+     * Updates markers for the provided routeIds from the status info from the given
+     * ObaTripsForRouteResponse
+     *
+     * @param routeIds markers representing real-time positions for the provided routeIds will be
+     *                 added to the map
+     * @param response response that contains the real-time status info
+     */
+    @Override
+    public void updateVehicles(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
+        setupVehicleOverlay();
+        mVehicleOverlay.updateVehicles(routeIds, response);
+    }
+
+    @Override
+    public void removeVehicleOverlay() {
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.clear();
+        }
+    }
+
     @Override
     public void zoomToRoute() {
         if (mMap != null) {
@@ -668,8 +702,12 @@ public class BaseMapFragment extends SupportMapFragment
                     }
                 }
 
-                int padding = UIHelp.dpToPixels(getActivity(), 20);
-                mMap.moveCamera((CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+                Activity a = getActivity();
+                if (a != null) {
+                    int padding = UIHelp.dpToPixels(a, 20);
+                    mMap.moveCamera(
+                            (CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
+                }
             } else {
                 Toast.makeText(getActivity(), getString(R.string.route_info_no_shape_data),
                         Toast.LENGTH_SHORT).show();

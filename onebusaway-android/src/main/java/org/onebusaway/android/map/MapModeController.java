@@ -20,12 +20,14 @@ import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.app.Activity;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 
+import java.util.HashSet;
 import java.util.List;
 
 public interface MapModeController {
@@ -97,6 +99,19 @@ public interface MapModeController {
 
         // Set lines to be shown on the map view
         void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes);
+
+        /**
+         * Updates markers for the provided routeIds from the status info from the given
+         * ObaTripsForRouteResponse
+         *
+         * @param routeIds markers representing real-time positions for the provided routeIds will
+         *                 be added to the map
+         * @param response response that contains the real-time status info
+         */
+        void updateVehicles(HashSet<String> routeIds, ObaTripsForRouteResponse response);
+
+        // Remove the vehicles from the map
+        void removeVehicleOverlay();
 
         // Zoom to line overlay of route
         void zoomToRoute();

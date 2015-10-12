@@ -41,6 +41,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -867,5 +869,28 @@ public final class UIHelp {
                 }
             }
         }
+    }
+
+    /**
+     * Creates a new Bitmap, with the black color of the source image changed to the given color.
+     * The source Bitmap isn't modified.
+     *
+     * @param source the source Bitmap with a black background
+     * @param color  the color to change the black color to
+     * @return the resulting Bitmap that has the black changed to the color
+     */
+    public static Bitmap colorBitmap(Bitmap source, int color) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        int[] pixels = new int[width * height];
+        source.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        for (int x = 0; x < pixels.length; ++x) {
+            pixels[x] = (pixels[x] == Color.BLACK) ? color : pixels[x];
+        }
+
+        Bitmap out = Bitmap.createBitmap(width, height, source.getConfig());
+        out.setPixels(pixels, 0, width, 0, 0, width, height);
+        return out;
     }
 }

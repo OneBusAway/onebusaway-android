@@ -46,8 +46,38 @@ public class MathUtils {
      * @return the index of the direction name for the angle
      */
     public static int getHalfWindIndex(float heading) {
-        float partitionSize = 360.0f / NUMBER_OF_HALF_WINDS;
+        return getHalfWindIndex(heading, NUMBER_OF_HALF_WINDS);
+    }
+
+    /**
+     * Converts the specified heading angle into an index between 0 and numHalfWinds-1 that can be used to retrieve
+     * the direction name for that heading (known as "boxing the compass", down to the half-wind
+     * level).
+     *
+     * @param heading the heading angle
+     * @param numHalfWinds number of half winds to divide the compass into
+     * @return the index of the direction name for the angle
+     */
+    public static int getHalfWindIndex(float heading, int numHalfWinds) {
+        float partitionSize = 360.0f / numHalfWinds;
         float displacedHeading = MathUtils.mod(heading + partitionSize / 2, 360.0f);
         return (int) (displacedHeading / partitionSize);
+    }
+
+    /**
+     * Converts from OBA orientation to direction.
+     *
+     * From OBA REST API docs for trip status (http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/elements/trip-status.html)
+     * : "orientation - ...0º is east, 90º is north, 180º is west, and 270º is south."
+     *
+     * @param orientation 0º is east, 90º is north, 180º is west, and 270º is south
+     * @return direction, where 0º is north, 90º is east, 180º is south, and 270º is west
+     */
+    public static double toDirection(double orientation) {
+        double direction = (-orientation + 90) % 360;
+        if (direction < 0) {
+            direction += 360;
+        }
+        return direction;
     }
 }

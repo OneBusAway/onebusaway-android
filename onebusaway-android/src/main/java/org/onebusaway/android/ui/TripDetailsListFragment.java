@@ -227,6 +227,17 @@ public class TripDetailsListFragment extends ListFragment {
                         }
                     });
                 }
+            } else {
+                // If we don't have a stop, then scroll to the current position of the bus
+                final Integer nextStop = mAdapter.getNextStopIndex();
+                if (nextStop != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(nextStop - 1);
+                        }
+                    });
+                }
             }
             mAdapter.notifyDataSetChanged();
         } else {  // refresh, keep scroll position
@@ -656,6 +667,17 @@ public class TripDetailsListFragment extends ListFragment {
                 time.setTextColor(getResources().getColor(R.color.trip_details_not_passed));
             }
             return convertView;
+        }
+
+        /**
+         * Returns the next stop index based on real-time info, or null no estimated next stop
+         * exists
+         *
+         * @return the next stop index based on real-time info, or null no estimated next stop
+         * exists
+         */
+        public Integer getNextStopIndex() {
+            return mNextStopIndex;
         }
     }
 }

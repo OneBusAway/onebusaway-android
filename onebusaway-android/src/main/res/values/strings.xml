@@ -488,4 +488,9 @@
     <string name="trip_details_real_time_min_sec_early">%1$d min %2$d sec early (Last update:
         %3$s)
     </string>
+
+    <!-- Vehicles on Map -->
+    <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
+    <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
+    <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
 </resources>

@@ -1,76 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-        <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+    <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/ri_contents">
 
-            <Spinner
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:id="@+id/ri_spinnerServices" />
-
-            <LinearLayout
+        <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/ri_info_layout">
 
-            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:orientation="vertical"
+                      android:id="@+id/ri_attributes_layout">
 
             <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:id="@+id/ri_editTextDesc"
-                android:hint="@string/ri_desc"
-                android:maxLines="4"
-                android:lines="4"
-                android:layout_gravity="left|top" />
-
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:orientation="vertical"
-                android:layout_margin="@dimen/report_issue_margin"
-                android:background="@color/light_gray"
-                android:id="@+id/ri_imagePickerLayout">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="150dp"
-                    android:src="@drawable/ic_image_collections"
-                    android:id="@+id/ri_imageView" />
-
-                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="2dp"
+                    android:id="@+id/ri_editTextDesc"
+                    android:hint="@string/ri_desc"
+                    android:maxLines="4"
+                    android:lines="4"
+                    android:layout_gravity="left|top"/>
+
+            <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical"
+                    android:layout_margin="@dimen/report_issue_margin"
+                    android:background="@color/light_gray"
+                    android:id="@+id/ri_imagePickerLayout">
+
+                <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:src="@drawable/ic_image_collections"
+                        android:id="@+id/ri_imageView"/>
+
+                <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
                     <Button
-                        android:layout_width="160dp"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ri_button_camera"
-                        android:layout_marginLeft="15dp"
-                        android:id="@+id/ri_CameraButton" />
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ri_button_camera"
+                            android:layout_marginLeft="15dp"
+                            android:id="@+id/ri_CameraButton"/>
 
                     <Button
-                        android:layout_width="160dp"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ri_button_gallery"
-                        android:layout_alignParentRight="true"
-                        android:layout_marginRight="15dp"
-                        android:id="@+id/ri_GalleryButton" />
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ri_button_gallery"
+                            android:layout_alignParentRight="true"
+                            android:layout_marginRight="15dp"
+                            android:id="@+id/ri_GalleryButton"/>
 
                 </RelativeLayout>
 
             </LinearLayout>
 
         </LinearLayout>
+
+    </LinearLayout>
 
 </LinearLayout>

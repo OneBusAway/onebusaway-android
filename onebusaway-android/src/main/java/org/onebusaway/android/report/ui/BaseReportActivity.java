@@ -91,8 +91,13 @@ public class BaseReportActivity extends ActionBarActivity {
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_info_item, null, false);
 
         LinearLayout linear = (LinearLayout) findViewById(masterViewId);
-        ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
-        linear.addView(layout);
+        if (linear.getChildCount() == 0) {
+            ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
+            linear.addView(layout);
+        } else {
+            layout = (RelativeLayout) linear.getChildAt(0);
+            ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
+        }
     }
 
     protected void removeInfoText(Integer masterViewId) {

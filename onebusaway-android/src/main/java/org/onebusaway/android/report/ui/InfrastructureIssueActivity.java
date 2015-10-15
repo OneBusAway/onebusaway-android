@@ -1,3 +1,18 @@
+/*
+* Copyright (C) 2014-2015 University of South Florida (sjbarbeau@gmail.com)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
@@ -10,6 +25,7 @@ import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.ui.ReportProblemFragmentBase;
 import org.onebusaway.android.ui.ReportStopProblemFragment;
+import org.onebusaway.android.ui.ReportTripProblemFragment;
 import org.onebusaway.android.util.LocationUtil;
 
 import android.content.Context;
@@ -22,9 +38,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
+import android.widget.Spinner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,24 +69,23 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
 
     private ImageButton addressRefreshButton;
 
+    private Spinner servicesSpinner;
+
     //Map Fragment
     private BaseMapFragment mMapFragment;
-
-    //Open311 Issue report Fragment
 
     //Location helper for tracking the issue location
     private IssueLocationHelper issueLocationHelper;
 
     /**
-     * Stores the serviceList Results from ServicesTask
-     * This list will be used from Open311ProblemFragment
-     */
-    private List<Service> serviceList;
-
-    /**
      * Open311 client
      */
     private Open311 mOpen311;
+
+    /**
+     * Selected static issue type
+     */
+    private String staticIssuetype;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -101,6 +118,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.infrastructure_issue);
 
         setUpOpen311();
@@ -165,6 +183,19 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
 
         CustomScrollView mainScrollView = (CustomScrollView) findViewById(R.id.ri_scrollView);
         mainScrollView.addInterceptScrollView(findViewById(R.id.ri_frame_map_view));
+
+        servicesSpinner = (Spinner) findViewById(R.id.ri_spinnerServices);
+        servicesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                Service service = (Service) servicesSpinner.getSelectedItem();
+                onSpinnerItemSelected(service);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+            }
+        });
     }
 
     /**
@@ -183,73 +214,30 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         }
     }
 
+    private void onSpinnerItemSelected(Service service) {
+
+        if (!ReportConstants.DEFAULT_SERVICE.equalsIgnoreCase(service.getType())) {
+            //Remove the info text for select category
+            removeInfoText(R.id.ri_custom_info_layout);
+        }
+
+        staticIssuetype = null;
+
+        if (service.getService_code() != null) {
+            showOpen311Reporting(service);
+        } else if (!ReportConstants.DEFAULT_SERVICE.equals(service.getType())) {
+            showStaticIssueReporting(service.getType());
+        }
+    }
+
     /**
      * Places a marker into the map from given Location
      *
      * @param location position for marker
      */
     private void updateMarkerPosition(Location location) {
-
         int markerId = mMapFragment.addMarker(location);
         issueLocationHelper.handleMarkerUpdate(markerId);
-    }
-
-    /**
-     * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
-     *
-     * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-     * @param routes a HashMap of all route display names that serve this stop - key is routeId
-     */
-    @Override
-    public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location) {
-        issueLocationHelper.updateMarkerPosition(location, stop);
-        if (stop != null) {
-            //Clear manually added markers
-            issueLocationHelper.clearMarkers();
-            syncAddress(stop.getLocation());
-        } else if (location != null) {
-            syncAddress(location);
-        }
-    }
-
-    /**
-     * Called by the ServicesTask when Open311 endpoint returns ServiceList
-     *
-     * @param services ServiceListResponse
-     */
-    @Override
-    public void onServicesTaskCompleted(ServiceListResponse services, Open311 open311) {
-        //Close progress
-        showProgress(Boolean.FALSE);
-
-        mOpen311 = open311;
-
-        List<Service> serviceList = new ArrayList<>();
-        if (services != null && services.isSuccess()) {
-            serviceList.addAll(services.getServiceList());
-            if (Open311Manager.isAreaManagedByOpen311(serviceList)) {
-                serviceList.add(0, new Service("Issue Category", ReportConstants.DEFAULT_SERVICE));
-                enableOpen311Reporting(serviceList);
-            } else {
-                disableOpen311Reporting();
-            }
-        } else if (services != null) {
-            disableOpen311Reporting();
-        }
-
-    }
-
-    /**
-     * If problem was sent from ReportStopProblemFragment then close also this Activity
-     */
-    @Override
-    public void onSendReport() {
-        finish();
-    }
-
-    @Override
-    public void onClearMarker(int markerId) {
-        mMapFragment.removeMarker(markerId);
     }
 
     /**
@@ -270,6 +258,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         List<Open311> open311List = Open311Manager.getAllOpen311();
         ServiceListTask serviceListTask = new ServiceListTask(slr, open311List, this);
         serviceListTask.execute();
+    }
+
+    private void syncAddressString(Location location) {
+        String address = getAddressByLocation(location);
+        addressEditText.setText(address);
     }
 
     /**
@@ -367,34 +360,130 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         }
     }
 
+    @Override
+    public void onClearMarker(int markerId) {
+        mMapFragment.removeMarker(markerId);
+    }
+
     /**
-     * Returns if Category defined by Open311 endpoint for selected region
+     * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
      *
-     * @param serviceList Response from the open311
-     * @return true if there is category for region
+     * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
+     * @param routes a HashMap of all route display names that serve this stop - key is routeId
      */
-    public Boolean isCategoryDefinedForRegion(List<Service> serviceList) {
-        return (serviceList.size() > 2);
+    @Override
+    public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location) {
+        issueLocationHelper.updateMarkerPosition(location, stop);
+        // Clear all reporting fragments
+        clearReportingFragments();
+
+        if (stop != null) {
+            //Clear manually added markers
+            issueLocationHelper.clearMarkers();
+
+            if (staticIssuetype != null) {
+                showStaticIssueReporting(staticIssuetype);
+                syncAddressString(location);
+            } else {
+                syncAddress(stop.getLocation());
+            }
+            // clear static issue type
+            staticIssuetype = null;
+        } else if (location != null) {
+            syncAddress(location);
+        }
+    }
+
+    @Override
+    public void onSendReport() {
+        finish();
+    }
+
+    /**
+     * Called by the ServicesTask when Open311 endpoint returns ServiceList
+     *
+     * @param services ServiceListResponse
+     * @param open311  returns active open311
+     */
+    @Override
+    public void onServicesTaskCompleted(ServiceListResponse services, Open311 open311) {
+        // Close progress
+        showProgress(Boolean.FALSE);
+
+        // Set main open311
+        this.mOpen311 = open311;
+
+        prepareServiceList(services);
+    }
+
+    /**
+     * Prepares the service lists and shows as categories in the screen
+     * Adds static service categories (stop and trip problems) if they are
+     * not specified by open311 endpoint
+     */
+    private void prepareServiceList(ServiceListResponse services) {
+
+        // Show information to the user
+        addInfoText(getString(R.string.report_dialog_categories), R.id.ri_custom_info_layout);
+
+        // Create the service list
+        List<Service> serviceList = new ArrayList<>();
+        serviceList.add(0, new Service(getString(R.string.ri_service_default),
+                ReportConstants.DEFAULT_SERVICE));
+
+        if (services != null && services.isSuccess()) {
+            serviceList.addAll(services.getServiceList());
+        }
+
+        // Set marker on the map if there are open311 services
+        if (Open311Manager.isAreaManagedByOpen311(serviceList)) {
+            updateMarkerPosition(issueLocationHelper.getIssueLocation());
+        }
+
+        boolean isStaticServicesProvided = false;
+        for (Service s : serviceList) {
+            if (ReportConstants.ISSUE_GROUP_TRANSIT.equalsIgnoreCase(s.getGroup())) {
+                isStaticServicesProvided = true;
+                break;
+                // TODO: better manage static services
+            }
+        }
+
+        // Set static service
+        if (!isStaticServicesProvided) {
+            serviceList.add(new Service(getString(R.string.ri_service_stop),
+                    ReportConstants.STATIC_SERVICE_STOP));
+            serviceList.add(new Service(getString(R.string.ri_service_trip),
+                    ReportConstants.STATIC_SERVICE_TRIP));
+        }
+
+        ArrayAdapter<Service> adapter = new ArrayAdapter<>(this,
+                android.support.v7.appcompat.R.layout.support_simple_spinner_dropdown_item,
+                serviceList);
+        servicesSpinner.setAdapter(adapter);
     }
 
     /**
      * Disables open311 reporting if there is no category for region
+     * Show static services
      */
-    public void disableOpen311Reporting() {
+    public void showStaticIssueReporting(String issueType) {
 
         issueLocationHelper.clearMarkers();
 
-        removeInfoText(R.id.ri_custom_info_layout);
-
-        removeOpen311ProblemFragment();
-
-        removeStopProblemFragment();
+        clearReportingFragments();
 
         ObaStop obaStop = issueLocationHelper.getObaStop();
         if (obaStop != null) {
-            showStopProblemFragment(obaStop);
+            if (ReportConstants.STATIC_SERVICE_STOP.equals(issueType)) {
+                showStopProblemFragment(obaStop);
+            } else if (ReportConstants.STATIC_SERVICE_STOP.equals(issueType)) {
+                showTripProblemFragment(obaStop);
+            }
         } else {
-            addInfoText(getString(R.string.report_dialog_out_of_region_message), R.id.ri_custom_info_layout);
+            addInfoText(getString(R.string.report_dialog_out_of_region_message),
+                    R.id.ri_custom_info_layout);
+            staticIssuetype = issueType;
         }
 
     }
@@ -402,17 +491,23 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
     /**
      * Enables open311 reporting if there is no category for region
      */
-    private void enableOpen311Reporting(List<Service> serviceList) {
+    private void showOpen311Reporting(Service service) {
 
-        setServiceList(serviceList);
+        clearReportingFragments();
 
+        showOpen311ProblemFragment(service);
+
+        updateMarkerPosition(issueLocationHelper.getIssueLocation());
+    }
+
+    private void clearReportingFragments() {
         removeInfoText(R.id.ri_custom_info_layout);
+
+        removeOpen311ProblemFragment();
 
         removeStopProblemFragment();
 
-        showOpen311ProblemFragment();
-
-        updateMarkerPosition(issueLocationHelper.getIssueLocation());
+        removeTripProblemFragment();
     }
 
     public void createContactInfoFragment() {
@@ -432,16 +527,23 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem);
     }
 
-    private void removeStopProblemFragment() {
-        removeFragmentByTag(ReportStopProblemFragment.TAG);
+    private void showTripProblemFragment(ObaStop obaStop) {
     }
 
-    private void showOpen311ProblemFragment() {
-        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311);
+    private void showOpen311ProblemFragment(Service service) {
+        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service);
     }
 
     private void removeOpen311ProblemFragment() {
         removeFragmentByTag(Open311ProblemFragment.TAG);
+    }
+
+    private void removeStopProblemFragment() {
+        removeFragmentByTag(ReportStopProblemFragment.TAG);
+    }
+
+    private void removeTripProblemFragment() {
+        removeFragmentByTag(ReportTripProblemFragment.TAG);
     }
 
     public IssueLocationHelper getIssueLocationHelper() {
@@ -450,13 +552,5 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
 
     public String getCurrentAddress() {
         return addressEditText.getText().toString();
-    }
-
-    public List<Service> getServiceList() {
-        return serviceList;
-    }
-
-    public void setServiceList(List<Service> serviceList) {
-        this.serviceList = serviceList;
     }
 }

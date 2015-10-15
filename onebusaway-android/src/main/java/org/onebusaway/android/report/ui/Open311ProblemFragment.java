@@ -41,7 +41,7 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.text.Spannable;
@@ -53,8 +53,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -63,7 +61,6 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.File;
@@ -95,8 +92,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     /**
      * UI elements
      */
-    private Spinner servicesSpinner;
-
     private ImageView issueImage;
 
     private Button cameraButton;
@@ -104,6 +99,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     private Button galleryButton;
 
     private Open311 mOpen311;
+
+    private Service mService;
 
     //Captured image url
     private Uri mCapturedImageURI;
@@ -113,12 +110,13 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
 
     public static final String TAG = "Open311ProblemFragment";
 
-    public static void show(ActionBarActivity activity, Integer containerViewId,
-                            Open311 open311) {
+    public static void show(AppCompatActivity activity, Integer containerViewId,
+                            Open311 open311, Service service) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Open311ProblemFragment fragment = new Open311ProblemFragment();
         fragment.setOpen311(open311);
+        fragment.setService(service);
 
         FragmentTransaction ft = fm.beginTransaction();
         ft.replace(containerViewId, fragment, TAG);
@@ -131,6 +129,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         View rootView = inflater.inflate(R.layout.open311_issue, container, false);
 
         setRetainInstance(true);
+
         setHasOptionsMenu(Boolean.TRUE);
 
         return rootView;
@@ -141,6 +140,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         super.onViewCreated(view, savedInstanceState);
 
         setupViews();
+
+        callServiceDescription();
     }
 
     /**
@@ -154,32 +155,17 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
 
         galleryButton = (Button) findViewById(R.id.ri_GalleryButton);
         galleryButton.setOnClickListener(this);
+    }
 
-        servicesSpinner = (Spinner) findViewById(R.id.ri_spinnerServices);
-        servicesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                Service service = (Service) servicesSpinner.getSelectedItem();
-                if (service.getService_code() != null) {
-                    showProgress(Boolean.TRUE);
-                    Location location = getIssueLocationHelper().getIssueLocation();
-                    ServiceDescriptionRequest sdr = new ServiceDescriptionRequest(location.getLatitude(),
-                            location.getLongitude(), mOpen311.getJurisdiction(), service.getService_code());
+    private void callServiceDescription() {
+        showProgress(Boolean.TRUE);
+        Location location = getIssueLocationHelper().getIssueLocation();
+        ServiceDescriptionRequest sdr = new ServiceDescriptionRequest(location.getLatitude(),
+                location.getLongitude(), mOpen311.getJurisdiction(), mService.getService_code());
 
-                    ServiceDescriptionTask sdt = new ServiceDescriptionTask(sdr, mOpen311,
-                            Open311ProblemFragment.this);
-                    sdt.execute();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-            }
-        });
-        ArrayAdapter<Service> adapter = new ArrayAdapter<>(getActivity(),
-                android.support.v7.appcompat.R.layout.support_simple_spinner_dropdown_item,
-                getServiceList());
-        servicesSpinner.setAdapter(adapter);
+        ServiceDescriptionTask sdt = new ServiceDescriptionTask(sdr, mOpen311,
+                Open311ProblemFragment.this);
+        sdt.execute();
     }
 
     @Override
@@ -257,9 +243,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
      * Prepare submit forms and submit report
      */
     private void submitReport() {
-        //Get current Open311 service
-        Service service = (Service) servicesSpinner.getSelectedItem();
-
         //Prepare issue description
         String description = ((EditText) getActivity().findViewById(R.id.ri_editTextDesc)).getText().toString();
         description = description + getBusStopInfo();
@@ -271,8 +254,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         IssueLocationHelper issueLocationHelper = getIssueLocationHelper();
 
         ServiceRequest.Builder builder = new ServiceRequest.Builder();
-        builder.setJurisdiction_id(mOpen311.getJurisdiction()).setService_code(service.getService_code()).
-                setService_name(service.getService_name()).
+        builder.setJurisdiction_id(mOpen311.getJurisdiction()).setService_code(mService.getService_code()).
+                setService_name(mService.getService_name()).
                 setLatitude(issueLocationHelper.getIssueLocation().getLatitude()).
                 setLongitude(issueLocationHelper.getIssueLocation().getLongitude()).setSummary(null).
                 setDescription(description).setEmail(open311User.getEmail()).
@@ -382,7 +365,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
      * Creates a byte array which contains the image data
      *
      * @return image in bytes
-     * @throws IOException
      */
     private File createImageFile() throws IOException {
         //Convert bitmap to file
@@ -422,9 +404,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     public void createServiceDescriptionUI(ServiceDescription serviceDescription) {
         clearInfoField();
         this.serviceDescription = serviceDescription;
-        Service service = (Service) servicesSpinner.getSelectedItem();
-        if (!"".equals(service.getDescription()) && service.getDescription() != null)
-            addInfoText(service.getDescription());
+        if (!"".equals(mService.getDescription()) && mService.getDescription() != null)
+            addInfoText(mService.getDescription());
 
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (!Boolean.valueOf(open311Attribute.getVariable())) {
@@ -570,10 +551,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         return ((InfrastructureIssueActivity) getActivity()).getCurrentAddress();
     }
 
-    private List<Service> getServiceList() {
-        return ((InfrastructureIssueActivity) getActivity()).getServiceList();
-    }
-
     private void showProgress(Boolean visible) {
         ((InfrastructureIssueActivity) getActivity()).showProgress(visible);
     }
@@ -584,5 +561,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
 
     public void setOpen311(Open311 open311) {
         mOpen311 = open311;
+    }
+
+    public void setService(Service service) {
+        mService = service;
     }
 }

@@ -58,6 +58,8 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     public static final String USER_VEHICLE_NUM = ".UserVehicleNum";
 
+    public static final String TAG = "ReportTripProblemFragment";
+
     static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
         FragmentManager fm = activity.getSupportFragmentManager();
 

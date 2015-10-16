@@ -34,6 +34,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
@@ -277,6 +278,9 @@ public class HomeActivity extends AppCompatActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
+
+        // TODO: remove following
+        InfrastructureIssueActivity.start(this, getIntent());
     }
 
     @Override

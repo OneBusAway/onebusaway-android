@@ -6,49 +6,91 @@
     android:orientation="vertical">
 
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:hint="Name"
-        android:ems="10"
-        android:layout_marginTop="@dimen/report_issue_margin"
-        android:id="@+id/rici_name_editText"
-         />
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:hint="Last Name"
-        android:ems="10"
-        android:layout_marginTop="@dimen/report_issue_margin"
-        android:id="@+id/rici_lastname_editText"
-        />
+        <ImageView android:layout_width="24dp"
+                   android:layout_height="24dp"
+                   style="@style/MaterialSmallIcon"
+                   android:layout_marginTop="12dp"
+                   android:src="@drawable/ic_username"/>
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textEmailAddress"
-        android:ems="10"
-        android:hint="Email"
-        android:layout_marginTop="@dimen/report_issue_margin"
-        android:id="@+id/rici_email_editText" />
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:hint="Name"
+                android:ems="10"
+                android:id="@+id/rici_name_editText"
+                style="@style/MaterialItem"
+                />
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="phone"
-        android:ems="10"
-        android:hint="Phone"
-        android:layout_marginTop="@dimen/report_issue_margin"
-        android:id="@+id/rici_phone_editText" />
 
-    <Button
-        android:layout_width="194dp"
-        android:layout_height="wrap_content"
-        android:text="@string/rici_button_save"
-        android:layout_marginTop="@dimen/report_issue_margin"
-        android:id="@+id/rici_button_save"
-        android:layout_gravity="center_horizontal" />
+    </FrameLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MaterialLayout"
+            android:layout_marginTop="0dp"
+            android:orientation="horizontal">
+
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:hint="Last Name"
+                android:ems="10"
+                android:id="@+id/rici_lastname_editText"
+                style="@style/MaterialItem"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
+
+        <ImageView android:layout_width="24dp"
+                   android:layout_height="24dp"
+                   style="@style/MaterialSmallIcon"
+                   android:layout_marginTop="12dp"
+                   android:src="@drawable/ic_customer_service_email"/>
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:ems="10"
+                android:hint="Email"
+                style="@style/MaterialItem"
+                android:id="@+id/rici_email_editText" />
+
+    </FrameLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
+
+        <ImageView android:layout_width="24dp"
+                   android:layout_height="24dp"
+                   style="@style/MaterialSmallIcon"
+                   android:layout_marginTop="12dp"
+                   android:src="@drawable/ic_customer_service_phone"/>
+
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:ems="10"
+                android:hint="Phone"
+                style="@style/MaterialItem"
+                android:id="@+id/rici_phone_editText" />
+
+    </FrameLayout>
 </LinearLayout>

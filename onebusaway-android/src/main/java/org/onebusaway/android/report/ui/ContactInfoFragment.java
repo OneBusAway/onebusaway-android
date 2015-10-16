@@ -25,6 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import edu.usf.cutr.open311client.models.Open311User;
 
@@ -42,9 +43,24 @@ public class ContactInfoFragment extends BaseReportFragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // Set fragment nav drawer header
+        getActivity().setTitle(getString(R.string.ri_save_contact_header));
         if (savedInstanceState == null) {
             setUpViews();
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Restore nav drawer header for previous activity
+        getActivity().setTitle(getString(R.string.rt_infrastructure_problem_header));
+
+        // Save the user information
+        saveOpen311User();
+
+        Toast.makeText(getActivity(), getActivity().getString(R.string.ri_save_contact),
+                Toast.LENGTH_SHORT).show();
     }
 
     private void setUpViews() {
@@ -57,13 +73,6 @@ public class ContactInfoFragment extends BaseReportFragment {
             ((EditText) findViewById(R.id.rici_email_editText)).setText(open311User.getEmail());
         if (open311User.getPhone() != null)
             ((EditText) findViewById(R.id.rici_phone_editText)).setText(open311User.getPhone());
-
-        findViewById(R.id.rici_button_save).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                saveOpen311User();
-            }
-        });
     }
 
     private void saveOpen311User() {
@@ -76,8 +85,5 @@ public class ContactInfoFragment extends BaseReportFragment {
         PreferenceHelp.saveString(ReportConstants.PREF_LASTNAME, lastName);
         PreferenceHelp.saveString(ReportConstants.PREF_EMAIL, email);
         PreferenceHelp.saveString(ReportConstants.PREF_PHONE, phone);
-
-        getActivity().onBackPressed();
     }
-
 }

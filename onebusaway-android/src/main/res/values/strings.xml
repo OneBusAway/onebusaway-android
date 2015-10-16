@@ -506,10 +506,12 @@
     <string name="ri_title">Issue Summary</string>
     <string name="ri_desc">Issue Description</string>
     <string name="ri_button_camera">Camera</string>
+    <string name="ri_button_image">ADD IMAGE</string>
     <string name="ri_button_gallery">Gallery</string>
     <string name="ri_button_submit">Submit Issue</string>
     <string name="ri_address_not_found">Address not found. Please check your address.</string>
     <string name="ri_append_stop_id">\n\n\nLatest clicked bus stop id: %1$s</string>
+    <string name="ri_location_problem_info">Error getting location, please tap to map</string>
     <string name="ri_location_problem">Error getting location</string>
     <string name="ri_service_description_problem">Service description could not found.</string>
     <string name="ri_service_default">Issue Category</string>
@@ -518,6 +520,9 @@
 
     <!-- report issue types screen-->
     <string name="rt_infrastructure_problem">Report an Infrastructure Issue</string>
+    <string name="rt_infrastructure_problem_header">Infrastructure Issue</string>
+    <string name="ri_save_contact">Contact information saved.</string>
+    <string name="ri_save_contact_header">Save new contact </string>
     <string name="rt_customer_service">Contact Customer Service</string>
     <string name="rt_stop_problem">Report a Bus Stop Problem</string>
     <string name="rt_arrival_problem">Report Arrival Time Problem</string>

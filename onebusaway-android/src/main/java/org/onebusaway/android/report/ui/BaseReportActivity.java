@@ -7,11 +7,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.LinearLayout;
+import android.view.animation.TranslateAnimation;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -20,7 +19,7 @@ import android.widget.Toast;
 /**
  * Created by Cagri Cetin
  */
-public class BaseReportActivity extends ActionBarActivity {
+public class BaseReportActivity extends AppCompatActivity {
 
     protected FragmentTransaction setFragment(Fragment fragment, int containerViewId) {
         FragmentManager fm = getSupportFragmentManager();
@@ -86,25 +85,34 @@ public class BaseReportActivity extends ActionBarActivity {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
     }
 
-    protected void addInfoText(String text, int masterViewId) {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_info_item, null, false);
-
-        LinearLayout linear = (LinearLayout) findViewById(masterViewId);
-        if (linear.getChildCount() == 0) {
-            ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
-            linear.addView(layout);
-        } else {
-            layout = (RelativeLayout) linear.getChildAt(0);
-            ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
+    protected void addInfoText(String text) {
+        ((TextView) findViewById(R.id.ri_info_text)).setText(text);
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.ri_info_header);
+        if (relativeLayout.getVisibility() != View.VISIBLE) {
+            relativeLayout.setVisibility(View.VISIBLE);
         }
     }
 
-    protected void removeInfoText(Integer masterViewId) {
-        if (masterViewId == null) {
-            ((LinearLayout) findViewById(R.id.ri_info_layout)).removeAllViews();
-        } else {
-            ((LinearLayout) findViewById(masterViewId)).removeAllViews();
-        }
+    protected void removeInfoText() {
+        ((TextView) findViewById(R.id.ri_info_text)).setText("");
+        findViewById(R.id.ri_info_header).setVisibility(View.GONE);
+//        slideToTop(findViewById(R.id.ri_info_header));
+    }
+
+    // To animate view slide out from bottom to top
+    public void slideToTop(View view){
+        TranslateAnimation animate = new TranslateAnimation(0,0,0,-view.getHeight());
+        animate.setDuration(500);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.GONE);
+    }
+
+    public void slideToBottom(View view){
+        TranslateAnimation animate = new TranslateAnimation(0,0,0,view.getHeight());
+        animate.setDuration(500);
+        animate.setFillAfter(true);
+        view.startAnimation(animate);
+        view.setVisibility(View.GONE);
     }
 }

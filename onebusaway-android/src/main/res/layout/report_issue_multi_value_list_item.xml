@@ -3,36 +3,51 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/report_issue_margin"
-        android:layout_marginRight="@dimen/report_issue_margin"
-        android:layout_marginTop="20dp"
-        android:background="@color/light_gray">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Medium Text"
-            style="@style/Line3Text"
-            android:id="@+id/rimvli_textView"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
-
-        <LinearLayout
+    <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/rimvli_checkBoxGroup"
-            android:orientation="vertical"
-            android:layout_below="@+id/rimvli_textView"
-            android:layout_marginTop="5dp">
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
+
+        <ImageView android:layout_width="24dp"
+                   android:layout_height="24dp"
+                   style="@style/MaterialSmallIcon"
+                   android:src="@drawable/ic_checkbox"/>
+
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialItem"
+                >
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Medium Text"
+                    style="@style/Line3Text"
+                    android:textSize="15sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold"
+                    android:id="@+id/rimvli_textView"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"/>
+
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/rimvli_checkBoxGroup"
+                    android:orientation="vertical"
+                    android:layout_below="@+id/rimvli_textView"
+                    android:layout_marginTop="4dp">
 
             </LinearLayout>
 
-    </RelativeLayout>
+
+        </RelativeLayout>
+
+    </FrameLayout>
 </RelativeLayout>

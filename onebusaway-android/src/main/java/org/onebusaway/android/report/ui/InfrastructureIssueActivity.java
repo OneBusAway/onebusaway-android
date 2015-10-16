@@ -30,19 +30,23 @@ import org.onebusaway.android.util.LocationUtil;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,7 +60,7 @@ import edu.usf.cutr.open311client.models.Service;
 import edu.usf.cutr.open311client.models.ServiceListRequest;
 import edu.usf.cutr.open311client.models.ServiceListResponse;
 
-public class InfrastructureIssueActivity extends BaseReportActivity implements View.OnClickListener,
+public class InfrastructureIssueActivity extends BaseReportActivity implements
         BaseMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
         ReportProblemFragmentBase.OnProblemReportedListener, IssueLocationHelper.Callback {
 
@@ -65,11 +69,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
      */
     private EditText addressEditText;
 
-    private ImageButton addressSearchButton;
-
-    private ImageButton addressRefreshButton;
-
-    private Spinner servicesSpinner;
+    private Spinner mServicesSpinner;
 
     //Map Fragment
     private BaseMapFragment mMapFragment;
@@ -85,7 +85,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
     /**
      * Selected static issue type
      */
-    private String staticIssuetype;
+    private String mStaticIssuetype;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -173,22 +173,34 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
      * Initialize UI components
      */
     private void setupViews() {
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        setTitle(getString(R.string.rt_infrastructure_problem_header));
+
+        // Set info header color
+        int color = getResources().getColor(R.color.navdrawer_icon_tint_selected);
+        findViewById(R.id.ri_info_header).setBackgroundColor(lighter(color, 0.3f));
+
         addressEditText = (EditText) findViewById(R.id.ri_address_editText);
-
-        addressSearchButton = (ImageButton) findViewById(R.id.ri_search_address_button);
-        addressSearchButton.setOnClickListener(this);
-
-        addressRefreshButton = (ImageButton) findViewById(R.id.ri_refresh_address_button);
-        addressRefreshButton.setOnClickListener(this);
+        addressEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    searchAddress();
+                    return true;
+                }
+                return false;
+            }
+        });
 
         CustomScrollView mainScrollView = (CustomScrollView) findViewById(R.id.ri_scrollView);
         mainScrollView.addInterceptScrollView(findViewById(R.id.ri_frame_map_view));
 
-        servicesSpinner = (Spinner) findViewById(R.id.ri_spinnerServices);
-        servicesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mServicesSpinner = (Spinner) findViewById(R.id.ri_spinnerServices);
+        mServicesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                Service service = (Service) servicesSpinner.getSelectedItem();
+                Service service = (Service) mServicesSpinner.getSelectedItem();
                 onSpinnerItemSelected(service);
             }
 
@@ -205,23 +217,14 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         syncAddress(issueLocationHelper.getIssueLocation());
     }
 
-    @Override
-    public void onClick(View v) {
-        if (v == addressSearchButton) {
-            searchAddress();
-        } else if (v == addressRefreshButton) {
-            getAddressByLocation(issueLocationHelper.getIssueLocation());
-        }
-    }
-
     private void onSpinnerItemSelected(Service service) {
 
         if (!ReportConstants.DEFAULT_SERVICE.equalsIgnoreCase(service.getType())) {
             //Remove the info text for select category
-            removeInfoText(R.id.ri_custom_info_layout);
+            removeInfoText();
         }
 
-        staticIssuetype = null;
+        mStaticIssuetype = null;
 
         if (service.getService_code() != null) {
             showOpen311Reporting(service);
@@ -273,6 +276,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         String addressString = addressEditText.getText().toString();
         Location location = getLocationByAddress(addressString);
         if (location != null) {
+            mMapFragment.setMapCenter(location, true, true);
             syncAddress(location);
         } else {
             String message = getResources().getString(R.string.ri_address_not_found);
@@ -295,7 +299,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
             List<Address> addresses = geo.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
             if (addresses.isEmpty()) {
                 address = getString(R.string.ri_location_problem);
-                showRefreshButton(Boolean.TRUE);
+                addInfoText(getString(R.string.ri_location_problem_info));
             } else if (addresses.size() > 0) {
                 StringBuilder sb = new StringBuilder();
                 int addressLine = addresses.get(0).getMaxAddressLineIndex();
@@ -304,11 +308,10 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
                 }
                 sb.append(addresses.get(0).getAddressLine(addressLine - 1)).append(".");
                 address = sb.toString();
-                showRefreshButton(Boolean.FALSE);
             }
         } catch (Exception e) {
             address = getString(R.string.ri_location_problem);
-            showRefreshButton(Boolean.TRUE);
+            addInfoText(getString(R.string.ri_location_problem_info));
             e.printStackTrace();
         }
         showProgress(Boolean.FALSE);
@@ -345,21 +348,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         return null;
     }
 
-    /**
-     * Shows or hides refresh button for address bar
-     *
-     * @param isVisible true if you want to show refresh button
-     */
-    private void showRefreshButton(Boolean isVisible) {
-        if (isVisible) {
-            addressSearchButton.setVisibility(View.GONE);
-            addressRefreshButton.setVisibility(View.VISIBLE);
-        } else {
-            addressSearchButton.setVisibility(View.VISIBLE);
-            addressRefreshButton.setVisibility(View.GONE);
-        }
-    }
-
     @Override
     public void onClearMarker(int markerId) {
         mMapFragment.removeMarker(markerId);
@@ -381,14 +369,14 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
             //Clear manually added markers
             issueLocationHelper.clearMarkers();
 
-            if (staticIssuetype != null) {
-                showStaticIssueReporting(staticIssuetype);
+            if (mStaticIssuetype != null) {
+                showStaticIssueReporting(mStaticIssuetype);
                 syncAddressString(location);
             } else {
                 syncAddress(stop.getLocation());
             }
             // clear static issue type
-            staticIssuetype = null;
+            mStaticIssuetype = null;
         } else if (location != null) {
             syncAddress(location);
         }
@@ -397,6 +385,17 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
     @Override
     public void onSendReport() {
         finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     /**
@@ -423,8 +422,10 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
      */
     private void prepareServiceList(ServiceListResponse services) {
 
-        // Show information to the user
-        addInfoText(getString(R.string.report_dialog_categories), R.id.ri_custom_info_layout);
+        // Show information to the user if there is no error on location
+        String infoText = ((TextView) findViewById(R.id.ri_info_text)).getText().toString();
+        if (!getString(R.string.ri_location_problem_info).equalsIgnoreCase(infoText))
+            addInfoText(getString(R.string.report_dialog_categories));
 
         // Create the service list
         List<Service> serviceList = new ArrayList<>();
@@ -460,7 +461,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         ArrayAdapter<Service> adapter = new ArrayAdapter<>(this,
                 android.support.v7.appcompat.R.layout.support_simple_spinner_dropdown_item,
                 serviceList);
-        servicesSpinner.setAdapter(adapter);
+        mServicesSpinner.setAdapter(adapter);
     }
 
     /**
@@ -481,9 +482,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
                 showTripProblemFragment(obaStop);
             }
         } else {
-            addInfoText(getString(R.string.report_dialog_out_of_region_message),
-                    R.id.ri_custom_info_layout);
-            staticIssuetype = issueType;
+            addInfoText(getString(R.string.report_dialog_out_of_region_message));
+            mStaticIssuetype = issueType;
         }
 
     }
@@ -501,7 +501,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
     }
 
     private void clearReportingFragments() {
-        removeInfoText(R.id.ri_custom_info_layout);
+        removeInfoText();
 
         removeOpen311ProblemFragment();
 
@@ -510,7 +510,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
         removeTripProblemFragment();
     }
 
-    public void createContactInfoFragment() {
+    public void createOrRemoveContactInfoFragment() {
         Fragment fragment = getSupportFragmentManager().
                 findFragmentByTag(ReportConstants.TAG_CONTACT_INFO_FRAGMENT);
 
@@ -544,6 +544,22 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements V
 
     private void removeTripProblemFragment() {
         removeFragmentByTag(ReportTripProblemFragment.TAG);
+    }
+
+    /**
+     * Lightens a color by a given factor.
+     *
+     * @param color  The color to lighten
+     * @param factor The factor to lighten the color. 0 will make the color unchanged. 1 will make
+     *               the
+     *               color white.
+     * @return lighter version of the specified color.
+     */
+    public static int lighter(int color, float factor) {
+        int red = (int) ((Color.red(color) * (1 - factor) / 255 + factor) * 255);
+        int green = (int) ((Color.green(color) * (1 - factor) / 255 + factor) * 255);
+        int blue = (int) ((Color.blue(color) * (1 - factor) / 255 + factor) * 255);
+        return Color.argb(Color.alpha(color), red, green, blue);
     }
 
     public IssueLocationHelper getIssueLocationHelper() {

@@ -1,37 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/report_issue_margin"
-        android:layout_marginRight="@dimen/report_issue_margin"
-        android:layout_marginTop="20dp"
-        android:background="@color/light_gray">
-
-        <TextView
-            android:layout_width="wrap_content"
+    <FrameLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Medium Text"
-            style="@style/Line3Text"
-            android:id="@+id/risvli_textView"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            style="@style/MaterialLayout"
+            android:orientation="horizontal">
 
-        <RadioGroup
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_centerVertical="true"
-            android:layout_below="@+id/risvli_textView"
-            android:id="@+id/risvli_radioGroup"
-            android:layout_centerHorizontal="true"></RadioGroup>
+        <ImageView android:layout_width="24dp"
+                   android:layout_height="24dp"
+                   style="@style/MaterialSmallIcon"
+                   android:src="@drawable/ic_radio"/>
+
+        <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialItem"
+                >
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Medium Text"
+                    style="@style/Line3Text"
+                    android:textSize="15sp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold"
+                    android:id="@+id/risvli_textView"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"/>
+
+            <RadioGroup
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_centerVertical="true"
+                    android:layout_below="@+id/risvli_textView"
+                    android:id="@+id/risvli_radioGroup"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="4dp"></RadioGroup>
 
 
-    </RelativeLayout>
+        </RelativeLayout>
+
+    </FrameLayout>
 </RelativeLayout>

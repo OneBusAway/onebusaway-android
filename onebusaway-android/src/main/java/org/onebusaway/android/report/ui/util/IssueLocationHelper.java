@@ -22,7 +22,9 @@ import org.onebusaway.android.io.elements.ObaStop;
 import edu.usf.cutr.open311client.models.Service;
 
 /**
- * Created by Cagri Cetin
+ * IssueLocationHelper is responsible to handle multiple markers on the map
+ * BaseMapFragment only adds markers when a bus stop clicked. However, we need to add
+ * markers if a user clicks on the map
  */
 public class IssueLocationHelper {
 

@@ -9,18 +9,18 @@
             android:layout_height="wrap_content"
             android:id="@+id/ri_contents">
 
-        <LinearLayout
-                android:orientation="vertical"
+        <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/ri_info_layout">
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+            <ImageView android:layout_width="24dp"
+                       android:layout_height="24dp"
+                       android:layout_gravity="center|left"
+                       android:scaleType="fitXY"
+                       android:src="@drawable/ic_app_feedback"/>
 
-        <LinearLayout android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:orientation="vertical"
-                      android:id="@+id/ri_attributes_layout">
 
             <EditText
                     android:layout_width="match_parent"
@@ -29,46 +29,55 @@
                     android:id="@+id/ri_editTextDesc"
                     android:hint="@string/ri_desc"
                     android:maxLines="4"
-                    android:lines="4"
-                    android:layout_gravity="left|top"/>
+                    android:lines="2"
+                    style="@style/MaterialItem"/>
+        </FrameLayout>
 
-            <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:orientation="vertical"
-                    android:layout_margin="@dimen/report_issue_margin"
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView android:layout_width="24dp"
+                       android:layout_height="24dp"
+                       style="@style/MaterialSmallIcon"
+                       android:src="@drawable/ic_image_picker"/>
+
+            <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_image_collections"
                     android:background="@color/light_gray"
-                    android:id="@+id/ri_imagePickerLayout">
+                    android:id="@+id/ri_imageView"
+                    style="@style/MaterialItem"/>
+            <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="176dp"
+                    android:background="@android:color/white">
+                <Button
+                        android:background="?attr/selectableItemBackground"
+                        android:layout_width="120dp"
+                        android:layout_height="32dp"
+                        android:text="@string/ri_button_image"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@android:color/black"
+                        android:id="@+id/ri_attach_image"
+                        />
+            </FrameLayout>
 
-                <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="150dp"
-                        android:src="@drawable/ic_image_collections"
-                        android:id="@+id/ri_imageView"/>
+        </FrameLayout>
 
-                <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                    <Button
-                            android:layout_width="160dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/ri_button_camera"
-                            android:layout_marginLeft="15dp"
-                            android:id="@+id/ri_CameraButton"/>
-
-                    <Button
-                            android:layout_width="160dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/ri_button_gallery"
-                            android:layout_alignParentRight="true"
-                            android:layout_marginRight="15dp"
-                            android:id="@+id/ri_GalleryButton"/>
-
-                </RelativeLayout>
-
-            </LinearLayout>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/ri_info_layout">
 
         </LinearLayout>
 

@@ -65,7 +65,8 @@
     <color name="tutorial_navigation">#e0dcdc</color>
 
     <!--Reporting-->
-    <color name="light_gray">#f0f0f0</color>
+    <color name="light_gray">#CCCCCC</color>
+    <color name="material_gray">#7F7F7F</color>
     <color name="focus">#ff8e00</color>
     <color name="alert_info">@color/theme_primary_dark</color>
     <color name="alert_text_background_error">#ff9999</color>

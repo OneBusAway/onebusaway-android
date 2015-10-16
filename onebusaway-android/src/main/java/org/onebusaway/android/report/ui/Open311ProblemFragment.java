@@ -42,10 +42,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -86,17 +88,13 @@ import edu.usf.cutr.open311client.utils.Open311Validator;
 /**
  * Created by Cagri Cetin
  */
-public class Open311ProblemFragment extends BaseReportFragment implements View.OnClickListener,
+public class Open311ProblemFragment extends BaseReportFragment implements
         ServiceDescriptionTask.Callback, ServiceRequestTask.Callback {
 
     /**
      * UI elements
      */
     private ImageView issueImage;
-
-    private Button cameraButton;
-
-    private Button galleryButton;
 
     private Open311 mOpen311;
 
@@ -150,11 +148,34 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     private void setupViews() {
         issueImage = (ImageView) findViewById(R.id.ri_imageView);
 
-        cameraButton = (Button) findViewById(R.id.ri_CameraButton);
-        cameraButton.setOnClickListener(this);
+        Button addImageButton = (Button) findViewById(R.id.ri_attach_image);
 
-        galleryButton = (Button) findViewById(R.id.ri_GalleryButton);
-        galleryButton.setOnClickListener(this);
+        final PopupMenu popupMenu = new PopupMenu(getActivity(), addImageButton);
+        popupMenu.inflate(R.menu.report_issue_add_image);
+        addImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupMenu.show();
+            }
+        });
+
+        popupMenu.setOnMenuItemClickListener(
+                new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.ri_button_camera:
+                                openCamera();
+                                break;
+                            case R.id.ri_button_gallery:
+                                openGallery();
+                                break;
+                            default:
+                                break;
+                        }
+                        return true;
+                    }
+                });
     }
 
     private void callServiceDescription() {
@@ -166,15 +187,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         ServiceDescriptionTask sdt = new ServiceDescriptionTask(sdr, mOpen311,
                 Open311ProblemFragment.this);
         sdt.execute();
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v == cameraButton) {
-            openCamera();
-        } else if (v == galleryButton) {
-            openGallery();
-        }
     }
 
     /**
@@ -214,7 +226,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
 
         final int id = item.getItemId();
         if (id == R.id.user_info) {
-            createContactInfoFragment();
+            createOrRemoveContactInfoFragment();
         } else if (id == R.id.report_problem_send) {
             submitReport();
         }
@@ -291,7 +303,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
             if (errorCode == Open311Validator.PROBLEM_CODE_USER_NAME ||
                     errorCode == Open311Validator.PROBLEM_CODE_USER_LASTNAME ||
                     errorCode == Open311Validator.PROBLEM_CODE_USER_EMAIL)
-                createContactInfoFragment();
+                createOrRemoveContactInfoFragment();
         }
     }
 
@@ -404,12 +416,13 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     public void createServiceDescriptionUI(ServiceDescription serviceDescription) {
         clearInfoField();
         this.serviceDescription = serviceDescription;
-        if (!"".equals(mService.getDescription()) && mService.getDescription() != null)
-            addInfoText(mService.getDescription());
+        if (!"".equals(mService.getDescription()) && mService.getDescription() != null) {
+            addDescriptionText(mService.getDescription());
+        }
 
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (!Boolean.valueOf(open311Attribute.getVariable())) {
-                addInfoText(open311Attribute.getDescription());
+                addDescriptionText(open311Attribute.getDescription());
             } else {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
@@ -425,7 +438,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
     }
 
     /**
-     * Dyanmically creates an edit text
+     * Dynamically creates an edit text
      *
      * @param open311Attribute contains the open311 attributes
      */
@@ -435,19 +448,20 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
 
 
         LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
-        Spannable word = new SpannableString(open311Attribute.getDescription());
-        ((TextView) layout.findViewById(R.id.riti_textView)).setText(word);
-
+        Spannable desc = new SpannableString(open311Attribute.getDescription());
+        EditText editText = ((EditText) layout.findViewById(R.id.riti_editText));
         if (open311Attribute.getRequired()) {
-            Spannable wordTwo = new SpannableString(" *Required");
-            wordTwo.setSpan(new ForegroundColorSpan(Color.RED), 0, wordTwo.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            ((TextView) layout.findViewById(R.id.riti_textView)).append(wordTwo);
+            Spannable req = new SpannableString("(Required)");
+            req.setSpan(new ForegroundColorSpan(Color.RED), 0, req.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            editText.setHint(TextUtils.concat(desc, " ", req));
+        } else {
+            editText.setHint(desc);
         }
 
         if (Open311DataType.NUMBER.equals(open311Attribute.getDatatype())) {
-            ((EditText) layout.findViewById(R.id.riti_editText)).setInputType(InputType.TYPE_CLASS_NUMBER);
+            editText.setInputType(InputType.TYPE_CLASS_NUMBER);
         } else if (Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
-            ((EditText) layout.findViewById(R.id.riti_editText)).setInputType(InputType.TYPE_CLASS_DATETIME);
+            editText.setInputType(InputType.TYPE_CLASS_DATETIME);
         }
 
         linear.addView(layout);
@@ -534,9 +548,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         linear.removeAllViewsInLayout();
     }
 
-    private void addInfoText(String text) {
+    private void addDescriptionText(String text) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_info_item, null, false);
+        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
 
         LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
@@ -555,8 +569,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements View.O
         ((InfrastructureIssueActivity) getActivity()).showProgress(visible);
     }
 
-    private void createContactInfoFragment() {
-        ((InfrastructureIssueActivity) getActivity()).createContactInfoFragment();
+    private void createOrRemoveContactInfoFragment() {
+        ((InfrastructureIssueActivity) getActivity()).createOrRemoveContactInfoFragment();
     }
 
     public void setOpen311(Open311 open311) {

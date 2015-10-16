@@ -1,84 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:focusableInTouchMode="true"
-    android:orientation="vertical">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:focusableInTouchMode="true"
+              android:orientation="vertical">
+
+    <!-- Header aligned to top -->
+    <RelativeLayout
+            android:id="@+id/ri_info_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:animateLayoutChanges="true"
+            android:gravity="center"
+            android:visibility="gone">
+
+        <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:id="@+id/imageView"
+                android:src="@drawable/ic_stop_info"
+                android:layout_alignParentTop="true"
+                android:layout_toLeftOf="@+id/ri_info_text"
+                android:layout_toStartOf="@+id/ri_info_text"
+                android:layout_margin="4dp"
+                />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fixed Header"
+                android:layout_margin="4dp"
+                android:id="@+id/ri_info_text"
+                android:textColor="@android:color/white"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_centerVertical="true" android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
 
     <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/ri_contact_info">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/ri_contact_info">
 
         <org.onebusaway.android.report.ui.CustomScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/ri_scrollView"
-            android:fillViewport="false">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/ri_scrollView"
+                android:fillViewport="false">
 
             <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent">
+                    android:orientation="vertical"
+                    android:layout_width="fill_parent"
+                    android:layout_height="match_parent">
 
                 <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:id="@+id/ri_frame_map_view"></FrameLayout>
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:id="@+id/ri_frame_map_view"></FrameLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/MaterialLayout"
+                        android:orientation="horizontal">
+
+                    <ImageView android:layout_width="24dp"
+                               android:layout_height="24dp"
+                               android:layout_gravity="center|left"
+                               android:scaleType="fitXY"
+                               android:src="@drawable/ic_location"/>
 
                     <EditText
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/ri_address_editText"
-                        android:layout_weight="1"
-                        android:maxLines="2"
-                        android:hint="Address" />
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/ri_address_editText"
+                            android:imeOptions="actionSearch"
+                            android:inputType="textPostalAddress"
+                            android:maxLines="2"
+                            style="@style/MaterialItem"
+                            android:hint="Address"/>
 
-                    <ImageButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/ri_search_address_button"
-                        android:layout_gravity="center|right"
-                        android:background="@drawable/ic_action_search" />
+                </FrameLayout>
 
-                    <ImageButton
-                        android:layout_width="wrap_content"
+                <FrameLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/ri_refresh_address_button"
-                        android:layout_gravity="center|right"
-                        android:visibility="gone"
-                        android:background="@drawable/ic_action_navigation_refresh" />
-                </LinearLayout>
+                        style="@style/MaterialLayout"
+                        android:orientation="horizontal">
+
+                    <ImageView android:layout_width="24dp"
+                               android:layout_height="24dp"
+                               android:layout_gravity="center|left"
+                               android:scaleType="fitXY"
+                               android:src="@drawable/ic_category"/>
+                    <Spinner
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            style="@style/MaterialItem"
+                            android:minWidth="220dp"
+                            android:id="@+id/ri_spinnerServices"/>
+
+                </FrameLayout>
 
                 <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/ri_contents"></LinearLayout>
-
-                <Spinner
-                        android:layout_width="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minWidth="220dp"
-                        android:layout_marginTop="2dp"
-                        android:id="@+id/ri_spinnerServices" />
-
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/ri_custom_info_layout"></LinearLayout>
-
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/ri_report_stop_problem"></LinearLayout>
+                        android:id="@+id/ri_report_stop_problem"></LinearLayout>
 
             </LinearLayout>
 

@@ -28,6 +28,7 @@ import org.onebusaway.android.ui.PreferencesActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.Window;
 
 /**
@@ -42,6 +43,11 @@ public class ReportActivity extends BaseReportActivity {
         supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         super.onCreate(savedInstanceState);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        setTitle(getString(R.string.navdrawer_item_send_feedback));
+
         setContentView(R.layout.report);
 
         if (savedInstanceState == null) {
@@ -99,6 +105,17 @@ public class ReportActivity extends BaseReportActivity {
         super.onSaveInstanceState(outState);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     public void createPreferencesActivity() {
         Intent preferences = new Intent(ReportActivity.this, PreferencesActivity.class);
         startActivity(preferences);
@@ -114,7 +131,6 @@ public class ReportActivity extends BaseReportActivity {
     }
 
     public void createCustomerServiceFragment() {
-//        setFragment(new CustomerServiceFragment(), R.id.r_fragment_layout).commit();
         CustomerServiceDialog csd = new CustomerServiceDialog();
         csd.show(getSupportFragmentManager(), ReportConstants.TAG_CUSTOMER_SERVICE_FRAGMENT);
     }

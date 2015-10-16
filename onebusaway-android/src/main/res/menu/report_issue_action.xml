@@ -4,7 +4,7 @@
     <item
         android:id="@+id/user_info"
         android:title="@string/ri_action_title"
-        android:icon="@drawable/ic_action_action_perm_contact_cal"
+        android:icon="@drawable/ic_customer_info"
         android:orderInCategory="1"
         onebusaway:showAsAction="always" />
 

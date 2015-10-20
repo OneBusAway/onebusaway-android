@@ -62,7 +62,7 @@ public class ObaAnalytics {
         private final String stringValue;
         private final int distanceInMeters;
 
-        private ObaStopDistance(final String s, final int i) {
+        ObaStopDistance(final String s, final int i) {
             stringValue = s;
             distanceInMeters = i;
         }
@@ -87,7 +87,7 @@ public class ObaAnalytics {
 
         private final String stringValue;
 
-        private ObaEventCategory(final String s) {
+        ObaEventCategory(final String s) {
             stringValue = s;
         }
 
@@ -138,7 +138,7 @@ public class ObaAnalytics {
             }
             if (myLocation.getAccuracy() < LOCATION_ACCURACY_THRESHOLD) {
                 float distanceInMeters = myLocation.distanceTo(stopLocation);
-                ObaStopDistance stopDistance = null;
+                ObaStopDistance stopDistance;
 
                 if (distanceInMeters < ObaStopDistance.DISTANCE_1.getDistanceInMeters()) {
                     stopDistance = ObaStopDistance.DISTANCE_1;
@@ -218,7 +218,7 @@ public class ObaAnalytics {
         if (region != null && region.getName() != null) {
             regionName = region.getName();
         } else if (Application.get().getCustomApiUrl() != null) {
-            MessageDigest digest = null;
+            MessageDigest digest;
             try {
                 digest = MessageDigest.getInstance("SHA-1");
                 digest.update(Application.get().getCustomApiUrl().getBytes());

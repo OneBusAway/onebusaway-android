@@ -366,16 +366,22 @@ public class TripDetailsListFragment extends ListFragment {
         return null;
     }
 
-    private void showArrivals(String stopId) {
+    private void showArrivals(String stopId, String stopName, String stopDirection) {
         new ArrivalsListActivity.Builder(getActivity(), stopId)
-                .setUpMode(NavHelp.UP_MODE_BACK).start();
+                .setUpMode(NavHelp.UP_MODE_BACK)
+                .setStopName(stopName)
+                .setStopDirection(stopDirection)
+                .start();
     }
 
     private final AdapterView.OnItemClickListener mClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             ObaTripSchedule.StopTime time = mTripInfo.getSchedule().getStopTimes()[position];
-            showArrivals(time.getStopId());
+            ObaReferences refs = mTripInfo.getRefs();
+            String stopId = time.getStopId();
+            ObaStop stop = refs.getStop(stopId);
+            showArrivals(stopId, stop.getName(), stop.getDirection());
         }
     };
 

@@ -491,6 +491,11 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- Tutorial Fragment -->
+    <string name="pager_button_prev">Previous</string>
+    <string name="pager_button_next">Next</string>
+    <string name="pager_button_done">Done</string>
+
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Vehicle: %1$s</string>
     <string name="trip_details_scheduled_data">Schedule data</string>

@@ -96,7 +96,6 @@ public class Application extends android.app.Application {
         initObaRegion();
 
         ObaAnalytics.initAnalytics(this);
-        reportAnalytics();
     }
 
     /**
@@ -436,37 +435,5 @@ public class Application extends android.app.Application {
             mTrackers.put(trackerId, t);
         }
         return mTrackers.get(trackerId);
-    }
-
-    private void reportAnalytics() {
-        if (getCustomApiUrl() == null && getCurrentRegion() != null) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + getCurrentRegion().getName());
-        } else if (Application.get().getCustomApiUrl() != null) {
-            String customUrl = null;
-            MessageDigest digest = null;
-            try {
-                digest = MessageDigest.getInstance("SHA-1");
-                digest.update(getCustomApiUrl().getBytes());
-                customUrl = getString(R.string.analytics_label_custom_url) +
-                        ": " + getHex(digest.digest());
-            } catch (Exception e) {
-                customUrl = Application.get().getString(R.string.analytics_label_custom_url);
-            }
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                    getString(R.string.analytics_action_configured_region), getString(R.string.analytics_label_region)
-                            + customUrl);
-        }
-        Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
-                Boolean.FALSE);
-        Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
-                Boolean.FALSE);
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_experimental)
-                        + (experimentalRegions ? "YES" : "NO"));
-        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_region_auto)
-                        + (autoRegion ? "YES" : "NO"));
     }
 }

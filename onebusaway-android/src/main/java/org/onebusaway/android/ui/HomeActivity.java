@@ -351,10 +351,6 @@ public class HomeActivity extends AppCompatActivity
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
                     mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_nearby));
                 }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:

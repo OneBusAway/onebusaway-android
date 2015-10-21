@@ -37,18 +37,14 @@ import java.util.List;
  */
 public class ArrayAdapterWithIcon extends ArrayAdapter {
 
-    Context mContext;
-
     private List<Integer> mImages;
 
     private List<String> mItems;
 
     public ArrayAdapterWithIcon(Context context, String[] items, Integer[] images) {
         super(context, R.layout.bus_options_item, items);
-        mContext = context;
         mImages = Arrays.asList(images);
         mItems = Arrays.asList(items);
-        notifyDataSetChanged();
     }
 
     @Override
@@ -59,7 +55,7 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
             convertView = inflater.inflate(R.layout.bus_options_item, null);
         }
         ImageView image = (ImageView) convertView.findViewById(R.id.bus_option_image);
-        Drawable d = ContextCompat.getDrawable(mContext, mImages.get(position));
+        Drawable d = ContextCompat.getDrawable(getContext(), mImages.get(position));
         image.setImageDrawable(d);
         image.setColorFilter(getContext().getResources().getColor(R.color.theme_primary));
 

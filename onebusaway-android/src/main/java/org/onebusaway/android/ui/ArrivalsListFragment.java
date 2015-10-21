@@ -603,11 +603,8 @@ public class ArrivalsListFragment extends ListFragment
 
         int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
         String[] items = getResources().getStringArray(options);
-        // TODO - create util method to build the icon list
-        Integer[] icons = new Integer[]{R.drawable.focus_star_on, R.drawable.ic_drawer_alarm,
-                R.drawable.ic_trip_details,
-                R.drawable.ic_content_filter_list, R.drawable.ic_notification_event_note,
-                R.drawable.ic_alert_warning};
+        List<Integer> icons = UIHelp.buildTripOptionsIcons(hasUrl);
+
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {

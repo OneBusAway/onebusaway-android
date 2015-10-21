@@ -27,7 +27,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,12 +38,12 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
 
     private List<Integer> mImages;
 
-    private List<String> mItems;
+    private String[] mItems;
 
-    public ArrayAdapterWithIcon(Context context, String[] items, Integer[] images) {
+    public ArrayAdapterWithIcon(Context context, String[] items, List<Integer> images) {
         super(context, R.layout.bus_options_item, items);
-        mImages = Arrays.asList(images);
-        mItems = Arrays.asList(items);
+        mImages = images;
+        mItems = items;
     }
 
     @Override
@@ -60,7 +59,7 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
         image.setColorFilter(getContext().getResources().getColor(R.color.navdrawer_icon_tint));
 
         TextView text = (TextView) convertView.findViewById(R.id.bus_option_text);
-        text.setText(mItems.get(position));
+        text.setText(mItems[position]);
         return convertView;
     }
 }

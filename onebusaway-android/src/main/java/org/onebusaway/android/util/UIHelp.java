@@ -66,6 +66,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -781,8 +782,8 @@ public final class UIHelp {
     }
 
     /**
-     * Builds the array of CharSequences that should be shown for a given trip, provided the
-     * arguments for that trip
+     * Builds the array of CharSequences that should be shown for a given trip "Bus Options" menu,
+     * provided the arguments for that trip
      *
      * @param isRouteFavorite   true if this route is a user favorite, false if it is not
      * @param hasUrl            true if the route provides a URL for schedule data, false if it does
@@ -820,6 +821,27 @@ public final class UIHelp {
                 return R.array.stop_item_options_noschedule_favorite;
             }
         }
+    }
+
+    /**
+     * Builds the array of icons that should be shown for the trip "Bus Options" menu, given the
+     * provided arguments for that trip
+     *
+     * @param hasUrl true if the route provides a URL for schedule data, false if it does
+     *               not
+     * @return the array of icons that should be shown for a given trip
+     */
+    public static List<Integer> buildTripOptionsIcons(boolean hasUrl) {
+        ArrayList<Integer> list = new ArrayList<>();
+        list.add(R.drawable.focus_star_on);
+        list.add(R.drawable.ic_drawer_alarm);
+        list.add(R.drawable.ic_trip_details);
+        list.add(R.drawable.ic_content_filter_list);
+        if (hasUrl) {
+            list.add(R.drawable.ic_notification_event_note);
+        }
+        list.add(R.drawable.ic_alert_warning);
+        return list;
     }
 
     /**

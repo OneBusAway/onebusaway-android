@@ -108,8 +108,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
 
     /**
      * If a vehicle moves less than this distance (in meters), it will be animated, otherwise it
-     * will just
-     * disappear and then re-appear
+     * will just disappear and then re-appear
      */
     private static final double MAX_VEHICLE_ANIMATION_DISTANCE = 400;
 
@@ -314,7 +313,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
         /**
          * A cached set of vehicle markers currently shown on the map.  This is needed to
          * add/remove markers from the map.  activeTripId is the key - we can't use vehicleId
-         * because we want to show an interpolated position (based on scheudle data) for trips
+         * because we want to show an interpolated position (based on schedule data) for trips
          * without real-time data, and those statuses do not have vehicleIds associated with them,
          * but do have activeTripIds.
          */

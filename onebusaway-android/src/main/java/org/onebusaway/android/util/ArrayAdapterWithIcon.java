@@ -57,7 +57,7 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
         ImageView image = (ImageView) convertView.findViewById(R.id.bus_option_image);
         Drawable d = ContextCompat.getDrawable(getContext(), mImages.get(position));
         image.setImageDrawable(d);
-        image.setColorFilter(getContext().getResources().getColor(R.color.theme_primary));
+        image.setColorFilter(getContext().getResources().getColor(R.color.navdrawer_icon_tint));
 
         TextView text = (TextView) convertView.findViewById(R.id.bus_option_text);
         text.setText(mItems.get(position));

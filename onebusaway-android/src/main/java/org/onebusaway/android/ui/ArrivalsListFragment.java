@@ -601,8 +601,8 @@ public class ArrivalsListFragment extends ListFragment
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(getActivity(),
                 routeId, arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 
-        int options = UIHelp.buildTripOptions(isRouteFavorite, hasUrl, isReminderVisible);
-        String[] items = getResources().getStringArray(options);
+        List<String> items = UIHelp
+                .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible);
         List<Integer> icons = UIHelp.buildTripOptionsIcons(hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);

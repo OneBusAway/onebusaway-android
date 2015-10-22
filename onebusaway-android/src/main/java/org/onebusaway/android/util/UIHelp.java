@@ -782,45 +782,43 @@ public final class UIHelp {
     }
 
     /**
-     * Builds the array of CharSequences that should be shown for a given trip "Bus Options" menu,
+     * Builds the list of Strings that should be shown for a given trip "Bus Options" menu,
      * provided the arguments for that trip
      *
+     * @param c                 Context
      * @param isRouteFavorite   true if this route is a user favorite, false if it is not
      * @param hasUrl            true if the route provides a URL for schedule data, false if it does
      *                          not
      * @param isReminderVisible true if the reminder is currently visible for a trip, false if it
      *                          is
      *                          not
-     * @return the array of CharSequences that should be shown for a given trip, provided the
-     * arguments for that trip
+     * @return the list of Strings that should be shown for a given trip, provided the arguments for
+     * that trip
      */
-    public static int buildTripOptions(boolean isRouteFavorite, boolean hasUrl,
+    public static List<String> buildTripOptions(Context c, boolean isRouteFavorite, boolean hasUrl,
             boolean isReminderVisible) {
+        ArrayList<String> list = new ArrayList<>();
         if (!isRouteFavorite) {
-            if (isReminderVisible) {
-                if (hasUrl) {
-                    return R.array.stop_item_options_edit;
-                } else {
-                    return R.array.stop_item_options_edit_noschedule;
-                }
-            } else if (hasUrl) {
-                return R.array.stop_item_options;
-            } else {
-                return R.array.stop_item_options_noschedule;
-            }
+            list.add(c.getString(R.string.bus_options_menu_add_star));
         } else {
-            if (isReminderVisible) {
-                if (hasUrl) {
-                    return R.array.stop_item_options_edit_favorite;
-                } else {
-                    return R.array.stop_item_options_edit_noschedule_favorite;
-                }
-            } else if (hasUrl) {
-                return R.array.stop_item_options_favorite;
-            } else {
-                return R.array.stop_item_options_noschedule_favorite;
-            }
+            list.add(c.getString(R.string.bus_options_menu_remove_star));
         }
+
+        if (!isReminderVisible) {
+            list.add(c.getString(R.string.bus_options_menu_set_reminder));
+        } else {
+            list.add(c.getString(R.string.bus_options_menu_edit_reminder));
+        }
+
+        list.add(c.getString(R.string.bus_options_menu_show_trip_details));
+        list.add(c.getString(R.string.bus_options_menu_show_only_this_route));
+
+        if (hasUrl) {
+            list.add(c.getString(R.string.bus_options_menu_show_route_schedule));
+        }
+
+        list.add(c.getString(R.string.bus_options_menu_report_trip_problem));
+        return list;
     }
 
     /**

@@ -38,9 +38,9 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
 
     private List<Integer> mImages;
 
-    private String[] mItems;
+    private List<String> mItems;
 
-    public ArrayAdapterWithIcon(Context context, String[] items, List<Integer> images) {
+    public ArrayAdapterWithIcon(Context context, List<String> items, List<Integer> images) {
         super(context, R.layout.bus_options_item, items);
         mImages = images;
         mItems = items;
@@ -59,7 +59,7 @@ public class ArrayAdapterWithIcon extends ArrayAdapter {
         image.setColorFilter(getContext().getResources().getColor(R.color.navdrawer_icon_tint));
 
         TextView text = (TextView) convertView.findViewById(R.id.bus_option_text);
-        text.setText(mItems[position]);
+        text.setText(mItems.get(position));
         return convertView;
     }
 }

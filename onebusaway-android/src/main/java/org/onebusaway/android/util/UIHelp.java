@@ -804,13 +804,15 @@ public final class UIHelp {
             list.add(c.getString(R.string.bus_options_menu_remove_star));
         }
 
+        list.add(c.getString(R.string.bus_options_menu_show_route_on_map));
+        list.add(c.getString(R.string.bus_options_menu_show_trip_details));
+
         if (!isReminderVisible) {
             list.add(c.getString(R.string.bus_options_menu_set_reminder));
         } else {
             list.add(c.getString(R.string.bus_options_menu_edit_reminder));
         }
 
-        list.add(c.getString(R.string.bus_options_menu_show_trip_details));
         list.add(c.getString(R.string.bus_options_menu_show_only_this_route));
 
         if (hasUrl) {
@@ -825,15 +827,21 @@ public final class UIHelp {
      * Builds the array of icons that should be shown for the trip "Bus Options" menu, given the
      * provided arguments for that trip
      *
+     * @param isRouteFavorite   true if this route is a user favorite, false if it is not
      * @param hasUrl true if the route provides a URL for schedule data, false if it does
      *               not
      * @return the array of icons that should be shown for a given trip
      */
-    public static List<Integer> buildTripOptionsIcons(boolean hasUrl) {
+    public static List<Integer> buildTripOptionsIcons(boolean isRouteFavorite, boolean hasUrl) {
         ArrayList<Integer> list = new ArrayList<>();
-        list.add(R.drawable.focus_star_on);
-        list.add(R.drawable.ic_drawer_alarm);
+        if (!isRouteFavorite) {
+            list.add(R.drawable.focus_star_on);
+        } else {
+            list.add(R.drawable.focus_star_off);
+        }
+        list.add(R.drawable.ic_arrivals_styleb_action_map);
         list.add(R.drawable.ic_trip_details);
+        list.add(R.drawable.ic_drawer_alarm);
         list.add(R.drawable.ic_content_filter_list);
         if (hasUrl) {
             list.add(R.drawable.ic_notification_event_note);

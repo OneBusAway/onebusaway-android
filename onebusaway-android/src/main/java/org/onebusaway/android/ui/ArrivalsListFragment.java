@@ -603,7 +603,7 @@ public class ArrivalsListFragment extends ListFragment
 
         List<String> items = UIHelp
                 .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible);
-        List<Integer> icons = UIHelp.buildTripOptionsIcons(hasUrl);
+        List<Integer> icons = UIHelp.buildTripOptionsIcons(isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
 
@@ -631,19 +631,21 @@ public class ArrivalsListFragment extends ListFragment
                     });
                     routeDialog.show(getFragmentManager(), RouteFavoriteDialogFragment.TAG);
                 } else if (which == 1) {
-                    goToTrip(arrivalInfo);
+                    HomeActivity.start(getActivity(), arrivalInfo.getInfo().getRouteId());
                 } else if (which == 2) {
                     goToTripDetails(arrivalInfo);
                 } else if (which == 3) {
+                    goToTrip(arrivalInfo);
+                } else if (which == 4) {
                     ArrayList<String> routes = new ArrayList<String>(1);
                     routes.add(arrivalInfo.getInfo().getRouteId());
                     setRoutesFilter(routes);
                     if (mHeader != null) {
                         mHeader.refresh();
                     }
-                } else if (hasUrl && which == 4) {
+                } else if (hasUrl && which == 5) {
                     UIHelp.goToUrl(getActivity(), url);
-                } else if ((!hasUrl && which == 4) || (hasUrl && which == 5)) {
+                } else if ((!hasUrl && which == 5) || (hasUrl && which == 6)) {
                     ReportTripProblemActivity.start(getActivity(), arrivalInfo.getInfo());
                 }
             }

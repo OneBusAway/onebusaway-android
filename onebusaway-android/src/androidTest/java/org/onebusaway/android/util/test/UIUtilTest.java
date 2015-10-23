@@ -130,22 +130,24 @@ public class UIUtilTest extends ObaTestCase {
         List<String> options = UIHelp
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Set a reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Show route schedule");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(3), "Set a reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Show route schedule");
+        assertEquals(options.get(6), "Report problem with trip");
 
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Edit this reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Show route schedule");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(3), "Edit this reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Show route schedule");
+        assertEquals(options.get(6), "Report problem with trip");
 
         // Get a PSTA response - PSTA test data doesn't include route schedule URLs
         ObaArrivalInfoResponse response2 =
@@ -175,10 +177,11 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Set a reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Report problem with trip");
+        assertEquals(options.get(3), "Set a reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Report problem with trip");
 
         isReminderVisible = true;
 
@@ -186,10 +189,11 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
-        assertEquals(options.get(1), "Edit this reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Report problem with trip");
+        assertEquals(options.get(3), "Edit this reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Report problem with trip");
 
         // Now change route to favorite, and do all the above over again
         isRouteFavorite = true;
@@ -201,22 +205,24 @@ public class UIUtilTest extends ObaTestCase {
         // a reminder and view the route schedule
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Set a reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Show route schedule");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(3), "Set a reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Show route schedule");
+        assertEquals(options.get(6), "Report problem with trip");
 
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Edit this reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Show route schedule");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(3), "Edit this reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Show route schedule");
+        assertEquals(options.get(6), "Report problem with trip");
 
         // PSTA
         isReminderVisible = false;  // We don't have views here, so just fake it
@@ -226,10 +232,11 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Set a reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Report problem with trip");
+        assertEquals(options.get(3), "Set a reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Report problem with trip");
 
         isReminderVisible = true;
 
@@ -237,10 +244,11 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
-        assertEquals(options.get(1), "Edit this reminder");
+        assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip details");
-        assertEquals(options.get(3), "Show only this route");
-        assertEquals(options.get(4), "Report problem with trip");
+        assertEquals(options.get(3), "Edit this reminder");
+        assertEquals(options.get(4), "Show only this route");
+        assertEquals(options.get(5), "Report problem with trip");
     }
 
     public void testArrivalTimeIndexSearch() {

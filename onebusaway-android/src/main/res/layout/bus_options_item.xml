@@ -23,9 +23,11 @@
             android:id="@+id/bus_option_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxHeight="15dp"
-            android:maxWidth="15dp"
-            android:layout_marginLeft="15dp"
+            android:maxHeight="24dp"
+            android:maxWidth="24dp"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_marginLeft="16dp"
             android:layout_gravity="center_vertical"/>
     <TextView
             android:id="@+id/bus_option_text"

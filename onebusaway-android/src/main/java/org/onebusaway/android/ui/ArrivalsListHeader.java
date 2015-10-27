@@ -985,7 +985,8 @@ class ArrivalsListHeader {
     void refreshHeaderSize() {
         if (mInNameEdit) {
             // When editing the stop name, the header size is always the same
-            setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+            // Commented out as workaround to #314
+            //setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
             return;
         }
 
@@ -1156,8 +1157,8 @@ class ArrivalsListHeader {
         mExpandCollapse.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
-        // Set the entire header size
-        setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+        // Set the entire header size - commented out as workaround to #314
+        //setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());
@@ -1176,8 +1177,6 @@ class ArrivalsListHeader {
         mStopFavorite.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         mNoArrivals.setVisibility(View.VISIBLE);
-        // Reset the header size
-        refreshHeaderSize();
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

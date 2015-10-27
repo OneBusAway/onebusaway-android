@@ -104,15 +104,10 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Status colors are back</b>
-        - Easily see early/ontime/late arrivals by color in sliding panel header (tap to
-        see delay) and arrivals list.\n&#8226;
-        <b>Sort arrivals by route or estimated arrival</b>
-        - Tap the Sort button at top of Arrivals screen.\n&#8226;
-        <b>Sort starred stops by name or frequent use</b>
-        - Tap the Sort button at top of Starred Stop screen.\n&#8226;
-        <b>Negative arrivals are back</b>
-        - You can also turn them off in Settings.
+        <b>Real-time vehicles on map</b>
+        - Tap on arrival times and select \"Show route on map\".\n&#8226;
+        <b>Real-time trip details</b>
+        - Tap arrival times and select \"Show trip details\".
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>

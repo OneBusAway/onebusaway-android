@@ -200,16 +200,13 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         // Loop through the arrival times and create the TableRows that contains the data
         for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {
-            ArrivalInfo arrivalRow = combinedArrivalInfoStyleB.getArrivalInfoList().get(i);
+            final ArrivalInfo arrivalRow = combinedArrivalInfoStyleB.getArrivalInfoList().get(i);
             final ObaArrivalInfo tempArrivalInfo = arrivalRow.getInfo();
             long scheduledTime = tempArrivalInfo.getScheduledArrivalTime();
 
             // Create a new row to be added
-            TableRow tr = new TableRow(getContext());
-            tr.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,
-                    TableRow.LayoutParams.MATCH_PARENT));
-            tr.setFocusable(false);
-            tr.setClickable(false);
+            final TableRow tr = (TableRow) inflater
+                    .inflate(R.layout.arrivals_list_tr_template_style_b, null);
 
             // Layout and views to inflate from XML templates
             RelativeLayout layout;
@@ -313,6 +310,14 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                                 dividerHeight));
                 arrivalTimesLayout.addView(divider);
             }
+
+            // Add click listener
+            tr.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mFragment.showListItemMenu(tr, arrivalRow);
+                }
+            });
 
             // Add TableRow to container layout
             arrivalTimesLayout.addView(tr,

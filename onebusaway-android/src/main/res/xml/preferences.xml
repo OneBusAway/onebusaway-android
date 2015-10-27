@@ -64,6 +64,10 @@
                 android:key="@string/preferences_key_powered_by_oba"
                 android:title="@string/preferences_powered_by_oba_title"
                 android:summary="@string/preferences_powered_by_oba_summary"/>
+        <Preference
+                android:key="@string/preferences_key_about"
+                android:title="@string/preferences_about_title"
+                android:summary="@string/preferences_about_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_advanced"
                         android:key="@string/preferences_category_advanced">

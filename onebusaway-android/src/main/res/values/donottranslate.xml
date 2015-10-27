@@ -29,6 +29,7 @@
     <string name="preferences_key_analytics">preference_google_analytics</string>
     <string name="preferences_key_donate">preference_donate</string>
     <string name="preferences_key_powered_by_oba">preference_powered_by_oba</string>
+    <string name="preferences_key_about">preference_about</string>
     <string name="preference_key_preferred_units">preference_preferred_units</string>
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
@@ -81,6 +82,7 @@
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>
     <string name="analytics_label_button_press_powered_by_oba">Clicked Powered By Oba Link</string>
+    <string name="analytics_label_button_press_about">Clicked About</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Email Link</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>

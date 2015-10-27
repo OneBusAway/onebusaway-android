@@ -68,6 +68,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference poweredByObaPref;
 
+    Preference aboutPref;
+
     boolean autoSelectInitialValue;
     //Save initial value so we can compare to current value in onDestroy()
 
@@ -95,6 +97,9 @@ public class PreferencesActivity extends PreferenceActivity
 
         poweredByObaPref = findPreference(getString(R.string.preferences_key_powered_by_oba));
         poweredByObaPref.setOnPreferenceClickListener(this);
+
+        aboutPref = findPreference(getString(R.string.preferences_key_about));
+        aboutPref.setOnPreferenceClickListener(this);
 
         SharedPreferences settings = Application.getPrefs();
         autoSelectInitialValue = settings
@@ -235,6 +240,11 @@ public class PreferencesActivity extends PreferenceActivity
             Intent intent = new Intent(Intent.ACTION_VIEW,
                     Uri.parse(getString(R.string.powered_by_oba_url)));
             startActivity(intent);
+        } else if (pref.equals(aboutPref)) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_about));
+            AboutActivity.start(this);
         }
         return true;
     }

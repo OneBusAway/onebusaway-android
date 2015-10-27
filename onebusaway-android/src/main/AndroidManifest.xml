@@ -195,6 +195,16 @@
         <meta-data
                 android:name="com.google.android.maps.v2.API_KEY"
                 android:value="@string/apiv2_key"/>
+
+        <activity
+                android:name="org.onebusaway.android.ui.AboutActivity"
+                android:label="@string/title_activity_about"
+                android:parentActivityName="org.onebusaway.android.ui.PreferencesActivity"
+                android:theme="@style/Theme.OneBusAway.NoActionBar">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="org.onebusaway.android.ui.PreferencesActivity"/>
+        </activity>
     </application>
 
     <uses-feature

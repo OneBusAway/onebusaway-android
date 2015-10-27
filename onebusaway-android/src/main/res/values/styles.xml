@@ -211,4 +211,11 @@
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/header_text_color</item>
     </style>
+    <!-- About -->
+    <style name="Theme.OneBusAway.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="Theme.OneBusAway.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
+    <style name="Theme.OneBusAway.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 </resources>

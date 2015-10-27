@@ -3,6 +3,7 @@ package org.onebusaway.android.ui;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 
 import android.content.Context;
 import android.content.Intent;
@@ -73,5 +74,11 @@ public class AboutActivity extends AppCompatActivity {
         builder.append("\n\n");
 
         tv.setText(builder.toString());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
     }
 }

@@ -274,7 +274,9 @@ tasks.whenTaskAdded { theTask ->
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     // Google Play Services Analytics (we need this on Amazon flavor too)
-    compile 'com.google.android.gms:play-services-analytics:8.1.0'
+    compile('com.google.android.gms:play-services-analytics:8.1.0') {
+        exclude module: 'play-services-ads' // See #342
+    }
     // Google Play Services Location (we need this on Amazon flavor too)
     compile 'com.google.android.gms:play-services-location:8.1.0'
     // Support libraries

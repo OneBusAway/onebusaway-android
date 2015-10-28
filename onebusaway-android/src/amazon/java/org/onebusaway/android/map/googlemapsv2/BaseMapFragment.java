@@ -400,6 +400,21 @@ public class BaseMapFragment extends SupportMapFragment
         mSimpleMarkerOverlay.removeMarker(markerId);
     }
 
+    /**
+     * Define a visible region on the map, to signal to the map that portions of the map around
+     * the edges may be obscured, by setting padding on each of the four edges of the map.
+     * @param left the number of pixels of padding to be added on the left of the map.
+     * @param top the number of pixels of padding to be added on the top of the map.
+     * @param right the number of pixels of padding to be added on the right of the map.
+     * @param bottom the number of pixels of padding to be added on the bottom of the map.
+     */
+    @Override
+    public void setPadding(int left, int top, int right, int bottom) {
+        if (mMap != null) {
+            mMap.setPadding(left, top, right, bottom);
+        }
+    }
+
     @Override
     public void showProgress(boolean show) {
 //        setSupportProgressBarIndeterminateVisibility(show);

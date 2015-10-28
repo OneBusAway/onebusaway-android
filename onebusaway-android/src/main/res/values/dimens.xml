@@ -78,6 +78,7 @@
     <!-- Route lines -->
     <dimen name="map_route_line_width">5dp</dimen>
     <dimen name="map_route_padding">16dp</dimen>
+    <dimen name="map_route_vehicle_markers_padding">5dp</dimen>
 
     <!-- About -->
     <dimen name="app_bar_height">180dp</dimen>

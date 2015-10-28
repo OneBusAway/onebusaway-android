@@ -171,9 +171,17 @@ public class RouteMapController implements MapModeController {
 
         private final ProgressBar mProgressBar;
 
+        // Prevents completely hiding vehicle markers at top of route
+        private int VEHICLE_MARKER_PADDING;
+
         RoutePopup() {
             mActivity = mFragment.getActivity();
+            float paddingDp =
+                    mActivity.getResources().getDimension(R.dimen.map_route_vehicle_markers_padding)
+                            / mActivity.getResources().getDisplayMetrics().density;
+            VEHICLE_MARKER_PADDING = UIHelp.dpToPixels(mActivity, paddingDp);
             mView = mActivity.findViewById(R.id.route_info);
+            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
             mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
             mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
             mAgencyName = (TextView) mView.findViewById(R.id.agency);
@@ -198,6 +206,7 @@ public class RouteMapController implements MapModeController {
         }
 
         void showLoading() {
+            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
             UIHelp.hideViewWithoutAnimation(mRouteShortName);
             UIHelp.hideViewWithoutAnimation(mRouteLongName);
             UIHelp.showViewWithoutAnimation(mView);
@@ -212,9 +221,11 @@ public class RouteMapController implements MapModeController {
             UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
+            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
         }
 
         void hide() {
+            mFragment.getMapView().setPadding(0, 0, 0, 0);
             UIHelp.hideViewWithAnimation(mView, mShortAnimationDuration);
         }
     }

@@ -267,6 +267,19 @@ public class BaseMapFragment extends SupportMapFragment
         super.onPause();
     }
 
+    /**
+     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
+     *
+     * @param hidden True if the fragment is now hidden, false if it is not visible.
+     */
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        if (mController != null) {
+            mController.onHidden(hidden);
+        }
+        super.onHiddenChanged(hidden);
+    }
+
     @Override
     public void onResume() {
         mLocationHelper.onResume();

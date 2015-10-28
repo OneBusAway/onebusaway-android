@@ -220,6 +220,16 @@ public class StopMapController implements MapModeController,
         }
     }
 
+    /**
+     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
+     *
+     * @param hidden True if the fragment is now hidden, false if it is not visible.
+     */
+    @Override
+    public void onHidden(boolean hidden) {
+        // No op for this controller
+    }
+
     @Override
     public void onResume() {
         watchMap(true);

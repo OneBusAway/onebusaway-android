@@ -154,6 +154,13 @@ public interface MapModeController {
 
     void onPause();
 
+    /**
+     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
+     *
+     * @param hidden True if the fragment is now hidden, false if it is not visible.
+     */
+    void onHidden(boolean hidden);
+
     void onResume();
 
     void onSaveInstanceState(Bundle outState);

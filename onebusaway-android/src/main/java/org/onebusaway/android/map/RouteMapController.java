@@ -105,6 +105,9 @@ public class RouteMapController implements MapModeController {
             mVehiclesLoader = mVehicleLoaderListener.onCreateLoader(VEHICLES_LOADER, null);
             mVehiclesLoader.registerListener(0, mVehicleLoaderListener);
             mVehiclesLoader.startLoading();
+        } else {
+            // We are returning to the route view with the route already set, so show the header
+            mRoutePopup.show();
         }
     }
 
@@ -124,6 +127,21 @@ public class RouteMapController implements MapModeController {
     @Override
     public void onPause() {
         mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);
+    }
+
+    /**
+     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
+     *
+     * @param hidden True if the fragment is now hidden, false if it is not visible.
+     */
+    @Override
+    public void onHidden(boolean hidden) {
+        // If the fragment is no longer visible, hide the route header - otherwise, show it
+        if (hidden) {
+            mRoutePopup.hide();
+        } else {
+            mRoutePopup.show();
+        }
     }
 
     @Override
@@ -213,10 +231,22 @@ public class RouteMapController implements MapModeController {
             UIHelp.showViewWithoutAnimation(mProgressBar);
         }
 
+        /**
+         * Show the route header and populate it with the provided information
+         * @param route route information to show in the header
+         * @param agencyName agency name to show in the header
+         */
         void show(ObaRoute route, String agencyName) {
             mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
             mRouteLongName.setText(UIHelp.getRouteDescription(route));
             mAgencyName.setText(agencyName);
+            show();
+        }
+
+        /**
+         * Show the route header with the existing route information
+         */
+        void show() {
             UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);

@@ -278,6 +278,18 @@ public class BaseMapFragment extends SupportMapFragment
         super.onPause();
     }
 
+    /**
+     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
+     * @param hidden True if the fragment is now hidden, false if it is not visible.
+     */
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        if (mController != null) {
+            mController.onHidden(hidden);
+        }
+        super.onHiddenChanged(hidden);
+    }
+
     @Override
     public void onResume() {
         mLocationHelper.onResume();
@@ -403,9 +415,10 @@ public class BaseMapFragment extends SupportMapFragment
     /**
      * Define a visible region on the map, to signal to the map that portions of the map around
      * the edges may be obscured, by setting padding on each of the four edges of the map.
-     * @param left the number of pixels of padding to be added on the left of the map.
-     * @param top the number of pixels of padding to be added on the top of the map.
-     * @param right the number of pixels of padding to be added on the right of the map.
+     *
+     * @param left   the number of pixels of padding to be added on the left of the map.
+     * @param top    the number of pixels of padding to be added on the top of the map.
+     * @param right  the number of pixels of padding to be added on the right of the map.
      * @param bottom the number of pixels of padding to be added on the bottom of the map.
      */
     @Override

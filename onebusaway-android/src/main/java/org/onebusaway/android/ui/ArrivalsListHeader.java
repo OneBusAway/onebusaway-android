@@ -357,7 +357,7 @@ class ArrivalsListHeader {
         mAlertView = (ImageView) mView.findViewById(R.id.alert);
         mAlertView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mAlertView.setVisibility(View.GONE);
-        
+
         resetExpandCollapseAnimation();
 
         // Initialize right margin view visibilities

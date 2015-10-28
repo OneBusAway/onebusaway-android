@@ -168,7 +168,14 @@ class ArrivalsListHeader {
 
     private ImageView mExpandCollapse;
 
+    /**
+     * Variables used to show/hide alerts in the header
+     */
     private ImageView mAlertView;
+
+    boolean mHasWarning = false;
+
+    boolean mHasError = false;
 
     // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
@@ -349,6 +356,8 @@ class ArrivalsListHeader {
         mExpandCollapse = (ImageView) mView.findViewById(R.id.expand_collapse);
         mAlertView = (ImageView) mView.findViewById(R.id.alert);
         mAlertView.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mAlertView.setVisibility(View.GONE);
+        
         resetExpandCollapseAnimation();
 
         // Initialize right margin view visibilities
@@ -1088,6 +1097,8 @@ class ArrivalsListHeader {
         final long now = System.currentTimeMillis();
         final long responseTime = mController.getLastGoodResponseTime();
         AlertList alerts = mController.getAlertList();
+        mHasWarning = false;
+        mHasError = false;
 
         if (mResponseError != null) {
             alerts.remove(mResponseError);
@@ -1107,31 +1118,33 @@ class ArrivalsListHeader {
         }
 
         // If there is a warning or error alert, and show the alert icon in the header
-        boolean hasWarning = false;
-        boolean hasError = false;
+
         for (int i = 0; i < alerts.getCount(); i++) {
             AlertList.Alert a = alerts.getItem(i);
             if (a.getType() == AlertList.Alert.TYPE_WARNING) {
-                hasWarning = true;
+                mHasWarning = true;
             }
             if (a.getType() == AlertList.Alert.TYPE_ERROR) {
-                hasError = true;
+                mHasError = true;
             }
         }
 
-        if (hasError) {
-            UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+        if (mHasError) {
+            //UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setVisibility(View.VISIBLE);
             mAlertView.setColorFilter(mResources.getColor(R.color.alert_icon_error));
             mAlertView.setContentDescription(
                     mResources.getString(R.string.alert_content_description_error));
-        } else if (hasWarning) {
-            UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+        } else if (mHasWarning) {
+            //UIHelp.showViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setVisibility(View.VISIBLE);
             mAlertView.setColorFilter(mResources.getColor(R.color.alert_icon_warning));
             mAlertView.setContentDescription(
                     mResources.getString(R.string.alert_content_description_warning));
         } else {
             // Don't show the header icon for info-level or no alerts
-            UIHelp.hideViewWithAnimation(mAlertView, mShortAnimationDuration);
+            //UIHelp.hideViewWithAnimation(mAlertView, mShortAnimationDuration);
+            mAlertView.setVisibility(View.GONE);
             mAlertView.setContentDescription("");
         }
     }
@@ -1147,6 +1160,7 @@ class ArrivalsListHeader {
         mEtaSeparator.setVisibility(View.GONE);
         mEtaContainer2.setVisibility(View.GONE);
         mNoArrivals.setVisibility(View.GONE);
+        mAlertView.setVisibility(View.GONE);
 
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
@@ -1177,6 +1191,9 @@ class ArrivalsListHeader {
         mStopFavorite.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         mNoArrivals.setVisibility(View.VISIBLE);
+        if (mHasError || mHasWarning) {
+            mAlertView.setVisibility(View.VISIBLE);
+        }
         // Hide soft keyboard
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

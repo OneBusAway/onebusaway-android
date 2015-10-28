@@ -179,6 +179,7 @@
     <string name="stop_info_option_filter">Filter Routes</string>
     <string name="stop_info_option_editname">Edit Name</string>
     <string name="stop_info_option_addstar">Add Star To Stop</string>
+    <string name="stop_info_option_show_details">Show Stop Details</string>
     <string name="stop_info_option_removestar">Remove Star From Stop</string>
     <string name="stop_info_option_report_problem">Report Stop Problem</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d min.</string>
@@ -230,6 +231,9 @@
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
     <string name="stop_info_frequency_approximate">~</string>
+
+    <!-- Stop Details -->
+    <string name="stop_details_code">Stop #%1$s</string>
 
     <!-- Arrival Time Style B -->
     <string name="arrival_estimated">Real-time Estimate</string>

@@ -86,6 +86,7 @@
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Email Link</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
+    <string name="analytics_label_button_press_stop_details">Clicked Stop Details</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>
     <string name="analytics_label_button_press_search_box">Search box selected</string>
     <string name="analytics_label_button_press_search_button">Search button clicked</string>

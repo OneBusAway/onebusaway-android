@@ -554,6 +554,8 @@ public class ArrivalsListFragment extends ListFragment
             if (mHeader != null) {
                 mHeader.refresh();
             }
+        } else if (id == R.id.show_stop_details) {
+            showStopDetailsDialog();
         } else if (id == R.id.report_stop_problem) {
             if (mStop != null) {
                 ReportStopProblemActivity.start(getActivity(), mStop);
@@ -1041,6 +1043,48 @@ public class ArrivalsListFragment extends ListFragment
         RoutesFilterDialog frag = new RoutesFilterDialog();
         frag.setArguments(args);
         frag.show(getActivity().getSupportFragmentManager(), ".RoutesFilterDialog");
+    }
+
+    private void showStopDetailsDialog() {
+        // Create dialog contents
+        final String newLine = "\n";
+        String name = getStopName();
+        String userName = getUserStopName();
+        String title = "";
+
+        if (!TextUtils.isEmpty(userName)) {
+            title = userName;
+        } else if (name != null) {
+            title = name;
+        }
+
+        StringBuilder message = new StringBuilder();
+
+        if (mStop != null) {
+            message.append(getString(R.string.stop_details_code, mStop.getStopCode()) + newLine);
+        }
+
+        // Routes that serve this stop
+        List<String> routeDisplayNames = getRouteDisplayNames();
+        if (routeDisplayNames != null) {
+            String routes = getString(R.string.stop_info_route_ids_label) + " " + UIHelp
+                    .formatRouteDisplayNames(routeDisplayNames, new ArrayList<String>());
+            message.append(routes);
+        }
+
+        String direction = getStopDirection();
+        if (!TextUtils.isEmpty(direction)) {
+            message.append(newLine + getString(UIHelp.getStopDirectionText(direction)));
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(title);
+        builder.setMessage(message.toString());
+        builder.create().show();
+
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                getString(R.string.analytics_action_button_press),
+                getString(R.string.analytics_label_button_press_stop_details));
     }
 
     /**

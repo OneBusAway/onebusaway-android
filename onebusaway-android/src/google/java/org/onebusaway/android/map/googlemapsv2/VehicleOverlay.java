@@ -641,7 +641,15 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
             // Update last updated time (only shown for real-time info)
             long now = System.currentTimeMillis();
-            long elapsedSec = TimeUnit.MILLISECONDS.toSeconds(now - status.getLastUpdateTime());
+            long lastUpdateTime;
+            // Use the last updated time for the position itself, if its available
+            if (status.getLastLocationUpdateTime() != 0) {
+                lastUpdateTime = status.getLastLocationUpdateTime();
+            } else {
+                // Use the status timestamp for last updated time
+                lastUpdateTime = status.getLastUpdateTime();
+            }
+            long elapsedSec = TimeUnit.MILLISECONDS.toSeconds(now - lastUpdateTime);
             long elapsedMin = TimeUnit.SECONDS.toMinutes(elapsedSec);
             long secMod60 = elapsedSec % 60;
 

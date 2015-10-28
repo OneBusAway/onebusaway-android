@@ -57,6 +57,8 @@ public final class ObaTripStatusElement implements ObaTripStatus {
 
     private final Position lastKnownLocation;
 
+    private final Long lastLocationUpdateTime;
+
     private final Double lastKnownOrientation;
 
     private final int blockTripSequence;
@@ -80,6 +82,7 @@ public final class ObaTripStatusElement implements ObaTripStatus {
         status = null;
         lastUpdateTime = null;
         lastKnownLocation = null;
+        lastLocationUpdateTime = null;
         lastKnownOrientation = null;
         blockTripSequence = 0;
     }
@@ -172,6 +175,11 @@ public final class ObaTripStatusElement implements ObaTripStatus {
     @Override
     public Location getLastKnownLocation() {
         return (lastKnownLocation != null) ? lastKnownLocation.getLocation() : null;
+    }
+
+    @Override
+    public long getLastLocationUpdateTime() {
+        return lastLocationUpdateTime;
     }
 
     @Override

@@ -86,12 +86,18 @@ public class TripsForRouteRequestTest extends ObaTestCase {
         trips = response.getTrips();
 
         assertEquals("Hillsborough Area Regional Transit_101446", trips[0].getId());
+        assertEquals(1444073087126L, trips[0].getStatus().getLastUpdateTime());
         assertEquals("Hillsborough Area Regional Transit_2415",
                 trips[0].getStatus().getVehicleId());
         assertEquals("Hillsborough Area Regional Transit_4707", trips[0].getStatus().getNextStop());
         assertEquals(420, trips[0].getStatus().getScheduleDeviation());
+        // Potentially interpolated position
         assertEquals(28.063130557136404, trips[0].getStatus().getPosition().getLatitude());
         assertEquals(-82.43457, trips[0].getStatus().getPosition().getLongitude());
+        // Last known location
+        assertEquals(28.065561294555664, trips[0].getStatus().getLastKnownLocation().getLatitude());
+        assertEquals(-82.4344711303711, trips[0].getStatus().getLastKnownLocation().getLongitude());
+        assertEquals(0, trips[0].getStatus().getLastLocationUpdateTime());
     }
 
     public void testNewRequest() {

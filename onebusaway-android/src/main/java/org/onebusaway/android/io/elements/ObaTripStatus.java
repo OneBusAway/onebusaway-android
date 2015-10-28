@@ -151,6 +151,14 @@ public interface ObaTripStatus {
     public Location getLastKnownLocation();
 
     /**
+     * @return The last known real-time location update from the transit vehicle. This is different
+     * from lastUpdateTime in that it reflects the last know location update. An update from a
+     * vehicle might not contain location info, which means this field will not be updated. Will be
+     * zero if we haven’t had a location update from the vehicle.
+     */
+    public long getLastLocationUpdateTime();
+
+    /**
      * @return The last known orientation value received in real-time from the transit vehicle.
      * Can be null.
      */

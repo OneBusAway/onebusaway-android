@@ -131,7 +131,7 @@ public class UIUtilTest extends ObaTestCase {
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
@@ -143,7 +143,7 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
@@ -178,7 +178,7 @@ public class UIUtilTest extends ObaTestCase {
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report problem with trip");
@@ -190,7 +190,7 @@ public class UIUtilTest extends ObaTestCase {
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report problem with trip");
@@ -206,7 +206,7 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
@@ -218,7 +218,7 @@ public class UIUtilTest extends ObaTestCase {
         options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
@@ -233,7 +233,7 @@ public class UIUtilTest extends ObaTestCase {
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report problem with trip");
@@ -245,7 +245,7 @@ public class UIUtilTest extends ObaTestCase {
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
-        assertEquals(options.get(2), "Show trip details");
+        assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report problem with trip");

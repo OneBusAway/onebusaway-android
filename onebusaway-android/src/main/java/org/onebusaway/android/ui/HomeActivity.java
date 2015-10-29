@@ -39,6 +39,7 @@ import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.PreferenceHelp;
 import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.SwipeDownGestureDetector;
 import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
@@ -62,8 +63,10 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -258,12 +261,18 @@ public class HomeActivity extends AppCompatActivity
 
     SlidingPanelController mSlidingPanelController;
 
+    private GestureDetector mGestureDetector;
+
+    View.OnTouchListener mGestureListener;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         mContext = this;
+
+        setupGestureDetector();
 
         setupNavigationDrawer();
 
@@ -968,6 +977,25 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
+    private void setupGestureDetector() {
+        SwipeDownGestureDetector sd = new SwipeDownGestureDetector();
+        sd.setListener(new SwipeDownGestureDetector.Listener() {
+            @Override
+            public void onSwipeDown() {
+                if (mSlidingPanel != null && mSlidingPanel.getPanelState()
+                        == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                    mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+                }
+            }
+        });
+        mGestureDetector = new GestureDetector(this, sd);
+        mGestureListener = new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                return mGestureDetector.onTouchEvent(event);
+            }
+        };
+    }
+
     private void setupNavigationDrawer() {
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -1001,6 +1029,7 @@ public class HomeActivity extends AppCompatActivity
     private void setupSlidingPanel(Bundle bundle) {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
+        mArrivalsListHeaderView.setOnTouchListener(mGestureListener);
         mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
 
         mSlidingPanel.setPanelState(

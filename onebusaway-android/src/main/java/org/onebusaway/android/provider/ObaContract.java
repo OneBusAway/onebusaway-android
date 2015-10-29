@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
- * University of South Florida (sjbarbeau@gmail.com)
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Benjamin Du (bendu@me.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1246,7 +1247,9 @@ public final class ObaContract {
                     Routes.markAsFavorite(context, routeUri, false);
                 }
 
-                if (stopIdInternal != ALL_STOPS) {
+                // If a single stop is unstarred, but isFavorite(...) == true due to starring all
+                // stops, insert exclusion record
+                if (stopIdInternal != ALL_STOPS && isFavorite(context, routeId, headsign, stopId)) {
                     // Insert an exclusion record for this single stop, in case the user is unstarring it
                     // after starring the entire route
                     ContentValues values = new ContentValues();

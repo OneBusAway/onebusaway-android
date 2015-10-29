@@ -43,6 +43,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -61,6 +62,7 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -920,5 +922,16 @@ public final class UIHelp {
         Bitmap out = Bitmap.createBitmap(width, height, source.getConfig());
         out.setPixels(pixels, 0, width, 0, 0, width, height);
         return out;
+    }
+
+    /**
+     * Returns true if the provided touch event was within the provided view
+     *
+     * @return true if the provided touch event was within the provided view
+     */
+    public static boolean isTouchInView(View view, MotionEvent event) {
+        Rect rect = new Rect();
+        view.getGlobalVisibleRect(rect);
+        return rect.contains((int) event.getRawX(), (int) event.getRawY());
     }
 }

@@ -1011,6 +1011,7 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
                 Log.d(TAG, "onPanelSlide, offset " + slideOffset);
+                mArrivalsListHeader.closeStatusPopups();
             }
 
             @Override

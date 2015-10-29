@@ -42,6 +42,7 @@ import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -219,6 +220,8 @@ class ArrivalsListHeader {
 
     private ImageButton mEtaMoreVert1;
 
+    private PopupWindow mPopup1;
+
     private View mEtaSeparator;
 
     // Row 2
@@ -241,6 +244,8 @@ class ArrivalsListHeader {
     private ViewGroup mEtaRealtime2;
 
     private ImageButton mEtaMoreVert2;
+
+    private PopupWindow mPopup2;
 
     // Animations
     private static final float ANIM_PIVOT_VALUE = 0.5f;  // 50%
@@ -647,7 +652,12 @@ class ArrivalsListHeader {
                 mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        setupPopup(mEtaAndMin1, c1, mArrivalInfo.get(i1).getStatusText());
+                        if (mPopup1 != null && mPopup1.isShowing()) {
+                            mPopup1.dismiss();
+                            return;
+                        }
+                        mPopup1 = setupPopup(0, c1, mArrivalInfo.get(i1).getStatusText());
+                        mPopup1.showAsDropDown(mEtaAndMin1);
                     }
                 });
 
@@ -705,8 +715,12 @@ class ArrivalsListHeader {
                     mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            setupPopup(mEtaAndMin2, c2,
-                                    mArrivalInfo.get(i2).getStatusText());
+                            if (mPopup2 != null && mPopup2.isShowing()) {
+                                mPopup2.dismiss();
+                                return;
+                            }
+                            mPopup2 = setupPopup(1, c2, mArrivalInfo.get(i2).getStatusText());
+                            mPopup2.showAsDropDown(mEtaAndMin2);
                         }
                     });
 
@@ -750,16 +764,15 @@ class ArrivalsListHeader {
     /**
      * Sets the popup for the status
      *
-     * @param rl         layout to attach the popup to
+     * @param index      0 if this is for the top ETA row, 1 if it is for the second
      * @param color      color resource id to use for the popup background
      * @param statusText text to show in the status popup
+     * @return a new PopupWindow initialized based on the provided parameters
      */
-    private void setupPopup(RelativeLayout rl, int color, String statusText) {
+    private PopupWindow setupPopup(final int index, int color, String statusText) {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         TextView statusView = (TextView) inflater
-                .inflate(
-                        R.layout.arrivals_list_tv_template_style_b_status_large,
-                        null);
+                .inflate(R.layout.arrivals_list_tv_template_style_b_status_large, null);
         statusView.setBackgroundResource(
                 R.drawable.round_corners_style_b_status);
         GradientDrawable d = (GradientDrawable) statusView.getBackground();
@@ -781,15 +794,25 @@ class ArrivalsListHeader {
         statusView.measure(TextView.MeasureSpec.UNSPECIFIED,
                 TextView.MeasureSpec.UNSPECIFIED);
         statusView.setText(statusText);
-        final PopupWindow p = new PopupWindow(statusView, statusView.getWidth(),
-                statusView
-                        .getHeight());
+        PopupWindow p = new PopupWindow(statusView, statusView.getWidth(), statusView.getHeight());
         p.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         p.setBackgroundDrawable(
                 new ColorDrawable(mResources.getColor(android.R.color.transparent)));
         p.setOutsideTouchable(true);
-        p.showAsDropDown(rl);
+        p.setTouchInterceptor(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                boolean touchInView;
+                if (index == 0) {
+                    touchInView = UIHelp.isTouchInView(mEtaAndMin1, event);
+                } else {
+                    touchInView = UIHelp.isTouchInView(mEtaAndMin2, event);
+                }
+                return touchInView;
+            }
+        });
+        return p;
     }
 
     private void refreshStopFavorite() {
@@ -1199,5 +1222,17 @@ class ArrivalsListHeader {
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mEditNameView.getWindowToken(), 0);
         refresh();
+    }
+
+    /**
+     * Closes any open status popups displayed by the header
+     */
+    public void closeStatusPopups() {
+        if (mPopup1 != null) {
+            mPopup1.dismiss();
+        }
+        if (mPopup2 != null) {
+            mPopup2.dismiss();
+        }
     }
 }

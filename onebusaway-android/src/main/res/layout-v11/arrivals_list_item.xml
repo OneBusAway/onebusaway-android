@@ -14,7 +14,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<!-- Legacy layout for lower than API Level 11 - doesn't use material ripple on touch -->
+<!-- Layout for API Level 11 and higher - uses material ripple on touch -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -28,7 +28,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             card_view:cardUseCompatPadding="true"
-            card_view:cardCornerRadius="4dp">
+            card_view:cardCornerRadius="4dp"
+            android:foreground="?android:attr/selectableItemBackground">
         <ImageView
                 android:id="@+id/route_favorite"
                 android:src="@drawable/ic_toggle_star"

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
-     University of South Florida (sjbarbeau@gmail.com)
+<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,7 +13,6 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<!-- Legacy layout for lower than API Level 11 - doesn't use material ripple on touch -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -28,7 +26,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             card_view:cardUseCompatPadding="true"
-            card_view:cardCornerRadius="4dp">
+            card_view:cardCornerRadius="4dp"
+            android:foreground="?android:attr/selectableItemBackground">
         <ImageView
                 android:id="@+id/route_favorite"
                 android:src="@drawable/ic_toggle_star"

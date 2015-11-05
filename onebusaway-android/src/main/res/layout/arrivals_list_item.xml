@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             card_view:cardUseCompatPadding="true"
             card_view:cardCornerRadius="4dp"
-            android:foreground="?android:attr/selectableItemBackground">
+            android:foreground="?attr/selectableItemBackground">
         <ImageView
                 android:id="@+id/route_favorite"
                 android:src="@drawable/ic_toggle_star"

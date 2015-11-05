@@ -413,6 +413,10 @@
     <!-- Android Maps v2 -->
     <string name="install_google_maps_positive_button">Install</string>
     <string name="please_install_google_maps_dialog_title">Please install Google Maps</string>
+    <string name="no_play_store">Your device doesn\'t have the Play Store installed. Please find
+        another way to install Google Maps.
+    </string>
+    <string name="ok">OK</string>
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Location</string>

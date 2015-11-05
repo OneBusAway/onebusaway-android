@@ -23,6 +23,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 
 /**
@@ -56,7 +57,25 @@ public class ProprietaryMapHelpV2 {
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(Intent.ACTION_VIEW,
                                 Uri.parse(context.getString(R.string.android_maps_v2_market_url)));
-                        context.startActivity(intent);
+                        ResolveInfo info = context.getPackageManager()
+                                .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                        if (info != null) {
+                            context.startActivity(intent);
+                        } else {
+                            // User doesn't have Play Store installed
+                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            builder.setMessage(context.getString(
+                                    R.string.no_play_store));
+                            builder.setCancelable(true);
+                            builder.setPositiveButton(context.getString(R.string.ok),
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            AlertDialog d = builder.create();
+                            d.show();
+                        }
                     }
                 }
         );

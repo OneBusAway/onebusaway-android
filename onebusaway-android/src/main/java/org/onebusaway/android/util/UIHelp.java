@@ -613,6 +613,17 @@ public final class UIHelp {
     }
 
     /**
+     * Returns true if the API level supports our Arrival Info Style B (sort by route) views, false
+     * if it does not.  See #350 and #275.
+     *
+     * @return true if the API level supports our Arrival Info Style B (sort by route) views, false
+     * if it does not
+     */
+    public static boolean canSupportArrivalInfoStyleB() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
+    }
+
+    /**
      * Shows a view, using animation if the platform supports it
      *
      * @param v                 View to show

@@ -21,8 +21,11 @@
               android:title="@string/stop_info_option_refresh"
               android:icon="@drawable/ic_action_navigation_refresh"
               onebusaway:showAsAction="ifRoom"/>
-        <!-- Legacy version of menu - don't include option to sort arrivals on Gingerbread.
-        See #350 and #275. -->
+        <!-- Current version of menu - include option to sort arrivals. See #350 and #275. -->
+        <item android:id="@+id/sort_arrivals"
+              android:title="@string/menu_option_sort_by"
+              android:icon="@drawable/ic_action_content_sort"
+              onebusaway:showAsAction="ifRoom"/>
         <item android:id="@+id/show_on_map"
               android:title="@string/stop_info_option_showonmap"
               android:icon="@drawable/ic_action_location_map"

@@ -962,14 +962,19 @@ public class ArrivalsListFragment extends ListFragment
      *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
      */
     private void instantiateAdapter(int arrivalInfoStyle) {
-        switch (arrivalInfoStyle) {
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
-                mAdapter = new ArrivalsListAdapterStyleA(getActivity());
-                break;
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
-                mAdapter = new ArrivalsListAdapterStyleB(getActivity());
-                ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
-                break;
+        if (UIHelp.canSupportArrivalInfoStyleB()) {
+            switch (arrivalInfoStyle) {
+                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                    mAdapter = new ArrivalsListAdapterStyleA(getActivity());
+                    break;
+                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                    mAdapter = new ArrivalsListAdapterStyleB(getActivity());
+                    ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
+                    break;
+            }
+        } else {
+            // Always use Style A on Gingerbread
+            mAdapter = new ArrivalsListAdapterStyleA(getActivity());
         }
 
         // We present arrivals as cards, so hide the divider in the listview

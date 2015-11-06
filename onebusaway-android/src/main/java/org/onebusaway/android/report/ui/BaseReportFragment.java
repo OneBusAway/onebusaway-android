@@ -15,14 +15,9 @@
 */
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.util.PreferenceHelp;
-
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.widget.Toast;
-
-import edu.usf.cutr.open311client.models.Open311User;
 
 /**
  * @author Cagri Cetin
@@ -37,11 +32,6 @@ public class BaseReportFragment extends Fragment {
      */
     protected View findViewById(int id) {
         return getActivity().findViewById(id);
-    }
-
-    protected Open311User getOpen311User() {
-        return new Open311User(PreferenceHelp.getString(ReportConstants.PREF_NAME), PreferenceHelp.getString(ReportConstants.PREF_LASTNAME),
-                PreferenceHelp.getString(ReportConstants.PREF_EMAIL), PreferenceHelp.getString(ReportConstants.PREF_PHONE));
     }
 
     protected void createToastMessage(String message) {

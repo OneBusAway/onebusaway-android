@@ -33,20 +33,22 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class ReportTripProblemFragment extends ReportProblemFragmentBase {
-    //private static final String TAG = "ReportTripProblemFragment";
-
     public static final String TRIP_ID = ".TripId";
 
     public static final String STOP_ID = ".StopId";
 
     public static final String TRIP_NAME = ".TripName";
 
-    public static final String TRIP_SERVICE_DATE = ".ServiceDate";
+    private static final String SHOW_TRIP_NAME = ".ShowTripName";
+
+    private static final String TRIP_SERVICE_DATE = ".ServiceDate";
 
     public static final String TRIP_VEHICLE_ID = ".VehicleId";
 
@@ -60,7 +62,12 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     public static final String TAG = "ReportTripProblemFragment";
 
-    static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
+    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
+        show(activity, arrival, null, true);
+    }
+
+    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival,
+                            Integer containerViewId, boolean showTripName) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -70,13 +77,18 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         args.putString(TRIP_NAME, arrival.getHeadsign());
         args.putLong(TRIP_SERVICE_DATE, arrival.getServiceDate());
         args.putString(TRIP_VEHICLE_ID, arrival.getVehicleId());
+        args.putBoolean(SHOW_TRIP_NAME, showTripName);
 
         // Create the list fragment and add it as our sole content.
         ReportTripProblemFragment content = new ReportTripProblemFragment();
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(android.R.id.content, content);
+        if (containerViewId == null) {
+            ft.replace(android.R.id.content, content, TAG);
+        } else {
+            ft.replace(containerViewId, content, TAG);
+        }
         ft.addToBackStack(null);
         ft.commit();
     }
@@ -99,6 +111,12 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         final TextView tripName = (TextView) view.findViewById(R.id.trip_name);
         tripName.setText(MyTextUtils.toTitleCase(args.getString(TRIP_NAME)));
 
+        boolean showStopName = args.getBoolean(SHOW_TRIP_NAME, true);
+        if (!showStopName){
+            // Hide trip name header
+            view.findViewById(R.id.trip_info_header).setVisibility(View.GONE);
+        }
+
         // TODO: Switch this based on the trip mode
         final int tripArray = R.array.report_trip_problem_code_bus;
 
@@ -116,17 +134,14 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
         // On vehicle
         mUserOnVehicle = (CheckBox) view.findViewById(R.id.report_problem_onvehicle);
-        final View label = view.findViewById(R.id.report_problem_uservehicle_label);
-        mUserVehicle = (TextView) view.findViewById(R.id.report_problem_uservehicle);
+        mUserVehicle = (EditText) view.findViewById(R.id.report_problem_uservehicle);
         // Disabled by default
-        label.setEnabled(false);
         mUserVehicle.setEnabled(false);
 
         mUserOnVehicle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 boolean checked = mUserOnVehicle.isChecked();
-                label.setEnabled(checked);
                 mUserVehicle.setEnabled(checked);
             }
         });
@@ -155,6 +170,17 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
                 ObaReportProblemWithTripRequest.OTHER
         };
+
+        setupIconColors();
+    }
+
+    private void setupIconColors() {
+        ((ImageView) getActivity().findViewById(R.id.ic_header_location)).setColorFilter(
+                getResources().getColor(android.R.color.white));
+        ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) getActivity().findViewById(R.id.ic_action_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
     }
 
     @Override

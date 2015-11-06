@@ -42,17 +42,12 @@ public class RegionValidateDialog extends DialogFragment {
         message.append(getResources().getString(R.string.region_dialog_Message2, regionName)).append("?");
 
         return new AlertDialog.Builder(getActivity())
-                // Set Dialog Icon
-                .setIcon(R.drawable.ic_action_alert_error)
-                .setTitle(R.string.region_dialog_title)
                 .setMessage(message.toString())
-
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         ((ReportActivity) getActivity()).createIssueTypeListFragment();
                     }
                 })
-
                 .setNegativeButton("NO", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         closeSuperActivity();

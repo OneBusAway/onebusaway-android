@@ -278,9 +278,6 @@ public class HomeActivity extends AppCompatActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
-
-        // TODO: remove following
-        InfrastructureIssueActivity.start(this, getIntent());
     }
 
     @Override
@@ -828,7 +825,7 @@ public class HomeActivity extends AppCompatActivity
         if (mFocusedStop != null){
             ReportActivity.start(this, mFocusedStopId, mFocusedStop.getLatitude(), mFocusedStop.getLongitude());
         } else {
-            Location loc = LocationUtil.getDefaultSearchCenter();
+            Location loc = Application.getLastKnownLocation(this, mGoogleApiClient);
             ReportActivity.start(this, null, loc.getLatitude(), loc.getLongitude());
         }
     }

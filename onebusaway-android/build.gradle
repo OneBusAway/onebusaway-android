@@ -298,5 +298,5 @@ dependencies {
     googleCompile 'com.google.android.gms:play-services-maps:8.3.0'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile('com.amazon.android:amazon-maps-api:2.0')
-    compile 'edu.usf.cutr:open311client:1.0.0'
+    compile 'edu.usf.cutr:open311client:1.0.1'
 }

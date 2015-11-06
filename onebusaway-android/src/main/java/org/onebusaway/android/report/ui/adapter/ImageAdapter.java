@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com)
+* Copyright (C) 2015 University of South Florida (sjbarbeau@gmail.com)
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -30,11 +30,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-/**
- * @author Cagri Cetin
- */
 public class ImageAdapter extends PagerAdapter {
-    // Declare Variables
     Context context;
     int[] images;
     String[] texts;
@@ -58,7 +54,6 @@ public class ImageAdapter extends PagerAdapter {
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-
         ImageView imageView;
 
         inflater = (LayoutInflater) context
@@ -72,10 +67,32 @@ public class ImageAdapter extends PagerAdapter {
         ((TextView) itemView.findViewById(R.id.rsp_textView)).setText(html);
 
         Bitmap btm = BitmapFactory.decodeResource(context.getResources(), images[position]);
+        btm = scaleImageIfNecessary(btm);
         imageView.setImageBitmap(btm);
         container.addView(itemView);
 
         return itemView;
+    }
+
+    private Bitmap scaleImageIfNecessary(Bitmap btm) {
+        // 4K screen sizes
+        int maxWidth = 1440;
+        int maxHeight = 2560;
+
+        int imageWidth = btm.getWidth();
+        int imageHeight = btm.getHeight();
+
+        // Calculate scale ratio
+        double scaleRatioDouble = (double) imageHeight / maxHeight;
+        int scaleRatio = (int) Math.ceil(scaleRatioDouble);
+
+        if (scaleRatio == 1 || imageHeight * imageWidth < maxHeight * maxWidth) {
+            // Don't scale image if it is not necessary
+            return btm;
+        } else {
+            return Bitmap.createScaledBitmap(btm, btm.getWidth() / scaleRatio,
+                    btm.getHeight() / scaleRatio, true);
+        }
     }
 
     private Spanned convertStringToHtml(String text) {

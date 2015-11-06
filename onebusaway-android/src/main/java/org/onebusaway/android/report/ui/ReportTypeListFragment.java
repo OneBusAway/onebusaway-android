@@ -93,10 +93,12 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
         if (getString(R.string.rt_infrastructure_problem).equals(rti.getTitle())) {
             ((ReportActivity) getActivity()).createInfrastructureIssueActivity();
         } else if (getString(R.string.rt_stop_problem).equals(rti.getTitle())) {
-            ((ReportActivity) getActivity()).createBusStopTutorialFragment();
+            ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
+                    getString(R.string.ri_service_stop));
         } else if (getString(R.string.rt_arrival_problem).equals(rti.getTitle())) {
             // Report bus stop issue
-            ((ReportActivity) getActivity()).createBusStopTutorialFragment();
+            ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
+                    getString(R.string.ri_service_trip));
         } else if (getString(R.string.rt_app_feedback).equals(rti.getTitle())) {
             // Send App feedback
             ObaRegion region = Application.get().getCurrentRegion();

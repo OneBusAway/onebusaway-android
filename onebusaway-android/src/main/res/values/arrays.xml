@@ -63,7 +63,7 @@
         <item>Sunday</item>
     </string-array>
     <string-array name="report_stop_problem_code">
-        <item>Choose one</item>
+        <item>Choose one problem</item>
         <item>Stop name is wrong</item>
         <item>Stop number is wrong</item>
         <item>Location is wrong</item>
@@ -71,7 +71,7 @@
         <item>Something else</item>
     </string-array>
     <string-array name="report_trip_problem_code_bus">
-        <item>Choose one</item>
+        <item>Choose one problem</item>
         <item>The bus never came</item>
         <item>It came earlier than predicted</item>
         <item>It came later than predicted</item>
@@ -177,6 +177,12 @@
         <item>Click on the bus stop, that you want to report.</item>
         <item>Then select report problem section from options.</item>
         <item>Submit your bus stop related problem.</item>
+    </string-array>
+
+    <string-array name="report_transit_category_keywords">
+        <item>transit</item>
+        <item>bus</item>
+        <item>stop</item>
     </string-array>
 
     <array name="report_stop_issue_tutorial_images">

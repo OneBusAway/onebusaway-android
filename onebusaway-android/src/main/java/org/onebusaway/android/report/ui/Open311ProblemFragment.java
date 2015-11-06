@@ -23,6 +23,7 @@ import org.onebusaway.android.report.connection.ServiceRequestTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
+import org.onebusaway.android.util.PreferenceHelp;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -100,13 +101,16 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private Service mService;
 
-    //Captured image url
+    // Captured image url
     private Uri mCapturedImageURI;
 
-    //Open311 service description result for selected service code
+    // Open311 service description result for selected service code
     private ServiceDescription serviceDescription;
 
+    // private
+
     public static final String TAG = "Open311ProblemFragment";
+
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service) {
@@ -138,6 +142,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         super.onViewCreated(view, savedInstanceState);
 
         setupViews();
+
+        setupIconColors();
+
+        setUpContactInfoViews();
 
         callServiceDescription();
     }
@@ -176,6 +184,19 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                         return true;
                     }
                 });
+    }
+
+    private void setupIconColors() {
+        ((ImageView) findViewById(R.id.ri_ic_app_feedback)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) findViewById(R.id.ri_ic_image_picker)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) findViewById(R.id.ri_ic_username)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) findViewById(R.id.ri_ic_customer_service_email)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) findViewById(R.id.ri_ic_customer_service_phone)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
     }
 
     private void callServiceDescription() {
@@ -223,11 +244,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-        final int id = item.getItemId();
-        if (id == R.id.user_info) {
-            createOrRemoveContactInfoFragment();
-        } else if (id == R.id.report_problem_send) {
+        if (item.getItemId() == R.id.report_problem_send) {
             submitReport();
         }
         return super.onOptionsItemSelected(item);
@@ -238,7 +255,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == ReportConstants.GALLERY_INTENT && resultCode == Activity.RESULT_OK &&
-                null != data) {
+                data != null) {
             mCapturedImageURI = data.getData();
             String[] filePathColumn = {MediaStore.Images.Media.DATA};
             Cursor cursor = getActivity().getContentResolver().query(mCapturedImageURI,
@@ -248,6 +265,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
             issueImage.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+        } else if (requestCode == ReportConstants.CAPTURE_PICTURE_INTENT &&
+                resultCode == Activity.RESULT_OK && data != null) {
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap) extras.get("data");
+            issueImage.setImageBitmap(imageBitmap);
         }
     }
 
@@ -255,13 +277,16 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      * Prepare submit forms and submit report
      */
     private void submitReport() {
-        //Prepare issue description
+        // Save the open311 user
+        saveOpen311User();
+
+        // Prepare issue description
         String description = ((EditText) getActivity().findViewById(R.id.ri_editTextDesc)).getText().toString();
         description = description + getBusStopInfo();
 
         final TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
 
-        Open311User open311User = getOpen311User();
+        Open311User open311User = getOpen311UserFromUI();
 
         IssueLocationHelper issueLocationHelper = getIssueLocationHelper();
 
@@ -299,11 +324,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             srt.execute();
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
-
-            if (errorCode == Open311Validator.PROBLEM_CODE_USER_NAME ||
-                    errorCode == Open311Validator.PROBLEM_CODE_USER_LASTNAME ||
-                    errorCode == Open311Validator.PROBLEM_CODE_USER_EMAIL)
-                createOrRemoveContactInfoFragment();
         }
     }
 
@@ -397,9 +417,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         String fileName = "temp.jpg";
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, fileName);
-        mCapturedImageURI = getActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        mCapturedImageURI = getActivity().getContentResolver().insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
+//        intent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
         startActivityForResult(intent, ReportConstants.CAPTURE_PICTURE_INTENT);
     }
 
@@ -446,6 +467,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_text_item, null, false);
 
+        ((ImageView) layout.findViewById(R.id.ri_ic_question_answer)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
 
         LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         Spannable desc = new SpannableString(open311Attribute.getDescription());
@@ -479,6 +502,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_single_value_list_item, null, false);
 
             LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
+
+            ((ImageView) layout.findViewById(R.id.ri_ic_radio)).setColorFilter(
+                    getResources().getColor(R.color.material_gray));
 
             Spannable word = new SpannableString(open311Attribute.getDescription());
             ((TextView) layout.findViewById(R.id.risvli_textView)).setText(word);
@@ -519,6 +545,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
             LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
 
+            ((ImageView) layout.findViewById(R.id.ri_ic_checkbox)).setColorFilter(
+                    getResources().getColor(R.color.material_gray));
+
             Spannable word = new SpannableString(open311Attribute.getDescription());
             ((TextView) layout.findViewById(R.id.rimvli_textView)).setText(word);
 
@@ -555,6 +584,59 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
         linear.addView(layout);
+
+        ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+    }
+
+    private void setUpContactInfoViews() {
+        Open311User open311User = getOpen311UserFromSharedPref();
+        if (open311User.getName() != null)
+            ((EditText) findViewById(R.id.rici_name_editText)).setText(open311User.getName());
+        if (open311User.getLastName() != null)
+            ((EditText) findViewById(R.id.rici_lastname_editText)).setText(open311User.getLastName());
+        if (open311User.getEmail() != null)
+            ((EditText) findViewById(R.id.rici_email_editText)).setText(open311User.getEmail());
+        if (open311User.getPhone() != null)
+            ((EditText) findViewById(R.id.rici_phone_editText)).setText(open311User.getPhone());
+    }
+
+    /**
+     * Get open311 user from shared preferences
+     *
+     * @return Open311User
+     */
+    private Open311User getOpen311UserFromSharedPref() {
+        return new Open311User(PreferenceHelp.getString(ReportConstants.PREF_NAME),
+                PreferenceHelp.getString(ReportConstants.PREF_LASTNAME),
+                PreferenceHelp.getString(ReportConstants.PREF_EMAIL),
+                PreferenceHelp.getString(ReportConstants.PREF_PHONE));
+    }
+
+    /**
+     * Get open311 user from fields on the screen
+     *
+     * @return Open311User
+     */
+    private Open311User getOpen311UserFromUI() {
+        String name = ((EditText) findViewById(R.id.rici_name_editText)).getText().toString();
+        String lastName = ((EditText) findViewById(R.id.rici_lastname_editText)).getText().toString();
+        String email = ((EditText) findViewById(R.id.rici_email_editText)).getText().toString();
+        String phone = ((EditText) findViewById(R.id.rici_phone_editText)).getText().toString();
+
+        return new Open311User(name, lastName, email, phone);
+    }
+
+    private void saveOpen311User() {
+        String name = ((EditText) findViewById(R.id.rici_name_editText)).getText().toString();
+        String lastName = ((EditText) findViewById(R.id.rici_lastname_editText)).getText().toString();
+        String email = ((EditText) findViewById(R.id.rici_email_editText)).getText().toString();
+        String phone = ((EditText) findViewById(R.id.rici_phone_editText)).getText().toString();
+
+        PreferenceHelp.saveString(ReportConstants.PREF_NAME, name);
+        PreferenceHelp.saveString(ReportConstants.PREF_LASTNAME, lastName);
+        PreferenceHelp.saveString(ReportConstants.PREF_EMAIL, email);
+        PreferenceHelp.saveString(ReportConstants.PREF_PHONE, phone);
     }
 
     private IssueLocationHelper getIssueLocationHelper() {
@@ -567,10 +649,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private void showProgress(Boolean visible) {
         ((InfrastructureIssueActivity) getActivity()).showProgress(visible);
-    }
-
-    private void createOrRemoveContactInfoFragment() {
-        ((InfrastructureIssueActivity) getActivity()).createOrRemoveContactInfoFragment();
     }
 
     public void setOpen311(Open311 open311) {

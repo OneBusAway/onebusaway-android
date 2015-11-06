@@ -1,14 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C)  University of South Florida (cagricetin@mail.usf.edu)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:focusableInTouchMode="true"
+              android:background="@color/material_background"
               android:orientation="vertical">
 
     <!-- Header aligned to top -->
     <RelativeLayout
             android:id="@+id/ri_info_header"
             android:layout_width="match_parent"
+            android:background="@color/theme_primary_dark"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:animateLayoutChanges="true"
@@ -32,6 +48,39 @@
                 android:text="Fixed Header"
                 android:layout_margin="4dp"
                 android:id="@+id/ri_info_text"
+                android:textColor="@android:color/white"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_centerVertical="true" android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
+    <RelativeLayout
+            android:id="@+id/bus_stop_header"
+            android:layout_width="match_parent"
+            android:background="@color/theme_primary_dark"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:animateLayoutChanges="true"
+            android:gravity="center"
+            android:visibility="gone">
+
+        <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_drawer_maps_place"
+                android:id="@+id/ri_header_location"
+                android:layout_alignParentTop="true"
+                android:layout_toLeftOf="@+id/ri_bus_stop_text"
+                android:layout_toStartOf="@+id/ri_bus_stop_text"
+                android:layout_margin="4dp"
+                />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fixed Header"
+                android:layout_margin="4dp"
+                android:id="@+id/ri_bus_stop_text"
                 android:textColor="@android:color/white"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textSize="16sp"
@@ -66,11 +115,10 @@
                         style="@style/MaterialLayout"
                         android:orientation="horizontal">
 
-                    <ImageView android:layout_width="24dp"
-                               android:layout_height="24dp"
+                    <ImageView style="@style/MaterialSmallIcon"
                                android:layout_gravity="center|left"
-                               android:scaleType="fitXY"
-                               android:src="@drawable/ic_location"/>
+                               android:src="@drawable/ic_drawer_maps_place"
+                               android:id="@+id/ri_ic_location"/>
 
                     <EditText
                             android:layout_width="fill_parent"
@@ -88,18 +136,20 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         style="@style/MaterialLayout"
+                        android:id="@+id/ri_spinnerView"
+                        android:visibility="gone"
                         android:orientation="horizontal">
 
-                    <ImageView android:layout_width="24dp"
-                               android:layout_height="24dp"
+                    <ImageView style="@style/MaterialSmallIcon"
                                android:layout_gravity="center|left"
-                               android:scaleType="fitXY"
-                               android:src="@drawable/ic_category"/>
+                               android:src="@drawable/ic_category"
+                               android:id="@+id/ri_ic_category"/>
                     <Spinner
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            style="@style/MaterialItem"
-                            android:minWidth="220dp"
+                            android:layout_marginLeft="56dp"
+                            android:layout_gravity="center_vertical"
+                            style="@style/Base.Widget.AppCompat.Spinner.Underlined"
                             android:id="@+id/ri_spinnerServices"/>
 
                 </FrameLayout>

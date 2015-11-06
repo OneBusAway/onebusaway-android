@@ -30,6 +30,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+/**
+ * TutorialFragment is a general fragment that shows tutorial images
+ * from given image and string resources
+ *
+ * Example usage:
+ *
+ * TutorialFragment tutorialFragment = new TutorialFragment();
+ * Bundle bundle = new Bundle();
+ * // Set string resources from arrays
+ * bundle.putInt(TutorialFragment.STRING_RESOURCE_ID, R.array.report_stop_issue_tutorial_desc);
+ * * // Set image resources from arrays
+ * bundle.putInt(TutorialFragment.IMAGE_RESOURCE_ID, R.array.report_stop_issue_tutorial_images);
+ * tutorialFragment.setArguments(bundle);
+ *
+ *
+ */
 public class TutorialFragment extends BaseReportFragment implements
         View.OnClickListener, ViewPager.OnPageChangeListener {
 
@@ -43,14 +59,18 @@ public class TutorialFragment extends BaseReportFragment implements
     private ViewPager viewPager;
     int index = 0;
 
+    /**
+     * Array of resources
+     */
     private int stringArrayResourceId;
+
     private int imageArrayResourceId;
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         stringArrayResourceId = getArguments().getInt(STRING_RESOURCE_ID, -1);
+
         imageArrayResourceId = getArguments().getInt(IMAGE_RESOURCE_ID, -1);
 
         return inflater.inflate(R.layout.report_stop_problem_tutorial, null, false);
@@ -83,7 +103,7 @@ public class TutorialFragment extends BaseReportFragment implements
         PagerAdapter adapter = new ImageAdapter(getActivity(), images, texts);
         viewPager.setOffscreenPageLimit(3);
         viewPager.setAdapter(adapter);
-        viewPager.setOnPageChangeListener(this);
+        viewPager.addOnPageChangeListener(this);
         pagerDone = ((Button) findViewById(R.id.pager_button_done));
         pagerNext = ((Button) findViewById(R.id.pager_button_next));
         pagerPrev = ((Button) findViewById(R.id.pager_button_prev));
@@ -146,7 +166,6 @@ public class TutorialFragment extends BaseReportFragment implements
     }
 
     private void updateNavigationButtons(int i, int size) {
-
         if (i != size - 1 && i == 0){
             pagerPrev.setVisibility(View.GONE);
             pagerDone.setVisibility(View.GONE);
@@ -161,5 +180,4 @@ public class TutorialFragment extends BaseReportFragment implements
             pagerNext.setVisibility(View.VISIBLE);
         }
     }
-
 }

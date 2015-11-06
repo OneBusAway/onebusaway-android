@@ -15,8 +15,6 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
-import org.onebusaway.android.R;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -39,10 +37,7 @@ public class ReportSuccessDialog extends DialogFragment {
     @NonNull
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-
         return new AlertDialog.Builder(getActivity())
-                .setIcon(R.drawable.ic_action_alert_error)
-                .setTitle(R.string.region_dialog_title)
                 .setMessage(Open311Constants.M_REPORT_SUCCESS)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {

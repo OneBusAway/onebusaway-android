@@ -463,7 +463,9 @@ public class ArrivalsListFragment extends ListFragment
     public void setHeader(ArrivalsListHeader header, View headerView) {
         mHeader = header;
         mHeaderView = headerView;
-        mHeader.initView(mHeaderView);
+        if (header != null) {
+            mHeader.initView(mHeaderView);
+        }
         mExternalHeader = true;
     }
 

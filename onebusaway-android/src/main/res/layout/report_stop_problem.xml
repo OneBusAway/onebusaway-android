@@ -13,79 +13,109 @@
      limitations under the License.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="@android:color/white">
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="@color/material_background">
 
     <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-        <LinearLayout
-            style="@style/HeaderItem"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-
-            <TextView
-                android:id="@+id/stop_name"
-                style="@style/HeaderText"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="4dp">
+            android:layout_height="wrap_content">
 
-            <TextView
-                style="@style/FormLabel"
-                android:text="@string/report_problem_code"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"></TextView>
-
-            <Spinner
-                android:id="@+id/report_problem_code"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"></Spinner>
-
-            <TextView
-                style="@style/FormLabel"
-                android:text="@string/report_problem_comment"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"></TextView>
-
-            <EditText
-                android:id="@+id/report_problem_comment"
-                android:hint="@string/report_problem_comment_hint"
-                android:layout_width="fill_parent"
+        <!-- Header aligned to top -->
+        <RelativeLayout
+                android:id="@+id/stop_info_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minLines="4"></EditText>
+                android:background="@color/theme_primary_dark"
+                android:layout_alignParentTop="true"
+                android:animateLayoutChanges="true"
+                android:layout_marginBottom="16dp"
+                android:gravity="center">
 
-            <!--
+            <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:id="@+id/ic_header_location"
+                    android:src="@drawable/ic_drawer_maps_place"
+                    android:layout_alignParentTop="true"
+                    android:layout_toLeftOf="@+id/ri_info_text"
+                    android:layout_toStartOf="@+id/ri_info_text"
+                    android:layout_margin="4dp"
+                    />
+
             <TextView
-                style="@style/FormLabel"
-                android:text="@string/report_problem_email"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-            </TextView>
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fixed Header"
+                    android:id="@+id/stop_name"
+                    android:textColor="@android:color/white"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_alignBottom="@+id/ic_header_location"
+                    android:layout_toRightOf="@+id/ic_header_location"
+                    android:layout_toEndOf="@+id/ic_header_location"/>
+        </RelativeLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_gravity="center|left"
+                       android:src="@drawable/ic_app_feedback"
+                       android:id="@+id/ic_category"/>
+            <Spinner
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="56dp"
+                    android:layout_gravity="center_vertical"
+                    style="@style/Base.Widget.AppCompat.Spinner.Underlined"
+                    android:id="@+id/report_problem_code"/>
+
+        </FrameLayout>
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
             <EditText
-                android:id="@+id/report_problem_email"
-                android:hint="@string/report_problem_email_hint"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-            </EditText>
-            -->
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:id="@+id/report_problem_comment"
+                    android:hint="@string/report_problem_comment_hint"
+                    android:maxLines="4"
+                    android:lines="2"
+                    style="@style/MaterialItem"/>
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayoutTextView"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:src="@drawable/ic_action_info"
+                       android:id="@+id/ic_action_info"/>
 
             <TextView
-                style="@style/FormLabel"
-                android:text="@string/report_problem_hint"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"></TextView>
-        </LinearLayout>
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/MaterialItem"
+                    android:text="@string/report_problem_hint"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@android:color/black"
+                    />
+
+        </FrameLayout>
     </LinearLayout>
 </ScrollView>

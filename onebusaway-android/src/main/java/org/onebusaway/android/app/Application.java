@@ -438,8 +438,8 @@ public class Application extends android.app.Application {
 
     private void initOpen311(ObaRegion region) {
         if (BuildConfig.DEBUG) {
-            Open311Manager.setDebugMode(true);
-            Open311Manager.setDryRun(true);
+            Open311Manager.getSettings().setDebugMode(true);
+            Open311Manager.getSettings().setDryRun(true);
         }
 
         if (region != null && region.getOpen311Servers() != null) {

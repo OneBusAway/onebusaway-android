@@ -31,7 +31,7 @@ public class ReportConstants {
     public static final String STATIC_SERVICE_STOP = "stop";
     public static final String STATIC_SERVICE_TRIP = "trip";
 
-    public static final String ISSUE_GROUP_TRANSIT = "transit";
+    public static final String ISSUE_GROUP_TRANSIT = "Transit";
 
     //Preferences keys
     public static final String PREF_NAME = "reporterName";

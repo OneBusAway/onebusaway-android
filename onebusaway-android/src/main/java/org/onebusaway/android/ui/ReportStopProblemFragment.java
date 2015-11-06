@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +42,8 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     public static final String STOP_ID = ".StopId";
 
     public static final String STOP_NAME = ".StopName";
+
+    private static final String SHOW_STOP_NAME = ".ShowStopName";
 
     public static final String CODE = ".Code";
 
@@ -53,12 +56,19 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
     }
 
     public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
+        show(activity, stop, containerViewId, true);
+    }
+
+    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
+                            boolean showStopName) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
         args.putString(STOP_ID, stop.getId());
         // We don't use the stop name map here...we want the actual stop name.
         args.putString(STOP_NAME, stop.getName());
+
+        args.putBoolean(SHOW_STOP_NAME, showStopName);
 
         // Create the list fragment and add it as our sole content.
         ReportStopProblemFragment content = new ReportStopProblemFragment();
@@ -90,6 +100,12 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
         stopName.setText(MyTextUtils.toTitleCase(args.getString(STOP_NAME)));
 
+        boolean showStopName = args.getBoolean(SHOW_STOP_NAME, true);
+
+        if (!showStopName){
+            // Hide stop name header
+            view.findViewById(R.id.stop_info_header).setVisibility(View.GONE);
+        }
         //
         // The code spinner
         //
@@ -119,6 +135,18 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
                 ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
                 ObaReportProblemWithStopRequest.OTHER
         };
+
+        // Dynamically change the color of the small icons
+        setupIconColors();
+    }
+
+    private void setupIconColors() {
+        ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) getActivity().findViewById(R.id.ic_action_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) getActivity().findViewById(R.id.ic_header_location)).setColorFilter(
+                getResources().getColor(android.R.color.white));
     }
 
     @Override

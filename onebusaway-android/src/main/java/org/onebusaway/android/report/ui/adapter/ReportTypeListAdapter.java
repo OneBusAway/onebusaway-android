@@ -15,6 +15,9 @@
 */
 package org.onebusaway.android.report.ui.adapter;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.report.ui.model.ReportTypeItem;
+
 import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -23,9 +26,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.report.ui.model.ReportTypeItem;
 
 import java.util.List;
 

@@ -41,7 +41,7 @@ public class IssueLocationHelper {
          * Called when the marker is going to be cleared from the map
          * @param markerId the created marker id from BaseMapFragment.addMarker method
          */
-        public void onClearMarker(int markerId);
+        void onClearMarker(int markerId);
     }
 
     public IssueLocationHelper(Location markerPosition, Callback callback) {

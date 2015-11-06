@@ -109,7 +109,7 @@ public class ReportActivity extends BaseReportActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed();
+                finish();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -126,8 +126,11 @@ public class ReportActivity extends BaseReportActivity {
     }
 
     public void createInfrastructureIssueActivity() {
-        finish();
         InfrastructureIssueActivity.start(this, getIntent());
+    }
+
+    public void createInfrastructureIssueActivity(String serviceKeyword) {
+        InfrastructureIssueActivity.startWithService(this, getIntent(), serviceKeyword);
     }
 
     public void createCustomerServiceFragment() {
@@ -144,13 +147,13 @@ public class ReportActivity extends BaseReportActivity {
         setFragment(tutorialFragment, R.id.r_fragment_layout).commit();
     }
 
-    @Override
-    public void onBackPressed() {
-        int count = getSupportFragmentManager().getBackStackEntryCount();
-        if (count == 0) {
-            super.onBackPressed();
-        } else {
-            getSupportFragmentManager().popBackStack();
-        }
-    }
+//    @Override
+//    public void onBackPressed() {
+//        int count = getSupportFragmentManager().getBackStackEntryCount();
+//        if (count == 0) {
+//            super.onBackPressed();
+//        } else {
+//            getSupportFragmentManager().popBackStack();
+//        }
+//    }
 }

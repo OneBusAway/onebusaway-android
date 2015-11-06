@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:onebusaway="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/user_info"
-        android:title="@string/ri_action_title"
-        android:icon="@drawable/ic_customer_info"
-        android:orderInCategory="1"
-        onebusaway:showAsAction="always" />
-
     <item android:id="@+id/report_problem_send"
         android:title="@string/report_problem_send"
         android:icon="@drawable/ic_action_social_send_now"

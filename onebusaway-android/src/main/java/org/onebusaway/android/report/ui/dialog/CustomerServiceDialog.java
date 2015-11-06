@@ -110,7 +110,7 @@ public class CustomerServiceDialog extends DialogFragment implements
                     getColor(R.color.navdrawer_icon_tint_selected));
 
             ImageButton emailButton = (ImageButton) view.findViewById(R.id.ricsi_email);
-            webButton.setColorFilter(getActivity().getResources().
+            emailButton.setColorFilter(getActivity().getResources().
                     getColor(R.color.navdrawer_icon_tint_selected));
 
             if (TextUtils.isEmpty(agency.getEmail())) {

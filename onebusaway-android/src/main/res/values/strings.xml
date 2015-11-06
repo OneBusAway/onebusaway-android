@@ -233,7 +233,7 @@
     <string name="stop_info_frequency_approximate">~</string>
 
     <!-- Stop Details -->
-    <string name="stop_details_code">Stop #%1$s</string>
+    <string name="stop_details_code">Stop # %1$s</string>
 
     <!-- Arrival Time Style B -->
     <string name="arrival_estimated">Real-time Estimate</string>

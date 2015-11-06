@@ -98,9 +98,6 @@
     <string name="main_option_viewtrips">My Reminders</string>
     <string name="main_option_help">Help</string>
     <string name="main_option_preferences">Settings</string>
-    <string name="main_arrival_info">Show arrivals</string>
-    <string name="main_show_routes">Show routes</string>
-    <string name="main_hide_routes">Hide routes</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
@@ -426,10 +423,6 @@
     <string name="preferences_category_about">About</string>
     <string name="preferences_region_title">Your region</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>
-    <string name="preferences_auto_refresh_regions_title">Auto-refresh region list</string>
-    <string name="preferences_auto_refresh_regions_summary">Automatically updates region info
-        weekly
-    </string>
     <string name="preferences_auto_select_region_title">Automatic region</string>
     <string name="preferences_auto_select_region_summary">Set your current transit region based on
         your current location
@@ -445,7 +438,6 @@
         negative arrival times
     </string>
 
-    <string name="preferences_arrival_info_style_title">Arrival times style</string>
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
     <string name="preferences_arrival_info_style_options_b">Cards</string>
 

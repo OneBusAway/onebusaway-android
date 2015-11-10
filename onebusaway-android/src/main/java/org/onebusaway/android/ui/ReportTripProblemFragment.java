@@ -179,7 +179,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
                 getResources().getColor(android.R.color.white));
         ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
-        ((ImageView) getActivity().findViewById(R.id.ic_action_info)).setColorFilter(
+        ((ImageView) getActivity().findViewById(R.id.ic_trip_info)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
     }
 

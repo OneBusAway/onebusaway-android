@@ -16,6 +16,7 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.report.ui.adapter.ImageAdapter;
 
 import android.content.res.TypedArray;
@@ -79,6 +80,7 @@ public class TutorialFragment extends BaseReportFragment implements
     @Override
     public void onStart() {
         super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
     }
 
     @Override

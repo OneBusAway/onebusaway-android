@@ -17,6 +17,7 @@ package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.report.ui.adapter.ReportTypeListAdapter;
 import org.onebusaway.android.report.ui.model.ReportTypeItem;
@@ -80,6 +81,12 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
         ReportTypeListAdapter adapter = new ReportTypeListAdapter(getActivity(), reportTypeItems);
         setListAdapter(adapter);
         getListView().setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
     }
 
     private Boolean isEmailDefined() {

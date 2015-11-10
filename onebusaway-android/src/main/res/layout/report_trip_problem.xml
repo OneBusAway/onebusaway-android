@@ -139,7 +139,7 @@
 
             <ImageView style="@style/MaterialSmallIcon"
                        android:src="@drawable/ic_action_info"
-                       android:id="@+id/ic_action_info"/>
+                       android:id="@+id/ic_trip_info"/>
 
             <TextView
                     android:layout_width="wrap_content"
@@ -147,7 +147,6 @@
                     style="@style/MaterialItem"
                     android:text="@string/report_problem_hint"
                     android:textSize="15sp"
-                    android:textStyle="bold"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:textColor="@android:color/black"
                     />

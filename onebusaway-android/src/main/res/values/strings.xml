@@ -490,7 +490,6 @@
     <string name="region_dialog_Message2"> Are you in %1$s</string>
     <string name="report_dialog_out_of_region_message"> Please select a bus stop.</string>
     <string name="report_dialog_trip"> Please select a trip.</string>
-    <string name="report_dialog_categories">Please select an issue category.</string>
 
     <!-- report issue screen-->
     <string name="ri_title">Issue Summary</string>
@@ -510,6 +509,7 @@
     <string name="ri_user_lastname">Last Name (required)</string>
     <string name="ri_user_email">Email (required)</string>
     <string name="ri_user_phone">Phone Number</string>
+    <string name="ri_no_trip">No arrival times, please check back later.</string>
 
     <!-- report issue types screen-->
     <string name="rt_infrastructure_problem">Report an Infrastructure Issue</string>

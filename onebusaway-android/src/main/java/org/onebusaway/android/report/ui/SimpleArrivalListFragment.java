@@ -122,16 +122,26 @@ public class SimpleArrivalListFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader, ObaArrivalInfoResponse data) {
-        ObaArrivalInfo[] info = null;
+        ObaArrivalInfo[] info;
         if (data.getCode() == ObaApi.OBA_OK) {
             info = data.getArrivalInfo();
-            loadArrivalList(info, data.getCurrentTime());
+            if (info.length > 0) {
+                loadArrivalList(info, data.getCurrentTime());
+            } else {
+                showErrorText();
+            }
         }
+    }
+
+    private void showErrorText() {
+        String text = getResources().getString(R.string.ri_no_trip);
+        ((TextView) getActivity().findViewById(R.id.simple_arrival_info_text)).setText(text);
     }
 
     private void loadArrivalList(ObaArrivalInfo[] info, long currentTime) {
         LinearLayout contentLayout = (LinearLayout) getActivity().
                 findViewById(R.id.simple_arrival_content);
+        contentLayout.removeAllViews();
 
         ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfo.convertObaArrivalInfo(getActivity(),
                 info, new ArrayList<String>(), currentTime);
@@ -213,7 +223,6 @@ public class SimpleArrivalListFragment extends Fragment
 
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
-
     }
 
     private ArrivalsListLoader getArrivalsLoader() {

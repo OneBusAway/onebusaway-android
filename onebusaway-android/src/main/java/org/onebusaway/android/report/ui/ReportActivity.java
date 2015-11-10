@@ -18,6 +18,7 @@ package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.report.constants.ReportConstants;
@@ -114,6 +115,12 @@ public class ReportActivity extends BaseReportActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
     }
 
     public void createPreferencesActivity() {

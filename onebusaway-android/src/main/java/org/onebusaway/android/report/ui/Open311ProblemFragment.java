@@ -17,6 +17,7 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.report.connection.ServiceDescriptionTask;
 import org.onebusaway.android.report.connection.ServiceRequestTask;
@@ -150,6 +151,12 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         callServiceDescription();
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        ObaAnalytics.reportFragmentStart(this);
+    }
+
     /**
      * Initialize UI components
      */
@@ -230,6 +237,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     public void onServiceRequestTaskCompleted(ServiceRequestResponse response) {
         showProgress(Boolean.FALSE);
         if (response.isSuccess()) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
+                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_infrastructure));
             (new ReportSuccessDialog()).show((getActivity()).getSupportFragmentManager(), ReportSuccessDialog.TAG);
         } else {
             createToastMessage(response.getErrorMessage());
@@ -581,7 +590,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
 
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
+        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
         ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
         linear.addView(layout);
 

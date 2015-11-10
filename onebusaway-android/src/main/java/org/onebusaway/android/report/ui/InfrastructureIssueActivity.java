@@ -16,6 +16,7 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -36,6 +37,7 @@ import org.onebusaway.android.util.LocationUtil;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -50,6 +52,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -161,6 +164,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         setupIconColors();
 
         initLocation();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ObaAnalytics.reportActivityStart(this);
     }
 
     /**
@@ -482,16 +491,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         // Set marker on the map if there are open311 services
         if (Open311Manager.isAreaManagedByOpen311(serviceList)) {
             updateMarkerPosition(issueLocationHelper.getIssueLocation());
-
             showServicesSpinner();
-
-            // Show information to the user if there is no error on location and
-            // if stop not selected
-            String infoText = ((TextView) findViewById(R.id.ri_info_text)).getText().toString();
-            if (!getString(R.string.ri_location_problem_info).equalsIgnoreCase(infoText)
-                    && issueLocationHelper.getObaStop() == null) {
-                addInfoText(getString(R.string.report_dialog_categories));
-            }
         } else {
             // If there is no open311 services return and there is no stop selected
             // then hide the categories
@@ -687,7 +687,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private void showArrivalListFragment(ObaStop obaStop) {
         LayoutInflater layoutInflater = LayoutInflater.from(this);
-
         View v = layoutInflater.inflate(R.layout.arrivals_list_header, null);
         v.setVisibility(View.GONE);
 
@@ -698,9 +697,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     public void onArrivalItemClicked(ObaArrivalInfo obaArrivalInfo) {
         removeFragmentByTag(SimpleArrivalListFragment.TAG);
 
-        removeInfoText();
-
-        showBusStopHeader(obaArrivalInfo.getHeadsign());
+        addTripName(obaArrivalInfo.getHeadsign());
 
         ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, false);
     }
@@ -736,6 +733,23 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         removeFragmentByTag(ReportTripProblemFragment.TAG);
 
         removeFragmentByTag(SimpleArrivalListFragment.TAG);
+
+        ((LinearLayout) findViewById(R.id.ri_report_stop_problem)).removeAllViews();
+    }
+
+    private void addTripName(String text) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
+
+        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
+        TextView tv = ((TextView) layout.findViewById(R.id.riii_textView));
+        tv.setText(text);
+        tv.setTypeface(null, Typeface.NORMAL);
+
+        linear.addView(layout);
+
+        ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
     }
 
     public IssueLocationHelper getIssueLocationHelper() {

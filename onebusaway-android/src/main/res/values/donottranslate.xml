@@ -107,6 +107,7 @@
     <string name="analytics_label_report_problem">Reported Problem</string>
     <string name="analytics_label_report_stop_problem">Reported Stop Problem</string>
     <string name="analytics_label_report_trip_problem">Reported Trip Problem</string>
+    <string name="analytics_label_report_infrastructure">Reported Infrastructure Issue</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_star_route">Starred route</string>

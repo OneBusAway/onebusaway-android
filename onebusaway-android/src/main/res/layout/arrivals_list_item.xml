@@ -31,7 +31,6 @@
         <ImageView
                 android:id="@+id/route_favorite"
                 android:src="@drawable/ic_toggle_star"
-                android:contentDescription="@string/stop_info_favorite"
                 android:maxHeight="10dp"
                 android:maxWidth="10dp"
                 android:layout_width="22dp"
@@ -124,7 +123,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
-                            android:text="min"
+                            android:text="@string/minutes_abbreviation"
+                            android:contentDescription="@string/minutes_full"
                             android:ellipsize="end"
                             android:singleLine="true"
                             android:textIsSelectable="false"

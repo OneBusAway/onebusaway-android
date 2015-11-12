@@ -484,6 +484,8 @@
     <string name="miles_abbreviation">mi</string>
     <string name="meters_abbreviation">m</string>
     <string name="kilometers_abbreviation">km</string>
+    <string name="minutes_abbreviation">min</string>
+    <string name="minutes_full">minutes</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>

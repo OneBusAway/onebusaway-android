@@ -519,8 +519,8 @@ public class HomeActivity extends AppCompatActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_search_box));
             return true;
-        } else if (id == R.id.find_route) {
-            Intent myIntent = new Intent(this, MyRoutesActivity.class);
+        } else if (id == R.id.recent_stops_routes) {
+            Intent myIntent = new Intent(this, MyRecentStopsAndRoutesActivity.class);
             startActivity(myIntent);
             return true;
         }

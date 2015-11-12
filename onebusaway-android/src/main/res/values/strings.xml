@@ -245,6 +245,9 @@
 
     <!-- My stops/routes -->
     <string name="my_recent_title">Recent</string>
+    <string name="my_recent_menu_title">Recent stops/routes</string>
+    <string name="my_recent_stops">Stops</string>
+    <string name="my_recent_routes">Routes</string>
     <string name="my_starred_title">Starred</string>
     <string name="my_search_title">Search</string>
     <string name="my_no_recent_stops">You have no recent stops.</string>

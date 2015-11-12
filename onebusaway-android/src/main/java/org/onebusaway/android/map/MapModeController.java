@@ -125,7 +125,13 @@ public interface MapModeController {
         // Returns true if the map is capable of watching itself, false if it needs an external watcher
         boolean canWatchMapChanges();
 
-        // Sets the currently focused stop for the map
+        /**
+         * Sets focus to a particular stop, or pass in null for the stop to clear the focus
+         *
+         * @param stop   ObaStop to focus on, or null to clear the focus
+         * @param routes a list of all route display names that serve this stop, or null to clear
+         *               the focus
+         */
         public void setFocusStop(ObaStop stop, List<ObaRoute> routes);
 
         // Allow addition of markers, with an ID per marker that can be used to remove marker later

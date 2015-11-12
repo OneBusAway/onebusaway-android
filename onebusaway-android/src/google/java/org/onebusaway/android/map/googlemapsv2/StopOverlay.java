@@ -114,12 +114,15 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
         /**
          * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
          * or when the user taps on an area away from the map for the first time after a stop
-         * is already selected, which removes focus
+         * is already selected, which removes focus.  Clearly the focused stop can also be triggered
+         * programmatically via a call to setFocus() with a stop of null - in that case, because
+         * the user did not touch the map, location will be null.
          *
          * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
          * @param routes   a HashMap of all route display names that serve this stop - key is
          *                 routeId
-         * @param location the user touch location on the map
+         * @param location the user touch location on the map, or null if the focus was changed
+         *                 programmatically without the user tapping on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
     }
@@ -542,14 +545,20 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     }
 
     /**
-     * Sets focus to a particular stop
+     * Sets focus to a particular stop, or pass in null for the stop to clear the focus
      *
-     * @param stop   ObaStop to focus on
+     * @param stop   ObaStop to focus on, or null to clear the focus
      * @param routes a list of all route display names that serve this stop
      */
     public void setFocus(ObaStop stop, List<ObaRoute> routes) {
         // Make sure that the MarkerData has been initialized
         setupMarkerData();
+
+        if (stop == null) {
+            // Clear the focus
+            removeFocus(null);
+            return;
+        }
 
         /**
          * If mMarkerData exists before this method is called, the stop reference passed into this
@@ -625,12 +634,26 @@ public class StopOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.O
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d(TAG, "Map clicked");
+        removeFocus(latLng);
+    }
 
+    /**
+     * Removes the stop focus and notify listener
+     *
+     * @param latLng the location on the map where the user tapped if the focus change was
+     *               triggered
+     *               by the user tapping on the map, or null if the focus change was otherwise
+     *               triggered programmatically.
+     */
+    private void removeFocus(LatLng latLng) {
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
         }
-        // Set map clicked location
-        Location location = MapHelpV2.makeLocation(latLng);
+        // Set map clicked location, if it exists
+        Location location = null;
+        if (latLng != null) {
+            location = MapHelpV2.makeLocation(latLng);
+        }
         // Notify focus changed every time the map is clicked away from a stop marker
         mOnFocusChangedListener.onFocusChanged(null, null, location);
     }

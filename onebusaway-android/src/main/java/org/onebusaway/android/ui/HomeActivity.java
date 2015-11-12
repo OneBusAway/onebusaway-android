@@ -638,7 +638,8 @@ public class HomeActivity extends AppCompatActivity
      *
      * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
      * @param routes a HashMap of all route display names that serve this stop - key is routeId
-     * @param location the user touch location on the map
+     * @param location the user touch location on the map, or null if the focus was otherwise
+     *                 cleared programmatically
      */
     @Override
     public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location) {
@@ -722,9 +723,17 @@ public class HomeActivity extends AppCompatActivity
     public void onBackPressed() {
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
+            // Collapse the sliding panel if its anchored or expanded
             if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED
                     || mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED) {
                 mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+                return;
+            }
+            // Clear focused stop and close the sliding panel if its collapsed
+            if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
+                // Clear the stop focus in map fragment, which will trigger a callback to close the
+                // panel via BaseMapFragment.OnFocusChangedListener in this.onFocusChanged()
+                mMapFragment.setFocusStop(null, null);
                 return;
             }
         }

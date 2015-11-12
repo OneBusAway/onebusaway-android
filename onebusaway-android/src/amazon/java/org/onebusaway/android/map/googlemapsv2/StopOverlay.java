@@ -67,6 +67,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -174,11 +175,11 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
     /**
      * Clears any stop markers from the map
+     * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
      */
-    public synchronized void clear() {
+    public synchronized void clear(boolean clearFocusedStop) {
         if (mMarkerData != null) {
-            mMarkerData.clear();
-            mMarkerData = null;
+            mMarkerData.clear(clearFocusedStop);
         }
     }
 
@@ -726,13 +727,13 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
          * Keep a copy of ObaRoute references for stops have have had focus, so we can reconstruct
          * the mStopRoutes HashMap after clearing the cache
          */
-        private HashMap<String, ObaRoute> mFocusedRoutes;
+        private List<ObaRoute> mFocusedRoutes;
 
         MarkerData() {
             mStopMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
             mStopRoutes = new HashMap<String, ObaRoute>();
-            mFocusedRoutes = new HashMap<String, ObaRoute>();
+            mFocusedRoutes = new LinkedList<ObaRoute>();
         }
 
         synchronized void populate(List<ObaStop> stops, List<ObaRoute> routes) {
@@ -747,13 +748,10 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
                 mStops.clear();
 
                 // Make sure the currently focused stop still exists on the map
-                if (mCurrentFocusStop != null) {
-                    addMarkerToMap(mCurrentFocusStop, routes);
+                if (mCurrentFocusStop != null && mFocusedRoutes != null) {
+                    addMarkerToMap(mCurrentFocusStop, mFocusedRoutes);
                     count++;
                 }
-
-                // TODO - handle copy/clear focus routes
-
             }
 
             for (ObaStop stop : stops) {
@@ -788,7 +786,6 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
                     mStopRoutes.put(route.getId(), route);
                 }
             }
-
         }
 
         synchronized ObaStop getStopFromMarker(Marker marker) {
@@ -846,11 +843,12 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
             mCurrentFocusStop = stop;
 
             // Save a copy of ObaRoute references for this stop, so we have them when clearing cache
+            mFocusedRoutes.clear();
             String[] routeIds = stop.getRouteIds();
             for (int i = 0; i < routeIds.length; i++) {
                 ObaRoute route = mStopRoutes.get(routeIds[i]);
                 if (route != null) {
-                    mFocusedRoutes.put(routeIds[i], route);
+                    mFocusedRoutes.add(route);
                 }
             }
 
@@ -933,25 +931,30 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
         /**
          * Clears any stop markers from the map
+         * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
          */
-        synchronized void clear() {
+        synchronized void clear(boolean clearFocusedStop) {
             if (mStopMarkers != null) {
                 // Clear all markers from the map
                 removeMarkersFromMap();
 
                 // Clear the data structures
                 mStopMarkers.clear();
-                mStopMarkers = null;
             }
             if (mStops != null) {
                 mStops.clear();
-                mStops = null;
             }
             if (mStopRoutes != null) {
                 mStopRoutes.clear();
-                mStopRoutes = null;
             }
-            removeFocus();
+            if (clearFocusedStop) {
+                removeFocus();
+            } else {
+                // Make sure the currently focused stop still exists on the map
+                if (mCurrentFocusStop != null && mFocusedRoutes != null) {
+                    addMarkerToMap(mCurrentFocusStop, mFocusedRoutes);
+                }
+            }
         }
 
         synchronized int size() {

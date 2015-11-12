@@ -373,7 +373,7 @@ public class BaseMapFragment extends SupportMapFragment
             mController.destroy();
         }
         if (mStopOverlay != null) {
-            mStopOverlay.clear();
+            mStopOverlay.clear(false);
         }
         if (MapParams.MODE_ROUTE.equals(mode)) {
             mController = new RouteMapController(this);

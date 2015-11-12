@@ -43,7 +43,6 @@ import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -71,7 +70,6 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.Date;
@@ -576,7 +574,7 @@ public class HomeActivity extends AppCompatActivity
                                 showDialog(WHATSNEW_DIALOG);
                                 break;
                             case 3:
-                                goToContactEmail(HomeActivity.this);
+                                UIHelp.sendContactEmail(HomeActivity.this, mGoogleApiClient);
                                 break;
                         }
                     }
@@ -772,53 +770,6 @@ public class HomeActivity extends AppCompatActivity
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
         moveMyLocationButton();
-    }
-
-    private String getLocationString(Context context) {
-        Location loc = Application.getLastKnownLocation(context, mGoogleApiClient);
-        return LocationUtil.printLocationDetails(loc);
-    }
-
-    private void goToContactEmail(Context ctxt) {
-        PackageManager pm = ctxt.getPackageManager();
-        PackageInfo appInfo = null;
-        try {
-            appInfo = pm.getPackageInfo(ctxt.getPackageName(),
-                    PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region == null) {
-            return;
-        }
-
-        // appInfo.versionName
-        // Build.MODEL
-        // Build.VERSION.RELEASE
-        // Build.VERSION.SDK
-        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
-        final String body = ctxt.getString(R.string.bug_report_body,
-                appInfo.versionName,
-                Build.MODEL,
-                Build.VERSION.RELEASE,
-                Build.VERSION.SDK_INT,
-                getLocationString(ctxt));
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.putExtra(Intent.EXTRA_EMAIL,
-                new String[]{region.getContactEmail()});
-        send.putExtra(Intent.EXTRA_SUBJECT,
-                ctxt.getString(R.string.bug_report_subject));
-        send.putExtra(Intent.EXTRA_TEXT, body);
-        send.setType("message/rfc822");
-        try {
-            ctxt.startActivity(Intent.createChooser(send,
-                    ctxt.getString(R.string.bug_report_subject)));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
-                    .show();
-        }
     }
 
     /**

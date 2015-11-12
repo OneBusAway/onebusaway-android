@@ -17,6 +17,8 @@
 
 package org.onebusaway.android.util;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -39,11 +41,14 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -944,5 +949,55 @@ public final class UIHelp {
         Rect rect = new Rect();
         view.getGlobalVisibleRect(rect);
         return rect.contains((int) event.getRawX(), (int) event.getRawY());
+    }
+
+    /**
+     * Opens a "Contact Us" email, based on the currently selected region
+     *
+     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
+     *                        null if one isn't available
+     */
+    public static void sendContactEmail(Context c, GoogleApiClient googleApiClient) {
+        PackageManager pm = c.getPackageManager();
+        PackageInfo appInfo;
+        try {
+            appInfo = pm.getPackageInfo(c.getPackageName(),
+                    PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region == null) {
+            return;
+        }
+
+        Location loc = Application.getLastKnownLocation(c, googleApiClient);
+
+        // appInfo.versionName
+        // Build.MODEL
+        // Build.VERSION.RELEASE
+        // Build.VERSION.SDK
+        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
+        final String body = c.getString(R.string.bug_report_body,
+                appInfo.versionName,
+                Build.MODEL,
+                Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT,
+                LocationUtil.printLocationDetails(loc));
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                new String[]{region.getContactEmail()});
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                c.getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            c.startActivity(Intent.createChooser(send,
+                    c.getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(c, R.string.bug_report_error, Toast.LENGTH_LONG)
+                    .show();
+        }
     }
 }

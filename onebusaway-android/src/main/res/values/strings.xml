@@ -423,6 +423,7 @@
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_advanced">Advanced</string>
+    <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
     <string name="preferences_region_title">Your region</string>
     <string name="preferences_region_summary_custom_api">A custom API server is being used</string>

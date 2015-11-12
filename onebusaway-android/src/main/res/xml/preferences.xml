@@ -49,6 +49,25 @@
                 android:title="@string/preferences_restore_title"
                 android:summary="@string/preferences_restore_summary"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_advanced">
+        <PreferenceScreen
+                android:title="@string/preferences_category_advanced"
+                android:summary="@string/preferences_screen_advanced_summary">
+            <PreferenceCategory android:title="@string/preferences_category_advanced"
+                                android:key="@string/preferences_category_advanced">
+                <org.onebusaway.android.region.ExperimentalRegionsPreference
+                        android:key="@string/preference_key_experimental_regions"
+                        android:title="@string/preferences_experimental_regions_title"
+                        android:summary="@string/preferences_experimental_regions_summary"/>
+                <EditTextPreference
+                        android:title="@string/preferences_oba_api_servername_title"
+                        android:summary="@string/preferences_oba_api_servername_summary"
+                        android:inputType="text|textNoSuggestions"
+                        android:hint="@string/preferences_oba_api_servername_hint"
+                        android:key="@string/preference_key_oba_api_url"/>
+            </PreferenceCategory>
+        </PreferenceScreen>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_about"
                         android:key="@string/preferences_category_about">
         <CheckBoxPreference
@@ -68,18 +87,5 @@
                 android:key="@string/preferences_key_about"
                 android:title="@string/preferences_about_title"
                 android:summary="@string/preferences_about_summary"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/preferences_category_advanced"
-                        android:key="@string/preferences_category_advanced">
-        <org.onebusaway.android.region.ExperimentalRegionsPreference
-                android:key="@string/preference_key_experimental_regions"
-                android:title="@string/preferences_experimental_regions_title"
-                android:summary="@string/preferences_experimental_regions_summary"/>
-        <EditTextPreference
-                android:title="@string/preferences_oba_api_servername_title"
-                android:summary="@string/preferences_oba_api_servername_summary"
-                android:inputType="text|textNoSuggestions"
-                android:hint="@string/preferences_oba_api_servername_hint"
-                android:key="@string/preference_key_oba_api_url"/>
     </PreferenceCategory>
 </PreferenceScreen>

@@ -651,7 +651,8 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
     /**
      * Removes the stop focus and notify listener
      *
-     * @param latLng the location on the map where the user tapped if the focus change was triggered
+     * @param latLng the location on the map where the user tapped if the focus change was
+     *               triggered
      *               by the user tapping on the map, or null if the focus change was otherwise
      *               triggered programmatically.
      */

@@ -774,7 +774,8 @@ public class BaseMapFragment extends SupportMapFragment
      * Sets focus to a particular stop, or pass in null for the stop to clear the focus
      *
      * @param stop   ObaStop to focus on, or null to clear the focus
-     * @param routes a list of all route display names that serve this stop, or null to clear the focus
+     * @param routes a list of all route display names that serve this stop, or null to clear the
+     *               focus
      */
     @Override
     public void setFocusStop(ObaStop stop, List<ObaRoute> routes) {

@@ -590,7 +590,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
 
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
+        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
         linear.addView(layout);
 

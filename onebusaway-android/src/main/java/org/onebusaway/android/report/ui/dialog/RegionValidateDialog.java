@@ -31,7 +31,7 @@ import android.support.v4.app.DialogFragment;
  *
  * @author Cagri Cetin
  */
-public class RegionValidateDialog extends DialogFragment {
+public class RegionValidateDialog extends BaseReportDialogFragment {
 
     @Override
     @NonNull
@@ -41,7 +41,7 @@ public class RegionValidateDialog extends DialogFragment {
         String regionName = Application.get().getCurrentRegion().getName();
         message.append(getResources().getString(R.string.region_dialog_Message2, regionName)).append("?");
 
-        return new AlertDialog.Builder(getActivity())
+        AlertDialog dialog =  new AlertDialog.Builder(getActivity())
                 .setMessage(message.toString())
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -54,24 +54,7 @@ public class RegionValidateDialog extends DialogFragment {
                         ((ReportActivity) getActivity()).createPreferencesActivity();
                     }
                 }).create();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
-            @Override
-            public boolean onKey(android.content.DialogInterface dialog,
-                                 int keyCode, android.view.KeyEvent event) {
-                if ((keyCode == android.view.KeyEvent.KEYCODE_BACK)) {
-                    closeSuperActivity();
-                }
-                return false;
-            }
-        });
-    }
-
-    private void closeSuperActivity() {
-        getActivity().finish();
+        dialog.setCanceledOnTouchOutside(false);
+        return dialog;
     }
 }

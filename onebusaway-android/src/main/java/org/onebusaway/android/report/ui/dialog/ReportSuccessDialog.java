@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com)
+* Copyright (C) 2015 University of South Florida (sjbarbeau@gmail.com)
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
+import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
 
 import edu.usf.cutr.open311client.constants.Open311Constants;
 
@@ -29,7 +30,7 @@ import edu.usf.cutr.open311client.constants.Open311Constants;
  *
  * @author Cagri Cetin
  */
-public class ReportSuccessDialog extends DialogFragment {
+public class ReportSuccessDialog extends BaseReportDialogFragment {
 
     public static final String TAG = "ReportSuccessDialog";
 
@@ -37,12 +38,19 @@ public class ReportSuccessDialog extends DialogFragment {
     @NonNull
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        return new AlertDialog.Builder(getActivity())
+        AlertDialog dialog = new AlertDialog.Builder(getActivity())
                 .setMessage(Open311Constants.M_REPORT_SUCCESS)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        getActivity().finish();
+                        closeSuperActivity();
                     }
                 }).create();
+        dialog.setCanceledOnTouchOutside(false);
+        return dialog;
+    }
+
+    @Override
+    public void closeSuperActivity() {
+        ((InfrastructureIssueActivity) getActivity()).onSendReport();
     }
 }

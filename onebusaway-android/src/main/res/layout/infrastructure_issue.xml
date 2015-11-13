@@ -18,7 +18,8 @@
               android:layout_height="match_parent"
               android:focusableInTouchMode="true"
               android:background="@color/material_background"
-              android:orientation="vertical">
+              android:orientation="vertical"
+              android:configChanges="keyboardHidden|orientation|screenSize">
 
     <!-- Header aligned to top -->
     <RelativeLayout

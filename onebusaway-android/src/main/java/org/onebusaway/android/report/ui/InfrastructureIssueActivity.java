@@ -20,6 +20,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.report.connection.ServiceListTask;
@@ -78,6 +79,9 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private static final String SELECTED_SERVICE = "selectedService";
 
+    private static final String SHOW_CATEGORIES = ".showCategories";
+
+    private static final String SHOW_STOP_MARKER = ".showMarker";
     /**
      * UI Elements
      */
@@ -105,6 +109,16 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * Select this issue type when the activity starts
      */
     private String mDefaultIssueType;
+
+    /**
+     * Save instance state vars
+     * Restores old selected categories and marker position
+     */
+    private boolean mBundleShowCategories = false;
+
+    private boolean mBundleShowStopMarker = false;
+
+    private String mBundleStopId;
 
     /**
      * Starts the InfrastructureIssueActivity.
@@ -155,7 +169,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
         setUpProgressBar();
 
-        setupMapFragment();
+        setupMapFragment(savedInstanceState);
 
         setupLocationHelper();
 
@@ -172,6 +186,50 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         ObaAnalytics.reportActivityStart(this);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        ObaStop obaStop = issueLocationHelper.getObaStop();
+        if (obaStop != null) {
+            String stopId = null;
+            if (obaStop.getId() != null) {
+                stopId = obaStop.getId();
+            } else if (mBundleStopId != null) {
+                stopId = mBundleStopId;
+            }
+            getIntent().putExtra(MapParams.STOP_ID, stopId);
+            outState.putString(MapParams.STOP_ID, stopId);
+            outState.putBoolean(SHOW_STOP_MARKER, true);
+        }
+        getIntent().putExtra(MapParams.CENTER_LAT, issueLocationHelper.getIssueLocation().getLatitude());
+        getIntent().putExtra(MapParams.CENTER_LON, issueLocationHelper.getIssueLocation().getLongitude());
+
+        SpinnerItem spinnerItem = (SpinnerItem) mServicesSpinner.getSelectedItem();
+        if (!spinnerItem.isHint() && !spinnerItem.isSection()) {
+            Service service = ((ServiceSpinnerItem) spinnerItem).getService();
+            getIntent().putExtra(SELECTED_SERVICE, service.getService_name());
+            outState.putBoolean(SHOW_CATEGORIES, true);
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            mBundleShowCategories = savedInstanceState.getBoolean(SHOW_CATEGORIES, false);
+            mBundleShowStopMarker = savedInstanceState.getBoolean(SHOW_STOP_MARKER, false);
+            mBundleStopId = savedInstanceState.getString(MapParams.STOP_ID);
+
+            if (mBundleStopId != null) {
+                double lat = getIntent().getDoubleExtra(MapParams.CENTER_LAT, 0);
+                double lon = getIntent().getDoubleExtra(MapParams.CENTER_LON, 0);
+                Location location = LocationUtil.makeLocation(lat, lon);
+                issueLocationHelper.updateMarkerPosition(location, new ObaStopElement());
+            }
+        }
+    }
+
     /**
      * Set default open311 client
      */
@@ -183,10 +241,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * Setting up the BaseMapFragment
      * BaseMapFragment was used to implement a map.
      */
-    private void setupMapFragment() {
+    private void setupMapFragment(Bundle bundle) {
         FragmentManager fm = getSupportFragmentManager();
         if (mMapFragment == null) {
             mMapFragment = new BaseMapFragment();
+            mMapFragment.setArguments(bundle);
             // Register listener for map focus callbacks
             mMapFragment.setOnFocusChangeListener(this);
             mMapFragment.setZoom(15);
@@ -240,8 +299,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                                        int position, long id) {
                 SpinnerItem spinnerItem = (SpinnerItem) mServicesSpinner.getSelectedItem();
                 if (!spinnerItem.isHint() && !spinnerItem.isSection()) {
-                    Service service = ((ServiceSpinnerItem) spinnerItem).getService();
-                    onSpinnerItemSelected(service);
+                    if (!mBundleShowCategories) {
+                        Service service = ((ServiceSpinnerItem) spinnerItem).getService();
+                        onSpinnerItemSelected(service);
+                    } else {
+                        // Don't update the ui if the orientation change
+                        mBundleShowCategories = false;
+                    }
                 } else if (spinnerItem.isHint()) {
                     clearReportingFragments(false);
                 }
@@ -497,19 +561,24 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             // then hide the categories
             if (issueLocationHelper.getObaStop() == null) {
                 hideServicesSpinner();
-
                 // Show information to the user if there is no error on location
                 String infoText = ((TextView) findViewById(R.id.ri_info_text)).getText().toString();
                 if (!getString(R.string.ri_location_problem_info).equalsIgnoreCase(infoText)) {
                     addInfoText(getString(R.string.report_dialog_out_of_region_message));
                 }
+            } else if (mBundleShowStopMarker && mBundleStopId != null) {
+                // Restore marker position
+                mBundleShowStopMarker = false;
+                updateMarkerPosition(issueLocationHelper.getMarkerPosition());
             }
         }
 
         boolean isStaticServicesProvided = checkTransitCategories(serviceList);
 
         // Set static service
-        if (!isStaticServicesProvided) {
+        if (!isStaticServicesProvided)
+
+        {
             serviceList.addAll(createStaticServices());
         }
 
@@ -518,7 +587,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
          */
         Map<String, List<Service>> serviceListMap = new TreeMap<>();
 
-        for (Service s : serviceList) {
+        for (
+                Service s
+                : serviceList)
+
+        {
             String groupName = s.getGroup() == null ? "Others" : s.getGroup();
             List<Service> mappedList = serviceListMap.get(groupName);
             if (mappedList != null) {
@@ -541,13 +614,25 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         spinnerItems.add(hintServiceSpinnerItem);
 
         // Create Transit categories first
-        spinnerItems.add(new SectionItem(ReportConstants.ISSUE_GROUP_TRANSIT));
-        for (Service s : serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT)) {
+        spinnerItems.add(new
+
+                        SectionItem(ReportConstants.ISSUE_GROUP_TRANSIT)
+
+        );
+        for (
+                Service s
+                : serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT))
+
+        {
             spinnerItems.add(new ServiceSpinnerItem(s));
         }
 
         // Create the rest of the categories
-        for (String key : serviceListMap.keySet()) {
+        for (
+                String key
+                : serviceListMap.keySet())
+
+        {
             // Skip if it is transit category
             if (ReportConstants.ISSUE_GROUP_TRANSIT.equals(key)) {
                 continue;
@@ -561,10 +646,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         EntrySpinnerAdapter adapter = new EntrySpinnerAdapter(this, spinnerItems);
         mServicesSpinner.setAdapter(adapter);
 
-        if (mDefaultIssueType != null) {
+        if (mDefaultIssueType != null)
+
+        {
             // Select an default issue category programmatically
             selectDefaultCategory(spinnerItems);
         }
+
     }
 
     private void selectDefaultCategory(ArrayList<SpinnerItem> spinnerItems) {
@@ -662,14 +750,14 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         updateMarkerPosition(issueLocationHelper.getIssueLocation());
     }
 
-    private void clearReportingFragments(){
+    private void clearReportingFragments() {
         clearReportingFragments(true);
     }
 
     private void clearReportingFragments(boolean removeInfo) {
-        if (removeInfo)
+        if (removeInfo) {
             removeInfoText();
-
+        }
         removeOpen311ProblemFragment();
 
         removeStopProblemFragment();

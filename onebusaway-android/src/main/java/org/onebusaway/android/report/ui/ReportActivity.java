@@ -144,23 +144,4 @@ public class ReportActivity extends BaseReportActivity {
         CustomerServiceDialog csd = new CustomerServiceDialog();
         csd.show(getSupportFragmentManager(), ReportConstants.TAG_CUSTOMER_SERVICE_FRAGMENT);
     }
-
-    public void createBusStopTutorialFragment() {
-        TutorialFragment tutorialFragment = new TutorialFragment();
-        Bundle bundle = new Bundle();
-        bundle.putInt(TutorialFragment.STRING_RESOURCE_ID, R.array.report_stop_issue_tutorial_desc);
-        bundle.putInt(TutorialFragment.IMAGE_RESOURCE_ID, R.array.report_stop_issue_tutorial_images);
-        tutorialFragment.setArguments(bundle);
-        setFragment(tutorialFragment, R.id.r_fragment_layout).commit();
-    }
-
-//    @Override
-//    public void onBackPressed() {
-//        int count = getSupportFragmentManager().getBackStackEntryCount();
-//        if (count == 0) {
-//            super.onBackPressed();
-//        } else {
-//            getSupportFragmentManager().popBackStack();
-//        }
-//    }
 }

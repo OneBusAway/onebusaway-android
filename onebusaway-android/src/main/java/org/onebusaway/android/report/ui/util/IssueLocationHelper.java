@@ -68,6 +68,10 @@ public class IssueLocationHelper {
         }
     }
 
+    public Location getMarkerPosition() {
+        return markerPosition;
+    }
+
     public void clearMarkers() {
         if (markerId != -1) {
             callback.onClearMarker(markerId);

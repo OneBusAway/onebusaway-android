@@ -21,7 +21,9 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.ArrivalsListLoader;
@@ -59,6 +61,8 @@ public class SimpleArrivalListFragment extends Fragment
 
     private ObaStop mObaStop;
 
+    private String mBundleObaStopId;
+
     private Callback callback;
 
     public static final String TAG = "SimpleArrivalListFragment";
@@ -81,6 +85,24 @@ public class SimpleArrivalListFragment extends Fragment
         ft.replace(containerViewId, fragment, TAG);
         ft.addToBackStack(null);
         ft.commit();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mObaStop != null) {
+            outState.putString(MapParams.STOP_ID, mObaStop.getId());
+        } else if (mBundleObaStopId != null ){
+            outState.putString(MapParams.STOP_ID, mBundleObaStopId);
+        }
+    }
+
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            mBundleObaStopId = savedInstanceState.getString(MapParams.STOP_ID);
+        }
     }
 
     @Override
@@ -113,11 +135,20 @@ public class SimpleArrivalListFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+
+        getActivity().getSupportLoaderManager().restartLoader(ARRIVALS_LIST_LOADER, getArguments(), this).
+                forceLoad();
     }
 
     @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
-        return new ArrivalsListLoader(getActivity(), mObaStop.getId());
+        String stopId;
+        if (mObaStop == null){
+            stopId = mBundleObaStopId;
+        } else {
+            stopId = mObaStop.getId();
+        }
+        return new ArrivalsListLoader(getActivity(), stopId);
     }
 
     @Override

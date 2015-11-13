@@ -26,6 +26,8 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.ReportStopProblemActivity;
+import org.onebusaway.android.report.ui.ReportTripProblemActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.util.FragmentUtils;

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui;
+package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
 import org.onebusaway.android.util.MyTextUtils;
 
 import android.content.Context;
@@ -32,50 +32,58 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class ReportStopProblemFragment extends ReportProblemFragmentBase {
+public class ReportTripProblemFragment extends ReportProblemFragmentBase {
+    public static final String TRIP_ID = ".TripId";
 
     public static final String STOP_ID = ".StopId";
 
-    public static final String STOP_NAME = ".StopName";
+    public static final String TRIP_NAME = ".TripName";
 
-    private static final String SHOW_STOP_NAME = ".ShowStopName";
+    private static final String SHOW_TRIP_NAME = ".ShowTripName";
+
+    public static final String TRIP_SERVICE_DATE = ".ServiceDate";
+
+    public static final String TRIP_VEHICLE_ID = ".VehicleId";
 
     public static final String CODE = ".Code";
 
     public static final String USER_COMMENT = ".UserComment";
 
-    public static final String TAG = "ReportStopProblemFragment";
+    public static final String USER_ON_VEHICLE = ".UserOnVehicle";
 
-    public static void show(AppCompatActivity activity, ObaStop stop) {
-        show(activity, stop, null);
+    public static final String USER_VEHICLE_NUM = ".UserVehicleNum";
+
+    public static final String TAG = "ReportTripProblemFragment";
+
+    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
+        show(activity, arrival, null, true);
     }
 
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
-        show(activity, stop, containerViewId, true);
-    }
-
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
-                            boolean showStopName) {
+    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival,
+                            Integer containerViewId, boolean showTripName) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
-        args.putString(STOP_ID, stop.getId());
+        args.putString(TRIP_ID, arrival.getTripId());
+        args.putString(STOP_ID, arrival.getStopId());
         // We don't use the stop name map here...we want the actual stop name.
-        args.putString(STOP_NAME, stop.getName());
-
-        args.putBoolean(SHOW_STOP_NAME, showStopName);
+        args.putString(TRIP_NAME, arrival.getHeadsign());
+        args.putLong(TRIP_SERVICE_DATE, arrival.getServiceDate());
+        args.putString(TRIP_VEHICLE_ID, arrival.getVehicleId());
+        args.putBoolean(SHOW_TRIP_NAME, showTripName);
 
         // Create the list fragment and add it as our sole content.
-        ReportStopProblemFragment content = new ReportStopProblemFragment();
+        ReportTripProblemFragment content = new ReportTripProblemFragment();
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();
-
         if (containerViewId == null) {
             ft.replace(android.R.id.content, content, TAG);
         } else {
@@ -87,37 +95,56 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     private TextView mUserComment;
 
+    private CheckBox mUserOnVehicle;
+
+    private TextView mUserVehicle;
+
     @Override
     protected int getLayoutId() {
-        return R.layout.report_stop_problem;
+        return R.layout.report_trip_problem;
     }
-
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
-        stopName.setText(MyTextUtils.toTitleCase(args.getString(STOP_NAME)));
+        final TextView tripName = (TextView) view.findViewById(R.id.trip_name);
+        tripName.setText(MyTextUtils.toTitleCase(args.getString(TRIP_NAME)));
 
-        boolean showStopName = args.getBoolean(SHOW_STOP_NAME, true);
-
+        boolean showStopName = args.getBoolean(SHOW_TRIP_NAME, true);
         if (!showStopName){
-            // Hide stop name header
-            view.findViewById(R.id.stop_info_header).setVisibility(View.GONE);
+            // Hide trip name header
+            view.findViewById(R.id.trip_info_header).setVisibility(View.GONE);
         }
+
+        // TODO: Switch this based on the trip mode
+        final int tripArray = R.array.report_trip_problem_code_bus;
+
         //
         // The code spinner
         //
         mCodeView = (Spinner) view.findViewById(R.id.report_problem_code);
         ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
-                getActivity(), R.array.report_stop_problem_code,
-                android.R.layout.simple_spinner_item);
+                getActivity(), tripArray, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mCodeView.setAdapter(adapter);
 
         // Comment
         mUserComment = (TextView) view.findViewById(R.id.report_problem_comment);
+
+        // On vehicle
+        mUserOnVehicle = (CheckBox) view.findViewById(R.id.report_problem_onvehicle);
+        mUserVehicle = (EditText) view.findViewById(R.id.report_problem_uservehicle);
+        // Disabled by default
+        mUserVehicle.setEnabled(false);
+
+        mUserOnVehicle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean checked = mUserOnVehicle.isChecked();
+                mUserVehicle.setEnabled(checked);
+            }
+        });
 
         if (savedInstanceState != null) {
             int position = savedInstanceState.getInt(CODE);
@@ -125,28 +152,35 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
             CharSequence comment = savedInstanceState.getCharSequence(USER_COMMENT);
             mUserComment.setText(comment);
+
+            boolean onVehicle = savedInstanceState.getBoolean(USER_ON_VEHICLE);
+            mUserOnVehicle.setChecked(onVehicle);
+
+            CharSequence num = savedInstanceState.getCharSequence(USER_VEHICLE_NUM);
+            mUserVehicle.setText(num);
+            mUserVehicle.setEnabled(onVehicle);
         }
 
         SPINNER_TO_CODE = new String[]{
                 null,
-                ObaReportProblemWithStopRequest.NAME_WRONG,
-                ObaReportProblemWithStopRequest.NUMBER_WRONG,
-                ObaReportProblemWithStopRequest.LOCATION_WRONG,
-                ObaReportProblemWithStopRequest.ROUTE_OR_TRIP_MISSING,
-                ObaReportProblemWithStopRequest.OTHER
+                ObaReportProblemWithTripRequest.VEHICLE_NEVER_CAME,
+                ObaReportProblemWithTripRequest.VEHICLE_CAME_EARLY,
+                ObaReportProblemWithTripRequest.VEHICLE_CAME_LATE,
+                ObaReportProblemWithTripRequest.WRONG_HEADSIGN,
+                ObaReportProblemWithTripRequest.VEHICLE_DOES_NOT_STOP_HERE,
+                ObaReportProblemWithTripRequest.OTHER
         };
 
-        // Dynamically change the color of the small icons
         setupIconColors();
     }
 
     private void setupIconColors() {
-        ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
-                getResources().getColor(R.color.material_gray));
-        ((ImageView) getActivity().findViewById(R.id.ic_action_info)).setColorFilter(
-                getResources().getColor(R.color.material_gray));
         ((ImageView) getActivity().findViewById(R.id.ic_header_location)).setColorFilter(
                 getResources().getColor(android.R.color.white));
+        ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) getActivity().findViewById(R.id.ic_trip_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
     }
 
     @Override
@@ -154,6 +188,8 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         super.onSaveInstanceState(outState);
         outState.putInt(CODE, mCodeView.getSelectedItemPosition());
         outState.putCharSequence(USER_COMMENT, mUserComment.getText());
+        outState.putBoolean(USER_ON_VEHICLE, mUserOnVehicle.isChecked());
+        outState.putCharSequence(USER_VEHICLE_NUM, mUserVehicle.getText());
     }
 
     @Override
@@ -162,10 +198,9 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
                 Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(mUserComment.getWindowToken(), 0);
-
         if (isReportArgumentsValid()) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_stop_problem));
+                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_trip_problem));
             super.sendReport();
         } else {
             // Show error message if report arguments is not valid
@@ -176,10 +211,15 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     @Override
     protected ReportLoader createLoader(Bundle args) {
-        String stopId = args.getString(STOP_ID);
+        // Trip ID
+        String tripId = args.getString(TRIP_ID);
 
-        ObaReportProblemWithStopRequest.Builder builder =
-                new ObaReportProblemWithStopRequest.Builder(getActivity(), stopId);
+        ObaReportProblemWithTripRequest.Builder builder =
+                new ObaReportProblemWithTripRequest.Builder(getActivity(), tripId);
+
+        builder.setStopId(args.getString(STOP_ID));
+        builder.setVehicleId(args.getString(TRIP_VEHICLE_ID));
+        builder.setServiceDate(args.getLong(TRIP_SERVICE_DATE));
 
         // Code
         String code = SPINNER_TO_CODE[mCodeView.getSelectedItemPosition()];
@@ -200,6 +240,15 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
             if (location.hasAccuracy()) {
                 builder.setUserLocationAccuracy((int) location.getAccuracy());
             }
+        }
+
+        // User on vehicle?
+        builder.setUserOnVehicle(mUserOnVehicle.isChecked());
+
+        // User Vehicle Number
+        CharSequence vehicleNum = mUserVehicle.getText();
+        if (!TextUtils.isEmpty(vehicleNum)) {
+            builder.setUserVehicleNumber(vehicleNum.toString());
         }
 
         return new ReportLoader(getActivity(), builder.build());

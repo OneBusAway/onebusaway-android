@@ -149,7 +149,7 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.ReportStopProblemActivity"
+        <activity android:name=".report.ui.ReportStopProblemActivity"
                   android:label="@string/report_problem_stop_activity_label"
                   android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <!-- Parent activity meta-data to support 4.0 and lower -->
@@ -157,7 +157,7 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.HomeActivity"/>
         </activity>
-        <activity android:name="org.onebusaway.android.ui.ReportTripProblemActivity"
+        <activity android:name=".report.ui.ReportTripProblemActivity"
                   android:label="@string/report_problem_trip_activity_label"
                   android:parentActivityName="org.onebusaway.android.ui.HomeActivity">
             <!-- Parent activity meta-data to support 4.0 and lower -->

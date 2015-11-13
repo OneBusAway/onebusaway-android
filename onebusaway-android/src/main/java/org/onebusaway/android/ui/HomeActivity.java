@@ -45,6 +45,7 @@ import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -72,6 +73,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.Date;

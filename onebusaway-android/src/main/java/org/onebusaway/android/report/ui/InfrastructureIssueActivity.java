@@ -30,9 +30,6 @@ import org.onebusaway.android.report.ui.adapter.SectionItem;
 import org.onebusaway.android.report.ui.adapter.ServiceSpinnerItem;
 import org.onebusaway.android.report.ui.adapter.SpinnerItem;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
-import org.onebusaway.android.ui.ReportProblemFragmentBase;
-import org.onebusaway.android.ui.ReportStopProblemFragment;
-import org.onebusaway.android.ui.ReportTripProblemFragment;
 import org.onebusaway.android.util.LocationUtil;
 
 import android.app.Activity;

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui;
+package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIHelp;
 
@@ -28,10 +28,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 
 /**
- * An activity to hold the ReportTripProblemFragment
+ * An activity to hold the ReportStopProblemFragment
  */
-public class ReportTripProblemActivity extends AppCompatActivity {
-//private static final String TAG = "ReportTripProblemActivity";
+public class ReportStopProblemActivity extends AppCompatActivity {
+//private static final String TAG = "ReportStopProblemActivity";
 
     public static class Builder {
 
@@ -39,15 +39,11 @@ public class ReportTripProblemActivity extends AppCompatActivity {
 
         private Intent mIntent;
 
-        public Builder(Context context, ObaArrivalInfo arrival) {
+        public Builder(Context context, ObaStop stop) {
             mContext = context;
-            mIntent = new Intent(context, ReportTripProblemActivity.class);
-            mIntent.putExtra(ReportTripProblemFragment.TRIP_ID, arrival.getTripId());
-            mIntent.putExtra(ReportTripProblemFragment.STOP_ID, arrival.getStopId());
-            // We don't use the stop name map here...we want the actual stop name.
-            mIntent.putExtra(ReportTripProblemFragment.TRIP_NAME, arrival.getHeadsign());
-            mIntent.putExtra(ReportTripProblemFragment.TRIP_SERVICE_DATE, arrival.getServiceDate());
-            mIntent.putExtra(ReportTripProblemFragment.TRIP_VEHICLE_ID, arrival.getVehicleId());
+            mIntent = new Intent(context, ReportStopProblemActivity.class);
+            mIntent.putExtra(ReportStopProblemFragment.STOP_ID, stop.getId());
+            mIntent.putExtra(ReportStopProblemFragment.STOP_NAME, stop.getName());
         }
 
         public Intent getIntent() {
@@ -59,8 +55,8 @@ public class ReportTripProblemActivity extends AppCompatActivity {
         }
     }
 
-    public static void start(Context context, ObaArrivalInfo arrival) {
-        new Builder(context, arrival).start();
+    public static void start(Context context, ObaStop stop) {
+        new Builder(context, stop).start();
     }
 
     @Override
@@ -73,7 +69,7 @@ public class ReportTripProblemActivity extends AppCompatActivity {
 
         // Create the fragment and add it as our sole content.
         if (fm.findFragmentById(android.R.id.content) == null) {
-            ReportTripProblemFragment list = new ReportTripProblemFragment();
+            ReportStopProblemFragment list = new ReportStopProblemFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
             fm.beginTransaction().add(android.R.id.content, list).commit();
         }

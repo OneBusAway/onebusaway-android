@@ -72,7 +72,7 @@ We provide a few configuration options in `build.gradle` brand flavor definition
 
 Valid values are `0` and `1` - The way that estimated arrival information is shown to the user.  There are two options, as defined in `BuildFlavorConstants`:
     * `ARRIVAL_INFO_STYLE_A = 0` - The original OneBusAway presentation of arrival info to the user, with small rows sorted by estimated arrival time
-    * `ARRIVAL_INFO_STYLE_B = 1` - The presentation of arrival info created by York Region Transit/VIVA for their forked version of OBA, which has groups arrival times by route, and shows scheduled arrival times - see [their apps here](http://www.yorkregiontransit.com/en/ridingwithus/apps.asp)
+    * `ARRIVAL_INFO_STYLE_B = 1` - The presentation of arrival info created by York Region Transit/VIVA for their forked version of OBA, which groups arrival times by route, and shows scheduled arrival times - see [their apps here](http://www.yorkregiontransit.com/en/ridingwithus/apps.asp)
 
 <img src="https://cloud.githubusercontent.com/assets/928045/8015719/0681c99a-0ba9-11e5-8f7b-9116f9bcc773.png" width="384" height="362" align=center />
 

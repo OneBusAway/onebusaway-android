@@ -40,6 +40,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
+import android.os.Handler;
 import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -144,6 +145,9 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
         if (mMarkerData != null) {
             mMarkerData.clear();
             mMarkerData = null;
+        }
+        if (mCustomInfoWindowAdapter != null) {
+            mCustomInfoWindowAdapter.clear();
         }
     }
 
@@ -575,6 +579,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
         private Context mContext;
 
+        private Marker mCurrentFocusVehicleMarker;
+
         public CustomInfoWindowAdapter(Context context) {
             this.mInflater = LayoutInflater.from(context);
             this.mContext = context;
@@ -594,8 +600,10 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
             if (status == null) {
                 // Marker that the user tapped on wasn't a vehicle - use default rendering
+                mCurrentFocusVehicleMarker = null;
                 return null;
             }
+            mCurrentFocusVehicleMarker = marker;
             View view = mInflater.inflate(R.layout.custom_info_window, null);
             Resources r = mContext.getResources();
             TextView routeView = (TextView) view.findViewById(R.id.route_and_destination);
@@ -663,7 +671,35 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             }
             lastUpdatedView.setText(lastUpdated);
 
+            if (mMarkerRefreshHandler != null) {
+                mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
+                mMarkerRefreshHandler.postDelayed(mMarkerRefresh, MARKER_REFRESH_PERIOD);
+            }
+
             return view;
+        }
+
+        private final long MARKER_REFRESH_PERIOD = TimeUnit.SECONDS.toMillis(1);
+
+        private final Handler mMarkerRefreshHandler = new Handler();
+
+        private final Runnable mMarkerRefresh = new Runnable() {
+            public void run() {
+                if (mCurrentFocusVehicleMarker != null &&
+                        mCurrentFocusVehicleMarker.isInfoWindowShown()) {
+                    // Force an update of the marker balloon, so "last updated" time ticks up
+                    mCurrentFocusVehicleMarker.showInfoWindow();
+                }
+            }
+        };
+
+        /**
+         * Cancels any pending updates of the marker balloon contents
+         */
+        public void clear() {
+            if (mMarkerRefreshHandler != null) {
+                mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
+            }
         }
     }
 }

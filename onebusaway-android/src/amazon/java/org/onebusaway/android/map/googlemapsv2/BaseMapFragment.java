@@ -436,32 +436,11 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void showStops(List<ObaStop> stops, ObaReferences refs) {
-        // Maintain focus through this step.
-        // If we can't maintain focus through this step, then we
-        // have to hide the stop popup
-        String focusedId = mFocusStopId;
-        ObaStop focusedStop = mFocusStop;
-
-        if (mStopOverlay != null) {
-            focusedStop = mStopOverlay.getFocus();
-            if (focusedStop != null) {
-                focusedId = focusedStop.getId();
-            }
-        }
-
         // Make sure that the stop overlay has been initialized
         setupStopOverlay();
 
         if (stops != null) {
             mStopOverlay.populateStops(stops, refs);
-
-            if (focusedId != null) {
-                // TODO - Add ability to focus on stop using StopID, since
-                // when starting from an Intent (e.g., a bookmark) we don't have ObaStop
-                // This is left over from the old OBA Maps API v1 model - focus has been delegated
-                // largely to the StopOverlay - do we still need this?
-                //mStopOverlay.setFocus(stopId);
-            }
         }
     }
 

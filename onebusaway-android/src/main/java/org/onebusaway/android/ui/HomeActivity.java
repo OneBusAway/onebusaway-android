@@ -265,7 +265,9 @@ public class HomeActivity extends AppCompatActivity
 
         setupNavigationDrawer();
 
-        setupSlidingPanel(savedInstanceState);
+        setupSlidingPanel();
+
+        setupMapState(savedInstanceState);
 
         setupMyLocationButton();
 
@@ -958,7 +960,7 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    private void setupSlidingPanel(Bundle bundle) {
+    private void setupSlidingPanel() {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
         mArrivalsListHeaderSubView = mArrivalsListHeaderView.findViewById(R.id.main_header_content);
@@ -1040,16 +1042,37 @@ public class HomeActivity extends AppCompatActivity
                 return -1;
             }
         };
+    }
 
+    /**
+     * Sets up the initial map state, based on a previous savedInstanceState for this activity,
+     * or an Intent that was passed into this activity
+     */
+    private void setupMapState(Bundle savedInstanceState) {
         String stopId;
-        if (bundle != null) {
-            stopId = bundle.getString(STOP_ID);
+        // Check savedInstanceState to see if there is a previous state for this activity
+        if (savedInstanceState != null) {
+            // We're recreating an instance with a previous state, so show the focused stop in panel
+            stopId = savedInstanceState.getString(STOP_ID);
 
             if (stopId != null) {
                 mFocusedStopId = stopId;
-                // We're recreating an instance with a previous state, so show the focused stop in panel
                 // We don't have an ObaStop or ObaRoute mapping, so just pass in null for those
                 updateArrivalListFragment(stopId, null, null);
+            }
+        } else {
+            // Check intent passed into Activity
+            Bundle bundle = getIntent().getExtras();
+            if (bundle != null) {
+                // Did this activity start to focus on a stop?  If so, set focus and show arrival info
+                stopId = bundle.getString(MapParams.STOP_ID);
+                double lat = bundle.getDouble(MapParams.CENTER_LAT);
+                double lon = bundle.getDouble(MapParams.CENTER_LON);
+
+                if (stopId != null && lat != 0.0 && lon != 0.0) {
+                    mFocusedStopId = stopId;
+                    updateArrivalListFragment(stopId, null, null);
+                }
             }
         }
     }

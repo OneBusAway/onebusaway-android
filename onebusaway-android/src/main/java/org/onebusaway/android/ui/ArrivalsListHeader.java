@@ -1204,7 +1204,8 @@ class ArrivalsListHeader {
         // Open soft keyboard if no physical keyboard is open
         InputMethodManager inputMethodManager = (InputMethodManager) mContext.getSystemService(
                 Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.showSoftInput(mEditNameView, InputMethodManager.SHOW_IMPLICIT);
+        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED,
+                InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     synchronized void endNameEdit() {

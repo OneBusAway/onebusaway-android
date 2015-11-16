@@ -76,6 +76,8 @@ public class RouteMapController implements MapModeController {
 
     private VehicleLoaderListener mVehicleLoaderListener;
 
+    private long mLastUpdatedTimeVehicles;
+
     public RouteMapController(Callback callback) {
         mFragment = callback;
         mLineOverlayColor = mFragment.getActivity()
@@ -148,7 +150,25 @@ public class RouteMapController implements MapModeController {
     public void onResume() {
         // Make sure we schedule a future update for vehicles
         mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);
-        mVehicleRefreshHandler.postDelayed(mVehicleRefresh, VEHICLE_REFRESH_PERIOD);
+
+        if (mLastUpdatedTimeVehicles == 0) {
+            // We haven't loaded any vehicles yet - schedule the refresh for the full period and defer
+            // to the loader to reschedule when load is complete
+            mVehicleRefreshHandler.postDelayed(mVehicleRefresh, VEHICLE_REFRESH_PERIOD);
+            return;
+        }
+
+        long elapsedTimeMillis = TimeUnit.NANOSECONDS.toMillis(UIHelp.getCurrentTimeForComparison()
+                - mLastUpdatedTimeVehicles);
+        long refreshPeriod;
+        if (elapsedTimeMillis > VEHICLE_REFRESH_PERIOD) {
+            // Schedule an immediate update, if we're past the normal period after a load
+            refreshPeriod = 100;
+        } else {
+            // Schedule an update so a total of VEHICLE_REFRESH_PERIOD has elapsed since the last update
+            refreshPeriod = VEHICLE_REFRESH_PERIOD - elapsedTimeMillis;
+        }
+        mVehicleRefreshHandler.postDelayed(mVehicleRefresh, refreshPeriod);
     }
 
     @Override
@@ -439,6 +459,8 @@ public class RouteMapController implements MapModeController {
             routes.add(mRouteId);
 
             obaMapView.updateVehicles(routes, response);
+
+            mLastUpdatedTimeVehicles = UIHelp.getCurrentTimeForComparison();
 
             // Clear any pending refreshes
             mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);

@@ -54,6 +54,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
@@ -78,6 +79,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public final class UIHelp {
 
@@ -998,6 +1000,23 @@ public final class UIHelp {
         } catch (ActivityNotFoundException e) {
             Toast.makeText(c, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
+        }
+    }
+
+    /**
+     * Returns the current time for comparison against another current time.  For API levels >=
+     * Jelly Bean MR1 the SystemClock.getElapsedRealtimeNanos() method is used, and for API levels
+     * <
+     * Jelly Bean MR1 System.currentTimeMillis() is used.
+     *
+     * @return the current time for comparison against another current time, in nanoseconds
+     */
+    public static long getCurrentTimeForComparison() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            // Use elapsed real-time nanos, since its guaranteed monotonic
+            return SystemClock.elapsedRealtimeNanos();
+        } else {
+            return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
         }
     }
 }

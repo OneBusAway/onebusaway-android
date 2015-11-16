@@ -78,16 +78,16 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 
 Get early access to new OneBusAway Android versions!  See our [Beta Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
 
-### Contributing
+## Contributing
 
 We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
 
-### Deploying OneBusAway Android in Your City
+## Deploying OneBusAway Android in Your City
 
 There are two ways to deploy OneBusAway Android in your city:
 
 1. **Join the OneBusAway [multi-region project](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region)** - The easiest way to get started - simply set up your own OneBusAway server with your own transit data, and get added to the OneBusAway apps!  See [this page](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) for details.
-2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play / Amazon App Store based on the OneBusAway Android source code.  See [this page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md) for details.
+2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play / Amazon App Store based on the OneBusAway Android source code. See [rebranding page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md) for details.
 
 ## Troubleshooting
 

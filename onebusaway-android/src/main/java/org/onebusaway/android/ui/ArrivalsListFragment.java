@@ -939,8 +939,7 @@ public class ArrivalsListFragment extends ListFragment
         // Set and add the view that is shown if no arrival information is returned by the REST API
         getListView().setEmptyView(mEmptyList);
         ((ViewGroup) getListView().getParent()).addView(mEmptyList);
-        TextView noArrivals = (TextView) mEmptyList.findViewById(R.id.noArrivals);
-        if (noArrivals != null) {
+        if (currentText != null) {
             setEmptyText(currentText);
         }
     }

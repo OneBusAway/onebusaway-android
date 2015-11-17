@@ -262,7 +262,7 @@ public class ArrivalsListFragment extends ListFragment
 
         setupFooter();
 
-        setupEmptyList();
+        setupEmptyList(null);
 
         // This sets the stopId and uri
         setStopId();
@@ -876,14 +876,19 @@ public class ArrivalsListFragment extends ListFragment
         if (mFooter != null) {
             getListView().removeFooterView(mFooter);
         }
+        CharSequence emptyText = null;
         // Remove any existing empty list view
         if (mEmptyList != null) {
+            TextView noArrivals = (TextView) mEmptyList.findViewById(R.id.noArrivals);
+            if (noArrivals != null) {
+                emptyText = noArrivals.getText();
+            }
             ((ViewGroup) getListView().getParent()).removeView(mEmptyList);
         }
 
         initArrivalInfoViews(arrivalInfoStyle, inflater);
         setupFooter();
-        setupEmptyList();
+        setupEmptyList(emptyText);
         setListViewProperties(arrivalInfoStyle);
         instantiateAdapter(arrivalInfoStyle);
     }
@@ -919,8 +924,10 @@ public class ArrivalsListFragment extends ListFragment
 
     /**
      * Sets up the load more arrivals button in the empty list view
+     * @param currentText the text that should populate the empty list entry, or null if no text
+     *                    should be set at this point
      */
-    private void setupEmptyList() {
+    private void setupEmptyList(CharSequence currentText) {
         Button loadMoreArrivalsEmptyList = (Button) mEmptyList
                 .findViewById(R.id.load_more_arrivals);
         loadMoreArrivalsEmptyList.setOnClickListener(new View.OnClickListener() {
@@ -932,6 +939,10 @@ public class ArrivalsListFragment extends ListFragment
         // Set and add the view that is shown if no arrival information is returned by the REST API
         getListView().setEmptyView(mEmptyList);
         ((ViewGroup) getListView().getParent()).addView(mEmptyList);
+        TextView noArrivals = (TextView) mEmptyList.findViewById(R.id.noArrivals);
+        if (noArrivals != null) {
+            setEmptyText(currentText);
+        }
     }
 
     /**

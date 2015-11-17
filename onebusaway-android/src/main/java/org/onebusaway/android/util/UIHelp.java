@@ -71,6 +71,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -104,10 +105,19 @@ public final class UIHelp {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             SearchManager searchManager =
                     (SearchManager) activity.getSystemService(Context.SEARCH_SERVICE);
-            MenuItem menuItem = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) MenuItemCompat.getActionView(menuItem);
+            final MenuItem searchMenu = menu.findItem(R.id.action_search);
+            SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenu);
             searchView.setSearchableInfo(
                     searchManager.getSearchableInfo(activity.getComponentName()));
+            // Close the keyboard and SearchView at same time when the back button is pressed
+            searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View view, boolean queryTextFocused) {
+                    if (!queryTextFocused) {
+                        MenuItemCompat.collapseActionView(searchMenu);
+                    }
+                }
+            });
         }
     }
 
@@ -1018,5 +1028,24 @@ public final class UIHelp {
         } else {
             return TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis());
         }
+    }
+
+    /**
+     * Open the soft keyboard
+     */
+    public static void openKeyboard(Context context) {
+        InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED,
+                InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
+    /**
+     * Closes the soft keyboard
+     */
+    public static void closeKeyboard(Context context, View v) {
+        InputMethodManager imm =
+                (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
 }

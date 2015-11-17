@@ -492,6 +492,9 @@ public class HomeActivity extends AppCompatActivity
 
         UIHelp.setupSearch(this, menu);
 
+        // Initialize fragment menu visibility here, so we don't have overlap between the various fragments
+        setupOptionsMenu(menu);
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -500,11 +503,15 @@ public class HomeActivity extends AppCompatActivity
         super.onPrepareOptionsMenu(menu);
 
         // Manage fragment menu visibility here, so we don't have overlap between the various fragments
+        setupOptionsMenu(menu);
+
+        return true;
+    }
+
+    private void setupOptionsMenu(Menu menu) {
         menu.setGroupVisible(R.id.main_options_menu_group, true);
         menu.setGroupVisible(R.id.arrival_list_menu_group, mShowArrivalsMenu);
         menu.setGroupVisible(R.id.starred_stop_menu_group, mShowStarredStopsMenu);
-
-        return true;
     }
 
     @Override

@@ -599,7 +599,6 @@ public class ArrivalsListFragment extends ListFragment
         View tripView = v.findViewById(R.id.reminder);
         boolean isReminderVisible = tripView != null && tripView.getVisibility() != View.GONE;
         // Check route favorite, for whether we show "Add star" or "Remove star"
-        final Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(getActivity(),
                 routeId, arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 

@@ -1026,6 +1026,7 @@ public class ArrivalsListFragment extends ListFragment
                 styles[newValue]);
         checkAdapterStylePreference();
         refreshLocal();
+        getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
     }
 
     private void showRoutesFilterDialog() {

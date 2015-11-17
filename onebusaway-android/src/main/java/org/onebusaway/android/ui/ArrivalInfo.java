@@ -217,7 +217,7 @@ public final class ArrivalInfo {
             mDisplayTime = scheduled;
         }
 
-        mColor = computeColor(scheduled, predicted);
+        mColor = computeColor(scheduledMins, predictedMins);
 
         mStatusText = computeStatusLabel(context, info, now, predicted,
                 scheduledMins, predictedMins);

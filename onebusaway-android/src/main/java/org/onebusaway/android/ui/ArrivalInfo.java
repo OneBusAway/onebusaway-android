@@ -234,8 +234,8 @@ public final class ArrivalInfo {
      * ontime,
      * or if we don't have real-time info (i.e., scheduled)
      *
-     * @param scheduled the scheduled time
-     * @param predicted the predicted time
+     * @param scheduled the scheduled time, in minutes past unix epoch
+     * @param predicted the predicted time, in minutes past unix epoch
      * @return the status color to be used, depending on whether the vehicle is running early, late,
      * ontime,
      * or if we don't have real-time info (i.e., scheduled)
@@ -255,7 +255,7 @@ public final class ArrivalInfo {
      * ontime,
      * or if we don't have real-time info (i.e., scheduled)
      *
-     * @param delay the deviation from the scheduled time - positive means bus is running late,
+     * @param delay the deviation from the scheduled time, in minutes - positive means bus is running late,
      *              negative means early
      * @return the status color to be used, depending on whether the vehicle is running early, late,
      * ontime,

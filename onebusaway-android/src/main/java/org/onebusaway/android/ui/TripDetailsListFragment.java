@@ -53,6 +53,7 @@ import android.widget.TextView;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -316,6 +317,7 @@ public class TripDetailsListFragment extends ListFragment {
         realtime.setVisibility(View.VISIBLE);
 
         long deviation = status.getScheduleDeviation();
+        long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
         long minutes = Math.abs(deviation) / 60;
         long seconds = Math.abs(deviation) % 60;
         String lastUpdate = DateUtils.formatDateTime(getActivity(),
@@ -325,7 +327,7 @@ public class TripDetailsListFragment extends ListFragment {
                         DateUtils.FORMAT_NO_MIDNIGHT
         );
 
-        statusColor = ArrivalInfo.computeColorFromDeviation(deviation);
+        statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
         if (statusColor != R.color.stop_info_ontime) {
             // Show early/late/scheduled color
             d.setColor(getResources().getColor(statusColor));
@@ -573,8 +575,9 @@ public class TripDetailsListFragment extends ListFragment {
                 // If we have real-time info, use that
                 date = mStatus.getServiceDate();
                 deviation = mStatus.getScheduleDeviation();
+                long deviationMin = TimeUnit.SECONDS.toMinutes(mStatus.getScheduleDeviation());
                 if (mStatus.isPredicted()) {
-                    statusColor = ArrivalInfo.computeColorFromDeviation(deviation);
+                    statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
                 } else {
                     statusColor = R.color.stop_info_scheduled_time;
                 }

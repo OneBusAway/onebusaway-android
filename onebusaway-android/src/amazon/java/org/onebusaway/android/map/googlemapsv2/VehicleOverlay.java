@@ -508,8 +508,8 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
             Resources r = Application.get().getResources();
 
             if (isRealtime) {
-                colorResource = ArrivalInfo
-                        .computeColorFromDeviation(status.getScheduleDeviation());
+                long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
+                colorResource = ArrivalInfo.computeColorFromDeviation(deviationMin);
             } else {
                 colorResource = R.color.stop_info_scheduled_time;
             }
@@ -645,7 +645,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
                 String statusString = ArrivalInfo.computeArrivalLabelFromDelay(r, deviationMin);
                 statusView.setText(statusString);
-                statusColor = ArrivalInfo.computeColorFromDeviation(status.getScheduleDeviation());
+                statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
                 d.setColor(r.getColor(statusColor));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
             } else {

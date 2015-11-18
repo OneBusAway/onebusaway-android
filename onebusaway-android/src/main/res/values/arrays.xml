@@ -185,9 +185,4 @@
         <item>stop</item>
     </string-array>
 
-    <array name="report_stop_issue_tutorial_images">
-        <item>@drawable/stop_issue_tutorial_0</item>
-        <item>@drawable/stop_issue_tutorial_2</item>
-        <item>@drawable/stop_issue_tutorial_3</item>
-    </array>
 </resources>

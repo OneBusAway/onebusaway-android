@@ -78,13 +78,19 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private static final String SHOW_CATEGORIES = ".showCategories";
 
+    private static final String SHOW_INFO = ".showInfo";
+
     private static final String SHOW_STOP_MARKER = ".showMarker";
+
+    private static final String STOP_NAME = ".stopName";
     /**
      * UI Elements
      */
-    private EditText addressEditText;
+    private EditText mAddressEditText;
 
     private Spinner mServicesSpinner;
+
+    private RelativeLayout mBusStopHeader;
 
     //Map Fragment
     private BaseMapFragment mMapFragment;
@@ -114,8 +120,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     private boolean mBundleShowCategories = false;
 
     private boolean mBundleShowStopMarker = false;
-
-    private String mBundleStopId;
 
     /**
      * Starts the InfrastructureIssueActivity.
@@ -186,18 +190,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
         ObaStop obaStop = issueLocationHelper.getObaStop();
         if (obaStop != null) {
-            String stopId = null;
-            if (obaStop.getId() != null) {
-                stopId = obaStop.getId();
-            } else if (mBundleStopId != null) {
-                stopId = mBundleStopId;
-            }
+            String stopId = obaStop.getId();
             getIntent().putExtra(MapParams.STOP_ID, stopId);
             outState.putString(MapParams.STOP_ID, stopId);
             outState.putBoolean(SHOW_STOP_MARKER, true);
+            outState.putString(STOP_NAME, obaStop.getName());
         }
         getIntent().putExtra(MapParams.CENTER_LAT, issueLocationHelper.getIssueLocation().getLatitude());
         getIntent().putExtra(MapParams.CENTER_LON, issueLocationHelper.getIssueLocation().getLongitude());
@@ -208,6 +207,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             getIntent().putExtra(SELECTED_SERVICE, service.getService_name());
             outState.putBoolean(SHOW_CATEGORIES, true);
         }
+
+        if (isInfoVisiable()) {
+            String infoText = ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).getText().
+                    toString();
+            outState.putString(SHOW_INFO, infoText);
+        }
     }
 
     @Override
@@ -216,13 +221,19 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         if (savedInstanceState != null) {
             mBundleShowCategories = savedInstanceState.getBoolean(SHOW_CATEGORIES, false);
             mBundleShowStopMarker = savedInstanceState.getBoolean(SHOW_STOP_MARKER, false);
-            mBundleStopId = savedInstanceState.getString(MapParams.STOP_ID);
+            String bundleStopId = savedInstanceState.getString(MapParams.STOP_ID);
+            String stopName = savedInstanceState.getString(STOP_NAME);
 
-            if (mBundleStopId != null) {
+            if (bundleStopId != null) {
                 double lat = getIntent().getDoubleExtra(MapParams.CENTER_LAT, 0);
                 double lon = getIntent().getDoubleExtra(MapParams.CENTER_LON, 0);
                 Location location = LocationUtil.makeLocation(lat, lon);
-                issueLocationHelper.updateMarkerPosition(location, new ObaStopElement());
+                issueLocationHelper.updateMarkerPosition(location, new ObaStopElement(bundleStopId,
+                        lat, lon, stopName));
+            }
+            String infoText = savedInstanceState.getString(SHOW_INFO);
+            if (infoText != null) {
+                addInfoText(infoText);
             }
         }
     }
@@ -274,8 +285,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
         setTitle(getString(R.string.rt_infrastructure_problem_header));
 
-        addressEditText = (EditText) findViewById(R.id.ri_address_editText);
-        addressEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mAddressEditText = (EditText) findViewById(R.id.ri_address_editText);
+        mAddressEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -314,6 +325,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         });
 
         mDefaultIssueType = getIntent().getStringExtra(SELECTED_SERVICE);
+
+        mBusStopHeader = (RelativeLayout) findViewById(R.id.bus_stop_header);
     }
 
 
@@ -365,7 +378,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      */
     private void syncAddress(Location location) {
         String address = getAddressByLocation(location);
-        addressEditText.setText(address);
+        mAddressEditText.setText(address);
 
         showProgress(Boolean.TRUE);
 
@@ -379,15 +392,15 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private void syncAddressString(Location location) {
         String address = getAddressByLocation(location);
-        addressEditText.setText(address);
+        mAddressEditText.setText(address);
     }
 
     /**
-     * Search address string from addressEditText
+     * Search address string from mAddressEditText
      */
     private void searchAddress() {
         showProgress(Boolean.TRUE);
-        String addressString = addressEditText.getText().toString();
+        String addressString = mAddressEditText.getText().toString();
         Location location = getLocationByAddress(addressString);
         if (location != null) {
             mMapFragment.setMapCenter(location, true, true);
@@ -476,6 +489,18 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     @Override
     public void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location) {
         issueLocationHelper.updateMarkerPosition(location, stop);
+
+        // Don't call syncAddress if you are restoring the instance
+        if (mBundleShowStopMarker) {
+            if (stop != null) {
+                // Show bus stop name on the header
+                showBusStopHeader(stop.getName());
+            }
+            // Restore marker position
+            mBundleShowStopMarker = false;
+            return;
+        }
+
         // Clear all reporting fragments
         clearReportingFragments();
 
@@ -563,19 +588,15 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                 if (!getString(R.string.ri_location_problem_info).equalsIgnoreCase(infoText)) {
                     addInfoText(getString(R.string.report_dialog_out_of_region_message));
                 }
-            } else if (mBundleShowStopMarker && mBundleStopId != null) {
-                // Restore marker position
-                mBundleShowStopMarker = false;
-                updateMarkerPosition(issueLocationHelper.getMarkerPosition());
+            } else if (mBundleShowStopMarker) {
+                mMapFragment.setFocusStop(issueLocationHelper.getObaStop(), new ArrayList<ObaRoute>());
             }
         }
 
         boolean isStaticServicesProvided = checkTransitCategories(serviceList);
 
         // Set static service
-        if (!isStaticServicesProvided)
-
-        {
+        if (!isStaticServicesProvided) {
             serviceList.addAll(createStaticServices());
         }
 
@@ -584,11 +605,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
          */
         Map<String, List<Service>> serviceListMap = new TreeMap<>();
 
-        for (
-                Service s
-                : serviceList)
-
-        {
+        for (Service s : serviceList) {
             String groupName = s.getGroup() == null ? "Others" : s.getGroup();
             List<Service> mappedList = serviceListMap.get(groupName);
             if (mappedList != null) {
@@ -611,25 +628,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         spinnerItems.add(hintServiceSpinnerItem);
 
         // Create Transit categories first
-        spinnerItems.add(new
-
-                        SectionItem(ReportConstants.ISSUE_GROUP_TRANSIT)
-
-        );
-        for (
-                Service s
-                : serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT))
-
-        {
+        spinnerItems.add(new SectionItem(ReportConstants.ISSUE_GROUP_TRANSIT));
+        for (Service s : serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT)) {
             spinnerItems.add(new ServiceSpinnerItem(s));
         }
 
         // Create the rest of the categories
-        for (
-                String key
-                : serviceListMap.keySet())
-
-        {
+        for (String key : serviceListMap.keySet()) {
             // Skip if it is transit category
             if (ReportConstants.ISSUE_GROUP_TRANSIT.equals(key)) {
                 continue;
@@ -643,9 +648,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         EntrySpinnerAdapter adapter = new EntrySpinnerAdapter(this, spinnerItems);
         mServicesSpinner.setAdapter(adapter);
 
-        if (mDefaultIssueType != null)
-
-        {
+        if (mDefaultIssueType != null) {
             // Select an default issue category programmatically
             selectDefaultCategory(spinnerItems);
         }
@@ -792,9 +795,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         removeInfoText();
 
         ((TextView) findViewById(R.id.ri_bus_stop_text)).setText(text);
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.bus_stop_header);
-        if (relativeLayout.getVisibility() != View.VISIBLE) {
-            relativeLayout.setVisibility(View.VISIBLE);
+        if (mBusStopHeader.getVisibility() != View.VISIBLE) {
+            mBusStopHeader.setVisibility(View.VISIBLE);
         }
     }
 
@@ -842,7 +844,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     public String getCurrentAddress() {
-        return addressEditText.getText().toString();
+        return mAddressEditText.getText().toString();
     }
 
     private void finishActivityWithResult() {

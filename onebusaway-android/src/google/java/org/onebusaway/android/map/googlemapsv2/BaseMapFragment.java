@@ -35,6 +35,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.MapModeController;

@@ -59,11 +59,6 @@
     <color name="realtime_indicator_fill">@android:color/transparent</color>
     <color name="realtime_indicator_line">@android:color/white</color>
 
-    <!-- Alerts-->
-    <color name="alert_error">#FFC4C4</color>
-    <color name="alert_warning">#FFFF99</color>
-    <color name="tutorial_navigation">#e0dcdc</color>
-
     <!--Reporting-->
     <color name="light_gray">#CCCCCC</color>
     <color name="material_gray">#7F7F7F</color>

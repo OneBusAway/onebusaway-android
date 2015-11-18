@@ -60,6 +60,17 @@ public final class ObaStopElement implements ObaStop {
         routeIds = EMPTY_ROUTES;
     }
 
+    public ObaStopElement(String id, double lat, double lon, String name) {
+        this.id = id;
+        this.lat = lat;
+        this.lon = lon;
+        direction = "";
+        locationType = LOCATION_STOP;
+        this.name = name;
+        code = "";
+        routeIds = EMPTY_ROUTES;
+    }
+
     public String getId() {
         return id;
     }

@@ -96,7 +96,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     /**
      * UI elements
      */
-    private ImageView issueImage;
+    private ImageView mIssueImage;
 
     private Open311 mOpen311;
 
@@ -106,7 +106,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     private Uri mCapturedImageURI;
 
     // Open311 service description result for selected service code
-    private ServiceDescription serviceDescription;
+    private ServiceDescription mServiceDescription;
+
+    private LinearLayout mInfoLayout;
 
     // private
 
@@ -161,7 +163,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      * Initialize UI components
      */
     private void setupViews() {
-        issueImage = (ImageView) findViewById(R.id.ri_imageView);
+        mIssueImage = (ImageView) findViewById(R.id.ri_imageView);
+
+        mInfoLayout = (LinearLayout) findViewById(R.id.ri_info_layout);
 
         Button addImageButton = (Button) findViewById(R.id.ri_attach_image);
 
@@ -273,12 +277,12 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
-            issueImage.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+            mIssueImage.setImageBitmap(BitmapFactory.decodeFile(picturePath));
         } else if (requestCode == ReportConstants.CAPTURE_PICTURE_INTENT &&
                 resultCode == Activity.RESULT_OK && data != null) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-            issueImage.setImageBitmap(imageBitmap);
+            mIssueImage.setImageBitmap(imageBitmap);
         }
     }
 
@@ -320,9 +324,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
         ServiceRequest serviceRequest = builder.createServiceRequest();
         int errorCode = Open311Validator.validateServiceRequest(serviceRequest,
-                mOpen311.getOpen311Option().getOpen311Type(), serviceDescription);
+                mOpen311.getOpen311Option().getOpen311Type(), mServiceDescription);
 
-        List<Open311AttributePair> attributes = createOpen311Attributes(serviceDescription);
+        List<Open311AttributePair> attributes = createOpen311Attributes(mServiceDescription);
         serviceRequest.setAttributes(attributes);
 
         if (Open311Validator.isValid(errorCode)) {
@@ -409,7 +413,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      */
     private File createImageFile() throws IOException {
         //Convert bitmap to file
-        Bitmap bitmap = ((BitmapDrawable) issueImage.getDrawable()).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable) mIssueImage.getDrawable()).getBitmap();
         String path = Environment.getExternalStorageDirectory().toString() + "/" + "Download";
         File file = new File(path, "image.jpg");
         OutputStream fOut;
@@ -445,7 +449,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      */
     public void createServiceDescriptionUI(ServiceDescription serviceDescription) {
         clearInfoField();
-        this.serviceDescription = serviceDescription;
+        this.mServiceDescription = serviceDescription;
         if (!"".equals(mService.getDescription()) && mService.getDescription() != null) {
             addDescriptionText(mService.getDescription());
         }
@@ -479,7 +483,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         ((ImageView) layout.findViewById(R.id.ri_ic_question_answer)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
 
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         Spannable desc = new SpannableString(open311Attribute.getDescription());
         EditText editText = ((EditText) layout.findViewById(R.id.riti_editText));
         if (open311Attribute.getRequired()) {
@@ -496,7 +499,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             editText.setInputType(InputType.TYPE_CLASS_DATETIME);
         }
 
-        linear.addView(layout);
+        mInfoLayout.addView(layout);
     }
 
     /**
@@ -509,8 +512,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         if (values != null && values.size() > 0) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_single_value_list_item, null, false);
-
-            LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
 
             ((ImageView) layout.findViewById(R.id.ri_ic_radio)).setColorFilter(
                     getResources().getColor(R.color.material_gray));
@@ -537,7 +538,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 }
             }
 
-            linear.addView(layout);
+            mInfoLayout.addView(layout);
         }
     }
 
@@ -551,8 +552,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         if (values != null && values.size() > 0) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_multi_value_list_item, null, false);
-
-            LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
 
             ((ImageView) layout.findViewById(R.id.ri_ic_checkbox)).setColorFilter(
                     getResources().getColor(R.color.material_gray));
@@ -577,22 +576,20 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 }
             }
 
-            linear.addView(layout);
+            mInfoLayout.addView(layout);
         }
     }
 
     private void clearInfoField() {
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
-        linear.removeAllViewsInLayout();
+        mInfoLayout.removeAllViewsInLayout();
     }
 
     private void addDescriptionText(String text) {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
         RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
 
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_info_layout);
         ((TextView) layout.findViewById(R.id.riii_textView)).setText(text);
-        linear.addView(layout);
+        mInfoLayout.addView(layout);
 
         ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
                 getResources().getColor(R.color.material_gray));

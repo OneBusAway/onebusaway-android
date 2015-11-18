@@ -19,6 +19,8 @@ import org.onebusaway.android.R;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -41,12 +43,19 @@ public class BaseReportActivity extends AppCompatActivity {
 
     public final static String CLOSE_REQUEST = "BaseReportActivityClose";
 
+    protected RelativeLayout mInfoHeader;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && data.getBooleanExtra(CLOSE_REQUEST, false)){
             finish();
         }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
+        super.onCreate(savedInstanceState, persistentState);
     }
 
     protected FragmentTransaction setFragment(Fragment fragment, int containerViewId) {
@@ -114,15 +123,27 @@ public class BaseReportActivity extends AppCompatActivity {
     }
 
     protected void addInfoText(String text) {
-        ((TextView) findViewById(R.id.ri_info_text)).setText(text);
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.ri_info_header);
-        if (relativeLayout.getVisibility() != View.VISIBLE) {
-            relativeLayout.setVisibility(View.VISIBLE);
+        if (mInfoHeader == null){
+            mInfoHeader = (RelativeLayout) findViewById(R.id.ri_info_header);
+        }
+        ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).setText(text);
+        if (mInfoHeader.getVisibility() != View.VISIBLE) {
+            mInfoHeader.setVisibility(View.VISIBLE);
         }
     }
 
+    protected  boolean isInfoVisiable() {
+        if (mInfoHeader == null){
+            mInfoHeader = (RelativeLayout) findViewById(R.id.ri_info_header);
+        }
+        return mInfoHeader.getVisibility() == View.VISIBLE;
+    }
+
     protected void removeInfoText() {
-        ((TextView) findViewById(R.id.ri_info_text)).setText("");
-        findViewById(R.id.ri_info_header).setVisibility(View.GONE);
+        if (mInfoHeader == null){
+            mInfoHeader = (RelativeLayout) findViewById(R.id.ri_info_header);
+        }
+        ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).setText("");
+        mInfoHeader.setVisibility(View.GONE);
     }
 }

@@ -453,7 +453,7 @@ public class BaseMapFragment extends SupportMapFragment
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
-            if (mRunning) {
+            if (mRunning && UIHelp.canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
@@ -476,7 +476,9 @@ public class BaseMapFragment extends SupportMapFragment
         if (currentRegionChanged
                 && Application.getPrefs()
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)
-                && Application.get().getCurrentRegion() != null) {
+                && Application.get().getCurrentRegion() != null
+                && mRunning
+                && UIHelp.canManageDialog(getActivity())) {
             Toast.makeText(getActivity(),
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
@@ -517,7 +519,8 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     @SuppressWarnings("deprecation")
     public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
-        if (!LocationUtil.isLocationEnabled(getActivity()) && mRunning && UIHelp.canDisplayDialog(getActivity())) {
+        if (!LocationUtil.isLocationEnabled(getActivity()) && mRunning && UIHelp.canManageDialog(
+                getActivity())) {
             showDialog(MapDialogFragment.NOLOCATION_DIALOG);
             return;
         }

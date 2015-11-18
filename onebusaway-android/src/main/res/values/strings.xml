@@ -450,9 +450,9 @@
         API calls
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
-    <string name="preferences_save_title">Save to SD card</string>
+    <string name="preferences_save_title">Save to storage</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
-    <string name="preferences_restore_title">Restore from SD card</string>
+    <string name="preferences_restore_title">Restore from storage</string>
     <string name="preferences_restore_summary">Restores from previous save</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>

@@ -26,17 +26,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.RegionUtils;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-
-import com.joulespersecond.oba.elements.ObaRegion;
-import com.joulespersecond.seattlebusbot.Application;
-import com.joulespersecond.seattlebusbot.BuildConfig;
-import com.joulespersecond.seattlebusbot.R;
-import com.joulespersecond.seattlebusbot.util.LocationHelp;
-import com.joulespersecond.seattlebusbot.util.UIHelp;
+import org.onebusaway.android.util.UIHelp;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;

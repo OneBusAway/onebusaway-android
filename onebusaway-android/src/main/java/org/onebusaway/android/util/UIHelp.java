@@ -24,6 +24,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.HomeActivity;
@@ -1081,5 +1082,32 @@ public final class UIHelp {
         InputMethodManager imm =
                 (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+    }
+
+    /**
+     * Returns true if the provided currentTime falls within the situation's (i.e., alert's) active
+     * windows or if the situation does not provide an active window, and false if the currentTime
+     * falls outside of the situation's active windows
+     *
+     * @param currentTime the time to compare to the situation's windows
+     * @return true if the provided currentTime falls within the situation's (i.e., alert's) active
+     * windows or if the situation does not provide an active window, and false if the currentTime
+     * falls outside of the situation's active windows
+     */
+    public static boolean isActiveWindowForSituation(ObaSituation situation, long currentTime) {
+        if (situation.getActiveWindows().length == 0) {
+            // We assume a situation is active if it doesn't contain any active window information
+            return true;
+        }
+        boolean isActiveWindowForSituation = false;
+        for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
+            long from = activeWindow.getFrom();
+            long to = activeWindow.getTo();
+            if (from <= currentTime && currentTime <= to) {
+                isActiveWindowForSituation = true;
+                break;
+            }
+        }
+        return isActiveWindowForSituation;
     }
 }

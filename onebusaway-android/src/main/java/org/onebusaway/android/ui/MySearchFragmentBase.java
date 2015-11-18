@@ -104,6 +104,7 @@ abstract class MySearchFragmentBase extends ListFragment
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
+        UIHelp.closeKeyboard(getActivity(), mSearchViewV1);
         super.onStop();
     }
 

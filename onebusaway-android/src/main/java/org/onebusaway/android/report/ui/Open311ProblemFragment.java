@@ -116,6 +116,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private Map<Integer, AttributeValue> mAttributeValueHashMap = new HashMap<>();
 
+    private Map<Integer, View> mDynamicAttributeUIMap = new HashMap<>();
+
     public static final String TAG = "Open311ProblemFragment";
 
     private static final String ATTRIBUTES = ".attributes";
@@ -396,7 +398,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     /**
-     * Creates open311 question and answer attributes
+     * Creates open311 question and answer attributes to submit a report
      * Reads from dynamically created UI
      *
      * @param serviceDescription contains attribute types
@@ -411,13 +413,13 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
-                    EditText et = (EditText) findViewById(R.id.riti_editText);
+                    EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (et != null) {
                         attributes.add(new Open311AttributePair(open311Attribute.getCode(),
                                 et.getText().toString(), open311Attribute.getDatatype()));
                     }
                 } else if (Open311DataType.SINGLEVALUELIST.equals(open311Attribute.getDatatype())) {
-                    RadioGroup rg = (RadioGroup) findViewById(R.id.risvli_radioGroup);
+                    RadioGroup rg = (RadioGroup) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (rg != null) {
                         int count = rg.getChildCount();
                         for (int i = 0; i < count; i++) {
@@ -430,7 +432,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                         }
                     }
                 } else if (Open311DataType.MULTIVALUELIST.equals(open311Attribute.getDatatype())) {
-                    LinearLayout ll = (LinearLayout) findViewById(R.id.rimvli_checkBoxGroup);
+                    LinearLayout ll = (LinearLayout) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (ll != null) {
                         int count = ll.getChildCount();
                         for (int i = 0; i < count; i++) {
@@ -454,14 +456,14 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
                         || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
                         || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
-                    EditText et = (EditText) findViewById(R.id.riti_editText);
+                    EditText et = (EditText) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (et != null) {
                         AttributeValue value = new AttributeValue(open311Attribute.getCode());
                         value.addValue(et.getText().toString());
                         values.add(value);
                     }
                 } else if (Open311DataType.SINGLEVALUELIST.equals(open311Attribute.getDatatype())) {
-                    RadioGroup rg = (RadioGroup) findViewById(R.id.risvli_radioGroup);
+                    RadioGroup rg = (RadioGroup) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (rg != null) {
                         int count = rg.getChildCount();
                         for (int i = 0; i < count; i++) {
@@ -475,7 +477,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                         }
                     }
                 } else if (Open311DataType.MULTIVALUELIST.equals(open311Attribute.getDatatype())) {
-                    LinearLayout ll = (LinearLayout) findViewById(R.id.rimvli_checkBoxGroup);
+                    LinearLayout ll = (LinearLayout) mDynamicAttributeUIMap.get(open311Attribute.getCode());
                     if (ll != null) {
                         int count = ll.getChildCount();
                         AttributeValue value = new AttributeValue(open311Attribute.getCode());
@@ -593,6 +595,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         }
 
         mInfoLayout.addView(layout);
+        mDynamicAttributeUIMap.put(open311Attribute.getCode(), editText);
     }
 
     /**
@@ -641,6 +644,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             }
 
             mInfoLayout.addView(layout);
+            mDynamicAttributeUIMap.put(open311Attribute.getCode(), rg);
         }
     }
 
@@ -685,6 +689,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             }
 
             mInfoLayout.addView(layout);
+            mDynamicAttributeUIMap.put(open311Attribute.getCode(), cg);
         }
     }
 

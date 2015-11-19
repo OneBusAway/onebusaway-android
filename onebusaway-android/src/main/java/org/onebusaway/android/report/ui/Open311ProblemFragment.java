@@ -23,6 +23,7 @@ import org.onebusaway.android.report.connection.ServiceDescriptionTask;
 import org.onebusaway.android.report.connection.ServiceRequestTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
+import org.onebusaway.android.report.ui.model.AttributeValue;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.util.PreferenceHelp;
 
@@ -39,6 +40,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
@@ -72,8 +74,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.usf.cutr.open311client.Open311;
 import edu.usf.cutr.open311client.constants.Open311DataType;
@@ -110,10 +114,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private LinearLayout mInfoLayout;
 
-    // private
+    private Map<Integer, AttributeValue> mAttributeValueHashMap = new HashMap<>();
 
     public static final String TAG = "Open311ProblemFragment";
-
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service) {
@@ -130,7 +133,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
         View rootView = inflater.inflate(R.layout.open311_issue, container, false);
 
         setRetainInstance(true);
@@ -154,6 +159,24 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        List<AttributeValue> attributeValues = createAttributeValues(mServiceDescription);
+        outState.putParcelableArrayList("test", (ArrayList<? extends Parcelable>) attributeValues);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            List<AttributeValue> values = savedInstanceState.getParcelableArrayList("test");
+            for (AttributeValue v : values) {
+                mAttributeValueHashMap.put(v.getCode(), v);
+            }
+        }
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         ObaAnalytics.reportFragmentStart(this);
@@ -164,6 +187,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      */
     private void setupViews() {
         mIssueImage = (ImageView) findViewById(R.id.ri_imageView);
+        mIssueImage.setSaveEnabled(true);
 
         mInfoLayout = (LinearLayout) findViewById(R.id.ri_info_layout);
 
@@ -406,6 +430,53 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         return attributes;
     }
 
+    private List<AttributeValue> createAttributeValues(ServiceDescription serviceDescription) {
+        List<AttributeValue> values = new ArrayList<>();
+        for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
+            if (Boolean.valueOf(open311Attribute.getVariable())) {
+                if (Open311DataType.STRING.equals(open311Attribute.getDatatype())
+                        || Open311DataType.NUMBER.equals(open311Attribute.getDatatype())
+                        || Open311DataType.DATETIME.equals(open311Attribute.getDatatype())) {
+                    EditText et = (EditText) findViewById(R.id.riti_editText);
+                    if (et != null) {
+                        AttributeValue value = new AttributeValue(open311Attribute.getCode());
+                        value.addValue(et.getText().toString());
+                        values.add(value);
+                    }
+                } else if (Open311DataType.SINGLEVALUELIST.equals(open311Attribute.getDatatype())) {
+                    RadioGroup rg = (RadioGroup) findViewById(R.id.risvli_radioGroup);
+                    if (rg != null) {
+                        int count = rg.getChildCount();
+                        for (int i = 0; i < count; i++) {
+                            RadioButton rb = (RadioButton) rg.getChildAt(i);
+                            if (rb.isChecked()) {
+                                AttributeValue value = new AttributeValue(open311Attribute.getCode());
+                                value.addValue(rb.getText().toString());
+                                values.add(value);
+                                break;
+                            }
+                        }
+                    }
+                } else if (Open311DataType.MULTIVALUELIST.equals(open311Attribute.getDatatype())) {
+                    LinearLayout ll = (LinearLayout) findViewById(R.id.rimvli_checkBoxGroup);
+                    if (ll != null) {
+                        int count = ll.getChildCount();
+                        AttributeValue value = new AttributeValue(open311Attribute.getCode());
+                        for (int i = 0; i < count; i++) {
+                            CheckBox cb = (CheckBox) ll.getChildAt(i);
+                            if (cb.isChecked()) {
+                                value.addValue(cb.getText().toString());
+                            }
+                        }
+                        if (value.getValues().size() > 0)
+                            values.add(value);
+                    }
+                }
+            }
+        }
+        return values;
+    }
+
     /**
      * Creates a byte array which contains the image data
      *
@@ -433,7 +504,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         mCapturedImageURI = getActivity().getContentResolver().insert(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        intent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
         startActivityForResult(intent, ReportConstants.CAPTURE_PICTURE_INTENT);
     }
 
@@ -499,6 +569,12 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             editText.setInputType(InputType.TYPE_CLASS_DATETIME);
         }
 
+        // Restore view state from attribute result hash map
+        AttributeValue av = mAttributeValueHashMap.get(open311Attribute.getCode());
+        if (av != null){
+            editText.setText(av.getSingleValue());
+        }
+
         mInfoLayout.addView(layout);
     }
 
@@ -512,7 +588,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         if (values != null && values.size() > 0) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_single_value_list_item, null, false);
-
+            layout.setSaveEnabled(true);
             ((ImageView) layout.findViewById(R.id.ri_ic_radio)).setColorFilter(
                     getResources().getColor(R.color.material_gray));
 
@@ -528,6 +604,12 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             RadioGroup rg = (RadioGroup) layout.findViewById(R.id.risvli_radioGroup);
             rg.setOrientation(RadioGroup.VERTICAL);
 
+            // Restore view state from attribute result hash map
+            AttributeValue av = mAttributeValueHashMap.get(open311Attribute.getCode());
+            String entryValue = null;
+            if (av != null) {
+                entryValue = av.getSingleValue();
+            }
 
             for (int i = 0; i < values.size(); i++) {
                 LinkedHashMap<String, String> value = (LinkedHashMap<String, String>) values.get(i);
@@ -535,6 +617,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 rg.addView(rb); //the RadioButtons are added to the radioGroup instead of the layout
                 for (LinkedHashMap.Entry<String, String> entry : value.entrySet()) {
                     rb.setText(entry.getValue());
+                    if (entryValue != null && entryValue.equalsIgnoreCase(entry.getValue())){
+                        rb.setChecked(true);
+                    }
                 }
             }
 
@@ -565,14 +650,20 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 ((TextView) layout.findViewById(R.id.rimvli_textView)).append(wordTwo);
             }
 
-            LinearLayout cg = (LinearLayout) layout.findViewById(R.id.rimvli_checkBoxGroup);
+            // Restore view state from attribute result hash map
+            AttributeValue av = mAttributeValueHashMap.get(open311Attribute.getCode());
 
+            LinearLayout cg = (LinearLayout) layout.findViewById(R.id.rimvli_checkBoxGroup);
             for (int i = 0; i < values.size(); i++) {
                 LinkedHashMap<String, String> value = (LinkedHashMap<String, String>) values.get(i);
                 CheckBox cb = new CheckBox(getActivity());
                 cg.addView(cb);
                 for (LinkedHashMap.Entry<String, String> entry : value.entrySet()) {
                     cb.setText(entry.getValue());
+
+                    if (av != null && av.getValues().contains(entry.getValue())) {
+                        cb.setChecked(true);
+                    }
                 }
             }
 

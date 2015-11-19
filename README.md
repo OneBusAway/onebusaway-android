@@ -14,6 +14,10 @@ OneBusAway for Android automatically keeps track of your most used stops and rou
 
 It's available on the [Play Store](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot).
 
+## Testing
+
+Get early access to new OneBusAway Android versions! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/TESTING.md) for details.
+
 ## Build Setup
 
 We use [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants) to enable a number of different build variants of OneBusAway Android.
@@ -73,10 +77,6 @@ key.alias=<key_alias_name>
 ```
 
 Note that the paths in these files always use the Unix path separator `/`, even on Windows. If you use the Windows path separator `\` you will get the error `No value has been specified for property 'signingConfig.keyAlias'.`
-
-### Beta testing
-
-Get early access to new OneBusAway Android versions!  See our [Beta Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
 
 ## Contributing
 

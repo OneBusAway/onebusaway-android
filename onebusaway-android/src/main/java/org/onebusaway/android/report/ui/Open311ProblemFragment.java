@@ -118,6 +118,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public static final String TAG = "Open311ProblemFragment";
 
+    private static final String ATTRIBUTES = ".attributes";
+
+    private static final String IMAGE = ".image";
+    private static final String IMAGE_URI = ".imageUri";
+
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service) {
         FragmentManager fm = activity.getSupportFragmentManager();
@@ -149,7 +154,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setupViews();
+        setupViews(savedInstanceState);
 
         setupIconColors();
 
@@ -162,14 +167,25 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         List<AttributeValue> attributeValues = createAttributeValues(mServiceDescription);
-        outState.putParcelableArrayList("test", (ArrayList<? extends Parcelable>) attributeValues);
+        if (attributeValues.size() > 0) {
+            outState.putParcelableArrayList(ATTRIBUTES, (ArrayList<? extends Parcelable>) attributeValues);
+        }
+
+        if (mCapturedImageURI != null) {
+            Bitmap bitmap = ((BitmapDrawable) mIssueImage.getDrawable()).getBitmap();
+            outState.putParcelable(IMAGE, bitmap);
+            outState.putParcelable(IMAGE_URI, mCapturedImageURI);
+        }
     }
 
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
         if (savedInstanceState != null) {
-            List<AttributeValue> values = savedInstanceState.getParcelableArrayList("test");
+            mCapturedImageURI = savedInstanceState.getParcelable(IMAGE_URI);
+
+            List<AttributeValue> values = savedInstanceState.getParcelableArrayList(ATTRIBUTES);
+            mAttributeValueHashMap.clear();
             for (AttributeValue v : values) {
                 mAttributeValueHashMap.put(v.getCode(), v);
             }
@@ -185,9 +201,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     /**
      * Initialize UI components
      */
-    private void setupViews() {
+    private void setupViews(Bundle bundle) {
         mIssueImage = (ImageView) findViewById(R.id.ri_imageView);
-        mIssueImage.setSaveEnabled(true);
+        if (bundle != null && bundle.getParcelable(IMAGE) != null) {
+            mIssueImage.setImageBitmap((Bitmap) bundle.getParcelable(IMAGE));
+        }
 
         mInfoLayout = (LinearLayout) findViewById(R.id.ri_info_layout);
 
@@ -337,8 +355,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 setPhone(open311User.getPhone()).setAddress_string(getCurrentAddress()).
                 setDevice_id(tm.getDeviceId());
 
-        if (mCapturedImageURI != null) {
-            builder.setMedia_url(mCapturedImageURI.toString());
+        if (mIssueImage.getDrawable() != null) {
             try {
                 builder.setMedia(createImageFile());
             } catch (IOException e) {
@@ -571,7 +588,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
         // Restore view state from attribute result hash map
         AttributeValue av = mAttributeValueHashMap.get(open311Attribute.getCode());
-        if (av != null){
+        if (av != null) {
             editText.setText(av.getSingleValue());
         }
 
@@ -617,7 +634,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 rg.addView(rb); //the RadioButtons are added to the radioGroup instead of the layout
                 for (LinkedHashMap.Entry<String, String> entry : value.entrySet()) {
                     rb.setText(entry.getValue());
-                    if (entryValue != null && entryValue.equalsIgnoreCase(entry.getValue())){
+                    if (entryValue != null && entryValue.equalsIgnoreCase(entry.getValue())) {
                         rb.setChecked(true);
                     }
                 }

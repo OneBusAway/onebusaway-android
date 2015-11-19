@@ -2,10 +2,9 @@ package org.onebusaway.android.report.ui.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
-
-import edu.usf.cutr.open311client.models.Open311Attribute;
 
 public class AttributeValue implements Parcelable {
 
@@ -42,7 +41,11 @@ public class AttributeValue implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeInt(code);
-        parcel.writeStringArray((String[]) values.toArray());
+        try {
+            parcel.writeStringArray((String[]) values.toArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -59,7 +62,9 @@ public class AttributeValue implements Parcelable {
     }
 
     public void addValue(String value) {
-        this.values.add(value);
+        if (!TextUtils.isEmpty(value)) {
+            this.values.add(value);
+        }
     }
 
     public String getSingleValue() {

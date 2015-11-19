@@ -395,6 +395,45 @@ public final class UIHelp {
         }
     }
 
+    public static void goToPhoneDialer(Context context, String url) {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse(url));
+        context.startActivity(intent);
+    }
+
+    public static void sendEmail(Context ctxt, String email, String location) {
+        PackageManager pm = ctxt.getPackageManager();
+        PackageInfo appInfo;
+        try {
+            appInfo = pm.getPackageInfo(ctxt.getPackageName(),
+                    PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+
+        final String body = ctxt.getString(R.string.bug_report_body,
+                appInfo.versionName,
+                Build.MODEL,
+                Build.VERSION.RELEASE,
+                Build.VERSION.SDK_INT,
+                location);
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                new String[]{email});
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                ctxt.getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            ctxt.startActivity(Intent.createChooser(send,
+                    ctxt.getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+
     public static final String getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {

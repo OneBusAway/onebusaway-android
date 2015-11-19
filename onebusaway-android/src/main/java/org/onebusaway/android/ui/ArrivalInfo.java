@@ -381,11 +381,11 @@ public final class ArrivalInfo {
         return mEta;
     }
 
-    final long getDisplayTime() {
+    public final long getDisplayTime() {
         return mDisplayTime;
     }
 
-    final String getStatusText() {
+    public final String getStatusText() {
         return mStatusText;
     }
 
@@ -394,7 +394,7 @@ public final class ArrivalInfo {
      *
      * @return the resource code for the color that should be used for the arrival time
      */
-    final int getColor() {
+    public final int getColor() {
         return mColor;
     }
 
@@ -402,7 +402,7 @@ public final class ArrivalInfo {
      * Returns true if there is real-time arrival info available for this trip, false if there is not
      * @return true if there is real-time arrival info available for this trip, false if there is not
      */
-    final boolean getPredicted() {
+    public final boolean getPredicted() {
         return mPredicted;
     }
 

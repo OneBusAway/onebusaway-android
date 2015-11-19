@@ -42,9 +42,9 @@ public class ObaRegionElement implements ObaRegion {
         }
 
         public Bounds(double lat,
-                double lon,
-                double latSpan,
-                double lonSpan) {
+                      double lon,
+                      double latSpan,
+                      double lonSpan) {
             this.lat = lat;
             this.lon = lon;
             this.latSpan = latSpan;
@@ -72,6 +72,45 @@ public class ObaRegionElement implements ObaRegion {
         }
     }
 
+    public static class Open311Servers implements ObaRegion.Open311Servers {
+
+        public static final Open311Servers[] EMPTY_ARRAY = new Open311Servers[]{};
+
+        private final String jurisdictionId;
+
+        private final String apiKey;
+
+        private final String baseUrl;
+
+        Open311Servers() {
+            jurisdictionId = "";
+            apiKey = "";
+            baseUrl = "";
+        }
+
+        public Open311Servers(String jurisdictionId, String apiKey, String baseUrl) {
+
+            this.jurisdictionId = jurisdictionId;
+            this.apiKey = apiKey;
+            this.baseUrl = baseUrl;
+        }
+
+        @Override
+        public String getJuridisctionId() {
+            return jurisdictionId;
+        }
+
+        @Override
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        @Override
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+    }
+
     private final long id;
 
     private final String regionName;
@@ -83,6 +122,8 @@ public class ObaRegionElement implements ObaRegion {
     private final String siriBaseUrl;
 
     private final Bounds[] bounds;
+
+    private final Open311Servers[] open311Servers;
 
     private final String language;
 
@@ -107,6 +148,7 @@ public class ObaRegionElement implements ObaRegion {
         siriBaseUrl = null;
         active = false;
         bounds = Bounds.EMPTY_ARRAY;
+        open311Servers = Open311Servers.EMPTY_ARRAY;
         language = "";
         contactEmail = "";
         supportsObaDiscoveryApis = false;
@@ -118,25 +160,27 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     public ObaRegionElement(long id,
-            String name,
-            boolean active,
-            String obaBaseUrl,
-            String siriBaseUrl,
-            Bounds[] bounds,
-            String lang,
-            String contactEmail,
-            boolean supportsObaDiscoveryApis,
-            boolean supportsObaRealtimeApis,
-            boolean supportsSiriRealtimeApis,
-            String twitterUrl,
-            boolean experimental,
-            String stopInfoUrl) {
+                            String name,
+                            boolean active,
+                            String obaBaseUrl,
+                            String siriBaseUrl,
+                            Bounds[] bounds,
+                            Open311Servers[] open311Servers,
+                            String lang,
+                            String contactEmail,
+                            boolean supportsObaDiscoveryApis,
+                            boolean supportsObaRealtimeApis,
+                            boolean supportsSiriRealtimeApis,
+                            String twitterUrl,
+                            boolean experimental,
+                            String stopInfoUrl) {
         this.id = id;
         this.regionName = name;
         this.active = active;
         this.obaBaseUrl = obaBaseUrl;
         this.siriBaseUrl = siriBaseUrl;
         this.bounds = bounds;
+        this.open311Servers = open311Servers;
         this.language = lang;
         this.contactEmail = contactEmail;
         this.supportsObaDiscoveryApis = supportsObaDiscoveryApis;
@@ -175,6 +219,11 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public Bounds[] getBounds() {
         return bounds;
+    }
+
+    @Override
+    public Open311Servers[] getOpen311Servers() {
+        return open311Servers;
     }
 
     @Override
@@ -256,6 +305,7 @@ public class ObaRegionElement implements ObaRegion {
                 ", obaBaseUrl='" + obaBaseUrl + '\'' +
                 ", siriBaseUrl='" + siriBaseUrl + '\'' +
                 ", bounds=" + Arrays.toString(bounds) +
+                ", open311Servers=" + Arrays.toString(open311Servers) +
                 ", language='" + language + '\'' +
                 ", contactEmail='" + contactEmail + '\'' +
                 ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis +

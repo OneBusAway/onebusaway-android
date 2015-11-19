@@ -211,6 +211,40 @@
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/header_text_color</item>
     </style>
+
+    <!-- Reporting -->
+    <style name="Line3Text">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="MaterialLayout">
+        <item name="android:layout_marginLeft">16dp</item>
+        <item name="android:layout_marginRight">16dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="MaterialLayoutTextView">
+        <item name="android:layout_marginLeft">16dp</item>
+        <item name="android:layout_marginRight">16dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:layout_marginBottom">12dp</item>
+    </style>
+    <style name="MaterialItem">
+        <item name="android:layout_marginLeft">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="MaterialSmallIcon">
+        <item name="android:layout_gravity">top|left</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxHeight">24dp</item>
+        <item name="android:maxWidth">24dp</item>
+    </style>
     <!-- About -->
     <style name="Theme.OneBusAway.NoActionBar">
         <item name="windowActionBar">false</item>

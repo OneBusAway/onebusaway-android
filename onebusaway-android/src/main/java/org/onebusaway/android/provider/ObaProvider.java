@@ -43,7 +43,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 22;
+        private static final int DATABASE_VERSION = 23;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -208,6 +208,19 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.RouteHeadsignFavorites.STOP_ID + " VARCHAR NOT NULL, " +
                                 ObaContract.RouteHeadsignFavorites.EXCLUDE + " INTEGER NOT NULL " +
                                 ");");
+                ++oldVersion;
+            }
+            if (oldVersion == 22) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                                ObaContract.RegionOpen311Servers.PATH + " (" +
+                                ObaContract.RegionOpen311Servers._ID
+                                + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                ObaContract.RegionOpen311Servers.REGION_ID + " INTEGER NOT NULL, " +
+                                ObaContract.RegionOpen311Servers.JURISDICTION + " VARCHAR, " +
+                                ObaContract.RegionOpen311Servers.API_KEY + " VARCHAR NOT NULL, " +
+                                ObaContract.RegionOpen311Servers.BASE_URL + " VARCHAR NOT NULL " +
+                                ");");
             }
         }
 
@@ -254,6 +267,7 @@ public class ObaProvider extends ContentProvider {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.ServiceAlerts.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.Regions.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionBounds.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionOpen311Servers.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RouteHeadsignFavorites.PATH);
         }
     }
@@ -290,6 +304,10 @@ public class ObaProvider extends ContentProvider {
 
     private static final int ROUTE_HEADSIGN_FAVORITES = 16;
 
+    private static final int REGION_OPEN311_SERVERS = 17;
+
+    private static final int REGION_OPEN311_SERVERS_ID = 18;
+
     private static final UriMatcher sUriMatcher;
 
     private static final HashMap<String, String> sStopsProjectionMap;
@@ -305,6 +323,8 @@ public class ObaProvider extends ContentProvider {
     private static final HashMap<String, String> sRegionsProjectionMap;
 
     private static final HashMap<String, String> sRegionBoundsProjectionMap;
+
+    private static final HashMap<String, String> sRegionOpen311ProjectionMap;
 
     // Insert helpers are useful.
     private DatabaseUtils.InsertHelper mStopsInserter;
@@ -322,6 +342,8 @@ public class ObaProvider extends ContentProvider {
     private DatabaseUtils.InsertHelper mRegionsInserter;
 
     private DatabaseUtils.InsertHelper mRegionBoundsInserter;
+
+    private DatabaseUtils.InsertHelper mRegionOpen311ServersInserter;
 
     private DatabaseUtils.InsertHelper mRouteHeadsignFavoritesInserter;
 
@@ -346,6 +368,9 @@ public class ObaProvider extends ContentProvider {
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionBounds.PATH, REGION_BOUNDS);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionBounds.PATH + "/#",
                 REGION_BOUNDS_ID);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionOpen311Servers.PATH, REGION_OPEN311_SERVERS);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RegionOpen311Servers.PATH + "/#",
+                REGION_OPEN311_SERVERS_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RouteHeadsignFavorites.PATH,
                 ROUTE_HEADSIGN_FAVORITES);
 
@@ -440,6 +465,18 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.RegionBounds.LAT_SPAN, ObaContract.RegionBounds.LAT_SPAN);
         sRegionBoundsProjectionMap
                 .put(ObaContract.RegionBounds.LON_SPAN, ObaContract.RegionBounds.LON_SPAN);
+
+        sRegionOpen311ProjectionMap = new HashMap<String, String>();
+        sRegionOpen311ProjectionMap
+                .put(ObaContract.RegionOpen311Servers._ID, ObaContract.RegionOpen311Servers._ID);
+        sRegionOpen311ProjectionMap
+                .put(ObaContract.RegionOpen311Servers.REGION_ID, ObaContract.RegionOpen311Servers.REGION_ID);
+        sRegionOpen311ProjectionMap
+                .put(ObaContract.RegionOpen311Servers.JURISDICTION, ObaContract.RegionOpen311Servers.JURISDICTION);
+        sRegionOpen311ProjectionMap
+                .put(ObaContract.RegionOpen311Servers.API_KEY, ObaContract.RegionOpen311Servers.API_KEY);
+        sRegionOpen311ProjectionMap
+                .put(ObaContract.RegionOpen311Servers.BASE_URL, ObaContract.RegionOpen311Servers.BASE_URL);
     }
 
     private SQLiteDatabase mDb;
@@ -490,6 +527,10 @@ public class ObaProvider extends ContentProvider {
                 return ObaContract.RegionBounds.CONTENT_DIR_TYPE;
             case REGION_BOUNDS_ID:
                 return ObaContract.RegionBounds.CONTENT_TYPE;
+            case REGION_OPEN311_SERVERS:
+                return ObaContract.RegionOpen311Servers.CONTENT_DIR_TYPE;
+            case REGION_OPEN311_SERVERS_ID:
+                return ObaContract.RegionOpen311Servers.CONTENT_TYPE;
             case ROUTE_HEADSIGN_FAVORITES:
                 return ObaContract.RouteHeadsignFavorites.CONTENT_DIR_TYPE;
             default:
@@ -513,14 +554,14 @@ public class ObaProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
+                        String[] selectionArgs, String sortOrder) {
         final SQLiteDatabase db = getDatabase();
         return queryInternal(db, uri, projection, selection, selectionArgs, sortOrder);
     }
 
     @Override
     public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
+                      String[] selectionArgs) {
         final SQLiteDatabase db = getDatabase();
         db.beginTransaction();
         try {
@@ -630,6 +671,11 @@ public class ObaProvider extends ContentProvider {
                 result = ContentUris.withAppendedId(ObaContract.RegionBounds.CONTENT_URI, longId);
                 return result;
 
+            case REGION_OPEN311_SERVERS:
+                longId = mRegionOpen311ServersInserter.insert(values);
+                result = ContentUris.withAppendedId(ObaContract.RegionOpen311Servers.CONTENT_URI, longId);
+                return result;
+
             case ROUTE_HEADSIGN_FAVORITES:
                 id = values.getAsString(ObaContract.RouteHeadsignFavorites.ROUTE_ID);
                 if (id == null) {
@@ -654,8 +700,8 @@ public class ObaProvider extends ContentProvider {
     }
 
     private Cursor queryInternal(SQLiteDatabase db,
-            Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
+                                 Uri uri, String[] projection, String selection,
+                                 String[] selectionArgs, String sortOrder) {
         final int match = sUriMatcher.match(uri);
         final String limit = uri.getQueryParameter("limit");
 
@@ -769,6 +815,22 @@ public class ObaProvider extends ContentProvider {
                 qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
+
+            case REGION_OPEN311_SERVERS:
+                qb.setTables(ObaContract.RegionOpen311Servers.PATH);
+                qb.setProjectionMap(sRegionOpen311ProjectionMap);
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
+
+            case REGION_OPEN311_SERVERS_ID:
+                qb.setTables(ObaContract.RegionOpen311Servers.PATH);
+                qb.setProjectionMap(sRegionOpen311ProjectionMap);
+                qb.appendWhere(ObaContract.RegionOpen311Servers._ID);
+                qb.appendWhere("=");
+                qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
+
             case ROUTE_HEADSIGN_FAVORITES:
                 qb.setTables(ObaContract.RouteHeadsignFavorites.PATH);
                 return qb.query(mDb, projection, selection, selectionArgs,
@@ -779,8 +841,8 @@ public class ObaProvider extends ContentProvider {
     }
 
     private int updateInternal(SQLiteDatabase db,
-            Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
+                               Uri uri, ContentValues values, String selection,
+                               String[] selectionArgs) {
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case STOPS:
@@ -835,6 +897,13 @@ public class ObaProvider extends ContentProvider {
                 return db.update(ObaContract.RegionBounds.PATH, values,
                         whereLong(ObaContract.RegionBounds._ID, uri), selectionArgs);
 
+            case REGION_OPEN311_SERVERS:
+                return db.update(ObaContract.RegionOpen311Servers.PATH, values, selection, selectionArgs);
+
+            case REGION_OPEN311_SERVERS_ID:
+                return db.update(ObaContract.RegionOpen311Servers.PATH, values,
+                        whereLong(ObaContract.RegionOpen311Servers._ID, uri), selectionArgs);
+
             case ROUTE_HEADSIGN_FAVORITES:
                 return 0;
 
@@ -844,7 +913,7 @@ public class ObaProvider extends ContentProvider {
     }
 
     private int deleteInternal(SQLiteDatabase db,
-            Uri uri, String selection, String[] selectionArgs) {
+                               Uri uri, String selection, String[] selectionArgs) {
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case STOPS:
@@ -897,6 +966,13 @@ public class ObaProvider extends ContentProvider {
             case REGION_BOUNDS_ID:
                 return db.delete(ObaContract.RegionBounds.PATH,
                         whereLong(ObaContract.RegionBounds._ID, uri), selectionArgs);
+
+            case REGION_OPEN311_SERVERS:
+                return db.delete(ObaContract.RegionOpen311Servers.PATH, selection, selectionArgs);
+
+            case REGION_OPEN311_SERVERS_ID:
+                return db.delete(ObaContract.RegionOpen311Servers.PATH,
+                        whereLong(ObaContract.RegionOpen311Servers._ID, uri), selectionArgs);
 
             case ROUTE_HEADSIGN_FAVORITES:
                 return db.delete(ObaContract.RouteHeadsignFavorites.PATH, selection, selectionArgs);
@@ -952,6 +1028,8 @@ public class ObaProvider extends ContentProvider {
             mRegionsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.Regions.PATH);
             mRegionBoundsInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.RegionBounds.PATH);
+            mRegionOpen311ServersInserter = new DatabaseUtils.InsertHelper(mDb,
+                    ObaContract.RegionOpen311Servers.PATH);
             mRouteHeadsignFavoritesInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.RouteHeadsignFavorites.PATH);
         }

@@ -16,101 +16,142 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            style="@style/FormBackground">
+            android:background="@color/material_background"
+            android:configChanges="keyboardHidden|orientation|screenSize">
 
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
 
-        <LinearLayout
-                style="@style/HeaderItem"
-                android:layout_width="fill_parent"
+        <!-- Header aligned to top -->
+        <RelativeLayout
+                android:id="@+id/trip_info_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_horizontal">
+                android:background="@color/theme_primary_dark"
+                android:layout_alignParentTop="true"
+                android:animateLayoutChanges="true"
+                android:gravity="center"
+                android:layout_marginBottom="16dp">
+
+            <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:id="@+id/ic_header_location"
+                    android:src="@drawable/ic_drawer_maps_place"
+                    android:layout_alignParentTop="true"
+                    android:layout_toLeftOf="@+id/ri_info_text"
+                    android:layout_toStartOf="@+id/ri_info_text"
+                    android:layout_margin="4dp"
+                    />
+
             <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fixed Header"
                     android:id="@+id/trip_name"
-                    style="@style/HeaderText"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"/>
-        </LinearLayout>
+                    android:textColor="@android:color/white"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_alignBottom="@+id/ic_header_location"
+                    android:layout_toRightOf="@+id/ic_header_location"
+                    android:layout_toEndOf="@+id/ic_header_location"/>
+        </RelativeLayout>
 
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="fill_parent"
+        <FrameLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="4dp">
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
 
-            <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_code"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_gravity="center|left"
+                       android:src="@drawable/ic_app_feedback"
+                       android:id="@+id/ic_category"/>
             <Spinner
-                    android:id="@+id/report_problem_code"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </Spinner>
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="56dp"
+                    android:layout_gravity="center_vertical"
+                    style="@style/Base.Widget.AppCompat.Spinner.Underlined"
+                    android:id="@+id/report_problem_code"/>
 
-            <TextView
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_comment"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
             <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:id="@+id/report_problem_comment"
                     android:hint="@string/report_problem_comment_hint"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:minLines="4">
-            </EditText>
+                    android:maxLines="4"
+                    android:lines="2"
+                    style="@style/MaterialItem"/>
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
 
             <CheckBox
                     android:id="@+id/report_problem_onvehicle"
                     android:text="@string/report_problem_onvehicle_bus"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    style="@style/MaterialItem">
             </CheckBox>
+        </FrameLayout>
 
-            <TextView
-                    android:id="@+id/report_problem_uservehicle_label"
-                    style="@style/FormLabel"
-                    android:text="@string/report_problem_vehiclenumber_bus"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
             <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:id="@+id/report_problem_uservehicle"
                     android:hint="@string/report_problem_uservehicle_hint"
-                    android:layout_width="fill_parent"
+                    android:maxLines="4"
+                    android:lines="2"
+                    style="@style/MaterialItem"/>
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayoutTextView"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:src="@drawable/ic_stop_info"
+                       android:id="@+id/ic_trip_info"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:inputType="number">
-            </EditText>
-
-            <!--
-            <TextView
-                style="@style/FormLabel"
-                android:text="@string/report_problem_email"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-            </TextView>
-            <EditText
-                android:id="@+id/report_problem_email"
-                android:hint="@string/report_problem_email_hint"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-            </EditText>
-            -->
-
-            <TextView
-                    style="@style/FormLabel"
+                    style="@style/MaterialItem"
                     android:text="@string/report_problem_hint"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-            </TextView>
-        </LinearLayout>
+                    android:textSize="15sp"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@android:color/black"
+                    />
+
+        </FrameLayout>
     </LinearLayout>
 </ScrollView>

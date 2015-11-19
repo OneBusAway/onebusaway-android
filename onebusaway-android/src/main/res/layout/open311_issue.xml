@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C)  University of South Florida (cagricetin@mail.usf.edu)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/material_background"
+              android:orientation="vertical"
+              android:configChanges="keyboardHidden|orientation|screenSize">
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/ri_contents">
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_gravity="center|left"
+                       android:src="@drawable/ic_app_feedback"
+                       android:id="@+id/ri_ic_app_feedback"/>
+
+
+            <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:id="@+id/ri_editTextDesc"
+                    android:hint="@string/ri_desc"
+                    android:maxLines="4"
+                    android:lines="2"
+                    style="@style/MaterialItem"/>
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:src="@drawable/ic_image_picker"
+                       android:id="@+id/ri_ic_image_picker"/>
+
+            <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_image_collections"
+                    android:background="@color/light_gray"
+                    android:id="@+id/ri_imageView"
+                    style="@style/MaterialItem"/>
+                <Button
+                        android:layout_width="120dp"
+                        android:layout_height="32dp"
+                        android:layout_marginLeft="176dp"
+                        android:background="@color/material_background"
+                        android:text="@string/ri_button_image"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:textColor="@android:color/black"
+                        android:id="@+id/ri_attach_image"
+                        />
+
+        </FrameLayout>
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/ri_info_layout">
+
+        </LinearLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_marginTop="12dp"
+                       android:src="@drawable/ic_username"
+                       android:id="@+id/ri_ic_username"/>
+
+            <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:hint="@string/ri_user_name"
+                    android:ems="10"
+                    android:id="@+id/rici_name_editText"
+                    style="@style/MaterialItem"
+                    />
+
+
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:layout_marginTop="0dp"
+                android:orientation="horizontal">
+
+            <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:hint="@string/ri_user_lastname"
+                    android:ems="10"
+                    android:id="@+id/rici_lastname_editText"
+                    style="@style/MaterialItem"/>
+
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_marginTop="12dp"
+                       android:src="@drawable/ic_customer_service_email"
+                       android:id="@+id/ri_ic_customer_service_email"/>
+            <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:ems="10"
+                    android:hint="@string/ri_user_email"
+                    style="@style/MaterialItem"
+                    android:id="@+id/rici_email_editText" />
+
+        </FrameLayout>
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
+
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:layout_marginTop="12dp"
+                       android:src="@drawable/ic_customer_service_phone"
+                       android:id="@+id/ri_ic_customer_service_phone"/>
+
+            <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone"
+                    android:ems="10"
+                    android:hint="@string/ri_user_phone"
+                    style="@style/MaterialItem"
+                    android:id="@+id/rici_phone_editText" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

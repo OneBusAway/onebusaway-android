@@ -107,4 +107,8 @@ public class PreferenceHelp {
         }
         return 0;  // Default to the first option
     }
+
+    public static String getString(String key) {
+        return Application.getPrefs().getString(key, null);
+    }
 }

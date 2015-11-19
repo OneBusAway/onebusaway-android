@@ -341,6 +341,9 @@ public class RegionUtils {
         HashMap<Long, ArrayList<ObaRegionElement.Bounds>> allBounds = getBoundsFromProvider(
                 context);
 
+        HashMap<Long, ArrayList<ObaRegionElement.Open311Servers>> allOpen311Servers =
+                getOpen311ServersFromProvider(context);
+
         Cursor c = null;
         try {
             final String[] PROJECTION = {
@@ -379,12 +382,18 @@ public class RegionUtils {
                         bounds.toArray(new ObaRegionElement.Bounds[]{}) :
                         null;
 
+                ArrayList<ObaRegionElement.Open311Servers> open311Servers = allOpen311Servers.get(id);
+                ObaRegionElement.Open311Servers[] open311Servers2 = (open311Servers != null) ?
+                        open311Servers.toArray(new ObaRegionElement.Open311Servers[]{}) :
+                        null;
+
                 results.add(new ObaRegionElement(id,   // id
                         c.getString(1),             // Name
                         true,                       // Active
                         c.getString(2),             // OBA Base URL
                         c.getString(3),             // SIRI Base URL
                         bounds2,                    // Bounds
+                        open311Servers2,            // Open311 servers
                         c.getString(4),             // Lang
                         c.getString(5),             // Contact Email
                         c.getInt(6) > 0,            // Supports Oba Discovery
@@ -458,6 +467,56 @@ public class RegionUtils {
         }
     }
 
+    private static HashMap<Long, ArrayList<ObaRegionElement.Open311Servers>> getOpen311ServersFromProvider(
+            Context context) {
+        // Prefetch the bounds to limit the number of DB calls.
+        Cursor c = null;
+        try {
+            final String[] PROJECTION = {
+                    ObaContract.RegionOpen311Servers.REGION_ID,
+                    ObaContract.RegionOpen311Servers.JURISDICTION,
+                    ObaContract.RegionOpen311Servers.API_KEY,
+                    ObaContract.RegionOpen311Servers.BASE_URL
+            };
+            HashMap<Long, ArrayList<ObaRegionElement.Open311Servers>> results
+                    = new HashMap<Long, ArrayList<ObaRegionElement.Open311Servers>>();
+
+            ContentResolver cr = context.getContentResolver();
+            c = cr.query(ObaContract.RegionOpen311Servers.CONTENT_URI, PROJECTION, null, null, null);
+            if (c == null) {
+                return results;
+            }
+            if (c.getCount() == 0) {
+                c.close();
+                return results;
+            }
+            c.moveToFirst();
+            do {
+                long regionId = c.getLong(0);
+                ArrayList<ObaRegionElement.Open311Servers> open311Servers = results.get(regionId);
+                ObaRegionElement.Open311Servers b = new ObaRegionElement.Open311Servers(
+                        c.getString(1),
+                        c.getString(2),
+                        c.getString(3));
+                if (open311Servers != null) {
+                    open311Servers.add(b);
+                } else {
+                    open311Servers = new ArrayList<ObaRegionElement.Open311Servers>();
+                    open311Servers.add(b);
+                    results.put(regionId, open311Servers);
+                }
+
+            } while (c.moveToNext());
+
+            return results;
+
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+    }
+
     private synchronized static ArrayList<ObaRegion> getRegionsFromServer(Context context) {
         ObaRegionsResponse response = ObaRegionsRequest.newRequest(context).call();
         return new ArrayList<ObaRegion>(Arrays.asList(response.getRegions()));
@@ -502,7 +561,8 @@ public class RegionUtils {
         ObaRegionElement region = new ObaRegionElement(regionId,
                 BuildConfig.FIXED_REGION_NAME, true,
                 BuildConfig.FIXED_REGION_OBA_BASE_URL, BuildConfig.FIXED_REGION_SIRI_BASE_URL,
-                boundsArray, BuildConfig.FIXED_REGION_LANG, BuildConfig.FIXED_REGION_CONTACT_EMAIL,
+                boundsArray,new ObaRegionElement.Open311Servers[0], BuildConfig.FIXED_REGION_LANG,
+                BuildConfig.FIXED_REGION_CONTACT_EMAIL,
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
@@ -539,13 +599,23 @@ public class RegionUtils {
                 }
                 cr.bulkInsert(ObaContract.RegionBounds.CONTENT_URI, values);
             }
+
+            ObaRegion.Open311Servers[] open311Servers = region.getOpen311Servers();
+
+            if (open311Servers != null) {
+                ContentValues[] values = new ContentValues[open311Servers.length];
+                for (int i = 0; i < open311Servers.length; ++i) {
+                    values[i] = toContentValues(regionId, open311Servers[i]);
+                }
+                cr.bulkInsert(ObaContract.RegionOpen311Servers.CONTENT_URI, values);
+            }
         }
     }
 
     private static ContentValues toContentValues(ObaRegion region) {
         ContentValues values = new ContentValues();
         values.put(ObaContract.Regions._ID, region.getId());
-        values.put(ObaContract.Regions.NAME, region.getName());
+            values.put(ObaContract.Regions.NAME, region.getName());
         String obaUrl = region.getObaBaseUrl();
         values.put(ObaContract.Regions.OBA_BASE_URL, obaUrl != null ? obaUrl : "");
         String siriUrl = region.getSiriBaseUrl();
@@ -571,6 +641,15 @@ public class RegionUtils {
         values.put(ObaContract.RegionBounds.LONGITUDE, bounds.getLon());
         values.put(ObaContract.RegionBounds.LAT_SPAN, bounds.getLatSpan());
         values.put(ObaContract.RegionBounds.LON_SPAN, bounds.getLonSpan());
+        return values;
+    }
+
+    private static ContentValues toContentValues(long region, ObaRegion.Open311Servers open311Servers) {
+        ContentValues values = new ContentValues();
+        values.put(ObaContract.RegionOpen311Servers.REGION_ID, region);
+        values.put(ObaContract.RegionOpen311Servers.BASE_URL, open311Servers.getBaseUrl());
+        values.put(ObaContract.RegionOpen311Servers.JURISDICTION, open311Servers.getJuridisctionId());
+        values.put(ObaContract.RegionOpen311Servers.API_KEY, open311Servers.getApiKey());
         return values;
     }
 }

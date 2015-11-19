@@ -41,6 +41,8 @@ public final class ObaAgencyElement implements ObaAgency {
 
     private final String disclaimer;
 
+    private final String email;
+
     public ObaAgencyElement() {
         id = "";
         name = "";
@@ -49,6 +51,7 @@ public final class ObaAgencyElement implements ObaAgency {
         lang = "";
         phone = "";
         disclaimer = "";
+        email = "";
     }
 
     @Override
@@ -84,6 +87,11 @@ public final class ObaAgencyElement implements ObaAgency {
     @Override
     public String getDisclaimer() {
         return disclaimer;
+    }
+
+    @Override
+    public String getEmail() {
+        return email;
     }
 
     @Override

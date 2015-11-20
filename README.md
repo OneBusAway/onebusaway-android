@@ -36,9 +36,6 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 
 ### Prerequisites for both Android Studio and Gradle
 
-1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
-2. If you want to build the Amazon platform flavor, you need to have [Apache Maven](http://maven.apache.org/download.cgi) installed.  Then, from the root directory of the project run `mvn install:install-file -Dfile=libs/amazon-maps-api-v2.aar -DpomFile=libs/amazon-maps-api-v2.pom` to install the Amazon Maps API v2 library.
-
 ### Building in Android Studio
 
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
@@ -52,6 +49,7 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 
 ### Building from the command line using Gradle
 
+1. Set the `JAVA_HOME` environmental variables to point to your JDK folder (e.g. `C:\Program Files\Java\jdk1.6.0_27`)
 1. Download and install the [Android SDK](http://developer.android.com/sdk/index.html). Make sure to install the Google APIs for your API level (e.g. 17), the Android SDK Build-tools version for your `buildToolsVersion` version, the Android Support Repository and the Google Repository.
 2. Set the `ANDROID_HOME` environmental variable to your Android SDK location.
 3. To build and push the app to the device, run `gradlew installObaGoogleDebug` from the command line at the root of the project (or `gradlew installObaAmazonDebug` for Amazon build flavor)
@@ -77,6 +75,12 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 ### Beta testing
 
 Get early access to new OneBusAway Android versions!  See our [Beta Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
+
+### Updating Amazon Maps API
+1. Download updated Amazon Maps API `aar` and `pom` files
+1. Download [Apache Maven](https://maven.apache.org/download.cgi) & unzip Apache Maven (installation not required)
+1. Run following command, replacing appropriate paths:
+  `path-to-bin-folder-of-maven/mvn install:install-file -Dfile=path-to-amazon-files/amazon-maps-api-v2.aar -DpomFile=path-to-amazon-files/amazon-maps-api-v2.pom -DlocalRepositoryPath=path-to-git-repo/.m2/repository`
 
 ## Contributing
 

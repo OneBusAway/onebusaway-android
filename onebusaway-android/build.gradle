@@ -27,10 +27,13 @@ apply plugin: 'com.android.application'
 
 repositories {
     jcenter()
-    mavenLocal()
     maven {
         // OBA Releases - for comparator to sort alphanumeric routes
         url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
+    }
+    maven {
+        // for Amazon Maps
+        url uri('../.m2/repository')
     }
 }
 
@@ -272,7 +275,6 @@ tasks.whenTaskAdded { theTask ->
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
     // Google Play Services Analytics (we need this on Amazon flavor too)
     compile('com.google.android.gms:play-services-analytics:8.3.0') {
         exclude module: 'play-services-ads' // See #342
@@ -294,5 +296,5 @@ dependencies {
     // Google Play Services Maps (only for Google flavor)
     googleCompile 'com.google.android.gms:play-services-maps:8.3.0'
     // Amazon Maps (only for Amazon flavor)
-    amazonCompile('com.amazon.android:amazon-maps-api:2.0')
+    amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
 }

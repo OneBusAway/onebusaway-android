@@ -37,7 +37,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -55,6 +54,7 @@ import java.util.List;
  * @author barbeau
  */
 public class ObaRegionsService extends IntentService {
+
     private boolean mForceReload;
 
     public ObaRegionsService() {
@@ -67,7 +67,7 @@ public class ObaRegionsService extends IntentService {
         resultIntent.putExtra("regions", RegionUtils.getRegions(this, mForceReload));
         LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent);
     }
-    
+
     public static class ObaRegionsReceiver extends BroadcastReceiver {
 
         public interface Callback {
@@ -75,7 +75,8 @@ public class ObaRegionsService extends IntentService {
             /**
              * Called when the ObaRegionsTask is complete
              *
-             * @param currentRegionChanged true if the current region changed as a result of the task,
+             * @param currentRegionChanged true if the current region changed as a result of the
+             *                             task,
              *                             false if it didn't change
              */
             public void onRegionTaskFinished(boolean currentRegionChanged);
@@ -112,12 +113,15 @@ public class ObaRegionsService extends IntentService {
          * @param callback           a callback will be made via this interface after the task is
          *                           complete
          *                           (null if no callback is requested)
-         * @param force              true if the task should be forced to update region info from the
-         *                           server, false if it can return local info
-         * @param showProgressDialog true if a progress dialog should be shown to the user during the
+         * @param callback           a callback will be made via this interface after the task is
+         *                           complete
+         *                           (null if no callback is requested)
+         * @param showProgressDialog true if a progress dialog should be shown to the user during
+         *                           the
          *                           task, false if it should not
          */
-        public ObaRegionsReceiver(Context context, ObaRegionsReceiver.Callback callback, boolean showProgressDialog) {
+        public ObaRegionsReceiver(Context context, ObaRegionsReceiver.Callback callback,
+                boolean showProgressDialog) {
             this.mContext = context;
             this.mCallback = callback;
             mShowProgressDialog = showProgressDialog;
@@ -155,11 +159,12 @@ public class ObaRegionsService extends IntentService {
             SharedPreferences settings = Application.getPrefs();
 
             if (settings
-                    .getBoolean(mContext.getString(R.string.preference_key_auto_select_region), true)) {
+                    .getBoolean(mContext.getString(R.string.preference_key_auto_select_region),
+                            true)) {
                 // Pass in the GoogleApiClient initialized in constructor
-                Location myLocation = LocationUtil.getLocation2(mContext, mGoogleApiClient);
+                Location myLocation = Application.getLastKnownLocation(mContext, mGoogleApiClient);
 
-                ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation);
+                ObaRegion closestRegion = RegionUtils.getClosestRegion(results, myLocation, true);
 
                 if (Application.get().getCurrentRegion() == null) {
                     if (closestRegion != null) {
@@ -169,8 +174,10 @@ public class ObaRegionsService extends IntentService {
                             Log.d(TAG, "Detected closest region '" + closestRegion.getName() + "'");
                         }
                         //Analytics
-                        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
-                                mContext.getString(R.string.analytics_action_configured_region_auto),
+                        ObaAnalytics.reportEventWithCategory(
+                                ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                                mContext.getString(
+                                        R.string.analytics_action_configured_region_auto),
                                 mContext.getString(R.string.analytics_label_region_auto)
                                         + closestRegion.getName() + "; Old Region: null");
                         doCallback(true);
@@ -189,7 +196,8 @@ public class ObaRegionsService extends IntentService {
                                 + "', changed to this region.");
                     }
                     //Analytics
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                             mContext.getString(R.string.analytics_action_configured_region_auto)
                             , mContext.getString(R.string.analytics_label_region_auto)
                                     + closestRegion.getName() + "; Old Region: "

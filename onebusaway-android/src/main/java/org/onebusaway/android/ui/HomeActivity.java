@@ -34,7 +34,6 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsService;
-import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtil;
@@ -835,9 +834,11 @@ public class HomeActivity extends AppCompatActivity
         }
 
         final String obaRegionServiceFilter = "HomeActivity_obaRegionReceiver";
-        obaRegionReceiver = new ObaRegionsService.ObaRegionsReceiver(this, mMapFragment, showProgressDialog);
-        LocalBroadcastManager.getInstance(this).registerReceiver(obaRegionReceiver, new IntentFilter(
-                obaRegionServiceFilter));
+        obaRegionReceiver = new ObaRegionsService.ObaRegionsReceiver(this, mMapFragment,
+                showProgressDialog);
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(obaRegionReceiver, new IntentFilter(
+                        obaRegionServiceFilter));
         Intent obaRegionsIntent = new Intent(this, ObaRegionsService.class);
         obaRegionReceiver.showProgressDialog();
         obaRegionsIntent.putExtra("mForceReload", forceReload);

@@ -22,11 +22,10 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.BuildFlavorUtil;
 import org.onebusaway.android.region.ObaRegionsService;
 import org.onebusaway.android.region.ObaRegionsService.ObaRegionsReceiver;
+import org.onebusaway.android.util.BuildFlavorUtil;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -39,8 +38,8 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
-import android.support.v7.widget.Toolbar;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
@@ -60,7 +59,8 @@ public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
         SharedPreferences.OnSharedPreferenceChangeListener, ObaRegionsReceiver.Callback {
 
-    private static final String OBAREGIONS_RECEIVER_FILTER = "PreferencesActivity_obaRegionsReceiver";
+    private static final String OBAREGIONS_RECEIVER_FILTER
+            = "PreferencesActivity_obaRegionsReceiver";
 
     private static final String TAG = "PreferencesActivity";
 

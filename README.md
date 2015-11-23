@@ -36,8 +36,6 @@ This results in a total of 2 * 3 = 6 core build variants.  Each of these core va
 The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`), but
 also mention how you would build/run the **amazon** flavor for the **oba** brand (e.g., `obaAmazonDebug`).  If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/master/REBRANDING.md).
 
-### Prerequisites for both Android Studio and Gradle
-
 ### Building in Android Studio
 
 1. Download and install the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).

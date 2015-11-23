@@ -33,6 +33,7 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.region.ObaRegionsService;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
@@ -46,6 +47,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -56,6 +58,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -189,6 +192,8 @@ public class HomeActivity extends AppCompatActivity
 
     ObaStop mFocusedStop = null;
 
+    ObaRegionsService.ObaRegionsReceiver obaRegionReceiver;
+
     /**
      * Starts the MapActivity with a particular stop focused with the center of
      * the map at a particular point.
@@ -278,6 +283,14 @@ public class HomeActivity extends AppCompatActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (obaRegionReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(obaRegionReceiver);
+        }
     }
 
     @Override
@@ -821,10 +834,15 @@ public class HomeActivity extends AppCompatActivity
             showProgressDialog = false;
         }
 
-        //Check region status, possibly forcing a reload from server and checking proximity to current region
-        ObaRegionsTask task = new ObaRegionsTask(this, mMapFragment, forceReload,
-                showProgressDialog);
-        task.execute();
+        final String obaRegionServiceFilter = "HomeActivity_obaRegionReceiver";
+        obaRegionReceiver = new ObaRegionsService.ObaRegionsReceiver(this, mMapFragment, showProgressDialog);
+        LocalBroadcastManager.getInstance(this).registerReceiver(obaRegionReceiver, new IntentFilter(
+                obaRegionServiceFilter));
+        Intent obaRegionsIntent = new Intent(this, ObaRegionsService.class);
+        obaRegionReceiver.showProgressDialog();
+        obaRegionsIntent.putExtra("mForceReload", forceReload);
+        obaRegionsIntent.putExtra("FILTER", obaRegionServiceFilter);
+        this.startService(obaRegionsIntent);
     }
 
     private void setupMyLocationButton() {

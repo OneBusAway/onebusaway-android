@@ -52,7 +52,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
-import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.region.ObaRegionsService.ObaRegionsReceiver;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtil;
 import org.onebusaway.android.util.UIHelp;
@@ -98,7 +98,7 @@ import java.util.concurrent.TimeUnit;
  * @author paulw, barbeau
  */
 public class BaseMapFragment extends SupportMapFragment
-        implements MapModeController.Callback, ObaRegionsTask.Callback,
+        implements MapModeController.Callback, ObaRegionsReceiver.Callback,
         MapModeController.ObaMapView,
         LocationSource, LocationHelper.Listener,
         com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,

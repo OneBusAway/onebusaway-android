@@ -76,7 +76,10 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 
 Get early access to new OneBusAway Android versions!  See our [Beta Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
 
-### Updating Amazon Maps API
+### Updating the Amazon Maps API library
+
+Occasionally Amazon will likely release updates to their `amazon-maps-api-v2` library.  These artifacts aren't currently hosted on Maven Central or Jcenter.  As a result, when they release an update, we need to update our bundled Maven repo with the new artifact.  The steps to do this are:
+
 1. Download updated Amazon Maps API `aar` and `pom` files
 1. Download [Apache Maven](https://maven.apache.org/download.cgi) & unzip Apache Maven (installation not required)
 1. Run following command, replacing appropriate paths:

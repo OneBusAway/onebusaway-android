@@ -1,6 +1,10 @@
 # OneBusAway for Android [![Build Status](https://travis-ci.org/OneBusAway/onebusaway-android.svg?branch=master)](https://travis-ci.org/OneBusAway/onebusaway-android) [![Join the chat at https://gitter.im/OneBusAway/onebusaway-android](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/OneBusAway/onebusaway-android?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-This is the official Android app for OneBusAway!
+This is the official Android / Fire Phone app for OneBusAway!
+
+[![Google Play logo](http://www.android.com/images/brand/android_app_on_play_logo_large.png)](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
+
+[![Amazon App Store logo](https://images-na.ssl-images-amazon.com/images/G/01/mobile-apps/devportal2/res/images/amazon-underground-app-us-black.png)](http://www.amazon.com/gp/mas/dl/android?p=com.joulespersecond.seattlebusbot)
 
 OneBusAway for Android provides:
 
@@ -11,8 +15,6 @@ OneBusAway for Android provides:
 5. The ability to search for nearby stops or routes
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
-
-It's available on the [Play Store](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot).
 
 ## Build Setup
 

@@ -35,22 +35,38 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
- * TutorialFragment is a general fragment that shows tutorial images
- * from given image and string resources
+ * TutorialFragment is a general-use fragment that shows a tutorial "wizard"
+ * using the provided image and string resources.  See #335 for details and screenshots.
  *
  * Example usage:
  *
- * TutorialFragment tutorialFragment = new TutorialFragment();
- * Bundle bundle = new Bundle();
- * // Set string resources from arrays
- * bundle.putInt(TutorialFragment.STRING_RESOURCE_ID, R.array.report_stop_issue_tutorial_desc);
- * * // Set image resources from arrays
- * bundle.putInt(TutorialFragment.IMAGE_RESOURCE_ID, R.array.report_stop_issue_tutorial_images);
- * tutorialFragment.setArguments(bundle);
+ * First, define a string and resource array in the `array.xml`:
+ *     <!-- Resource array for tutorial strings -->
+ *     <array name="report_types_icons_without_open311">
+ *         <item>@drawable/stop_issue_tutorial_0</item>
+ *         <item>@drawable/stop_issue_tutorial_2</item>
+ *         <item>@drawable/stop_issue_tutorial_3</item>
+ *     </array>
+ *
+ *     <!-- Resource array for tutorial images -->
+ *     <string-array name="preferred_units_options">
+ *         <item>@string/preferences_preferred_units_option_automatic</item>
+ *         <item>@string/preferences_preferred_units_option_metric</item>
+ *         <item>@string/preferences_preferred_units_option_imperial</item>
+ *     </string-array>
+ *
+ * Then, pass in these arrays as a bundle into the TutorialFragment when instantiating it:
+ *
+ *     TutorialFragment tutorialFragment = new TutorialFragment();
+ *     Bundle bundle = new Bundle();
+ *     // Set string resources from arrays
+ *     bundle.putInt(TutorialFragment.STRING_RESOURCE_ID, R.array.report_stop_issue_tutorial_desc);
+ *     // Set image resources from arrays
+ *     bundle.putInt(TutorialFragment.IMAGE_RESOURCE_ID, R.array.report_stop_issue_tutorial_images);
+ *     tutorialFragment.setArguments(bundle);
  */
 public class TutorialFragment extends Fragment implements
         View.OnClickListener, ViewPager.OnPageChangeListener {

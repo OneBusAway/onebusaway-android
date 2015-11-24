@@ -46,7 +46,7 @@ public final class ObaTripsForRouteRequest extends RequestBase
          * @return This object.
          */
         public Builder setIncludeSchedule(boolean includeSchedule) {
-            mBuilder.appendQueryParameter("includeSchedules", String.valueOf(includeSchedule));
+            mBuilder.appendQueryParameter("includeSchedule", String.valueOf(includeSchedule));
             return this;
         }
 

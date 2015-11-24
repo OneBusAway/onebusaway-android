@@ -331,8 +331,9 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     public void setupVehicleOverlay() {
-        if (mVehicleOverlay == null) {
-            mVehicleOverlay = new VehicleOverlay(getActivity(), mMap);
+        Activity a = getActivity();
+        if (mVehicleOverlay == null && a != null) {
+            mVehicleOverlay = new VehicleOverlay(a, mMap);
         }
     }
 
@@ -703,7 +704,9 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void updateVehicles(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
         setupVehicleOverlay();
-        mVehicleOverlay.updateVehicles(routeIds, response);
+        if (mVehicleOverlay != null) {
+            mVehicleOverlay.updateVehicles(routeIds, response);
+        }
     }
 
     @Override

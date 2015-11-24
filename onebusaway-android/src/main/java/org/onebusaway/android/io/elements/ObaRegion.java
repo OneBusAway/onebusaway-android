@@ -19,7 +19,7 @@ package org.onebusaway.android.io.elements;
 /**
  * Specifies a region in the OneBusAway multi-region system.
  */
-public interface ObaRegion {
+public interface ObaRegion extends java.io.Serializable {
 
     /**
      * Specifies a single bound rectangle within this region.

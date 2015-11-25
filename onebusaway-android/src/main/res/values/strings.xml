@@ -101,10 +101,13 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Real-time vehicles on map</b>
-        - Tap on arrival times and select \"Show route on map\".\n&#8226;
-        <b>Real-time trip status</b>
-        - Tap arrival times and select \"Show trip status\".
+        <b>Improved \"Show route on map\" interface</b>
+        - Route is now a layer on same map view.\n&#8226;\u0020
+        <b>Misc. usability improvements</b>
+        - Lots of small tweaks.\n&#8226;\u0020
+        <b>Accessibility improvements</b>
+        - Better labels for some components.\n&#8226;
+        <b>Bug fixes</b>
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>

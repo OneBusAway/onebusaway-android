@@ -32,6 +32,8 @@ public class MapParams {
 
     public static final String ZOOM_TO_ROUTE = ".ZoomToRoute";
 
+    public static final String ZOOM_INCLUDE_CLOSEST_VEHICLE = ".ZoomIncludesClosestVehicle";
+
     public static final String MODE_ROUTE = "RouteMode";
 
     public static final String MODE_STOP = "StopMode";

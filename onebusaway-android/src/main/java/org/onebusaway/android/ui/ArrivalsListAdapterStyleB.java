@@ -183,7 +183,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         mapImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HomeActivity.start(getContext(), stopInfo.getInfo().getRouteId());
+                mFragment.showRouteOnMap(stopInfo);
             }
         });
 

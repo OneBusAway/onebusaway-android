@@ -30,14 +30,22 @@ import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.LatLngBounds;
 
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaTripDetails;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.Log;
+
+import java.util.HashSet;
 
 /**
  * Utilities to help process data for Android Maps API v1
  */
 public class MapHelpV2 {
+
+    public static final String TAG = "MapHelpV2";
 
     /**
      * Converts a latitude/longitude to a LatLng.
@@ -132,5 +140,65 @@ public class MapHelpV2 {
      */
     public static void promptUserInstallMaps(final Context context) {
         ProprietaryMapHelpV2.promptUserInstallMaps(context);
+    }
+
+    /**
+     * Gets the location of the vehicle closest to the provided location running the provided routes
+     *
+     * @param response response containing list of trips with vehicle locations
+     * @param routeIds markers representing real-time positions for the provided routeIds will be
+     *                checked for proximity to the location (all other routes are ignored)
+     * @param loc         location
+     * @return the closest vehicle location to the given location, or null if a closest vehicle
+     * couldn't be found
+     */
+    public static LatLng getClosestVehicle(ObaTripsForRouteResponse response, HashSet<String> routeIds, Location loc) {
+        if (loc == null) {
+            return null;
+        }
+        float minDist = Float.MAX_VALUE;
+        ObaTripStatus closestVehicle = null;
+        Location closestVehicleLocation = null;
+        Float distToVehicle;
+
+        for (ObaTripDetails detail : response.getTrips()) {
+            Location vehicleLocation;
+            ObaTripStatus status = detail.getStatus();
+            if (status == null) {
+                continue;
+            }
+            // Check if this vehicle is running a route we're interested in
+            String activeRoute = response.getTrip(status.getActiveTripId()).getRouteId();
+            if (!routeIds.contains(activeRoute)) {
+                continue;
+            }
+            if (status.getLastKnownLocation() != null) {
+                // Use last actual position
+                vehicleLocation = status.getLastKnownLocation();
+            } else if (status.getPosition() != null) {
+                // Use last interpolated position
+                vehicleLocation = status.getPosition();
+            } else {
+                // No vehicle location - continue to next trip
+                continue;
+            }
+            distToVehicle = vehicleLocation.distanceTo(loc);
+
+            if (distToVehicle < minDist) {
+                closestVehicleLocation = vehicleLocation;
+                closestVehicle = status;
+                minDist = distToVehicle;
+            }
+        }
+
+        if (closestVehicleLocation == null) {
+            return null;
+        }
+
+        Log.d(TAG, "Closest vehicle is vehicleId=" + closestVehicle.getVehicleId() + ", routeId=" + ", tripId=" +
+                closestVehicle.getActiveTripId() + " at " + closestVehicleLocation.getLatitude() + ","
+                + closestVehicleLocation.getLongitude());
+
+        return makeLatLng(closestVehicleLocation);
     }
 }

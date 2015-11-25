@@ -726,6 +726,29 @@ public class HomeActivity extends AppCompatActivity
         moveMyLocationButton();
     }
 
+    /**
+     * Called by the ArrivalListFragment when the user selects the "Show route on map" for a
+     * particular route/trip
+     *
+     * @param arrivalInfo The arrival information for the route/trip that the user selected
+     * @return true if the listener has consumed the event, false otherwise
+     */
+    @Override
+    public boolean onShowRouteOnMapSelected(ArrivalInfo arrivalInfo) {
+        // If the panel is fully expanded, change it to anchored so the user can see the map
+        if (mSlidingPanel != null) {
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
+
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(MapParams.ZOOM_TO_ROUTE, false);
+        bundle.putBoolean(MapParams.ZOOM_INCLUDE_CLOSEST_VEHICLE, true);
+        bundle.putString(MapParams.ROUTE_ID, arrivalInfo.getInfo().getRouteId());
+        mMapFragment.setMapMode(MapParams.MODE_ROUTE, bundle);
+
+        return true;
+    }
+
     @Override
     public void onBackPressed() {
         // Collapse the panel when the user presses the back button
@@ -995,6 +1018,10 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onPanelCollapsed(View panel) {
                 Log.d(TAG, "onPanelCollapsed");
+                if (mMapFragment != null) {
+                    mMapFragment.getMapView()
+                            .setPadding(null, null, null, mSlidingPanel.getPanelHeight());
+                }
                 if (mArrivalsListHeader != null) {
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
                     mArrivalsListHeader.refresh();
@@ -1005,6 +1032,10 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onPanelAnchored(View panel) {
                 Log.d(TAG, "onPanelAnchored");
+                if (mMapFragment != null) {
+                    mMapFragment.getMapView()
+                            .setPadding(null, null, null, mSlidingPanel.getPanelHeight());
+                }
                 if (mFocusedStop != null && mMapFragment != null) {
                     mMapFragment.setMapCenter(mFocusedStop.getLocation(), true, true);
                 }
@@ -1020,6 +1051,9 @@ public class HomeActivity extends AppCompatActivity
                 // We need to hide the panel when switching between fragments via the navdrawer,
                 // so we shouldn't put anything here that causes us to lose the state of the
                 // MapFragment or the ArrivalListFragment (e.g., removing the ArrivalListFragment)
+                if (mMapFragment != null) {
+                    mMapFragment.getMapView().setPadding(null, null, null, 0);
+                }
             }
         });
 

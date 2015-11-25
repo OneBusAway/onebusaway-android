@@ -115,6 +115,14 @@ public class BaseMapFragment extends SupportMapFragment
 
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
 
+    public static final float DEFAULT_MAP_PADDING_DP = 20.0f;
+
+    // Keep track of current map padding
+    private int mMapPaddingLeft = 0;
+    private int mMapPaddingTop = 0;
+    private int mMapPaddingRight = 0;
+    private int mMapPaddingBottom = 0;
+
     // Use fully-qualified class name to avoid import statement, because it interferes with scripted
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
     private com.amazon.geo.mapsv2.AmazonMap mMap;
@@ -418,15 +426,32 @@ public class BaseMapFragment extends SupportMapFragment
      * Define a visible region on the map, to signal to the map that portions of the map around
      * the edges may be obscured, by setting padding on each of the four edges of the map.
      *
-     * @param left   the number of pixels of padding to be added on the left of the map.
-     * @param top    the number of pixels of padding to be added on the top of the map.
-     * @param right  the number of pixels of padding to be added on the right of the map.
-     * @param bottom the number of pixels of padding to be added on the bottom of the map.
+     * @param left   the number of pixels of padding to be added on the left of the map, or null
+     *               if the existing padding should be used
+     * @param top    the number of pixels of padding to be added on the top of the map, or null
+     *               if the existing padding should be used
+     * @param right  the number of pixels of padding to be added on the right of the map, or null
+     *               if the existing padding should be used
+     * @param bottom the number of pixels of padding to be added on the bottom of the map, or null
+     *               if the existing padding should be used
      */
     @Override
-    public void setPadding(int left, int top, int right, int bottom) {
+    public void setPadding(Integer left, Integer top, Integer right, Integer bottom) {
+        if (left != null) {
+            mMapPaddingLeft = left;
+        }
+        if (top != null) {
+            mMapPaddingTop = top;
+        }
+        if (right != null) {
+            mMapPaddingRight = right;
+        }
+        if (bottom != null) {
+            mMapPaddingBottom = bottom;
+        }
+
         if (mMap != null) {
-            mMap.setPadding(left, top, right, bottom);
+            mMap.setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
         }
     }
 
@@ -628,11 +653,12 @@ public class BaseMapFragment extends SupportMapFragment
             LatLng target = MapHelpV2.makeLatLng(location);
             LatLng offsetTarget;
 
-            if (overlayExpanded) {
-                // Adjust camera target based on MapModeController.OVERLAY_PERCENTAGE
-                // so it appears in the center of the visible map
+            if (isRouteDisplayed() && overlayExpanded) {
+                // Adjust camera target if the route header is currently displayed - map padding
+                // doesn't get this quite right, as the header is slid up some and full padding doesn't apply
+                double percentageOffset = 0.2;
                 double bias =
-                        (getLongitudeSpanInDecDegrees() * MapModeController.OVERLAY_PERCENTAGE) / 2;
+                        (getLongitudeSpanInDecDegrees() * percentageOffset) / 2;
                 offsetTarget = new LatLng(target.latitude - bias, target.longitude);
                 target = offsetTarget;
             }
@@ -729,7 +755,7 @@ public class BaseMapFragment extends SupportMapFragment
 
                 Activity a = getActivity();
                 if (a != null) {
-                    int padding = UIHelp.dpToPixels(a, 20);
+                    int padding = UIHelp.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
                     mMap.moveCamera(
                             (CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
                 }
@@ -740,6 +766,41 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
+    /**
+     * Zoom to include the current map bounds plus the location of the nearest vehicle
+     *
+     * @param routeIds markers representing real-time positions for the provided routeIds will be
+     *                checked for proximity to the location (all other routes are ignored)
+     * @param response trips-for-route API response, which includes real-time vehicle locations in status
+     */
+    @Override
+    public void zoomIncludeClosestVehicle(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
+        if (mMap == null) {
+            return;
+        }
+        LatLng closestVehicleLocation = MapHelpV2
+                .getClosestVehicle(response, routeIds, getMapCenterAsLocation());
+
+        LatLngBounds visibleBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
+
+        if (visibleBounds.contains(closestVehicleLocation)) {
+            // Closest vehicle is already in view - don't change camera
+            return;
+        }
+
+        // Zoom to include current map bounds and closest vehicle location
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(visibleBounds.northeast);
+        builder.include(visibleBounds.southwest);
+        builder.include(closestVehicleLocation);
+
+        Activity a = getActivity();
+        if (a != null) {
+            int padding = UIHelp.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), padding));
+        }
+    }
+
     @Override
     public void removeRouteOverlay() {
         for (Polyline p : mLineOverlay) {
@@ -747,6 +808,17 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         mLineOverlay.clear();
+    }
+
+    /**
+     * Clears any stop markers from the map
+     * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
+     */
+    @Override
+    public void removeStopOverlay(boolean clearFocusedStop) {
+        if (mStopOverlay != null) {
+            mStopOverlay.clear(clearFocusedStop);
+        }
     }
 
     @Override

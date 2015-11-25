@@ -116,11 +116,28 @@ public interface MapModeController {
         // Zoom to line overlay of route
         void zoomToRoute();
 
+        /**
+         * Zoom to include the closest vehicle from the response within the map view
+         *
+         * @param routeIds markers representing real-time positions for the provided routeIds will
+         *                 be
+         *                 checked for proximity to the location (all other routes are ignored)
+         */
+        void zoomIncludeClosestVehicle(HashSet<String> routeIds, ObaTripsForRouteResponse response);
+
         // Post invalidate
         void postInvalidate();
 
         // Removes the route from the map
         void removeRouteOverlay();
+
+        /**
+         * Clears any stop markers from the map
+         *
+         * @param clearFocusedStop true to clear the currently focused stop, false to leave it on
+         *                         map
+         */
+        void removeStopOverlay(boolean clearFocusedStop);
 
         // Returns true if the map is capable of watching itself, false if it needs an external watcher
         boolean canWatchMapChanges();
@@ -144,12 +161,16 @@ public interface MapModeController {
          * Define a visible region on the map, to signal to the map that portions of the map around
          * the edges may be obscured, by setting padding on each of the four edges of the map.
          *
-         * @param left   the number of pixels of padding to be added on the left of the map.
-         * @param top    the number of pixels of padding to be added on the top of the map.
-         * @param right  the number of pixels of padding to be added on the right of the map.
-         * @param bottom the number of pixels of padding to be added on the bottom of the map.
+         * @param left   the number of pixels of padding to be added on the left of the map, or null
+         *               if the existing padding should be used
+         * @param top    the number of pixels of padding to be added on the top of the map, or null
+         *               if the existing padding should be used
+         * @param right  the number of pixels of padding to be added on the right of the map, or null
+         *               if the existing padding should be used
+         * @param bottom the number of pixels of padding to be added on the bottom of the map, or null
+         *               if the existing padding should be used
          */
-        void setPadding(int left, int top, int right, int bottom);
+        void setPadding(Integer left, Integer top, Integer right, Integer bottom);
     }
 
     String getMode();

@@ -60,6 +60,8 @@ public class RouteMapController implements MapModeController {
 
     private boolean mZoomToRoute;
 
+    private boolean mZoomIncludeClosestVehicle;
+
     private int mLineOverlayColor;
 
     private RoutePopup mRoutePopup;
@@ -95,7 +97,14 @@ public class RouteMapController implements MapModeController {
         assert (args != null);
         String routeId = args.getString(MapParams.ROUTE_ID);
         mZoomToRoute = args.getBoolean(MapParams.ZOOM_TO_ROUTE, false);
+        mZoomIncludeClosestVehicle = args
+                .getBoolean(MapParams.ZOOM_INCLUDE_CLOSEST_VEHICLE, false);
         if (!routeId.equals(mRouteId)) {
+            if (mRouteId != null) {
+                clearCurrentState();
+            }
+
+            // Set up the new route
             mRouteId = routeId;
             mRoutePopup.showLoading();
             mFragment.showProgress(true);
@@ -111,6 +120,25 @@ public class RouteMapController implements MapModeController {
             // We are returning to the route view with the route already set, so show the header
             mRoutePopup.show();
         }
+    }
+
+    /**
+     * Clears the current state of the controller, so a new route can be loaded
+     */
+    private void clearCurrentState() {
+        // Stop loaders and refresh handler
+        mRouteLoader.stopLoading();
+        mRouteLoader.reset();
+        mVehiclesLoader.stopLoading();
+        mVehiclesLoader.reset();
+        mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);
+
+        // Clear the existing route and vehicle overlays
+        mFragment.getMapView().removeRouteOverlay();
+        mFragment.getMapView().removeVehicleOverlay();
+
+        // Clear the existing stop icons, but leave the currently focused stop
+        mFragment.getMapView().removeStopOverlay(false);
     }
 
     @Override
@@ -219,7 +247,8 @@ public class RouteMapController implements MapModeController {
                             / mActivity.getResources().getDisplayMetrics().density;
             VEHICLE_MARKER_PADDING = UIHelp.dpToPixels(mActivity, paddingDp);
             mView = mActivity.findViewById(R.id.route_info);
-            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
+            mFragment.getMapView()
+                    .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
             mRouteShortName = (TextView) mView.findViewById(R.id.short_name);
             mRouteLongName = (TextView) mView.findViewById(R.id.long_name);
             mAgencyName = (TextView) mView.findViewById(R.id.agency);
@@ -244,7 +273,8 @@ public class RouteMapController implements MapModeController {
         }
 
         void showLoading() {
-            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
+            mFragment.getMapView()
+                    .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
             UIHelp.hideViewWithoutAnimation(mRouteShortName);
             UIHelp.hideViewWithoutAnimation(mRouteLongName);
             UIHelp.showViewWithoutAnimation(mView);
@@ -271,11 +301,12 @@ public class RouteMapController implements MapModeController {
             UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);
             UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
-            mFragment.getMapView().setPadding(0, mView.getHeight() + VEHICLE_MARKER_PADDING, 0, 0);
+            mFragment.getMapView()
+                    .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
         }
 
         void hide() {
-            mFragment.getMapView().setPadding(0, 0, 0, 0);
+            mFragment.getMapView().setPadding(null, 0, null, null);
             UIHelp.hideViewWithAnimation(mView, mShortAnimationDuration);
         }
     }
@@ -459,6 +490,11 @@ public class RouteMapController implements MapModeController {
             routes.add(mRouteId);
 
             obaMapView.updateVehicles(routes, response);
+
+            if (mZoomIncludeClosestVehicle) {
+                obaMapView.zoomIncludeClosestVehicle(routes, response);
+                mZoomIncludeClosestVehicle = false;
+            }
 
             mLastUpdatedTimeVehicles = UIHelp.getCurrentTimeForComparison();
 

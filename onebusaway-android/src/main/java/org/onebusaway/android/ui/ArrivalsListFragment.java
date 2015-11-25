@@ -168,6 +168,14 @@ public class ArrivalsListFragment extends ListFragment
          * @param response new arrival information
          */
         void onArrivalTimesUpdated(final ObaArrivalInfoResponse response);
+
+        /**
+         * Called when the user selects the "Show route on map" for a particular route/trip
+         *
+         * @param arrivalInfo The arrival information for the route/trip that the user selected
+         * @return true if the listener has consumed the event, false otherwise
+         */
+        boolean onShowRouteOnMapSelected(ArrivalInfo arrivalInfo);
     }
 
     /**
@@ -632,7 +640,7 @@ public class ArrivalsListFragment extends ListFragment
                     });
                     routeDialog.show(getFragmentManager(), RouteFavoriteDialogFragment.TAG);
                 } else if (which == 1) {
-                    HomeActivity.start(getActivity(), arrivalInfo.getInfo().getRouteId());
+                    showRouteOnMap(arrivalInfo);
                 } else if (which == 2) {
                     goToTripDetails(arrivalInfo);
                 } else if (which == 3) {
@@ -654,6 +662,17 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog dialog = builder.create();
         dialog.setOwnerActivity(getActivity());
         dialog.show();
+    }
+
+    public void showRouteOnMap(ArrivalInfo arrivalInfo) {
+        boolean handled = false;
+        if (mListener != null) {
+            handled = mListener.onShowRouteOnMapSelected(arrivalInfo);
+        }
+        // If the event hasn't been handled by the listener, start a new activity
+        if (!handled) {
+            HomeActivity.start(getActivity(), arrivalInfo.getInfo().getRouteId());
+        }
     }
 
     //

@@ -777,8 +777,8 @@ public class BaseMapFragment extends SupportMapFragment
 
         LatLngBounds visibleBounds = mMap.getProjection().getVisibleRegion().latLngBounds;
 
-        if (visibleBounds.contains(closestVehicleLocation)) {
-            // Closest vehicle is already in view - don't change camera
+        if (closestVehicleLocation == null || visibleBounds.contains(closestVehicleLocation)) {
+            // Closest vehicle is already in view or is null - don't change camera
             return;
         }
 

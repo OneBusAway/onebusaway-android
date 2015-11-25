@@ -119,8 +119,11 @@ public class BaseMapFragment extends SupportMapFragment
 
     // Keep track of current map padding
     private int mMapPaddingLeft = 0;
+
     private int mMapPaddingTop = 0;
+
     private int mMapPaddingRight = 0;
+
     private int mMapPaddingBottom = 0;
 
     // Use fully-qualified class name to avoid import statement, because it interferes with scripted
@@ -770,11 +773,13 @@ public class BaseMapFragment extends SupportMapFragment
      * Zoom to include the current map bounds plus the location of the nearest vehicle
      *
      * @param routeIds markers representing real-time positions for the provided routeIds will be
-     *                checked for proximity to the location (all other routes are ignored)
-     * @param response trips-for-route API response, which includes real-time vehicle locations in status
+     *                 checked for proximity to the location (all other routes are ignored)
+     * @param response trips-for-route API response, which includes real-time vehicle locations in
+     *                 status
      */
     @Override
-    public void zoomIncludeClosestVehicle(HashSet<String> routeIds, ObaTripsForRouteResponse response) {
+    public void zoomIncludeClosestVehicle(HashSet<String> routeIds,
+            ObaTripsForRouteResponse response) {
         if (mMap == null) {
             return;
         }

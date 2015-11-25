@@ -143,16 +143,18 @@ public class MapHelpV2 {
     }
 
     /**
-     * Gets the location of the vehicle closest to the provided location running the provided routes
+     * Gets the location of the vehicle closest to the provided location running the provided
+     * routes
      *
      * @param response response containing list of trips with vehicle locations
      * @param routeIds markers representing real-time positions for the provided routeIds will be
-     *                checked for proximity to the location (all other routes are ignored)
-     * @param loc         location
+     *                 checked for proximity to the location (all other routes are ignored)
+     * @param loc      location
      * @return the closest vehicle location to the given location, or null if a closest vehicle
      * couldn't be found
      */
-    public static LatLng getClosestVehicle(ObaTripsForRouteResponse response, HashSet<String> routeIds, Location loc) {
+    public static LatLng getClosestVehicle(ObaTripsForRouteResponse response,
+            HashSet<String> routeIds, Location loc) {
         if (loc == null) {
             return null;
         }
@@ -195,8 +197,10 @@ public class MapHelpV2 {
             return null;
         }
 
-        Log.d(TAG, "Closest vehicle is vehicleId=" + closestVehicle.getVehicleId() + ", routeId=" + ", tripId=" +
-                closestVehicle.getActiveTripId() + " at " + closestVehicleLocation.getLatitude() + ","
+        Log.d(TAG, "Closest vehicle is vehicleId=" + closestVehicle.getVehicleId() + ", routeId="
+                + ", tripId=" +
+                closestVehicle.getActiveTripId() + " at " + closestVehicleLocation.getLatitude()
+                + ","
                 + closestVehicleLocation.getLongitude());
 
         return makeLatLng(closestVehicleLocation);

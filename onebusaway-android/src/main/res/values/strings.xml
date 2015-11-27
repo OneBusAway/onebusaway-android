@@ -182,6 +182,7 @@
     <string name="stop_info_option_show_details">Show Stop Details</string>
     <string name="stop_info_option_removestar">Remove Star From Stop</string>
     <string name="stop_info_option_report_problem">Report Stop Problem</string>
+    <string name="stop_info_option_night_light">Night Light</string>
     <string name="stop_info_nodata_minutes">No arrivals in the next %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
@@ -516,6 +517,13 @@
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
     <string name="vehicle_last_updated_min_and_sec">Data updated %1$d min %2$d sec ago</string>
     <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
+
+    <!-- Night Light -->
+    <string name="night_light_dialog_title">Never miss the bus at night again!</string>
+    <string name="night_light_dialog_message">Tired of watching your bus fly by because the driver
+        couldn\'t see you in the dark? Hold up your flashing Night Light and make yourself visible!
+    </string>
+    <string name="night_light_create_shortcut">Create shortcut</string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

@@ -568,6 +568,8 @@ public class ArrivalsListFragment extends ListFragment
             if (mStop != null) {
                 ReportStopProblemActivity.start(getActivity(), mStop);
             }
+        } else if (id == R.id.night_light) {
+            NightLightActivity.start(getActivity());
         }
         return false;
     }

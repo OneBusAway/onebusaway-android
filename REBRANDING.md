@@ -70,9 +70,11 @@ We provide a few configuration options in `build.gradle` brand flavor definition
 
 **Arrival Information**
 
-Valid values are `0` and `1` - The way that estimated arrival information is shown to the user.  There are two options, as defined in `BuildFlavorConstants`:
+Valid values are `0` and `1` - The default way that estimated arrival information is shown to the user.  There are two options, as defined in `BuildFlavorConstants`:
     * `ARRIVAL_INFO_STYLE_A = 0` - The original OneBusAway presentation of arrival info to the user, with small rows sorted by estimated arrival time
     * `ARRIVAL_INFO_STYLE_B = 1` - The presentation of arrival info created by York Region Transit/VIVA for their forked version of OBA, which groups arrival times by route, and shows scheduled arrival times - see [their apps here](http://www.yorkregiontransit.com/en/ridingwithus/apps.asp)
+
+No matter which default is defined, users can change the sorting style by using the "Sort by" button in the action bar.
 
 <img src="https://cloud.githubusercontent.com/assets/928045/8015719/0681c99a-0ba9-11e5-8f7b-9116f9bcc773.png" width="384" height="362" align=center />
 
@@ -88,12 +90,12 @@ Here's an example of how configuration options are set up for the sample agency 
         dimension "brand"  // This line is always the same for all brands - it tells Gradle that this entry is for a brand
         applicationId "org.agencyx.android" // This is the unique identifier for the listing of this brand on Google Play (typically its your unique domain name in reverse) - you can find this app at https://play.google.com/store/apps/details?id=org.agencyx.android
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']  // This line is always the same for all brands - it tells Gradle how to set up the database authority field for the brand
-        buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Use the original OneBusAway presentation of arrival times (i.e., Style A)
+        buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Use the original OneBusAway presentation of arrival times (i.e., Style A) as the default
         buildConfigField "boolean", "USE_FIXED_REGION", "false" // Use the multi-region feature of OneBusAway to select the closest region
         ...
     }
 
-So, Agency X has elected to stick with the normal OneBusAway arrival time presentation and allow region roaming.  This app behaves much like the original OneBusAway app, except it has its own name and colors.
+So, Agency X has elected to stick with the normal OneBusAway arrival time presentation as the default and allow region roaming.  This app behaves much like the original OneBusAway app, except it has its own name and colors.
 
 The Agency Y sample has chosen different options - they are using `ARRIVAL_INFO_STYLE_B`, and have their app fixed to the region info provided in their brand flavor dimension entry:
 
@@ -101,7 +103,7 @@ The Agency Y sample has chosen different options - they are using `ARRIVAL_INFO_
         dimension "brand" // Always the same for all brands
         applicationId "org.agencyy.android" // Unique listing of this brand on app store
         manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider'] // Always the same for all brands
-        buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Use the York Region Transit presentation of arrival times (i.e., Style B)
+        buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Use the York Region Transit presentation of arrival times (i.e., Style B) by default
         buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region - see the following fields for the region info that will be used
         // Fixed region info that the app will use
         buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""

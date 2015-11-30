@@ -1315,6 +1315,10 @@ public class ArrivalsListFragment extends ListFragment
         ArrivalsListLoader loader = getArrivalsLoader();
         if (loader != null) {
             ObaArrivalInfoResponse response = loader.getLastGoodResponse();
+            if (response == null) {
+                // Nothing to refresh yet
+                return;
+            }
             mAdapter.setData(response.getArrivalInfo(), mRoutesFilter, System.currentTimeMillis());
         }
         if (mHeader != null) {

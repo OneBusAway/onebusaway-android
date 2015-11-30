@@ -26,7 +26,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.app.Activity;
@@ -164,7 +164,7 @@ public class StopMapController implements MapModeController,
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mCallback.getActivity())
                 == ConnectionResult.SUCCESS) {
             Context context = mCallback.getActivity();
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(context);
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
             mGoogleApiClient.connect();
         }
 
@@ -183,7 +183,7 @@ public class StopMapController implements MapModeController,
             double lat = args.getDouble(MapParams.CENTER_LAT);
             double lon = args.getDouble(MapParams.CENTER_LON);
             if (lat != 0.0 && lon != 0.0) {
-                center = LocationUtil.makeLocation(lat, lon);
+                center = LocationUtils.makeLocation(lat, lon);
             }
             mCallback.getMapView().setZoom(mapZoom);
 

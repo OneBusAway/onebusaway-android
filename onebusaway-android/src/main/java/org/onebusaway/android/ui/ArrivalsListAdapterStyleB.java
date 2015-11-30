@@ -21,7 +21,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
 import android.content.ContentValues;
@@ -268,8 +268,8 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             d.setAlpha(alpha);
 
             // Set padding on status view
-            int pSides = UIHelp.dpToPixels(context, 5);
-            int pTopBottom = UIHelp.dpToPixels(context, 2);
+            int pSides = UIUtils.dpToPixels(context, 5);
+            int pTopBottom = UIUtils.dpToPixels(context, 2);
             statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
             // Add TextViews to layout
@@ -288,7 +288,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                     .getLayoutParams();
             params2.addRule(RelativeLayout.CENTER_IN_PARENT);
             // Give status view a little extra margin
-            int p = UIHelp.dpToPixels(context, 3);
+            int p = UIUtils.dpToPixels(context, 3);
             params2.setMargins(p, p, p, p);
             statusView.setLayoutParams(params2);
 
@@ -303,7 +303,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
             // Add the divider, if its not the first row
             if (i != 0) {
-                int dividerHeight = UIHelp.dpToPixels(context, 1);
+                int dividerHeight = UIUtils.dpToPixels(context, 1);
                 divider = inflater.inflate(R.layout.arrivals_list_divider_template_style_b, null);
                 divider.setLayoutParams(
                         new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT,

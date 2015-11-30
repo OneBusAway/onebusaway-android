@@ -23,7 +23,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BuildFlavorUtil;
+import org.onebusaway.android.util.BuildFlavorUtils;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -127,7 +127,7 @@ public class PreferencesActivity extends PreferenceActivity
         // If its the OBA brand flavor, then show the "Donate" preference and hide "Powered by OBA"
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
-        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtil.OBA_FLAVOR_BRAND)) {
+        if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtils.OBA_FLAVOR_BRAND)) {
             aboutCategory.removePreference(poweredByObaPref);
         } else {
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"

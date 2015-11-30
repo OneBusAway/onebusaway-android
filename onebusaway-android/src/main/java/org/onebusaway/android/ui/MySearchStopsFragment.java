@@ -21,7 +21,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.location.Location;
@@ -49,13 +49,13 @@ public class MySearchStopsFragment extends MySearchFragmentBase
 
     public static final String TAB_NAME = "search";
 
-    private UIHelp.StopUserInfoMap mStopUserMap;
+    private UIUtils.StopUserInfoMap mStopUserMap;
 
     private MyAdapter mAdapter;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        mStopUserMap = new UIHelp.StopUserInfoMap(getActivity());
+        mStopUserMap = new UIUtils.StopUserInfoMap(getActivity());
         super.onActivityCreated(savedInstanceState);
 
         mAdapter = new MyAdapter();
@@ -91,7 +91,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     @Override
     public void onLoadFinished(Loader<ObaStopsForLocationResponse> loader,
             ObaStopsForLocationResponse response) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
@@ -118,7 +118,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     //
     @Override
     protected void doSearch(String text) {
-        UIHelp.showProgress(this, true);
+        UIUtils.showProgress(this, true);
         Bundle args = new Bundle();
         args.putString(QUERY_TEXT, text);
         Loader<?> loader = getLoaderManager().restartLoader(0, args, this);
@@ -208,7 +208,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
         @Override
         protected void initView(View view, ObaStop stop) {
             mStopUserMap.setView(view, stop.getId(), stop.getName());
-            UIHelp.setStopDirection(view.findViewById(R.id.direction),
+            UIUtils.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),
                     true);
         }

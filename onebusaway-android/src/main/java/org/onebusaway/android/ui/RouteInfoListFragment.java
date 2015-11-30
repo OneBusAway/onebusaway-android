@@ -29,7 +29,7 @@ import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -136,7 +136,7 @@ public class RouteInfoListFragment extends ListFragment {
             HomeActivity.start(getActivity(), mRouteId);
             return true;
         } else if (id == R.id.goto_url) {
-            UIHelp.goToUrl(getActivity(), mRouteInfo.getUrl());
+            UIUtils.goToUrl(getActivity(), mRouteInfo.getUrl());
             return true;
         }
         return false;
@@ -403,7 +403,7 @@ public class RouteInfoListFragment extends ListFragment {
                             HashMap<String, String> groupStopMap = new HashMap<String, String>(2);
                             if (stop != null) {
                                 groupStopMap.put("name", MyTextUtils.toTitleCase(stop.getName()));
-                                String dir = cxt.getString(UIHelp.getStopDirectionText(stop
+                                String dir = cxt.getString(UIUtils.getStopDirectionText(stop
                                         .getDirection()));
                                 groupStopMap.put("direction", dir);
                                 groupStopMap.put("id", stopId);
@@ -479,7 +479,7 @@ public class RouteInfoListFragment extends ListFragment {
                 ObaContract.Routes.insertOrUpdate(getActivity(), mRouteInfo.getId(), values, true);
             }
         } else {
-            setEmptyText(UIHelp.getRouteErrorString(getActivity(), routeInfo.getCode()));
+            setEmptyText(UIUtils.getRouteErrorString(getActivity(), routeInfo.getCode()));
         }
     }
 
@@ -489,7 +489,7 @@ public class RouteInfoListFragment extends ListFragment {
         if (code == ObaApi.OBA_OK) {
             setEmptyText("");
         } else {
-            setEmptyText(UIHelp.getRouteErrorString(getActivity(), code));
+            setEmptyText(UIUtils.getRouteErrorString(getActivity(), code));
         }
         mAdapter = new SimpleExpandableListAdapter(
                 getActivity(),

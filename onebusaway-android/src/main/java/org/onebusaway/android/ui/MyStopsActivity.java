@@ -17,7 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -62,7 +62,7 @@ public class MyStopsActivity extends MyTabActivityBase {
 
         restoreDefaultTab();
 
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
     }
 
     @Override

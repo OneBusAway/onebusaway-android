@@ -26,7 +26,10 @@ import android.os.Build;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class TestHelp {
+/**
+ * A class containing utility methods related to unit tests
+ */
+public class TestUtils {
 
     static String CATEGORY_TEST = BuildConfig.APPLICATION_ID + ".category.TEST";
 

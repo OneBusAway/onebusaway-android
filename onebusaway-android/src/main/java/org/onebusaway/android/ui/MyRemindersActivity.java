@@ -16,7 +16,7 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -30,7 +30,7 @@ public class MyRemindersActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

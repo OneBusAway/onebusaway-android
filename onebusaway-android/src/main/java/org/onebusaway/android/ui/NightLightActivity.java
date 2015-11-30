@@ -18,7 +18,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -79,7 +79,7 @@ public class NightLightActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
         setContentView(R.layout.night_light);
         screen = findViewById(R.id.screen);
         disableScreenSleep();
@@ -256,7 +256,7 @@ public class NightLightActivity extends AppCompatActivity {
      */
     private void createShortcut() {
         final Intent shortcutIntent =
-                UIHelp.makeShortcut(this,
+                UIUtils.makeShortcut(this,
                         getString(R.string.stop_info_option_night_light),
                         new Intent(this, NightLightActivity.class));
         shortcutIntent.setAction(INSTALL_SHORTCUT);

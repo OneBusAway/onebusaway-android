@@ -17,7 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.SearchManager;
 import android.content.Intent;
@@ -36,7 +36,7 @@ public class SearchActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
         handleIntent(getIntent());
     }
 

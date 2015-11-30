@@ -19,7 +19,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -47,7 +47,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // Set the sort by clause, in case its the first execution and none is set
-        final int currentStopOrder = PreferenceHelp.getStopSortOrderFromPreferences();
+        final int currentStopOrder = PreferenceUtils.getStopSortOrderFromPreferences();
         setSortByClause(currentStopOrder);
 
         return new CursorLoader(getActivity(),
@@ -115,7 +115,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.menu_option_sort_by);
 
-        final int currentStopOrder = PreferenceHelp.getStopSortOrderFromPreferences();
+        final int currentStopOrder = PreferenceUtils.getStopSortOrderFromPreferences();
 
         builder.setSingleChoiceItems(R.array.sort_stops, currentStopOrder,
                 new DialogInterface.OnClickListener() {
@@ -162,7 +162,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
         }
         // Set the sort option to preferences
         final String[] sortOptions = getResources().getStringArray(R.array.sort_stops);
-        PreferenceHelp.saveString(getResources()
+        PreferenceUtils.saveString(getResources()
                         .getString(R.string.preference_key_default_stop_sort),
                 sortOptions[index]);
     }

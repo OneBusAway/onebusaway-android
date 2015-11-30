@@ -23,8 +23,8 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -73,7 +73,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
     }
@@ -139,7 +139,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
     }
 
     protected void sendReport() {
-        UIHelp.showProgress(this, true);
+        UIUtils.showProgress(this, true);
         getLoaderManager().restartLoader(REPORT_LOADER, getArguments(), this);
 
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
@@ -153,7 +153,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
     @Override
     public void onLoadFinished(Loader<ObaResponse> loader, ObaResponse response) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
 
         if ((response != null) && (response.getCode() == ObaApi.OBA_OK)) {
             Toast.makeText(getActivity(), R.string.report_problem_sent, Toast.LENGTH_LONG).show();
@@ -172,7 +172,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
     @Override
     public void onLoaderReset(Loader<ObaResponse> loader) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
     }
 
     final Handler mGoBackHandler = new Handler();

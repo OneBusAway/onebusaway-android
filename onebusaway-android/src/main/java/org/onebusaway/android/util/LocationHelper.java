@@ -36,7 +36,7 @@ import java.util.List;
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 /**
- * Implements a helper to keep listeners updated with the best location available from
+ * A helper class that keeps listeners updated with the best location available from
  * multiple providers
  */
 public class LocationHelper implements com.google.android.gms.location.LocationListener,

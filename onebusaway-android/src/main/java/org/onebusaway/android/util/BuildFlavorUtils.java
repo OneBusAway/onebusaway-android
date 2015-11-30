@@ -27,7 +27,7 @@ import android.content.res.Resources;
  *
  * @author barbeau
  */
-public class BuildFlavorUtil {
+public class BuildFlavorUtils {
 
     public static final String OBA_FLAVOR_BRAND = "oba";
     // Used to show/hide donate/powered by oba pref
@@ -49,11 +49,11 @@ public class BuildFlavorUtil {
      */
     public static String getPreferenceOptionForArrivalInfoBuildFlavorStyle(int buildFlavorStyle) {
         switch (buildFlavorStyle) {
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+            case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
                 // OBA Classic
                 return Application.get().getResources()
                         .getString(R.string.preferences_arrival_info_style_options_a);
-            case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+            case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
                 // Use a card-styled footer
                 return Application.get().getResources()
                         .getString(R.string.preferences_arrival_info_style_options_b);

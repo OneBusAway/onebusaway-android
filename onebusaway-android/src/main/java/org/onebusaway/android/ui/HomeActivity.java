@@ -36,10 +36,10 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -273,7 +273,7 @@ public class HomeActivity extends AppCompatActivity
 
         setupGooglePlayServices();
 
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         autoShowWhatsNew();
 
@@ -490,7 +490,7 @@ public class HomeActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_options, menu);
 
-        UIHelp.setupSearch(this, menu);
+        UIUtils.setupSearch(this, menu);
 
         // Initialize fragment menu visibility here, so we don't have overlap between the various fragments
         setupOptionsMenu(menu);
@@ -570,7 +570,7 @@ public class HomeActivity extends AppCompatActivity
                                     twitterUrl = Application.get().getCurrentRegion()
                                             .getTwitterUrl();
                                 }
-                                UIHelp.goToUrl(HomeActivity.this, twitterUrl);
+                                UIUtils.goToUrl(HomeActivity.this, twitterUrl);
                                 ObaAnalytics.reportEventWithCategory(
                                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                         getString(R.string.analytics_action_switch),
@@ -583,7 +583,7 @@ public class HomeActivity extends AppCompatActivity
                                 showDialog(WHATSNEW_DIALOG);
                                 break;
                             case 3:
-                                UIHelp.sendContactEmail(HomeActivity.this, mGoogleApiClient);
+                                UIUtils.sendContactEmail(HomeActivity.this, mGoogleApiClient);
                                 break;
                         }
                     }
@@ -636,7 +636,7 @@ public class HomeActivity extends AppCompatActivity
             // (Unfortunately I can't find a way to reschedule them without
             // having the app run again).
             TripService.scheduleAll(this);
-            PreferenceHelp.saveInt(WHATS_NEW_VER, appInfo.versionCode);
+            PreferenceUtils.saveInt(WHATS_NEW_VER, appInfo.versionCode);
         }
     }
 
@@ -834,7 +834,7 @@ public class HomeActivity extends AppCompatActivity
             RegionUtils.saveToProvider(this, Collections.singletonList(r));
             Application.get().setCurrentRegion(r);
             // Disable any region auto-selection in preferences
-            PreferenceHelp
+            PreferenceUtils
                     .saveBoolean(getString(R.string.preference_key_auto_select_region), false);
             return;
         }
@@ -942,7 +942,7 @@ public class HomeActivity extends AppCompatActivity
                             bottom = currentMargin - (int) (Math.abs(currentMargin - goalMargin)
                                     * interpolatedTime);
                         }
-                        UIHelp.setMargins(mFabMyLocation,
+                        UIUtils.setMargins(mFabMyLocation,
                                 p.leftMargin,
                                 p.topMargin,
                                 p.rightMargin,
@@ -998,7 +998,7 @@ public class HomeActivity extends AppCompatActivity
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(this);
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(this);
             mGoogleApiClient.connect();
         }
     }

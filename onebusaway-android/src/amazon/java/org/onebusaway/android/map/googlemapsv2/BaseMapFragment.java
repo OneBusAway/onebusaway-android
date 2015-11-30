@@ -54,8 +54,8 @@ import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -130,7 +130,7 @@ public class BaseMapFragment extends SupportMapFragment
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
     private com.amazon.geo.mapsv2.AmazonMap mMap;
 
-    private UIHelp.StopUserInfoMap mStopUserMap;
+    private UIUtils.StopUserInfoMap mStopUserMap;
 
     private String mFocusStopId;
 
@@ -482,7 +482,7 @@ public class BaseMapFragment extends SupportMapFragment
         String serverName = Application.get().getCustomApiUrl();
         if (mWarnOutOfRange && (Application.get().getCurrentRegion() != null || !TextUtils
                 .isEmpty(serverName))) {
-            if (mRunning && UIHelp.canManageDialog(getActivity())) {
+            if (mRunning && UIUtils.canManageDialog(getActivity())) {
                 showDialog(MapDialogFragment.OUTOFRANGE_DIALOG);
             }
         }
@@ -507,7 +507,7 @@ public class BaseMapFragment extends SupportMapFragment
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)
                 && Application.get().getCurrentRegion() != null
                 && mRunning
-                && UIHelp.canManageDialog(getActivity())) {
+                && UIUtils.canManageDialog(getActivity())) {
             Toast.makeText(getActivity(),
                     getString(R.string.region_region_found,
                             Application.get().getCurrentRegion().getName()),
@@ -548,7 +548,7 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     @SuppressWarnings("deprecation")
     public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
-        if (!LocationUtil.isLocationEnabled(getActivity()) && mRunning && UIHelp.canManageDialog(
+        if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
                 getActivity())) {
             showDialog(MapDialogFragment.NOLOCATION_DIALOG);
             return;
@@ -610,7 +610,7 @@ public class BaseMapFragment extends SupportMapFragment
     //
     public static void showMapError(Context context, ObaResponse response) {
         Toast.makeText(context,
-                context.getString(UIHelp.getMapErrorString(context, response.getCode())),
+                context.getString(UIUtils.getMapErrorString(context, response.getCode())),
                 Toast.LENGTH_LONG).show();
     }
 
@@ -758,7 +758,7 @@ public class BaseMapFragment extends SupportMapFragment
 
                 Activity a = getActivity();
                 if (a != null) {
-                    int padding = UIHelp.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+                    int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
                     mMap.moveCamera(
                             (CameraUpdateFactory.newLatLngBounds(builder.build(), padding)));
                 }
@@ -801,7 +801,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         Activity a = getActivity();
         if (a != null) {
-            int padding = UIHelp.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+            int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), padding));
         }
     }

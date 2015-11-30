@@ -17,7 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -54,7 +54,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         if (isShortcutMode()) {
             final Intent shortcut =
-                    UIHelp.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
+                    UIUtils.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
 
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut);
@@ -103,7 +103,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
             case CONTEXT_MENU_CREATE_SHORTCUT:
                 StopData stopData = getStopData(getListView(), info.position);
                 final Intent shortcutIntent =
-                        UIHelp.makeShortcut(getActivity(), stopData.uiName,
+                        UIUtils.makeShortcut(getActivity(), stopData.uiName,
                                 stopData.getArrivalsList().getIntent());
                 shortcutIntent.setAction(INSTALL_SHORTCUT);
                 shortcutIntent.setFlags(0);

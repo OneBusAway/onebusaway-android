@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author barbeau
  */
-public class LocationUtil {
+public class LocationUtils {
 
     public static final String TAG = "LocationUtil";
 
@@ -55,7 +55,7 @@ public class LocationUtil {
         if (region != null) {
             double results[] = new double[4];
             RegionUtils.getRegionSpan(region, results);
-            return LocationUtil.makeLocation(results[2], results[3]);
+            return LocationUtils.makeLocation(results[2], results[3]);
         } else {
             return null;
         }

@@ -19,7 +19,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import android.app.Activity;
@@ -429,7 +429,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (isSeparator(itemId)) {
             // we are done
-            UIHelp.setAccessibilityIgnore(view);
+            UIUtils.setAccessibilityIgnore(view);
             return view;
         }
 

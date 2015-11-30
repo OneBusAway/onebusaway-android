@@ -17,7 +17,7 @@ package org.onebusaway.android.tripservice;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -221,7 +221,7 @@ public class TripService extends Service {
     }
 
     public static String getRouteShortName(Context context, String id) {
-        return UIHelp.stringForQuery(context, Uri.withAppendedPath(
+        return UIUtils.stringForQuery(context, Uri.withAppendedPath(
                         ObaContract.Routes.CONTENT_URI, id),
                 ObaContract.Routes.SHORTNAME
         );

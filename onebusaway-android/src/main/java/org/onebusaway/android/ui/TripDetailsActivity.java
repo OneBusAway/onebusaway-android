@@ -18,7 +18,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -71,7 +71,7 @@ public class TripDetailsActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

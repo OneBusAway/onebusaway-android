@@ -26,7 +26,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -205,7 +205,7 @@ public class TripDetailsListFragment extends ListFragment {
         if (code == ObaApi.OBA_OK) {
             setEmptyText("");
         } else {
-            setEmptyText(UIHelp.getRouteErrorString(getActivity(), code));
+            setEmptyText(UIUtils.getRouteErrorString(getActivity(), code));
             return;
         }
 
@@ -408,7 +408,7 @@ public class TripDetailsListFragment extends ListFragment {
 
     private void refresh() {
         if (isAdded()) {
-            UIHelp.showProgress(this, true);
+            UIUtils.showProgress(this, true);
             getTripDetailsLoader().onContentChanged();
         }
     }
@@ -608,7 +608,7 @@ public class TripDetailsListFragment extends ListFragment {
 
             // Set bus and realtime indicator to match status color
             bus.setColorFilter(getResources().getColor(statusColor));
-            UIHelp.setRealtimeIndicatorColor(realtime, getResources().getColor(statusColor),
+            UIUtils.setRealtimeIndicatorColor(realtime, getResources().getColor(statusColor),
                     android.R.color.transparent);
 
             int routeColor;

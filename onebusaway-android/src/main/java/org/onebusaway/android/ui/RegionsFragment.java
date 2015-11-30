@@ -25,8 +25,8 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsLoader;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.app.Activity;
@@ -90,7 +90,7 @@ public class RegionsFragment extends ListFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
 
@@ -123,7 +123,7 @@ public class RegionsFragment extends ListFragment
         //If we're currently auto-selecting regions, disable this so it doesn't override the manual setting
         if (Application.getPrefs()
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true)) {
-            PreferenceHelp
+            PreferenceUtils
                     .saveBoolean(getString(R.string.preference_key_auto_select_region), false);
             Toast.makeText(this.getActivity(),
                     R.string.region_disabled_auto_selection, Toast.LENGTH_LONG)

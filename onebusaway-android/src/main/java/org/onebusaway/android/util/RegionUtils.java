@@ -41,6 +41,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * A class containing utility methods related to handling multiple regions in OneBusAway
+ */
 public class RegionUtils {
 
     private static final String TAG = "RegionUtils";

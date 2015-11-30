@@ -20,7 +20,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -138,7 +138,7 @@ public final class PollerTask implements Runnable {
 
     private long getReminderMS(String tripId, String stopId) {
         final Uri uri = ObaContract.Trips.buildUri(tripId, stopId);
-        return (long) UIHelp.intForQuery(mContext, uri, ObaContract.Trips.REMINDER) * ONE_MINUTE;
+        return (long) UIUtils.intForQuery(mContext, uri, ObaContract.Trips.REMINDER) * ONE_MINUTE;
     }
 
     //

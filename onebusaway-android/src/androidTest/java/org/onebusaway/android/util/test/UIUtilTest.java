@@ -13,7 +13,7 @@ import org.onebusaway.android.mock.MockObaStop;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.text.TextUtils;
 
@@ -31,13 +31,13 @@ public class UIUtilTest extends ObaTestCase {
         ObaStop stop = MockObaStop.getMockStop();
         HashMap<String, ObaRoute> routes = MockObaStop.getMockRoutes();
 
-        String serializedRoutes = UIHelp.serializeRouteDisplayNames(stop, routes);
+        String serializedRoutes = UIUtils.serializeRouteDisplayNames(stop, routes);
         assertEquals("1,5", serializedRoutes);
     }
 
     public void testDeserializeRouteDisplayNames() {
         String serializedRoutes = "1,5";
-        List<String> routeList = UIHelp.deserializeRouteDisplayNames(serializedRoutes);
+        List<String> routeList = UIUtils.deserializeRouteDisplayNames(serializedRoutes);
         assertEquals("1", routeList.get(0));
         assertEquals("5", routeList.get(1));
     }
@@ -49,13 +49,13 @@ public class UIUtilTest extends ObaTestCase {
 
         routes.add("1");
         routes.add("5");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
         routes.add("5");
         routes.add("1");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5", formattedString);
 
         routes.clear();
@@ -64,7 +64,7 @@ public class UIUtilTest extends ObaTestCase {
         routes.add("15");
         routes.add("8b");
         routes.add("8a");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1, 5, 8a, 8b, 15", formattedString);
 
         // Test highlighting one URL
@@ -75,7 +75,7 @@ public class UIUtilTest extends ObaTestCase {
         routes.add("8b");
         routes.add("8a");
         highlightedRoutes.add("1");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1*, 5, 8a, 8b, 15", formattedString);
 
         // Test highlighting several URLs
@@ -89,7 +89,7 @@ public class UIUtilTest extends ObaTestCase {
         highlightedRoutes.add("1");
         highlightedRoutes.add("8b");
         highlightedRoutes.add("15");
-        formattedString = UIHelp.formatRouteDisplayNames(routes, highlightedRoutes);
+        formattedString = UIUtils.formatRouteDisplayNames(routes, highlightedRoutes);
         assertEquals("1*, 5, 8a, 8b*, 15*", formattedString);
     }
 
@@ -127,7 +127,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
-        List<String> options = UIHelp
+        List<String> options = UIUtils
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
@@ -140,7 +140,8 @@ public class UIUtilTest extends ObaTestCase {
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
-        options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+        options = UIUtils
+                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -174,7 +175,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
-        options = UIHelp
+        options = UIUtils
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
@@ -186,7 +187,7 @@ public class UIUtilTest extends ObaTestCase {
         isReminderVisible = true;
 
         // Now we should see *edit* the reminder, and still no route schedule
-        options = UIHelp
+        options = UIUtils
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Add star to route");
         assertEquals(options.get(1), "Show route on map");
@@ -203,7 +204,8 @@ public class UIUtilTest extends ObaTestCase {
 
         // HART has route schedule URLs in test data, so below options should allow the user to set
         // a reminder and view the route schedule
-        options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+        options = UIUtils
+                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -215,7 +217,8 @@ public class UIUtilTest extends ObaTestCase {
         isReminderVisible = true;
 
         // Now we should see route schedules and *edit* the reminder
-        options = UIHelp.buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
+        options = UIUtils
+                .buildTripOptions(getContext(), isRouteFavorite, hasUrl, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
         assertEquals(options.get(2), "Show trip status");
@@ -229,7 +232,7 @@ public class UIUtilTest extends ObaTestCase {
 
         // PSTA does not have route schedule URLs in test data, so below options should allow the
         // user to set a reminder but NOT view the route schedule
-        options = UIHelp
+        options = UIUtils
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");
@@ -241,7 +244,7 @@ public class UIUtilTest extends ObaTestCase {
         isReminderVisible = true;
 
         // Now we should see *edit* the reminder, and still no route schedule
-        options = UIHelp
+        options = UIUtils
                 .buildTripOptions(getContext(), isRouteFavorite, hasUrl2, isReminderVisible);
         assertEquals(options.get(0), "Remove star from route");
         assertEquals(options.get(1), "Show route on map");

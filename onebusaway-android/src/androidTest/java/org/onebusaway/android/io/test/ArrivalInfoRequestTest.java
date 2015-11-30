@@ -26,7 +26,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -217,7 +217,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(0, windows.length);
 
         // No active window is included, so this should return true to assume the alert is active
-        boolean result = UIHelp.isActiveWindowForSituation(situation, response.getCurrentTime());
+        boolean result = UIUtils.isActiveWindowForSituation(situation, response.getCurrentTime());
         assertEquals(true, result);
 
         // TODO - we need valid test responses that include the below situation data
@@ -277,27 +277,27 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals(1436073000, windows[1].getTo());
 
         long timeBeforeWindow0 = 0;
-        boolean result = UIHelp.isActiveWindowForSituation(situation, timeBeforeWindow0);
+        boolean result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
         assertEquals(false, result);
 
         long timeWithinWindow0 = 1435005046;
-        result = UIHelp.isActiveWindowForSituation(situation, timeWithinWindow0);
+        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
         assertEquals(true, result);
 
         long timeAfterWindow0 = 1436072373;
-        result = UIHelp.isActiveWindowForSituation(situation, timeAfterWindow0);
+        result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow0);
         assertEquals(false, result);
 
         long timeBeforeWindow1 = 1436072373;
-        result = UIHelp.isActiveWindowForSituation(situation, timeBeforeWindow1);
+        result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow1);
         assertEquals(false, result);
 
         long timeWithinWindow1 = 1436072375;
-        result = UIHelp.isActiveWindowForSituation(situation, timeWithinWindow1);
+        result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow1);
         assertEquals(true, result);
 
         long timeAfterWindow1 = 1436073001;
-        result = UIHelp.isActiveWindowForSituation(situation, timeAfterWindow1);
+        result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow1);
         assertEquals(false, result);
     }
 

@@ -2,7 +2,7 @@ package org.onebusaway.android.mock;
 
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
@@ -44,7 +44,7 @@ public class MockObaStop {
 
         @Override
         public Location getLocation() {
-            return LocationUtil.makeLocation(getLatitude(), getLongitude());
+            return LocationUtils.makeLocation(getLatitude(), getLongitude());
         }
 
         @Override

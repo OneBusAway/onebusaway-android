@@ -18,7 +18,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -176,7 +176,7 @@ public final class QueryUtils {
                         }
                         return true;
                     } else if (columnIndex == Columns.COL_DIRECTION) {
-                        UIHelp.setStopDirection(view.findViewById(R.id.direction),
+                        UIUtils.setStopDirection(view.findViewById(R.id.direction),
                                 cursor.getString(columnIndex),
                                 true);
                         return true;

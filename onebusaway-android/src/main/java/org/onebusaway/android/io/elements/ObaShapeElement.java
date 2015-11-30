@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.io.elements;
 
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
@@ -115,7 +115,7 @@ public final class ObaShapeElement implements ObaShape {
             lon += dlon;
 
             // The polyline encodes in degrees * 1E5, we need decimal degrees
-            array.add(LocationUtil.makeLocation(lat / 1E5, lon / 1E5));
+            array.add(LocationUtils.makeLocation(lat / 1E5, lon / 1E5));
         }
 
         return array;

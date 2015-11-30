@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.io.elements;
 
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
@@ -36,7 +36,7 @@ public interface ObaTripStatus {
         }
 
         public Location getLocation() {
-            return LocationUtil.makeLocation(lat, lon);
+            return LocationUtils.makeLocation(lat, lon);
         }
     }
 

@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -42,7 +42,7 @@ public class MyRecentRoutesActivity extends AppCompatActivity {
 
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentRoutesFragment.TAB_NAME);
-        return UIHelp.makeShortcut(this,
+        return UIUtils.makeShortcut(this,
                 getString(R.string.recent_routes_shortcut),
                 new Intent(this, MyRoutesActivity.class)
                         .setData(uri)

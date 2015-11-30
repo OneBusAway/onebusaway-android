@@ -16,7 +16,7 @@
  */
 package org.onebusaway.android.map;
 
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 import android.os.Handler;
@@ -64,7 +64,7 @@ public class MapWatcher {
             Location newCenter = mObaMapView.getMapCenterAsLocation();
             float newZoom = mObaMapView.getZoomLevelAsFloat();
 
-            final boolean centerChanged = !LocationUtil.fuzzyEquals(newCenter, mCurrentCenter);
+            final boolean centerChanged = !LocationUtils.fuzzyEquals(newCenter, mCurrentCenter);
             final boolean zoomChanged = newZoom != mCurrentZoom;
 
             final long now = System.currentTimeMillis();

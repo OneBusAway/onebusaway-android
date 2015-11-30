@@ -23,7 +23,10 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
 
-public class PreferenceHelp {
+/**
+ * A class containing utility methods related to preferences
+ */
+public class PreferenceUtils {
 
     @TargetApi(9)
     public static void saveString(SharedPreferences prefs, String key, String value) {

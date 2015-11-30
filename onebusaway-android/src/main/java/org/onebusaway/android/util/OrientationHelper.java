@@ -31,8 +31,7 @@ import android.view.WindowManager;
 import java.util.ArrayList;
 
 /**
- * Implements a sensor-based orientation helper, which allows listeners to receive
- * orientation updates
+ * A sensor-based orientation helperclass , which allows listeners to receive orientation updates
  */
 public class OrientationHelper implements SensorEventListener {
 

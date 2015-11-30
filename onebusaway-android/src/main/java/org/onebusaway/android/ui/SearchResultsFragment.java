@@ -32,9 +32,9 @@ import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -101,7 +101,7 @@ public class SearchResultsFragment extends ListFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
     }
@@ -136,7 +136,7 @@ public class SearchResultsFragment extends ListFragment
     }
 
     private void search() {
-        UIHelp.showProgress(this, true);
+        UIUtils.showProgress(this, true);
         Loader<?> loader = getLoaderManager().restartLoader(0, getArguments(), this);
         //loader.onContentChanged();
         loader.forceLoad();
@@ -147,7 +147,7 @@ public class SearchResultsFragment extends ListFragment
         String query = args.getString(QUERY_TEXT);
         Location location = Application.getLastKnownLocation(getActivity(), mGoogleApiClient);
         if (location == null) {
-            location = LocationUtil.getDefaultSearchCenter();
+            location = LocationUtils.getDefaultSearchCenter();
         }
         return new MyLoader(getActivity(), query, location);
     }
@@ -155,7 +155,7 @@ public class SearchResultsFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<SearchResponse> loader,
             SearchResponse response) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
@@ -193,7 +193,7 @@ public class SearchResultsFragment extends ListFragment
         final String routeId = route.getId();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(UIHelp.getRouteDescription(route));
+        builder.setTitle(UIUtils.getRouteDescription(route));
 
         builder.setItems(R.array.search_route_options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -258,7 +258,7 @@ public class SearchResultsFragment extends ListFragment
             // so unfortunately we can't actually re-use views...
             if (elem instanceof ObaRoute) {
                 view = inflater.inflate(R.layout.route_list_item, parent, false);
-                UIHelp.setRouteView(view, (ObaRoute) elem);
+                UIUtils.setRouteView(view, (ObaRoute) elem);
             } else if (elem instanceof ObaStop) {
                 view = inflater.inflate(R.layout.stop_list_item, parent, false);
                 initStop(view, (ObaStop) elem);
@@ -272,7 +272,7 @@ public class SearchResultsFragment extends ListFragment
             TextView nameView = (TextView) view.findViewById(R.id.stop_name);
             nameView.setText(MyTextUtils.toTitleCase(stop.getName()));
 
-            UIHelp.setStopDirection(view.findViewById(R.id.direction),
+            UIUtils.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),
                     true);
         }
@@ -301,7 +301,7 @@ public class SearchResultsFragment extends ListFragment
         private ObaRoutesForLocationResponse getRoutes() {
             ObaRoutesForLocationResponse response =
                     new ObaRoutesForLocationRequest.Builder(getContext(), mCenter)
-                            .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
+                            .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
                             .setQuery(mQueryText)
                             .build()
                             .call();
@@ -314,10 +314,10 @@ public class SearchResultsFragment extends ListFragment
                     return response;
                 }
             }
-            Location center = LocationUtil.getDefaultSearchCenter();
+            Location center = LocationUtils.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();
@@ -329,7 +329,7 @@ public class SearchResultsFragment extends ListFragment
 
         private ObaStopsForLocationResponse getStops() {
             return new ObaStopsForLocationRequest.Builder(getContext(), mCenter)
-                    .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
+                    .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
                     .setQuery(mQueryText)
                     .build()
                     .call();

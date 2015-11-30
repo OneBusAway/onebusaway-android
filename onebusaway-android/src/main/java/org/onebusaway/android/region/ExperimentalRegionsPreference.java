@@ -17,7 +17,7 @@ package org.onebusaway.android.region;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -146,7 +146,7 @@ public class ExperimentalRegionsPreference extends CheckBoxPreference {
     public void setValue(boolean newValue) {
         mCurrentValue = newValue;
         setChecked(newValue);
-        PreferenceHelp
+        PreferenceUtils
                 .saveBoolean(getContext().getString(R.string.preference_key_experimental_regions),
                         newValue);
     }

@@ -20,7 +20,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -60,7 +60,7 @@ public class ArrivalsListActivity extends AppCompatActivity {
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
-            setStopRoutes(UIHelp.serializeRouteDisplayNames(stop, routes));
+            setStopRoutes(UIUtils.serializeRouteDisplayNames(stop, routes));
         }
 
         public Builder setStopName(String stopName) {
@@ -76,7 +76,7 @@ public class ArrivalsListActivity extends AppCompatActivity {
         /**
          * Sets the routes that serve this stop as a comma-delimited set of route_ids
          * <p/>
-         * See {@link org.onebusaway.android.util.UIHelp#serializeRouteDisplayNames(ObaStop,
+         * See {@link UIUtils#serializeRouteDisplayNames(ObaStop,
          * java.util.HashMap)}
          *
          * @param routes comma-delimited list of route_ids that serve this stop
@@ -121,7 +121,7 @@ public class ArrivalsListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

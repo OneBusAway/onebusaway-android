@@ -20,7 +20,7 @@ import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -53,7 +53,7 @@ public class AgenciesFragment extends ListFragment
         // Go to the URL
         ObaAgency agency = mResponse.getAgency(mAdapter.getItem(position).getId());
         if (!TextUtils.isEmpty(agency.getUrl())) {
-            UIHelp.goToUrl(getActivity(), agency.getUrl());
+            UIUtils.goToUrl(getActivity(), agency.getUrl());
         }
     }
 

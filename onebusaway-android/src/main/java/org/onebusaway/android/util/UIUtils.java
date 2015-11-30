@@ -83,7 +83,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class UIHelp {
+/**
+ * A class containing utility methods related to the user interface
+ */
+public final class UIUtils {
 
     private static final String TAG = "UIHelp";
 
@@ -195,7 +198,7 @@ public final class UIHelp {
     // available.
     public static final void setStopDirection(View v, String direction, boolean show) {
         final TextView text = (TextView) v;
-        final int directionText = UIHelp.getStopDirectionText(direction);
+        final int directionText = UIUtils.getStopDirectionText(direction);
         if ((directionText != R.string.direction_none) || show) {
             text.setText(directionText);
             text.setVisibility(View.VISIBLE);
@@ -788,7 +791,7 @@ public final class UIHelp {
             if (v.getVisibility() == View.VISIBLE) {
                 Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
                         + " is visible");
-                if (UIHelp.canAnimateViewModern()) {
+                if (UIUtils.canAnimateViewModern()) {
                     Log.d(TAG, v.getContext().getResources().getResourceEntryName(v.getId())
                             + " alpha - " + v.getAlpha());
                 }
@@ -1031,7 +1034,7 @@ public final class UIHelp {
                 Build.MODEL,
                 Build.VERSION.RELEASE,
                 Build.VERSION.SDK_INT,
-                LocationUtil.printLocationDetails(loc));
+                LocationUtils.printLocationDetails(loc));
         Intent send = new Intent(Intent.ACTION_SEND);
         send.putExtra(Intent.EXTRA_EMAIL,
                 new String[]{region.getContactEmail()});

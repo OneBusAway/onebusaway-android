@@ -18,7 +18,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -61,7 +61,7 @@ public class SituationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 

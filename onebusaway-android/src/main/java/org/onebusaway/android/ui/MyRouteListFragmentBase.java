@@ -17,7 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -58,7 +58,7 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
         final String routeName = c.getString(COL_SHORTNAME);
 
         if (isShortcutMode()) {
-            final Intent shortcut = UIHelp.makeShortcut(getActivity(), routeName,
+            final Intent shortcut = UIUtils.makeShortcut(getActivity(), routeName,
                     RouteInfoActivity.makeIntent(getActivity(), routeId));
 
             Activity activity = getActivity();
@@ -109,7 +109,7 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
                         QueryUtils.RouteList.getId(getListView(), info.position));
                 return true;
             case CONTEXT_MENU_SHOW_URL:
-                UIHelp.goToUrl(getActivity(),
+                UIUtils.goToUrl(getActivity(),
                         QueryUtils.RouteList.getUrl(getListView(), info.position));
                 return true;
             default:

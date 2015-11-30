@@ -31,7 +31,7 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.MathUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -511,7 +511,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             Bitmap b = getBitmapFromCache(key);
             if (b == null) {
                 // Cache miss - create Bitmap and add to cache
-                b = UIHelp.colorBitmap(vehicle_icons[halfWind], color);
+                b = UIUtils.colorBitmap(vehicle_icons[halfWind], color);
                 addBitmapToCache(key, b);
             }
             return BitmapDescriptorFactory.fromBitmap(b);
@@ -616,7 +616,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             ObaTrip trip = mLastResponse.getTrip(status.getActiveTripId());
             ObaRoute route = mLastResponse.getRoute(trip.getRouteId());
 
-            routeView.setText(UIHelp.getRouteDisplayName(route) + " " +
+            routeView.setText(UIUtils.getRouteDisplayName(route) + " " +
                     mContext.getString(R.string.trip_info_separator) + " " + trip.getHeadsign());
 
             boolean isRealtime = isLocationRealtime(status);
@@ -625,8 +625,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             GradientDrawable d = (GradientDrawable) statusView.getBackground();
 
             // Set padding on status view
-            int pSides = UIHelp.dpToPixels(mContext, 5);
-            int pTopBottom = UIHelp.dpToPixels(mContext, 2);
+            int pSides = UIUtils.dpToPixels(mContext, 5);
+            int pTopBottom = UIUtils.dpToPixels(mContext, 2);
 
             int statusColor;
 

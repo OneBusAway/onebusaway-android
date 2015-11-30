@@ -21,8 +21,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.SearchViewV1;
 
 import android.app.Activity;
@@ -62,7 +62,7 @@ abstract class MySearchFragmentBase extends ListFragment
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getActivity());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
     }
@@ -104,7 +104,7 @@ abstract class MySearchFragmentBase extends ListFragment
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-        UIHelp.closeKeyboard(getActivity(), mSearchViewV1);
+        UIUtils.closeKeyboard(getActivity(), mSearchViewV1);
         super.onStop();
     }
 
@@ -192,7 +192,7 @@ abstract class MySearchFragmentBase extends ListFragment
      * @param destIntent The destination intent.
      */
     protected final void makeShortcut(String name, Intent destIntent) {
-        final Intent shortcut = UIHelp.makeShortcut(getActivity(), name, destIntent);
+        final Intent shortcut = UIUtils.makeShortcut(getActivity(), name, destIntent);
 
         Activity activity = getActivity();
         activity.setResult(Activity.RESULT_OK, shortcut);
@@ -212,7 +212,7 @@ abstract class MySearchFragmentBase extends ListFragment
         Activity act = getActivity();
         Location location = Application.getLastKnownLocation(act, mGoogleApiClient);
         if (location == null) {
-            location = LocationUtil.getDefaultSearchCenter();
+            location = LocationUtils.getDefaultSearchCenter();
         }
         return location;
     }

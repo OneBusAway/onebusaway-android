@@ -24,9 +24,9 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -110,14 +110,14 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         mShowProgressDialog = showProgressDialog;
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(context);
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
             mGoogleApiClient.connect();
         }
     }
 
     @Override
     protected void onPreExecute() {
-        if (mShowProgressDialog && UIHelp.canManageDialog(mContext)) {
+        if (mShowProgressDialog && UIUtils.canManageDialog(mContext)) {
             mProgressDialog = ProgressDialog.show(mContext, "",
                     mContext.getString(R.string.region_detecting_server), true);
             mProgressDialog.setIndeterminate(true);
@@ -141,7 +141,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         }
 
         // Dismiss the dialog before calling the callbacks to avoid errors referencing the dialog later
-        if (mShowProgressDialog && UIHelp.canManageDialog(mContext) && mProgressDialog
+        if (mShowProgressDialog && UIUtils.canManageDialog(mContext) && mProgressDialog
                 .isShowing()) {
             mProgressDialog.dismiss();
         }
@@ -206,7 +206,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     }
 
     private void haveUserChooseRegion(final ArrayList<ObaRegion> result) {
-        if (!UIHelp.canManageDialog(mContext)) {
+        if (!UIUtils.canManageDialog(mContext)) {
             return;
         }
 

@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -33,7 +33,7 @@ public class MyStarredStopsActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
@@ -44,7 +44,7 @@ public class MyStarredStopsActivity extends AppCompatActivity {
 
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyStarredStopsFragment.TAB_NAME);
-        return UIHelp.makeShortcut(this,
+        return UIUtils.makeShortcut(this,
                 getString(R.string.starred_stops_shortcut),
                 new Intent(this, MyStopsActivity.class)
                         .setData(uri)

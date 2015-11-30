@@ -5,8 +5,8 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.TestHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.TestUtils;
 
 import android.location.Location;
 import android.os.Build;
@@ -17,7 +17,7 @@ import android.util.Log;
 /**
  * Tests to evaluate location utilities
  */
-public class LocationUtilTest extends AndroidTestCase {
+public class LocationUtilsTest extends AndroidTestCase {
 
     public static final String TAG = "LocationUtilTest";
 
@@ -35,7 +35,7 @@ public class LocationUtilTest extends AndroidTestCase {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
-            mGoogleApiClient = LocationUtil.getGoogleApiClientWithCallbacks(getContext());
+            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getContext());
             mGoogleApiClient.connect();
         }
     }
@@ -58,12 +58,12 @@ public class LocationUtilTest extends AndroidTestCase {
         // Test that non-null location is preferred
         a = new Location("test");
         b = null;
-        result = LocationUtil.compareLocationsByTime(a, b);
+        result = LocationUtils.compareLocationsByTime(a, b);
         assertTrue(result);
 
         a = null;
         b = new Location("test");
-        result = LocationUtil.compareLocationsByTime(a, b);
+        result = LocationUtils.compareLocationsByTime(a, b);
         assertFalse(result);
 
         // Test that location with greater (i.e., newer) timestamp is preferred
@@ -72,13 +72,13 @@ public class LocationUtilTest extends AndroidTestCase {
         b = new Location("test");
         b.setTime(1000);
 
-        result = LocationUtil.compareLocationsByTime(a, b);
+        result = LocationUtils.compareLocationsByTime(a, b);
         assertTrue(result);
 
         a.setTime(1000);
         b.setTime(1001);
 
-        result = LocationUtil.compareLocationsByTime(a, b);
+        result = LocationUtils.compareLocationsByTime(a, b);
         assertFalse(result);
     }
 
@@ -90,12 +90,12 @@ public class LocationUtilTest extends AndroidTestCase {
         // Test that non-null location is preferred
         a = new Location("test");
         b = null;
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertTrue(result);
 
         a = null;
         b = new Location("test");
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertFalse(result);
 
         long time = System
@@ -107,56 +107,56 @@ public class LocationUtilTest extends AndroidTestCase {
         b = new Location("test");
         b.setTime(time);
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertTrue(result);
 
         a.setTime(time);
         b.setTime(time + 1);
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertFalse(result);
 
         // Test that the new location would be saved if the old location is older than the time
         // threshold, even if the accuracy is worse
         a = new Location("test");
         a.setTime(time);  // A is newer
-        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        a.setAccuracy(LocationUtils.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
         b = new Location("test");
-        b.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
-        b.setTime(time - LocationUtil.TIME_THRESHOLD - 1);  // older than time threshold
+        b.setAccuracy(LocationUtils.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        b.setTime(time - LocationUtils.TIME_THRESHOLD - 1);  // older than time threshold
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertTrue(result);
 
         // A is older, so this should fail, since we never want an older location
         a = new Location("test");
-        a.setTime(time - LocationUtil.TIME_THRESHOLD - 2);  // A is older
-        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        a.setTime(time - LocationUtils.TIME_THRESHOLD - 2);  // A is older
+        a.setAccuracy(LocationUtils.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
         b = new Location("test");
-        b.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
-        b.setTime(time - LocationUtil.TIME_THRESHOLD - 1);  // older than time threshold
+        b.setAccuracy(LocationUtils.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        b.setTime(time - LocationUtils.TIME_THRESHOLD - 1);  // older than time threshold
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertFalse(result);
 
         // Test that location with greater (i.e., newer) timestamp is preferred, as long as it has
         // a reasonable accuracy
         a = new Location("test");
         a.setTime(time + 1);  // A is newer
-        a.setAccuracy(LocationUtil.ACC_THRESHOLD - 1);  // 1 meter better than threshold
+        a.setAccuracy(LocationUtils.ACC_THRESHOLD - 1);  // 1 meter better than threshold
         b = new Location("test");
         b.setTime(time);
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertTrue(result);
 
         a = new Location("test");
         a.setTime(time + 1);  // A is newer
-        a.setAccuracy(LocationUtil.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
+        a.setAccuracy(LocationUtils.ACC_THRESHOLD + 1);  // 1 meter worse than threshold
         b = new Location("test");
         b.setTime(time);
 
-        result = LocationUtil.compareLocations(a, b);
+        result = LocationUtils.compareLocations(a, b);
         assertFalse(result);
     }
 
@@ -164,7 +164,7 @@ public class LocationUtilTest extends AndroidTestCase {
         Location loc;
 
         // Make sure we're not running on an emulator, since we'll get a null location there
-        if (!TestHelp.isRunningOnEmulator()) {
+        if (!TestUtils.isRunningOnEmulator()) {
             /**
              * Test without Google Play Services - should be a Location API v1 location.
              * Typically this is "gps" or "network", but some devices (e.g., HTC EVO LTE)
@@ -189,7 +189,7 @@ public class LocationUtilTest extends AndroidTestCase {
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS &&
-                !TestHelp.isRunningOnEmulator()) {
+                !TestUtils.isRunningOnEmulator()) {
             /**
              * Could return either a fused or Location API v1 location
              */
@@ -221,12 +221,12 @@ public class LocationUtilTest extends AndroidTestCase {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             timeDiff = SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos();
-            Log.d(TAG, "Location from " + LocationUtil.printLocationDetails(location));
+            Log.d(TAG, "Location from " + LocationUtils.printLocationDetails(location));
             // Use elapsed real-time nanos, since its guaranteed monotonic
             return timeDiff <= (FRESH_LOCATION_THRESHOLD_MS * 1E6);
         } else {
             timeDiff = System.currentTimeMillis() - location.getTime();
-            Log.d(TAG, "Location from " + LocationUtil.printLocationDetails(location));
+            Log.d(TAG, "Location from " + LocationUtils.printLocationDetails(location));
             return timeDiff <= FRESH_LOCATION_THRESHOLD_MS;
         }
     }

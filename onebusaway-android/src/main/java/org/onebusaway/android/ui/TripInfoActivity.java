@@ -21,7 +21,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -105,7 +105,7 @@ public class TripInfoActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
 
         FragmentManager fm = getSupportFragmentManager();
 
@@ -308,7 +308,7 @@ public class TripInfoActivity extends AppCompatActivity {
                 mRouteName = TripService.getRouteShortName(getActivity(), mRouteId);
             }
             if (mStopName == null) {
-                mStopName = UIHelp.stringForQuery(getActivity(), Uri.withAppendedPath(
+                mStopName = UIUtils.stringForQuery(getActivity(), Uri.withAppendedPath(
                                 ObaContract.Stops.CONTENT_URI, mStopId),
                         ObaContract.Stops.NAME
                 );

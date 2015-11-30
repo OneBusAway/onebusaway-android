@@ -22,7 +22,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.annotation.TargetApi;
 import android.content.ContentQueryMap;
@@ -313,13 +313,13 @@ class ArrivalsListHeader {
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
         // Remove any previous clickable spans - we're recycling views between fragments for efficiency
-        UIHelp.removeAllClickableSpans(mShowAllView);
+        UIUtils.removeAllClickableSpans(mShowAllView);
         mShowAllClick = new ClickableSpan() {
             public void onClick(View v) {
                 mController.setRoutesFilter(new ArrayList<String>());
             }
         };
-        UIHelp.setClickableSpan(mShowAllView, mShowAllClick);
+        UIUtils.setClickableSpan(mShowAllView, mShowAllClick);
 
         mNoArrivals = (TextView) mView.findViewById(R.id.no_arrivals);
 
@@ -365,11 +365,11 @@ class ArrivalsListHeader {
         resetExpandCollapseAnimation();
 
         // Initialize right margin view visibilities
-        UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+        UIUtils.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
 
-        UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-        UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+        UIUtils.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+        UIUtils.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+        UIUtils.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
 
         // Initialize stop info view
         final ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -498,7 +498,7 @@ class ArrivalsListHeader {
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     private void doExpandCollapseRotation(boolean collapsed) {
-        if (!UIHelp.canAnimateViewModern()) {
+        if (!UIUtils.canAnimateViewModern()) {
             rotateExpandCollapseImageViewLegacy(collapsed);
             return;
         }
@@ -537,7 +537,7 @@ class ArrivalsListHeader {
         if (mExpandCollapse == null) {
             return;
         }
-        if (UIHelp.canAnimateViewModern()) {
+        if (UIUtils.canAnimateViewModern()) {
             if (mExpandCollapse.getRotation() != 0) {
                 mExpandCollapse.setRotation(0);
             }
@@ -630,11 +630,11 @@ class ArrivalsListHeader {
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
                     mEtaArrivalInfo1.setTextSize(ETA_TEXT_NOW_SIZE_SP);
-                    UIHelp.hideViewWithAnimation(mEtaMin1, mShortAnimationDuration);
+                    UIUtils.hideViewWithAnimation(mEtaMin1, mShortAnimationDuration);
                 } else if (eta > 0) {
                     mEtaArrivalInfo1.setText(Long.toString(eta));
                     mEtaArrivalInfo1.setTextSize(ETA_TEXT_SIZE_SP);
-                    UIHelp.showViewWithAnimation(mEtaMin1, mShortAnimationDuration);
+                    UIUtils.showViewWithAnimation(mEtaMin1, mShortAnimationDuration);
                 }
 
                 mEtaAndMin1.setBackgroundResource(
@@ -662,7 +662,7 @@ class ArrivalsListHeader {
 
                 if (mArrivalInfo.get(i1).getPredicted()) {
                     // We have real-time data - show the indicator
-                    UIHelp.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
+                    UIUtils.showViewWithAnimation(mEtaRealtime1, mShortAnimationDuration);
                 } else {
                     // We only have schedule data - hide the indicator
                     mEtaRealtime1.setVisibility(View.INVISIBLE);
@@ -694,11 +694,11 @@ class ArrivalsListHeader {
                     if (eta == 0) {
                         mEtaArrivalInfo2.setText(mContext.getString(R.string.stop_info_eta_now));
                         mEtaArrivalInfo2.setTextSize(ETA_TEXT_NOW_SIZE_SP);
-                        UIHelp.hideViewWithAnimation(mEtaMin2, mShortAnimationDuration);
+                        UIUtils.hideViewWithAnimation(mEtaMin2, mShortAnimationDuration);
                     } else if (eta > 0) {
                         mEtaArrivalInfo2.setText(Long.toString(eta));
                         mEtaArrivalInfo2.setTextSize(ETA_TEXT_SIZE_SP);
-                        UIHelp.showViewWithAnimation(mEtaMin2, mShortAnimationDuration);
+                        UIUtils.showViewWithAnimation(mEtaMin2, mShortAnimationDuration);
                     }
                     mEtaAndMin2.setBackgroundResource(
                             R.drawable.round_corners_style_b_header_status);
@@ -725,7 +725,7 @@ class ArrivalsListHeader {
 
                     if (mArrivalInfo.get(i2).getPredicted()) {
                         // We have real-time data - show the indicator
-                        UIHelp.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
+                        UIUtils.showViewWithAnimation(mEtaRealtime2, mShortAnimationDuration);
                     } else {
                         // We only have schedule data - hide the indicator
                         mEtaRealtime2.setVisibility(View.INVISIBLE);
@@ -749,11 +749,13 @@ class ArrivalsListHeader {
                 int minAfter = mController.getMinutesAfter();
                 if (minAfter != -1) {
                     mNoArrivals
-                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, false));
+                            .setText(
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false));
                 } else {
                     minAfter = 35;  // Assume 35 minutes, because that's the API default
                     mNoArrivals
-                            .setText(UIHelp.getNoArrivalsMessage(mContext, minAfter, false, false));
+                            .setText(
+                                    UIUtils.getNoArrivalsMessage(mContext, minAfter, false, false));
                 }
                 mNumHeaderArrivals = 0;
             }
@@ -782,10 +784,10 @@ class ArrivalsListHeader {
             // For on-time, use header default color
             d.setColor(mResources.getColor(R.color.theme_primary));
         }
-        d.setStroke(UIHelp.dpToPixels(mContext, 1),
+        d.setStroke(UIUtils.dpToPixels(mContext, 1),
                 mResources.getColor(R.color.header_text_color));
-        int pSides = UIHelp.dpToPixels(mContext, 5);
-        int pTopBottom = UIHelp.dpToPixels(mContext, 2);
+        int pSides = UIUtils.dpToPixels(mContext, 5);
+        int pTopBottom = UIUtils.dpToPixels(mContext, 2);
         statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
         statusView.setLayoutParams(
                 new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -804,9 +806,9 @@ class ArrivalsListHeader {
             public boolean onTouch(View v, MotionEvent event) {
                 boolean touchInView;
                 if (index == 0) {
-                    touchInView = UIHelp.isTouchInView(mEtaAndMin1, event);
+                    touchInView = UIUtils.isTouchInView(mEtaAndMin1, event);
                 } else {
-                    touchInView = UIHelp.isTouchInView(mEtaAndMin2, event);
+                    touchInView = UIUtils.isTouchInView(mEtaAndMin2, event);
                 }
                 return touchInView;
             }
@@ -868,30 +870,30 @@ class ArrivalsListHeader {
         }
         if (mArrivalInfo == null) {
             // We don't have any arrival info yet, so make sure the progress bar is running
-            UIHelp.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mProgressBar, mShortAnimationDuration);
             // Hide all the arrival views
-            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
             return;
         }
 
         if (mNumHeaderArrivals == 0) {
             // "No routes" message should be shown
-            UIHelp.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mNoArrivals, mShortAnimationDuration);
             // Hide all others
-            UIHelp.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
         }
 
         // Show at least the first row of arrival info, if we have one or more records
         if (mNumHeaderArrivals >= 1) {
             // Show the first row of arrival info
-            UIHelp.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mEtaContainer1, mShortAnimationDuration);
             // Hide no arrivals
-            UIHelp.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mNoArrivals, mShortAnimationDuration);
 
             // Setup tapping on star for first row
             final ObaArrivalInfo info1 = mHeaderArrivalInfo.get(0).getInfo();
@@ -937,8 +939,8 @@ class ArrivalsListHeader {
 
         if (mNumHeaderArrivals >= 2) {
             // Also show the 2nd row of arrival info
-            UIHelp.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
 
             // Setup tapping on star for second row
             final ObaArrivalInfo info2 = mHeaderArrivalInfo.get(1).getInfo();
@@ -981,12 +983,12 @@ class ArrivalsListHeader {
             refreshReminder(mHeaderArrivalInfo.get(1).getInfo().getTripId(), r);
         } else {
             // Hide the 2nd row of arrival info and related views - we only had one arrival info
-            UIHelp.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
-            UIHelp.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaSeparator, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mEtaContainer2, mShortAnimationDuration);
         }
 
         // Hide progress bar
-        UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+        UIUtils.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
     }
 
     /**
@@ -1047,7 +1049,7 @@ class ArrivalsListHeader {
      * @param newHeightDp the new header layout height, in dp
      */
     void setHeaderSize(float newHeightDp) {
-        int heightPixels = UIHelp.dpToPixels(mContext, newHeightDp);
+        int heightPixels = UIUtils.dpToPixels(mContext, newHeightDp);
         if (mSlidingPanelController != null) {
             mSlidingPanelController.setPanelHeightPixels(heightPixels);
         } else {
@@ -1186,7 +1188,7 @@ class ArrivalsListHeader {
 
         // Save mExpandCollapse visibility state
         cachedExpandCollapseViewVisibility = mExpandCollapse.getVisibility();
-        if (!UIHelp.canAnimateViewModern()) {
+        if (!UIUtils.canAnimateViewModern()) {
             // View won't disappear without clearing the legacy rotation animation
             mExpandCollapse.clearAnimation();
         }
@@ -1201,7 +1203,7 @@ class ArrivalsListHeader {
         mInNameEdit = true;
 
         // Open soft keyboard if no physical keyboard is open
-        UIHelp.openKeyboard(mContext);
+        UIUtils.openKeyboard(mContext);
     }
 
     synchronized void endNameEdit() {
@@ -1215,7 +1217,7 @@ class ArrivalsListHeader {
             mAlertView.setVisibility(View.VISIBLE);
         }
         // Hide soft keyboard
-        UIHelp.closeKeyboard(mContext, mEditNameView);
+        UIUtils.closeKeyboard(mContext, mEditNameView);
         refresh();
     }
 

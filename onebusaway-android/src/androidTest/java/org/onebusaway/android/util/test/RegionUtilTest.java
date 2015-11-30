@@ -2,7 +2,7 @@ package org.onebusaway.android.util.test;
 
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.location.Location;
@@ -43,13 +43,13 @@ public class RegionUtilTest extends AndroidTestCase {
         mAtlantaRegion = MockRegion.getAtlanta(getContext());
 
         // Region locations
-        mSeattleLoc = LocationUtil.makeLocation(47.6097, -122.3331);
-        mTampaLoc = LocationUtil.makeLocation(27.9681, -82.4764);
-        mAtlantaLoc = LocationUtil.makeLocation(33.7550, -84.3900);
+        mSeattleLoc = LocationUtils.makeLocation(47.6097, -122.3331);
+        mTampaLoc = LocationUtils.makeLocation(27.9681, -82.4764);
+        mAtlantaLoc = LocationUtils.makeLocation(33.7550, -84.3900);
 
         // Far locations
-        mLondonLoc = LocationUtil.makeLocation(51.5072, -0.1275);
-        mOriginLoc = LocationUtil.makeLocation(0, 0);
+        mLondonLoc = LocationUtils.makeLocation(51.5072, -0.1275);
+        mOriginLoc = LocationUtils.makeLocation(0, 0);
     }
 
     public void testGetDistanceAway() {

@@ -18,7 +18,7 @@ package org.onebusaway.android.io.test;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.request.ObaTripsForLocationRequest;
 import org.onebusaway.android.io.request.ObaTripsForLocationResponse;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
@@ -26,7 +26,7 @@ import android.location.Location;
 public class TripsForLocationTest extends ObaTestCase {
 
     public void test1() {
-        final Location pt = LocationUtil.makeLocation(47.653, -122.307);
+        final Location pt = LocationUtils.makeLocation(47.653, -122.307);
 
         ObaTripsForLocationRequest.Builder builder =
                 new ObaTripsForLocationRequest.Builder(getContext(), pt);
@@ -41,7 +41,7 @@ public class TripsForLocationTest extends ObaTestCase {
 
     public void testOutOfRange() {
         // This is just to make sure we copy and call newRequest() at least once
-        final Location pt = LocationUtil.makeLocation(48.85808, 2.29498);
+        final Location pt = LocationUtils.makeLocation(48.85808, 2.29498);
 
         ObaTripsForLocationRequest request =
                 new ObaTripsForLocationRequest.Builder(getContext(), pt).build();

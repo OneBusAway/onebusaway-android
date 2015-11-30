@@ -18,6 +18,9 @@ package org.onebusaway.android.util;
 import android.content.Intent;
 import android.os.Bundle;
 
+/**
+ * A class containing utility methods related to handling fragments
+ */
 public class FragmentUtils {
 
     public static final String URI = "uri";

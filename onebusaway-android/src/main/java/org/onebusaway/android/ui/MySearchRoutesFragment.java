@@ -22,8 +22,8 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
 import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
 import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.Intent;
@@ -84,7 +84,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     @Override
     public void onLoadFinished(Loader<ObaRoutesForLocationResponse> loader,
             ObaRoutesForLocationResponse response) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
         //Log.d(TAG, "Loader finished");
         final int code = response.getCode();
         if (code == ObaApi.OBA_OK) {
@@ -111,7 +111,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
     //
     @Override
     protected void doSearch(String text) {
-        UIHelp.showProgress(this, true);
+        UIUtils.showProgress(this, true);
         Bundle args = new Bundle();
         args.putString(QUERY_TEXT, text);
         Loader<?> loader = getLoaderManager().restartLoader(0, args, this);
@@ -139,7 +139,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         ListAdapter adapter = l.getAdapter();
         ObaRoute route = (ObaRoute) adapter.getItem(position - l.getHeaderViewsCount());
         final String routeId = route.getId();
-        final String routeName = UIHelp.getRouteDisplayName(route);
+        final String routeName = UIUtils.getRouteDisplayName(route);
 
         if (isShortcutMode()) {
             Intent intent = RouteInfoActivity.makeIntent(getActivity(), routeId);
@@ -180,7 +180,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 HomeActivity.start(getActivity(), getId(getListView(), info.position));
                 return true;
             case CONTEXT_MENU_SHOW_URL:
-                UIHelp.goToUrl(getActivity(), getUrl(getListView(), info.position));
+                UIUtils.goToUrl(getActivity(), getUrl(getListView(), info.position));
                 return true;
             default:
                 return super.onContextItemSelected(item);
@@ -210,7 +210,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
 
         @Override
         protected void initView(View view, ObaRoute route) {
-            UIHelp.setRouteView(view, route);
+            UIUtils.setRouteView(view, route);
         }
     }
 
@@ -246,10 +246,10 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 }
             }
 
-            Location center = LocationUtil.getDefaultSearchCenter();
+            Location center = LocationUtils.getDefaultSearchCenter();
             if (center != null) {
                 return new ObaRoutesForLocationRequest.Builder(getContext(), center)
-                        .setRadius(LocationUtil.DEFAULT_SEARCH_RADIUS)
+                        .setRadius(LocationUtils.DEFAULT_SEARCH_RADIUS)
                         .setQuery(mQueryText)
                         .build()
                         .call();

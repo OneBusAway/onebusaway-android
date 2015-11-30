@@ -27,9 +27,9 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.BuildFlavorUtil;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.PreferenceHelp;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -147,7 +147,7 @@ public class Application extends android.app.Application {
      */
     public static synchronized void setLastKnownLocation(Location l) {
         // If the new location is better than the old one, save it
-        if (LocationUtil.compareLocations(l, mLastKnownLocation)) {
+        if (LocationUtils.compareLocations(l, mLastKnownLocation)) {
             if (mLastKnownLocation == null) {
                 mLastKnownLocation = new Location("Last known location");
             }
@@ -200,7 +200,7 @@ public class Application extends android.app.Application {
         if (last != null) {
             return last;
         } else {
-            return LocationUtil.getDefaultSearchCenter();
+            return LocationUtils.getDefaultSearchCenter();
         }
     }
 
@@ -231,7 +231,7 @@ public class Application extends android.app.Application {
         }
         Location apiV1 = getLocationApiV1(cxt);
 
-        if (LocationUtil.compareLocationsByTime(playServices, apiV1)) {
+        if (LocationUtils.compareLocationsByTime(playServices, apiV1)) {
             Log.d(TAG, "Using location from Google Play Services");
             return playServices;
         } else {
@@ -252,7 +252,7 @@ public class Application extends android.app.Application {
             // If this provider has a last location, and either:
             // 1. We don't have a last location,
             // 2. Our last location is older than this location.
-            if (LocationUtil.compareLocationsByTime(loc, last)) {
+            if (LocationUtils.compareLocationsByTime(loc, last)) {
                 last = loc;
             }
         }
@@ -270,14 +270,14 @@ public class Application extends android.app.Application {
         if (region != null) {
             // First set it in preferences, then set it in OBA.
             ObaApi.getDefaultContext().setRegion(region);
-            PreferenceHelp
+            PreferenceUtils
                     .saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
             //We're using a region, so clear the custom API URL preference
             setCustomApiUrl(null);
         } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
             ObaApi.getDefaultContext().setRegion(null);
-            PreferenceHelp.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
+            PreferenceUtils.saveLong(mPrefs, getString(R.string.preference_key_region), -1);
         }
     }
 
@@ -303,7 +303,7 @@ public class Application extends android.app.Application {
      *             milliseconds since January 1, 1970, 00:00:00 GMT
      */
     public void setLastRegionUpdateDate(long date) {
-        PreferenceHelp
+        PreferenceUtils
                 .saveLong(mPrefs, getString(R.string.preference_key_last_region_update), date);
     }
 
@@ -328,7 +328,7 @@ public class Application extends android.app.Application {
      * @param url the custom URL
      */
     public void setCustomApiUrl(String url) {
-        PreferenceHelp.saveString(getString(R.string.preference_key_oba_api_url), url);
+        PreferenceUtils.saveString(getString(R.string.preference_key_oba_api_url), url);
     }
 
     private static final String HEXES = "0123456789abcdef";
@@ -360,7 +360,7 @@ public class Application extends android.app.Application {
         if (uuid == null) {
             // Generate one and save that.
             uuid = getAppUid();
-            PreferenceHelp.saveString(APP_UID, uuid);
+            PreferenceUtils.saveString(APP_UID, uuid);
         }
 
         checkArrivalStylePreferenceDefault();
@@ -384,25 +384,25 @@ public class Application extends android.app.Application {
         if (arrivalInfoStylePref == null) {
             // First execution of app - set the default arrival info style based on the BuildConfig value
             switch (BuildConfig.ARRIVAL_INFO_STYLE) {
-                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
                     // Use OBA classic style for default
-                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
                             .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
-                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_A));
+                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_A));
                     Log.d(TAG, "Using arrival info style A (OBA Classic) as default preference");
                     break;
-                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
                     // Use a card-styled footer for default
-                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
                             .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
-                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_B));
+                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
                     Log.d(TAG, "Using arrival info style B (Cards) as default preference");
                     break;
                 default:
                     // Use a card-styled footer for default
-                    PreferenceHelp.saveString(arrivalInfoStylePrefKey, BuildFlavorUtil
+                    PreferenceUtils.saveString(arrivalInfoStylePrefKey, BuildFlavorUtils
                             .getPreferenceOptionForArrivalInfoBuildFlavorStyle(
-                                    BuildFlavorUtil.ARRIVAL_INFO_STYLE_B));
+                                    BuildFlavorUtils.ARRIVAL_INFO_STYLE_B));
                     Log.d(TAG, "Using arrival info style B (Cards) as default preference");
                     break;
             }

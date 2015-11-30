@@ -27,12 +27,12 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
-import org.onebusaway.android.util.BuildFlavorUtil;
+import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtil;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.PreferenceHelp;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -91,7 +91,7 @@ public class ArrivalsListFragment extends ListFragment
 
     /**
      * Comma-delimited set of routes that serve this stop
-     * See {@link org.onebusaway.android.util.UIHelp#serializeRouteDisplayNames(ObaStop,
+     * See {@link UIUtils#serializeRouteDisplayNames(ObaStop,
      * java.util.HashMap)}
      */
     public static final String STOP_ROUTES = ".StopRoutes";
@@ -206,7 +206,7 @@ public class ArrivalsListFragment extends ListFragment
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
-            setStopRoutes(UIHelp.serializeRouteDisplayNames(stop, routes));
+            setStopRoutes(UIUtils.serializeRouteDisplayNames(stop, routes));
             setStopLocation(stop.getLocation());
         }
 
@@ -229,7 +229,7 @@ public class ArrivalsListFragment extends ListFragment
         /**
          * Sets the routes that serve this stop via a comma-delimited set of route display names
          * <p/>
-         * See {@link org.onebusaway.android.util.UIHelp#serializeRouteDisplayNames(ObaStop,
+         * See {@link UIUtils#serializeRouteDisplayNames(ObaStop,
          * java.util.HashMap)}
          *
          * @param routes comma-delimited list of route display names that serve this stop
@@ -253,7 +253,7 @@ public class ArrivalsListFragment extends ListFragment
             return null;
         }
 
-        initArrivalInfoViews(BuildFlavorUtil.getArrivalInfoStyleFromPreferences(), inflater);
+        initArrivalInfoViews(BuildFlavorUtils.getArrivalInfoStyleFromPreferences(), inflater);
 
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
     }
@@ -263,7 +263,7 @@ public class ArrivalsListFragment extends ListFragment
         super.onActivityCreated(savedInstanceState);
 
         // Set the list view properties for Style B
-        setListViewProperties(BuildFlavorUtil.getArrivalInfoStyleFromPreferences());
+        setListViewProperties(BuildFlavorUtils.getArrivalInfoStyleFromPreferences());
 
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
@@ -282,7 +282,7 @@ public class ArrivalsListFragment extends ListFragment
         setUserInfo();
 
         // Create an empty adapter we will use to display the loaded data
-        instantiateAdapter(BuildFlavorUtil.getArrivalInfoStyleFromPreferences());
+        instantiateAdapter(BuildFlavorUtils.getArrivalInfoStyleFromPreferences());
 
         // Start out with a progress indicator.
         setListShown(false);
@@ -298,7 +298,7 @@ public class ArrivalsListFragment extends ListFragment
 
         // Set initial minutesAfter value in the empty list view
         setEmptyText(
-                UIHelp.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
+                UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
     }
@@ -393,7 +393,7 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
                                final ObaArrivalInfoResponse result) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;
@@ -419,7 +419,7 @@ public class ArrivalsListFragment extends ListFragment
                 info = lastGood.getArrivalInfo();
                 situations = lastGood.getSituations();
             } else {
-                setEmptyText(UIHelp.getStopErrorString(getActivity(), result.getCode()));
+                setEmptyText(UIUtils.getStopErrorString(getActivity(), result.getCode()));
             }
         }
 
@@ -452,7 +452,7 @@ public class ArrivalsListFragment extends ListFragment
             } else if (mLastResponseLength == info.length) {
                 // No additional arrivals were included in the response, show a toast
                 Toast.makeText(getActivity(),
-                        UIHelp.getNoArrivalsMessage(getActivity(),
+                        UIUtils.getNoArrivalsMessage(getActivity(),
                                 getArrivalsLoader().getMinutesAfter(), true, false),
                         Toast.LENGTH_LONG
                 ).show();
@@ -492,7 +492,7 @@ public class ArrivalsListFragment extends ListFragment
 
         if (info != null) {
             // Reset the empty text just in case there is no data.
-            setEmptyText(UIHelp.getNoArrivalsMessage(getActivity(),
+            setEmptyText(UIUtils.getNoArrivalsMessage(getActivity(),
                     getArrivalsLoader().getMinutesAfter(), false, false));
             mAdapter.setData(info, mRoutesFilter, System.currentTimeMillis());
         }
@@ -504,7 +504,7 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
-        UIHelp.showProgress(this, false);
+        UIUtils.showProgress(this, false);
         mAdapter.setData(null, mRoutesFilter, System.currentTimeMillis());
 
         mArrivalInfo = null;
@@ -617,9 +617,9 @@ public class ArrivalsListFragment extends ListFragment
         final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(getActivity(),
                 routeId, arrivalInfo.getInfo().getHeadsign(), arrivalInfo.getInfo().getStopId());
 
-        List<String> items = UIHelp
+        List<String> items = UIUtils
                 .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible);
-        List<Integer> icons = UIHelp.buildTripOptionsIcons(isRouteFavorite, hasUrl);
+        List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
 
@@ -660,7 +660,7 @@ public class ArrivalsListFragment extends ListFragment
                         mHeader.refresh();
                     }
                 } else if (hasUrl && which == 5) {
-                    UIHelp.goToUrl(getActivity(), url);
+                    UIUtils.goToUrl(getActivity(), url);
                 } else if ((!hasUrl && which == 5) || (hasUrl && which == 6)) {
                     ReportTripProblemActivity.start(getActivity(), arrivalInfo.getInfo());
                 }
@@ -701,7 +701,7 @@ public class ArrivalsListFragment extends ListFragment
             double latitude = args.getDouble(STOP_LAT);
             double longitude = args.getDouble(STOP_LON);
             if (latitude != 0 && longitude != 0) {
-                location = LocationUtil.makeLocation(latitude, longitude);
+                location = LocationUtils.makeLocation(latitude, longitude);
             }
         }
         return location;
@@ -820,7 +820,7 @@ public class ArrivalsListFragment extends ListFragment
             List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
             ArrayList<String> displayNames = new ArrayList<String>();
             for (ObaRoute r : routes) {
-                displayNames.add(UIHelp.getRouteDisplayName(r));
+                displayNames.add(UIUtils.getRouteDisplayName(r));
             }
             return displayNames;
         } else {
@@ -828,7 +828,7 @@ public class ArrivalsListFragment extends ListFragment
             Bundle args = getArguments();
             String serializedRoutes = args.getString(STOP_ROUTES);
             if (serializedRoutes != null) {
-                return UIHelp.deserializeRouteDisplayNames(serializedRoutes);
+                return UIUtils.deserializeRouteDisplayNames(serializedRoutes);
             }
         }
         // If we've gotten this far, we don't have any routeIds to share
@@ -876,16 +876,16 @@ public class ArrivalsListFragment extends ListFragment
      * was initialized
      */
     private void checkAdapterStylePreference() {
-        int currentArrivalInfoStyle = BuildFlavorUtil.getArrivalInfoStyleFromPreferences();
+        int currentArrivalInfoStyle = BuildFlavorUtils.getArrivalInfoStyleFromPreferences();
 
-        if (currentArrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_A &&
+        if (currentArrivalInfoStyle == BuildFlavorUtils.ARRIVAL_INFO_STYLE_A &&
                 !(mAdapter instanceof ArrivalsListAdapterStyleA)) {
             // Change to Style A adapter
-            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtil.ARRIVAL_INFO_STYLE_A);
-        } else if (currentArrivalInfoStyle == BuildFlavorUtil.ARRIVAL_INFO_STYLE_B &&
+            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtils.ARRIVAL_INFO_STYLE_A);
+        } else if (currentArrivalInfoStyle == BuildFlavorUtils.ARRIVAL_INFO_STYLE_B &&
                 !(mAdapter instanceof ArrivalsListAdapterStyleB)) {
             // Change to Style B adapter
-            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtil.ARRIVAL_INFO_STYLE_B);
+            reinitAdapterStyleOnPreferenceChange(BuildFlavorUtils.ARRIVAL_INFO_STYLE_B);
         }
     }
 
@@ -979,10 +979,10 @@ public class ArrivalsListFragment extends ListFragment
         ListView.MarginLayoutParams listParam = (ListView.MarginLayoutParams) getListView()
                 .getLayoutParams();
         // Set margins for the CardViews
-        listParam.bottomMargin = UIHelp.dpToPixels(getActivity(), 2);
-        listParam.topMargin = UIHelp.dpToPixels(getActivity(), 3);
-        listParam.leftMargin = UIHelp.dpToPixels(getActivity(), 5);
-        listParam.rightMargin = UIHelp.dpToPixels(getActivity(), 5);
+        listParam.bottomMargin = UIUtils.dpToPixels(getActivity(), 2);
+        listParam.topMargin = UIUtils.dpToPixels(getActivity(), 3);
+        listParam.leftMargin = UIUtils.dpToPixels(getActivity(), 5);
+        listParam.rightMargin = UIUtils.dpToPixels(getActivity(), 5);
         // Set the listview background to give the cards more contrast
         getListView().setBackgroundColor(
                 getResources().getColor(R.color.stop_info_arrival_list_background));
@@ -997,12 +997,12 @@ public class ArrivalsListFragment extends ListFragment
      *                         BuildFlavorUtil.ARRIVAL_INFO_STYLE_* contants
      */
     private void instantiateAdapter(int arrivalInfoStyle) {
-        if (UIHelp.canSupportArrivalInfoStyleB()) {
+        if (UIUtils.canSupportArrivalInfoStyleB()) {
             switch (arrivalInfoStyle) {
-                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_A:
+                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_A:
                     mAdapter = new ArrivalsListAdapterStyleA(getActivity());
                     break;
-                case BuildFlavorUtil.ARRIVAL_INFO_STYLE_B:
+                case BuildFlavorUtils.ARRIVAL_INFO_STYLE_B:
                     mAdapter = new ArrivalsListAdapterStyleB(getActivity());
                     ((ArrivalsListAdapterStyleB) mAdapter).setFragment(this);
                     break;
@@ -1047,7 +1047,7 @@ public class ArrivalsListFragment extends ListFragment
                     getActivity().getString(R.string.analytics_label_sort_by_eta_arrival));
         }
 
-        PreferenceHelp.saveString(getResources()
+        PreferenceUtils.saveString(getResources()
                         .getString(R.string.preference_key_arrival_info_style),
                 styles[newValue]);
         checkAdapterStylePreference();
@@ -1075,7 +1075,7 @@ public class ArrivalsListFragment extends ListFragment
             final ObaRoute route = routes.get(i);
             // final String id = route.getId();
             // mRouteIds.add(i, id);
-            items[i] = UIHelp.getRouteDisplayName(route);
+            items[i] = UIUtils.getRouteDisplayName(route);
             if (filter.contains(route.getId())) {
                 checks[i] = true;
             }
@@ -1111,14 +1111,14 @@ public class ArrivalsListFragment extends ListFragment
         // Routes that serve this stop
         List<String> routeDisplayNames = getRouteDisplayNames();
         if (routeDisplayNames != null) {
-            String routes = getString(R.string.stop_info_route_ids_label) + " " + UIHelp
+            String routes = getString(R.string.stop_info_route_ids_label) + " " + UIUtils
                     .formatRouteDisplayNames(routeDisplayNames, new ArrayList<String>());
             message.append(routes);
         }
 
         String direction = getStopDirection();
         if (!TextUtils.isEmpty(direction)) {
-            message.append(newLine + getString(UIHelp.getStopDirectionText(direction)));
+            message.append(newLine + getString(UIUtils.getStopDirectionText(direction)));
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -1303,7 +1303,7 @@ public class ArrivalsListFragment extends ListFragment
      */
     private void refresh() {
         if (isAdded()) {
-            UIHelp.showProgress(this, true);
+            UIUtils.showProgress(this, true);
             // Get last response length now, since its overwritten within
             // ArrivalsListLoader before onLoadFinished() is called
             ObaArrivalInfoResponse lastGood =
@@ -1508,7 +1508,7 @@ public class ArrivalsListFragment extends ListFragment
         mSituationAlerts = new ArrayList<SituationAlert>();
 
         for (ObaSituation situation : situations) {
-            if (UIHelp.isActiveWindowForSituation(situation, System.currentTimeMillis())) {
+            if (UIUtils.isActiveWindowForSituation(situation, System.currentTimeMillis())) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
             }

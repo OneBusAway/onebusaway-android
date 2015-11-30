@@ -17,9 +17,9 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.util.LocationUtil;
-import org.onebusaway.android.util.PreferenceHelp;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -50,7 +50,7 @@ abstract class MyTabActivityBase extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        UIHelp.setupActionBar(this);
+        UIUtils.setupActionBar(this);
         setSupportProgressBarIndeterminateVisibility(false);
 
         final Intent intent = getIntent();
@@ -78,7 +78,7 @@ abstract class MyTabActivityBase extends AppCompatActivity {
         if (mDefaultTab == null) {
             final ActionBar bar = getSupportActionBar();
             final ActionBar.Tab tab = bar.getSelectedTab();
-            PreferenceHelp.saveString(getLastTabPref(), (String) tab.getTag());
+            PreferenceUtils.saveString(getLastTabPref(), (String) tab.getTag());
         }
 
         super.onDestroy();
@@ -156,7 +156,7 @@ abstract class MyTabActivityBase extends AppCompatActivity {
     private static final Location getSearchCenter(Intent intent) {
         double[] p = intent.getDoubleArrayExtra(EXTRA_SEARCHCENTER);
         if (p != null && p.length == 2) {
-            return LocationUtil.makeLocation(p[0], p[1]);
+            return LocationUtils.makeLocation(p[0], p[1]);
         }
         return null;
     }

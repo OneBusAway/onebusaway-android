@@ -19,7 +19,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -102,7 +102,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         int color = context.getResources().getColor(colorCode);
         if (stopInfo.getPredicted()) {
             // Show real-time indicator
-            UIHelp.setRealtimeIndicatorColorByResourceCode(realtimeView, colorCode,
+            UIUtils.setRealtimeIndicatorColorByResourceCode(realtimeView, colorCode,
                     android.R.color.transparent);
             realtimeView.setVisibility(View.VISIBLE);
         } else {
@@ -114,8 +114,8 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         d.setColor(color);
 
         // Set padding on status view
-        int pSides = UIHelp.dpToPixels(context, 5);
-        int pTopBottom = UIHelp.dpToPixels(context, 2);
+        int pSides = UIUtils.dpToPixels(context, 5);
+        int pTopBottom = UIUtils.dpToPixels(context, 2);
         status.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
         time.setText(DateUtils.formatDateTime(context,

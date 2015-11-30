@@ -18,7 +18,7 @@ package org.onebusaway.android.tripservice;
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalsListActivity;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -100,7 +100,7 @@ public final class NotifierTask implements Runnable {
             return;
         }
         final Uri tripUri = ObaContract.Trips.buildUri(tripId, stopId);
-        final String routeId = UIHelp.stringForQuery(mContext,
+        final String routeId = UIUtils.stringForQuery(mContext,
                 tripUri, ObaContract.Trips.ROUTE_ID);
 
         // Set our state to notified

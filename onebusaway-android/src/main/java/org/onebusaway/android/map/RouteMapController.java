@@ -26,7 +26,7 @@ import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.util.UIHelp;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -186,7 +186,7 @@ public class RouteMapController implements MapModeController {
             return;
         }
 
-        long elapsedTimeMillis = TimeUnit.NANOSECONDS.toMillis(UIHelp.getCurrentTimeForComparison()
+        long elapsedTimeMillis = TimeUnit.NANOSECONDS.toMillis(UIUtils.getCurrentTimeForComparison()
                 - mLastUpdatedTimeVehicles);
         long refreshPeriod;
         if (elapsedTimeMillis > VEHICLE_REFRESH_PERIOD) {
@@ -245,7 +245,7 @@ public class RouteMapController implements MapModeController {
             float paddingDp =
                     mActivity.getResources().getDimension(R.dimen.map_route_vehicle_markers_padding)
                             / mActivity.getResources().getDisplayMetrics().density;
-            VEHICLE_MARKER_PADDING = UIHelp.dpToPixels(mActivity, paddingDp);
+            VEHICLE_MARKER_PADDING = UIUtils.dpToPixels(mActivity, paddingDp);
             mView = mActivity.findViewById(R.id.route_info);
             mFragment.getMapView()
                     .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
@@ -275,10 +275,10 @@ public class RouteMapController implements MapModeController {
         void showLoading() {
             mFragment.getMapView()
                     .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
-            UIHelp.hideViewWithoutAnimation(mRouteShortName);
-            UIHelp.hideViewWithoutAnimation(mRouteLongName);
-            UIHelp.showViewWithoutAnimation(mView);
-            UIHelp.showViewWithoutAnimation(mProgressBar);
+            UIUtils.hideViewWithoutAnimation(mRouteShortName);
+            UIUtils.hideViewWithoutAnimation(mRouteLongName);
+            UIUtils.showViewWithoutAnimation(mView);
+            UIUtils.showViewWithoutAnimation(mProgressBar);
         }
 
         /**
@@ -287,8 +287,8 @@ public class RouteMapController implements MapModeController {
          * @param agencyName agency name to show in the header
          */
         void show(ObaRoute route, String agencyName) {
-            mRouteShortName.setText(UIHelp.getRouteDisplayName(route));
-            mRouteLongName.setText(UIHelp.getRouteDescription(route));
+            mRouteShortName.setText(UIUtils.getRouteDisplayName(route));
+            mRouteLongName.setText(UIUtils.getRouteDescription(route));
             mAgencyName.setText(agencyName);
             show();
         }
@@ -297,17 +297,17 @@ public class RouteMapController implements MapModeController {
          * Show the route header with the existing route information
          */
         void show() {
-            UIHelp.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);
-            UIHelp.showViewWithAnimation(mView, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mProgressBar, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mRouteShortName, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mRouteLongName, mShortAnimationDuration);
+            UIUtils.showViewWithAnimation(mView, mShortAnimationDuration);
             mFragment.getMapView()
                     .setPadding(null, mView.getHeight() + VEHICLE_MARKER_PADDING, null, null);
         }
 
         void hide() {
             mFragment.getMapView().setPadding(null, 0, null, null);
-            UIHelp.hideViewWithAnimation(mView, mShortAnimationDuration);
+            UIUtils.hideViewWithAnimation(mView, mShortAnimationDuration);
         }
     }
 
@@ -496,7 +496,7 @@ public class RouteMapController implements MapModeController {
                 mZoomIncludeClosestVehicle = false;
             }
 
-            mLastUpdatedTimeVehicles = UIHelp.getCurrentTimeForComparison();
+            mLastUpdatedTimeVehicles = UIUtils.getCurrentTimeForComparison();
 
             // Clear any pending refreshes
             mVehicleRefreshHandler.removeCallbacks(mVehicleRefresh);

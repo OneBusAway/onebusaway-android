@@ -176,6 +176,11 @@ public class ArrivalsListFragment extends ListFragment
          * @return true if the listener has consumed the event, false otherwise
          */
         boolean onShowRouteOnMapSelected(ArrivalInfo arrivalInfo);
+
+        /**
+         * Called when the user selects the "Sort by" option
+         */
+        void onSortBySelected();
     }
 
     /**
@@ -1048,6 +1053,9 @@ public class ArrivalsListFragment extends ListFragment
         checkAdapterStylePreference();
         refreshLocal();
         getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
+        if (mListener != null) {
+            mListener.onSortBySelected();
+        }
     }
 
     private void showRoutesFilterDialog() {

@@ -749,6 +749,19 @@ public class HomeActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     * Called when the user selects the "Sort by" option in ArrivalsListFragment
+     */
+    @Override
+    public void onSortBySelected() {
+        // If the sliding panel isn't open, then open it to show what we're sorting
+        if (mSlidingPanel != null) {
+            if (isSlidingPanelCollapsed()) {
+                mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
+            }
+        }
+    }
+
     @Override
     public void onBackPressed() {
         // Collapse the panel when the user presses the back button

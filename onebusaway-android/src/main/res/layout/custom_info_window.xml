@@ -46,16 +46,16 @@
     </TextView>
     <ImageView
             android:id="@+id/trip_more_info"
-            android:layout_width="14dp"
-            android:layout_height="14dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_centerVertical="true"
             android:layout_alignRight="@+id/route_and_destination"
             android:layout_alignBottom="@+id/last_updated"
-            android:layout_marginBottom="4dp"
-            android:layout_marginRight="-5dp"
-            android:src="@drawable/ic_navigation_more_vert"
-            android:maxHeight="16dp"
-            android:maxWidth="16dp"
+            android:layout_marginBottom="-4dp"
+            android:layout_marginRight="-9dp"
+            android:src="@drawable/ic_navigation_chevron_right"
+            android:maxHeight="24dp"
+            android:maxWidth="24dp"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"/>
 </RelativeLayout>

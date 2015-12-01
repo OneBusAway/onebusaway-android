@@ -16,7 +16,7 @@ OneBusAway for Android provides:
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
 
-## Testing
+## Alpha and Beta Testing
 
 Get early access to new OneBusAway Android versions! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/TESTING.md) for details.
 

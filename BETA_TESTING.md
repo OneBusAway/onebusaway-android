@@ -36,7 +36,9 @@ Note that as an alpha tester you'll automatically get beta and production releas
 
 Please let us know if you experience problems with a beta or alpha, or would like to give general feedback (good and bad)!
 
-You can reach us via:
+If the app crashes, please submit a crash report when you are prompted, and add comments on what you were doing when it crashed.  This gives us the information we need to fix problems.
+
+You can also reach us via:
 
 * Email - android-app (at) onebusaway.org
 * Posting a messsage to the [OneBusAway Google+ Community](https://plus.google.com/u/0/communities/105092615216731099521)

@@ -40,9 +40,9 @@ script:
   - ./wait_for_emulator
   - ./gradlew connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest -PdisablePreDex
 
-# Integration with Gitter (https://gitter.im/OneBusAway/onebusaway-android)
 notifications:
   webhooks:
+  # Integration with Gitter (https://gitter.im/OneBusAway/onebusaway-android)
     urls:
       - https://webhooks.gitter.im/e/a579a4e7a21ff6ee51a1
     on_success: always  # options: [always|never|change] default: always

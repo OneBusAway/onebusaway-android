@@ -49,5 +49,4 @@ notifications:
     on_failure: always  # options: [always|never|change] default: always
     on_start: false     # default: false
 # Integration with Slack (https://onebusaway.slack.com/)
-  slack:
-    secure: GSG94H1Jjx+VAQAttWsMFqFOl9t6/3avSoTT/P41uGyNpw9paG1rBerxhnF/iLaUBVIQW7fTxH2FJxsYw9qKRunVQiWRsOYhdKore0yUxQIv7vSm5pxxZseNoDaCnWQdtknAbLIPhz10XBko2A8SIcjx+XSAXLq/deHDqV3Qu+o=
+  slack: onebusaway:DuVMFUTB2Y7YXRBIvLq7sqtR

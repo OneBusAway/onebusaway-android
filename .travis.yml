@@ -47,7 +47,8 @@ notifications:
       - https://webhooks.gitter.im/e/a579a4e7a21ff6ee51a1
     on_success: change
     on_failure: always
-# Integration with Slack (https://onebusaway.slack.com/)
-  slack: onebusaway:DuVMFUTB2Y7YXRBIvLq7sqtR
+  slack:
+    rooms:
+      secure: XET9qYOIT4XB73QGol94Cskfv2bTgZf84F2wOkykPiJQA6ff1R38VMUHHiRtG0E1GzO7UsgL0G4kHoVV8FQTPyzC89bsuPsa5vEJNghBVP/MSWPsckv32DqgjzYqILSfh14nFafqG4giykcdEYDXxqtifMM9uvYLxO0n2gV2cSI=
     on_success: change
     on_failure: always

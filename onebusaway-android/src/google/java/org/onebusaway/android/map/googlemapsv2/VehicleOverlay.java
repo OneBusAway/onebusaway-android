@@ -604,7 +604,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
                 return null;
             }
             mCurrentFocusVehicleMarker = marker;
-            View view = mInflater.inflate(R.layout.custom_info_window, null);
+            View view = mInflater.inflate(R.layout.vehicle_info_window, null);
             Resources r = mContext.getResources();
             TextView routeView = (TextView) view.findViewById(R.id.route_and_destination);
             TextView statusView = (TextView) view.findViewById(R.id.status);

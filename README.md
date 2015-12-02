@@ -18,7 +18,7 @@ OneBusAway for Android automatically keeps track of your most used stops and rou
 
 ## Alpha and Beta Testing
 
-Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/TESTING.md) for details.
+Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
 
 ## Build Setup
 

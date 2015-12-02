@@ -50,6 +50,6 @@ notifications:
   # Integration with Slack (https://onebusaway.slack.com/)
   slack:
     rooms:
-      secure: XET9qYOIT4XB73QGol94Cskfv2bTgZf84F2wOkykPiJQA6ff1R38VMUHHiRtG0E1GzO7UsgL0G4kHoVV8FQTPyzC89bsuPsa5vEJNghBVP/MSWPsckv32DqgjzYqILSfh14nFafqG4giykcdEYDXxqtifMM9uvYLxO0n2gV2cSI=
+      - onebusaway:DuVMFUTB2Y7YXRBIvLq7sqtR#android
     on_success: change
     on_failure: always

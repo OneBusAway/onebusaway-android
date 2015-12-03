@@ -252,6 +252,13 @@ public class BaseMapFragment extends SupportMapFragment
     private void initMapState(Bundle args) {
         mFocusStopId = args.getString(MapParams.STOP_ID);
 
+        mMapPaddingLeft = args.getInt(MapParams.MAP_PADDING_LEFT, MapParams.DEFAULT_MAP_PADDING);
+        mMapPaddingTop = args.getInt(MapParams.MAP_PADDING_TOP, MapParams.DEFAULT_MAP_PADDING);
+        mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING);
+        mMapPaddingBottom = args
+                .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
+        setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
+
         String mode = args.getString(MapParams.MODE);
         if (mode == null) {
             mode = MapParams.MODE_STOP;
@@ -316,6 +323,10 @@ public class BaseMapFragment extends SupportMapFragment
             outState.putDouble(MapParams.CENTER_LON, center.getLongitude());
             outState.putFloat(MapParams.ZOOM, getZoomLevelAsFloat());
         }
+        outState.putInt(MapParams.MAP_PADDING_LEFT, mMapPaddingLeft);
+        outState.putInt(MapParams.MAP_PADDING_TOP, mMapPaddingTop);
+        outState.putInt(MapParams.MAP_PADDING_RIGHT, mMapPaddingRight);
+        outState.putInt(MapParams.MAP_PADDING_BOTTOM, mMapPaddingBottom);
     }
 
     public boolean isRouteDisplayed() {

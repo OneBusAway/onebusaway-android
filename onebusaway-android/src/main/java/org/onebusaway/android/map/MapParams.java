@@ -34,9 +34,19 @@ public class MapParams {
 
     public static final String ZOOM_INCLUDE_CLOSEST_VEHICLE = ".ZoomIncludesClosestVehicle";
 
+    public static final String MAP_PADDING_LEFT = ".MapPaddingLeft";
+
+    public static final String MAP_PADDING_TOP = ".MapPaddingTop";
+
+    public static final String MAP_PADDING_RIGHT = ".MapPaddingRight";
+
+    public static final String MAP_PADDING_BOTTOM = ".MapPaddingBottom";
+
     public static final String MODE_ROUTE = "RouteMode";
 
     public static final String MODE_STOP = "StopMode";
 
     public static final int DEFAULT_ZOOM = 18;
+
+    public static final int DEFAULT_MAP_PADDING = 0;
 }

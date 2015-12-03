@@ -49,7 +49,7 @@ notifications:
     on_failure: always
   # Integration with Slack (https://onebusaway.slack.com/)
   slack:
-    rooms:
-      - onebusaway:DuVMFUTB2Y7YXRBIvLq7sqtR
     on_success: change
     on_failure: always
+    rooms:
+      secure: wI7HPoHVlHyQJeMLJ/dxVTw5i5qQofAGGep+1msBz3r4uxyEWgBko3kNF6gSSM1MfuEy5q2uhT3sNoflZQ0q6KK9k9DRPklP931h2uccexeNivx24kbMR696Ma4r+h5U58Fa6sp5dDUvihD+9rDiFcE5nDxo6DmO7xilesOz7wE=

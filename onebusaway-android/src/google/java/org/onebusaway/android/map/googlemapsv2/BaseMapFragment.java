@@ -93,7 +93,7 @@ public class BaseMapFragment extends SupportMapFragment
         com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback {
 
-    private static final String TAG = "BaseMapFragment";
+    public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
 

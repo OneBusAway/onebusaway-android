@@ -40,6 +40,8 @@ import android.widget.TextView;
 public final class MyRemindersFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    public static final String TAG = "MyRemindersFragment";
+
     private static final String[] PROJECTION = {
             ObaContract.Trips._ID,
             ObaContract.Trips.NAME,

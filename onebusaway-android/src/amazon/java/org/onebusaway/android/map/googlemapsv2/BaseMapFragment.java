@@ -104,7 +104,7 @@ public class BaseMapFragment extends SupportMapFragment
         com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback {
 
-    private static final String TAG = "BaseMapFragment";
+    public static final String TAG = "BaseMapFragment";
 
     private static final int REQUEST_NO_LOCATION = 41;
 
@@ -266,7 +266,8 @@ public class BaseMapFragment extends SupportMapFragment
         mMapPaddingLeft = args.getInt(MapParams.MAP_PADDING_LEFT, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingTop = args.getInt(MapParams.MAP_PADDING_TOP, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING);
-        mMapPaddingBottom = args.getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
+        mMapPaddingBottom = args
+                .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
         setPadding(mMapPaddingLeft, mMapPaddingTop, mMapPaddingRight, mMapPaddingBottom);
 
         String mode = args.getString(MapParams.MODE);

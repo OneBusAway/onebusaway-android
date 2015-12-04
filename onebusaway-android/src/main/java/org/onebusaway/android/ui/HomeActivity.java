@@ -55,7 +55,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -75,7 +74,6 @@ import android.widget.ListView;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
@@ -412,19 +410,15 @@ public class HomeActivity extends AppCompatActivity
          */
         if (mMapFragment == null) {
             // First check to see if an instance of BaseMapFragment already exists (see #356)
-            List<Fragment> fragments = fm.getFragments();
-            for (Fragment f : fragments) {
-                if (f instanceof BaseMapFragment) {
-                    Log.d(TAG, "Using BaseMapFragment that already exists");
-                    mMapFragment = (BaseMapFragment) f;
-                }
-            }
+            mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
 
             if (mMapFragment == null) {
                 // No existing fragment was found, so create a new one
                 Log.d(TAG, "Creating new BaseMapFragment");
                 mMapFragment = BaseMapFragment.newInstance();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMapFragment).commit();
+                fm.beginTransaction()
+                        .add(R.id.main_fragment_container, mMapFragment, BaseMapFragment.TAG)
+                        .commit();
             }
         }
         // Register listener for map focus callbacks
@@ -460,20 +454,15 @@ public class HomeActivity extends AppCompatActivity
         mShowStarredStopsMenu = true;
         if (mMyStarredStopsFragment == null) {
             // First check to see if an instance of MyStarredStopsFragment already exists (see #356)
-            List<Fragment> fragments = fm.getFragments();
-            for (Fragment f : fragments) {
-                if (f instanceof MyStarredStopsFragment) {
-                    Log.d(TAG, "Using MyStarredStopsFragment that already exists");
-                    mMyStarredStopsFragment = (MyStarredStopsFragment) f;
-                }
-            }
+            mMyStarredStopsFragment = (MyStarredStopsFragment) fm
+                    .findFragmentByTag(MyStarredStopsFragment.TAG);
 
             if (mMyStarredStopsFragment == null) {
                 // No existing fragment was found, so create a new one
                 Log.d(TAG, "Creating new MyStarredStopsFragment");
                 mMyStarredStopsFragment = new MyStarredStopsFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyStarredStopsFragment)
-                        .commit();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyStarredStopsFragment,
+                        MyStarredStopsFragment.TAG).commit();
             }
         }
         fm.beginTransaction().show(mMyStarredStopsFragment).commit();
@@ -501,20 +490,15 @@ public class HomeActivity extends AppCompatActivity
          */
         if (mMyRemindersFragment == null) {
             // First check to see if an instance of MyRemindersFragment already exists (see #356)
-            List<Fragment> fragments = fm.getFragments();
-            for (Fragment f : fragments) {
-                if (f instanceof MyRemindersFragment) {
-                    Log.d(TAG, "Using MyRemindersFragment that already exists");
-                    mMyRemindersFragment = (MyRemindersFragment) f;
-                }
-            }
+            mMyRemindersFragment = (MyRemindersFragment) fm
+                    .findFragmentByTag(MyRemindersFragment.TAG);
 
             if (mMyRemindersFragment == null) {
                 // No existing fragment was found, so create a new one
                 Log.d(TAG, "Creating new MyRemindersFragment");
                 mMyRemindersFragment = new MyRemindersFragment();
-                fm.beginTransaction().add(R.id.main_fragment_container, mMyRemindersFragment)
-                        .commit();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyRemindersFragment,
+                        MyRemindersFragment.TAG).commit();
             }
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();

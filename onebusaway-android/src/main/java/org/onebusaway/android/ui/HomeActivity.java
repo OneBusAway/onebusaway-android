@@ -398,12 +398,8 @@ public class HomeActivity extends AppCompatActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        if (mMyStarredStopsFragment != null && !mMyStarredStopsFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
-        }
-        if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyRemindersFragment).commit();
-        }
+        hideStarredStopsFragment();
+        hideReminderFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -438,15 +434,9 @@ public class HomeActivity extends AppCompatActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
-        if (mMapFragment != null && !mMapFragment.isHidden()) {
-            fm.beginTransaction().hide(mMapFragment).commit();
-        }
-        if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyRemindersFragment).commit();
-        }
-        if (mSlidingPanel != null) {
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        }
+        hideMapFragment();
+        hideReminderFragment();
+        hideSlidingPanel();
         mShowArrivalsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -474,15 +464,9 @@ public class HomeActivity extends AppCompatActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
-        if (mMyStarredStopsFragment != null && !mMyStarredStopsFragment.isHidden()) {
-            fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
-        }
-        if (mMapFragment != null && !mMapFragment.isHidden()) {
-            fm.beginTransaction().hide(mMapFragment).commit();
-        }
-        if (mSlidingPanel != null) {
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        }
+        hideStarredStopsFragment();
+        hideMapFragment();
+        hideSlidingPanel();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
         /**
@@ -502,6 +486,38 @@ public class HomeActivity extends AppCompatActivity
             }
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();
+    }
+
+    private void hideMapFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
+        if (mMapFragment != null && !mMapFragment.isHidden()) {
+            fm.beginTransaction().hide(mMapFragment).commit();
+        }
+    }
+
+    private void hideStarredStopsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyStarredStopsFragment = (MyStarredStopsFragment) fm.findFragmentByTag(
+                MyStarredStopsFragment.TAG);
+        if (mMyStarredStopsFragment != null && !mMyStarredStopsFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyStarredStopsFragment).commit();
+        }
+    }
+
+    private void hideReminderFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyRemindersFragment = (MyRemindersFragment) fm
+                .findFragmentByTag(MyRemindersFragment.TAG);
+        if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+    }
+
+    private void hideSlidingPanel() {
+        if (mSlidingPanel != null) {
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        }
     }
 
     public void restoreActionBar() {

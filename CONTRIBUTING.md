@@ -8,7 +8,7 @@ To ensure that the app source code remains fully open-source under a common lice
 
 ## Code of Conduct
 
-This project adheres to the [Open Code of Conduct](http://todogroup.org/opencodeofconduct/#OneBusAway/barbeau@cutr.usf.edu). By participating, you are expected to honor this code.
+This project adheres to the [Open Code of Conduct](http://todogroup.org/opencodeofconduct/#OneBusAway/conduct@onebusaway.org). By participating, you are expected to honor this code.
 
 ## Code Style and Template
 

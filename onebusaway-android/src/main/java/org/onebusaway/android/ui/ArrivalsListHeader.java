@@ -924,6 +924,21 @@ class ArrivalsListHeader {
                 }
             });
 
+            mEtaReminder1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Add / edit reminder
+                    TripInfoActivity.start(mContext,
+                            info1.getTripId(),
+                            mController.getStopId(),
+                            info1.getRouteId(),
+                            info1.getShortName(),
+                            mController.getStopName(),
+                            info1.getScheduledDepartureTime(),
+                            info1.getHeadsign());
+                }
+            });
+
             // Setup "more" button click for first row
             mEtaMoreVert1.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -967,6 +982,21 @@ class ArrivalsListHeader {
                         }
                     });
                     dialog.show(mFragmentManager, RouteFavoriteDialogFragment.TAG);
+                }
+            });
+
+            mEtaReminder2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Add / edit reminder
+                    TripInfoActivity.start(mContext,
+                            info2.getTripId(),
+                            mController.getStopId(),
+                            info2.getRouteId(),
+                            info2.getShortName(),
+                            mController.getStopName(),
+                            info2.getScheduledDepartureTime(),
+                            info2.getHeadsign());
                 }
             });
 

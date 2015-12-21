@@ -20,6 +20,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -110,6 +112,8 @@ public class HomeActivity extends AppCompatActivity
 
     public static final String STOP_ID = ".StopId";
 
+    private static final String TUTORIAL_MYLOCATION = ".tutorial_mylocation";
+
     private static final int HELP_DIALOG = 1;
 
     private static final int WHATSNEW_DIALOG = 2;
@@ -199,9 +203,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static final void start(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -226,9 +230,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static final Intent makeIntent(Context context,
-            String focusId,
-            double lat,
-            double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -278,6 +282,8 @@ public class HomeActivity extends AppCompatActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
+
+        showTutorialView();
     }
 
     @Override
@@ -426,6 +432,22 @@ public class HomeActivity extends AppCompatActivity
             // if we've focused on a stop, then show the panel that was previously hidden
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
+    }
+
+    private void showTutorialView() {
+        SharedPreferences settings = Application.getPrefs();
+        boolean showTutorial = settings.getBoolean(TUTORIAL_MYLOCATION, true);
+
+        if (showTutorial) {
+            PreferenceUtils.saveBoolean(TUTORIAL_MYLOCATION, false);
+            new ShowcaseView.Builder(this)
+                    .setTarget(new ViewTarget(R.id.btnMyLocation, this))
+                    .setContentTitle("ShowcaseView")
+                    .setContentText("This is highlighting the my location")
+                    .hideOnTouchOutside()
+                    .build();
+        }
+
     }
 
     private void showStarredStopsFragment() {
@@ -684,8 +706,8 @@ public class HomeActivity extends AppCompatActivity
     /**
      * Called by the BaseMapFragment when a stop obtains focus, or no stops have focus
      *
-     * @param stop   the ObaStop that obtained focus, or null if no stop is in focus
-     * @param routes a HashMap of all route display names that serve this stop - key is routeId
+     * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+     * @param routes   a HashMap of all route display names that serve this stop - key is routeId
      * @param location the user touch location on the map, or null if the focus was otherwise
      *                 cleared programmatically
      */
@@ -825,7 +847,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void updateArrivalListFragment(String stopId, ObaStop stop,
-            HashMap<String, ObaRoute> routes) {
+                                           HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -886,11 +908,11 @@ public class HomeActivity extends AppCompatActivity
         //If we don't have region info selected, or if enough time has passed since last region info update,
         //force contacting the server again
         if (Application.get().getCurrentRegion() == null ||
-                        new Date().getTime() - Application.get().getLastRegionUpdateDate()
-                                > REGION_UPDATE_THRESHOLD) {
+                new Date().getTime() - Application.get().getLastRegionUpdateDate()
+                        > REGION_UPDATE_THRESHOLD) {
             forceReload = true;
             Log.d(TAG,
-                        "Region info has expired (or does not exist), forcing a reload from the server...");
+                    "Region info has expired (or does not exist), forcing a reload from the server...");
         }
 
         if (Application.get().getCurrentRegion() != null) {

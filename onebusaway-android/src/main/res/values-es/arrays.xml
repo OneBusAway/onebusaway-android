@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
+    and individual contributors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<resources>
+    <string-array name="main_help_options">
+        <item>Twitter</item>
+        <item>Agencias Soportadas</item>
+        <item>Novedades en esta versión</item>
+        <item>Contactanos</item>
+    </string-array>
+    <string-array name="main_help_options_no_contact_us">
+        <item>Twitter</item>
+        <item>Agencias Soportadas</item>
+        <item>Novedades en esta versión</item>
+    </string-array>
+    <string-array name="route_favorite_options">
+        <item>Esta parada</item>
+        <item>Todas las paradas</item>
+    </string-array>
+    <string-array name="sort_stops">
+        <item>Nombre</item>
+        <item>Usadas mas frecuentemente</item>
+    </string-array>
+    <string-array name="search_stop_options">
+        <item>Mostrar llegadas</item>
+        <item>Mostrar sobre el mapa</item>
+    </string-array>
+    <string-array name="search_route_options">
+        <item>Mostrar la lista de paradas</item>
+        <item>Mostrar sobre el mapa</item>
+    </string-array>
+    <string-array name="reminder_time">
+        <item>Sin recordatorio</item>
+        <item>1 minuto</item>
+        <item>3 minutos</item>
+        <item>5 minutos</item>
+        <item>10 minutos</item>
+        <item>15 minutos</item>
+        <item>20 minutos</item>
+        <item>25 minutos</item>
+        <item>30 minutos</item>
+    </string-array>
+    <string-array name="reminder_days">
+        <item>Lunes</item>
+        <item>Martes</item>
+        <item>Miércoles</item>
+        <item>Jueves</item>
+        <item>Viernes</item>
+        <item>Sábado</item>
+        <item>Domingo</item>
+    </string-array>
+    <string-array name="report_stop_problem_code">
+        <item>Elige uno</item>
+        <item>El nombre de la Parada está mal</item>
+        <item>El número de la Parada esá mal</item>
+        <item>Ubicación errónea</item>
+        <item>Ruta o Viaje faltante</item>
+        <item>Algo más</item>
+    </string-array>
+    <string-array name="report_trip_problem_code_bus">
+        <item>Elige uno</item>
+        <item>El bus nunca llegó</item>
+        <item>Llego antes de lo previsto</item>
+        <item>LLego después de lo previsto</item>
+        <item>Se muestra un destino incorrecto</item>
+        <item>El bus no se detiene aquí</item>
+        <item>Algo más</item>
+    </string-array>
+    <string-array name="preferred_units_options">
+        <item>@string/preferences_preferred_units_option_automatic</item>
+        <item>@string/preferences_preferred_units_option_metric</item>
+        <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
+    <string-array name="arrival_info_style_options">
+        <item>@string/preferences_arrival_info_style_options_a</item>
+        <item>@string/preferences_arrival_info_style_options_b</item>
+    </string-array>
+
+    <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
+         towards the selected bus stop instead of N/S/E/W. -->
+    <string-array name="spoken_compass_directions">
+        <item>hacia adelante</item>
+        <!-- North -->
+        <item>un poco a la izquierda</item>
+        <!-- NNE -->
+        <item>un poco a la izquierda</item>
+        <!-- NE -->
+        <item>izquierda</item>
+        <!-- ENE -->
+        <item>izquierda</item>
+        <!-- East -->
+        <item>detrás de ti a la izquierda</item>
+        <!-- ESE -->
+        <item>detrás de ti a la izquierda</item>
+        <!-- SE -->
+        <item>detrás de ti a la izquierda</item>
+        <!-- SSE -->
+        <item>derecho detrás de ti</item>
+        <!-- South -->
+        <item>detrás de ti a la derecha</item>
+        <!-- SSW -->
+        <item>detrás de ti a la derecha</item>
+        <!-- SW -->
+        <item>detrás de ti a la derecha</item>
+        <!-- WSW -->
+        <item>derecha</item>
+        <!-- West -->
+        <item>derecha</item>
+        <!-- WNW -->
+        <item>un poco a la derecha</item>
+        <!-- NW -->
+        <item>un poco a la derecha</item>
+        <!-- NNW -->
+    </string-array>
+</resources>

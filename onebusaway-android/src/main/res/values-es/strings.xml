@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
+    and individual contributors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="app_name">OneBusAway</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navdrawer_item_nearby">Cercano</string>
+    <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
+    <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
+    <string name="navdrawer_item_settings">Configuración</string>
+    <string name="navdrawer_item_help">Ayuda</string>
+    <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
+
+    <!-- Permissions -->
+    <string name="trip_service_perm_label">inicia el servicio del viaje</string>
+    <string name="trip_service_perm_description">Permite a la aplicación usar recordatorios para
+        los buses próximos.
+    </string>
+
+    <!-- Generic -->
+    <string name="generic_comm_error">Lo sentimos, hubo un error de comunicación y no podemos mostrar está
+        información. Intenta de nuevo y puede que funcione.
+    </string>
+    <string name="generic_comm_error_toast">Error al actualizar. Lo intentaremos de nuevo en un minuto.</string>
+    <string name="route_not_found_error_no_region">Lo sentimos, esa ruta especificada no ha sido encontrada. Si
+        esta era un
+        atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
+        (Cambialo en
+        \"Preferencias-> Tú región\").
+    </string>
+    <string name="route_not_found_error_with_region_name">Lo sentimos, esa ruta especificada no puede ser
+        encontrada. Si esta era un
+        atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
+        región actual es
+        %1$s. Cambialo en \"Preferencias-> Tú región\").
+    </string>
+    <string name="stop_not_found_error_no_region">Lo sentimos, esa parada especificada no puede ser encontrada. Si
+        esta era un
+        atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
+        (Cambialo en
+        \"Preferencias-> Tú región\").
+    </string>
+    <string name="stop_not_found_error_with_region_name">Lo sentimos, esa parada especificada no puede ser
+        encontrada. Si esta era un
+        atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
+        región actual es
+        %1$s. Cambialo en \"Preferencias-> Tú región\").
+    </string>
+    <string name="internal_error">Uy, algo salió mal. Intenta de nuevo y puede que funcione.</string>
+    <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manerjar esta
+        solicitud.
+    </string>
+    <string name="bad_gateway_error">Los servidores de OneBusAway están sobrecargados. ¡Por favor disculpanos!
+    </string>
+    <string name="map_generic_error">No se pueden obtener paradas.</string>
+    <string name="no_network_error">Parece que estás fuera de línea o no estas conectado a la red.
+    </string>
+    <string name="airplane_mode_error">No estás conectado a la red.\n¿Puedes apagar el modo
+        Avión?
+    </string>
+    <string name="custom_api_url_error">URL inválida. Por favor ingresa un servidor de OneBusAway que funcione.
+    </string>
+    <string name="direction_n">Norte</string>
+    <string name="direction_ne">Noreste</string>
+    <string name="direction_e">Este</string>
+    <string name="direction_se">Sureste</string>
+    <string name="direction_s">Sur</string>
+    <string name="direction_sw">Suroeste</string>
+    <string name="direction_w">Oeste</string>
+    <string name="direction_nw">Noroeste</string>
+    <string name="direction_none"></string>
+    <string name="loading">Cargando&#8230;</string>
+    <string name="browser_error">No se puede iniciar el Navegador.</string>
+    <string name="search_hint">Buscar paradas o rutas</string>
+    <string name="search">Buscar</string>
+    <string name="checkmark_description">Selección de marca de verificación</string>
+
+    <!--  Option strings -->
+    <string name="map_option_mylocation">Mi ubicación</string>
+    <string name="map_option_search">Buscar</string>
+    <string name="main_option_findroute">Mis Rutas</string>
+    <string name="main_option_findstop">Mis Paradas</string>
+    <string name="main_option_viewtrips">Mis Recordatorios</string>
+    <string name="main_option_help">Ayuda</string>
+    <string name="main_option_preferences">Configuración</string>
+    <string name="main_help_title">Ayuda</string>
+    <string name="main_help_whatsnew_title">Novedades en esta versión</string>
+    <string name="main_help_whatsnew">&#8226;\u0020
+        <b>Improved \"Show route on map\" interface</b>
+        - Route is now a layer on same map view.\n&#8226;\u0020
+        <b>Misc. usability improvements</b>
+        - Lots of small tweaks.\n&#8226;\u0020
+        <b>Accessibility improvements</b>
+        - Better labels for some components.\n&#8226;
+        <b>Bug fixes</b>
+    </string>
+    <string name="main_help_close">Cerrar</string>
+    <string name="main_nolocation_title">La ubicación no esta habilitada</string>
+    <string name="main_nolocation">A OneBusAway le gustaria saber tú ubicación, ¿Quieres activarlo
+        ahora?
+    </string>
+    <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
+    <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
+    <string name="main_outofrange_title">Fuera de alcance</string>
+    <string name="main_outofrange">Usted esta fuera de área de servicio %1$s.\n\n¿Ir allí ahora?</string>
+    <string name="main_outofrange_yes">Llévame allí</string>
+    <string name="main_outofrange_no">Quedarme donde estoy</string>
+
+    <string name="bus_options_menu_add_star">Adicionar la ruta a favoritos</string>
+    <string name="bus_options_menu_remove_star">Remover la ruta de favortios</string>
+    <string name="bus_options_menu_show_route_on_map">Mostrar la ruta sobre el mapa</string>
+    <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
+    <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
+    <string name="bus_options_menu_edit_reminder">Editar este recordatorio</string>
+    <string name="bus_options_menu_show_only_this_route">Mostrar solamente esta ruta</string>
+    <string name="bus_options_menu_show_route_schedule">Mostrar el horario de la ruta</string>
+    <string name="bus_options_menu_report_trip_problem">Reportar un problema con el viaje</string>
+
+    <!--  Stop Info -->
+    <string name="stop_info_ontime">A tiempo</string>
+    <plurals name="stop_info_arrive_delayed">
+        <item quantity="one">1 min tarde</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min tarde
+        </item>
+    </plurals>
+    <plurals name="stop_info_arrive_early">
+        <item quantity="one">1 min antes</item>
+        <!-- Below element should remain on same line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min antes
+        </item>
+    </plurals>
+    <plurals name="stop_info_depart_delayed">
+        <item quantity="one">Sale 1 min tarde</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Sale
+            <xliff:g id="count">%d</xliff:g>
+            min tarde
+        </item>
+    </plurals>
+    <plurals name="stop_info_depart_early">
+        <item quantity="one">Sale 1 min antes</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Sale
+            <xliff:g id="count">%d</xliff:g>
+            min antes
+        </item>
+    </plurals>
+    <string name="stop_info_scheduled_arrival">Llegada planificada</string>
+    <string name="stop_info_scheduled_departure">Salida planificada</string>
+    <string name="stop_info_frequency_from">Cada %1$d mins desde %2$s</string>
+    <string name="stop_info_frequency_until">Cada %1$d mins hasta %2$s</string>
+    <string name="stop_info_eta_now">AHORA</string>
+    <string name="stop_info_eta_unknown">---\u0020\u0020</string>
+    <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
+    <string name="menu_option_sort_by">Ordenar por</string>
+    <string name="stop_info_option_sort_eta">Ordenar por llegada estimada…</string>
+    <string name="stop_info_option_sort_route">Ordenar por Ruta…</string>
+    <string name="stop_info_option_refresh">Refrescar</string>
+    <string name="stop_info_option_filter">Filtrar rutas</string>
+    <string name="stop_info_option_editname">Editar el nombre de la Parada</string>
+    <string name="stop_info_option_addstar">Adicionar la parada a favoritos</string>
+    <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
+    <string name="stop_info_option_removestar">Remover la paradad de favoritos</string>
+    <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
+    <string name="stop_info_option_night_light">Iluminación de noche</string>
+    <string name="stop_info_nodata_minutes">Sin llegadas en los próximos %1$d min.</string>
+    <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
+    <plurals name="stop_info_nodata_hours_minutes">
+        <item quantity="one">Sin llegadas en la siguiente hora y %1$d min.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Sin llegadas en las siguientes
+            <xliff:g id="count">%2$d</xliff:g>
+            horas y %1$d min.
+        </item>
+    </plurals>
+    <plurals name="stop_info_nodata_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">Sin llegadas adicionales en los próximos %1$d
+        min.
+    </string>
+    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
+    <plurals name="stop_info_no_additional_data_hours_minutes">
+        <item quantity="one">Sin llegadas adicionales en la siguiente hora y %1$d min.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Sin llegadas adicionales en las siguientes
+            <xliff:g id="count">%2$d</xliff:g>
+            horas y %1$d min.
+        </item>
+    </plurals>
+    <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
+        <item quantity="one">1h %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        </item>
+    </plurals>
+    <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
+    <string name="stop_info_item_options_title">Opciones de bus</string>
+    <string name="stop_info_filter_title">Solo mostrar estas rutas</string>
+    <string name="stop_info_filter_header">Mostrando %1$d de %2$d rutas</string>
+    <string name="stop_info_filter_showall">(mostrar todas)</string>
+    <string name="stop_info_save">Guardar</string>
+    <string name="stop_info_cancel">Cancelar</string>
+    <string name="stop_info_clear">Limpiar</string>
+    <string name="stop_info_old_data">Datos actualizados el %s</string>
+    <string name="stop_info_favorite">Parada Favorita</string>
+    <string name="stop_info_route_ids_label">Rutas:</string>
+    <string name="stop_info_header_arrival_info">%1$d min</string>
+    <string name="stop_info_header_just_left">acaba de irse</string>
+    <string name="stop_info_button_content_description">Acerca de esta parada</string>
+    <string name="stop_info_frequency_approximate">~</string>
+
+    <!-- Stop Details -->
+    <string name="stop_details_code">Parada # %1$s</string>
+
+    <!-- Arrival Time Style B -->
+    <string name="arrival_estimated">Estimación en Tiempo Real</string>
+    <string name="arrival_scheduled">Programada</string>
+
+    <!-- Route Info  -->
+    <string name="route_info_context_get_stop_info">Mostrar información de llegadas</string>
+    <string name="route_info_context_showonmap">Mostrar sobre el mapa</string>
+    <string name="route_info_goto_url">Ver horarios</string>
+    <string name="route_info_no_shape_data">Lo sentimos, no esta disponible la información del mapa para esta ruta
+    </string>
+
+    <!-- My stops/routes -->
+    <string name="my_recent_title">Reciente</string>
+    <string name="my_recent_menu_title">Paradas/Rutas recientes</string>
+    <string name="my_recent_stops">Paradas</string>
+    <string name="my_recent_routes">Rutas</string>
+    <string name="my_starred_title">Marcadas como favoritas</string>
+    <string name="my_search_title">Buscar</string>
+    <string name="my_no_recent_stops">No tienes paradas recientes.</string>
+    <string name="my_no_starred_stops">No tienes paradas favoritas.\n\nPuedes adicionar la parada a favoritas en
+        la pantalla de llegadas.
+    </string>
+    <string name="my_no_recent_routes">No tienes rutas recients.</string>
+    <!-- <string name="my_no_starred_routes">No tienes rutas favoritas.</string>-->
+    <string name="route_favorite_options_title_star">Marcar como favorito a \"%s\" para:</string>
+    <string name="route_favorite_options_title_unstar">Remover de favorito a \"%s\" para:</string>
+
+    <string name="my_option_clear_recent_stops">Limpiar paradas recientes</string>
+    <string name="my_option_clear_recent_routes">Limpiar rutas recientes</string>
+    <string name="my_option_clear_starred_stops">Eliminar todas las paradas favoritas</string>
+    <!-- <string name="my_option_clear_starred_routes">Eliminar todas las rutas favoritas</string>-->
+    <string name="my_option_clear_confirm">¡No hay vuelta atrás! ¿Seguimos adelante?</string>
+    <string name="my_option_clear_confirm_title">¿Estás seguro de esto?</string>
+
+    <string name="my_context_get_stop_info">Mostrar información de llegadas</string>
+    <string name="my_context_get_route_info">Mostrar información de la ruta</string>
+    <string name="my_context_create_shortcut">Crear un atajo</string>
+    <string name="my_context_showonmap">Mostrar sobre el mapa</string>
+    <string name="my_context_remove_recent">Remover de recientes</string>
+    <string name="my_context_remove_star">Remover de favoritos</string>
+    <string name="my_context_show_schedule">Mostrar horarios</string>
+
+    <!-- Service Alerts  -->
+    <string name="situation_activity_label">Servicio de Alertas</string>
+    <string name="alert_content_description_warning">Advertencia sobre el Servicio - tap to slide up panel
+        and reveal more info.
+    </string>
+    <string name="alert_content_description_error">Advertencia Severa del Servicio - toque para deslizar 
+        hacia arriba el panel y mostrar mas información.
+    </string>
+
+    <!-- Find -->
+    <string name="find_hint_nofavoritestops">Encuentra una parada al ingresar su número en el cuadro de
+        búsqueda.\n\nLos números de parada son 3 a 5 digitos y se pueden encontrar en la señal de la parada.
+    </string>
+    <string name="find_hint_nofavoriteroutes">Encuentra una ruta al entrar su nombre o número en
+        el cuadro de búsqueda.
+    </string>
+    <string name="find_hint_noresults">No hay resultados que coincidan con su búsqueda.</string>
+    <string name="search_stop_hint">Ingrese un número de parada</string>
+    <string name="search_route_hint">Ingrese un número/nombre de ruta</string>
+
+    <string name="route_shortcut">Ruta de OneBusAway</string>
+    <string name="stop_shortcut">Parada de OneBusAway</string>
+    <string name="recent_stops_shortcut">Paradas recientes</string>
+    <string name="recent_routes_shortcut">Rutas recientes</string>
+    <string name="starred_stops_shortcut">Paradas favoritas</string>
+    <!-- <string name="starred_routes_shortcut">Rutas favoritas</string> -->
+    <string name="route_name">Ruta %s</string>
+
+    <!--  Trip info -->
+    <string name="trip_info_name">Nombre del recordatorio</string>
+    <string name="trip_info_reminder_content_description">Recordatorio</string>
+    <string name="trip_info_name_hint">Ingresa un nombre al recordatorio</string>
+    <string name="trip_info_route">Ruta %s</string>
+    <string name="trip_info_depart">Salida a las %s</string>
+    <string name="trip_info_reminder_header">Tiempo del recordatorio</string>
+    <string name="trip_info_reminder_repeat">Repetir</string>
+    <string name="trip_info_save">Guardar</string>
+    <string name="trip_info_cancel">Cancelar</string>
+    <string name="trip_info_delete">Borrar</string>
+    <string name="trip_info_saved">Viaje guardado.</string>
+    <string name="trip_info_dismiss">Cancelar</string>
+    <string name="trip_info_delete_trip">Se eliminará este recordatorio.</string>
+    <string name="trip_info_repeat_every">Cada %s</string>
+    <string name="trip_info_repeat_everyday">Todos los días</string>
+    <string name="trip_info_repeat_weekdays">Días semanales (Lun-Vie)</string>
+    <string name="trip_info_repeat_norepeat">Una vez</string>
+    <string name="trip_info_noname">(sin nombre)</string>
+    <string name="trip_info_option_showroute">Mostrar la Ruta</string>
+    <string name="trip_info_option_showstop">Mostrar las Paradas</string>
+    <string name="trip_info_separator">-</string>
+
+    <!--  Trip list -->
+    <string name="trip_list_notrips">No tienes ningún recordatorio.\n\nPuedes crear recordatorios al
+        tocar sobre un bus que llega a tu parada.
+    </string>
+    <string name="trip_list_context_edit">Editar el viaje</string>
+    <string name="trip_list_context_delete">Borrar viaje</string>
+    <string name="trip_list_context_showstop">Mostrar la parada</string>
+    <string name="trip_list_context_showroute">Mostrar la ruta</string>
+
+    <!--  Trip notifications -->
+    <string name="trip_stat_gone">La Ruta %s ha partido.</string>
+    <string name="trip_stat_lessthanone">¡La Ruta %s está a menos de 1 minuto!</string>
+    <string name="trip_stat_one">¡La Ruta %s está a 1 minuto!</string>
+    <string name="trip_stat">¡La Ruta %1$s está a %2$d minutos!</string>
+
+    <!-- Report problem -->
+    <string name="report_problem_code">¿Cuál es el problema?</string>
+    <string name="report_problem_comment">¿Algo más?</string>
+    <string name="report_problem_comment_hint">opcional</string>
+    <string name="report_problem_email">Tu correo electrónico</string>
+    <string name="report_problem_email_hint">opcional</string>
+    <string name="report_problem_cancel">Cancelar</string>
+    <string name="report_problem_send">Enviar</string>
+    <string name="report_problem_hint">¡Tus resortes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
+    <string name="report_problem_sent">¡Reporte enviado, Gracias!</string>
+    <string name="report_problem_error">No se pudo enviar el reporte. ¿Intentar de nuevo?</string>
+    <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
+    <!-- TODO: Modes -->
+    <string name="report_problem_onvehicle_bus">¿Estas en este bus?</string>
+    <string name="report_problem_vehiclenumber_bus">Número del bus</string>
+    <string name="report_problem_uservehicle_hint">opcional</string>
+    <string name="report_problem_stop_activity_label">Reportar problema de Parada</string>
+    <string name="report_problem_trip_activity_label">Reportar problema de Viaje</string>
+
+    <!-- Region list -->
+    <plurals name="distance_miles">
+        <item quantity="one">1 milla de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            millas de distancia
+        </item>
+    </plurals>
+    <plurals name="distance_feet">
+        <item quantity="one">1 pie de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            pies de distancia
+        </item>
+    </plurals>
+    <plurals name="distance_kilometers">
+        <item quantity="one">1 kilómetros de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            kilómetros de distancia
+        </item>
+    </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">1 metro de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            metros de distancia
+        </item>
+    </plurals>
+
+    <string name="region_unavailable">no disponible</string>
+    <string name="region_option_refresh">Refrescar</string>
+    <string name="region_detecting_server">Encontrando tus servicios de tránsito&#8230;</string>
+    <string name="region_choose_region">Elige una región</string>
+    <string name="region_disabled_auto_selection">Selección de región automática deshabilitada. Puedes
+        habilitarla en Preferencias.
+    </string>
+    <string name="region_region_found">Se encontrarón %1$s regiones</string>
+
+    <!--  Bug report -->
+    <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
+    <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
+        %1$s\nModelo: %2$s\nVersión SO: %3$s / %4$d\nLoc: %5$s
+    </string>
+    <string name="bug_report_error">No se puede enviar el informe de error: no se encontro una aplicación adecuada.
+    </string>
+
+    <!-- Android Maps v2 -->
+    <string name="install_google_maps_positive_button">Instalar</string>
+    <string name="please_install_google_maps_dialog_title">Por favor instala Google Maps</string>
+    <string name="no_play_store">Su dispositivio no tiene Play Store instalado. Por favor encuentra
+        otra manera de instalar Google Maps.
+    </string>
+    <string name="ok">OK</string>
+
+    <!-- Application Preferences -->
+    <string name="preferences_category_location">Ubicación</string>
+    <string name="preferences_category_display">Pantalla</string>
+    <string name="preferences_category_backup">Respaldar</string>
+    <string name="preferences_category_advanced">Avanzado</string>
+    <string name="preferences_screen_advanced_summary">Profundizar en aspectos prácticos</string>
+    <string name="preferences_category_about">Acerca de</string>
+    <string name="preferences_region_title">Tú región</string>
+    <string name="preferences_region_summary_custom_api">Se esta usando una servidor API personalizado</string>
+    <string name="preferences_auto_select_region_title">Región automática</string>
+    <string name="preferences_auto_select_region_summary">Establecer tu región de tránsito actual usando tu ubicación actual
+    </string>
+
+    <string name="preferences_preferred_units_title">Unidades de distancia preferidas</string>
+    <string name="preferences_preferred_units_option_automatic">Automático</string>
+    <string name="preferences_preferred_units_option_metric">Métrico (km, m)</string>
+    <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
+
+    <string name="preferences_show_negative_arrivals_title">Mostrar salida de buses</string>
+    <string name="preferences_show_negative_arrivals_summary">Incluir los buses que salieron como
+        tiempos de llegadas negativos
+    </string>
+
+    <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>
+    <string name="preferences_arrival_info_style_options_b">Tarjetas</string>
+
+    <string name="preferences_oba_api_servername_title">Servidor API de OneBusAway</string>
+    <string name="preferences_oba_api_servername_summary">Determina el servidor usado para llamadas del
+        API de OneBusAway
+    </string>
+    <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
+    <string name="preferences_save_title">Guardar al almacenamiento</string>
+    <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y recientes</string>
+    <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
+    <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
+    <string name="preferences_db_saved">¡Guardado exitosamente!</string>
+    <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
+    <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Seguir adelante?
+    </string>
+    <string name="preferences_db_restored">¡Restauración exitosa! Por favor reinicia OneBusAway.</string>
+    <string name="preferences_db_restore_error">No se puede restaurar: %1$s</string>
+
+    <string name="preferences_experimental_regions_title">Regiones experimentales</string>
+    <string name="preferences_experimental_regions_summary">Permite regiones que pueden ser inestables
+    </string>
+    <string name="preferences_experimental_regions_enable_warning">¡Las regiones experimentales pueden ser
+        inestables y sin información en tiempo real! ¿Seguir Adelante?
+    </string>
+    <string name="preferences_experimental_regions_disable_warning">¡Su región experimental actual
+        no está disponible! ¿Seguir Adelante?
+    </string>
+    <string name="preferences_analytics_title">Enviar datos anónimos de uso</string>
+    <string name="preferences_analytics_summary">Ayudanos a mejorar la aplicación</string>
+    <string name="preferences_donate_title">Donar</string>
+    <string name="preferences_donate_summary">Apoyar el proyecto de código abierto OneBusAway</string>
+    <string name="preferences_powered_by_oba_title">Desarrollado por OneBusAway</string>
+    <string name="preferences_powered_by_oba_summary">Obtener más información sobre el proyecto de código abierto
+    </string>
+    <string name="preferences_about_title">Acerca de</string>
+    <string name="preferences_about_summary">Información de versión, contribuyentes y licencia</string>
+    <!-- Units -->
+    <string name="feet_abbreviation">ft</string>
+    <string name="miles_abbreviation">mi</string>
+    <string name="meters_abbreviation">m</string>
+    <string name="kilometers_abbreviation">km</string>
+    <string name="minutes_abbreviation">min</string>
+    <string name="minutes_full">minutos</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Abra la bandeja de navegación</string>
+    <string name="navigation_drawer_close">Cierre la bandeja de navegación</string>
+
+    <!-- Tutorial Fragment -->
+    <string name="pager_button_prev">Anterior</string>
+    <string name="pager_button_next">Siguiente</string>
+    <string name="pager_button_done">Listo</string>
+
+    <!-- Trip Details -->
+    <string name="trip_details_vehicle">Vehículo: %1$s</string>
+    <string name="trip_details_scheduled_data">Datos de horario</string>
+    <string name="trip_details_real_time_sec_late">%1$d seg tarde (Última actualización: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d seg tarde (Última actualización: %3$s)
+    </string>
+    <string name="trip_details_real_time_sec_early">%1$d seg antes (Última actualización: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d seg antes (Última actualización:
+        %3$s)
+    </string>
+    <string name="trip_details_current_stop">Parada actual</string>
+    <string name="trip_details_current_bus_position">El bus se encuentra actualmente en</string>
+
+    <!-- Vehicles on Map -->
+    <string name="vehicle_last_updated_sec">Datos actualizados hace %1$d seg</string>
+    <string name="vehicle_last_updated_min_and_sec">Datos acualizados hace %1$d min %2$d seg</string>
+    <string name="vehicle_last_updated_scheduled">Posición calculada a partir de la planificación</string>
+
+    <!-- Night Light -->
+    <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
+    <string name="night_light_dialog_message">¿Cansado de ver pasar su bus porque el conductor
+        no lo podía ver en la oscuridad? ¡Enciende la luz parpadeante de la noche y hazte visible!
+    </string>
+    <string name="night_light_create_shortcut">Crear un atajo</string>
+
+    <!-- About -->
+    <string name="title_activity_about">Acerca de</string>
+    <string name="about_text">
+        "Obtenga mas información sobre el proyecto de código abierto OneBusAway en http://onebusaway.org.\n\n"
+
+        "*** Código ***\n\n"
+
+        "Nos gustaría agradecer a las siguientes personas que han contribuido en el código para OneBusAway Android:\n\n"
+
+        "* Paul Watts\n"
+        "* Brian Ferris\n"
+        "* Daniel Welsh\n"
+        "* Arno Hart\n"
+        "* Sean Barbeau\n"
+        "* York Region Transit\n"
+        "* Ari Rusakko\n"
+        "* Ben Du\n"
+        "* Cagri Cetin\n"
+        "* Mike Karabushin\n\n"
+
+        "¿Quieres contribuir a esta aplicación? Revísalo tú mismo en Github en
+        https://github.com/OneBusAway/onebusaway-android.\n\n"
+
+        "*** Imágenes ***\n\n"
+
+        "Gracias a los diseñadores que crearon las imágenes utilizadas en los iconos de vehículos, que fueron subidos "
+        "a el Noun Project bajo CC BY 3.0 (http://creativecommons.org/licenses/by/3.0/us/):\n\n"
+
+        "* Flechas por Zlatko Najdenovski, MK\n"
+        "* Marcador en el Mapa por Housin Aziz, SE\n\n"
+
+        "Gracias a Google por los iconos de material design
+        (https://github.com/google/material-design-icons), "
+        "licenciadas bajo CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).\n\n"
+    </string>
+</resources>

@@ -67,7 +67,7 @@ abstract class MyListFragmentBase extends ListFragment
         }
     }
 
-    private SimpleCursorAdapter mAdapter;
+    protected SimpleCursorAdapter mAdapter;
 
     private Observer mObserver;
 

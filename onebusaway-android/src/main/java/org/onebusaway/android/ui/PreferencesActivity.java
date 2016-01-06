@@ -24,6 +24,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -64,6 +65,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference analyticsPref;
 
+    Preference tutorialPref;
+
     Preference donatePref;
 
     Preference poweredByObaPref;
@@ -91,6 +94,9 @@ public class PreferencesActivity extends PreferenceActivity
 
         analyticsPref = findPreference(getString(R.string.preferences_key_analytics));
         analyticsPref.setOnPreferenceChangeListener(this);
+
+        tutorialPref = findPreference(getString(R.string.preference_key_tutorial));
+        tutorialPref.setOnPreferenceClickListener(this);
 
         donatePref = findPreference(getString(R.string.preferences_key_donate));
         donatePref.setOnPreferenceClickListener(this);
@@ -227,6 +233,12 @@ public class PreferencesActivity extends PreferenceActivity
         Log.d(TAG, "preference - " + pref.getKey());
         if (pref.equals(regionPref)) {
             RegionsActivity.start(this);
+        } else if (pref.equals(tutorialPref)) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_press_tutorial));
+            ShowcaseViewUtils.resetAllTutorials();
+            NavHelp.goHome(this);
         } else if (pref.equals(donatePref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),

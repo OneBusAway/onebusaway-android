@@ -1029,8 +1029,6 @@ public class ArrivalsListFragment extends ListFragment
 
         if (currentValue.equalsIgnoreCase(styles[0])) {
             // Currently we're sorting by ETA - change to sorting by route
-            Toast.makeText(getActivity(), r.getString(R.string.stop_info_option_sort_route),
-                    Toast.LENGTH_SHORT).show();
             newValue = 1;
             //Analytics
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -1039,8 +1037,6 @@ public class ArrivalsListFragment extends ListFragment
         } else {
             // Currently we're sorting by route - change to sorting by eta
             newValue = 0;
-            Toast.makeText(getActivity(), r.getString(R.string.stop_info_option_sort_eta),
-                    Toast.LENGTH_SHORT).show();
             //Analytics
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getActivity().getString(R.string.analytics_action_button_press),

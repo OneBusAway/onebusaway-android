@@ -20,6 +20,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -28,6 +29,7 @@ import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -64,6 +66,33 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setHasOptionsMenu(true);
+        showStarredStopsTutorials();
+    }
+
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            showStarredStopsTutorials();
+        }
+    }
+
+    /**
+     * Show the sort starred stops tutorial if we have more than 1 starred stop
+     */
+    private void showStarredStopsTutorials() {
+        if (!isVisible()) {
+            return;
+        }
+        if (mAdapter.getCount() > 0) {
+            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT,
+                    (AppCompatActivity) getActivity(), null);
+        }
+        if (mAdapter.getCount() > 1) {
+            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SORT,
+                    (AppCompatActivity) getActivity(), null);
+        }
     }
 
     @Override

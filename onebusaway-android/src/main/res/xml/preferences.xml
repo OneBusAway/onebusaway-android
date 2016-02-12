@@ -76,6 +76,10 @@
             android:summary="@string/preferences_analytics_summary"
             android:defaultValue="true"/>
         <Preference
+                android:key="@string/preference_key_tutorial"
+                android:title="@string/preferences_tutorial_title"
+                android:summary="@string/preferences_tutorial_summary"/>
+        <Preference
             android:key="@string/preferences_key_donate"
             android:title="@string/preferences_donate_title"
             android:summary="@string/preferences_donate_summary"/>

@@ -101,13 +101,12 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Improved \"Show route on map\" interface</b>
-        - Route is now a layer on same map view.\n&#8226;\u0020
-        <b>Misc. usability improvements</b>
-        - Lots of small tweaks.\n&#8226;\u0020
-        <b>Accessibility improvements</b>
-        - Better labels for some components.\n&#8226;
-        <b>Bug fixes</b>
+        <b>Fresh new look</b>
+        - Yay material design!\n&#8226;\u0020
+        <b>Live buses on the map</b>
+        - Tap on arrival times and choose \"Show route on map\"!\n&#8226;\u0020
+        <b>Live trip status</b>
+        - Tap on arrival times and choose \"Show trip status\"!
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_nolocation_title">Location not enabled</string>
@@ -476,6 +475,8 @@
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
+    <string name="preferences_tutorial_title">Show tutorial</string>
+    <string name="preferences_tutorial_summary">Show instructions for using this app</string>
     <string name="preferences_donate_title">Donate</string>
     <string name="preferences_donate_summary">Support the OneBusAway open-source project</string>
     <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
@@ -524,6 +525,64 @@
         couldn\'t see you in the dark? Hold up your flashing Night Light and make yourself visible!
     </string>
     <string name="night_light_create_shortcut">Create shortcut</string>
+
+    <!-- Tutorials -->
+    <string name="tutorial_welcome_title">Welcome to OneBusAway!</string>
+    <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
+        times.
+    </string>
+    <string name="tutorial_arrival_header_arrival_info_title">How long until your bus arrives?
+    </string>
+    <string name="tutorial_arrival_header_arrival_info_text">This long! Colored background tells you
+        if the bus is early (red) or late (blue). On time = green background. If we don\'t know
+        where the bus is, the scheduled time is shown (gray background).
+    </string>
+    <string name="tutorial_arrival_header_star_stop_title">Star your favorite stops</string>
+    <string name="tutorial_arrival_header_star_stop_text">Tap on the star to save your favorite
+        stops. Starred stops are available via the main navigation panel.
+    </string>
+    <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
+    </string>
+    <string name="tutorial_arrival_header_sliding_panel_text">Tap on the arrow or drag the panel up
+        to see more arrivals for this stop.
+    </string>
+    <string name="tutorial_arrival_info_more_title">Use your transit super powers wisely!</string>
+    <string name="tutorial_arrival_info_more_text">Tap on the 3 dots to set reminders, star favorite
+        routes, view a route on the map, and more…
+    </string>
+    <string name="tutorial_arrival_sort_title">Sort by ETA or route</string>
+    <string name="tutorial_arrival_sort_text">Arrivals can be sorted by estimated arrival time, or
+        sorted/grouped by route using the "Sort" button at the top of the screen.
+    </string>
+    <string name="tutorial_arrival_header_star_route_title">Star your favorite routes</string>
+    <string name="tutorial_arrival_header_star_route_text">Tap on the star to pin your favorite
+        routes to the top of the sliding panel.
+    </string>
+    <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
+    <string name="tutorial_recent_stops_routes_text">Stops and routes that you\'ve recent looked at
+        can be accessed via the "More" button.
+    </string>
+    <string name="tutorial_arrival_style_b_show_route_title">View live vehicle positions on the map
+    </string>
+    <string name="tutorial_arrival_style_b_show_route_text">Tap on the map icon to see your bus move
+        in real-time.
+    </string>
+    <string name="tutorial_vehicle_icons_title">Tap on vehicle icons to see details</string>
+    <string name="tutorial_vehicle_icons_text">Hint - Rotate the map using two fingers if you
+        accidentally tap on a nearby stop instead of the vehicle.
+    </string>
+    <string name="tutorial_vehicle_info_window_title">See live vehicle details</string>
+    <string name="tutorial_vehicle_info_window_text">Tap on the popup balloon to view the transit
+        line and real-time trip status for that vehicle.
+    </string>
+    <string name="tutorial_starred_stops_sort_title">Sort your starred stops</string>
+    <string name="tutorial_starred_stops_sort_text">Organize your favorite stops by name or
+        frequency of use with the "Sort" button at the top of the screen.
+    </string>
+    <string name="tutorial_starred_stops_shortcut_title">Save time with shortcuts</string>
+    <string name="tutorial_starred_stops_shortcut_text">Long-press on a stop to create a shortcut on
+        your home screen. Tap on the shortcut to instantly see arrivals!
+    </string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

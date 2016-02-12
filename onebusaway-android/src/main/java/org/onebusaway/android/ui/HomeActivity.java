@@ -39,6 +39,7 @@ import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
@@ -278,6 +279,8 @@ public class HomeActivity extends AppCompatActivity
         autoShowWhatsNew();
 
         checkRegionStatus();
+
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null);
     }
 
     @Override
@@ -604,6 +607,10 @@ public class HomeActivity extends AppCompatActivity
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case 0:
+                                ShowcaseViewUtils.resetAllTutorials();
+                                NavHelp.goHome(HomeActivity.this);
+                                break;
+                            case 1:
                                 String twitterUrl = TWITTER_URL;
                                 if (Application.get().getCurrentRegion() != null &&
                                         !TextUtils.isEmpty(Application.get().getCurrentRegion()
@@ -617,13 +624,13 @@ public class HomeActivity extends AppCompatActivity
                                         getString(R.string.analytics_action_switch),
                                         getString(R.string.analytics_label_app_switch));
                                 break;
-                            case 1:
+                            case 2:
                                 AgenciesActivity.start(HomeActivity.this);
                                 break;
-                            case 2:
+                            case 3:
                                 showDialog(WHATSNEW_DIALOG);
                                 break;
-                            case 3:
+                            case 4:
                                 UIUtils.sendContactEmail(HomeActivity.this, mGoogleApiClient);
                                 break;
                         }
@@ -765,6 +772,59 @@ public class HomeActivity extends AppCompatActivity
 
         // Header might have changed height, so make sure my location button is set above the header
         moveMyLocationButton();
+
+        // Show arrival info related tutorials
+        showArrivalInfoTutorials(response);
+    }
+
+    /**
+     * Triggers the various tutorials related to arrival info and the sliding panel header
+     *
+     * @param response arrival info, which is required for some tutorials
+     */
+    private void showArrivalInfoTutorials(ObaArrivalInfoResponse response) {
+        // If we're already showing a ShowcaseView, we don't want to stack another on top
+        if (ShowcaseViewUtils.isShowcaseViewShowing()) {
+            return;
+        }
+
+        // If we can't see the map or sliding panel, we can't see the arrival info, so return
+        if (mMapFragment.isHidden() || !mMapFragment.isVisible() ||
+                mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+            return;
+        }
+
+        /**
+         * The ShowcaseViewUtils.showTutorial() method takes care of checking if a tutorial has
+         * already been shown, so we can just list the tutorials in order of how they should be
+         * shown to the user.
+         */
+
+        // Show the tutorial explaining arrival times
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO, this,
+                response);
+
+        // Show the starred stop tutorial
+        if (isSlidingPanelCollapsed()) {
+            ShowcaseViewUtils
+                    .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_STAR_STOP, this,
+                            response);
+        }
+
+        // Show the starred routes tutorial
+        ShowcaseViewUtils
+                .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_HEADER_STAR_ROUTE, this, response);
+
+        // Show the "more" arrival info tutorial
+        ShowcaseViewUtils
+                .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_INFO_MORE, this, response);
+
+        if (!isSlidingPanelCollapsed() &&
+                mArrivalsListFragment.getListAdapter() instanceof ArrivalsListAdapterStyleB) {
+            ShowcaseViewUtils
+                    .showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_STYLE_B_SHOW_ROUTE, this,
+                            response);
+        }
     }
 
     /**
@@ -787,6 +847,8 @@ public class HomeActivity extends AppCompatActivity
         bundle.putString(MapParams.ROUTE_ID, arrivalInfo.getInfo().getRouteId());
         mMapFragment.setMapMode(MapParams.MODE_ROUTE, bundle);
 
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_VEHICLE_ICONS, this, null);
+
         return true;
     }
 
@@ -805,6 +867,11 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        // If we're showing a tutorial, we don't want the user to be able to use the back button
+        if (ShowcaseViewUtils.isShowcaseViewShowing()) {
+            return;
+        }
+
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
             // Collapse the sliding panel if its anchored or expanded
@@ -1067,6 +1134,9 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
                     mArrivalsListHeader.refresh();
                 }
+
+                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT,
+                        HomeActivity.this, null);
             }
 
             @Override
@@ -1097,6 +1167,9 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(false);
                     mArrivalsListHeader.refresh();
                 }
+
+                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT,
+                        HomeActivity.this, null);
             }
 
             @Override

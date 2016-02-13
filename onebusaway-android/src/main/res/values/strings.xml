@@ -527,6 +527,7 @@
     <string name="night_light_create_shortcut">Create shortcut</string>
 
     <!-- Tutorials -->
+    <string name="tutorial_button_text" >Got it!</string>
     <string name="tutorial_welcome_title">Welcome to OneBusAway!</string>
     <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
         times.
@@ -552,7 +553,7 @@
     </string>
     <string name="tutorial_arrival_sort_title">Sort by ETA or route</string>
     <string name="tutorial_arrival_sort_text">Arrivals can be sorted by estimated arrival time, or
-        sorted/grouped by route using the "Sort" button at the top of the screen.
+        sorted/grouped by route using the \"Sort\" button at the top of the screen.
     </string>
     <string name="tutorial_arrival_header_star_route_title">Star your favorite routes</string>
     <string name="tutorial_arrival_header_star_route_text">Tap on the star to pin your favorite
@@ -560,7 +561,7 @@
     </string>
     <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
     <string name="tutorial_recent_stops_routes_text">Stops and routes that you\'ve recent looked at
-        can be accessed via the "More" button.
+        can be accessed via the \"More\" button.
     </string>
     <string name="tutorial_arrival_style_b_show_route_title">View live vehicle positions on the map
     </string>
@@ -577,7 +578,7 @@
     </string>
     <string name="tutorial_starred_stops_sort_title">Sort your starred stops</string>
     <string name="tutorial_starred_stops_sort_text">Organize your favorite stops by name or
-        frequency of use with the "Sort" button at the top of the screen.
+        frequency of use with the \"Sort\" button at the top of the screen.
     </string>
     <string name="tutorial_starred_stops_shortcut_title">Save time with shortcuts</string>
     <string name="tutorial_starred_stops_shortcut_text">Long-press on a stop to create a shortcut on

@@ -27,9 +27,9 @@
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
 
     <!-- Permissions -->
-    <string name="trip_service_perm_label">inicia el servicio del viaje</string>
+    <string name="trip_service_perm_label">Iniciar el servicio del viaje</string>
     <string name="trip_service_perm_description">Permite a la aplicación usar recordatorios para
-        los buses próximos.
+        los buses que se aproximan.
     </string>
 
     <!-- Generic -->
@@ -37,7 +37,7 @@
         información. Intenta de nuevo y puede que funcione.
     </string>
     <string name="generic_comm_error_toast">Error al actualizar. Lo intentaremos de nuevo en un minuto.</string>
-    <string name="route_not_found_error_no_region">Lo sentimos, esa ruta especificada no ha sido encontrada. Si
+    <string name="route_not_found_error_no_region">Lo sentimos, la ruta especificada no ha sido encontrada. Si
         este era un
         atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
         (Cambialo en
@@ -62,7 +62,7 @@
         %1$s. Cambialo en \"Preferencias-> Tú región\").
     </string>
     <string name="internal_error">Uy, algo salió mal. Intenta de nuevo y puede que funcione.</string>
-    <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manerjar esta
+    <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manejar esta
         solicitud.
     </string>
     <string name="bad_gateway_error">Los servidores de OneBusAway están sobrecargados. ¡Por favor disculpanos!
@@ -254,13 +254,13 @@
     <string name="my_starred_title">Marcadas como favoritas</string>
     <string name="my_search_title">Buscar</string>
     <string name="my_no_recent_stops">No tienes paradas recientes.</string>
-    <string name="my_no_starred_stops">No tienes paradas favoritas.\n\nPuedes adicionar la parada a favoritas en
-        la pantalla de llegadas.
+    <string name="my_no_starred_stops">No tienes paradas favoritas.\n\nPuedes adicionar paradas a favoritos en
+        la pantalla de llegadas de buses.
     </string>
-    <string name="my_no_recent_routes">No tienes rutas recients.</string>
+    <string name="my_no_recent_routes">No tienes rutas recientes.</string>
     <!-- <string name="my_no_starred_routes">No tienes rutas favoritas.</string>-->
     <string name="route_favorite_options_title_star">Marcar como favorito a \"%s\" para:</string>
-    <string name="route_favorite_options_title_unstar">Remover de favorito a \"%s\" para:</string>
+    <string name="route_favorite_options_title_unstar">Remover de favoritos a \"%s\" para:</string>
 
     <string name="my_option_clear_recent_stops">Limpiar paradas recientes</string>
     <string name="my_option_clear_recent_routes">Limpiar rutas recientes</string>
@@ -279,8 +279,8 @@
 
     <!-- Service Alerts  -->
     <string name="situation_activity_label">Servicio de Alertas</string>
-    <string name="alert_content_description_warning">Advertencia sobre el Servicio - tap to slide up panel
-        and reveal more info.
+    <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para delizr hacia arriba
+        el panel y mostrar mas información.
     </string>
     <string name="alert_content_description_error">Advertencia Severa del Servicio - toque para deslizar 
         hacia arriba el panel y mostrar mas información.
@@ -324,8 +324,8 @@
     <string name="trip_info_repeat_weekdays">Días semanales (Lun-Vie)</string>
     <string name="trip_info_repeat_norepeat">Una vez</string>
     <string name="trip_info_noname">(sin nombre)</string>
-    <string name="trip_info_option_showroute">Mostrar la Ruta</string>
-    <string name="trip_info_option_showstop">Mostrar las Paradas</string>
+    <string name="trip_info_option_showroute">Mostrar la ruta</string>
+    <string name="trip_info_option_showstop">Mostrar las paradas</string>
     <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->
@@ -338,10 +338,10 @@
     <string name="trip_list_context_showroute">Mostrar la ruta</string>
 
     <!--  Trip notifications -->
-    <string name="trip_stat_gone">La Ruta %s ha partido.</string>
-    <string name="trip_stat_lessthanone">¡La Ruta %s está a menos de 1 minuto!</string>
-    <string name="trip_stat_one">¡La Ruta %s está a 1 minuto!</string>
-    <string name="trip_stat">¡La Ruta %1$s está a %2$d minutos!</string>
+    <string name="trip_stat_gone">La ruta %s ha partido.</string>
+    <string name="trip_stat_lessthanone">¡La ruta %s está a menos de 1 minuto!</string>
+    <string name="trip_stat_one">¡La ruta %s está a 1 minuto!</string>
+    <string name="trip_stat">¡La ruta %1$s está a %2$d minutos!</string>
 
     <!-- Report problem -->
     <string name="report_problem_code">¿Cuál es el problema?</string>
@@ -352,7 +352,7 @@
     <string name="report_problem_cancel">Cancelar</string>
     <string name="report_problem_send">Enviar</string>
     <string name="report_problem_hint">¡Tus resortes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
-    <string name="report_problem_sent">¡Reporte enviado, Gracias!</string>
+    <string name="report_problem_sent">Reporte enviado, ¡Gracias!</string>
     <string name="report_problem_error">No se pudo enviar el reporte. ¿Intentar de nuevo?</string>
     <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
     <!-- TODO: Modes -->
@@ -419,7 +419,7 @@
     <string name="no_play_store">Su dispositivio no tiene Play Store instalado. Por favor encuentra
         otra manera de instalar Google Maps.
     </string>
-    <string name="ok">OK</string>
+    <string name="ok">Aceptar</string>
 
     <!-- Application Preferences -->
     <string name="preferences_category_location">Ubicación</string>
@@ -441,7 +441,7 @@
     <string name="preferences_preferred_units_option_imperial">Imperial (mi, ft)</string>
 
     <string name="preferences_show_negative_arrivals_title">Mostrar salida de buses</string>
-    <string name="preferences_show_negative_arrivals_summary">Incluir los buses que salieron como
+    <string name="preferences_show_negative_arrivals_summary">Mostrar los buses que salieron con
         tiempos de llegadas negativos
     </string>
 
@@ -454,12 +454,12 @@
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_save_title">Guardar al almacenamiento</string>
-    <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y recientes</string>
+    <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las recientes busquedas</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
     <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
-    <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Seguir adelante?
+    <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
     </string>
     <string name="preferences_db_restored">¡Restauración exitosa! Por favor reinicia OneBusAway.</string>
     <string name="preferences_db_restore_error">No se puede restaurar: %1$s</string>
@@ -468,10 +468,10 @@
     <string name="preferences_experimental_regions_summary">Permite regiones que pueden ser inestables
     </string>
     <string name="preferences_experimental_regions_enable_warning">¡Las regiones experimentales pueden ser
-        inestables y sin información en tiempo real! ¿Seguir Adelante?
+        inestables y sin información en tiempo real! ¿Continuar?
     </string>
     <string name="preferences_experimental_regions_disable_warning">¡Su región experimental actual
-        no está disponible! ¿Seguir Adelante?
+        no está disponible! ¿Continuar?
     </string>
     <string name="preferences_analytics_title">Enviar datos anónimos de uso</string>
     <string name="preferences_analytics_summary">Ayudanos a mejorar la aplicación</string>
@@ -522,11 +522,12 @@
     <!-- Night Light -->
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
     <string name="night_light_dialog_message">¿Cansado de ver pasar su bus porque el conductor
-        no lo podía ver en la oscuridad? ¡Enciende la luz parpadeante de la noche y hazte visible!
+        no lo podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!
     </string>
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
 
     <!-- Tutorials -->
+    <string name="tutorial_button_text" >¡Entendido!</string>
     <string name="tutorial_welcome_title">¡Bienvenido a OneBusAway!</string>
     <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
         de llegada.
@@ -546,13 +547,13 @@
     <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o deslice el panel hacia arriba
         para ver mas llegadas de buses en esta parada.
     </string>
-    <string name="tutorial_arrival_info_more_title">¡Usa tus super poderes de transito sabiamente!</string>
-    <string name="tutorial_arrival_info_more_text">Toca sobre los 3 puntos (...) para establecer recordatorios, agregar una ruta a
+    <string name="tutorial_arrival_info_more_title">¡Usa tus super poderes de tránsito sabiamente!</string>
+    <string name="tutorial_arrival_info_more_text">Toca sobre los 3 puntos para establecer recordatorios, agregar una ruta a
         favoritos, ver una ruta sobre el mapa, y mucho más ...
     </string>
     <string name="tutorial_arrival_sort_title">Ordenar por ETA o rutas</string>
-    <string name="tutorial_arrival_sort_text">Las llegadas puedes ser ordenadas por el tiempo estimado de llegada (ETA en ingles), o
-        ordenadas y agrupadas por ruta usando el botón de "Ordenar" en la parte superior de la pantalla.
+    <string name="tutorial_arrival_sort_text">Las llegadas puedes ser ordenadas por el tiempo estimado de llegada (ETA en inglés), u
+        ordenadas y agrupadas por ruta usando el botón de \"Ordenar\" en la parte superior de la pantalla.
     </string>
     <string name="tutorial_arrival_header_star_route_title">Agrega rutas a favoritos</string>
     <string name="tutorial_arrival_header_star_route_text">Toca sobre la estrella para que tus rutas
@@ -560,7 +561,7 @@
     </string>
     <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
     <string name="tutorial_recent_stops_routes_text">Las paradas y rutas que recientemente has mirado
-        se pueden aceder por medio del botón "Más".
+        se pueden aceder por medio del botón \"Más\".
     </string>
     <string name="tutorial_arrival_style_b_show_route_title">Ver la posición de los buses sobre el mapa
     </string>
@@ -577,7 +578,7 @@
     </string>
     <string name="tutorial_starred_stops_sort_title">Ordenar tus paradas favoritas</string>
     <string name="tutorial_starred_stops_sort_text">Organiza tus paradas favoritas por nombre o
-        frecuencia de uso con el botón "Ordenar" en la parte superior de la pantalla.
+        frecuencia de uso con el botón \"Ordenar\" en la parte superior de la pantalla.
     </string>
     <string name="tutorial_starred_stops_shortcut_title">Ahorra tiempo con accesos directos</string>
     <string name="tutorial_starred_stops_shortcut_text">Presiona un largo tiempo sobre una parada para crear un acceso directo

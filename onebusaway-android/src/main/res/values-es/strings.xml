@@ -19,7 +19,7 @@
     <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
-    <string name="navdrawer_item_nearby">Cercano</string>
+    <string name="navdrawer_item_nearby">Cerca</string>
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
     <string name="navdrawer_item_settings">Configuración</string>
@@ -38,25 +38,25 @@
     </string>
     <string name="generic_comm_error_toast">Error al actualizar. Lo intentaremos de nuevo en un minuto.</string>
     <string name="route_not_found_error_no_region">Lo sentimos, esa ruta especificada no ha sido encontrada. Si
-        esta era un
+        este era un
         atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
         (Cambialo en
         \"Preferencias-> Tú región\").
     </string>
     <string name="route_not_found_error_with_region_name">Lo sentimos, esa ruta especificada no puede ser
-        encontrada. Si esta era un
+        encontrada. Si este era un
         atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
         región actual es
         %1$s. Cambialo en \"Preferencias-> Tú región\").
     </string>
     <string name="stop_not_found_error_no_region">Lo sentimos, esa parada especificada no puede ser encontrada. Si
-        esta era un
+        este era un
         atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
         (Cambialo en
         \"Preferencias-> Tú región\").
     </string>
     <string name="stop_not_found_error_with_region_name">Lo sentimos, esa parada especificada no puede ser
-        encontrada. Si esta era un
+        encontrada. Si este era un
         atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
         región actual es
         %1$s. Cambialo en \"Preferencias-> Tú región\").
@@ -101,17 +101,16 @@
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Improved \"Show route on map\" interface</b>
-        - Route is now a layer on same map view.\n&#8226;\u0020
-        <b>Misc. usability improvements</b>
-        - Lots of small tweaks.\n&#8226;\u0020
-        <b>Accessibility improvements</b>
-        - Better labels for some components.\n&#8226;
-        <b>Bug fixes</b>
+        <b>Nueva Interfaz</b>
+        - ¡Material design ha llegado!\n&#8226;\u0020
+        <b>Buses en vivo desde el mapa</b>
+        - ¡En los tiempos de llegada selecciona \"Mostrar la ruta sobre el mapa\"!\n&#8226;\u0020
+        <b>Estado del viaje en vivo</b>
+        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
-    <string name="main_nolocation">A OneBusAway le gustaria saber tú ubicación, ¿Quieres activarlo
+    <string name="main_nolocation">A OneBusAway le gustaria saber tú ubicación, ¿Quieres activarla
         ahora?
     </string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
@@ -173,11 +172,11 @@
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Mostrar sobre el Mapa</string>
     <string name="menu_option_sort_by">Ordenar por</string>
-    <string name="stop_info_option_sort_eta">Ordenar por llegada estimada…</string>
-    <string name="stop_info_option_sort_route">Ordenar por Ruta…</string>
+    <string name="stop_info_option_sort_eta">Ordenar por llegada estimada …</string>
+    <string name="stop_info_option_sort_route">Ordenar por Ruta …</string>
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_filter">Filtrar rutas</string>
-    <string name="stop_info_option_editname">Editar el nombre de la Parada</string>
+    <string name="stop_info_option_editname">Editar el nombre de la parada</string>
     <string name="stop_info_option_addstar">Adicionar la parada a favoritos</string>
     <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
     <string name="stop_info_option_removestar">Remover la paradad de favoritos</string>
@@ -238,7 +237,7 @@
 
     <!-- Arrival Time Style B -->
     <string name="arrival_estimated">Estimación en Tiempo Real</string>
-    <string name="arrival_scheduled">Programada</string>
+    <string name="arrival_scheduled">Planificada</string>
 
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Mostrar información de llegadas</string>
@@ -249,7 +248,7 @@
 
     <!-- My stops/routes -->
     <string name="my_recent_title">Reciente</string>
-    <string name="my_recent_menu_title">Paradas/Rutas recientes</string>
+    <string name="my_recent_menu_title">Paradas y Rutas recientes</string>
     <string name="my_recent_stops">Paradas</string>
     <string name="my_recent_routes">Rutas</string>
     <string name="my_starred_title">Marcadas como favoritas</string>
@@ -272,7 +271,7 @@
 
     <string name="my_context_get_stop_info">Mostrar información de llegadas</string>
     <string name="my_context_get_route_info">Mostrar información de la ruta</string>
-    <string name="my_context_create_shortcut">Crear un atajo</string>
+    <string name="my_context_create_shortcut">Crear un acceso directo</string>
     <string name="my_context_showonmap">Mostrar sobre el mapa</string>
     <string name="my_context_remove_recent">Remover de recientes</string>
     <string name="my_context_remove_star">Remover de favoritos</string>
@@ -432,7 +431,8 @@
     <string name="preferences_region_title">Tú región</string>
     <string name="preferences_region_summary_custom_api">Se esta usando una servidor API personalizado</string>
     <string name="preferences_auto_select_region_title">Región automática</string>
-    <string name="preferences_auto_select_region_summary">Establecer tu región de tránsito actual usando tu ubicación actual
+    <string name="preferences_auto_select_region_summary">Establecer tu región de tránsito actual usando 
+        tu ubicación actual
     </string>
 
     <string name="preferences_preferred_units_title">Unidades de distancia preferidas</string>
@@ -475,6 +475,8 @@
     </string>
     <string name="preferences_analytics_title">Enviar datos anónimos de uso</string>
     <string name="preferences_analytics_summary">Ayudanos a mejorar la aplicación</string>
+    <string name="preferences_tutorial_title">Mostrar tutorial</string>
+    <string name="preferences_tutorial_summary">Aprende a utilizar la aplicación con este tutorial</string>
     <string name="preferences_donate_title">Donar</string>
     <string name="preferences_donate_summary">Apoyar el proyecto de código abierto OneBusAway</string>
     <string name="preferences_powered_by_oba_title">Desarrollado por OneBusAway</string>
@@ -522,8 +524,66 @@
     <string name="night_light_dialog_message">¿Cansado de ver pasar su bus porque el conductor
         no lo podía ver en la oscuridad? ¡Enciende la luz parpadeante de la noche y hazte visible!
     </string>
-    <string name="night_light_create_shortcut">Crear un atajo</string>
+    <string name="night_light_create_shortcut">Crear un acceso directo</string>
 
+    <!-- Tutorials -->
+    <string name="tutorial_welcome_title">¡Bienvenido a OneBusAway!</string>
+    <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
+        de llegada.
+    </string>
+    <string name="tutorial_arrival_header_arrival_info_title">¿Cuanto tiempo hasta que llegue tu bus?
+    </string>
+    <string name="tutorial_arrival_header_arrival_info_text">¡Largo tiempo! El color de fondo te indica
+        si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros nos sabemos
+        donde se encuentra el bus, se muestra el tiempo planificado (gris).
+    </string>
+    <string name="tutorial_arrival_header_star_stop_title">Destaca tus paradas favoritas</string>
+    <string name="tutorial_arrival_header_star_stop_text">Toca sobre la estrella para guardar tus paradas
+        favoritas. Las paradas favoritas están disponivles en el panel de navegación principal.
+    </string>
+    <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
+    </string>
+    <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o deslice el panel hacia arriba
+        para ver mas llegadas de buses en esta parada.
+    </string>
+    <string name="tutorial_arrival_info_more_title">¡Usa tus super poderes de transito sabiamente!</string>
+    <string name="tutorial_arrival_info_more_text">Toca sobre los 3 puntos (...) para establecer recordatorios, agregar una ruta a
+        favoritos, ver una ruta sobre el mapa, y mucho más ...
+    </string>
+    <string name="tutorial_arrival_sort_title">Ordenar por ETA o rutas</string>
+    <string name="tutorial_arrival_sort_text">Las llegadas puedes ser ordenadas por el tiempo estimado de llegada (ETA en ingles), o
+        ordenadas y agrupadas por ruta usando el botón de "Ordenar" en la parte superior de la pantalla.
+    </string>
+    <string name="tutorial_arrival_header_star_route_title">Agrega rutas a favoritos</string>
+    <string name="tutorial_arrival_header_star_route_text">Toca sobre la estrella para que tus rutas
+        favoritas aparezcan en la parte superior del panel deslizante.
+    </string>
+    <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
+    <string name="tutorial_recent_stops_routes_text">Las paradas y rutas que recientemente has mirado
+        se pueden aceder por medio del botón "Más".
+    </string>
+    <string name="tutorial_arrival_style_b_show_route_title">Ver la posición de los buses sobre el mapa
+    </string>
+    <string name="tutorial_arrival_style_b_show_route_text">Toca sobre el icono de mapa para ver tu bus moverse
+        en tiempo real.
+    </string>
+    <string name="tutorial_vehicle_icons_title">Toca sobre los iconos del bus para ver mas información</string>
+    <string name="tutorial_vehicle_icons_text">Consejo - Rota el mapa usando dos dedos si
+        accidentalmente tocas sobre una parada cercana en lugar de a un bus.
+    </string>
+    <string name="tutorial_vehicle_info_window_title">Ver información del bus en vivo</string>
+    <string name="tutorial_vehicle_info_window_text">Toca sobre la ventana emergente para ver la ruta de
+        tránsito y su estado en tiempo real para ese bus.
+    </string>
+    <string name="tutorial_starred_stops_sort_title">Ordenar tus paradas favoritas</string>
+    <string name="tutorial_starred_stops_sort_text">Organiza tus paradas favoritas por nombre o
+        frecuencia de uso con el botón "Ordenar" en la parte superior de la pantalla.
+    </string>
+    <string name="tutorial_starred_stops_shortcut_title">Ahorra tiempo con accesos directos</string>
+    <string name="tutorial_starred_stops_shortcut_text">Presiona un largo tiempo sobre una parada para crear un acceso directo
+        en tu pantalla de inicio. ¡Toca sobre el acceso directo para ver instantaneamente las llegadas!
+    </string>
+    
     <!-- About -->
     <string name="title_activity_about">Acerca de</string>
     <string name="about_text">

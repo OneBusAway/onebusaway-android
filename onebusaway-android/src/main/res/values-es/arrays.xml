@@ -16,12 +16,14 @@
 -->
 <resources>
     <string-array name="main_help_options">
+        <item>Aprende con el tutorial</item>
         <item>Twitter</item>
         <item>Agencias Soportadas</item>
         <item>Novedades en esta versión</item>
         <item>Contactanos</item>
     </string-array>
     <string-array name="main_help_options_no_contact_us">
+        <item>Aprende con el tutorial</item>
         <item>Twitter</item>
         <item>Agencias Soportadas</item>
         <item>Novedades en esta versión</item>

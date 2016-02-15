@@ -231,6 +231,12 @@
     <string name="stop_info_header_just_left">acaba de irse</string>
     <string name="stop_info_button_content_description">Acerca de esta parada</string>
     <string name="stop_info_frequency_approximate">~</string>
+    <string name="stop_header_sliding_panel_open">El panel deslizante se expandió. Toque o presione el botón Atrás
+        para colapsar.
+    </string>
+    <string name="stop_header_sliding_panel_collapsed">El planel desplizante se colapso. Toque para expandir y
+        ver la lista detallada de llegadas, p presione el botón Atrás para ocultar.
+    </string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Parada # %1$s</string>
@@ -535,7 +541,7 @@
     <string name="tutorial_arrival_header_arrival_info_title">¿Cuanto tiempo hasta que llegue tu bus?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">¡Largo tiempo! El color de fondo te indica
-        si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros nos sabemos
+        si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>
     <string name="tutorial_arrival_header_star_stop_title">Destaca tus paradas favoritas</string>
@@ -560,8 +566,8 @@
         favoritas aparezcan en la parte superior del panel deslizante.
     </string>
     <string name="tutorial_recent_stops_routes_title">Paradas y rutas recientes</string>
-    <string name="tutorial_recent_stops_routes_text">Las paradas y rutas que recientemente has mirado
-        se pueden aceder por medio del botón \"Más\".
+    <string name="tutorial_recent_stops_routes_text">Encuentra las paradas y rutas que recientemente has mirado
+        accediendo por medio del botón \"Más\" en la parte superior derecha de la pantalla.
     </string>
     <string name="tutorial_arrival_style_b_show_route_title">Ver la posición de los buses sobre el mapa
     </string>

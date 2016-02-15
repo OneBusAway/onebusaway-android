@@ -12,6 +12,7 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.DrawableRes;
@@ -198,9 +199,9 @@ public class ShowcaseViewUtils {
                 target = new ViewTarget(R.id.eta_route_favorite, activity);
                 break;
             case TUTORIAL_RECENT_STOPS_ROUTES:
-                title = r.getString(R.string.tutorial_arrival_header_star_route_title);
+                title = r.getString(R.string.tutorial_recent_stops_routes_title);
                 text = new SpannableString(
-                        r.getString(R.string.tutorial_arrival_header_star_route_text));
+                        r.getString(R.string.tutorial_recent_stops_routes_text));
                 addIcon(activity, text, R.drawable.ic_navigation_more_vert);
                 break;
             case TUTORIAL_ARRIVAL_STYLE_B_SHOW_ROUTE:
@@ -283,6 +284,8 @@ public class ShowcaseViewUtils {
         Drawable d = ResourcesCompat.getDrawable(context.getResources(),
                 drawableResource, context.getTheme());
         d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+        d.setColorFilter(context.getResources().getColor(R.color.header_text_color),
+                PorterDuff.Mode.SRC_IN);
         ImageSpan imageSpan = new ImageSpan(d, ImageSpan.ALIGN_BOTTOM);
         text.setSpan(imageSpan, text.length() - 1, text.length(),
                 Spannable.SPAN_INCLUSIVE_INCLUSIVE);

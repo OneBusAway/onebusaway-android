@@ -280,7 +280,9 @@ public class HomeActivity extends AppCompatActivity
 
         checkRegionStatus();
 
+        // Tutorials - only one will show at a time, so "Welcome" is shown before "Recents"
         ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null);
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_RECENT_STOPS_ROUTES, this, null);
     }
 
     @Override

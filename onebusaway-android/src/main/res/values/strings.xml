@@ -561,7 +561,7 @@
     </string>
     <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
     <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
-        looked at via the 3 dots at the top right of the screen.
+        looked at via the \"More\" button at the top right of the screen.
     </string>
     <string name="tutorial_arrival_style_b_show_route_title">View live vehicle positions on the map
     </string>

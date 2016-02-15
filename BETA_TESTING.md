@@ -6,13 +6,12 @@ Please note that these versions are not as heavily tested as production releases
 
 ## Register as a beta tester
 
-1. Join the [OneBusAway Google+ Community](https://plus.google.com/u/0/communities/105092615216731099521) using a Google account
-2. Go to https://play.google.com/apps/testing/com.joulespersecond.seattlebusbot and opt in for testing (using the same Google account)
-3. Download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot) (using the same Google account) - you'll now have access to the beta version!
+1. Go to https://play.google.com/apps/testing/com.joulespersecond.seattlebusbot and opt in for testing
+1. Download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot) (using the same Google account) - you'll now have access to the beta version!
 
-You only have to complete the above steps once. Unless you opt-out (using the same link in #2 above), you'll continue to receive new beta versions as they are released.
+Please be patient - it may take a few hours for the beta version to become available after you opt in.  You only have to complete the above steps once. Unless you opt-out (using the same link in #1 above), you'll continue to receive new beta versions as they are released.
 
-Please note that you need to use the same Google account for all three steps above, or you won't get access to the beta.
+Please note that you need to use the same Google account for both steps above, or you won't get access to the beta.
 
 Note that as a beta tester you'll automatically get production releases too.
 

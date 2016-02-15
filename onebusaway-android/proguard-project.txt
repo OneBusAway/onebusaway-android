@@ -38,5 +38,8 @@
 # SearchView
 -keep class android.support.v7.widget.SearchView { *; }
 
+# "About" activity - see #418
+-keep public class * extends android.support.design.widget.CoordinatorLayout$Behavior { *; }
+
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**

@@ -330,6 +330,15 @@ public class ArrivalsListFragment extends ListFragment
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
+
+        // TODO: Long click functionality
+        getListView().setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(getActivity(), "Long Tapped!", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
     }
 
     @Override

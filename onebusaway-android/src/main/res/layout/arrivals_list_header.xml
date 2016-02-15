@@ -234,6 +234,7 @@
         <ImageView
                 android:id="@+id/expand_collapse"
                 android:src="@drawable/ic_navigation_expand_more"
+                android:contentDescription="@string/stop_info_open_close_sliding_panel"
                 android:layout_width="13dp"
                 android:layout_height="13dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin_expand_collapse"

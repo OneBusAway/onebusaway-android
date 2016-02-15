@@ -231,6 +231,9 @@
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
     <string name="stop_info_frequency_approximate">~</string>
+    <string name="stop_info_open_close_sliding_panel">Tap to open and close the bottom sliding
+        panel
+    </string>
 
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>

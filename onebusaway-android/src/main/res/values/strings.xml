@@ -231,8 +231,11 @@
     <string name="stop_info_header_just_left">just left</string>
     <string name="stop_info_button_content_description">About this stop</string>
     <string name="stop_info_frequency_approximate">~</string>
-    <string name="stop_info_open_close_sliding_panel">Tap to open and close the bottom sliding
-        panel
+    <string name="stop_header_sliding_panel_open">Sliding panel expanded. Tap or press Back button
+        to collapse.
+    </string>
+    <string name="stop_header_sliding_panel_collapsed">Sliding panel collapsed. Tap to expand and
+        show detailed arrivals list, or press Back button to hide.
     </string>
 
     <!-- Stop Details -->

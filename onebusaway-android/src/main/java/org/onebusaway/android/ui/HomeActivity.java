@@ -69,6 +69,7 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 import java.util.Collections;
@@ -183,6 +184,8 @@ public class HomeActivity extends AppCompatActivity
     String mFocusedStopId = null;
 
     ObaStop mFocusedStop = null;
+
+    ImageView mExpandCollapse = null;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -898,6 +901,7 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListHeader.setSlidingPanelController(mSlidingPanelController);
         mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         mShowArrivalsMenu = true;
+        mExpandCollapse = (ImageView) mArrivalsListHeaderView.findViewById(R.id.expand_collapse);
 
         if (stop != null && routes != null) {
             // Use ObaStop and ObaRoute objects, since we can pre-populate some of the fields
@@ -1126,6 +1130,12 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.refresh();
                 }
 
+                // Accessibility
+                if (mExpandCollapse != null) {
+                    mExpandCollapse.setContentDescription(mContext.getResources()
+                            .getString(R.string.stop_header_sliding_panel_open));
+                }
+
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT,
                         HomeActivity.this, null);
             }
@@ -1142,6 +1152,12 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.refresh();
                 }
                 moveMyLocationButton();
+
+                // Accessibility
+                if (mExpandCollapse != null) {
+                    mExpandCollapse.setContentDescription(mContext.getResources()
+                            .getString(R.string.stop_header_sliding_panel_collapsed));
+                }
             }
 
             @Override
@@ -1159,6 +1175,12 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.refresh();
                 }
 
+                // Accessibility
+                if (mExpandCollapse != null) {
+                    mExpandCollapse.setContentDescription(mContext.getResources()
+                            .getString(R.string.stop_header_sliding_panel_open));
+                }
+
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT,
                         HomeActivity.this, null);
             }
@@ -1171,6 +1193,12 @@ public class HomeActivity extends AppCompatActivity
                 // MapFragment or the ArrivalListFragment (e.g., removing the ArrivalListFragment)
                 if (mMapFragment != null) {
                     mMapFragment.getMapView().setPadding(null, null, null, 0);
+                }
+
+                // Accessibility - reset it here so its ready for next showing
+                if (mExpandCollapse != null) {
+                    mExpandCollapse.setContentDescription(mContext.getResources()
+                            .getString(R.string.stop_header_sliding_panel_collapsed));
                 }
             }
         });

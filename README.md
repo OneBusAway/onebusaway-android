@@ -51,7 +51,7 @@ also mention how you would build/run the **amazon** flavor for the **oba** brand
 1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
 1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle)) then select OK.
 1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
-1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & chose **obaGoogleDebug** to select the Google Play version, or **obaAmazonDebug** to select the Fire Phone.
+1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version, or **obaAmazonDebug** to select the Fire Phone.
 1. Click the green play button (or Alt+Shift+F10) to build and run the project!
 
 ### Building from the command line using Gradle

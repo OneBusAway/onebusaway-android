@@ -30,7 +30,8 @@ import android.content.res.Resources;
 public class BuildFlavorUtils {
 
     public static final String OBA_FLAVOR_BRAND = "oba";
-    // Used to show/hide donate/powered by oba pref
+
+    public static final String AMAZON_FLAVOR_PLATFORM = "amazon";
 
     public static final int ARRIVAL_INFO_STYLE_A = 0; // Original OBA style
 

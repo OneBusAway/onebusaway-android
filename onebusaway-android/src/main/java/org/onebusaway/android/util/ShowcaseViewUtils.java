@@ -5,6 +5,7 @@ import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.Target;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
@@ -236,6 +237,11 @@ public class ShowcaseViewUtils {
                 addIcon(activity, text, R.drawable.ic_action_content_sort);
                 break;
             case TUTORIAL_STARRED_STOPS_SHORTCUT:
+                if (BuildConfig.FLAVOR_platform
+                        .equalsIgnoreCase(BuildFlavorUtils.AMAZON_FLAVOR_PLATFORM)) {
+                    // Amazon doesn't support shortcuts - see #419
+                    return;
+                }
                 title = r.getString(R.string.tutorial_starred_stops_shortcut_title);
                 text = new SpannableString(
                         r.getString(R.string.tutorial_starred_stops_shortcut_text));

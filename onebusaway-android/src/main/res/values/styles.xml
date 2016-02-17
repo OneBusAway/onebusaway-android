@@ -221,7 +221,7 @@
 
     <!-- Tutorial - ShowcaseView -->
     <style name="CustomShowcaseTheme" parent="ShowcaseView">
-        <item name="sv_backgroundColor">#df4CAF50</item>
+        <item name="sv_backgroundColor">@color/tutorial_background</item>
         <item name="sv_showcaseColor">@color/theme_primary_dark</item>
         <item name="sv_buttonText">@string/tutorial_button_text</item>
         <item name="sv_titleTextAppearance">@style/CustomTitle2</item>
@@ -229,10 +229,10 @@
     </style>
 
     <style name="CustomTitle2" parent="TextAppearance.ShowcaseView.Title.Light">
-        <item name="android:textColor">#deffffff</item>
+        <item name="android:textColor">@color/tutorial_title</item>
     </style>
 
     <style name="CustomText2" parent="TextAppearance.ShowcaseView.Detail.Light">
-        <item name="android:textColor">#bfffffff</item>
+        <item name="android:textColor">@color/tutorial_text</item>
     </style>
 </resources>

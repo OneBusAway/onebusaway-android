@@ -79,4 +79,9 @@
     <color name="trip_details_not_passed">@color/body_text_2</color>
     <color name="trip_details_color_selected">#11000000</color>
     <color name="trip_details_background">@color/stop_info_arrival_list_background</color>
+
+    <!-- Tutorials -->
+    <color name="tutorial_background">#df4CAF50</color>
+    <color name="tutorial_title">#deffffff</color>
+    <color name="tutorial_text">#bfffffff</color>
 </resources>

@@ -22,6 +22,11 @@
     <string name="tutorial_welcome_text">Tap on a stop (red dot on the map) to see arrival
         times.
     </string>
+    <string name="tutorial_arrival_header_arrival_info_text">This long! Colored background tells you
+        if the bus is early (dark red) or late (blue). On time = normal red background. If we don\'t
+        know
+        where the bus is, the scheduled time is shown (gray background).
+    </string>
 
     <!-- See src/main/res/strings.xml for more strings you can override here -->
 </resources>

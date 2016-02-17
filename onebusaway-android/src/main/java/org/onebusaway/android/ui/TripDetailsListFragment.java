@@ -50,6 +50,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -125,6 +126,13 @@ public class TripDetailsListFragment extends ListFragment {
         setHasOptionsMenu(true);
 
         getListView().setOnItemClickListener(mClickListener);
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG,"On Click");
+                return true;
+            }
+        });
 
         // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
         if (savedInstanceState != null) {

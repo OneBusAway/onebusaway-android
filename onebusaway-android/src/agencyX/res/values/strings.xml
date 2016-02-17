@@ -17,5 +17,11 @@
 <resources>
     <string name="app_name">Agency X</string>
 
+    <!-- Tutorial -->
+    <string name="tutorial_welcome_title">Welcome to Agency X!</string>
+    <string name="tutorial_welcome_text">Tap on a stop (red dot on the map) to see arrival
+        times.
+    </string>
+
     <!-- See src/main/res/strings.xml for more strings you can override here -->
 </resources>

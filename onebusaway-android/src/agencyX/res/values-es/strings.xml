@@ -23,7 +23,7 @@
         de llegada.
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">¡Largo tiempo! El color de fondo te indica
-        si el bus esta adelantado (rojo oscuro) o va atrasado (azul oscuro). Si es rojo claro se encuentra a tiempo. 
+        si el bus esta adelantado (rojo oscuro) o va atrasado (azul). Si es rojo claro se encuentra a tiempo. 
         Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>

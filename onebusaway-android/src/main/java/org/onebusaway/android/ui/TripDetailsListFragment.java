@@ -28,12 +28,16 @@ import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
@@ -126,13 +130,7 @@ public class TripDetailsListFragment extends ListFragment {
         setHasOptionsMenu(true);
 
         getListView().setOnItemClickListener(mClickListener);
-        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.i(TAG,"On Click");
-                return true;
-            }
-        });
+        getListView().setOnItemLongClickListener(mLongClickListener);
 
         // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
         if (savedInstanceState != null) {
@@ -395,6 +393,53 @@ public class TripDetailsListFragment extends ListFragment {
             String stopId = time.getStopId();
             ObaStop stop = refs.getStop(stopId);
             showArrivals(stopId, stop.getName(), stop.getDirection());
+        }
+    };
+
+    private final AdapterView.OnItemLongClickListener mLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            final int pId = position;
+            // Build AlertDialog
+            AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
+            bldr.setMessage(R.string.stop_notify_dialog_msg).setTitle(R.string.stop_notify_dialog_title);
+
+            // Confirmation button
+            bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    ObaTripSchedule.StopTime time = mTripInfo.getSchedule().getStopTimes()[pId];
+                    ObaReferences refs = mTripInfo.getRefs();
+                    String stopId = time.getStopId();
+                    ObaStop stop = refs.getStop(stopId);
+
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(getContext())
+                                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                                    .setContentTitle(getResources().getString(R.string.stop_notify_title))
+                                    .setContentText(stop.getName());
+                    NotificationManager mNotificationManager =
+                            (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    mBuilder.setOngoing(true);
+                    mNotificationManager.notify(1, mBuilder.build());
+                    Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            // Cancellation Button
+            bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+
+            // Display
+            AlertDialog dialog = bldr.create();
+            dialog.setOwnerActivity(getActivity());
+            dialog.show();
+            return true;
         }
     };
 

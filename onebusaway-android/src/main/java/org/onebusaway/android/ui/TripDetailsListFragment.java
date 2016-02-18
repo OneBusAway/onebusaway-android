@@ -30,6 +30,8 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -418,6 +420,7 @@ public class TripDetailsListFragment extends ListFragment {
                                     .setSmallIcon(R.drawable.map_stop_icon)
                                     .setContentTitle(getResources().getString(R.string.stop_notify_title))
                                     .setContentText(stop.getName());
+
                     NotificationManager mNotificationManager =
                             (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 

@@ -415,7 +415,7 @@ public class TripDetailsListFragment extends ListFragment {
 
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(getContext())
-                                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                                    .setSmallIcon(R.drawable.map_stop_icon)
                                     .setContentTitle(getResources().getString(R.string.stop_notify_title))
                                     .setContentText(stop.getName());
                     NotificationManager mNotificationManager =

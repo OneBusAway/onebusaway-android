@@ -17,6 +17,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.LocationHelper;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -25,14 +26,14 @@ import java.util.concurrent.Executors;
  * Created by azizmb on 2/18/16.
  */
 public class TADService extends Service
-    implements LocationListener
+    implements LocationHelper.Listener
 {
     public static final String TAG = "TADService";
 
     private int UPDATE_TIME_INTERVAL = 5 * 1000; // 5 secs
     private int UPDATE_DISTANCE_INTERVAL = 5;   // 5m
 
-    private LocationManager mLocationManager = null;
+    private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;
 
     private String dName = null;
@@ -47,10 +48,11 @@ public class TADService extends Service
         this.dLocation.setLongitude(intent.getDoubleExtra("STOP_LNG", 0));
 
         final ProximityProvider provider = new ProximityProvider();
-        mLocationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
-        if (mLocationManager != null) {
+        mLocationHelper = new LocationHelper(this);
+
+        if (mLocationHelper != null) {
             Log.i(TAG, "Requesting Location Updates");
-            mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, UPDATE_TIME_INTERVAL, UPDATE_DISTANCE_INTERVAL, this);
+            mLocationHelper.registerListener(this);
         }
         return START_STICKY;
     }
@@ -83,19 +85,6 @@ public class TADService extends Service
             updateNotification();
             // TODO: Run TAD
         }
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
     }
 
     private void updateNotification()

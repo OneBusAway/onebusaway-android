@@ -26,6 +26,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.TTSHelper;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
@@ -38,6 +39,7 @@ import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.ListPreference;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.AsyncTaskLoader;
@@ -427,6 +429,7 @@ public class TripDetailsListFragment extends ListFragment {
                             (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
                     mBuilder.setOngoing(true);
+                    TTSHelper tts = new TTSHelper("Starting Trip");
                     mNotificationManager.notify(1, mBuilder.build());
                     Intent serviceIntent = new Intent(getContext(), TADService.class);
                     Bundle stopBundle = new Bundle();

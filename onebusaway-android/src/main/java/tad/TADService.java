@@ -18,7 +18,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.util.LocationHelper;
+import org.onebusaway.android.util.RegionUtils;
 
+import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
@@ -29,9 +31,6 @@ public class TADService extends Service
     implements LocationHelper.Listener
 {
     public static final String TAG = "TADService";
-
-    private int UPDATE_TIME_INTERVAL = 5 * 1000; // 5 secs
-    private int UPDATE_DISTANCE_INTERVAL = 5;   // 5m
 
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;
@@ -87,6 +86,9 @@ public class TADService extends Service
         }
     }
 
+    // Updates on-going notification of trip with distance to stop.
+    // If user's current location is unavailable, it falls back
+    // to the stop name.
     private void updateNotification()
     {
         NotificationCompat.Builder mBuilder =
@@ -95,8 +97,19 @@ public class TADService extends Service
                         .setContentTitle(getResources().getString(R.string.stop_notify_title))
                         .setContentText(dName);
 
+
         if (mLastLocation != null) {
-            mBuilder.setContentText(mLastLocation.distanceTo(dLocation)*0.000621371 + " miles away.");
+            // Retrieve preferred unit and calculate distance.
+            String unit = getString(R.string.preference_key_preferred_units);
+            double distance = mLastLocation.distanceTo(dLocation);
+            DecimalFormat fmt = new DecimalFormat("#.0");
+            if (unit == "km") {
+                distance /= 1000;
+                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+            } else {
+                distance *= RegionUtils.METERS_TO_MILES;
+                mBuilder.setContentText(fmt.format(distance) + " miles away.");
+            }
         }
 
         NotificationManager mNotificationManager =

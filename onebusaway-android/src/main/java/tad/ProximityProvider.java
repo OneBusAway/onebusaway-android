@@ -56,14 +56,14 @@ public class ProximityProvider {
             }
             //check if near final stop and reset the 2nd to last stop detection variables.
             // This was replaced by the method resetVariablesAfterSegmentSwitching
-    /*            if (StopDetector(this.endistance, 0, 0)) {
+                if (StopDetector(this.endistance, 0, 0)) {
                     m100_a = false;
                     m50_a = false;
                     m20_a = false;
                     m20_d = false;
                     m50_d = false;
                     m100_d = false;
-                }*/
+                }
         }
         return 0; //No alerts played.
     }
@@ -83,7 +83,7 @@ public class ProximityProvider {
                     if (t == 0) {
                         System.out.println("Alert 1 Screen showed to rider");
                         waitingForConfirm = true;
-                        this.midlet.getDisplay().setCurrent(this.midlet.getAlert1());
+                        // Pull the cord now alert.
                         System.out.println("Calling way point reached!");
                         System.err.println("Calling WayPoint Reached!");
                         this.navProvider.navlistener.waypointReached(this.lastcoords);
@@ -107,7 +107,7 @@ public class ProximityProvider {
                     if (t == 0) {
                         System.out.println("Alert 1 screen before last stop");
                         waitingForConfirm = true;
-                        this.midlet.getDisplay().setCurrent(this.midlet.getAlert1());
+                        // Destination Reached Event
                         System.out.println("Calling destination reached...");
                         System.err.println("calling destination reached!");
                         this.navProvider.navlistener.destinationReached();
@@ -205,9 +205,6 @@ public class ProximityProvider {
                 System.out.println("Case 5: true");
                 return true;
             }
-
-
-        }
         return false;
     }
 }

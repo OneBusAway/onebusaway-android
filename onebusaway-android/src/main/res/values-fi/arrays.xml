@@ -1,57 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2014 Turo Ulvinen (turo.ulvinen@gmail.com), 2015 Ari Rusakko (ari.rusakko@octo3.fi)
+<!-- Copyright (C) 2014 Turo Ulvinen (turo.ulvinen@gmail.com), 2015-2016 Ari Rusakko (ari.rusakko@octo3.fi)
 
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-          http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 -->
 <resources>
     <string-array name="main_help_options">
-        <item>Tutorial</item>
+        <item>Opastus</item>
         <item>Twitter</item>
         <item>Tuetut liikennöitsijät</item>
         <item>Uutta?</item>
         <item>Ota yhteyttä</item>
     </string-array>
     <string-array name="main_help_options_no_contact_us">
-        <item>Tutorial</item>
-        <item>Twitter Feed</item>
-        <item>Supported Agencies</item>
-        <item>What\'s New?</item>
+        <item>Opastus</item>
+        <item>Twitter</item>
+        <item>Tuetut liikennöitsijät</item>
+        <item>Uutta?</item>
     </string-array>
-    <string-array name="stop_item_options">
-        <item>Aseta muistutus</item>
-        <item>Näytä reittitiedot</item>
-        <item>Näytä ainoastaan tämä reitti</item>
-        <item>Näytä reitin aikataulu</item>
-        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    <string-array name="route_favorite_options">
+        <item>Tämä pysäkki</item>
+        <item>Kaikki pysäkit</item>
     </string-array>
-    <string-array name="stop_item_options_edit">
-        <item>Muokkaa muistutusta</item>
-        <item>Näytä reittitiedot</item>
-        <item>Näytä ainoastaan tämä reitti</item>
-        <item>Näytä reitin aikataulu</item>
-        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
-    </string-array>
-    <string-array name="stop_item_options_noschedule">
-        <item>Aseta muistutus</item>
-        <item>Näytä reittitiedot</item>
-        <item>Näytä ainoastaan tämä reitti</item>
-        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
-    </string-array>
-    <string-array name="stop_item_options_edit_noschedule">
-        <item>Muokkaa muistutusta</item>
-        <item>Näytä reittitiedot</item>
-        <item>Näytä ainoastaan tämä reitti</item>
-        <item>Ilmoita matkaan liittyvästä ongelmasta</item>
+    <string-array name="sort_stops">
+        <item>Nimi</item>
+        <item>Useiten käytetty</item>
     </string-array>
     <string-array name="search_stop_options">
         <item>Näytä saapuvat</item>
@@ -102,5 +84,46 @@
         <item>@string/preferences_preferred_units_option_automatic</item>
         <item>@string/preferences_preferred_units_option_metric</item>
         <item>@string/preferences_preferred_units_option_imperial</item>
+    </string-array>
+    <string-array name="arrival_info_style_options">
+        <item>@string/preferences_arrival_info_style_options_a</item>
+        <item>@string/preferences_arrival_info_style_options_b</item>
+    </string-array>
+
+    <!-- Spoken directions based on 16 compass points, but pointing from the user's current location
+         towards the selected bus stop instead of N/S/E/W. -->
+    <string-array name="spoken_compass_directions">
+        <item>suoraan edessä</item>
+        <!-- North -->
+        <item>hieman vasemmalla</item>
+        <!-- NNE -->
+        <item>hieman vasemmalla</item>
+        <!-- NE -->
+        <item>vasemmalla</item>
+        <!-- ENE -->
+        <item>vasemmalla</item>
+        <!-- East -->
+        <item>takana vasemmalla</item>
+        <!-- ESE -->
+        <item>takana vasemmalla</item>
+        <!-- SE -->
+        <item>takana vasemalla</item>
+        <!-- SSE -->
+        <item>suoraan takana</item>
+        <!-- South -->
+        <item>takana oikealla</item>
+        <!-- SSW -->
+        <item>takana oikealla</item>
+        <!-- SW -->
+        <item>takana oikealla</item>
+        <!-- WSW -->
+        <item>oikealla</item>
+        <!-- West -->
+        <item>oikealla</item>
+        <!-- WNW -->
+        <item>hieman oikealla</item>
+        <!-- NW -->
+        <item>hieman oikealla</item>
+        <!-- NNW -->
     </string-array>
 </resources>

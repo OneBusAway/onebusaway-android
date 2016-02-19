@@ -62,6 +62,8 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
+import tad.TADService;
+
 public class TripDetailsListFragment extends ListFragment {
 
     private static final String TAG = "TripDetailsListFragment";
@@ -426,6 +428,12 @@ public class TripDetailsListFragment extends ListFragment {
 
                     mBuilder.setOngoing(true);
                     mNotificationManager.notify(1, mBuilder.build());
+                    Intent serviceIntent = new Intent(getContext(), TADService.class);
+                    Bundle stopBundle = new Bundle();
+                    serviceIntent.putExtra("STOP_NAME", stop.getName());
+                    serviceIntent.putExtra("STOP_LAT", stop.getLatitude());
+                    serviceIntent.putExtra("STOP_LNG", stop.getLongitude());
+                    getContext().startService(serviceIntent);
                     Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
                 }
             });

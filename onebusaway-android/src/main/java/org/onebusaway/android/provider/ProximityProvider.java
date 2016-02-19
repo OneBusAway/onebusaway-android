@@ -20,7 +20,7 @@ public class ProximityProvider {
     private float endistance = -1; //Direct distance to last bus stop coords, used for segment navigation
     private boolean ready = false; //Has get ready alert been played?
     private boolean waitingForConfirm = false;
-    private boolean m100_a,  m50_a,  m20_a,  m20_d,  m50_d,  m100_d = false;  //Varibales for handling arrival/departure from 2nd to last stop
+    private boolean m100_a,  m50_a,  m20_a,  m20_d,  m50_d,  m100_d = false;  //Varibales for handling arrival/departure from 2nd to last stop*/
 
 
     private int checkProximityAll(Location currentLocation) {
@@ -167,7 +167,7 @@ public class ProximityProvider {
                 return true;
 
             } else */
-        System.out.println("Detecting stop. distance_d=" +
+        /*System.out.println("Detecting stop. distance_d=" +
                 distance_d + ". stop_type=" + stop_type + " speed=" + speed);
         if  (stop_type == 1) {
                 /* Check if the bus is on the second to last stop */

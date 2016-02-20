@@ -42,6 +42,7 @@ public class TADService extends Service
     private String dName = null;
     private Location dLocation = null;
 
+    private TADNavigationServiceProvider navProvider;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -56,6 +57,7 @@ public class TADService extends Service
             Log.i(TAG, "Requesting Location Updates");
             mLocationHelper.registerListener(this);
         }
+        this.navProvider = new TADNavigationServiceProvider();
         return START_STICKY;
     }
 
@@ -84,8 +86,8 @@ public class TADService extends Service
         Log.i(TAG, "Location Updated");
         mLastLocation = location;
         if (mLastLocation != null) {
+            this.navProvider.locationUpdated(mLastLocation);
             updateNotification();
-            // TODO: Run TAD
         }
     }
 

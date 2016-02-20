@@ -145,17 +145,9 @@ public class TADNavigationServiceProvider implements Runnable {
         distances = new float[segments.length];
         System.out.println("Segments Length: " + segments.length);
         //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
-        Location coords = new Location(LocationManager.GPS_PROVIDER);
-        coords.setLatitude(this.segments[segmentIndex].getYToBeforeLatitude());
-        coords.setLongitude(this.segments[segmentIndex].getXToBeforeLongitude());
-
-        Location lastcoords = new Location(LocationManager.GPS_PROVIDER);
-        lastcoords.setLatitude(this.segments[segmentIndex].getYToLatitude());
-        lastcoords.setLongitude(this.segments[segmentIndex].getXToLongitude());
-
-        Location firstcoords = new Location(LocationManager.GPS_PROVIDER);
-        firstcoords.setLatitude(this.segments[segmentIndex].getYFromLatitude());
-        firstcoords.setLongitude(this.segments[segmentIndex].getXFromLongitude());
+        Location coords = this.segments[segmentIndex].getBeforeLocation();
+        Location lastcoords = this.segments[segmentIndex].getToLocation();
+        Location firstcoords = this.segments[segmentIndex].getFromLocation();
 
         alertdistance = this.segments[segmentIndex].getAlertDistance();
         //Have proximity listener listen for the "Ring" location
@@ -229,7 +221,7 @@ public class TADNavigationServiceProvider implements Runnable {
             System.out.println("getting coords");
             this.segmentIndex++;
             //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
-            Location coords = new Location(LocationManager.GPS_PROVIDER);
+            /*Location coords = new Location(LocationManager.GPS_PROVIDER);
             coords.setLatitude(this.segments[segmentIndex].getYToBeforeLatitude());
             coords.setLongitude(this.segments[segmentIndex].getXToBeforeLongitude());
 
@@ -239,12 +231,13 @@ public class TADNavigationServiceProvider implements Runnable {
 
             Location firstcoords = new Location(LocationManager.GPS_PROVIDER);
             firstcoords.setLatitude(this.segments[segmentIndex].getYFromLatitude());
-            firstcoords.setLongitude(this.segments[segmentIndex].getXFromLongitude());
+            firstcoords.setLongitude(this.segments[segmentIndex].getXFromLongitude());*/
 
-            alertdistance = this.segments[segmentIndex].getAlertDistance();
+            Segment segment = this.segments[segmentIndex];
+            alertdistance = segment.getAlertDistance();
             //Have proximity listener listen for the "Ring" location
             this.proxListener.listenForDistance(alertdistance);
-            this.proxListener.listenForCoords(coords, lastcoords, firstcoords);
+            this.proxListener.listenForCoords(segment.getBeforeLocation(), segment.getToLocation(), segment.getFromLocation());
              System.out.println("Proximlistener parameters were set!");
             //Try to cancel any existing registrations of the AVLServiceProvider
             try{

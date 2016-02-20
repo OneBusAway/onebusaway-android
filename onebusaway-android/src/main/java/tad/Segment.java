@@ -4,6 +4,8 @@
 package tad;
 
 
+import android.location.Location;
+
 /**
  *
  */
@@ -79,7 +81,7 @@ public class Segment {
         return idStopFromTransitAgencyGTFS;
     }
 
-    private double XFromLongitude;
+    /*private double XFromLongitude;
 
     public void setXFromLongitude(double XFromLongitude)  {
         this.XFromLongitude = XFromLongitude;
@@ -97,7 +99,11 @@ public class Segment {
 
     public double getYFromLatitude() {
         return YFromLatitude;
-    }
+    }*/
+
+    private Location fromLocation;
+    public Location getFromLocation() { return fromLocation; }
+    public void setFromLocation(Location l) {fromLocation = l; }
 
     private int idStopTo;
 
@@ -119,7 +125,7 @@ public class Segment {
         return idStopToTransitAgencyGTFS;
     }
 
-    private double XToLongitude;
+    /*private double XToLongitude;
 
     public void setXToLongitude(double XToLongitude)  {
         this.XToLongitude = XToLongitude;
@@ -137,9 +143,13 @@ public class Segment {
 
     public double getYToLatitude() {
         return YToLatitude;
-    }
+    }*/
+    private Location toLocation;
+    public Location getToLocation() { return toLocation; }
+    public void setToLocation(Location l) {toLocation = l; }
 
-    private double XToBeforeLongitude;
+
+    /*private double XToBeforeLongitude;
 
     public void setXToBeforeLongitude(double XToBeforeLongitude)  {
         this.XToBeforeLongitude = XToBeforeLongitude;
@@ -157,7 +167,10 @@ public class Segment {
 
     public double getYToBeforeLatitude() {
         return YToBeforeLatitude;
-    }
+    }*/
+    private Location beforeLocation;
+    public Location getBeforeLocation() { return beforeLocation; }
+    public void setBeforeLocation(Location l) { beforeLocation = l; }
 
     private float AlertDistance;
 
@@ -167,5 +180,12 @@ public class Segment {
 
     public float getAlertDistance() {
         return AlertDistance;
+    }
+
+    public Segment(Location fromLoc, Location toLoc, Location beforeLoc)
+    {
+        this.fromLocation = fromLoc;
+        this.toLocation = toLoc;
+        this.beforeLocation = beforeLoc;
     }
 }

@@ -31,6 +31,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.MyTextUtils;
@@ -432,7 +433,7 @@ public class ArrivalsListFragment extends ListFragment
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
                 mStop = result.getStop();
-                addToDB(mStop);
+                DBUtil.addToDB(mStop);
             }
             info = result.getArrivalInfo();
             situations = result.getSituations();
@@ -1492,22 +1493,6 @@ public class ArrivalsListFragment extends ListFragment
                 c.close();
             }
         }
-    }
-
-    private void addToDB(ObaStop stop) {
-        String name = MyTextUtils.toTitleCase(stop.getName());
-
-        // Update the database
-        ContentValues values = new ContentValues();
-        values.put(ObaContract.Stops.CODE, stop.getStopCode());
-        values.put(ObaContract.Stops.NAME, name);
-        values.put(ObaContract.Stops.DIRECTION, stop.getDirection());
-        values.put(ObaContract.Stops.LATITUDE, stop.getLatitude());
-        values.put(ObaContract.Stops.LONGITUDE, stop.getLongitude());
-        if (Application.get().getCurrentRegion() != null) {
-            values.put(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
-        }
-        ObaContract.Stops.insertOrUpdate(getActivity(), stop.getId(), values, true);
     }
 
     private static final String[] TRIPS_PROJECTION = {

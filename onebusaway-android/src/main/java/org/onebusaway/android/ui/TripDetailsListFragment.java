@@ -406,53 +406,58 @@ public class TripDetailsListFragment extends ListFragment {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             final int pId = position;
-            // Build AlertDialog
-            AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
-            bldr.setMessage(R.string.stop_notify_dialog_msg).setTitle(R.string.stop_notify_dialog_title);
+            if (pId > 1) {
+                // Build AlertDialog
+                AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
+                bldr.setMessage(R.string.stop_notify_dialog_msg).setTitle(R.string.stop_notify_dialog_title);
 
-            // Confirmation button
-            bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    ObaTripSchedule.StopTime time = mTripInfo.getSchedule().getStopTimes()[pId];
-                    ObaReferences refs = mTripInfo.getRefs();
-                    String stopId = time.getStopId();
-                    ObaStop stop = refs.getStop(stopId);
+                // Confirmation button
+                bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
+                        ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
+                        ObaReferences refs = mTripInfo.getRefs();
+                        String destStopId = timeDest.getStopId();
+                        String lastStopId = timeLast.getStopId();
+                        ObaStop destStop = refs.getStop(destStopId);
+                        ObaStop lastStop = refs.getStop(lastStopId);
 
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(getContext())
-                                    .setSmallIcon(R.drawable.map_stop_icon)
-                                    .setContentTitle(getResources().getString(R.string.stop_notify_title))
-                                    .setContentText(stop.getName());
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(getContext())
+                                        .setSmallIcon(R.drawable.map_stop_icon)
+                                        .setContentTitle(getResources().getString(R.string.stop_notify_title))
+                                        .setContentText(destStop.getName());
 
-                    NotificationManager mNotificationManager =
-                            (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+                        NotificationManager mNotificationManager =
+                                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
-                    mBuilder.setOngoing(true);
-                    TTSHelper tts = new TTSHelper("Starting Trip");
-                    mNotificationManager.notify(1, mBuilder.build());
-                    Intent serviceIntent = new Intent(getContext(), TADService.class);
-                    Bundle stopBundle = new Bundle();
-                    serviceIntent.putExtra("STOP_NAME", stop.getName());
-                    serviceIntent.putExtra("STOP_LAT", stop.getLatitude());
-                    serviceIntent.putExtra("STOP_LNG", stop.getLongitude());
-                    getContext().startService(serviceIntent);
-                    Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
-                }
-            });
+                        mBuilder.setOngoing(true);
+                        TTSHelper tts = new TTSHelper("Starting Trip");
+                        mNotificationManager.notify(1, mBuilder.build());
+                        Intent serviceIntent = new Intent(getContext(), TADService.class);
+                        Bundle stopBundle = new Bundle();
+                        serviceIntent.putExtra("STOP_NAME", destStop.getName());
+                        serviceIntent.putExtra("STOP_LAT", destStop.getLatitude());
+                        serviceIntent.putExtra("STOP_LNG", destStop.getLongitude());
+                        getContext().startService(serviceIntent);
+                        Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
+                    }
+                });
 
-            // Cancellation Button
-            bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
+                // Cancellation Button
+                bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
 
-                }
-            });
+                    }
+                });
 
-            // Display
-            AlertDialog dialog = bldr.create();
-            dialog.setOwnerActivity(getActivity());
-            dialog.show();
+                // Display
+                AlertDialog dialog = bldr.create();
+                dialog.setOwnerActivity(getActivity());
+                dialog.show();
+            }
             return true;
         }
     };

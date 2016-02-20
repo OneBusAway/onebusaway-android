@@ -58,6 +58,8 @@ public class TADService extends Service
             mLocationHelper.registerListener(this);
         }
         this.navProvider = new TADNavigationServiceProvider();
+        Segment segment = new Segment();
+        this.navProvider.navigate(new tad.Service(), new Segment[] { });
         return START_STICKY;
     }
 

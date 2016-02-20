@@ -228,7 +228,7 @@
         </service>
 
         <service
-            android:name="tad.TADService" >
+            android:name=".tad.TADService" >
         </service>
 
         <receiver android:name=".tripservice.AlarmReceiver">

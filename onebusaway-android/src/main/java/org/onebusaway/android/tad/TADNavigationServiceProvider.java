@@ -6,7 +6,7 @@
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
  */
-package tad;
+package org.onebusaway.android.tad;
 import android.location.Location;
 import android.util.Log;
 

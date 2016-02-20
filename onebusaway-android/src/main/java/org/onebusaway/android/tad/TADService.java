@@ -1,4 +1,4 @@
-package tad;
+package org.onebusaway.android.tad;
 
 import android.app.NotificationManager;
 import android.app.Service;
@@ -6,27 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceScreen;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import org.onebusaway.android.R;
-import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 
 /**
  * Created by azizmb on 2/18/16.
@@ -59,7 +47,7 @@ public class TADService extends Service
         }
         this.navProvider = new TADNavigationServiceProvider();
         Segment segment = new Segment(null, this.dLocation, null);
-        this.navProvider.navigate(new tad.Service(), new Segment[] { });
+        this.navProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { });
         return START_STICKY;
     }
 

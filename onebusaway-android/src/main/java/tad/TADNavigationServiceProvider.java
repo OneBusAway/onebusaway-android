@@ -7,10 +7,7 @@
  * and open the template in the editor.
  */
 package tad;
-
-//Java libraries
 import android.location.Location;
-import android.location.LocationManager;
 import android.util.Log;
 
 /**
@@ -21,12 +18,7 @@ import android.util.Log;
 public class TADNavigationServiceProvider implements Runnable {
 
     public final String TAG = "TADNavServiceProvider";
-    /* These varaibles hold references to TAD objects */
-    //TADMIDlet_Converted midlet;
-    //TADCommunicator communicator;
-    //TADLocListener locListener;
     public TADProximityCalculator proxListener;
-    //NavigationServiceListener navlistener;
     private int timeout = 60;  //Timeout value for service provider action (default = 60 seconds);
     private boolean dialogAllowed = false;  //Whether a dialog is allowed with this navigation service provider
     /** TAD Specific variables **/
@@ -221,18 +213,6 @@ public class TADNavigationServiceProvider implements Runnable {
             System.out.println("getting coords");
             this.segmentIndex++;
             //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
-            /*Location coords = new Location(LocationManager.GPS_PROVIDER);
-            coords.setLatitude(this.segments[segmentIndex].getYToBeforeLatitude());
-            coords.setLongitude(this.segments[segmentIndex].getXToBeforeLongitude());
-
-            Location lastcoords = new Location(LocationManager.GPS_PROVIDER);
-            lastcoords.setLatitude(this.segments[segmentIndex].getYToLatitude());
-            lastcoords.setLongitude(this.segments[segmentIndex].getXToLongitude());
-
-            Location firstcoords = new Location(LocationManager.GPS_PROVIDER);
-            firstcoords.setLatitude(this.segments[segmentIndex].getYFromLatitude());
-            firstcoords.setLongitude(this.segments[segmentIndex].getXFromLongitude());*/
-
             Segment segment = this.segments[segmentIndex];
             alertdistance = segment.getAlertDistance();
             //Have proximity listener listen for the "Ring" location

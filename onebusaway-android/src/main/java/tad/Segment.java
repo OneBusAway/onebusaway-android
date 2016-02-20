@@ -182,7 +182,7 @@ public class Segment {
         return AlertDistance;
     }
 
-    public Segment(Location fromLoc, Location toLoc, Location beforeLoc)
+    public Segment(Location beforeLoc, Location toLoc, Location fromLoc)
     {
         this.fromLocation = fromLoc;
         this.toLocation = toLoc;

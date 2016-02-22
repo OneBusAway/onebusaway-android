@@ -762,6 +762,12 @@
         \"OneBusAway\" and then \"Permissions\", and re-enable \"Location\".
     </string>
 
+    <!-- Voice Commands -->
+    <string name="voice_get_ready">Get ready!</string>
+    <string name="voice_starting_trip">Starting trip now!</string>
+    <string name="voice_exit_bus">Get off the bus now!</string>
+    <string name="voice_pull_cord">Pull the cord!</string>
+
     <!-- About -->
     <string name="title_activity_about">About</string>
     <string name="about_text">

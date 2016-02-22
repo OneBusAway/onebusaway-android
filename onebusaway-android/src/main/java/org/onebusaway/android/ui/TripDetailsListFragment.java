@@ -430,7 +430,7 @@ public class TripDetailsListFragment extends ListFragment {
                                 (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
                         mBuilder.setOngoing(true);
-                        TTSHelper tts = new TTSHelper("Starting Trip");
+                        TTSHelper tts = new TTSHelper(getString(R.string.voice_starting_trip));
                         mNotificationManager.notify(1, mBuilder.build());
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
                         Bundle stopBundle = new Bundle();

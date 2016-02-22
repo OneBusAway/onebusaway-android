@@ -10,6 +10,8 @@ package org.onebusaway.android.tad;
 import android.location.Location;
 import android.util.Log;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.TTSHelper;
 
 /**
@@ -447,7 +449,7 @@ public class TADNavigationServiceProvider implements Runnable {
                         if (t == 0) {
                             Log.i(TAG,"Alert 1 screen before last stop");
                             waitingForConfirm = true;
-                            TTSHelper helper = new TTSHelper("Exit the Bus Now");
+                            TTSHelper helper = new TTSHelper(Application.get().getApplicationContext().getString(R.string.voice_exit_bus));
                             Log.i(TAG,"Calling destination reached...");
                             System.err.println("calling destination reached!");
                             finished = true;
@@ -488,7 +490,9 @@ public class TADNavigationServiceProvider implements Runnable {
             } else if (selection == 1) {
                 if (ready == false) {
                     ready = true;
-                    TTSHelper helper = new TTSHelper("Get Ready");
+                    TTSHelper helper = new TTSHelper(
+                            Application.get().getApplicationContext().getString(R.string.voice_get_ready)
+                    );
                     return true;
                 }
             }
@@ -619,7 +623,9 @@ public class TADNavigationServiceProvider implements Runnable {
                 if (this.directdistance < 250) {
                     //Fire proximity event for getting ready 100 meters prior to 2nd to last stop
                     if (this.proximityEvent(1, -1)) {
-                        TTSHelper helper = new TTSHelper("Get Ready");
+                        TTSHelper helper = new TTSHelper(
+                                Application.get().getApplicationContext().getString(R.string.voice_get_ready)
+                        );
                         Log.i(TAG, "-----Get ready!");
                         return 2; //Get ready alert played
                     }
@@ -629,7 +635,9 @@ public class TADNavigationServiceProvider implements Runnable {
                     //Fire proximity event for getting off the bus
 
                     if (this.proximityEvent(0, 0)) {
-                        TTSHelper helper = new TTSHelper("Get Off The Bus Now!");
+                        TTSHelper helper = new TTSHelper(
+                                Application.get().getApplicationContext().getString(R.string.voice_exit_bus)
+                        );
                         Log.i(TAG, "-----Get off the bus!");
                         finished = true;
                         return 1; // Get off bus alert played

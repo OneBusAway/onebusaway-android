@@ -38,7 +38,7 @@ public class TADNavigationServiceProvider implements Runnable {
     /** Creates a new instance of TADNavigationServiceProvider */
     public TADNavigationServiceProvider(/*TADCommunicator communicator*/) {
         //this.communicator = communicator;
-        System.out.println("Creating TAD Navigation Service Provider");
+        Log.i(TAG,"Creating TAD Navigation Service Provider");
     }
 
     /**
@@ -47,7 +47,7 @@ public class TADNavigationServiceProvider implements Runnable {
      */
     private void lazyProxInitialization() {
         //Re-initializes the proximityListener
-        System.out.println("Proximity Listener initializing...");
+        Log.i(TAG,"Proximity Listener initializing...");
         proxListener = null;
         proxListener = new TADProximityCalculator(this);  //Create the proximitylistener
 
@@ -97,7 +97,7 @@ public class TADNavigationServiceProvider implements Runnable {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Could not get Segment ID");
+            Log.i(TAG,"Could not get Segment ID");
             return -1;
         }
     }
@@ -127,7 +127,7 @@ public class TADNavigationServiceProvider implements Runnable {
      */
     public void navigate(Service service, Segment[] segments) {
 
-        System.out.println("Starting navigation for service");
+        Log.i(TAG,"Starting navigation for service");
         //Create a new istance and rewrite the old one with a blank slate of ProximityListener
         this.lazyProxInitialization();
         this.service = service;
@@ -135,7 +135,7 @@ public class TADNavigationServiceProvider implements Runnable {
         this.segmentIndex = 0;
         this.diss = 0;
         distances = new float[segments.length];
-        System.out.println("Segments Length: " + segments.length);
+        Log.i(TAG,"Segments Length: " + segments.length);
         //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
         Location coords = this.segments[segmentIndex].getBeforeLocation();
         Location lastcoords = this.segments[segmentIndex].getToLocation();
@@ -187,16 +187,16 @@ public class TADNavigationServiceProvider implements Runnable {
      * @return
      */
     public boolean hasMoreSegments() {
-        System.out.println("Checking if service has more segments left");
+        Log.i(TAG,"Checking if service has more segments left");
         //If there are still more segments to be navigated as part of this transit service, return true.  Otherwise return false
         if ((this.segments == null) || (this.segmentIndex >= (this.segments.length - 1))) {
-            System.out.println("Segments Index: " + this.segmentIndex + " Segments Length: " + (this.segments.length - 1));
-            System.out.println("%%%%%%%%%%%%%%% No more Segments Left %%%%%%%%%%%%%%%%%%%%%");
+            Log.i(TAG,"Segments Index: " + this.segmentIndex + " Segments Length: " + (this.segments.length - 1));
+            Log.i(TAG,"%%%%%%%%%%%%%%% No more Segments Left %%%%%%%%%%%%%%%%%%%%%");
 
             return false; //No more segments exist
 
         }
-        System.out.println("More segments left, returning true");
+        Log.i(TAG,"More segments left, returning true");
         return true; //Additional segments still need to be navigated as part of this service
 
     }
@@ -205,12 +205,12 @@ public class TADNavigationServiceProvider implements Runnable {
      * Tells the NavigationProvider to navigate the next segment in the queue
      */
     private void navigateNextSegment() {
-        System.out.println("Attempting to navigate next segment");
+        Log.i(TAG,"Attempting to navigate next segment");
         if ((this.segments != null) && (this.segmentIndex < (this.segments.length))) {
             //Increment segment index
-            System.out.println("Setting previous segment to null!");
+            Log.i(TAG,"Setting previous segment to null!");
             this.segments[segmentIndex] = null; // - Set unused object to null to enable it for garbage collection.
-            System.out.println("getting coords");
+            Log.i(TAG,"getting coords");
             this.segmentIndex++;
             //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
             Segment segment = this.segments[segmentIndex];
@@ -218,28 +218,28 @@ public class TADNavigationServiceProvider implements Runnable {
             //Have proximity listener listen for the "Ring" location
             this.proxListener.listenForDistance(alertdistance);
             this.proxListener.listenForCoords(segment.getBeforeLocation(), segment.getToLocation(), segment.getFromLocation());
-             System.out.println("Proximlistener parameters were set!");
+             Log.i(TAG,"Proximlistener parameters were set!");
             //Try to cancel any existing registrations of the AVLServiceProvider
             try{
                 //midlet.avlProvider.setAVLDataListener(null, null, null, "", "");
             }catch(Exception e){
-                System.out.println("WARNING - error attempting to cancel any existing AVLServiceProviders");
+                Log.i(TAG,"WARNING - error attempting to cancel any existing AVLServiceProviders");
             }
 
             //Set AVLServiceProvider for new segment
-             System.out.println("Setting agency properties++++++...");
+             Log.i(TAG,"Setting agency properties++++++...");
             /*TransitAgencyAVLProperties agencyProperties = new TransitAgencyAVLProperties(segments[segmentIndex].getAgencyFeedIDTAD());
-            System.out.println("Setting avl data listener!");
+            Log.i(TAG,"Setting avl data listener!");
             if (this.midlet.avlProvider != null) {
                 this.midlet.avlProvider.setAVLDataListener(this.midlet.avlListener, this.midlet.avlListener, agencyProperties, segments[segmentIndex].getIdStopFromTransitAgencyGTFS(), segments[segmentIndex].getRoute_IDGTFS());
                 this.midlet.avlProvider.setArrivalReminder(midlet.AVL_ARRIVAL_REMINDER_TIME);
-                //System.out.println("AVL data listener: " + this.midlet.avlProvider.getAVLDataListener());
-                System.out.println("ARrival reminder: " + this.midlet.avlProvider.getArrivalReminder());
-                System.out.println("Properties were set!");
+                //Log.i(TAG,"AVL data listener: " + this.midlet.avlProvider.getAVLDataListener());
+                Log.i(TAG,"ARrival reminder: " + this.midlet.avlProvider.getArrivalReminder());
+                Log.i(TAG,"Properties were set!");
             } else {
-                System.out.println("Tjhe avl provider was null!");
+                Log.i(TAG,"Tjhe avl provider was null!");
             }*/
-            System.out.println("Trying yto update route info!");
+            Log.i(TAG,"Trying yto update route info!");
             //Update route info on screen
 
             /*if (segments[segmentIndex].getTrip_headsignGTFS() != null) {
@@ -249,7 +249,7 @@ public class TADNavigationServiceProvider implements Runnable {
                 //No headsign information exists.  Just show route number
                 this.midlet.getStringItem().setText("ROUTE " + segments[segmentIndex].getRoute_IDGTFS().trim());  //Set route name
             }*/
-            System.out.println("Route info was updated!");
+            Log.i(TAG,"Route info was updated!");
 
         //NEW - Set boolean flag to allow navigation again for current segment
         } else {
@@ -323,7 +323,7 @@ public class TADNavigationServiceProvider implements Runnable {
             }
             proxListener.setTrigger(false); //Reset the proximity notification alert
         } catch (Exception e) {
-            System.out.println("Error in TADProximityListener.proximityEvent(): " + e);
+            Log.i(TAG,"Error in TADProximityListener.proximityEvent(): " + e);
             e.printStackTrace(); // See what happens!!!!!!!!
         }
     }
@@ -359,7 +359,7 @@ public class TADNavigationServiceProvider implements Runnable {
          */
         public TADProximityCalculator(TADNavigationServiceProvider navProvider) {
             this.navProvider = navProvider;
-            System.out.println("Initializing TADProximityCalculator");
+            Log.i(TAG,"Initializing TADProximityCalculator");
             //this.radius = Float.parseFloat(this.midlet.getAppProperty("PROX_RADIUS"));
             //this.readyradius = Float.parseFloat(midlet.getAppProperty("READY_RADIUS"));
         }
@@ -377,7 +377,7 @@ public class TADNavigationServiceProvider implements Runnable {
         /** ProximityListener Functions **/
         public void monitoringStateChanged(boolean value) {
             //Fired when the monitoring of the ProximityListener state changes (is or is NOT active)
-            System.out.println("Fired ProximityListener.monitoringStateChanged()...");
+            Log.i(TAG,"Fired ProximityListener.monitoringStateChanged()...");
         }
 
         /**
@@ -399,26 +399,25 @@ public class TADNavigationServiceProvider implements Runnable {
             //*******************************************************************************************************************
             //* This function is fired by the ProximityListener when it detects that it is near a set of registered coordinates *
             //*******************************************************************************************************************
-            // System.out.println("Fired proximityEvent() from ProximityListener object.");
+            // Log.i(TAG,"Fired proximityEvent() from ProximityListener object.");
 
             //NEW - if statement that encompases rest of method to check if navProvider has triggered navListener before for this coordinate
             if (selection == 0) {
                 if (trigger == false) {
                     trigger = true;
-                    System.out.println("Proximity Event fired");
+                    Log.i(TAG,"Proximity Event fired");
                     if (this.navProvider.hasMoreSegments()) {
                         if (t == 0) {
-                        System.out.println("Alert 1 Screen showed to rider");
+                        Log.i(TAG,"Alert 1 Screen showed to rider");
                             waitingForConfirm = true;
                             // GET READY.
-                            System.out.println("Calling way point reached!");
-                            System.err.println("Calling WayPoint Reached!");
+                            Log.i(TAG,"Calling way point reached!");
                             //this.navProvider.navlistener.waypointReached(this.lastcoords);
                             return true;
                         }
                         if (t == 1) {
                             try {
-                                System.out.println("About to switch segment - from Proximity Event");
+                                Log.i(TAG,"About to switch segment - from Proximity Event");
                                 this.navProvider.navigateNextSegment(); //Uncomment this line to allow navigation on multiple segments within one service (chained segments)
 
                                 this.ready = false; //Reset the "get ready" notification alert
@@ -426,31 +425,31 @@ public class TADNavigationServiceProvider implements Runnable {
                                 this.trigger = false; //Reset the proximity notification alert 
 
                             } catch (Exception e) {
-                                System.out.println("Error in TADProximityListener.proximityEvent(): " + e);
+                                Log.i(TAG,"Error in TADProximityListener.proximityEvent(): " + e);
                             }
                         }
                     } else {
-                        System.out.println("Got to last stop ");
+                        Log.i(TAG,"Got to last stop ");
                         if (t == 0) {
-                            System.out.println("Alert 1 screen before last stop");
+                            Log.i(TAG,"Alert 1 screen before last stop");
                             waitingForConfirm = true;
                             // Exit Bus Now
-                            System.out.println("Calling destination reached...");
+                            Log.i(TAG,"Calling destination reached...");
                             System.err.println("calling destination reached!");
                             return true;
                         }
                         if (t == 1) {
                             long time = System.currentTimeMillis();
-                            System.out.println("Ending trip, going back to services");
+                            Log.i(TAG,"Ending trip, going back to services");
                             try {
                                 this.navProvider.service = null;
                                 this.navProvider.segments = null;
                                 this.navProvider.segmentIndex = 0;
-                                System.out.println("Time setting variables to null: " + (System.currentTimeMillis() - time));
+                                Log.i(TAG,"Time setting variables to null: " + (System.currentTimeMillis() - time));
                                 time = System.currentTimeMillis();
                                 //this.midlet.getDisplay().setCurrent(this.midlet.getChooseService1());
                                 //this.midlet.communicator.clientNotification();
-                                System.out.println("Time showing GUI and notifying communicator: " + (System.currentTimeMillis() - time));
+                                Log.i(TAG,"Time showing GUI and notifying communicator: " + (System.currentTimeMillis() - time));
                                 time = System.currentTimeMillis();
                                 //Cancel any registration of the AVLServiceProvider & Listener
                                 try {
@@ -458,14 +457,14 @@ public class TADNavigationServiceProvider implements Runnable {
                                     //Reset AVLlistener, since the user is finished traveling and doesn't need AVL info
                                     //midlet.avlListener.reset();
                                 } catch (Exception e) {
-                                    System.out.println("Error canceling the AVLServiceListener registration: " + e);
+                                    Log.i(TAG,"Error canceling the AVLServiceListener registration: " + e);
                                 }
-                                System.out.println("Time setting AVL Data Listener: " + (System.currentTimeMillis() - time));
+                                Log.i(TAG,"Time setting AVL Data Listener: " + (System.currentTimeMillis() - time));
                                 time = System.currentTimeMillis();
 
 
                             } catch (Exception e) {
-                                System.out.println("Error while sending distances to server");
+                                Log.i(TAG,"Error while sending distances to server");
                             }
                         }
                     }
@@ -526,48 +525,48 @@ public class TADNavigationServiceProvider implements Runnable {
              * 20 meters away from the bus stop.
             if ((distance_d < 20) && (distance_d != -1) && stop_type == 0) {
 
-                System.out.println("About to fire Proximity Event from Last Stop Detected");
+                Log.i(TAG,"About to fire Proximity Event from Last Stop Detected");
                 this.trigger = false;
                 this.proximityEvent(0, 1);
                 return true;
 
             } else */
-            System.out.println("Detecting stop. distance_d=" + 
+            Log.i(TAG,"Detecting stop. distance_d=" +
                     distance_d + ". stop_type=" + stop_type + " speed=" + speed);
             if  (stop_type == 1) {
                 /* Check if the bus is on the second to last stop */
                 if ((distance_d > 50) && (distance_d < 100) && (distance_d != -1) && !m100_a) {
                     m100_a = true;
-                    System.out.println("Case 1: false");
+                    Log.i(TAG,"Case 1: false");
                     return false;
                 }
                 if ((distance_d > 20) && (distance_d < 50) && (distance_d != -1) && !m50_a) {
                     m50_a = true;
-                    System.out.println("Case 2: false");
+                    Log.i(TAG,"Case 2: false");
                     return false;
                 }
                 if ((distance_d < 20) && (distance_d != -1) && !m20_a) {                    
                     m20_a = true;
                     if (speed > 15) {
-                        System.out.println("Case 3: true");
+                        Log.i(TAG,"Case 3: true");
                         return true;
                     }
-                    System.out.println("Case 3: false");
+                    Log.i(TAG,"Case 3: false");
                     return false;
                 }
                 if ((distance_d < 20) && (distance_d != -1) && m20_a && !m20_d) {                    
                     m20_d = true;
                     if (speed < 10) {
-                        System.out.println("Case 4: false");
+                        Log.i(TAG,"Case 4: false");
                         return false;
                     } else if (speed > 15) {
-                        System.out.println("Case 4: true");
+                        Log.i(TAG,"Case 4: true");
                         return true;
                     }
                 }
                 if ((distance_d > 20) && (distance_d < 50) && (distance_d != -1) && !m50_d && (m20_d || m20_a)) {
                     m50_d = true;
-                    System.out.println("Case 5: true");
+                    Log.i(TAG,"Case 5: true");
                     return true;
                 }
 
@@ -587,19 +586,19 @@ public class TADNavigationServiceProvider implements Runnable {
                 this.endistance = this.lastcoords.distanceTo(currentLocation);
                 //re-calculate the distance to second to last bus stop from the current location
                 this.directdistance = this.secondtolastcoords.distanceTo(currentLocation);
-                System.out.println("Second to last stop coordinates: " + secondtolastcoords.getLatitude() + ", " + secondtolastcoords.getLongitude());
+                Log.i(TAG,"Second to last stop coordinates: " + secondtolastcoords.getLatitude() + ", " + secondtolastcoords.getLongitude());
                 try {
                     //Update GUI to show distance to last stop
                     /*this.midlet.getStringItem3().setText(Float.toString(this.endistance));
                     if (this.midlet.is2ndToLastStopDistanceVisible()) {
-                        System.out.println("SHowing 2nd to last stop distance!");
+                        Log.i(TAG,"SHowing 2nd to last stop distance!");
                         this.midlet.getStringItem4().setText(Float.toString(this.directdistance));
                     } else {
                         this.midlet.getStringItem4().setText("");
                     }*/
 
                 } catch (Exception e3) {
-                    System.out.println("Warning - Could not set Distance...");
+                    Log.i(TAG,"Warning - Could not set Distance...");
                 }
                 if (this.directdistance < 250) {
                     //Fire proximity event for getting ready 100 meters prior to 2nd to last stop
@@ -635,7 +634,7 @@ public class TADNavigationServiceProvider implements Runnable {
         
         
         public void resetVariablesAfterSegmentSwitching() {
-            System.out.println("Reseting variables after segment switching!");            
+            Log.i(TAG,"Reseting variables after segment switching!");
             m100_a = false;
             m50_a = false;
             m20_a = false;

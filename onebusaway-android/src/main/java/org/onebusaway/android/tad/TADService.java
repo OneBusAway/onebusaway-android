@@ -28,7 +28,8 @@ public class TADService extends Service
     private Location mLastLocation = null;
 
     private String dName = null;
-    private Location dLocation = null;
+    private Location dLocation = null;      // Last stop
+    private Location bLocation = null;      // Second to last stop
 
     private TADNavigationServiceProvider navProvider;
 
@@ -38,6 +39,9 @@ public class TADService extends Service
         this.dLocation = new Location(LocationManager.GPS_PROVIDER);
         this.dLocation.setLatitude(intent.getDoubleExtra("STOP_LAT", 0));
         this.dLocation.setLongitude(intent.getDoubleExtra("STOP_LNG", 0));
+        this.bLocation = new Location(LocationManager.GPS_PROVIDER);
+        this.bLocation.setLatitude(intent.getDoubleExtra("BEFORE_LAT", 0));
+        this.bLocation.setLongitude(intent.getDoubleExtra("BEFORE_LNG", 0));
 
         mLocationHelper = new LocationHelper(this);
 
@@ -46,8 +50,8 @@ public class TADService extends Service
             mLocationHelper.registerListener(this);
         }
         this.navProvider = new TADNavigationServiceProvider();
-        Segment segment = new Segment(null, this.dLocation, null);
-        this.navProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { });
+        Segment segment = new Segment(this.bLocation, this.dLocation, null);
+        this.navProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
         return START_STICKY;
     }
 

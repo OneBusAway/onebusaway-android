@@ -437,6 +437,8 @@ public class TripDetailsListFragment extends ListFragment {
                         serviceIntent.putExtra("STOP_NAME", destStop.getName());
                         serviceIntent.putExtra("STOP_LAT", destStop.getLatitude());
                         serviceIntent.putExtra("STOP_LNG", destStop.getLongitude());
+                        serviceIntent.putExtra("BEFORE_LAT", lastStop.getLatitude());
+                        serviceIntent.putExtra("BEFORE_LNG", lastStop.getLongitude());
                         getContext().startService(serviceIntent);
                         Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
                     }

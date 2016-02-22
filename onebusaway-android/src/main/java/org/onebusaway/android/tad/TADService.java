@@ -83,6 +83,15 @@ public class TADService extends Service
             this.navProvider.locationUpdated(mLastLocation);
             updateNotification();
         }
+
+        // Trip is done? Clear notification and end service.
+        if (this.navProvider.getFinished()) {
+            NotificationManager mNotificationManager = (NotificationManager)
+                    getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mNotificationManager.cancel(1);
+            this.stopSelf();
+        }
     }
 
     // Updates on-going notification of trip with distance to stop.

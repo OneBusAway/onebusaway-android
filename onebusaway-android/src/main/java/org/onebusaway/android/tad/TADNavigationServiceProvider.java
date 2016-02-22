@@ -37,6 +37,8 @@ public class TADNavigationServiceProvider implements Runnable {
     private boolean waitingForConfirm = false;
     private Location currentLocation = null;
 
+    private boolean finished = false;   // Trip has finished.
+
     /** Creates a new instance of TADNavigationServiceProvider */
     public TADNavigationServiceProvider(/*TADCommunicator communicator*/) {
         //this.communicator = communicator;
@@ -62,6 +64,15 @@ public class TADNavigationServiceProvider implements Runnable {
     public void addDistance(float d) {
         distances[diss] = d;
         diss++;
+    }
+
+    /**
+     * Returns true if trip is done.
+     * @return
+     */
+    public boolean getFinished()
+    {
+        return finished;
     }
 
     /**
@@ -439,11 +450,13 @@ public class TADNavigationServiceProvider implements Runnable {
                             TTSHelper helper = new TTSHelper("Exit the Bus Now");
                             Log.i(TAG,"Calling destination reached...");
                             System.err.println("calling destination reached!");
+                            finished = true;
                             return true;
                         }
                         if (t == 1) {
                             long time = System.currentTimeMillis();
                             Log.i(TAG,"Ending trip, going back to services");
+                            finished = true;
                             try {
                                 this.navProvider.service = null;
                                 this.navProvider.segments = null;
@@ -618,6 +631,7 @@ public class TADNavigationServiceProvider implements Runnable {
                     if (this.proximityEvent(0, 0)) {
                         TTSHelper helper = new TTSHelper("Get Off The Bus Now!");
                         Log.i(TAG, "-----Get off the bus!");
+                        finished = true;
                         return 1; // Get off bus alert played
 
                     }

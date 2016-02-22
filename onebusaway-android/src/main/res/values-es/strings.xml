@@ -272,7 +272,7 @@
     <string name="my_option_clear_recent_routes">Limpiar rutas recientes</string>
     <string name="my_option_clear_starred_stops">Eliminar todas las paradas favoritas</string>
     <!-- <string name="my_option_clear_starred_routes">Eliminar todas las rutas favoritas</string>-->
-    <string name="my_option_clear_confirm">¡No hay vuelta atrás! ¿Seguimos adelante?</string>
+    <string name="my_option_clear_confirm">¡No hay vuelta atrás! ¿Desea continuar?</string>
     <string name="my_option_clear_confirm_title">¿Estás seguro de esto?</string>
 
     <string name="my_context_get_stop_info">Mostrar información de llegadas</string>
@@ -285,7 +285,7 @@
 
     <!-- Service Alerts  -->
     <string name="situation_activity_label">Servicio de Alertas</string>
-    <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para delizr hacia arriba
+    <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para deslizar hacia arriba
         el panel y mostrar mas información.
     </string>
     <string name="alert_content_description_error">Advertencia Severa del Servicio - toque para deslizar 
@@ -550,7 +550,7 @@
     </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o deslice el panel hacia arriba
+    <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o desliza el panel hacia arriba
         para ver mas llegadas de buses en esta parada.
     </string>
     <string name="tutorial_arrival_info_more_title">¡Usa tus super poderes de tránsito sabiamente!</string>
@@ -606,13 +606,19 @@
         "* Arno Hart\n"
         "* Sean Barbeau\n"
         "* York Region Transit\n"
-        "* Ari Rusakko\n"
         "* Ben Du\n"
         "* Cagri Cetin\n"
         "* Mike Karabushin\n\n"
 
         "¿Quieres contribuir a esta aplicación? Revísalo tú mismo en Github en
         https://github.com/OneBusAway/onebusaway-android.\n\n"
+
+        "*** Traducciones ***\n\n"
+
+        "Nos gustaría agradecer a quienes han contribuido a las traducciones de OneBusAway Android:\n\n"
+
+        "* Ari Rusakko\n"
+        "* Edgar Andrés Moncada Taborda\n\n"
 
         "*** Imágenes ***\n\n"
 

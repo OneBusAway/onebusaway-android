@@ -55,6 +55,8 @@ public final class ObaApi {
 
         <T> T deserialize(Reader reader, Class<T> cls);
 
+        <T> T deserializeFromResponse(String response, Class<T> cls);
+
         String serialize(Object obj);
 
         <T> T createFromError(Class<T> cls, int code, String error);

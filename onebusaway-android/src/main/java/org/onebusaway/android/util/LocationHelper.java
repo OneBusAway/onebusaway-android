@@ -72,9 +72,9 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
 
     private static final int MILLISECONDS_PER_SECOND = 1000;
 
-    public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
+    private static final int UPDATE_INTERVAL_IN_SECONDS = 5;
 
-    private static final long UPDATE_INTERVAL =
+    private long UPDATE_INTERVAL =
             MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS;
 
     private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
@@ -87,6 +87,14 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
 
     public LocationHelper(Context context) {
         mContext = context;
+        mLocationManager = (LocationManager) Application.get().getBaseContext()
+                .getSystemService(Context.LOCATION_SERVICE);
+        setupGooglePlayServices();
+    }
+
+    public LocationHelper(Context context, int interval) {
+        mContext = context;
+        UPDATE_INTERVAL = interval*MILLISECONDS_PER_SECOND;
         mLocationManager = (LocationManager) Application.get().getBaseContext()
                 .getSystemService(Context.LOCATION_SERVICE);
         setupGooglePlayServices();

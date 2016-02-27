@@ -17,6 +17,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -439,7 +440,7 @@ public class TripDetailsListFragment extends ListFragment {
                         serviceIntent.putExtra("STOP_LNG", destStop.getLongitude());
                         serviceIntent.putExtra("BEFORE_LAT", lastStop.getLatitude());
                         serviceIntent.putExtra("BEFORE_LNG", lastStop.getLongitude());
-                        getContext().startService(serviceIntent);
+                        Application.get().getApplicationContext().startService(serviceIntent);
                         Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
                     }
                 });

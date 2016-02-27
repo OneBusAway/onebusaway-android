@@ -11,7 +11,9 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.LocationHelper;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
@@ -108,7 +110,9 @@ public class TADService extends Service
 
         if (mLastLocation != null) {
             // Retrieve preferred unit and calculate distance.
-            String unit = getString(R.string.preference_key_preferred_units);
+            String unit_key = getString(R.string.preference_key_preferred_units);
+            String unit = Application.getPrefs().getString(unit_key, "");
+
             double distance = mLastLocation.distanceTo(dLocation);
             DecimalFormat fmt = new DecimalFormat("#.0");
             if (unit == "km") {

@@ -2,7 +2,6 @@ package org.onebusaway.android.util;
 
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
-import android.util.Log;
 
 import org.onebusaway.android.app.Application;
 
@@ -15,8 +14,7 @@ public class TTSHelper implements TextToSpeech.OnInitListener {
     private TextToSpeech tts;
     private String Message;
 
-    public TTSHelper(String msg)
-    {
+    public TTSHelper(String msg) {
         Message = msg;
         tts = new TextToSpeech(Application.get().getApplicationContext(), this);
     }

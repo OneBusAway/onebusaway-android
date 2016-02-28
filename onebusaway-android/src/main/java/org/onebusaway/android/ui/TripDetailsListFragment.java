@@ -27,7 +27,6 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.TTSHelper;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;

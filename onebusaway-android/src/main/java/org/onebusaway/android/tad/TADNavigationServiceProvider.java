@@ -207,7 +207,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      * @return
      */
     public boolean hasMoreSegments() {
-        Log.d(TAG,"Checking if service has more segments left");
+        Log.d(TAG, "Checking if service has more segments left");
         //If there are still more segments to be navigated as part of this transit service, return true.  Otherwise return false
         if ((segments == null) || (segmentIndex >= (segments.length - 1))) {
             Log.d(TAG, "Segments Index: " + segmentIndex + " Segments Length: " + (segments.length - 1));
@@ -692,9 +692,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         if (status == 1) {          // General status update.
 
         } else if (status == 2) {   // Get ready to pack
-
+            Speak(Application.get().getString(R.string.voice_get_ready));
         } else if (status == 3) {   // Pull the cord
-            
+            Speak(Application.get().getString(R.string.voice_pull_cord));
         }
     }
 

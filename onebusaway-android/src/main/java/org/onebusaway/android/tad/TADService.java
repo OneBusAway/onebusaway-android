@@ -37,15 +37,18 @@ public class TADService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        this.dName = intent.getStringExtra("STOP_NAME");
-        this.dLocation = new Location(LocationManager.GPS_PROVIDER);
-        this.dLocation.setLatitude(intent.getDoubleExtra("STOP_LAT", 0));
-        this.dLocation.setLongitude(intent.getDoubleExtra("STOP_LNG", 0));
-        this.bLocation = new Location(LocationManager.GPS_PROVIDER);
-        this.bLocation.setLatitude(intent.getDoubleExtra("BEFORE_LAT", 0));
-        this.bLocation.setLongitude(intent.getDoubleExtra("BEFORE_LNG", 0));
+        if (intent != null) {
 
-        mLocationHelper = new LocationHelper(this);
+        } else {
+            this.dName = intent.getStringExtra("STOP_NAME");
+            this.dLocation = new Location(LocationManager.GPS_PROVIDER);
+            this.dLocation.setLatitude(intent.getDoubleExtra("STOP_LAT", 0));
+            this.dLocation.setLongitude(intent.getDoubleExtra("STOP_LNG", 0));
+            this.bLocation = new Location(LocationManager.GPS_PROVIDER);
+            this.bLocation.setLatitude(intent.getDoubleExtra("BEFORE_LAT", 0));
+            this.bLocation.setLongitude(intent.getDoubleExtra("BEFORE_LNG", 0));
+        }
+        mLocationHelper = new LocationHelper(this, 1);
 
         if (mLocationHelper != null) {
             Log.i(TAG, "Requesting Location Updates");

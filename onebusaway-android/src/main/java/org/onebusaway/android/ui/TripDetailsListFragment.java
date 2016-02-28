@@ -430,7 +430,6 @@ public class TripDetailsListFragment extends ListFragment {
                                 (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
                         mBuilder.setOngoing(true);
-                        TTSHelper tts = new TTSHelper(getString(R.string.voice_starting_trip));
                         mNotificationManager.notify(1, mBuilder.build());
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
                         Bundle stopBundle = new Bundle();
@@ -440,7 +439,6 @@ public class TripDetailsListFragment extends ListFragment {
                         serviceIntent.putExtra("BEFORE_LAT", lastStop.getLatitude());
                         serviceIntent.putExtra("BEFORE_LNG", lastStop.getLongitude());
                         Application.get().getApplicationContext().startService(serviceIntent);
-                        Toast.makeText(getActivity(), R.string.stop_notify_confirmation, Toast.LENGTH_SHORT).show();
                     }
                 });
 

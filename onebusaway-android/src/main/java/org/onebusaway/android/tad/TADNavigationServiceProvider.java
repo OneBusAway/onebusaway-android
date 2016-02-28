@@ -7,9 +7,12 @@
  * and open the template in the editor.
  */
 package org.onebusaway.android.tad;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.onebusaway.android.R;
@@ -677,11 +680,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             mTTS.setLanguage(Locale.getDefault());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mTTS.speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH, null, "TRIPMESSAGE");
-            } else {
-                mTTS.speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH, null);
-            }
+            Speak(Application.get().getString(R.string.voice_starting_trip));
         }
     }
 
@@ -689,12 +688,35 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     // e.g, notifications, speak, etc.
     private void UpdateInterface (int status)
     {
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(Application.get().getApplicationContext())
+                        .setSmallIcon(R.drawable.map_stop_icon)
+                        .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title));
         if (status == 1) {          // General status update.
 
         } else if (status == 2) {   // Get ready to pack
-            Speak(Application.get().getString(R.string.voice_get_ready));
+            String message = Application.get().getString(R.string.voice_get_ready);
+            Speak(message);
+
+            mBuilder.setContentText(message);
+            NotificationManager mNotificationManager =
+                    (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mBuilder.setOngoing(true);
+            mNotificationManager.notify(1, mBuilder.build());
+
         } else if (status == 3) {   // Pull the cord
-            Speak(Application.get().getString(R.string.voice_pull_cord));
+            String message = Application.get().getString(R.string.voice_pull_cord);
+            Speak(message);
+
+            mBuilder.setContentText(message);
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mBuilder.setOngoing(true);
+            mNotificationManager.notify(1, mBuilder.build());
         }
     }
 

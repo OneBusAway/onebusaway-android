@@ -54,6 +54,7 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -189,6 +190,9 @@ class ArrivalsListHeader {
     /**
      * Views to show ETA information in header
      */
+
+    private boolean mShowArrivals = true;  // Allows external classes to show/hide arrivals
+
     // Number of arrival current shown in the header - needed for various header view sizing.
     int mNumHeaderArrivals = -1;  // -1 if mArrivalInfo hasn't been refreshed
 
@@ -258,6 +262,8 @@ class ArrivalsListHeader {
     // Manages header size in "stop name edit mode"
     private int cachedExpandCollapseViewVisibility;
 
+    private static float HEADER_HEIGHT_NO_ARRIVALS_DP;
+
     private static float HEADER_HEIGHT_ONE_ARRIVAL_DP;
 
     private static float HEADER_HEIGHT_TWO_ARRIVALS_DP;
@@ -287,6 +293,9 @@ class ArrivalsListHeader {
         mNumHeaderArrivals = -1;
 
         // Cache the ArrivalsListHeader height values
+        HEADER_HEIGHT_NO_ARRIVALS_DP =
+                view.getResources().getDimension(R.dimen.arrival_header_height_no_arrivals)
+                        / view.getResources().getDisplayMetrics().density;
         HEADER_HEIGHT_ONE_ARRIVAL_DP =
                 view.getResources().getDimension(R.dimen.arrival_header_height_one_arrival)
                 / view.getResources().getDisplayMetrics().density;
@@ -560,6 +569,36 @@ class ArrivalsListHeader {
                 mExpandCollapse.setVisibility(View.GONE);
             }
         }
+    }
+
+    /**
+     * Allows external classes to show or hide arrival information in the header
+     *
+     * @param value true if the arrival info should be shown, false if it should not
+     */
+    public void showArrivals(boolean value) {
+        mShowArrivals = value;
+        if (mView != null) {
+            TableLayout arrivalTable = (TableLayout) mView.findViewById(R.id.eta_table);
+            if (arrivalTable != null) {
+                if (mShowArrivals) {
+                    arrivalTable.setVisibility(View.VISIBLE);
+                    mProgressBar.setVisibility(View.VISIBLE);
+                } else {
+                    arrivalTable.setVisibility(View.GONE);
+                    mProgressBar.setVisibility(View.GONE);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns true if the header is showing arrival info, false if it is not
+     *
+     * @return true if the header is showing arrival info, false if it is not
+     */
+    public boolean isShowingArrivals() {
+        return mShowArrivals;
     }
 
     /**
@@ -1047,16 +1086,25 @@ class ArrivalsListHeader {
      */
     void refreshHeaderSize() {
         if (mInNameEdit) {
-            // When editing the stop name, the header size is always the same
-            // Commented out as workaround to #314
-            //setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+            // When editing the stop name, the header size is always the same.
+            // Only set the height if we're not showing any arrivals (originally commented out as a
+            // workaround to #314, but we shouldn't have the same issue if the header isn't in the
+            // sliding panel - the only case where we're allowing the user to hide arrivals in the
+            // header)
+            if (!mShowArrivals) {
+                setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+            }
             return;
         }
 
         float newSize = 0;
 
         // Change the header size based on arrival info and if a route filter is used
-        if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
+        if (!mShowArrivals) {
+            // If the external class has selected not to show arrivals, we should change the header
+            // size
+            newSize = HEADER_HEIGHT_NO_ARRIVALS_DP;
+        } else if (mNumHeaderArrivals == 0 || mNumHeaderArrivals == 1) {
             newSize = HEADER_HEIGHT_ONE_ARRIVAL_DP;
         } else if (mNumHeaderArrivals == 2) {
             newSize = HEADER_HEIGHT_TWO_ARRIVALS_DP;
@@ -1225,8 +1273,14 @@ class ArrivalsListHeader {
         mExpandCollapse.setVisibility(View.GONE);
         mEditNameContainerView.setVisibility(View.VISIBLE);
 
-        // Set the entire header size - commented out as workaround to #314
-        //setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+        // When editing the stop name, the header size is always the same.
+        // Only set the height if we're not showing any arrivals (originally commented out as a
+        // workaround to #314, but we shouldn't have the same issue if the header isn't in the
+        // sliding panel - the only case where we're allowing the user to hide arrivals in the
+        // header)
+        if (!mShowArrivals) {
+            setHeaderSize(HEADER_HEIGHT_EDIT_NAME_DP);
+        }
 
         mEditNameView.requestFocus();
         mEditNameView.setSelection(mEditNameView.getText().length());

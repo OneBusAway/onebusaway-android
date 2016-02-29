@@ -176,6 +176,8 @@
     <string name="stop_info_option_sort_route">Sorting by route…</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_filter">Filter routes</string>
+    <string name="stop_info_option_hide_header_arrivals">Hide arrivals in header</string>
+    <string name="stop_info_option_show_header_arrivals">Show arrivals in header</string>
     <string name="stop_info_option_editname">Edit stop name</string>
     <string name="stop_info_option_addstar">Add star to stop</string>
     <string name="stop_info_option_show_details">Show stop details</string>
@@ -449,6 +451,11 @@
     <string name="preferences_show_negative_arrivals_title">Show departed buses</string>
     <string name="preferences_show_negative_arrivals_summary">Include buses that just left as
         negative arrival times
+    </string>
+
+    <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
+    <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
+        show arrival info in the header at the top of the screen (doesn\'t affect map view)
     </string>
 
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>

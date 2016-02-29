@@ -33,6 +33,11 @@
                 android:title="@string/preferences_show_negative_arrivals_title"
                 android:summary="@string/preferences_show_negative_arrivals_summary"
                 android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="@string/preference_key_show_header_arrivals"
+                android:title="@string/preferences_show_header_arrivals_title"
+                android:summary="@string/preferences_show_header_arrivals_summary"
+                android:defaultValue="false"/>
         <ListPreference
                 android:key="@string/preference_key_preferred_units"
                 android:title="@string/preferences_preferred_units_title"

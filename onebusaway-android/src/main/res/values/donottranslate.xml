@@ -35,6 +35,7 @@
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
     <string name="preference_key_tutorial">preference_key_tutorial</string>
+    <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -76,6 +77,10 @@
     </string>
     <string name="analytics_label_sort_by_mfu_stops">Clicked sort by most frequently used from
         MyStarredStopsFragment
+    </string>
+    <string name="analytics_label_show_arrivals_in_header">Clicked show arrivals in header
+    </string>
+    <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
     </string>
     <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>

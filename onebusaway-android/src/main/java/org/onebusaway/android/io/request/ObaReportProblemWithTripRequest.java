@@ -54,8 +54,8 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
     public static class Builder extends RequestBase.PostBuilderBase {
 
         public Builder(Context context, String tripId) {
-            super(context, BASE_PATH + "/report-problem-with-trip.json");
-            mPostData.appendQueryParameter("tripId", tripId);
+            super(context,
+                    BASE_PATH + String.format("/report-problem-with-trip/%1$s.json", Uri.encode(tripId)));
         }
 
         /**
@@ -96,9 +96,6 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          */
         public Builder setCode(String code) {
             mPostData.appendQueryParameter("code", code);
-            // This is also for the old, JSON-encoded "data" format of the API.
-            String data = String.format("{\"code\":\"%s\"}", code);
-            mPostData.appendQueryParameter("data", data);
             return this;
         }
 

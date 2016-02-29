@@ -530,11 +530,23 @@ public class ArrivalsListFragment extends ListFragment
         menu.findItem(R.id.toggle_favorite)
                 .setTitle(title)
                 .setTitleCondensed(title);
+
+        MenuItem menuItemHeaderArrivals = menu.findItem(R.id.show_header_arrivals);
+        if (mHeader != null) {
+            title = mHeader.isShowingArrivals() ?
+                    getString(R.string.stop_info_option_hide_header_arrivals) :
+                    getString(R.string.stop_info_option_show_header_arrivals);
+            menuItemHeaderArrivals.setTitle(title);
+            menuItemHeaderArrivals.setTitleCondensed(title);
+        }
+
         if (mExternalHeader) {
             // If we're using an external header, it means that this fragment is being shown
             // in the bottom sliding panel, and therefore the map is already visible.
             // So, we can remove the "Show Map" option
             menu.findItem(R.id.show_on_map).setVisible(false);
+            // We want to hide the "show/hide arrivals in header" setting if we are in the sliding panel
+            menuItemHeaderArrivals.setVisible(false);
         }
     }
 
@@ -558,6 +570,8 @@ public class ArrivalsListFragment extends ListFragment
             if (mStop != null) {
                 showRoutesFilterDialog();
             }
+        } else if (id == R.id.show_header_arrivals) {
+            doShowHideHeaderArrivals();
         } else if (id == R.id.edit_name) {
             if (mHeader != null) {
                 mHeader.beginNameEdit(null);
@@ -1054,6 +1068,36 @@ public class ArrivalsListFragment extends ListFragment
         }
     }
 
+    /**
+     * Toggle the visibility of arrivals in the header
+     */
+    private void doShowHideHeaderArrivals() {
+        boolean showArrivals = Application.getPrefs()
+                .getBoolean(getString(R.string.preference_key_show_header_arrivals), false);
+
+        if (showArrivals) {
+            // Currently we're showing arrivals in header - we need to remove them
+            mHeader.showArrivals(false);
+
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_hide_arrivals_in_header));
+        } else {
+            // Currently we're hiding arrivals - we need to show them
+            mHeader.showArrivals(true);
+
+            //Analytics
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_show_arrivals_in_header));
+        }
+
+        PreferenceUtils.saveBoolean(getResources()
+                .getString(R.string.preference_key_show_header_arrivals), !showArrivals);
+        mHeader.refresh();
+    }
+
     private void showRoutesFilterDialog() {
         ObaArrivalInfoResponse response =
                 getArrivalsLoader().getLastGoodResponse();
@@ -1150,6 +1194,10 @@ public class ArrivalsListFragment extends ListFragment
             mHeader.showExpandCollapseIndicator(false);
             // Header is not in a sliding panel, so set collapsed state to false
             mHeader.setSlidingPanelCollapsed(false);
+            // Show or hide the header arrivals based on user preference
+            boolean showArrivals = Application.getPrefs()
+                    .getBoolean(getString(R.string.preference_key_show_header_arrivals), false);
+            mHeader.showArrivals(showArrivals);
         } else {
             // The header is in another layout (e.g., sliding panel), so we need to remove the header in this layout
             getView().findViewById(R.id.arrivals_list_header).setVisibility(View.GONE);

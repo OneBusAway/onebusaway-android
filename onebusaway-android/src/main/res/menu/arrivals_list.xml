@@ -27,6 +27,9 @@
               android:title="@string/stop_info_option_showonmap"
               android:icon="@drawable/ic_action_location_map"
               onebusaway:showAsAction="ifRoom"/>
+        <item android:id="@+id/show_header_arrivals"
+              android:title="@string/stop_info_option_filter"
+              android:icon="@drawable/ic_menu_trip"/>
         <item android:id="@+id/filter"
               android:title="@string/stop_info_option_filter"
               android:icon="@drawable/ic_menu_trip"/>

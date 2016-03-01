@@ -46,8 +46,8 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
     // Other
     public static final String OTHER = "other";
 
-    protected ObaReportProblemWithStopRequest(Uri uri, String postData) {
-        super(uri, postData);
+    protected ObaReportProblemWithStopRequest(Uri uri) {
+        super(uri);
     }
 
     public static class Builder extends RequestBase.BuilderBase {
@@ -104,7 +104,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
         }
 
         public ObaReportProblemWithStopRequest build() {
-            return new ObaReportProblemWithStopRequest(buildUri(), null);
+            return new ObaReportProblemWithStopRequest(buildUri());
         }
     }
 

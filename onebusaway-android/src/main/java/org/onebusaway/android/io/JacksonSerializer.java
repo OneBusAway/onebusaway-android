@@ -118,6 +118,19 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
         }
     }
 
+    public <T> T deserializeFromResponse(String response, Class<T> cls) {
+        try {
+            return mMapper.readValue(response, cls);
+        } catch (JsonParseException e) {
+            Log.e(TAG, e.toString());
+        } catch (JsonMappingException e) {
+            Log.e(TAG, e.toString());
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
+        }
+        return null;
+    }
+
     public String serialize(Object obj) {
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator;

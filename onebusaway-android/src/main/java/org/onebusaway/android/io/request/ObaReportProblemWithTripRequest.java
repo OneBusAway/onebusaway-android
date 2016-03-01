@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2016 Paul Watts (paulcwatts@gmail.com)
+ * University of South Florida (cagricetin@mail.usf.edu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +52,11 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
         super(uri, postData);
     }
 
-    public static class Builder extends RequestBase.PostBuilderBase {
+    public static class Builder extends RequestBase.BuilderBase {
 
         public Builder(Context context, String tripId) {
             super(context, BASE_PATH + "/report-problem-with-trip.json");
-            mPostData.appendQueryParameter("tripId", tripId);
+            mBuilder.appendQueryParameter("tripId", tripId);
         }
 
         /**
@@ -65,7 +66,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param stopId The stop ID.
          */
         public Builder setStopId(String stopId) {
-            mPostData.appendQueryParameter("stopId", stopId);
+            mBuilder.appendQueryParameter("stopId", stopId);
             return this;
         }
 
@@ -75,7 +76,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param serviceDate The service date.
          */
         public Builder setServiceDate(long serviceDate) {
-            mPostData.appendQueryParameter("serviceDate", String.valueOf(serviceDate));
+            mBuilder.appendQueryParameter("serviceDate", String.valueOf(serviceDate));
             return this;
         }
 
@@ -85,7 +86,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param vehicleId The vehicle actively serving the trip.
          */
         public Builder setVehicleId(String vehicleId) {
-            mPostData.appendQueryParameter("vehicleId", vehicleId);
+            mBuilder.appendQueryParameter("vehicleId", vehicleId);
             return this;
         }
 
@@ -95,10 +96,10 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param code The problem code.
          */
         public Builder setCode(String code) {
-            mPostData.appendQueryParameter("code", code);
+            mBuilder.appendQueryParameter("code", code);
             // This is also for the old, JSON-encoded "data" format of the API.
             String data = String.format("{\"code\":\"%s\"}", code);
-            mPostData.appendQueryParameter("data", data);
+            mBuilder.appendQueryParameter("data", data);
             return this;
         }
 
@@ -108,7 +109,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
-            mPostData.appendQueryParameter("userComment", comment);
+            mBuilder.appendQueryParameter("userComment", comment);
             return this;
         }
 
@@ -119,8 +120,8 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param lon The user's current location.
          */
         public Builder setUserLocation(double lat, double lon) {
-            mPostData.appendQueryParameter("userLat", String.valueOf(lat));
-            mPostData.appendQueryParameter("userLon", String.valueOf(lon));
+            mBuilder.appendQueryParameter("userLat", String.valueOf(lat));
+            mBuilder.appendQueryParameter("userLon", String.valueOf(lon));
             return this;
         }
 
@@ -130,7 +131,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {
-            mPostData.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
+            mBuilder.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
             return this;
         }
 
@@ -142,7 +143,7 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param onVehicle If the user is on the vehicle.
          */
         public Builder setUserOnVehicle(boolean onVehicle) {
-            mPostData.appendQueryParameter("userOnVehicle", String.valueOf(onVehicle));
+            mBuilder.appendQueryParameter("userOnVehicle", String.valueOf(onVehicle));
             return this;
         }
 
@@ -152,18 +153,18 @@ public final class ObaReportProblemWithTripRequest extends RequestBase
          * @param vehicleNumber The vehicle as reported by the user.
          */
         public Builder setUserVehicleNumber(String vehicleNumber) {
-            mPostData.appendQueryParameter("userVehicleNumber", vehicleNumber);
+            mBuilder.appendQueryParameter("userVehicleNumber", vehicleNumber);
             return this;
         }
 
         public ObaReportProblemWithTripRequest build() {
-            return new ObaReportProblemWithTripRequest(buildUri(), buildPostData());
+            return new ObaReportProblemWithTripRequest(buildUri(), null);
         }
     }
 
     @Override
     public ObaReportProblemWithTripResponse call() {
-        return callPostHack(ObaReportProblemWithTripResponse.class);
+        return call(ObaReportProblemWithTripResponse.class);
     }
 
     @Override

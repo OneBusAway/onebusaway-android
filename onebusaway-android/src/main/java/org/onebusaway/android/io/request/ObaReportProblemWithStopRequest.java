@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012 - 2016 Paul Watts (paulcwatts@gmail.com)
+ * University of South Florida (cagricetin@mail.usf.edu)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +50,12 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
         super(uri, postData);
     }
 
-    public static class Builder extends RequestBase.PostBuilderBase {
+    public static class Builder extends RequestBase.BuilderBase {
 
         public Builder(Context context, String stopId) {
             super(context, BASE_PATH + "/report-problem-with-stop.json");
-            mPostData.appendQueryParameter("stopId", stopId);
+            mBuilder.appendQueryParameter("stopId", stopId);
+
         }
 
         /**
@@ -62,10 +64,10 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param code The problem code.
          */
         public Builder setCode(String code) {
-            mPostData.appendQueryParameter("code", code);
+            mBuilder.appendQueryParameter("code", code);
             // This is also for the old, JSON-encoded "data" format of the API.
             String data = String.format("{\"code\":\"%s\"}", code);
-            mPostData.appendQueryParameter("data", data);
+            mBuilder.appendQueryParameter("data", data);
             return this;
         }
 
@@ -75,7 +77,7 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param comment The user comment.
          */
         public Builder setUserComment(String comment) {
-            mPostData.appendQueryParameter("userComment", comment);
+            mBuilder.appendQueryParameter("userComment", comment);
             return this;
         }
 
@@ -86,8 +88,8 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param lon The user's current location.
          */
         public Builder setUserLocation(double lat, double lon) {
-            mPostData.appendQueryParameter("userLat", String.valueOf(lat));
-            mPostData.appendQueryParameter("userLon", String.valueOf(lon));
+            mBuilder.appendQueryParameter("userLat", String.valueOf(lat));
+            mBuilder.appendQueryParameter("userLon", String.valueOf(lon));
             return this;
         }
 
@@ -97,18 +99,18 @@ public final class ObaReportProblemWithStopRequest extends RequestBase
          * @param meters The user's location accuracy in meters.
          */
         public Builder setUserLocationAccuracy(int meters) {
-            mPostData.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
+            mBuilder.appendQueryParameter("userLocationAccuracy", String.valueOf(meters));
             return this;
         }
 
         public ObaReportProblemWithStopRequest build() {
-            return new ObaReportProblemWithStopRequest(buildUri(), buildPostData());
+            return new ObaReportProblemWithStopRequest(buildUri(), null);
         }
     }
 
     @Override
     public ObaReportProblemWithStopResponse call() {
-        return callPostHack(ObaReportProblemWithStopResponse.class);
+        return call(ObaReportProblemWithStopResponse.class);
     }
 
     @Override

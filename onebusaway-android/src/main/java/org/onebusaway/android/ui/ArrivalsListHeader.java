@@ -684,8 +684,8 @@ class ArrivalsListHeader {
                     // Show early/late/scheduled color
                     d1.setColor(mResources.getColor(c1));
                 } else {
-                    // For on-time, use header default color
-                    d1.setColor(mResources.getColor(R.color.theme_primary));
+                    // For on-time, use header on time color for better customization (#429)
+                    d1.setColor(mResources.getColor(R.color.header_stop_info_ontime));
                 }
                 mEtaAndMin1.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -747,8 +747,8 @@ class ArrivalsListHeader {
                         // Show early/late/scheduled color
                         d2.setColor(mResources.getColor(c2));
                     } else {
-                        // For on-time, use header default color
-                        d2.setColor(mResources.getColor(R.color.theme_primary));
+                        // For on-time, use header on time color for better customization (#429)
+                        d2.setColor(mResources.getColor(R.color.header_stop_info_ontime));
                     }
                     mEtaAndMin2.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -820,8 +820,8 @@ class ArrivalsListHeader {
             // Show early/late color
             d.setColor(mResources.getColor(color));
         } else {
-            // For on-time, use header default color
-            d.setColor(mResources.getColor(R.color.theme_primary));
+            // For on-time, use header on time color for better customization (#429)
+            d.setColor(mResources.getColor(R.color.header_stop_info_ontime));
         }
         d.setStroke(UIUtils.dpToPixels(mContext, 1),
                 mResources.getColor(R.color.header_text_color));

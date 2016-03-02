@@ -716,7 +716,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     // Update Interface
     // e.g, notifications, speak, etc.
     private void UpdateInterface(int status) {
-
+        int NOTIFICATION_ID = 33620;
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
                         .setSmallIcon(R.drawable.map_stop_icon)
@@ -728,12 +728,12 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
             DecimalFormat fmt = new DecimalFormat("0.0");
             // TODO: Fix unit check
-            double distance;
+            double distance = mProxListener.endistance;
             if (unit == "km") {
-                distance = this.mProxListener.endistance / 1000;
+                distance /= 1000;
                 mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             } else {
-                distance =  this.mProxListener.endistance * RegionUtils.METERS_TO_MILES;
+                distance *= RegionUtils.METERS_TO_MILES;
                 mBuilder.setContentText(fmt.format(distance) + " miles away.");
             }
 
@@ -741,7 +741,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
             mBuilder.setOngoing(true);
-            mNotificationManager.notify(1, mBuilder.build());
+            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
@@ -751,8 +751,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.notify(2, mBuilder.build());
-            mNotificationManager.cancel(1);
+            mNotificationManager.notify(NOTIFICATION_ID+1, mBuilder.build());
+            mNotificationManager.cancel(NOTIFICATION_ID);
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
@@ -763,16 +763,19 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.notify(3, mBuilder.build());
+            mNotificationManager.notify(NOTIFICATION_ID+2, mBuilder.build());
         }
     }
 
-    // Speak specified message out loud using TTS.
+    /**
+     * Speak specified message out loud using TTS
+    * @param message Message to be spoken.
+    */
     private void Speak(String message) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mTTS.speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH, null, "TRIPMESSAGE");
+            mTTS.speak(message, TextToSpeech.QUEUE_FLUSH, null, "TRIPMESSAGE");
         } else {
-            mTTS.speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH, null);
+            mTTS.speak(message, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 }

@@ -38,8 +38,6 @@ public class TADService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-
-        } else {
             this.dName = intent.getStringExtra("STOP_NAME");
             this.dLocation = new Location(LocationManager.GPS_PROVIDER);
             this.dLocation.setLatitude(intent.getDoubleExtra("STOP_LAT", 0));
@@ -47,7 +45,10 @@ public class TADService extends Service
             this.bLocation = new Location(LocationManager.GPS_PROVIDER);
             this.bLocation.setLatitude(intent.getDoubleExtra("BEFORE_LAT", 0));
             this.bLocation.setLongitude(intent.getDoubleExtra("BEFORE_LNG", 0));
+        } else {
+            // Load from disk
         }
+
         mLocationHelper = new LocationHelper(this, 1);
 
         if (mLocationHelper != null) {
@@ -86,7 +87,6 @@ public class TADService extends Service
         mLastLocation = location;
         if (mLastLocation != null) {
             this.navProvider.locationUpdated(mLastLocation);
-            updateNotification();
         }
 
         // Trip is done? Clear notification and end service.
@@ -97,40 +97,6 @@ public class TADService extends Service
             mNotificationManager.cancel(1);
             this.stopSelf();
         }
-    }
-
-    // Updates on-going notification of trip with distance to stop.
-    // If user's current location is unavailable, it falls back
-    // to the stop name.
-    private void updateNotification()
-    {
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(getApplicationContext())
-                        .setSmallIcon(R.drawable.map_stop_icon)
-                        .setContentTitle(getResources().getString(R.string.stop_notify_title))
-                        .setContentText(dName);
-
-
-        if (mLastLocation != null) {
-            // Retrieve preferred unit and calculate distance.
-            String unit_key = getString(R.string.preference_key_preferred_units);
-            String unit = Application.getPrefs().getString(unit_key, "");
-
-            double distance = mLastLocation.distanceTo(dLocation);
-            DecimalFormat fmt = new DecimalFormat("#.0");
-            if (unit == "km") {
-                distance /= 1000;
-                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
-            } else {
-                distance *= RegionUtils.METERS_TO_MILES;
-                mBuilder.setContentText(fmt.format(distance) + " miles away.");
-            }
-        }
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-
-        mNotificationManager.notify(1, mBuilder.build());
     }
 
 }

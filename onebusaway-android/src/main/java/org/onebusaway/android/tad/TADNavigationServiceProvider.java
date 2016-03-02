@@ -18,7 +18,9 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.util.RegionUtils;
 
+import java.text.DecimalFormat;
 import java.util.Locale;
 
 /**
@@ -166,16 +168,16 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         Log.d(TAG, "Starting navigation for service");
         //Create a new istance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
-        service = service;
-        segments = segments;
+        this.service = service;
+        this.segments = segments;
         segmentIndex = 0;
         diss = 0;
         distances = new float[segments.length];
         Log.d(TAG, "Segments Length: " + segments.length);
         //Create new coordinate object using the "Ring" coordinates as specified by the TAD web site and server
-        Location coords = segments[segmentIndex].getBeforeLocation();
-        Location lastcoords = segments[segmentIndex].getToLocation();
-        Location firstcoords = segments[segmentIndex].getFromLocation();
+        Location coords = this.segments[segmentIndex].getBeforeLocation();
+        Location lastcoords = this.segments[segmentIndex].getToLocation();
+        Location firstcoords = this.segments[segmentIndex].getFromLocation();
 
         alertdistance = this.segments[segmentIndex].getAlertDistance();
         //Have proximity listener listen for the "Ring" location
@@ -380,7 +382,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         //TADMIDlet_Converted midlet;  //Holds references to the main MIDlet that is executing
         TADNavigationServiceProvider navProvider;  //Holds reference to main navigation provider for TAD
         //**  Proximity Listener variables **/
-        private float radius = 160;  //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
+        private float radius = 100;  //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
         private float readyradius = 300; //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
         private boolean trigger = false;  //Defines whether the Proximity Listener has been triggered (true) or not (false)
         private Location secondtolastcoords = null;  //Tests distance from registered location w/ ProximityListener manually
@@ -720,6 +722,26 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                         .setSmallIcon(R.drawable.map_stop_icon)
                         .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title));
         if (status == 1) {          // General status update.
+            // Retrieve preferred unit and calculate distance.
+            String unit_key = Application.get().getString(R.string.preference_key_preferred_units);
+            String unit = Application.getPrefs().getString(unit_key, "");
+
+            DecimalFormat fmt = new DecimalFormat("0.0");
+            // TODO: Fix unit check
+            double distance;
+            if (unit == "km") {
+                distance = this.mProxListener.endistance / 1000;
+                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+            } else {
+                distance =  this.mProxListener.endistance * RegionUtils.METERS_TO_MILES;
+                mBuilder.setContentText(fmt.format(distance) + " miles away.");
+            }
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mBuilder.setOngoing(true);
+            mNotificationManager.notify(1, mBuilder.build());
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
@@ -729,8 +751,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mBuilder.setOngoing(true);
-            mNotificationManager.notify(1, mBuilder.build());
+            mNotificationManager.notify(2, mBuilder.build());
+            mNotificationManager.cancel(1);
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
@@ -741,8 +763,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mBuilder.setOngoing(true);
-            mNotificationManager.notify(1, mBuilder.build());
+            mNotificationManager.notify(3, mBuilder.build());
         }
     }
 

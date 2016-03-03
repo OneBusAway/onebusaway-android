@@ -420,19 +420,7 @@ public class TripDetailsListFragment extends ListFragment {
                         ObaStop destStop = refs.getStop(destStopId);
                         ObaStop lastStop = refs.getStop(lastStopId);
 
-                        NotificationCompat.Builder mBuilder =
-                                new NotificationCompat.Builder(getContext())
-                                        .setSmallIcon(R.drawable.map_stop_icon)
-                                        .setContentTitle(getResources().getString(R.string.stop_notify_title))
-                                        .setContentText(destStop.getName());
-
-                        NotificationManager mNotificationManager =
-                                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
-
-                        mBuilder.setOngoing(true);
-                        mNotificationManager.notify(1, mBuilder.build());
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
-                        Bundle stopBundle = new Bundle();
                         serviceIntent.putExtra("STOP_NAME", destStop.getName());
                         serviceIntent.putExtra("STOP_LAT", destStop.getLatitude());
                         serviceIntent.putExtra("STOP_LNG", destStop.getLongitude());

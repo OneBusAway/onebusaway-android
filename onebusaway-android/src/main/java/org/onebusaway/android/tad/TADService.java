@@ -4,6 +4,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.IBinder;
@@ -89,14 +90,22 @@ public class TADService extends Service
             this.navProvider.locationUpdated(mLastLocation);
         }
 
-        // Trip is done? Clear notification and end service.
+        // Trip is done? End service.
         if (this.navProvider.getFinished()) {
-            NotificationManager mNotificationManager = (NotificationManager)
-                    getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-
-            mNotificationManager.cancel(1);
             this.stopSelf();
         }
+    }
+
+    // Saves location details for TAD to disk.
+    private void saveTrip()
+    {
+
+    }
+
+    // Loads trip details for TAD to disk.
+    private void loadTrip()
+    {
+
     }
 
 }

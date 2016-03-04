@@ -412,6 +412,7 @@ public class TripDetailsListFragment extends ListFragment {
                 bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        // TODO: Handle trips with only two stops.
                         ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
                         ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
                         ObaReferences refs = mTripInfo.getRefs();

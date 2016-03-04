@@ -728,6 +728,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
             DecimalFormat fmt = new DecimalFormat("0.0");
             // TODO: Fix unit check
+            // Main string.xml, preferred_units_option
+            // See RegionsFragment
             double distance = mProxListener.endistance;
             if (unit == "km") {
                 distance /= 1000;

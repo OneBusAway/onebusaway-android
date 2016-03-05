@@ -58,7 +58,7 @@ public class TADService extends Service
             Log.i(TAG, "Requesting Location Updates");
             mLocationHelper.registerListener(this);
         }
-        this.navProvider = new TADNavigationServiceProvider(String tripId, String stopId);
+        this.navProvider = new TADNavigationServiceProvider(mTripId, mStopId);
         Segment segment = new Segment(this.mBeforeLocation, this.mDestLocation, null);
         this.navProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
         return START_STICKY;

@@ -422,7 +422,8 @@ public class TripDetailsListFragment extends ListFragment {
                         ObaStop lastStop = refs.getStop(lastStopId);
 
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
-                        serviceIntent.putExtra("STOP_NAME", destStop.getName());
+                        serviceIntent.putExtra("STOP_ID", destStopId);
+                        serviceIntent.putExtra("TRIP_ID", mTripId);
                         serviceIntent.putExtra("STOP_LAT", destStop.getLatitude());
                         serviceIntent.putExtra("STOP_LNG", destStop.getLongitude());
                         serviceIntent.putExtra("BEFORE_LAT", lastStop.getLatitude());

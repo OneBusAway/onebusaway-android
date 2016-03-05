@@ -9,7 +9,9 @@
 package org.onebusaway.android.tad;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
@@ -19,6 +21,7 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
@@ -54,15 +57,19 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private boolean finished = false;   // Trip has finished.
 
-    private TextToSpeech mTTS;
-    SharedPreferences mSettings = Application.getPrefs();
+    private TextToSpeech mTTS;          // TextToSpeech for speaking commands.
+    SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
 
+    private String mTripId;             // Trip ID
+    private String mStopId;             // Stop ID
     /**
      * Creates a new instance of TADNavigationServiceProvider
      */
-    public TADNavigationServiceProvider() {
+    public TADNavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating TAD Navigation Service Provider");
         mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        mTripId = tripId;
+        mStopId = stopId;
     }
 
     /**
@@ -719,14 +726,24 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     // e.g, notifications, speak, etc.
     private void UpdateInterface(int status) {
         int NOTIFICATION_ID = 33620;
+
+        Application app = Application.get();
+        TripDetailsListFragment.IntentBuilder bldr = new TripDetailsListFragment.IntentBuilder(
+                app.getApplicationContext(), mTripId);
+
+        bldr.setStopId(mStopId);
+        Intent intent = bldr.build();
+        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),0, intent,0);
+
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
                         .setSmallIcon(R.drawable.map_stop_icon)
-                        .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title));
+                        .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
+                        .setContentIntent(pIntent);
         if (status == 1) {          // General status update.
             // Retrieve preferred unit and calculate distance.
 
-            Application app = Application.get();
+
             String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
             String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);

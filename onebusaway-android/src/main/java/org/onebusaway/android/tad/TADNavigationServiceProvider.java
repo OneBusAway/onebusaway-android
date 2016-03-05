@@ -10,6 +10,7 @@ package org.onebusaway.android.tad;
 
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
@@ -54,6 +55,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     private boolean finished = false;   // Trip has finished.
 
     private TextToSpeech mTTS;
+    SharedPreferences mSettings = Application.getPrefs();
 
     /**
      * Creates a new instance of TADNavigationServiceProvider
@@ -723,20 +725,32 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                         .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title));
         if (status == 1) {          // General status update.
             // Retrieve preferred unit and calculate distance.
-            String unit_key = Application.get().getString(R.string.preference_key_preferred_units);
-            String unit = Application.getPrefs().getString(unit_key, "");
 
-            DecimalFormat fmt = new DecimalFormat("0.0");
-            // TODO: Fix unit check
-            // Main string.xml, preferred_units_option
-            // See RegionsFragment
+            Application app = Application.get();
+            String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
+            String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);
+            String AUTOMATIC = app.getString(R.string.preferences_preferred_units_option_automatic);
+            String preferredUnits = mSettings.getString(app.getString(R.string.preference_key_preferred_units), AUTOMATIC);
             double distance = mProxListener.endistance;
-            if (unit == "km") {
-                distance /= 1000;
-                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+            double miles = distance * RegionUtils.METERS_TO_MILES;  // Get miles.
+            distance /= 1000;                                       // Get kilometers.
+            DecimalFormat fmt = new DecimalFormat("0.0");
+
+            Locale mLocale = Locale.getDefault();
+
+            if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+                Log.d(TAG, "Setting units automatically");
+                // If the country is set to USA, assume imperial, otherwise metric
+                // TODO - Method of guessing metric/imperial can definitely be improved
+                if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
+                    mBuilder.setContentText(fmt.format(miles) + " miles away.");
+                } else {
+                    mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
+                }
+            } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
+                mBuilder.setContentText(fmt.format(miles) + " miles away.");
             } else {
-                distance *= RegionUtils.METERS_TO_MILES;
-                mBuilder.setContentText(fmt.format(distance) + " miles away.");
+                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             }
 
             NotificationManager mNotificationManager =

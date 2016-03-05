@@ -733,7 +733,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         bldr.setStopId(mStopId);
         Intent intent = bldr.build();
-        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),0, intent,0);
+        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())

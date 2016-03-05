@@ -35,7 +35,7 @@ public class TADService extends Service
     private String mStopId;                         // Destination Stop ID
     private String mTripId;                         // Trip ID
 
-    private TADNavigationServiceProvider navProvider;
+    private TADNavigationServiceProvider mNavProvider;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -58,9 +58,10 @@ public class TADService extends Service
             Log.i(TAG, "Requesting Location Updates");
             mLocationHelper.registerListener(this);
         }
-        this.navProvider = new TADNavigationServiceProvider(mTripId, mStopId);
+
+        mNavProvider = new TADNavigationServiceProvider(mTripId, mStopId);
         Segment segment = new Segment(this.mBeforeLocation, this.mDestLocation, null);
-        this.navProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
+        mNavProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
         return START_STICKY;
     }
 
@@ -89,11 +90,11 @@ public class TADService extends Service
         Log.i(TAG, "Location Updated");
         mLastLocation = location;
         if (mLastLocation != null) {
-            this.navProvider.locationUpdated(mLastLocation);
+            mNavProvider.locationUpdated(mLastLocation);
         }
 
         // Trip is done? End service.
-        if (this.navProvider.getFinished()) {
+        if (mNavProvider.getFinished()) {
             this.stopSelf();
         }
     }

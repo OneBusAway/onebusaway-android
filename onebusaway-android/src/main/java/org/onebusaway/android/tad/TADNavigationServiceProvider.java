@@ -21,6 +21,7 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.RegionUtils;
 
@@ -728,11 +729,12 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         int NOTIFICATION_ID = 33620;
 
         Application app = Application.get();
-        TripDetailsListFragment.IntentBuilder bldr = new TripDetailsListFragment.IntentBuilder(
+        TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
                 app.getApplicationContext(), mTripId);
 
-        bldr.setStopId(mStopId);
-        Intent intent = bldr.build();
+        bldr = bldr.setStopId(mStopId);
+        Intent intent = bldr.getIntent();
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder =

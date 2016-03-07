@@ -453,7 +453,7 @@
         tiempos de llegadas negativos
     </string>
 
-    <string name="preferences_show_header_arrivals_title">Mostrar llegadas sobre el nombre de la parada</string>
+    <string name="preferences_show_header_arrivals_title">Ver llegadas sobre el nombre de parada</string>
     <string name="preferences_show_header_arrivals_summary">Cuando se visualizan paradas favoritas,
         muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
     </string>

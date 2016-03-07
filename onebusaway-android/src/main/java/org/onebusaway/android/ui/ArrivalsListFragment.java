@@ -32,6 +32,7 @@ import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -56,6 +57,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -105,6 +107,8 @@ public class ArrivalsListFragment extends ListFragment
      * instantiate its own header view
      */
     public static final String EXTERNAL_HEADER = ".ExternalHeader";
+
+    private static final String TUTORIAL_COUNTER = "tutorial_counter";
 
     private static final long RefreshPeriod = 60 * 1000;
 
@@ -463,6 +467,35 @@ public class ArrivalsListFragment extends ListFragment
         // Notify listener that we have new arrival info
         if (mListener != null) {
             mListener.onArrivalTimesUpdated(result);
+        }
+
+        showTutorials(result);
+    }
+
+    private void showTutorials(ObaArrivalInfoResponse response) {
+        // If we're already showing a ShowcaseView, we don't want to stack another on top
+        if (ShowcaseViewUtils.isShowcaseViewShowing()) {
+            return;
+        }
+        /**
+         * The ShowcaseViewUtils.showTutorial() method takes care of checking if a tutorial has
+         * already been shown, so we can just list the tutorials in order of how they should be
+         * shown to the user.
+         */
+        int counter = Application.getPrefs().getInt(TUTORIAL_COUNTER, 0);
+        counter++;
+        PreferenceUtils.saveInt(TUTORIAL_COUNTER, counter);
+        // Give the user a break from tutorials for lesser important ones - only show every 3rd time
+        if (counter % 3 == 0) {
+            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_ROUTE_FILTER,
+                    (AppCompatActivity) getActivity(), response);
+            if (!mExternalHeader) {
+                // This menu option only shows up if we're not in the sliding panel
+                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_SHOW_ARRIVAL_IN_HEADER,
+                        (AppCompatActivity) getActivity(), response);
+            }
+            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_NIGHT_LIGHT,
+                    (AppCompatActivity) getActivity(), response);
         }
     }
 

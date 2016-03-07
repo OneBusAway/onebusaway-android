@@ -597,6 +597,20 @@
     <string name="tutorial_starred_stops_shortcut_text">Long-press on a stop to create a shortcut on
         your home screen. Tap on the shortcut to instantly see arrivals!
     </string>
+    <string name="tutorial_show_arrivals_in_header_title">Show favorite routes on top</string>
+    <string name="tutorial_show_arrivals_in_header_text">Want to see your starred routes above the
+        stop name? Try the \"Show arrivals in header\" option via the \"More\" button at the top
+        right of the screen.
+    </string>
+    <string name="tutorial_arrival_route_filter_title">Filter unwanted routes</string>
+    <string name="tutorial_arrival_route_filter_text">Don\'t care about Route 6? Hide it using the
+        \"Filter routes\" option via the \"More\" button at the top right of the screen.
+    </string>
+    <string name="tutorial_night_light_title">Light up the night</string>
+    <string name="tutorial_night_light_text">Tired of watching your bus fly by because the driver
+        couldn\'t see you in the dark? Try the \"Night light\" via the \"More\" button at the top
+        right of the screen.
+    </string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

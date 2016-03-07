@@ -62,6 +62,13 @@ public class ShowcaseViewUtils {
 
     public static final String TUTORIAL_STARRED_STOPS_SHORTCUT = ".tutorial_starred stops_shortcut";
 
+    public static final String TUTORIAL_SHOW_ARRIVAL_IN_HEADER
+            = ".tutorial_show_arrivals_in_header";
+
+    public static final String TUTORIAL_ARRIVAL_ROUTE_FILTER = ".tutorial_arrival_route_filter";
+
+    public static final String TUTORIAL_NIGHT_LIGHT = ".tutorial_night_light";
+
     private static ShowcaseView mShowcaseView;
 
     /**
@@ -245,6 +252,24 @@ public class ShowcaseViewUtils {
                 title = r.getString(R.string.tutorial_starred_stops_shortcut_title);
                 text = new SpannableString(
                         r.getString(R.string.tutorial_starred_stops_shortcut_text));
+                break;
+            case TUTORIAL_SHOW_ARRIVAL_IN_HEADER:
+                title = r.getString(R.string.tutorial_show_arrivals_in_header_title);
+                text = new SpannableString(
+                        r.getString(R.string.tutorial_show_arrivals_in_header_text));
+                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
+                break;
+            case TUTORIAL_ARRIVAL_ROUTE_FILTER:
+                title = r.getString(R.string.tutorial_arrival_route_filter_title);
+                text = new SpannableString(
+                        r.getString(R.string.tutorial_arrival_route_filter_text));
+                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
+                break;
+            case TUTORIAL_NIGHT_LIGHT:
+                title = r.getString(R.string.tutorial_night_light_title);
+                text = new SpannableString(
+                        r.getString(R.string.tutorial_night_light_text));
+                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
                 break;
             default:
                 throw new IllegalArgumentException(

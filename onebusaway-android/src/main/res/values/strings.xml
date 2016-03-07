@@ -86,7 +86,7 @@
     <string name="direction_none"></string>
     <string name="loading">Loading&#8230;</string>
     <string name="browser_error">Unable to launch browser.</string>
-    <string name="search_hint">Search stops or routes</string>
+    <string name="search_hint">Search stop or route IDs</string>
     <string name="search">Search</string>
     <string name="checkmark_description">Selection checkmark</string>
 

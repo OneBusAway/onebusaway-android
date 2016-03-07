@@ -86,7 +86,7 @@
     <string name="direction_none"></string>
     <string name="loading">Cargando&#8230;</string>
     <string name="browser_error">No se puede iniciar el Navegador.</string>
-    <string name="search_hint">Buscar paradas o rutas</string>
+    <string name="search_hint">Buscar paradas o rutas por ID</string>
     <string name="search">Buscar</string>
     <string name="checkmark_description">Selección de marca de verificación</string>
 
@@ -176,6 +176,8 @@
     <string name="stop_info_option_sort_route">Ordenar por Ruta …</string>
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_filter">Filtrar rutas</string>
+    <string name="stop_info_option_hide_header_arrivals">Ocultar las llegadas del encabezado</string>
+    <string name="stop_info_option_show_header_arrivals">Mostrar las llegadas en el encabezado</string>
     <string name="stop_info_option_editname">Editar el nombre de la parada</string>
     <string name="stop_info_option_addstar">Adicionar la parada a favoritos</string>
     <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
@@ -451,6 +453,11 @@
         tiempos de llegadas negativos
     </string>
 
+    <string name="preferences_show_header_arrivals_title">Ver llegadas sobre el nombre de parada</string>
+    <string name="preferences_show_header_arrivals_summary">Cuando se visualizan paradas favoritas,
+        muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
+    </string>
+
     <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>
     <string name="preferences_arrival_info_style_options_b">Tarjetas</string>
 
@@ -590,7 +597,21 @@
     <string name="tutorial_starred_stops_shortcut_text">Presiona un largo tiempo sobre una parada para crear un acceso directo
         en tu pantalla de inicio. ¡Toca sobre el acceso directo para ver instantaneamente las llegadas!
     </string>
-    
+    <string name="tutorial_show_arrivals_in_header_title">Ver las rutas favoritas de primero</string>
+    <string name="tutorial_show_arrivals_in_header_text">¿Quieres ver tus rutas favoritas sobre el
+        nombre de la parada? Intenta la opción \"Mostrar las llegadas en el encabezado\" desde el botón \"Más\" en la parte superior
+        derecha de la pantalla.
+    </string>
+    <string name="tutorial_arrival_route_filter_title">Filtrar las rutas no deseadas</string>
+    <string name="tutorial_arrival_route_filter_text">¿No te interesa la Ruta 6? Ocultada usando la
+        opción \"Filtrar rutas\" desde el botón \"Más\" en la parte superior derecha de la pantalla.
+    </string>
+    <string name="tutorial_night_light_title">Iluminación en la noche</string>
+    <string name="tutorial_night_light_text">¿Estás cansado de que el bus continue de largo porque el conductor
+        no te pudo ver en la oscuridad? Intenta la opción \"Iluminación de noche\" desde el botón \"Más\" en la parte superior
+        derecha de la pantalla.
+    </string>
+
     <!-- About -->
     <string name="title_activity_about">Acerca de</string>
     <string name="about_text">

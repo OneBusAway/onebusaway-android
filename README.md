@@ -90,7 +90,7 @@ Occasionally Amazon will likely release updates to their `amazon-maps-api-v2` li
 
 ## Contributing
 
-We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
+We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/.github/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
 
 ## Deploying OneBusAway Android in Your City
 

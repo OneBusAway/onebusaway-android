@@ -38,14 +38,24 @@
             android:layout_marginLeft="5dp"/>
 
     <ImageView
-            android:id="@+id/stop_icon"
-            android:src="@drawable/ic_drawer_maps_place"
-            android:contentDescription="@string/trip_details_current_stop"
-            android:layout_width="@dimen/trip_details_transit_stop_icon"
-            android:layout_height="@dimen/trip_details_transit_stop_icon"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="5dp"/>
+        android:id="@+id/stop_icon"
+        android:src="@drawable/ic_drawer_maps_place"
+        android:contentDescription="@string/trip_details_current_stop"
+        android:layout_width="@dimen/trip_details_transit_stop_icon"
+        android:layout_height="@dimen/trip_details_transit_stop_icon"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"/>
+
+    <ImageView
+        android:id="@+id/destination_icon"
+        android:src="@drawable/ic_destination_stop"
+        android:contentDescription="@string/trip_details_dest_stop"
+        android:layout_width="@dimen/trip_details_dest_stop_icon"
+        android:layout_height="@dimen/trip_details_dest_stop_icon"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"/>
 
     <LinearLayout
             android:id="@+id/transit_line"

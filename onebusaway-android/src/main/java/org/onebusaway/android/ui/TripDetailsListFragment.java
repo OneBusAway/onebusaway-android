@@ -422,6 +422,7 @@ public class TripDetailsListFragment extends ListFragment {
                         ObaStop lastStop = refs.getStop(lastStopId);
 
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
+
                         serviceIntent.putExtra("STOP_ID", destStopId);
                         serviceIntent.putExtra("TRIP_ID", mTripId);
                         serviceIntent.putExtra("STOP_LAT", destStop.getLatitude());
@@ -664,6 +665,7 @@ public class TripDetailsListFragment extends ListFragment {
 
             ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
             ImageView stopIcon = (ImageView) convertView.findViewById(R.id.stop_icon);
+            ImageView flagIcon = (ImageView) convertView.findViewById(R.id.destination_icon);
             ImageView topLine = (ImageView) convertView.findViewById(R.id.top_line);
             ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);

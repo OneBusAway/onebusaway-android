@@ -694,6 +694,7 @@
     </string>
     <string name="trip_details_current_stop">Current stop</string>
     <string name="trip_details_current_bus_position">Bus is currently at</string>
+    <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>

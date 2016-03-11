@@ -51,6 +51,11 @@ public class TripDetailsActivity extends AppCompatActivity {
             return this;
         }
 
+        public Builder setActiveTrip(Boolean b) {
+            mIntent.putExtra(TripDetailsListFragment.TRIP_ACTIVE, b);
+            return this;
+        }
+
         public Builder setUpMode(String mode) {
             mIntent.putExtra(NavHelp.UP_MODE, mode);
             return this;

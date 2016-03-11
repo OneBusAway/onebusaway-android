@@ -1480,4 +1480,64 @@ public final class ObaContract {
             return favorite;
         }
     }
+
+
+    public static class TripStops implements TripsColumns, StopsColumns, BaseColumns {
+
+        // Cannot be instantiated
+        private TripStops() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "trip_stops";
+
+        /** The content:// style URI for this table */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".tripstops";
+
+        public static final String TRIP_ID = "TRIP_ID";
+
+        /**
+         * Saves list of stops for TAD Trip.
+         *
+         * @param tripId  TripId of trip to stored.
+         * @param stops Array of stop ids, in order they are visited.
+         */
+        public static void saveTrip(Context context, String tripId, String[] stops) {
+            if (context == null) {
+                return;
+            }
+
+            ContentResolver cr = context.getContentResolver();
+
+            final String WHERE = TRIP_ID + "=?";
+            final String[] selectionArgs = {tripId};
+
+            // Delete records for previous trip.
+            cr.delete(CONTENT_URI, WHERE, selectionArgs);
+
+            if (stops.length > 1) {
+                // Insert each stop into table
+                for (int i = 0; i < stops.length; i++) {
+                    ContentValues values = new ContentValues();
+                    values.put(STOP_ID, stops[i]);
+                    cr.insert(CONTENT_URI, values);
+                }
+            }
+        }
+
+        public static void getTrip(Context context, String tripId)
+        {
+            if (context == null) {
+                return;
+            }
+
+            ContentResolver cr = context.getContentResolver();
+            final String WHERE = TRIP_ID + "=?";
+            final String[] selectionArgs = {tripId};
+        }
+    }
 }

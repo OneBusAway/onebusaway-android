@@ -79,6 +79,8 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String SCROLL_MODE_STOP = "stop";
 
+    public static final String TRIP_ACTIVE = ".TripActive";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
@@ -92,6 +94,8 @@ public class TripDetailsListFragment extends ListFragment {
     private String mScrollMode;
 
     private Integer mStopIndex;
+
+    private boolean mActiveTrip;
 
     private ObaTripDetailsResponse mTripInfo;
 
@@ -148,7 +152,11 @@ public class TripDetailsListFragment extends ListFragment {
         }
 
         mStopId = args.getString(STOP_ID);
+<<<<<<< HEAD
         mScrollMode = args.getString(SCROLL_MODE);
+=======
+        mActiveTrip = args.getBoolean(TRIP_ACTIVE);
+>>>>>>> 516b6e1... Added bool to distinguish between when activity is loaded from selecting stop, vs opening from TAD notification.
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
@@ -704,9 +712,15 @@ public class TripDetailsListFragment extends ListFragment {
             }
 
             if (mStopIndex != null && mStopIndex == position) {
-                // Show the selected stop
-                stopIcon.setVisibility(View.VISIBLE);
+                if (mActiveTrip) {  // Trip is active in background
+                    stopIcon.setVisibility(View.GONE);
+                    flagIcon.setVisibility(View.VISIBLE);
+                } else {            // Selected stop
+                    stopIcon.setVisibility(View.VISIBLE);
+                    flagIcon.setVisibility(View.GONE);
+                }
             } else {
+                flagIcon.setVisibility(View.GONE);
                 stopIcon.setVisibility(View.GONE);
             }
 

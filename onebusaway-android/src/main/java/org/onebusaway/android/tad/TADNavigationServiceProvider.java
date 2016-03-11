@@ -733,6 +733,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 app.getApplicationContext(), mTripId);
 
         bldr = bldr.setStopId(mStopId);
+        bldr = bldr.setActiveTrip(true);
         Intent intent = bldr.getIntent();
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -744,7 +745,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                         .setContentIntent(pIntent);
         if (status == 1) {          // General status update.
             // Retrieve preferred unit and calculate distance.
-
 
             String IMPERIAL = app.getString(R.string.preferences_preferred_units_option_imperial);
             String METRIC = app.getString(R.string.preferences_preferred_units_option_metric);

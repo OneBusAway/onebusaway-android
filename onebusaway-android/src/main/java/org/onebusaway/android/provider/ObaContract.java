@@ -507,6 +507,50 @@ public final class ObaContract {
         public static final String EXCLUDE = "exclude";
     }
 
+    protected interface NavigationColumns {
+
+        /**
+         * The TAD Navigation ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String REGION_ID = "nav_id";
+
+        /**
+         * The Trip Id
+         * <P>
+         * Type: STRING
+         * </P>
+         */
+        public static final String TRIP_ID = "trip_id";
+
+        /**
+         * The Stop ID of the destination.
+         * <P>
+         * Type: STRING
+         * </P>
+         */
+        public static final String DESTINATION_ID = "destination_id";
+
+        /**
+         * The Stop ID of the stop before the user's destination.
+         * <P>
+         * Type: STRING
+         * </P>
+         */
+        public static final String BEFORE_ID = "before_id";
+
+        /**
+         * Whether this leg of the trip is still active.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String ACTIVE = "is_active";
+
+    }
+
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
 
         // Cannot be instantiated
@@ -1537,7 +1581,7 @@ public final class ObaContract {
 
             ContentResolver cr = context.getContentResolver();
             final String WHERE = TRIP_ID + "=?";
-            final String[] selectionArgs = {tripId};
+            final String[] selectionArgs = { tripId };
         }
     }
 }

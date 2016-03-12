@@ -732,8 +732,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
                 app.getApplicationContext(), mTripId);
 
-        bldr = bldr.setStopId(mStopId);
-        bldr = bldr.setActiveTrip(true);
+        bldr = bldr.setDestinationId(mStopId);
         Intent intent = bldr.getIntent();
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);

@@ -81,6 +81,8 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String TRIP_ACTIVE = ".TripActive";
 
+    public static final String DEST_ID = ".DestinationId";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
@@ -93,7 +95,11 @@ public class TripDetailsListFragment extends ListFragment {
 
     private String mScrollMode;
 
+    private String mDestinationId;
+
     private Integer mStopIndex;
+
+    private Integer mDestinationIndex;
 
     private boolean mActiveTrip;
 
@@ -156,6 +162,8 @@ public class TripDetailsListFragment extends ListFragment {
         mScrollMode = args.getString(SCROLL_MODE);
 
         mActiveTrip = args.getBoolean(TRIP_ACTIVE);
+
+        mDestinationId = args.getString(DEST_ID);
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
@@ -253,6 +261,44 @@ public class TripDetailsListFragment extends ListFragment {
             getListView().setDivider(null);
             setListAdapter(mAdapter);
             setScroller(listView);
+
+            // Scroll to stop if we have the stopId available
+            if (mStopId != null) {
+                mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                if (mStopIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mStopIndex);
+                        }
+                    });
+                }
+            } else {
+                // If we don't have a stop, then scroll to the current position of the bus
+                final Integer nextStop = mAdapter.getNextStopIndex();
+                if (nextStop != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(nextStop - 1);
+                        }
+                    });
+                }
+            }
+
+            if (mDestinationId != null) {
+                mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+                if (mDestinationIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mDestinationIndex);
+                        }
+                    });
+                }
+            }
+
+            mAdapter.notifyDataSetChanged();
         } else {  // refresh, keep scroll position
             int index = listView.getFirstVisiblePosition();
             View v = listView.getChildAt(0);
@@ -695,6 +741,7 @@ public class TripDetailsListFragment extends ListFragment {
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
+            flagIcon.setColorFilter(routeColor);
 
             if (position == 0) {
                 // First stop in trip - hide the top half of the transit line
@@ -710,14 +757,12 @@ public class TripDetailsListFragment extends ListFragment {
                 bottomLine.setVisibility(View.VISIBLE);
             }
 
-            if (mStopIndex != null && mStopIndex == position) {
-                if (mActiveTrip) {  // Trip is active in background
-                    stopIcon.setVisibility(View.GONE);
-                    flagIcon.setVisibility(View.VISIBLE);
-                } else {            // Selected stop
-                    stopIcon.setVisibility(View.VISIBLE);
-                    flagIcon.setVisibility(View.GONE);
-                }
+            if (mDestinationIndex != null && mDestinationIndex == position) {
+                stopIcon.setVisibility(View.GONE);
+                flagIcon.setVisibility(View.VISIBLE);
+            } else if (mStopIndex != null && mStopIndex == position) {
+                stopIcon.setVisibility(View.VISIBLE);
+                flagIcon.setVisibility(View.GONE);
             } else {
                 flagIcon.setVisibility(View.GONE);
                 stopIcon.setVisibility(View.GONE);

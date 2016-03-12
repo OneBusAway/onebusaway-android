@@ -1526,23 +1526,21 @@ public final class ObaContract {
     }
 
 
-    public static class TripStops implements TripsColumns, StopsColumns, BaseColumns {
+    public static class NavStops implements BaseColumns, NavigationColumns {
 
         // Cannot be instantiated
-        private TripStops() {
+        private NavStops() {
         }
 
         /** The URI path portion for this table */
-        public static final String PATH = "trip_stops";
+        public static final String PATH = "nav_stops";
 
         /** The content:// style URI for this table */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(
                 AUTHORITY_URI, PATH);
 
         public static final String CONTENT_DIR_TYPE
-                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".tripstops";
-
-        public static final String TRIP_ID = "TRIP_ID";
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
         /**
          * Saves list of stops for TAD Trip.
@@ -1567,7 +1565,7 @@ public final class ObaContract {
                 // Insert each stop into table
                 for (int i = 0; i < stops.length; i++) {
                     ContentValues values = new ContentValues();
-                    values.put(STOP_ID, stops[i]);
+                    //values.put(STOP_ID, stops[i]);
                     cr.insert(CONTENT_URI, values);
                 }
             }

@@ -56,6 +56,11 @@ public class TripDetailsActivity extends AppCompatActivity {
             return this;
         }
 
+        public Builder setDestinationId(String stopId) {
+            mIntent.putExtra(TripDetailsListFragment.DEST_ID, stopId);
+            return this;
+        }
+
         public Builder setUpMode(String mode) {
             mIntent.putExtra(NavHelp.UP_MODE, mode);
             return this;

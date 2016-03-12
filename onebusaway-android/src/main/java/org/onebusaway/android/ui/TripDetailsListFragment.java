@@ -152,11 +152,10 @@ public class TripDetailsListFragment extends ListFragment {
         }
 
         mStopId = args.getString(STOP_ID);
-<<<<<<< HEAD
+
         mScrollMode = args.getString(SCROLL_MODE);
-=======
+
         mActiveTrip = args.getBoolean(TRIP_ACTIVE);
->>>>>>> 516b6e1... Added bool to distinguish between when activity is loaded from selecting stop, vs opening from TAD notification.
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }

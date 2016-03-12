@@ -27,6 +27,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
@@ -473,6 +474,9 @@ public class TripDetailsListFragment extends ListFragment {
                         String lastStopId = timeLast.getStopId();
                         ObaStop destStop = refs.getStop(destStopId);
                         ObaStop lastStop = refs.getStop(lastStopId);
+
+                        DBUtil.addToDB(lastStop);
+                        DBUtil.addToDB(destStop);
 
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
 

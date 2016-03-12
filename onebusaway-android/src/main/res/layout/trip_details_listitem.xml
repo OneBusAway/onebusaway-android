@@ -49,7 +49,7 @@
 
     <ImageView
         android:id="@+id/destination_icon"
-        android:src="@drawable/ic_destination_stop"
+        android:src="@drawable/ic_content_flag"
         android:contentDescription="@string/trip_details_dest_stop"
         android:layout_width="@dimen/trip_details_dest_stop_icon"
         android:layout_height="@dimen/trip_details_dest_stop_icon"

@@ -515,12 +515,12 @@ public final class ObaContract {
          * Type: INTEGER
          * </P>
          */
-        public static final String REGION_ID = "nav_id";
+        public static final String NAV_ID = "nav_id";
 
         /**
          * The Trip Id
          * <P>
-         * Type: STRING
+         * Type: TEXT
          * </P>
          */
         public static final String TRIP_ID = "trip_id";
@@ -528,7 +528,7 @@ public final class ObaContract {
         /**
          * The Stop ID of the destination.
          * <P>
-         * Type: STRING
+         * Type: TEXT
          * </P>
          */
         public static final String DESTINATION_ID = "destination_id";
@@ -536,7 +536,7 @@ public final class ObaContract {
         /**
          * The Stop ID of the stop before the user's destination.
          * <P>
-         * Type: STRING
+         * Type: TEXT
          * </P>
          */
         public static final String BEFORE_ID = "before_id";
@@ -1542,44 +1542,5 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
-        /**
-         * Saves list of stops for TAD Trip.
-         *
-         * @param tripId  TripId of trip to stored.
-         * @param stops Array of stop ids, in order they are visited.
-         */
-        public static void saveTrip(Context context, String tripId, String[] stops) {
-            if (context == null) {
-                return;
-            }
-
-            ContentResolver cr = context.getContentResolver();
-
-            final String WHERE = TRIP_ID + "=?";
-            final String[] selectionArgs = {tripId};
-
-            // Delete records for previous trip.
-            cr.delete(CONTENT_URI, WHERE, selectionArgs);
-
-            if (stops.length > 1) {
-                // Insert each stop into table
-                for (int i = 0; i < stops.length; i++) {
-                    ContentValues values = new ContentValues();
-                    //values.put(STOP_ID, stops[i]);
-                    cr.insert(CONTENT_URI, values);
-                }
-            }
-        }
-
-        public static void getTrip(Context context, String tripId)
-        {
-            if (context == null) {
-                return;
-            }
-
-            ContentResolver cr = context.getContentResolver();
-            final String WHERE = TRIP_ID + "=?";
-            final String[] selectionArgs = { tripId };
-        }
     }
 }

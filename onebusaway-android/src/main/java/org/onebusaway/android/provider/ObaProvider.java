@@ -235,6 +235,20 @@ public class ObaProvider extends ContentProvider {
                         "ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.OTP_CONTACT_EMAIL + " VARCHAR");
             }
+
+            if (oldVersion == 22) {
+                db.execSQL(
+                        "CREATE TABLE" +
+                                ObaContract.NavStops.PATH + " (" +
+                                ObaContract.NavStops._ID + "INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                + ObaContract.NavStops.NAV_ID + "VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.TRIP_ID + "VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.DESTINATION_ID + "VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.BEFORE_ID + "VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.ACTIVE + "BOOLEAN NOT NULL " +
+                                ");"
+                );
+            }
         }
 
         @Override

@@ -13,4 +13,6 @@ The notification system allows the user to be constantly reminded of nearby stop
 
 It is still a project in development with several collaborators with the willing to make it a worth using app.
 
+##IN DEVELOPEMENT
+
 

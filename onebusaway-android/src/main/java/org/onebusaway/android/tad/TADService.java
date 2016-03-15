@@ -13,6 +13,7 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -26,6 +27,10 @@ public class TADService extends Service
     implements LocationHelper.Listener
 {
     public static final String TAG = "TADService";
+
+    public static final String DESTINATION_ID = ".DestinationId";
+    public static final String BEFORE_STOP_ID = ".BeforeId";
+    public static final String TRIP_ID = ".TripId";
 
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;

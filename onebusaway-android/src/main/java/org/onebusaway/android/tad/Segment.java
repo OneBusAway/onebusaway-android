@@ -85,25 +85,6 @@ public class Segment {
         return idStopFromTransitAgencyGTFS;
     }
 
-    /*private double XFromLongitude;
-
-    public void setXFromLongitude(double XFromLongitude)  {
-        this.XFromLongitude = XFromLongitude;
-    }
-
-    public double getXFromLongitude() {
-        return XFromLongitude;
-    }
-
-    private double YFromLatitude;
-
-    public void setYFromLatitude(double YFromLatitude)  {
-        this.YFromLatitude = YFromLatitude;
-    }
-
-    public double getYFromLatitude() {
-        return YFromLatitude;
-    }*/
 
     private Location fromLocation;
     public Location getFromLocation() { return fromLocation; }
@@ -129,49 +110,10 @@ public class Segment {
         return idStopToTransitAgencyGTFS;
     }
 
-    /*private double XToLongitude;
-
-    public void setXToLongitude(double XToLongitude)  {
-        this.XToLongitude = XToLongitude;
-    }
-
-    public double getXToLongitude() {
-        return XToLongitude;
-    }
-
-    private double YToLatitude;
-
-    public void setYToLatitude(double YToLatitude)  {
-        this.YToLatitude = YToLatitude;
-    }
-
-    public double getYToLatitude() {
-        return YToLatitude;
-    }*/
     private Location toLocation;
     public Location getToLocation() { return toLocation; }
     public void setToLocation(Location l) {toLocation = l; }
 
-
-    /*private double XToBeforeLongitude;
-
-    public void setXToBeforeLongitude(double XToBeforeLongitude)  {
-        this.XToBeforeLongitude = XToBeforeLongitude;
-    }
-
-    public double getXToBeforeLongitude() {
-        return XToBeforeLongitude;
-    }
-
-    private double YToBeforeLatitude;
-
-    public void setYToBeforeLatitude(double YToBeforeLatitude)  {
-        this.YToBeforeLatitude = YToBeforeLatitude;
-    }
-
-    public double getYToBeforeLatitude() {
-        return YToBeforeLatitude;
-    }*/
     private Location beforeLocation;
     public Location getBeforeLocation() { return beforeLocation; }
     public void setBeforeLocation(Location l) { beforeLocation = l; }
@@ -185,6 +127,10 @@ public class Segment {
     public float getAlertDistance() {
         return AlertDistance;
     }
+
+    private String tripId;
+    public void setTripId(String trip) { tripId = trip; }
+    public String getTripId() { return tripId; }
 
     /**
         Construct a segment from two stops. From Location remains null.
@@ -213,4 +159,6 @@ public class Segment {
         toLocation = toLoc;
         beforeLocation = beforeLoc;
     }
+
+
 }

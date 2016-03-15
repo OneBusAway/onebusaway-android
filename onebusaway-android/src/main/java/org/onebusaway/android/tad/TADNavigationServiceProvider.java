@@ -56,6 +56,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     private boolean waitingForConfirm = false;
     private Location currentLocation = null;
 
+    private boolean resuming = false;   // Is Trip being resumed?
     private boolean finished = false;   // Trip has finished.
 
     private TextToSpeech mTTS;          // TextToSpeech for speaking commands.
@@ -71,6 +72,14 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         mTripId = tripId;
         mStopId = stopId;
+    }
+
+    public TADNavigationServiceProvider(String tripId, String stopId, int flag) {
+        Log.d(TAG, "Creating TAD Navigation Service Provider");
+        mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        mTripId = tripId;
+        mStopId = stopId;
+        resuming = flag == 1;
     }
 
     /**
@@ -719,7 +728,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             mTTS.setLanguage(Locale.getDefault());
-            Speak(Application.get().getString(R.string.voice_starting_trip));
+            if (!resuming) {
+                Speak(Application.get().getString(R.string.voice_starting_trip));
+            }
         }
     }
 

@@ -1542,5 +1542,24 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
+        public static Uri insert(Context context, Integer nav_id, String tripId, String destId, String beforeId)
+        {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(NAV_ID, nav_id);
+            values.put(TRIP_ID, tripId);
+            values.put(DESTINATION_ID, destId);
+            values.put(BEFORE_ID, beforeId);
+            values.put(ACTIVE, true);
+            return cr.insert(CONTENT_URI, values);
+        }
+
+        public  static boolean update(Context context, Uri uri, boolean active)
+        {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ACTIVE, active);
+            return cr.update(uri, values, null, null) > 0;
+        }
     }
 }

@@ -35,9 +35,8 @@ public class TADService extends Service
     private LocationHelper mLocationHelper = null;
     private Location mLastLocation = null;
 
-    private Location mDestLocation = null;          // Destination stop location
-    private Location mBeforeLocation = null;        // Second to last stop location
-    private String mStopId;                         // Destination Stop ID
+    private String mDestinationStopId;              // Destination Stop ID
+    private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
 
     private TADNavigationServiceProvider mNavProvider;
@@ -45,16 +44,19 @@ public class TADService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-            mDestLocation = new Location(LocationManager.GPS_PROVIDER);
-            mDestLocation.setLatitude(intent.getDoubleExtra("STOP_LAT", 0));
-            mDestLocation.setLongitude(intent.getDoubleExtra("STOP_LNG", 0));
-            mBeforeLocation = new Location(LocationManager.GPS_PROVIDER);
-            mBeforeLocation.setLatitude(intent.getDoubleExtra("BEFORE_LAT", 0));
-            mBeforeLocation.setLongitude(intent.getDoubleExtra("BEFORE_LNG", 0));
-            mStopId = intent.getStringExtra("STOP_ID");
-            mTripId = intent.getStringExtra("TRIP_ID");
+            mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
+            mBeforeStopId = intent.getStringExtra(BEFORE_STOP_ID);
+            mTripId = intent.getStringExtra(TRIP_ID);
+
+            ObaContract.NavStops.insert(Application.get().getApplicationContext(),
+                    1, mTripId, mDestinationStopId, mBeforeStopId);
         } else {
-            // Load from disk
+            String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
+            if (args != null && args.length == 3) {
+                mTripId = args[0];
+                mDestinationStopId = args[1];
+                mBeforeStopId = args[2];
+            }
         }
 
         mLocationHelper = new LocationHelper(this, 1);
@@ -64,8 +66,10 @@ public class TADService extends Service
             mLocationHelper.registerListener(this);
         }
 
-        mNavProvider = new TADNavigationServiceProvider(mTripId, mStopId);
-        Segment segment = new Segment(this.mBeforeLocation, this.mDestLocation, null);
+        mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
+        Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
+        Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
+        Segment segment = new Segment(last, dest, null);
         mNavProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
         return START_STICKY;
     }

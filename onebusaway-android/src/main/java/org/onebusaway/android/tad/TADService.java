@@ -50,12 +50,15 @@ public class TADService extends Service
 
             ObaContract.NavStops.insert(Application.get().getApplicationContext(),
                     1, mTripId, mDestinationStopId, mBeforeStopId);
+
+            mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
             if (args != null && args.length == 3) {
                 mTripId = args[0];
                 mDestinationStopId = args[1];
                 mBeforeStopId = args[2];
+                mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId, 1);
             }
         }
 
@@ -66,11 +69,13 @@ public class TADService extends Service
             mLocationHelper.registerListener(this);
         }
 
-        mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
         Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
         Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
         Segment segment = new Segment(last, dest, null);
-        mNavProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
+
+        if (mNavProvider != null) {
+            mNavProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
+        }
         return START_STICKY;
     }
 

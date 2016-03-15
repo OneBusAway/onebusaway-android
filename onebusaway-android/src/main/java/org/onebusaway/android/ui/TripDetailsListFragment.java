@@ -480,8 +480,8 @@ public class TripDetailsListFragment extends ListFragment {
 
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
 
-                        serviceIntent.putExtra(TADService.DESTINATION_ID, destStopId);
-                        serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStopId);
+                        serviceIntent.putExtra(TADService.DESTINATION_ID, destStop.getId());
+                        serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
                         serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
                         Application.get().getApplicationContext().startService(serviceIntent);
                     }

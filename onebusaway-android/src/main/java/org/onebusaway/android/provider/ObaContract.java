@@ -627,18 +627,17 @@ public final class ObaContract {
             return cr.update(uri, values, null, null) > 0;
         }
 
-        public static Location get(Context context, String id) {
-            return get(context.getContentResolver(), id);
+        public static Location getLocation(Context context, String id) {
+            return getLocation(context.getContentResolver(), id);
         }
 
-        public static Location get(ContentResolver cr, String id) {
+        private static Location getLocation(ContentResolver cr, String id) {
             final String[] PROJECTION = {
-                    CODE,
                     LATITUDE,
                     LONGITUDE
             };
 
-            Cursor c = cr.query(CONTENT_URI, PROJECTION,CODE + "=?", new String[] {id}, null);
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,_ID + "=?", new String[] {id}, null);
             if (c != null) {
                 try {
                     if (c.getCount() == 0) {
@@ -646,8 +645,8 @@ public final class ObaContract {
                     }
                     c.moveToFirst();
                     Location l = new Location(LocationManager.GPS_PROVIDER);
-                    l.setLatitude(c.getDouble(1));
-                    l.setLongitude(c.getDouble(2));
+                    l.setLatitude(c.getDouble(0));
+                    l.setLongitude(c.getDouble(1));
                     return l;
 
                 } finally {
@@ -1579,6 +1578,7 @@ public final class ObaContract {
         public static Uri insert(Context context, Integer nav_id, String tripId, String destId, String beforeId)
         {
             ContentResolver cr = context.getContentResolver();
+            cr.delete(CONTENT_URI,null, null);
             ContentValues values = new ContentValues();
             values.put(NAV_ID, nav_id);
             values.put(TRIP_ID, tripId);
@@ -1594,6 +1594,29 @@ public final class ObaContract {
             ContentValues values = new ContentValues();
             values.put(ACTIVE, active);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static String[] getDetails(Context context, String id) {
+            final String[] PROJECTION = {
+                    TRIP_ID,
+                    DESTINATION_ID,
+                    BEFORE_ID
+            };
+
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?",new String[] { id }, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    return new String[] { c.getString(0), c.getString(1), c.getString(2) };
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
 
         public static Segment[] get(Context context, String navId)
@@ -1616,10 +1639,11 @@ public final class ObaContract {
                     c.moveToFirst();
                     do {
                         results[i] = new Segment(
-                                Stops.get(context, c.getString(2)),
-                                Stops.get(context, c.getString(1)),
+                                Stops.getLocation(context, c.getString(2)),
+                                Stops.getLocation(context, c.getString(1)),
                                 null
                         );
+                        results[i].setTripId(c.getString(0));
                         i++;
                     } while (c.moveToNext());
 

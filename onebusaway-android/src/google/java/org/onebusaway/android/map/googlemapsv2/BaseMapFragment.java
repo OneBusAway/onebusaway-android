@@ -540,7 +540,9 @@ public class BaseMapFragment extends SupportMapFragment
                 }
 
                 // Pass overlay focus event up to listeners for this fragment
-                mOnFocusChangedListener.onFocusChanged(stop, routes, location);
+                if (mOnFocusChangedListener != null) {
+                    mOnFocusChangedListener.onFocusChanged(stop, routes, location);
+                }
             }
         });
     }

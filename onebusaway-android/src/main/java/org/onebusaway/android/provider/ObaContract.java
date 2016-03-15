@@ -22,12 +22,16 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.tad.Segment;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
@@ -621,6 +625,36 @@ public final class ObaContract {
             values.put(ObaContract.Stops.USE_COUNT, 0);
             values.putNull(ObaContract.Stops.ACCESS_TIME);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static Location get(Context context, String id) {
+            return get(context.getContentResolver(), id);
+        }
+
+        public static Location get(ContentResolver cr, String id) {
+            final String[] PROJECTION = {
+                    CODE,
+                    LATITUDE,
+                    LONGITUDE
+            };
+
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,CODE + "=?", new String[] {id}, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    Location l = new Location(LocationManager.GPS_PROVIDER);
+                    l.setLatitude(c.getDouble(1));
+                    l.setLongitude(c.getDouble(2));
+                    return l;
+
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
     }
 
@@ -1554,12 +1588,47 @@ public final class ObaContract {
             return cr.insert(CONTENT_URI, values);
         }
 
-        public  static boolean update(Context context, Uri uri, boolean active)
+        public static boolean update(Context context, Uri uri, boolean active)
         {
             ContentResolver cr = context.getContentResolver();
             ContentValues values = new ContentValues();
             values.put(ACTIVE, active);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static Segment[] get(Context context, String navId)
+        {
+            final String[] PROJECTION = {
+                    TRIP_ID,
+                    DESTINATION_ID,
+                    BEFORE_ID
+            };
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, null);
+            if (c != null) {
+                try {
+                    Segment[] results = new Segment[c.getCount()];
+                    if (c.getCount() == 0) {
+                        return results;
+                    }
+
+                    int i = 0;
+                    c.moveToFirst();
+                    do {
+                        results[i] = new Segment(
+                                Stops.get(context, c.getString(2)),
+                                Stops.get(context, c.getString(1)),
+                                null
+                        );
+                        i++;
+                    } while (c.moveToNext());
+
+                    return results;
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
     }
 }

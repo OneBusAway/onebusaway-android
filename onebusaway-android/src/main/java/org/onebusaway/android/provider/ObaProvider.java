@@ -738,12 +738,8 @@ public class ObaProvider extends ContentProvider {
                 return result;
 
             case NAV_STOPS:
-                id = values.getAsString(ObaContract.NavStops._ID);
-                if (id == null) {
-                    throw new IllegalArgumentException("Need a nav ID to insert! " + uri);
-                }
-                result = Uri.withAppendedPath(ObaContract.NavStops.CONTENT_URI, id);
-                mNavStopsInserter.insert(values);
+                longId = mNavStopsInserter.insert(values);
+                result = ContentUris.withAppendedId(ObaContract.NavStops.CONTENT_URI, longId);
                 return result;
 
             // What would these mean, anyway??

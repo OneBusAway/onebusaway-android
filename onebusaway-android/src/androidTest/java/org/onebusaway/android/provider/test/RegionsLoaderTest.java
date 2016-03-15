@@ -33,7 +33,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
 
     private void _assertTampa(ObaRegion tampa) {
         assertEquals(0, tampa.getId());
-        assertEquals("Tampa", tampa.getName());
+        assertEquals("Tampa Bay", tampa.getName());
         ObaRegion.Bounds[] bounds = tampa.getBounds();
         assertNotNull(bounds);
         assertEquals(1, bounds.length);
@@ -102,7 +102,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         // Retrieve from provider
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromProvider(getContext());
         assertNotNull(regions);
-        assertEquals(5, regions.size());  // Number of production regions
+        assertEquals(7, regions.size());  // Number of production regions
 
         // Production regions
         _assertTampa(regions.get(0));

@@ -5,6 +5,10 @@ package org.onebusaway.android.tad;
 
 
 import android.location.Location;
+import android.location.LocationManager;
+
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.util.LocationHelper;
 
 /**
  *
@@ -182,10 +186,31 @@ public class Segment {
         return AlertDistance;
     }
 
+    /**
+        Construct a segment from two stops. From Location remains null.
+        @param destination Destination Stop.
+        @param before Second-to-last stop.
+     */
+    public Segment(ObaStop destination, ObaStop before)
+    {
+        toLocation = new Location(LocationManager.GPS_PROVIDER);
+        toLocation.setLatitude(destination.getLatitude());
+        toLocation.setLongitude(destination.getLongitude());
+        beforeLocation = new Location(LocationManager.GPS_PROVIDER);
+        beforeLocation.setLatitude(before.getLatitude());
+        beforeLocation.setLongitude(before.getLongitude());
+    }
+
+    /**
+     * Construct a segment from locations.
+     * @param beforeLoc Second to last location.
+     * @param toLoc Destination location.
+     * @param fromLoc User's from location.
+     */
     public Segment(Location beforeLoc, Location toLoc, Location fromLoc)
     {
-        this.fromLocation = fromLoc;
-        this.toLocation = toLoc;
-        this.beforeLocation = beforeLoc;
+        fromLocation = fromLoc;
+        toLocation = toLoc;
+        beforeLocation = beforeLoc;
     }
 }

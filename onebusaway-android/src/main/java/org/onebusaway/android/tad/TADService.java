@@ -112,17 +112,4 @@ public class TADService extends Service
             this.stopSelf();
         }
     }
-
-    // Saves location details for TAD to disk.
-    private void saveTrip()
-    {
-
-    }
-
-    // Loads trip details for TAD to disk.
-    private void loadTrip()
-    {
-
-    }
-
 }

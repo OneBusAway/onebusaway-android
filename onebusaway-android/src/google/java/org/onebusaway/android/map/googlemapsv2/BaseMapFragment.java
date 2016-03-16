@@ -711,6 +711,8 @@ public class BaseMapFragment extends SupportMapFragment
             mLineOverlay.clear();
             PolylineOptions lineOptions;
 
+            int totalPoints = 0;
+
             for (ObaShape s : shapes) {
                 lineOptions = new PolylineOptions();
                 lineOptions.color(lineOverlayColor);
@@ -720,7 +722,11 @@ public class BaseMapFragment extends SupportMapFragment
                 }
                 // Add the line to the map, and keep a reference in the ArrayList
                 mLineOverlay.add(mMap.addPolyline(lineOptions));
+
+                totalPoints += lineOptions.getPoints().size();
             }
+
+            Log.d(TAG, "Total points for route polylines = " + totalPoints);
         }
     }
 

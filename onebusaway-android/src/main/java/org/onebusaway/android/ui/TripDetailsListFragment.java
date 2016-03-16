@@ -475,14 +475,32 @@ public class TripDetailsListFragment extends ListFragment {
                         ObaStop destStop = refs.getStop(destStopId);
                         ObaStop lastStop = refs.getStop(lastStopId);
 
+
                         DBUtil.addToDB(lastStop);
                         DBUtil.addToDB(destStop);
 
                         Intent serviceIntent = new Intent(getContext(), TADService.class);
 
-                        serviceIntent.putExtra(TADService.DESTINATION_ID, destStop.getId());
+                        mDestinationId = destStop.getId();
+                        serviceIntent.putExtra(TADService.DESTINATION_ID, mDestinationId);
                         serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
                         serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
+
+                        // update UI
+                        final ListView listView = getListView();
+                        if (mDestinationId != null) {
+                            mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+                            if (mDestinationIndex != null) {
+                                listView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        listView.setSelection(mDestinationIndex);
+                                    }
+                                });
+                            }
+                        }
+
+                        mAdapter.notifyDataSetChanged();
                         Application.get().getApplicationContext().startService(serviceIntent);
                     }
                 });

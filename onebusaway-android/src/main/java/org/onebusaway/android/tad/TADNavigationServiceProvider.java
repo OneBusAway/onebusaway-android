@@ -8,6 +8,7 @@
  */
 package org.onebusaway.android.tad;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -35,7 +36,9 @@ import java.util.Locale;
  */
 public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnInitListener {
 
-    public final String TAG = "TADNavServiceProvider";
+    public static final String TAG = "TADNavServiceProvider";
+    public static final int NOTIFICATION_ID = 33620;
+
     public TADProximityCalculator mProxListener;
 
     private int timeout = 60;  //Timeout value for service provider action (default = 60 seconds);
@@ -64,6 +67,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
+
+    private TADService mService;        // TAD Service
+    public void setTadService(TADService s) { mService = s; }
     /**
      * Creates a new instance of TADNavigationServiceProvider
      */
@@ -737,8 +743,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     // Update Interface
     // e.g, notifications, speak, etc.
     private void UpdateInterface(int status) {
-        int NOTIFICATION_ID = 33620;
-
         Application app = Application.get();
         TripDetailsActivity.Builder bldr = new TripDetailsActivity.Builder(
                 app.getApplicationContext(), mTripId);

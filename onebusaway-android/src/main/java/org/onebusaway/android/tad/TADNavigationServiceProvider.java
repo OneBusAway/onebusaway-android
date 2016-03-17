@@ -756,7 +756,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
                         .setSmallIcon(R.drawable.map_stop_icon)
                         .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
-                        .setContentIntent(pIntent);
+                        .setContentIntent(pIntent)
+                        .setAutoCancel(true);
         if (status == 1) {          // General status update.
             // Retrieve preferred unit and calculate distance.
 
@@ -786,8 +787,13 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             }
 
-            NotificationManager mNotificationManager =
-                    (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
+            Intent cancelIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
+            cancelIntent.putExtra(TripReceiver.NAV_ID, NOTIFICATION_ID);
+            PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0,cancelIntent,0);
+            mBuilder.addAction(R.drawable.ic_action_cancel,"Cancel Trip", pCancelIntent);
+            NotificationManager mNotificationManager = (NotificationManager)
+                    Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
             mBuilder.setOngoing(true);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());

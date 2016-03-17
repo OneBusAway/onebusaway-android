@@ -252,6 +252,14 @@
                 <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".tad.TripReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name=".tad.BroadcastReceiver" />
+            </intent-filter>
+        </receiver>
 
         <meta-data
                 android:name="com.google.android.gms.version"

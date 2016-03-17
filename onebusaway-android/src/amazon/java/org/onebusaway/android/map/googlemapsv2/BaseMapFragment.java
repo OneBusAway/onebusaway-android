@@ -38,6 +38,7 @@ import com.amazon.geo.mapsv2.model.LatLngBounds;
 import com.amazon.geo.mapsv2.model.Polyline;
 import com.amazon.geo.mapsv2.model.PolylineOptions;
 import com.amazon.geo.mapsv2.model.VisibleRegion;
+import com.google.maps.android.PolyUtil;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -64,8 +65,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
@@ -76,6 +79,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -716,28 +720,68 @@ public class BaseMapFragment extends SupportMapFragment
         return mMap.getCameraPosition().zoom;
     }
 
+    final Handler mRouteOverlayHandler = new Handler();
+
     @Override
-    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes) {
+    public void setRouteOverlay(final int lineOverlayColor, final ObaShape[] shapes) {
         if (mMap != null) {
-            mLineOverlay.clear();
-            PolylineOptions lineOptions;
+            mRouteOverlayHandler.removeCallbacks(null);
 
-            int totalPoints = 0;
+            // Simplifying route polylines can take a reasonable amount of time, so run in separate thread
+            mRouteOverlayHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mLineOverlay.clear();
+                    PolylineOptions lineOptions;
 
-            for (ObaShape s : shapes) {
-                lineOptions = new PolylineOptions();
-                lineOptions.color(lineOverlayColor);
+                    int totalPoints = 0;
+                    List original = new ArrayList<>();
+                    int totalSimplified = 0;
+                    List simplified;
+                    double tolerance = 2; // meters
+                    long totalTime = 0;
 
-                for (Location l : s.getPoints()) {
-                    lineOptions.add(MapHelpV2.makeLatLng(l));
+                    for (ObaShape s : shapes) {
+                        lineOptions = new PolylineOptions();
+                        lineOptions.color(lineOverlayColor);
+
+                        for (Location l : s.getPoints()) {
+                            original.add(MapHelpV2.makeLatLng(l));
+                        }
+
+                        long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                            startTime = SystemClock.elapsedRealtimeNanos();
+                        }
+
+                        simplified = PolyUtil.simplify(original, tolerance);
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                            endTime = SystemClock.elapsedRealtimeNanos();
+                            totalTime += endTime - startTime;
+                            Log.d(TAG, "Polyline simplify time: " + TimeUnit.MILLISECONDS
+                                    .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
+                        }
+
+                        lineOptions.addAll(simplified);
+                        // Add the line to the map, and keep a reference in the ArrayList
+                        mLineOverlay.add(mMap.addPolyline(lineOptions));
+
+                        totalSimplified += simplified.size();
+                        totalPoints += original.size();
+                    }
+
+                    float savings = (1 - ((float) totalSimplified / totalPoints));
+                    Log.d(TAG, "Total simplified points for route polylines = " + totalSimplified);
+                    Log.d(TAG, "Total points for route polylines = " + totalPoints);
+                    Log.d(TAG, "Polyline % savings (with tolerance of " + tolerance + "m) =  " + MessageFormat.format(
+                            "{0,number,#.##%}", savings));
+                    Log.d(TAG, "Total polyline simplify time: " + TimeUnit.MILLISECONDS
+                            .convert(totalTime, TimeUnit.NANOSECONDS) + "ms");
                 }
-                // Add the line to the map, and keep a reference in the ArrayList
-                mLineOverlay.add(mMap.addPolyline(lineOptions));
+            });
 
-                totalPoints += lineOptions.getPoints().size();
-            }
 
-            Log.d(TAG, "Total points for route polylines = " + totalPoints);
         }
     }
 

@@ -281,6 +281,8 @@ dependencies {
     }
     // Google Play Services Location (we need this on Amazon flavor too)
     compile 'com.google.android.gms:play-services-location:8.3.0'
+    // Map utils - polyline simplification
+    compile 'com.google.maps.android:android-maps-utils:0.4.3'
     // Support libraries
     compile 'com.android.support:cardview-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'

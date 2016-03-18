@@ -1637,7 +1637,7 @@ public final class ObaContract {
                     BEFORE_ID
             };
             ContentResolver cr = context.getContentResolver();
-            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, null);
+            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, SEQUENCE + " ASC");
             if (c != null) {
                 try {
                     Segment[] results = new Segment[c.getCount()];

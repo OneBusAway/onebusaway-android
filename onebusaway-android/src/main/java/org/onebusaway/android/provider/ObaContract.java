@@ -546,6 +546,14 @@ public final class ObaContract {
         public static final String BEFORE_ID = "before_id";
 
         /**
+         * Sequence Number of the Segment.
+         * <P>
+         * Type: Integer
+         * </P>
+         */
+        public static final String SEQUENCE = "seq_num";
+
+        /**
          * Whether this leg of the trip is still active.
          * <P>
          * Type: BOOLEAN
@@ -1575,8 +1583,9 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
-        public static Uri insert(Context context, Integer nav_id, String tripId, String destId, String beforeId)
+        public static Uri insert(Context context, Integer nav_id, Integer seq_num, String tripId, String destId, String beforeId)
         {
+            // TODO: Delete there since there's only one active trip.
             ContentResolver cr = context.getContentResolver();
             cr.delete(CONTENT_URI,null, null);
             ContentValues values = new ContentValues();
@@ -1584,6 +1593,7 @@ public final class ObaContract {
             values.put(TRIP_ID, tripId);
             values.put(DESTINATION_ID, destId);
             values.put(BEFORE_ID, beforeId);
+            values.put(SEQUENCE, seq_num);
             values.put(ACTIVE, true);
             return cr.insert(CONTENT_URI, values);
         }

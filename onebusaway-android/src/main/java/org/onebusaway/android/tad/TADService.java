@@ -49,7 +49,7 @@ public class TADService extends Service
             mTripId = intent.getStringExtra(TRIP_ID);
 
             ObaContract.NavStops.insert(Application.get().getApplicationContext(),
-                    1, mTripId, mDestinationStopId, mBeforeStopId);
+                    1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
             mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
         } else {

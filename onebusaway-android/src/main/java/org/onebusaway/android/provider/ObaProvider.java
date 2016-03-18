@@ -246,7 +246,7 @@ public class ObaProvider extends ContentProvider {
                                 + ObaContract.NavStops.DESTINATION_ID + " VARCHAR NOT NULL, "
                                 + ObaContract.NavStops.BEFORE_ID + " VARCHAR NOT NULL, "
                                 + ObaContract.NavStops.SEQUENCE + " INTEGER NOT NULL, "
-                                + ObaContract.NavStops.ACTIVE + " BOOLEAN NOT NULL " +
+                                + ObaContract.NavStops.ACTIVE + " INTEGER NOT NULL " +
                                 ");"
                 );
             }

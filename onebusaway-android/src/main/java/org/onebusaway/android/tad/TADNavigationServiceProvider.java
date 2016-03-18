@@ -38,6 +38,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     public static final String TAG = "TADNavServiceProvider";
     public static final int NOTIFICATION_ID = 33620;
+    private static final long[] VIBRATION_PATTERN = new long[] {
+      2000,1000,2000,1000,2000,1000,2000,1000,2000,1000,2000
+    };
 
     public TADProximityCalculator mProxListener;
 
@@ -733,7 +736,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         if (status == TextToSpeech.SUCCESS) {
             mTTS.setLanguage(Locale.getDefault());
             if (!resuming) {
-                Speak(Application.get().getString(R.string.voice_starting_trip));
+                Speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH);
             }
         }
     }
@@ -798,9 +801,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
-            Speak(message);
+            Speak(message, TextToSpeech.QUEUE_FLUSH);
+            Speak(message, TextToSpeech.QUEUE_ADD);
 
             mBuilder.setContentText(message);
+            mBuilder.setVibrate(VIBRATION_PATTERN);
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -809,9 +814,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
-            Speak(message);
+            Speak(message, TextToSpeech.QUEUE_FLUSH);
+            Speak(message, TextToSpeech.QUEUE_ADD);
 
             mBuilder.setContentText(message);
+            mBuilder.setVibrate(VIBRATION_PATTERN);
 
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -823,12 +830,13 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     /**
      * Speak specified message out loud using TTS
     * @param message Message to be spoken.
+     * @param queueFlag Flag to use when adding message to queue.
     */
-    private void Speak(String message) {
+    private void Speak(String message, int queueFlag) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mTTS.speak(message, TextToSpeech.QUEUE_FLUSH, null, "TRIPMESSAGE");
+            mTTS.speak(message, queueFlag, null, "TRIPMESSAGE");
         } else {
-            mTTS.speak(message, TextToSpeech.QUEUE_FLUSH, null);
+            mTTS.speak(message, queueFlag, null);
         }
     }
 }

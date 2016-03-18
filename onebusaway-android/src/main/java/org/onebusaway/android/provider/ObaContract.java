@@ -556,7 +556,7 @@ public final class ObaContract {
         /**
          * Whether this leg of the trip is still active.
          * <P>
-         * Type: BOOLEAN
+         * Type: Integer (1 or 0)
          * </P>
          */
         public static final String ACTIVE = "is_active";
@@ -616,6 +616,29 @@ public final class ObaContract {
                 c.close();
             }
             return result;
+        }
+
+        public static boolean isFavorite(Context context, String stopId)
+        {
+            final String[] PROJECTION = {
+                    FAVORITE
+            };
+
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,_ID + "=?", new String[] {stopId}, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return false;
+                    }
+                    c.moveToFirst();
+                    return c.getInt(0) == 1;
+
+                } finally {
+                    c.close();
+                }
+            }
+            return false;
         }
 
         public static boolean markAsFavorite(Context context,
@@ -1587,14 +1610,14 @@ public final class ObaContract {
         {
             // TODO: Delete there since there's only one active trip.
             ContentResolver cr = context.getContentResolver();
-            cr.delete(CONTENT_URI,null, null);
+            cr.delete(CONTENT_URI, null, null);
             ContentValues values = new ContentValues();
             values.put(NAV_ID, nav_id);
             values.put(TRIP_ID, tripId);
             values.put(DESTINATION_ID, destId);
             values.put(BEFORE_ID, beforeId);
             values.put(SEQUENCE, seq_num);
-            values.put(ACTIVE, true);
+            values.put(ACTIVE, 1);
             return cr.insert(CONTENT_URI, values);
         }
 
@@ -1602,7 +1625,7 @@ public final class ObaContract {
         {
             ContentResolver cr = context.getContentResolver();
             ContentValues values = new ContentValues();
-            values.put(ACTIVE, active);
+            values.put(ACTIVE, active ? 1 : 0);
             return cr.update(uri, values, null, null) > 0;
         }
 

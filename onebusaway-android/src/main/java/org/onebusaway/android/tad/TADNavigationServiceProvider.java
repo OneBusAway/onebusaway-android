@@ -67,9 +67,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
-
-    private TADService mService;        // TAD Service
-    public void setTadService(TADService s) { mService = s; }
+    
     /**
      * Creates a new instance of TADNavigationServiceProvider
      */
@@ -788,7 +786,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             }
 
             Intent cancelIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
-            cancelIntent.putExtra(TripReceiver.NAV_ID, NOTIFICATION_ID);
+            cancelIntent.putExtra(TripReceiver.NAV_ID, 1);
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0,cancelIntent,0);
             mBuilder.addAction(R.drawable.ic_action_cancel,"Cancel Trip", pCancelIntent);

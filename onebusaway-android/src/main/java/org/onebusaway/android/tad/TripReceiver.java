@@ -18,7 +18,8 @@ public class TripReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.i("BR", "Received.");
         int navId = intent.getIntExtra(NAV_ID, 0);
-        Application.get().getApplicationContext().stopService(new Intent(context, TADService.class));
+        Context appCxt = Application.get().getApplicationContext();
+        appCxt.stopService(new Intent(appCxt, TADService.class));
         NotificationManager manager = (NotificationManager)
                 context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.cancel(TADNavigationServiceProvider.NOTIFICATION_ID);

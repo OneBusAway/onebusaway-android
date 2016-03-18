@@ -67,7 +67,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
-    
+
     /**
      * Creates a new instance of TADNavigationServiceProvider
      */
@@ -752,7 +752,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
-                        .setSmallIcon(R.drawable.map_stop_icon)
+                        .setSmallIcon(R.drawable.ic_content_flag)
                         .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
                         .setContentIntent(pIntent)
                         .setAutoCancel(true);
@@ -789,7 +789,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             cancelIntent.putExtra(TripReceiver.NAV_ID, 1);
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0,cancelIntent,0);
-            mBuilder.addAction(R.drawable.ic_action_cancel,"Cancel Trip", pCancelIntent);
+            mBuilder.addAction(R.drawable.ic_action_cancel,app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
             NotificationManager mNotificationManager = (NotificationManager)
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 

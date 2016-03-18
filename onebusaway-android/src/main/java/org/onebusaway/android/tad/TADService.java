@@ -79,6 +79,7 @@ public class TADService extends Service
         return START_STICKY;
     }
 
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -96,6 +97,7 @@ public class TADService extends Service
 
     @Override
     public void onDestroy() {
+        mLocationHelper.unregisterListener(this);
         super.onDestroy();
     }
 

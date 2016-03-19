@@ -22,6 +22,7 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaSituationElement;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.RegionUtils;
@@ -39,7 +40,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     public static final String TAG = "TADNavServiceProvider";
     public static final int NOTIFICATION_ID = 33620;
     private static final long[] VIBRATION_PATTERN = new long[] {
-      2000,1000,2000,1000,2000,1000,2000,1000,2000,1000,2000
+      2000,1000,2000,1000,2000,1000,2000,1000,2000,1000
     };
 
     public TADProximityCalculator mProxListener;
@@ -790,6 +791,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
             Intent cancelIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
             cancelIntent.putExtra(TripReceiver.NAV_ID, 1);
+            cancelIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0,cancelIntent,0);
             mBuilder.addAction(R.drawable.ic_action_cancel,app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
@@ -801,8 +803,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
-            Speak(message, TextToSpeech.QUEUE_FLUSH);
-            Speak(message, TextToSpeech.QUEUE_ADD);
+            /*Speak(message, TextToSpeech.QUEUE_FLUSH);
+            Speak(message, TextToSpeech.QUEUE_ADD);*/
+            for (int i = 0; i < 5; i++) {
+                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
+            }
 
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);
@@ -814,8 +819,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
-            Speak(message, TextToSpeech.QUEUE_FLUSH);
-            Speak(message, TextToSpeech.QUEUE_ADD);
+            /*Speak(message, TextToSpeech.QUEUE_FLUSH);
+            Speak(message, TextToSpeech.QUEUE_ADD);*/
+            for (int i = 0; i < 5; i++) {
+                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
+            }
 
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);

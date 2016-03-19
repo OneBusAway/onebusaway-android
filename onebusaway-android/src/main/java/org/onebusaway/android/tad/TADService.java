@@ -43,6 +43,7 @@ public class TADService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "Starting Service");
         if (intent != null) {
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
             mBeforeStopId = intent.getStringExtra(BEFORE_STOP_ID);
@@ -97,6 +98,7 @@ public class TADService extends Service
 
     @Override
     public void onDestroy() {
+        Log.i(TAG, "Destroying Service.");
         mLocationHelper.unregisterListener(this);
         super.onDestroy();
     }

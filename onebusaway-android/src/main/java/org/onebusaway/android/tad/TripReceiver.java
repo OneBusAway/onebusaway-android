@@ -26,7 +26,7 @@ public class TripReceiver extends BroadcastReceiver {
         int navId = intent.getIntExtra(NAV_ID, 0);
         switch (intent.getIntExtra(ACTION_NUM, 0)) {
             case DISMISS_NOTIFICATION:
-
+                TADNavigationServiceProvider.mTTS.stop();
                 break;
 
             case CANCEL_TRIP:

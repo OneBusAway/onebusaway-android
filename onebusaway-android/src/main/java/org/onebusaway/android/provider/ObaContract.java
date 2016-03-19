@@ -1606,19 +1606,51 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
-        public static Uri insert(Context context, Integer nav_id, Integer seq_num, String tripId, String destId, String beforeId)
+        public static Uri insert(Context context, Integer navId, Integer seqNum, String tripId, String destId, String beforeId)
         {
             // TODO: Delete there since there's only one active trip.
             ContentResolver cr = context.getContentResolver();
             cr.delete(CONTENT_URI, null, null);
             ContentValues values = new ContentValues();
-            values.put(NAV_ID, nav_id);
+            values.put(NAV_ID, navId);
             values.put(TRIP_ID, tripId);
             values.put(DESTINATION_ID, destId);
             values.put(BEFORE_ID, beforeId);
-            values.put(SEQUENCE, seq_num);
+            values.put(SEQUENCE, seqNum);
             values.put(ACTIVE, 1);
             return cr.insert(CONTENT_URI, values);
+        }
+
+        /**
+         * Inserts multi-leg trip into database.
+         * @param context Context.
+         * @param navId   Navigation ID of TAD Trip.
+         * @param tripId  Trip ID of route.
+         * @param legs    Array of 2-string arrays, first element being stopId of second-to-last
+         *                stop and second element being stopid of destination stop of leg.
+         * @return
+         */
+        public static boolean insert(Context context, Integer navId, String tripId, String[][] legs)
+        {
+            ContentResolver cr = context.getContentResolver();
+            // TODO: Delete there since there's only one active trip atm.
+            cr.delete(CONTENT_URI, null, null);
+
+            // If inner array doesn't contain 2 values, can't insert.
+            if (legs.length > 1 && legs[0].length < 2) {
+                return false;
+            }
+
+            for (int i = 0; i < legs.length;i++) {
+                ContentValues values = new ContentValues();
+                values.put(NAV_ID, navId);
+                values.put(TRIP_ID, tripId);
+                values.put(BEFORE_ID, legs[i][0]);
+                values.put(DESTINATION_ID, legs[i][1]);
+                values.put(SEQUENCE, i+1);
+                values.put(ACTIVE, 1);
+            }
+            return true;
         }
 
         public static boolean update(Context context, Uri uri, boolean active)

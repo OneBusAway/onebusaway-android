@@ -758,6 +758,13 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        // Create deletion intent to stop repeated voice comands.
+        Intent delIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
+        delIntent.putExtra(TripReceiver.NAV_ID, 1);
+        delIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
+        PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                0, delIntent, 0);
+
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
                         .setSmallIcon(R.drawable.ic_content_flag)
@@ -807,14 +814,15 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
-            /*Speak(message, TextToSpeech.QUEUE_FLUSH);
-            Speak(message, TextToSpeech.QUEUE_ADD);*/
             for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);
+            mBuilder.setDeleteIntent(pDelIntent);
+
+
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -823,14 +831,13 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
-            /*Speak(message, TextToSpeech.QUEUE_FLUSH);
-            Speak(message, TextToSpeech.QUEUE_ADD);*/
             for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);
+            mBuilder.setDeleteIntent(pDelIntent);
 
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);

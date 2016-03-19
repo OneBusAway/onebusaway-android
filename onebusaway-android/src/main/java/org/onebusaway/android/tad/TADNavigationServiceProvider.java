@@ -66,7 +66,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     private boolean resuming = false;   // Is Trip being resumed?
     private boolean finished = false;   // Trip has finished.
 
-    private TextToSpeech mTTS;          // TextToSpeech for speaking commands.
+    public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
     SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
 
     private String mTripId;             // Trip ID
@@ -77,17 +77,21 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      */
     public TADNavigationServiceProvider(String tripId, String stopId) {
         Log.d(TAG, "Creating TAD Navigation Service Provider");
-        mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        if (mTTS == null) {
+            mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        }
         mTripId = tripId;
         mStopId = stopId;
     }
 
     public TADNavigationServiceProvider(String tripId, String stopId, int flag) {
         Log.d(TAG, "Creating TAD Navigation Service Provider");
-        mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        resuming = flag == 1;
+        if (mTTS == null) {
+            mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        }
         mTripId = tripId;
         mStopId = stopId;
-        resuming = flag == 1;
     }
 
     /**
@@ -805,7 +809,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             String message = Application.get().getString(R.string.voice_get_ready);
             /*Speak(message, TextToSpeech.QUEUE_FLUSH);
             Speak(message, TextToSpeech.QUEUE_ADD);*/
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 
@@ -821,7 +825,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             String message = Application.get().getString(R.string.voice_pull_cord);
             /*Speak(message, TextToSpeech.QUEUE_FLUSH);
             Speak(message, TextToSpeech.QUEUE_ADD);*/
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 

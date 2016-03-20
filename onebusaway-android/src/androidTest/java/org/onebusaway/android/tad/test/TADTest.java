@@ -19,6 +19,7 @@ public class TADTest extends ObaTestCase {
         for (Location l : getTrip()) {
             provider.locationUpdated(l);
         }
+        assertEquals(provider.getFinished(), true);
     }
 
     private Location[] getTrip()

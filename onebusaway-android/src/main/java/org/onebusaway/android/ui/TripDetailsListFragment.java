@@ -490,14 +490,14 @@ public class TripDetailsListFragment extends ListFragment {
                         final ListView listView = getListView();
                         if (mDestinationId != null) {
                             mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
-                            if (mDestinationIndex != null) {
+                            /*if (mDestinationIndex != null) {
                                 listView.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         listView.setSelection(mDestinationIndex);
                                     }
                                 });
-                            }
+                            }*/
                         }
 
                         mAdapter.notifyDataSetChanged();

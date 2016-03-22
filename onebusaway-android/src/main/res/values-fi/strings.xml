@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright (C) 2014 Turo Ulvinen (turo.ulvinen@gmail.com), 2015-2016 Ari Rusakko (ari.rusakko@octo3.fi)
 
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -62,14 +63,15 @@
     </string>
     <string name="internal_error">Hups, jotakin odottamatonta tapahtui. Yritä myöhemmin uudestaan.</string>
     <string name="out_of_memory_error">Käytettävissä oleva muistin määrä ei riitä pyynnön
-      käsittelyyn.
+        käsittelyyn.
     </string>
     <string name="bad_gateway_error">OneBusAway:n palvelin on ruuhkautunut. Pyydämme anteeksi!
     </string>
     <string name="map_generic_error">Pysäkkejä ei pystytä hakemaan.</string>
     <string name="no_network_error">Internet-yhteyttä ei ole saatavilla.
     </string>
-    <string name="airplane_mode_error">Et ole yhdistettynä internetiin.\nSuljetaanko lentokone-tila?
+    <string name="airplane_mode_error">Et ole yhdistettynä internetiin.\nSuljetaanko
+        lentokone-tila?
     </string>
     <string name="custom_api_url_error">Virheellinen osoite. Käytä toimivan OneBusAway palvelimen osoitetta.
     </string>
@@ -108,7 +110,9 @@
     </string>
     <string name="main_help_close">Sulje</string>
     <string name="main_nolocation_title">Sijaintitieto ei ole käytettävissä</string>
-    <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi, sallitaanko?</string>
+    <string name="main_nolocation">OneBusAway haluaa käyttää sijaintitietoasi,
+        sallitaanko?
+    </string>
     <string name="main_waiting_for_location">Sijaintiasi yritetään paikantaa&#8230;</string>
     <string name="main_location_unavailable">Sijaintiasi ei pystytty määrittämään.</string>
     <string name="main_outofrange_title">Ulkona alueelta</string>
@@ -172,6 +176,8 @@
     <string name="stop_info_option_sort_route">Järjestetty reitin mukaan…</string>
     <string name="stop_info_option_refresh">Päivitä</string>
     <string name="stop_info_option_filter">Rajaa reittejä</string>
+    <string name="stop_info_option_hide_header_arrivals">Piilota saapumiset otsikosta</string>
+    <string name="stop_info_option_show_header_arrivals">Näytä saapumiset otsikossa</string>
     <string name="stop_info_option_editname">Muokkaa nimeä</string>
     <string name="stop_info_option_addstar">Lisää suosikiksi</string>
     <string name="stop_info_option_show_details">Pysäkin tiedot</string>
@@ -261,6 +267,8 @@
     </string>
     <string name="my_no_recent_routes">Sinulla ei ole aiempia reittejä.</string>
     <!-- <string name="my_no_starred_routes">Sinulla ei ole suosikkireittejä.</string>-->
+    <string name="route_favorite_options_title_star">Lisää suosikki \"%s\":</string>
+    <string name="route_favorite_options_title_unstar">Poista suosikki \"%s\":</string>
 
     <string name="my_option_clear_recent_stops">Tyhjennä aiemmat pysäkit</string>
     <string name="my_option_clear_recent_routes">Tyhjennä aiemmat reitit</string>
@@ -329,7 +337,8 @@
     <string name="trip_info_separator">-</string>
 
     <!--  Trip list -->
-    <string name="trip_list_notrips">Sinulla ei ole yhtään muistutusta.\n\nVoit luoda muistutuksia napauttamalla saapuvaa kulkuneuvoa valitulla pysäkillä.
+    <string name="trip_list_notrips">Sinulla ei ole yhtään muistutusta.\n\nVoit luoda muistutuksia
+        napauttamalla saapuvaa kulkuneuvoa valitulla pysäkillä.
     </string>
     <string name="trip_list_context_edit">Muokkaa matkaa</string>
     <string name="trip_list_context_delete">Poista matka</string>
@@ -399,7 +408,8 @@
     <string name="region_option_refresh">Päivitä</string>
     <string name="region_detecting_server">Kulkuyhteyksiä etsitään&#8230;</string>
     <string name="region_choose_region">Valitse alue</string>
-    <string name="region_disabled_auto_selection">Automaattinen alueen valinta on pois käytöstä. Voit aktivoida sen asetuksista.
+    <string name="region_disabled_auto_selection">Automaattinen alueen valinta on pois käytöstä. Voit
+        aktivoida sen asetuksista.
     </string>
     <string name="region_region_found">Löytyi %1$s aluetta</string>
 
@@ -429,7 +439,8 @@
     <string name="preferences_region_title">Alue</string>
     <string name="preferences_region_summary_custom_api">Erikois API palvelin on käytössä</string>
     <string name="preferences_auto_select_region_title">Autom. alueen valinta</string>
-    <string name="preferences_auto_select_region_summary">Aseta nykyinen alue sijaintisi perusteella
+    <string name="preferences_auto_select_region_summary">Aseta nykyinen alue sijaintisi
+        perusteella
     </string>
 
     <string name="preferences_preferred_units_title">Mittayksiköt</string>
@@ -442,11 +453,17 @@
         negatiivisina saapumisaikoina
     </string>
 
+    <string name="preferences_show_header_arrivals_title">Näytä saapuvat bussit pysäkin yläpuolella</string>
+    <string name="preferences_show_header_arrivals_summary">Näyttää suosikkipysäkeille
+        saapuvien bussien tiedot otsikosssa (ei vaikuta karttaan)
+    </string>
+
     <string name="preferences_arrival_info_style_options_a">Klassinen OneBusAway</string>
     <string name="preferences_arrival_info_style_options_b">Kortit</string>
 
     <string name="preferences_oba_api_servername_title">OneBusAway API palvelin</string>
-    <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen OneBusAway API kutsuille
+    <string name="preferences_oba_api_servername_summary">Määrittää käytettävän palvelimen OneBusAway
+        API kutsuille
     </string>
     <string name="preferences_oba_api_servername_hint">esimerkki.onebusaway.org</string>
     <string name="preferences_save_title">Tallenna muistikortille</string>
@@ -463,12 +480,16 @@
     <string name="preferences_experimental_regions_title">Kokeelliset alueet</string>
     <string name="preferences_experimental_regions_summary">Ottaa käyttöön alueet, jotka saattavat toimia epävakaasti
     </string>
-    <string name="preferences_experimental_regions_enable_warning">Kokeelliset alueet saattavat toimia epävakaasti ja reaaliaikaista tietoa ei ole ehkä saatavilla! Jatketaanko?
+    <string name="preferences_experimental_regions_enable_warning">Kokeelliset alueet saattavat toimia
+        epävakaasti ja reaaliaikaista tietoa ei ole ehkä saatavilla! Jatketaanko?
     </string>
-    <string name="preferences_experimental_regions_disable_warning">Sinun tämänhetkinen kokeellinen alueesi ei ole saatavilla! Jatketaanko?
+    <string name="preferences_experimental_regions_disable_warning">Sinun tämänhetkinen kokeellinen
+        alueesi ei ole saatavilla! Jatketaanko?
     </string>
     <string name="preferences_analytics_title">Lähetä anonyymeja käyttötietoja</string>
     <string name="preferences_analytics_summary">Auta meitä parantamaan sovellusta. Tiedot lähetetään anonyymisti.</string>
+    <string name="preferences_tutorial_title">Näytä ohje</string>
+    <string name="preferences_tutorial_summary">Tarkemmat ohjeet kuinka käyttää tätä sovellusta</string>
     <string name="preferences_donate_title">Lahjoita</string>
     <string name="preferences_donate_summary">Tue OneBusAwayn avoimen lähdekoodin projektia</string>
     <string name="preferences_powered_by_oba_title">Powered by OneBusAway</string>
@@ -575,6 +596,20 @@
     <string name="tutorial_starred_stops_shortcut_title">Pikakuvakkeilla säästät aikaa</string>
     <string name="tutorial_starred_stops_shortcut_text">Painamalla pitkään pysäkkiä voit luoda laitteesi 
         työpöydälle pikakuvakkeen. Pikakuvaketta napsauttamalla näet suoraan pysäkille saapuvat vuorot.
+    </string>
+    <string name="tutorial_show_arrivals_in_header_title">Näytä suosikkireitit päällimmäisenä</string>
+    <string name="tutorial_show_arrivals_in_header_text">Haluatko nähdä suosikkireittisi pysäkin
+        yläpuolella? Kokeile ruudun oikean ylänurkan \"Lisää\" napin takaa löytyvää
+        \"Näytä saapumiset otsikossa\" asetusta.
+    </string>
+    <string name="tutorial_arrival_route_filter_title">Piilota turhat reitit</string>
+    <string name="tutorial_arrival_route_filter_text">Etkö tarvitse reittiä 6? Piilota se ruudun oikean
+        ylänurkan \"Lisää\" napin takaa löytyvän \"Rajaa reittejä\" asetuksen avulla.
+    </string>
+    <string name="tutorial_night_light_title">Tuo valoa pimeyteen</string>
+    <string name="tutorial_night_light_text">Harmittaako kun bussi ajaa pimeässä ohitsesi
+        huomaamatta sinua? Kokeile ruudun oikean ylänurkan \"Lisää\" napin takaa löytyvää
+        \"Yövalo\" asetusta.
     </string>
 
     <!-- About -->

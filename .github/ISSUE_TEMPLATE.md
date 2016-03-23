@@ -16,7 +16,7 @@ What did you see instead?  Describe your issue in detail here.
 
 **Device and Android version:** 
 
-What make and model device (e.g., Samsung Galaxy S3) did you encounter this on?  What Android version (e.g., Android 4.0 Ice Cream Sandwich) are you running?  Is it the stock version from the manufacturer or a custom ROM?
+What make and model device (e.g., Samsung Galaxy S3) did you encounter this on?  What Android version (e.g., Android 4.0 Ice Cream Sandwich) are you running?  Is it the stock version from the manufacturer or a custom ROM?  What version of Google Play Services is running on your device?
 
 **Screenshots:** 
 

@@ -28,6 +28,7 @@ import org.onebusaway.android.provider.ObaContract;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
@@ -40,6 +41,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A class containing utility methods related to handling multiple regions in OneBusAway
@@ -274,6 +276,51 @@ public class RegionUtils {
         }
 
         return true;
+    }
+
+    /**
+     *
+     * @return OTP server URL with trimmed trailing slash, or null if none defined for region.
+     */
+    public static String getOtpBaseUrl() {
+        ObaRegion region = Application.get().getCurrentRegion();
+        String otpBaseUrl = region.getOtpBaseUrl();
+
+        if (otpBaseUrl == null)
+            return null;
+
+        // Trim trailing slash if it exists.
+        return otpBaseUrl.replaceFirst("/$", "");
+    }
+
+    /**
+     *
+     * @return returns true if preferred units are metric, false if Imperial
+     */
+    public static boolean getUnitsAreMetric(Context context) {
+        String IMPERIAL = context.getString(R.string.preferences_preferred_units_option_imperial);
+        String METRIC = context.getString(R.string.preferences_preferred_units_option_metric);
+        String AUTOMATIC = context.getString(R.string.preferences_preferred_units_option_automatic);
+
+        SharedPreferences mSettings = Application.getPrefs();
+
+        String preferredUnits = mSettings
+                .getString(context.getString(R.string.preference_key_preferred_units),
+                        AUTOMATIC);
+
+        if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+            Log.d(TAG, "Setting units automatically");
+            // If the country is set to USA, assume imperial, otherwise metric
+            // TODO - Method of guessing metric/imperial can definitely be improved
+            if (Locale.getDefault().getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
+                // Assume imperial
+                return false;
+            } else {
+                // Assume metric
+                return true;
+            }
+        } else
+            return preferredUnits.equalsIgnoreCase(METRIC);
     }
 
     /**

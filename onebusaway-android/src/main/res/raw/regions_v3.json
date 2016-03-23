@@ -323,9 +323,10 @@
             "lonSpan": 1.1692720000000065
           }
         ],
-        "otpBaseUrl": null, 
-        "contactEmail": "sbrown@camsys.com", 
-        "stopInfoUrl": null, 
+        "otpBaseUrl": "http://developer.onebusaway.org/ma-otp/otp",
+        "open311Servers": [],
+        "contactEmail": "sbrown@camsys.com",
+        "stopInfoUrl": null,
         "active": true, 
         "facebookUrl": "", 
         "obaBaseUrl": "http://developer.onebusaway.org/mbta-api/", 

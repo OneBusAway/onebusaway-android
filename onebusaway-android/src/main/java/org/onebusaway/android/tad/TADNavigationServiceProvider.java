@@ -79,6 +79,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         Log.d(TAG, "Creating TAD Navigation Service Provider");
         if (mTTS == null) {
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
+        } else {
+            String message = Application.get().getString(R.string.voice_starting_trip);
+            Speak(message, TextToSpeech.QUEUE_FLUSH);
         }
         mTripId = tripId;
         mStopId = stopId;

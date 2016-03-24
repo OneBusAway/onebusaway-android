@@ -18,4 +18,5 @@
           android:background="@color/android:background_light"
           android:cacheColorHint="#00000000"
           android:layout_width="fill_parent"
-          android:layout_height="wrap_content"/>
+          android:layout_height="wrap_content"
+          android:scrollbars="vertical"/>

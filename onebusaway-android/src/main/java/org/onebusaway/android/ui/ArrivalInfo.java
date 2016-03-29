@@ -23,6 +23,7 @@ import org.onebusaway.android.provider.ObaContract;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.text.format.DateUtils;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -45,11 +46,15 @@ public final class ArrivalInfo {
      * @param arrivalInfo
      * @param filter routeIds to filter for
      * @param ms current time in milliseconds
+     * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label should be
+     *                                             included in the status label, false if it should
+     *                                             not
      * @return ArrayList of arrival info to be used with the adapter
      */
     public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
             ObaArrivalInfo[] arrivalInfo,
-            ArrayList<String> filter, long ms) {
+            ArrayList<String> filter, long ms,
+            boolean includeArrivalDepartureInStatusLabel) {
         final int len = arrivalInfo.length;
         ArrayList<ArrivalInfo> result = new ArrayList<ArrivalInfo>(len);
         if (filter != null && filter.size() > 0) {
@@ -57,7 +62,8 @@ public final class ArrivalInfo {
             for (int i = 0; i < len; ++i) {
                 ObaArrivalInfo arrival = arrivalInfo[i];
                 if (filter.contains(arrival.getRouteId())) {
-                    ArrivalInfo info = new ArrivalInfo(context, arrival, ms);
+                    ArrivalInfo info = new ArrivalInfo(context, arrival, ms,
+                            includeArrivalDepartureInStatusLabel);
                     if (shouldAddEta(info)) {
                         result.add(info);
                     }
@@ -66,7 +72,8 @@ public final class ArrivalInfo {
         } else {
             // Add arrivals for all routes
             for (int i = 0; i < len; ++i) {
-                ArrivalInfo info = new ArrivalInfo(context, arrivalInfo[i], ms);
+                ArrivalInfo info = new ArrivalInfo(context, arrivalInfo[i], ms,
+                        includeArrivalDepartureInStatusLabel);
                 if (shouldAddEta(info)) {
                     result.add(info);
                 }
@@ -182,15 +189,26 @@ public final class ArrivalInfo {
 
     private final String mStatusText;
 
+    private final String mTimeText;
+
     private final int mColor;
 
     private static final int ms_in_mins = 60 * 1000;
 
     private final boolean mPredicted;
 
+    private final boolean mIsArrival;
+
     private final boolean mIsRouteAndHeadsignFavorite;
 
-    public ArrivalInfo(Context context, ObaArrivalInfo info, long now) {
+    /**
+     * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label
+     *                                             should be
+     *                                             included in the status label false if it
+     *                                             should not
+     */
+    public ArrivalInfo(Context context, ObaArrivalInfo info, long now,
+            boolean includeArrivalDepartureInStatusLabel) {
         mInfo = info;
         // First, all times have to have to be converted to 'minutes'
         final long nowMins = now / ms_in_mins;
@@ -199,9 +217,12 @@ public final class ArrivalInfo {
         if (info.getStopSequence() != 0) {
             scheduled = info.getScheduledArrivalTime();
             predicted = info.getPredictedArrivalTime();
+            mIsArrival = true;
         } else {
+            // Show departure time
             scheduled = info.getScheduledDepartureTime();
             predicted = info.getPredictedDepartureTime();
+            mIsArrival = false;
         }
 
         final long scheduledMins = scheduled / ms_in_mins;
@@ -220,7 +241,8 @@ public final class ArrivalInfo {
         mColor = computeColor(scheduledMins, predictedMins);
 
         mStatusText = computeStatusLabel(context, info, now, predicted,
-                scheduledMins, predictedMins);
+                scheduledMins, predictedMins, includeArrivalDepartureInStatusLabel);
+        mTimeText = computeTimeLabel(context);
 
         // Check if the user has marked this routeId/headsign/stopId as a favorite
         mIsRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
@@ -275,12 +297,24 @@ public final class ArrivalInfo {
         }
     }
 
+    /**
+     *
+     * @param context
+     * @param info
+     * @param now
+     * @param predicted
+     * @param scheduledMins
+     * @param predictedMins
+     * @param includeArrivalDeparture true if the arrival/departure label should be included, false
+     *                                if it should not
+     * @return
+     */
     private String computeStatusLabel(Context context,
             ObaArrivalInfo info,
             final long now,
             final long predicted,
             final long scheduledMins,
-            final long predictedMins) {
+            final long predictedMins, boolean includeArrivalDeparture) {
         if (context == null) {
             // The Activity has been destroyed, so just return an empty string to avoid an NPE
             return "";
@@ -314,33 +348,110 @@ public final class ArrivalInfo {
             long delay = predictedMins - scheduledMins;
 
             if (mEta >= 0) {
-                // Bus is arriving
+                // Bus hasn't yet arrived/departed
                 return computeArrivalLabelFromDelay(res, delay);
             } else {
-                // Bus is departing
-                if (delay > 0) {
-                    // Departing delayed
-                    return res.getQuantityString(
-                            R.plurals.stop_info_depart_delayed, (int) delay,
-                            delay);
-                } else if (delay < 0) {
-                    // Departing early
-                    delay = -delay;
-                    return res
-                            .getQuantityString(
-                                    R.plurals.stop_info_depart_early,
-                                    (int) delay, delay);
+                /**
+                 * Arrival/departure time has passed
+                 */
+                if (!includeArrivalDeparture) {
+                    // Don't include "depart" or "arrive" in label
+                    if (delay > 0) {
+                        // Delayed
+                        return res.getQuantityString(
+                                R.plurals.stop_info_status_late_without_arrive_depart, (int) delay,
+                                delay);
+                    } else if (delay < 0) {
+                        // Early
+                        delay = -delay;
+                        return res.getQuantityString(
+                                R.plurals.stop_info_status_early_without_arrive_depart,
+                                (int) delay, delay);
+                    } else {
+                        // On time
+                        return context.getString(R.string.stop_info_ontime);
+                    }
+                }
+
+                if (mIsArrival) {
+                    // Is an arrival time
+                    if (delay > 0) {
+                        // Arrived late
+                        return res.getQuantityString(
+                                R.plurals.stop_info_arrived_delayed, (int) delay,
+                                delay);
+                    } else if (delay < 0) {
+                        // Arrived early
+                        delay = -delay;
+                        return res
+                                .getQuantityString(
+                                        R.plurals.stop_info_arrived_early,
+                                        (int) delay, delay);
+                    } else {
+                        // Arrived on time
+                        return context.getString(R.string.stop_info_arrived_ontime);
+                    }
                 } else {
-                    // Departing on time
-                    return context.getString(R.string.stop_info_ontime);
+                    // Is a departure time
+                    if (delay > 0) {
+                        // Departed late
+                        return res.getQuantityString(
+                                R.plurals.stop_info_depart_delayed, (int) delay,
+                                delay);
+                    } else if (delay < 0) {
+                        // Departed early
+                        delay = -delay;
+                        return res
+                                .getQuantityString(
+                                        R.plurals.stop_info_depart_early,
+                                        (int) delay, delay);
+                    } else {
+                        // Departed on time
+                        return context.getString(R.string.stop_info_departed_ontime);
+                    }
                 }
             }
         } else {
-            if (mEta > 0) {
+            // Scheduled times
+            if (!includeArrivalDeparture) {
+                return context.getString(R.string.stop_info_scheduled);
+            }
+
+            if (mIsArrival) {
                 return context.getString(R.string.stop_info_scheduled_arrival);
             } else {
+                return context.getString(R.string.stop_info_scheduled_departure);
+            }
+        }
+    }
+
+    private String computeTimeLabel(Context context) {
+        if (context == null) {
+            // The Activity has been destroyed, so just return an empty string to avoid an NPE
+            return "";
+        }
+
+        String displayTime = DateUtils.formatDateTime(context,
+                getDisplayTime(),
+                DateUtils.FORMAT_SHOW_TIME |
+                        DateUtils.FORMAT_NO_NOON |
+                        DateUtils.FORMAT_NO_MIDNIGHT
+        );
+
+        if (mEta >= 0) {
+            // Bus hasn't yet arrived
+            if (mIsArrival) {
+                return context.getString(R.string.stop_info_time_arriving_at, displayTime);
+            } else {
                 return context
-                        .getString(R.string.stop_info_scheduled_departure);
+                        .getString(R.string.stop_info_time_departing_at, displayTime);
+            }
+        } else {
+            // Arrival/departure time has passed
+            if (mIsArrival) {
+                return context.getString(R.string.stop_info_time_arrived_at, displayTime);
+            } else {
+                return context.getString(R.string.stop_info_time_departed_at, displayTime);
             }
         }
     }
@@ -385,8 +496,20 @@ public final class ArrivalInfo {
         return mDisplayTime;
     }
 
-    final String getStatusText() {
+    public final String getStatusText() {
         return mStatusText;
+    }
+
+    public final String getTimeText() {
+        return mTimeText;
+    }
+
+    /**
+     * Returns true if this arrival info is for an arrival time, false if it is for a departure
+     * time
+     */
+    public final boolean isArrival() {
+        return mIsArrival;
     }
 
     /**

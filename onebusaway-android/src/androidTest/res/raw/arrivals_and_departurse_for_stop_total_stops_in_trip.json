@@ -1,0 +1,915 @@
+{
+  "code": 200,
+  "currentTime": 1459259368018,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 3,
+          "departureEnabled": true,
+          "distanceFromStop": 3409.2837306353176,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 13,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459260056000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459260056000,
+          "routeId": "PSTA_32",
+          "routeLongName": "ST. PETERSBURG CIRCULATOR",
+          "routeShortName": "32",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459260000000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459260000000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 33,
+          "totalStopsInTrip": 34,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1330213020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1330213020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_10067",
+            "closestStopTimeOffset": 29,
+            "distanceAlongTrip": 4100.757670214007,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.764249801635742,
+              "lon": -82.63497924804688
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_10067",
+            "nextStopTimeOffset": 29,
+            "orientation": 90,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.766912280995722,
+              "lon": -82.63395
+            },
+            "predicted": true,
+            "scheduleDeviation": 56,
+            "scheduledDistanceAlongTrip": 4100.757670214007,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 7511.998573846595,
+            "vehicleId": "PSTA_2510"
+          },
+          "vehicleId": "PSTA_2510"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 4,
+          "departureEnabled": true,
+          "distanceFromStop": 3413.5010092359444,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 14,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459260300000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459260300000,
+          "routeId": "PSTA_32",
+          "routeLongName": "ST. PETERSBURG CIRCULATOR",
+          "routeShortName": "32",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459260300000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459260300000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 0,
+          "totalStopsInTrip": 34,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1330214020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1330213020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_10067",
+            "closestStopTimeOffset": 29,
+            "distanceAlongTrip": 4100.757670214007,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.764249801635742,
+              "lon": -82.63497924804688
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_10067",
+            "nextStopTimeOffset": 29,
+            "orientation": 90,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.766912280995722,
+              "lon": -82.63395
+            },
+            "predicted": true,
+            "scheduleDeviation": 56,
+            "scheduledDistanceAlongTrip": 4100.757670214007,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 7511.998573846595,
+            "vehicleId": "PSTA_2510"
+          },
+          "vehicleId": "PSTA_2510"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 9176.467693927974,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 38,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459260701000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459260701000,
+          "routeId": "PSTA_74",
+          "routeLongName": "ST PETERSBURG/INDIAN ROCKS",
+          "routeShortName": "74",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459259761000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459259761000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 129,
+          "totalStopsInTrip": 142,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1332937020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1332937020",
+            "blockTripSequence": 1,
+            "closestStop": "PSTA_745",
+            "closestStopTimeOffset": 3,
+            "distanceAlongTrip": 28281.354250220582,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.842620849609375,
+              "lon": -82.64686584472656
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_745",
+            "nextStopTimeOffset": 3,
+            "orientation": 355.9143832202318,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.842516164830784,
+              "lon": -82.64670630763096
+            },
+            "predicted": true,
+            "scheduleDeviation": 940,
+            "scheduledDistanceAlongTrip": 28281.354250220582,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 40262.018403075745,
+            "vehicleId": "PSTA_13106"
+          },
+          "vehicleId": "PSTA_13106"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 3,
+          "departureEnabled": true,
+          "distanceFromStop": 7353.385461270125,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 31,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459260810000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459260810000,
+          "routeId": "PSTA_5",
+          "routeLongName": "ST PETERSBURG/TYRONE SQUARE MALL",
+          "routeShortName": "5",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459260347000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459260347000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 61,
+          "totalStopsInTrip": 71,
+          "tripHeadsign": "5 TH AVE N + 2ND ST",
+          "tripId": "PSTA_1329982020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1329982020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_3737",
+            "closestStopTimeOffset": 3,
+            "distanceAlongTrip": 7868.738187084942,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.77818489074707,
+              "lon": -82.71224975585938
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_3737",
+            "nextStopTimeOffset": 3,
+            "orientation": 351.8698976462512,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.777092390851976,
+              "lon": -82.71195673596382
+            },
+            "predicted": true,
+            "scheduleDeviation": 463,
+            "scheduledDistanceAlongTrip": 7868.738187084942,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 18013.911440837164,
+            "vehicleId": "PSTA_2511"
+          },
+          "vehicleId": "PSTA_2511"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 3,
+          "departureEnabled": true,
+          "distanceFromStop": 19423.26713833367,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 64,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459262029000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459262029000,
+          "routeId": "PSTA_74",
+          "routeLongName": "ST PETERSBURG/INDIAN ROCKS",
+          "routeShortName": "74",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459261561000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459261561000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 129,
+          "totalStopsInTrip": 142,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1332938020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1332938020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_719",
+            "closestStopTimeOffset": 0,
+            "distanceAlongTrip": 18034.554805814885,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.839107513427734,
+              "lon": -82.71088409423828
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_719",
+            "nextStopTimeOffset": 0,
+            "orientation": 0,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.83911,
+              "lon": -82.70795980207237
+            },
+            "predicted": true,
+            "scheduleDeviation": 468,
+            "scheduledDistanceAlongTrip": 18034.554805814885,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 40262.018403075745,
+            "vehicleId": "PSTA_2606"
+          },
+          "vehicleId": "PSTA_2606"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 4,
+          "departureEnabled": true,
+          "distanceFromStop": 10923.542410085269,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 47,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459262100000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459262100000,
+          "routeId": "PSTA_32",
+          "routeLongName": "ST. PETERSBURG CIRCULATOR",
+          "routeShortName": "32",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459262100000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459262100000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 33,
+          "totalStopsInTrip": 34,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1330214020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1330213020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_10067",
+            "closestStopTimeOffset": 29,
+            "distanceAlongTrip": 4100.757670214007,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.764249801635742,
+              "lon": -82.63497924804688
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_10067",
+            "nextStopTimeOffset": 29,
+            "orientation": 90,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.766912280995722,
+              "lon": -82.63395
+            },
+            "predicted": true,
+            "scheduleDeviation": 56,
+            "scheduledDistanceAlongTrip": 4100.757670214007,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 7511.998573846595,
+            "vehicleId": "PSTA_2510"
+          },
+          "vehicleId": "PSTA_2510"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 5,
+          "departureEnabled": true,
+          "distanceFromStop": 10927.759688685896,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 48,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459262400000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459262400000,
+          "routeId": "PSTA_32",
+          "routeLongName": "ST. PETERSBURG CIRCULATOR",
+          "routeShortName": "32",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459262400000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459262400000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 0,
+          "totalStopsInTrip": 34,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1330215020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1330213020",
+            "blockTripSequence": 3,
+            "closestStop": "PSTA_10067",
+            "closestStopTimeOffset": 29,
+            "distanceAlongTrip": 4100.757670214007,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.764249801635742,
+              "lon": -82.63497924804688
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_10067",
+            "nextStopTimeOffset": 29,
+            "orientation": 90,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.766912280995722,
+              "lon": -82.63395
+            },
+            "predicted": true,
+            "scheduleDeviation": 56,
+            "scheduledDistanceAlongTrip": 4100.757670214007,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 7511.998573846595,
+            "vehicleId": "PSTA_2510"
+          },
+          "vehicleId": "PSTA_2510"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 2,
+          "departureEnabled": true,
+          "distanceFromStop": 29138.52249669272,
+          "frequency": null,
+          "lastUpdateTime": 1459259325000,
+          "numberOfStopsAway": 97,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1459263164000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1459263164000,
+          "routeId": "PSTA_74",
+          "routeLongName": "ST PETERSBURG/INDIAN ROCKS",
+          "routeShortName": "74",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1459263361000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1459263361000,
+          "serviceDate": 1459224000000,
+          "situationIds": [],
+          "status": "default",
+          "stopId": "PSTA_1767",
+          "stopSequence": 129,
+          "totalStopsInTrip": 142,
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripId": "PSTA_1332939020",
+          "tripStatus": {
+            "activeTripId": "PSTA_1332939020",
+            "blockTripSequence": 2,
+            "closestStop": "PSTA_686",
+            "closestStopTimeOffset": -23,
+            "distanceAlongTrip": 8319.299447455836,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 27.840002059936523,
+              "lon": -82.7929916381836
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1459259325000,
+            "nextStop": "PSTA_687",
+            "nextStopTimeOffset": 85,
+            "orientation": 0,
+            "phase": "in_progress",
+            "position": {
+              "lat": 27.83959,
+              "lon": -82.7898552447709
+            },
+            "predicted": true,
+            "scheduleDeviation": -197,
+            "scheduledDistanceAlongTrip": 8319.299447455836,
+            "serviceDate": 1459224000000,
+            "situationIds": [
+              "PSTA_13",
+              "PSTA_12"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 40262.018403075745,
+            "vehicleId": "PSTA_12103"
+          },
+          "vehicleId": "PSTA_12103"
+        }
+      ],
+      "nearbyStopIds": [],
+      "situationIds": [
+        "PSTA_13",
+        "PSTA_12"
+      ],
+      "stopId": "PSTA_1767"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "email": "cserv@psta.net",
+          "fareUrl": "",
+          "id": "PSTA",
+          "lang": "EN",
+          "name": "PSTA",
+          "phone": "(727) 540-1900",
+          "privateService": false,
+          "timezone": "America/New_York",
+          "url": "http://www.psta.net"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_5",
+          "longName": "ST PETERSBURG/TYRONE SQUARE MALL",
+          "shortName": "5",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_32",
+          "longName": "ST. PETERSBURG CIRCULATOR",
+          "shortName": "32",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_74",
+          "longName": "ST PETERSBURG/INDIAN ROCKS",
+          "shortName": "74",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_58",
+          "longName": "GATEWAY MALL/SEMINOLE MALL",
+          "shortName": "58",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_75",
+          "longName": "GATEWAY MALL/TYRONE SQUARE",
+          "shortName": "75",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        },
+        {
+          "agencyId": "PSTA",
+          "color": "2E2EFE",
+          "description": "",
+          "id": "PSTA_18",
+          "longName": "ST PETERSBURG/CLEARWATER",
+          "shortName": "18",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": ""
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1458842289134,
+          "description": {
+            "lang": "en",
+            "value": "[Low] For route schedule information visit our web site at PSTA.net or contact the PSTA InfoLine at (727) 540-1900 or TDD only (727) 540-0603.: For route schedule information visit our web site at PSTA.net or contact the PSTA InfoLine at (727) 540-1900 or TDD only (727) 540-0603."
+          },
+          "id": "PSTA_13",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Shoppes at Park Place: For Route Schedule Information"
+          },
+          "url": null
+        },
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "PSTA",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 1458842288796,
+          "description": {
+            "lang": "en",
+            "value": "[Low] For route schedule information visit our web site at PSTA.net or contact the PSTA InfoLine at (727) 540-1900 or TDD only (727) 540-0603.: For route schedule information visit our web site at PSTA.net or contact the PSTA InfoLine at (727) 540-1900 or TDD only (727) 540-0603."
+          },
+          "id": "PSTA_12",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "noImpact",
+          "summary": {
+            "lang": "en",
+            "value": "Park Street Terminal West: For Route Schedule Information"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "1200",
+          "direction": "E",
+          "id": "PSTA_1767",
+          "lat": 27.77638,
+          "locationType": 0,
+          "lon": -82.65355,
+          "name": "4TH AVE N + 15TH ST N",
+          "routeIds": [
+            "PSTA_5",
+            "PSTA_32",
+            "PSTA_74"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "6523",
+          "direction": "W",
+          "id": "PSTA_10067",
+          "lat": 27.7672,
+          "locationType": 0,
+          "lon": -82.63522,
+          "name": "4TH AVE S + 2ND ST S",
+          "routeIds": [
+            "PSTA_32"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2958",
+          "direction": "E",
+          "id": "PSTA_745",
+          "lat": 27.84251,
+          "locationType": 0,
+          "lon": -82.64645,
+          "name": "77TH AVE N + DR MLK JR ST N",
+          "routeIds": [
+            "PSTA_58",
+            "PSTA_74",
+            "PSTA_75"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "1264",
+          "direction": "E",
+          "id": "PSTA_3737",
+          "lat": 27.77708,
+          "locationType": 0,
+          "lon": -82.7118,
+          "name": "5TH AVE N + 58TH ST N",
+          "routeIds": [
+            "PSTA_5"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2859",
+          "direction": "E",
+          "id": "PSTA_719",
+          "lat": 27.83911,
+          "locationType": 0,
+          "lon": -82.70796,
+          "name": "PARK BLVD + 54TH ST",
+          "routeIds": [
+            "PSTA_74"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2910",
+          "direction": "SE",
+          "id": "PSTA_686",
+          "lat": 27.8397,
+          "locationType": 0,
+          "lon": -82.79164,
+          "name": "PARK BLVD + 110TH ST",
+          "routeIds": [
+            "PSTA_18",
+            "PSTA_58",
+            "PSTA_74"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        },
+        {
+          "code": "2952",
+          "direction": "W",
+          "id": "PSTA_687",
+          "lat": 27.842,
+          "locationType": 0,
+          "lon": -82.78832,
+          "name": "JOHNSON BLVD + LIBERTY LN",
+          "routeIds": [
+            "PSTA_18",
+            "PSTA_58",
+            "PSTA_74"
+          ],
+          "wheelchairBoarding": "UNKNOWN"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "PSTA_16650702",
+          "directionId": "0",
+          "id": "PSTA_1330213020",
+          "routeId": "PSTA_32",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_32:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16650702",
+          "directionId": "0",
+          "id": "PSTA_1330214020",
+          "routeId": "PSTA_32",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_32:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16531302",
+          "directionId": "0",
+          "id": "PSTA_1332937020",
+          "routeId": "PSTA_74",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_74:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16450502",
+          "directionId": "0",
+          "id": "PSTA_1329982020",
+          "routeId": "PSTA_5",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_5:01",
+          "timeZone": "",
+          "tripHeadsign": "5 TH AVE N + 2ND ST",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16530202",
+          "directionId": "0",
+          "id": "PSTA_1332938020",
+          "routeId": "PSTA_74",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_74:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16650702",
+          "directionId": "0",
+          "id": "PSTA_1330215020",
+          "routeId": "PSTA_32",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_32:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "PSTA_16530902",
+          "directionId": "0",
+          "id": "PSTA_1332939020",
+          "routeId": "PSTA_74",
+          "routeShortName": "",
+          "serviceId": "PSTA_246",
+          "shapeId": "PSTA_74:01",
+          "timeZone": "",
+          "tripHeadsign": "DOWNTOWN ST PETERSBURG",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

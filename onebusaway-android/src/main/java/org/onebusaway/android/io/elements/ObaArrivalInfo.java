@@ -94,6 +94,8 @@ public final class ObaArrivalInfo {
 
     private final int stopSequence;
 
+    private final int totalStopsInTrip;
+
     private final int blockTripSequence;
 
     ObaArrivalInfo() {
@@ -120,6 +122,7 @@ public final class ObaArrivalInfo {
         arrivalEnabled = true;
         departureEnabled = true;
         stopSequence = 0;
+        totalStopsInTrip = 0;
         blockTripSequence = 0;
     }
 
@@ -283,11 +286,22 @@ public final class ObaArrivalInfo {
     }
 
     /**
-     * @return The index of the stop into the sequence of stops that
-     * make up the trip for this arrival.
+     * @return the index of the stop into the sequence of stops that make up the trip for this
+     * arrival. This value is 0-indexed, and is generated internally by OneBusAway (it is not the
+     * GTFS stop_sequence). The first stop in the trip will always have stopSequence = 0, while the
+     * last stop in the trip will always have stopSequence = totalStopsInTrip - 1.
      */
     public int getStopSequence() {
         return stopSequence;
+    }
+
+    /**
+     * @return the total number of stops visited on the trip for this arrival, or 0 if the server
+     * doesn't support this field. If the same stop is visited more than once in this trip, each
+     * visitation is counted towards the total.
+     */
+    public int getTotalStopsInTrip() {
+        return totalStopsInTrip;
     }
 
     /**

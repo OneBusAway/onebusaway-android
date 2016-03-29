@@ -789,7 +789,7 @@ public class ArrivalsListFragment extends ListFragment
 
         if (mArrivalInfo != null) {
             list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter,
-                    System.currentTimeMillis());
+                    System.currentTimeMillis(), true);
         }
         return list;
     }

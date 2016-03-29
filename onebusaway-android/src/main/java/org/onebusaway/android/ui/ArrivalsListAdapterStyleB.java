@@ -73,7 +73,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
                     ArrivalInfo.convertObaArrivalInfo(getContext(),
-                            arrivals, routesFilter, currentTime);
+                            arrivals, routesFilter, currentTime, true);
 
             // Sort list by route and headsign, in that order
             Collections.sort(list, new Comparator<ArrivalInfo>() {

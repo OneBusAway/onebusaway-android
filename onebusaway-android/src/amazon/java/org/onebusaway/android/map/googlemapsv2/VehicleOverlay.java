@@ -652,7 +652,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
             } else {
                 // Scheduled info
-                statusView.setText(r.getString(R.string.stop_info_scheduled_arrival));
+                statusView.setText(r.getString(R.string.stop_info_scheduled));
                 statusColor = R.color.stop_info_scheduled_time;
                 d.setColor(r.getColor(statusColor));
                 lastUpdatedView.setText(r.getString(R.string.vehicle_last_updated_scheduled));

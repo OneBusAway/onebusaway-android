@@ -132,6 +132,8 @@
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">A tiempo</string>
+    <string name="stop_info_arrived_ontime">Llegó a tiempo</string>
+    <string name="stop_info_departed_ontime">Salió a tiempo</string>
     <plurals name="stop_info_arrive_delayed">
         <item quantity="one">1 min tarde</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
@@ -164,8 +166,46 @@
             min antes
         </item>
     </plurals>
+    <plurals name="stop_info_arrived_delayed">
+        <item quantity="one">Llegó 1 min tarde</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Llegó
+            <xliff:g id="count">%d</xliff:g>
+            min tarde
+        </item>
+    </plurals>
+    <plurals name="stop_info_arrived_early">
+        <item quantity="one">Llegó 1 min antes</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Llegó
+            <xliff:g id="count">%d</xliff:g>
+            min antes
+        </item>
+    </plurals>
+    <plurals name="stop_info_status_late_without_arrive_depart">
+        <item quantity="one">1 min tarde</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min tarde
+        </item>
+    </plurals>
+    <plurals name="stop_info_status_early_without_arrive_depart">
+        <item quantity="one">1 min antes</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min antes
+        </item>
+    </plurals>
     <string name="stop_info_scheduled_arrival">Llegada planificada</string>
     <string name="stop_info_scheduled_departure">Salida planificada</string>
+    <string name="stop_info_scheduled">Planificada</string>
+    <string name="stop_info_time_arriving_at">Llegando en %1s</string>
+    <string name="stop_info_time_departing_at">Saliendo en %1s</string>
+    <string name="stop_info_time_arrived_at">Llegó en %1s</string>
+    <string name="stop_info_time_departed_at">Salió en %1s</string>
+
     <string name="stop_info_frequency_from">Cada %1$d mins desde %2$s</string>
     <string name="stop_info_frequency_until">Cada %1$d mins hasta %2$s</string>
     <string name="stop_info_eta_now">AHORA</string>

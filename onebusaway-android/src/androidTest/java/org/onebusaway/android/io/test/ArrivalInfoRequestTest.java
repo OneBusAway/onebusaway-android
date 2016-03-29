@@ -161,6 +161,45 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(nearbyStops.size() > 0);
     }
 
+    public void testTotalStopsInTrip() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("api.tampa.onebusaway.org/api");
+
+        /**
+         * First test with a response from a server that supports the "totalStopsInTrip" field.
+         * In this case, it's for a fake stop 10000, and we use data for actual stop 6497 from
+         * the OBA Tampa server after it started supporting the field.
+         */
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_10000").build().call();
+        assertOK(response);
+
+        ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+        assertEquals(34, arrivals[0].getTotalStopsInTrip());
+        assertEquals(34, arrivals[1].getTotalStopsInTrip());
+        assertEquals(142, arrivals[2].getTotalStopsInTrip());
+        assertEquals(71, arrivals[3].getTotalStopsInTrip());
+        assertEquals(142, arrivals[4].getTotalStopsInTrip());
+        assertEquals(34, arrivals[5].getTotalStopsInTrip());
+        assertEquals(34, arrivals[6].getTotalStopsInTrip());
+        assertEquals(142, arrivals[7].getTotalStopsInTrip());
+
+        /**
+         * Now test with a response from a server that doesn't support the "totalStopsInTrip" field.
+         * In this case, it's a response from the OBA Tampa server prior to supporting the field.
+         */
+        response = new ObaArrivalInfoRequest.Builder(getContext(),
+                "Hillsborough Area Regional Transit_6497").build().call();
+        assertOK(response);
+
+        arrivals = response.getArrivalInfo();
+        assertEquals(0, arrivals[0].getTotalStopsInTrip());
+        assertEquals(0, arrivals[1].getTotalStopsInTrip());
+        assertEquals(0, arrivals[2].getTotalStopsInTrip());
+    }
+
     public void testNewRequestUsingCustomUrl() throws Exception {
         // Test by setting API directly
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");

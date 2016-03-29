@@ -16,6 +16,7 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,7 +118,7 @@ public class UIUtilTest extends ObaTestCase {
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
-                arrivals, null, response.getCurrentTime());
+                arrivals, null, response.getCurrentTime(), true);
 
         ObaRoute route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
         String url = route != null ? route.getUrl() : null;
@@ -166,7 +167,7 @@ public class UIUtilTest extends ObaTestCase {
         arrivals = response2.getArrivalInfo();
         assertNotNull(arrivals);
         arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
-                arrivals, null, response2.getCurrentTime());
+                arrivals, null, response2.getCurrentTime(), true);
 
         route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
         url = route != null ? route.getUrl() : null;
@@ -342,43 +343,10 @@ public class UIUtilTest extends ObaTestCase {
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
         ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
-                arrivals, null, response.getCurrentTime());
+                arrivals, null, response.getCurrentTime(), true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
-        assertEquals(32, arrivalInfo.size());
-
-        assertEquals(-4, arrivalInfo.get(0).getEta());
-        assertEquals(-3, arrivalInfo.get(1).getEta());
-        assertEquals(-1, arrivalInfo.get(2).getEta());
-        assertEquals(-1, arrivalInfo.get(3).getEta());
-        assertEquals(-1, arrivalInfo.get(4).getEta());
-        assertEquals(0, arrivalInfo.get(5).getEta()); // First non-negative ETA
-        assertEquals(0, arrivalInfo.get(6).getEta());
-        assertEquals(3, arrivalInfo.get(7).getEta());
-        assertEquals(5, arrivalInfo.get(8).getEta());
-        assertEquals(5, arrivalInfo.get(9).getEta());
-        assertEquals(6, arrivalInfo.get(10).getEta());
-        assertEquals(7, arrivalInfo.get(11).getEta());  // A favorite, set above
-        assertEquals(10, arrivalInfo.get(12).getEta());
-        assertEquals(14, arrivalInfo.get(13).getEta()); // Another favorite, set above
-        assertEquals(17, arrivalInfo.get(14).getEta());
-        assertEquals(20, arrivalInfo.get(15).getEta());
-        assertEquals(20, arrivalInfo.get(16).getEta());
-        assertEquals(23, arrivalInfo.get(17).getEta());
-        assertEquals(25, arrivalInfo.get(18).getEta());
-        assertEquals(26, arrivalInfo.get(19).getEta());
-        assertEquals(27, arrivalInfo.get(20).getEta());
-        assertEquals(28, arrivalInfo.get(21).getEta());
-        assertEquals(30, arrivalInfo.get(22).getEta());
-        assertEquals(30, arrivalInfo.get(23).getEta());
-        assertEquals(32, arrivalInfo.get(24).getEta());
-        assertEquals(32, arrivalInfo.get(25).getEta());
-        assertEquals(34, arrivalInfo.get(26).getEta());
-        assertEquals(34, arrivalInfo.get(27).getEta());
-        assertEquals(35, arrivalInfo.get(28).getEta());
-        assertEquals(35, arrivalInfo.get(29).getEta());
-        assertEquals(35, arrivalInfo.get(30).getEta());
-        assertEquals(35, arrivalInfo.get(31).getEta());
+        validateUatcArrivalInfo(arrivalInfo);
 
         // First non-negative arrival should be "0", in index 5
         int firstNonNegativeArrivalIndex = ArrivalInfo.findFirstNonNegativeArrival(arrivalInfo);
@@ -405,11 +373,235 @@ public class UIUtilTest extends ObaTestCase {
 
         // Process the response again (resetting the included favorite info)
         arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
-                arrivals, null, response.getCurrentTime());
+                arrivals, null, response.getCurrentTime(), true);
         preferredArrivalIndexes = ArrivalInfo.findPreferredArrivalIndexes(arrivalInfo);
 
         // Now the first two non-negative arrival times should be returned - indexes 5 and 6
         assertEquals(5, preferredArrivalIndexes.get(0).intValue());
         assertEquals(6, preferredArrivalIndexes.get(1).intValue());
+    }
+
+    /**
+     * Tests the status and time labels for arrival info
+     */
+    public void testArrivalInfoLabels() {
+        // Initial setup to get an ObaArrivalInfo object from a test response
+        ObaRegion tampa = MockRegion.getTampa(getContext());
+        assertNotNull(tampa);
+        Application.get().setCurrentRegion(tampa);
+
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_6497").build().call();
+        assertOK(response);
+        ObaStop stop = response.getStop();
+        assertNotNull(stop);
+        assertEquals("Hillsborough Area Regional Transit_6497", stop.getId());
+        List<ObaRoute> routes = response.getRoutes(stop.getRouteIds());
+        assertTrue(routes.size() > 0);
+        ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
+        assertEquals("Hillsborough Area Regional Transit", agency.getId());
+
+        // Get the response
+        ObaArrivalInfo[] arrivals = response.getArrivalInfo();
+        assertNotNull(arrivals);
+
+        /**
+         * Labels *with* arrive/depart included, and time labels
+         */
+        boolean includeArriveDepartLabels = true;
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(
+                getContext(),
+                arrivals, null, response.getCurrentTime(), includeArriveDepartLabels);
+
+        // Now confirm that we have the correct number of elements, and values for ETAs for the test
+        validateUatcArrivalInfo(arrivalInfo);
+
+        // Arrivals/departures that have already happened
+        assertEquals("Arrived on time", arrivalInfo.get(0).getStatusText());
+        assertEquals("Arrived at " + formatTime(1438804260000L),
+                arrivalInfo.get(0).getTimeText());
+        assertEquals("Departed 2 min late", arrivalInfo.get(1).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804320000L), arrivalInfo.get(1).getTimeText());
+        assertEquals("Departed 1 min early", arrivalInfo.get(2).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804440000L), arrivalInfo.get(2).getTimeText());
+        assertEquals("Arrived on time", arrivalInfo.get(3).getStatusText());
+        assertEquals("Arrived at " + formatTime(1438804440000L), arrivalInfo.get(3).getTimeText());
+        assertEquals("Departed 6 min early", arrivalInfo.get(4).getStatusText());
+        assertEquals("Departed at " + formatTime(1438804440000L), arrivalInfo.get(4).getTimeText());
+        // Arrivals and departures that will happen in the future
+        assertEquals("On time", arrivalInfo.get(5).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804500000L),
+                arrivalInfo.get(5).getTimeText());
+        assertEquals("On time", arrivalInfo.get(6).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804500000L), arrivalInfo.get(6).getTimeText());
+        assertEquals("5 min delay", arrivalInfo.get(7).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804680000L), arrivalInfo.get(7).getTimeText());
+        assertEquals("On time", arrivalInfo.get(8).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804800000L),
+                arrivalInfo.get(8).getTimeText());
+        assertEquals("On time", arrivalInfo.get(9).getStatusText());
+        assertEquals("Departing at " + formatTime(1438804800000L),
+                arrivalInfo.get(9).getTimeText());
+        assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804860000L),
+                arrivalInfo.get(10).getTimeText());
+        assertEquals("1 min early", arrivalInfo.get(11).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438804920000L),
+                arrivalInfo.get(11).getTimeText());
+        assertEquals("On time", arrivalInfo.get(12).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438805100000L),
+                arrivalInfo.get(12).getTimeText());
+        assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
+        assertEquals("Departing at " + formatTime(1438805340000L),
+                arrivalInfo.get(13).getTimeText());
+        assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438805520000L),
+                arrivalInfo.get(14).getTimeText());
+        assertEquals("On time", arrivalInfo.get(15).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438805700000L),
+                arrivalInfo.get(15).getTimeText());
+        assertEquals("On time", arrivalInfo.get(16).getStatusText());
+        assertEquals("Departing at " + formatTime(1438805700000L),
+                arrivalInfo.get(16).getTimeText());
+        assertEquals("4 min delay", arrivalInfo.get(17).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438805880000L),
+                arrivalInfo.get(17).getTimeText());
+        assertEquals("On time", arrivalInfo.get(18).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806000000L),
+                arrivalInfo.get(18).getTimeText());
+        assertEquals("8 min delay", arrivalInfo.get(19).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806060000L),
+                arrivalInfo.get(19).getTimeText());
+        assertEquals("2 min delay", arrivalInfo.get(20).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806124000L),
+                arrivalInfo.get(20).getTimeText());
+        assertEquals("3 min delay", arrivalInfo.get(21).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806180000L),
+                arrivalInfo.get(21).getTimeText());
+        assertEquals("On time", arrivalInfo.get(22).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806300000L),
+                arrivalInfo.get(22).getTimeText());
+        assertEquals("On time", arrivalInfo.get(23).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806300000L),
+                arrivalInfo.get(23).getTimeText());
+        assertEquals("6 min delay", arrivalInfo.get(24).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806420000L),
+                arrivalInfo.get(24).getTimeText());
+        assertEquals("3 min delay", arrivalInfo.get(25).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806420000L),
+                arrivalInfo.get(25).getTimeText());
+        assertEquals("6 min delay", arrivalInfo.get(26).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806540000L),
+                arrivalInfo.get(26).getTimeText());
+        assertEquals("On time", arrivalInfo.get(27).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806540000L),
+                arrivalInfo.get(27).getTimeText());
+        assertEquals("On time", arrivalInfo.get(28).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806600000L),
+                arrivalInfo.get(28).getTimeText());
+        assertEquals("On time", arrivalInfo.get(29).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806600000L),
+                arrivalInfo.get(29).getTimeText());
+        assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
+        assertEquals("Arriving at " + formatTime(1438806600000L),
+                arrivalInfo.get(30).getTimeText());
+        assertEquals("On time", arrivalInfo.get(31).getStatusText());
+        assertEquals("Departing at " + formatTime(1438806600000L),
+                arrivalInfo.get(31).getTimeText());
+
+        /**
+         * Status labels *without* arrive/depart included
+         */
+        includeArriveDepartLabels = false;
+        arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(), arrivals, null,
+                response.getCurrentTime(), includeArriveDepartLabels);
+
+        // Now confirm that we have the correct number of elements, and values for ETAs for the test
+        validateUatcArrivalInfo(arrivalInfo);
+
+        assertEquals("On time", arrivalInfo.get(0).getStatusText());
+        assertEquals("2 min late", arrivalInfo.get(1).getStatusText());
+        assertEquals("1 min early", arrivalInfo.get(2).getStatusText());
+        assertEquals("On time", arrivalInfo.get(3).getStatusText());
+        assertEquals("6 min early", arrivalInfo.get(4).getStatusText());
+        // Arrivals and departures that will happen in the future
+        assertEquals("On time", arrivalInfo.get(5).getStatusText());
+        assertEquals("On time", arrivalInfo.get(6).getStatusText());
+        assertEquals("5 min delay", arrivalInfo.get(7).getStatusText());
+        assertEquals("On time", arrivalInfo.get(8).getStatusText());
+        assertEquals("On time", arrivalInfo.get(9).getStatusText());
+        assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
+        assertEquals("1 min early", arrivalInfo.get(11).getStatusText());
+        assertEquals("On time", arrivalInfo.get(12).getStatusText());
+        assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
+        assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
+        assertEquals("On time", arrivalInfo.get(15).getStatusText());
+        assertEquals("On time", arrivalInfo.get(16).getStatusText());
+        assertEquals("4 min delay", arrivalInfo.get(17).getStatusText());
+        assertEquals("On time", arrivalInfo.get(18).getStatusText());
+        assertEquals("8 min delay", arrivalInfo.get(19).getStatusText());
+        assertEquals("2 min delay", arrivalInfo.get(20).getStatusText());
+        assertEquals("3 min delay", arrivalInfo.get(21).getStatusText());
+        assertEquals("On time", arrivalInfo.get(22).getStatusText());
+        assertEquals("On time", arrivalInfo.get(23).getStatusText());
+        assertEquals("6 min delay", arrivalInfo.get(24).getStatusText());
+        assertEquals("3 min delay", arrivalInfo.get(25).getStatusText());
+        assertEquals("6 min delay", arrivalInfo.get(26).getStatusText());
+        assertEquals("On time", arrivalInfo.get(27).getStatusText());
+        assertEquals("On time", arrivalInfo.get(28).getStatusText());
+        assertEquals("On time", arrivalInfo.get(29).getStatusText());
+        assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
+        assertEquals("On time", arrivalInfo.get(31).getStatusText());
+    }
+
+    /**
+     * Validates the ETAs and number of arrivals for Tampa's University Area Transit Center.  This
+     * data is used for a few tests and we want to make sure it's valid.
+     */
+    private void validateUatcArrivalInfo(ArrayList<ArrivalInfo> arrivalInfo) {
+        assertEquals(32, arrivalInfo.size());
+
+        assertEquals(-4, arrivalInfo.get(0).getEta());
+        assertEquals(-3, arrivalInfo.get(1).getEta());
+        assertEquals(-1, arrivalInfo.get(2).getEta());
+        assertEquals(-1, arrivalInfo.get(3).getEta());
+        assertEquals(-1, arrivalInfo.get(4).getEta());
+        assertEquals(0, arrivalInfo.get(5).getEta()); // First non-negative ETA
+        assertEquals(0, arrivalInfo.get(6).getEta());
+        assertEquals(3, arrivalInfo.get(7).getEta());
+        assertEquals(5, arrivalInfo.get(8).getEta());
+        assertEquals(5, arrivalInfo.get(9).getEta());
+        assertEquals(6, arrivalInfo.get(10).getEta());
+        assertEquals(7, arrivalInfo.get(11).getEta());
+        assertEquals(10, arrivalInfo.get(12).getEta());
+        assertEquals(14, arrivalInfo.get(13).getEta());
+        assertEquals(17, arrivalInfo.get(14).getEta());
+        assertEquals(20, arrivalInfo.get(15).getEta());
+        assertEquals(20, arrivalInfo.get(16).getEta());
+        assertEquals(23, arrivalInfo.get(17).getEta());
+        assertEquals(25, arrivalInfo.get(18).getEta());
+        assertEquals(26, arrivalInfo.get(19).getEta());
+        assertEquals(27, arrivalInfo.get(20).getEta());
+        assertEquals(28, arrivalInfo.get(21).getEta());
+        assertEquals(30, arrivalInfo.get(22).getEta());
+        assertEquals(30, arrivalInfo.get(23).getEta());
+        assertEquals(32, arrivalInfo.get(24).getEta());
+        assertEquals(32, arrivalInfo.get(25).getEta());
+        assertEquals(34, arrivalInfo.get(26).getEta());
+        assertEquals(34, arrivalInfo.get(27).getEta());
+        assertEquals(35, arrivalInfo.get(28).getEta());
+        assertEquals(35, arrivalInfo.get(29).getEta());
+        assertEquals(35, arrivalInfo.get(30).getEta());
+        assertEquals(35, arrivalInfo.get(31).getEta());
+    }
+
+    private String formatTime(long time) {
+        return DateUtils.formatDateTime(getContext(),
+                time,
+                DateUtils.FORMAT_SHOW_TIME |
+                        DateUtils.FORMAT_NO_NOON |
+                        DateUtils.FORMAT_NO_MIDNIGHT
+        );
     }
 }

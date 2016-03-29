@@ -26,7 +26,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
-import android.text.format.DateUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -54,7 +53,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
                     ArrivalInfo.convertObaArrivalInfo(getContext(),
-                            arrivals, routesFilter, currentTime);
+                            arrivals, routesFilter, currentTime, false);
             setData(list);
         } else {
             setData(null);
@@ -118,12 +117,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         int pTopBottom = UIUtils.dpToPixels(context, 2);
         status.setPadding(pSides, pTopBottom, pSides, pTopBottom);
 
-        time.setText(DateUtils.formatDateTime(context,
-                stopInfo.getDisplayTime(),
-                DateUtils.FORMAT_SHOW_TIME |
-                        DateUtils.FORMAT_NO_NOON |
-                        DateUtils.FORMAT_NO_MIDNIGHT
-        ));
+        time.setText(stopInfo.getTimeText());
 
         ContentValues values = null;
         if (mTripsForStop != null) {

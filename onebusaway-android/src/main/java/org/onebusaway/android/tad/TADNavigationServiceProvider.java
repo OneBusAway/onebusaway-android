@@ -817,7 +817,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 2) {   // Get ready to pack
             String message = Application.get().getString(R.string.voice_get_ready);
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 2; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 
@@ -834,7 +834,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 3) {   // Pull the cord
             String message = Application.get().getString(R.string.voice_pull_cord);
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
             }
 

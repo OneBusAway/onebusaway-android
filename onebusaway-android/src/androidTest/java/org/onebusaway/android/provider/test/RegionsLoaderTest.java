@@ -36,13 +36,19 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
         assertEquals("Tampa Bay", tampa.getName());
         ObaRegion.Bounds[] bounds = tampa.getBounds();
         assertNotNull(bounds);
-        assertEquals(1, bounds.length);
-        // 27.976910500000002:82.445851:0.5424609999999994:0.576357999999999
+        assertEquals(2, bounds.length);
+        // 27.976910500000002:-82.445851:0.5424609999999994:0.576357999999999
         assertBounds(bounds[0],
                 27.976910500000002,
                 -82.445851,
                 0.5424609999999994,
                 0.576357999999999);
+        // 27.919249999999998:-82.652145:0.47208000000000183:0.3967700000000036
+        assertBounds(bounds[1],
+                27.919249999999998,
+                -82.652145,
+                0.47208000000000183,
+                0.3967700000000036);
     }
 
     private void _assertPugetSound(ObaRegion ps) {

@@ -223,7 +223,8 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.RegionOpen311Servers.REGION_ID + " INTEGER NOT NULL, " +
                                 ObaContract.RegionOpen311Servers.JURISDICTION + " VARCHAR, " +
                                 ObaContract.RegionOpen311Servers.API_KEY + " VARCHAR NOT NULL, " +
-                                ObaContract.RegionOpen311Servers.BASE_URL + " VARCHAR NOT NULL " +
+                                ObaContract.RegionOpen311Servers.BASE_URL + " VARCHAR NOT NULL, " +
+                                ObaContract.Regions.OTP_BASE_URL + " VARCHAR " +
                                 ");");
             }
         }
@@ -469,6 +470,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.EXPERIMENTAL, ObaContract.Regions.EXPERIMENTAL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.STOP_INFO_URL, ObaContract.Regions.STOP_INFO_URL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.OTP_BASE_URL, ObaContract.Regions.OTP_BASE_URL);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);

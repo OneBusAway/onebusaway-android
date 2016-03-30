@@ -388,6 +388,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String STOP_INFO_URL = "stop_info_url";
+
+        /**
+         * The OpenTripPlanner URL for the region
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String OTP_BASE_URL = "otp_base_url";
     }
 
     protected interface RegionBoundsColumns {
@@ -1084,7 +1092,8 @@ public final class ObaContract {
                     SUPPORTS_SIRI_REALTIME,
                     TWITTER_URL,
                     EXPERIMENTAL,
-                    STOP_INFO_URL
+                    STOP_INFO_URL,
+                    OTP_BASE_URL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1108,7 +1117,8 @@ public final class ObaContract {
                             c.getInt(8) > 0,            // Supports Siri Realtime
                             c.getString(9),              // Twitter URL
                             c.getInt(10) > 0,               // Experimental
-                            c.getString(11)              // StopInfoUrl
+                            c.getString(11),              // StopInfoUrl
+                            c.getString(12)               // OtpBaseUrl
                     );
                 } finally {
                     c.close();

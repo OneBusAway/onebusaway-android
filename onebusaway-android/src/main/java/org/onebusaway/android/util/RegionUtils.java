@@ -361,7 +361,8 @@ public class RegionUtils {
                     ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
                     ObaContract.Regions.TWITTER_URL,
                     ObaContract.Regions.EXPERIMENTAL,
-                    ObaContract.Regions.STOP_INFO_URL
+                    ObaContract.Regions.STOP_INFO_URL,
+                    ObaContract.Regions.OTP_BASE_URL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -404,7 +405,8 @@ public class RegionUtils {
                         c.getInt(8) > 0,            // Supports Siri Realtime
                         c.getString(9),              // Twitter URL
                         c.getInt(10) > 0,            // Experimental
-                        c.getString(11)             // StopInfoUrl
+                        c.getString(11),             // StopInfoUrl
+                        c.getString(12)              // OTP Base URL
                 ));
 
             } while (c.moveToNext());
@@ -584,7 +586,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
-                BuildConfig.FIXED_REGION_STOP_INFO_URL);
+                BuildConfig.FIXED_REGION_STOP_INFO_URL,
+                BuildConfig.FIXED_REGION_OTP_BASE_URL);
         return region;
     }
 
@@ -650,6 +653,7 @@ public class RegionUtils {
         values.put(ObaContract.Regions.TWITTER_URL, region.getTwitterUrl());
         values.put(ObaContract.Regions.EXPERIMENTAL, region.getExperimental());
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
+        values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
         return values;
     }
 

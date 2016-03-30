@@ -7,9 +7,21 @@
       {
         "siriBaseUrl": "http://tampa.onebusaway.org/onebusaway-api-webapp/siri/", 
         "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
-        "supportsSiriRealtimeApis": true, 
+        "supportsSiriRealtimeApis": true,
+        "open311Servers": [
+          {
+            "juridisctionId": null,
+            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
+            "baseUrl": "http://test.seeclickfix.com/open311/v2/"
+          },
+          {
+            "juridisctionId": null,
+            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
+            "baseUrl": "http://www.publicstuff.com/api/open311/"
+          }
+        ], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -25,19 +37,8 @@
             "lon": -82.652145, 
             "lonSpan": 0.3967700000000036
           }
-        ], 
-        "open311Servers": [
-          {
-            "juridisctionId": null, 
-            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f", 
-            "baseUrl": "http://test.seeclickfix.com/open311/v2/"
-          }, 
-          {
-            "juridisctionId": null, 
-            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f", 
-            "baseUrl": "http://www.publicstuff.com/api/open311/"
-          }
-        ], 
+        ],
+        "otpBaseUrl": "http://otp-fl.camsys-apps.com:8080/otp/", 
         "contactEmail": "onebusaway@gohart.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -50,9 +51,10 @@
       {
         "siriBaseUrl": "http://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/", 
         "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
-        "supportsSiriRealtimeApis": true, 
+        "supportsSiriRealtimeApis": true,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -110,8 +112,8 @@
             "lon": -121.993246104, 
             "lonSpan": 0.784555996061
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "onebusaway@soundtransit.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -124,9 +126,10 @@
       {
         "siriBaseUrl": "http://bustime.mta.info/api/", 
         "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": true, 
+        "supportsSiriRealtimeApis": true,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
         "supportsObaRealtimeApis": false, 
         "bounds": [
@@ -142,8 +145,8 @@
             "lon": -73.89908199999999, 
             "lonSpan": 0.23146799999999246
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "MTABusTime@mtahq.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -156,9 +159,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -204,8 +208,8 @@
             "lon": -84.37966800000001, 
             "lonSpan": 0.5820399999999921
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "onebusaway@ce.gatech.edu", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -218,9 +222,10 @@
       {
         "siriBaseUrl": "http://buseta.wmata.com/onebusaway-api-webapp/siri/", 
         "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": true, 
+        "supportsSiriRealtimeApis": true,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "https://mobile.twitter.com/Metrobusinfo", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -230,8 +235,8 @@
             "lon": -77.059196, 
             "lonSpan": 0.7805199999999957
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "feedback@wmata.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -244,9 +249,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_CA",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_CA", 
         "twitterUrl": "https://mobile.twitter.com/YRTViva", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -256,8 +262,8 @@
             "lon": -79.43752, 
             "lonSpan": 0.49329600000000084
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "transitinfo@york.ca", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -270,9 +276,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "https://mobile.twitter.com/CalParking", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -282,8 +289,8 @@
             "lon": -122.28957750000001, 
             "lonSpan": 0.10181500000000199
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "bear-transit@v-a.io", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -296,9 +303,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -314,8 +322,8 @@
             "lon": -71.210252, 
             "lonSpan": 1.1692720000000065
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "sbrown@camsys.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -328,9 +336,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "fi_FI",
         "supportsObaDiscoveryApis": true, 
-        "language": "fi_FI", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -340,8 +349,8 @@
             "lon": 28.197898391353952, 
             "lonSpan": 0.2674852336517013
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "obasupport@octo3.fi", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -354,9 +363,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -366,8 +376,8 @@
             "lon": -122.82026350000001, 
             "lonSpan": 0.2974530000000044
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "info@rvtd.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -380,9 +390,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.12-SNAPSHOT|1|1|12|SNAPSHOT|", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -392,8 +403,8 @@
             "lon": -121.3456095, 
             "lonSpan": 0.4220969999999937
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "jespejo@sanjoaquinrtd.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -406,9 +417,10 @@
       {
         "siriBaseUrl": null, 
         "obaVersionInfo": "1.1.14|1|1|14|73aea0d ", 
-        "supportsSiriRealtimeApis": false, 
+        "supportsSiriRealtimeApis": false,
+        "open311Servers": [], 
+        "language": "en_US",
         "supportsObaDiscoveryApis": true, 
-        "language": "en_US", 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
@@ -418,8 +430,8 @@
             "lon": -116.73142875280399, 
             "lonSpan": 1.093941754416008
           }
-        ], 
-        "open311Servers": [], 
+        ],
+        "otpBaseUrl": null, 
         "contactEmail": "helpdesk@sdmts.com", 
         "stopInfoUrl": null, 
         "active": true, 

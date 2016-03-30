@@ -30,7 +30,6 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -236,11 +235,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             }
 
             // Set arrival times and status in views
-            scheduleView.setText(DateUtils.formatDateTime(context,
-                    scheduledTime,
-                    DateUtils.FORMAT_SHOW_TIME |
-                            DateUtils.FORMAT_NO_NOON |
-                            DateUtils.FORMAT_NO_MIDNIGHT));
+            scheduleView.setText(UIUtils.formatTime(context, scheduledTime));
             if (arrivalRow.getPredicted()) {
                 long eta = arrivalRow.getEta();
                 if (eta == 0) {

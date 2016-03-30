@@ -20,10 +20,10 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaArrivalInfo.Frequency;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.text.format.DateUtils;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -431,12 +431,7 @@ public final class ArrivalInfo {
             return "";
         }
 
-        String displayTime = DateUtils.formatDateTime(context,
-                getDisplayTime(),
-                DateUtils.FORMAT_SHOW_TIME |
-                        DateUtils.FORMAT_NO_NOON |
-                        DateUtils.FORMAT_NO_MIDNIGHT
-        );
+        String displayTime = UIUtils.formatTime(context, getDisplayTime());
 
         if (mEta >= 0) {
             // Bus hasn't yet arrived

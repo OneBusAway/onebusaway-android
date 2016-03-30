@@ -16,7 +16,6 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -597,11 +596,6 @@ public class UIUtilTest extends ObaTestCase {
     }
 
     private String formatTime(long time) {
-        return DateUtils.formatDateTime(getContext(),
-                time,
-                DateUtils.FORMAT_SHOW_TIME |
-                        DateUtils.FORMAT_NO_NOON |
-                        DateUtils.FORMAT_NO_MIDNIGHT
-        );
+        return UIUtils.formatTime(getContext(), time);
     }
 }

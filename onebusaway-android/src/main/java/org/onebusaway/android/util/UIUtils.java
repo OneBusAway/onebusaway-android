@@ -64,6 +64,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.text.Spannable;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -1112,5 +1113,22 @@ public final class UIUtils {
             }
         }
         return isActiveWindowForSituation;
+    }
+
+    /**
+     * Returns the time formatting as "1:10pm" to be displayed as an absolute time for an
+     * arrival/departure
+     *
+     * @param time an arrival or departure time (e.g., from ArrivalInfo)
+     * @return the time formatting as "1:10pm" to be displayed as an absolute time for an
+     * arrival/departure
+     */
+    public static String formatTime(Context context, long time) {
+        return DateUtils.formatDateTime(context,
+                time,
+                DateUtils.FORMAT_SHOW_TIME |
+                        DateUtils.FORMAT_NO_NOON |
+                        DateUtils.FORMAT_NO_MIDNIGHT
+        );
     }
 }

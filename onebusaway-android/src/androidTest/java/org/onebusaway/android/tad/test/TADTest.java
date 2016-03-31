@@ -2,12 +2,14 @@ package org.onebusaway.android.tad.test;
 
 import android.location.Location;
 import android.location.LocationManager;
+import android.util.Log;
 
 import com.google.android.gms.location.LocationServices;
 
 import org.apache.commons.io.IOUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.test.ObaTestCase;
+import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
 
 import java.io.InputStream;
@@ -18,21 +20,44 @@ import java.util.Date;
  */
 public class TADTest extends ObaTestCase {
 
+    static final String TAG = "TADTest";
     static final String TRIP_ID = "";
     static final String STOP_ID = "";
+
+    static final double DEST_LAT = 0;
+    static final double DEST_LNG = 0;
+
+    static final double BEFORE_LAT = 0;
+    static final double BEFORE_LNG = 0;
 
     public void testTrip()
     {
         try {
+            // Construct Destination & Second-To-Last Locations
+            Location dest = new Location(LocationManager.GPS_PROVIDER);
+            dest.setLatitude(DEST_LAT);
+            dest.setLongitude(DEST_LNG);
+
+            Location last = new Location(LocationManager.GPS_PROVIDER);
+            last.setLatitude(BEFORE_LAT);
+            last.setLatitude(BEFORE_LNG);
+
+            Segment segment = new Segment(last, dest, null);
+
+            // Read test CSV.
             InputStream inputStream = getContext().getResources().openRawResource(R.raw.regions_v3);
             String csv = IOUtils.toString(inputStream);
+
+            // Begin navigation & simulation
             TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
+            provider.navigate(null, new Segment[] { segment });
+
             for (Location l : getTrip(csv)) {
                 provider.locationUpdated(l);
             }
             assertEquals(provider.getFinished(), true);
         } catch (Exception e) {
-
+            Log.i(TAG, e.toString());
         }
     }
 

@@ -32,6 +32,7 @@ public class TADTest extends ObaTestCase {
 
     public void testTrip()
     {
+        TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
         try {
             // Construct Destination & Second-To-Last Locations
             Location dest = new Location(LocationManager.GPS_PROVIDER);
@@ -49,7 +50,6 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(inputStream);
 
             // Begin navigation & simulation
-            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
             provider.navigate(null, new Segment[] { segment });
 
             for (Location l : getTrip(csv)) {
@@ -57,7 +57,8 @@ public class TADTest extends ObaTestCase {
             }
             assertEquals(provider.getFinished(), true);
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Log.d(TAG, e.toString());
+            assertEquals(provider.getFinished(), true);
         }
     }
 
@@ -103,6 +104,6 @@ public class TADTest extends ObaTestCase {
             locations[i-1].setAltitude(alt);
         }
 
-        return null;
+        return locations;
     }
 }

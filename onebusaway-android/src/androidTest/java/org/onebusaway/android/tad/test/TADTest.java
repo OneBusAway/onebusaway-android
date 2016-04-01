@@ -9,10 +9,12 @@ import com.google.android.gms.location.LocationServices;
 import org.apache.commons.io.IOUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.test.ObaTestCase;
+import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.Date;
 
 /**
@@ -46,19 +48,20 @@ public class TADTest extends ObaTestCase {
             Segment segment = new Segment(last, dest, null);
 
             // Read test CSV.
-            InputStream inputStream = getContext().getResources().openRawResource(R.raw.regions_v3);
-            String csv = IOUtils.toString(inputStream);
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1.txt"));
+            String csv = IOUtils.toString(reader);
 
             // Begin navigation & simulation
             provider.navigate(null, new Segment[] { segment });
 
             for (Location l : getTrip(csv)) {
+                Log.i(TAG, Double.toString(l.getLatitude()) + ", " + Double.toString(l.getLongitude()));
                 provider.locationUpdated(l);
             }
 
             assertEquals(true, provider.getFinished());
         } catch (Exception e) {
-            Log.d(TAG, e.toString());
+            Log.i(TAG, e.toString());
             assertEquals(true, provider.getFinished());
         }
     }
@@ -67,6 +70,7 @@ public class TADTest extends ObaTestCase {
      * Takes a CSV string and returns an array of Locations built from CSV data.
      * The first line of the csv is assumed to be a header, and the columns as follows
      * time, lat, lng, elevation, accuracy, bearing, speed, provider.
+     * TODO: Add link to GPS Logger git
      * @param csv
      * @return
      */

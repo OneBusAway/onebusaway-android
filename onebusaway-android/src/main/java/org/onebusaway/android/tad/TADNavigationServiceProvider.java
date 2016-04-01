@@ -762,11 +762,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // Create deletion intent to stop repeated voice comands.
-        Intent delIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
-        delIntent.putExtra(TripReceiver.NAV_ID, 1);
-        delIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
-        PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                0, delIntent, 0);
+        Intent receiverIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(Application.get().getApplicationContext())
@@ -803,11 +799,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             }
 
-            Intent cancelIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
-            cancelIntent.putExtra(TripReceiver.NAV_ID, 1);
-            cancelIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
+            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                    0,cancelIntent,0);
+                    0, receiverIntent, 0);
+
             mBuilder.addAction(R.drawable.ic_action_cancel,app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
             NotificationManager mNotificationManager = (NotificationManager)
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -816,6 +812,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
         } else if (status == 2) {   // Get ready to pack
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+1);
+            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, 0);
+
             String message = Application.get().getString(R.string.voice_get_ready);
             for (int i = 0; i < 2; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
@@ -833,6 +834,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mNotificationManager.cancel(NOTIFICATION_ID);
 
         } else if (status == 3) {   // Pull the cord
+            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+2);
+            PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, 0);
+
             String message = Application.get().getString(R.string.voice_pull_cord);
             for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );

@@ -17,6 +17,7 @@ public class TripReceiver extends BroadcastReceiver {
 
     public static final String NAV_ID = ".NAV_ID";
     public static final String ACTION_NUM = ".ACTION_NUM";
+    public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
 
     public static final int DISMISS_NOTIFICATION = 1;
     public static final int CANCEL_TRIP = 2;
@@ -24,7 +25,10 @@ public class TripReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         int navId = intent.getIntExtra(NAV_ID, 0);
-        switch (intent.getIntExtra(ACTION_NUM, 0)) {
+        int actionNum = intent.getIntExtra(ACTION_NUM, 0);
+        int notifyId = intent.getIntExtra(NOTIFICATION_ID, TADNavigationServiceProvider.NOTIFICATION_ID);
+
+        switch (actionNum) {
             case DISMISS_NOTIFICATION:
                 TADNavigationServiceProvider.mTTS.stop();
                 break;

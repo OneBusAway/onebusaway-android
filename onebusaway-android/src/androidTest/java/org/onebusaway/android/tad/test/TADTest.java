@@ -55,10 +55,11 @@ public class TADTest extends ObaTestCase {
             for (Location l : getTrip(csv)) {
                 provider.locationUpdated(l);
             }
-            assertEquals(provider.getFinished(), true);
+
+            assertEquals(true, provider.getFinished());
         } catch (Exception e) {
             Log.d(TAG, e.toString());
-            assertEquals(provider.getFinished(), true);
+            assertEquals(true, provider.getFinished());
         }
     }
 

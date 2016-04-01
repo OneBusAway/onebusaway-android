@@ -65,6 +65,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private boolean resuming = false;   // Is Trip being resumed?
     private boolean finished = false;   // Trip has finished.
+    private boolean getready = false;   // Get Ready triggered.
 
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
     SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
@@ -517,13 +518,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                             waitingForConfirm = true;
                             navProvider.UpdateInterface(3);
                             Log.d(TAG, "Calling destination reached...");
-                            finished = true;
                             return true;
                         }
                         if (t == 1) {
                             long time = System.currentTimeMillis();
                             Log.d(TAG, "Ending trip, going back to services");
-                            finished = true;
                             try {
                                 navProvider.service = null;
                                 navProvider.segments = null;
@@ -695,7 +694,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                     if (proximityEvent(0, 0)) {
                         navProvider.UpdateInterface(3);
                         Log.d(TAG, "-----Get off the bus!");
-                        finished = true;
                         return 1; // Get off bus alert played
 
                     }
@@ -812,6 +810,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
 
         } else if (status == 2) {   // Get ready to pack
+            getready = true;
             receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+1);
             receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
@@ -834,6 +833,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mNotificationManager.cancel(NOTIFICATION_ID);
 
         } else if (status == 3) {   // Pull the cord
+            finished = true;
             receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
             receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+2);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),

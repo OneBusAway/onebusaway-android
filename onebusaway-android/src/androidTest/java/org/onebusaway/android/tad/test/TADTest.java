@@ -48,21 +48,23 @@ public class TADTest extends ObaTestCase {
             Segment segment = new Segment(last, dest, null);
 
             // Read test CSV.
-            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1.txt"));
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
             String csv = IOUtils.toString(reader);
 
             // Begin navigation & simulation
             provider.navigate(null, new Segment[] { segment });
 
             for (Location l : getTrip(csv)) {
-                Log.i(TAG, Double.toString(l.getLatitude()) + ", " + Double.toString(l.getLongitude()));
                 provider.locationUpdated(l);
+                Log.i(TAG, String.format("(%f, %f, %f) R:%s  F:%s",
+                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())
+                ));
             }
 
-            assertEquals(true, provider.getFinished());
+            assertEquals(true, provider.getGetReady() && provider.getFinished());
         } catch (Exception e) {
             Log.i(TAG, e.toString());
-            assertEquals(true, provider.getFinished());
         }
     }
 
@@ -70,7 +72,8 @@ public class TADTest extends ObaTestCase {
      * Takes a CSV string and returns an array of Locations built from CSV data.
      * The first line of the csv is assumed to be a header, and the columns as follows
      * time, lat, lng, elevation, accuracy, bearing, speed, provider.
-     * TODO: Add link to GPS Logger git
+     * Generated using GPS Logger for Android (https://github.com/mendhak/gpslogger)
+     * (Also, available on the play store).
      * @param csv
      * @return
      */

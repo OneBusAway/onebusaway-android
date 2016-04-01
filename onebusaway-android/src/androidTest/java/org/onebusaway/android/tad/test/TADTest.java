@@ -26,11 +26,11 @@ public class TADTest extends ObaTestCase {
     static final String TRIP_ID = "";
     static final String STOP_ID = "";
 
-    static final double DEST_LAT = 28.0669755;
-    static final double DEST_LNG = -82.3903017;
+    static final double DEST_LAT = 28.059462;
+    static final double DEST_LNG = -82.4120362;
 
-    static final double BEFORE_LAT = 28.0672179;
-    static final double BEFORE_LNG = -82.3876694;
+    static final double BEFORE_LAT = 28.06174;
+    static final double BEFORE_LNG = -82.4096792;
 
     public void testTrip()
     {

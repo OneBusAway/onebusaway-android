@@ -23,8 +23,8 @@ import java.util.Date;
 public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
-    static final String TRIP_ID = "";
-    static final String STOP_ID = "";
+    static final String TRIP_ID = "TEST";
+    static final String STOP_ID = "TEST";
 
     static final double DEST_LAT = 28.059462;
     static final double DEST_LNG = -82.4120362;
@@ -56,6 +56,7 @@ public class TADTest extends ObaTestCase {
 
             for (Location l : getTrip(csv)) {
                 provider.locationUpdated(l);
+                //Thread.sleep(250);
                 Log.i(TAG, String.format("(%f, %f, %f)\tR:%s  F:%s",
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())

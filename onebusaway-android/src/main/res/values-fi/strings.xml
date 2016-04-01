@@ -132,42 +132,82 @@
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">Ajallaan</string>
+    <string name="stop_info_arrived_ontime">Saapui ajallaan</string>
+    <string name="stop_info_departed_ontime">Lähti ajallaan</string>
     <plurals name="stop_info_arrive_delayed">
-        <item quantity="one">1 minuutti myöhässä</item>
+        <item quantity="one">Minuutin myöhässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
-            minuuttia myöhässä
+            min myöhässä
         </item>
     </plurals>
     <plurals name="stop_info_arrive_early">
-        <item quantity="one">1 minuutti edellä</item>
+        <item quantity="one">Minuutin etuajassa</item>
         <!-- Below element should remain on same line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
-            minuuttia edellä
+            min etuajassa
         </item>
     </plurals>
     <plurals name="stop_info_depart_delayed">
-        <item quantity="one">Lähti 1 minuutti myöhässä</item>
+        <item quantity="one">Lähti minuutin myöhässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Lähti
             <xliff:g id="count">%d</xliff:g>
-            minuuttia myöhässä
+            min myöhässä
         </item>
     </plurals>
     <plurals name="stop_info_depart_early">
-        <item quantity="one">Lähti 1 minuutti edellä aikataulua</item>
+        <item quantity="one">Lähti minuutin etuajassa</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Lähti
             <xliff:g id="count">%d</xliff:g>
-            minuuttia edellä aikataulua
+            min etuajassa
+        </item>
+    </plurals>
+    <plurals name="stop_info_arrived_delayed">
+        <item quantity="one">Saapui minuutin myöhässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Saapui
+            <xliff:g id="count">%d</xliff:g>
+            min myöhässä
+        </item>
+    </plurals>
+    <plurals name="stop_info_arrived_early">
+        <item quantity="one">Saapui minuutin etuajassa</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Saapui
+            <xliff:g id="count">%d</xliff:g>
+            min etuajassa
+        </item>
+    </plurals>
+    <plurals name="stop_info_status_late_without_arrive_depart">
+        <item quantity="one">Minuutin myöhässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min myöhässä
+        </item>
+    </plurals>
+    <plurals name="stop_info_status_early_without_arrive_depart">
+        <item quantity="one">Minuutin etuajassa</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%d</xliff:g>
+            min etuajassa
         </item>
     </plurals>
     <string name="stop_info_scheduled_arrival">Aikataulun mukainen saapuminen</string>
     <string name="stop_info_scheduled_departure">Aikataulun mukainen lähtö</string>
-    <string name="stop_info_frequency_from">Joka %1$d minuutti %2$s lähtien</string>
-    <string name="stop_info_frequency_until">Joka %1$d minuutti %2$s asti</string>
+    <string name="stop_info_scheduled">Scheduled</string>
+    <string name="stop_info_time_arriving_at">Saapumassa %1s</string>
+    <string name="stop_info_time_departing_at">Lähtemässä %1s</string>
+    <string name="stop_info_time_arrived_at">Saapui %1s</string>
+    <string name="stop_info_time_departed_at">Lähti %1s</string>
+
+    <string name="stop_info_frequency_from">Joka %1$d. min %2$s lähtien</string>
+    <string name="stop_info_frequency_until">Joka %1$d. min %2$s asti</string>
     <string name="stop_info_eta_now">NYT</string>
     <string name="stop_info_eta_unknown">---\u0020\u0020</string>
     <string name="stop_info_option_showonmap">Näytä kartalla</string>
@@ -184,38 +224,38 @@
     <string name="stop_info_option_removestar">Poista suosikeista</string>
     <string name="stop_info_option_reportproblem">Ilmoita ongelmasta</string>
     <string name="stop_info_option_night_light">Yövalo</string>
-    <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d minuuttiin.</string>
+    <string name="stop_info_nodata_minutes">Ei saapuvia kulkuneuvoja seuraavaan %1$d min.</string>
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes">
-        <item quantity="one">Ei saapuvia kulkuneuvoja seuraavaan 1 tuntiin ja %1$d minuuttiin.</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">Ei saapuvia kulkuneuvoja seuraavaan
-            <xliff:g id="count">%2$d</xliff:g>
-             tuntiin ja %1$d minuuttiin.
-        </item>
-    </plurals>
-    <plurals name="stop_info_nodata_hours_minutes_short_format">
-        <item quantity="one">1h %1$d+ min</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
-        </item>
-    </plurals>
-    <string name="stop_info_no_additional_data_minutes">Ei saapuvia vuoroja seuraavaan %1$d
-         minuuttiin.
-    </string>
-    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
-    <plurals name="stop_info_no_additional_data_hours_minutes">
-        <item quantity="one">Ei saapuvia vuoroja seuraavaan 1 tuntiin ja %1$d minuuttiin.</item>
+        <item quantity="one">Ei saapuvia vuoroja seuraavaan tuntiin ja %1$d min.</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Ei saapuvia vuoroja seuraavaan
             <xliff:g id="count">%2$d</xliff:g>
-            tuntiin ja %1$d minuuttiin.
+             tuntiin ja %1$d min.
+        </item>
+    </plurals>
+    <plurals name="stop_info_nodata_hours_minutes_short_format">
+        <item quantity="one">1 t %1$d+ min</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g> t %1$d+ min
+        </item>
+    </plurals>
+    <string name="stop_info_no_additional_data_minutes">Ei saapuvia vuoroja seuraavaan %1$d
+        min.
+    </string>
+    <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
+    <plurals name="stop_info_no_additional_data_hours_minutes">
+        <item quantity="one">Ei saapuvia vuoroja seuraavaan tuntiin ja %1$d min.</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">Ei saapuvia vuoroja seuraavaan
+            <xliff:g id="count">%2$d</xliff:g>
+            tuntiin ja %1$d min.
         </item>
     </plurals>
     <plurals name="stop_info_no_additional_data_hours_minutes_short_format">
-        <item quantity="one">1h %1$d+ min</item>
+        <item quantity="one">1 t %1$d+ min</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
+        <item quantity="other"><xliff:g id="count">%2$d</xliff:g> t %1$d+ min
         </item>
     </plurals>
     <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
@@ -372,7 +412,7 @@
 
     <!-- Region list -->
     <plurals name="distance_miles">
-        <item quantity="one">1 mailin päässä</item>
+        <item quantity="one">Yhden mailin päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
@@ -380,7 +420,7 @@
         </item>
     </plurals>
     <plurals name="distance_feet">
-        <item quantity="one">1 jalan päässä</item>
+        <item quantity="one">Yhden jalan päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
@@ -388,7 +428,7 @@
         </item>
     </plurals>
     <plurals name="distance_kilometers">
-        <item quantity="one">1 kilometrin päässä</item>
+        <item quantity="one">Yhden kilometrin päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
@@ -396,7 +436,7 @@
         </item>
     </plurals>
     <plurals name="distance_meters">
-        <item quantity="one">1 metrin päässä</item>
+        <item quantity="one">Yhden metrin päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
@@ -517,19 +557,19 @@
     <!-- Trip Details -->
     <string name="trip_details_vehicle">Ajoneuvo: %1$s</string>
     <string name="trip_details_scheduled_data">Aikataulu</string>
-    <string name="trip_details_real_time_sec_late">%1$d sek myöhässä (Viim. päivitys: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d sek myöhässä (Viim. päivitys: %3$s)
+    <string name="trip_details_real_time_sec_late">%1$d s myöhässä (Viim. päivitys: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_late">%1$d min %2$d s myöhässä (Viim. päivitys: %3$s)
     </string>
-    <string name="trip_details_real_time_sec_early">%1$d sek etuajassa (Viim. päivitys: %2$s)</string>
-    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d sek etuajassa (Viim. päivitys:
+    <string name="trip_details_real_time_sec_early">%1$d s etuajassa (Viim. päivitys: %2$s)</string>
+    <string name="trip_details_real_time_min_sec_early">%1$d min %2$d s etuajassa (Viim. päivitys:
         %3$s)
     </string>
     <string name="trip_details_current_stop">Nykyinen pysäkki</string>
     <string name="trip_details_current_bus_position">Bussin nykyinen sijainti</string>
 
     <!-- Vehicles on Map -->
-    <string name="vehicle_last_updated_sec">Tiedot päivitetty %1$d sek sitten</string>
-    <string name="vehicle_last_updated_min_and_sec">Tiedot päivitetty %1$d min %2$d sek sitten</string>
+    <string name="vehicle_last_updated_sec">Tiedot päivitetty %1$d s sitten</string>
+    <string name="vehicle_last_updated_min_and_sec">Tiedot päivitetty %1$d min %2$d s sitten</string>
     <string name="vehicle_last_updated_scheduled">Sijainti laskettu aikataulun perusteella</string>
 
     <!-- Night Light -->

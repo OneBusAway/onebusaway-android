@@ -121,6 +121,13 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     }
 
     /**
+     * Returns true if user has been notified to get ready.
+     *
+     * @return
+     */
+    public boolean getGetReady() { return getready; }
+
+    /**
      * Returns true if trip is done.
      *
      * @return

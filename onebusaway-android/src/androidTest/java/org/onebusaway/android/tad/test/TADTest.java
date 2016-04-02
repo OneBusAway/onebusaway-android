@@ -24,13 +24,13 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
     static final String TRIP_ID = "TEST";
-    static final String STOP_ID = "TEST";
+    static final String STOP_ID = "Hillsborough Area Regional Transit_4601";
 
-    static final double DEST_LAT = 28.059462;
-    static final double DEST_LNG = -82.4120362;
+    static final double DEST_LAT = 28.066095;
+    static final double DEST_LNG = -82.401875;
 
-    static final double BEFORE_LAT = 28.06174;
-    static final double BEFORE_LNG = -82.4096792;
+    static final double BEFORE_LAT = 28.063453;
+    static final double BEFORE_LNG = -82.401853;
 
     public void testTrip()
     {
@@ -54,10 +54,13 @@ public class TADTest extends ObaTestCase {
             // Begin navigation & simulation
             provider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
 
+            Location[] locations = getTrip(csv);
+
+            int i = 0;
             for (Location l : getTrip(csv)) {
                 provider.locationUpdated(l);
-                //Thread.sleep(250);
-                Log.i(TAG, String.format("(%f, %f, %f)\tR:%s  F:%s",
+                Thread.sleep(100);
+                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i++,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())
                 ));

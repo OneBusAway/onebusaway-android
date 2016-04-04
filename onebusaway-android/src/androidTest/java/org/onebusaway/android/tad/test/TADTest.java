@@ -52,7 +52,7 @@ public class TADTest extends ObaTestCase {
             String csv = IOUtils.toString(reader);
 
             // Begin navigation & simulation
-            provider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
+            provider.navigate(new Segment[] { segment });
 
             Location[] locations = getTrip(csv);
 

@@ -53,7 +53,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     private int segmentIndex = 0;  //Index that defines the current segment within the ordered context of a service (i.e. First segment in a service will have index = 0, second segment index = 1, etc.)
     private Segment[] segments;  //Array of segments that are currently being navigated
     private float[] distances; //Array of floats calculated from segments traveled, segment limit = 20.
-    private Service service;  //Currently selected transit service that is being navigated
 
     //private GPSDistanceCalc cp = new GPSDistanceCalc();
     private boolean usecritical = false; //Tells the navigation provider to either use critical points or all points
@@ -145,19 +144,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         return distances;
     }
 
-    /**
-     * Returns the ID of the current active service
-     *
-     * @return
-     */
-    public int getServiceID() {
-        if (service != null) {
-            return service.getIdService();
-        } else {
-            return -1;  //If a service isn't currently being navigated, then return -1 as a default value
-
-        }
-    }
 
     /**
      * Returns the ID of the currently navigated segment
@@ -205,12 +191,11 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      * @param service
      * @param segments
      */
-    public void navigate(Service service, Segment[] segments) {
+    public void navigate(Segment[] segments) {
 
         Log.d(TAG, "Starting navigation for service");
         //Create a new istance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
-        this.service = service;
         this.segments = segments;
         segmentIndex = 0;
         diss = 0;
@@ -531,7 +516,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                             long time = System.currentTimeMillis();
                             Log.d(TAG, "Ending trip, going back to services");
                             try {
-                                navProvider.service = null;
                                 navProvider.segments = null;
                                 navProvider.segmentIndex = 0;
                                 Log.d(TAG, "Time setting variables to null: " + (System.currentTimeMillis() - time));

@@ -75,7 +75,7 @@ public class TADService extends Service
         Segment segment = new Segment(last, dest, null);
 
         if (mNavProvider != null) {
-            mNavProvider.navigate(new org.onebusaway.android.tad.Service(), new Segment[] { segment });
+            mNavProvider.navigate(new Segment[] { segment });
         }
         return START_STICKY;
     }

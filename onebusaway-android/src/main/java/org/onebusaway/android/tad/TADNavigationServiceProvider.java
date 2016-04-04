@@ -188,7 +188,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     /**
      * Navigates a transit Service which is composed of these Segments
      *
-     * @param service
      * @param segments
      */
     public void navigate(Segment[] segments) {

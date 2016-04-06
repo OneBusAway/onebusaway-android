@@ -23,33 +23,26 @@ import java.util.Date;
 public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
-    static final String TRIP_ID = "TEST";
-    static final String STOP_ID = "Hillsborough Area Regional Transit_4601";
-
-    static final double DEST_LAT = 28.058490;
-    static final double DEST_LNG = -82.401790;
-
-    static final double BEFORE_LAT = 28.063453;
-    static final double BEFORE_LNG = -82.401853;
 
     public void testTrip()
     {
-        TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
         try {
-            // Construct Destination & Second-To-Last Locations
-            Location dest = new Location(LocationManager.GPS_PROVIDER);
-            dest.setLatitude(DEST_LAT);
-            dest.setLongitude(DEST_LNG);
-
-            Location last = new Location(LocationManager.GPS_PROVIDER);
-            last.setLatitude(BEFORE_LAT);
-            last.setLatitude(BEFORE_LNG);
-
-            Segment segment = new Segment(last, dest, null);
-
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
             String csv = IOUtils.toString(reader);
+
+            String TRIP_ID = getTripId(csv);
+            String STOP_ID = getDestinationId(csv);
+
+            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
+
+            // Construct Destination & Second-To-Last Locations
+            Location dest = getDestinationLocation(csv);
+            Location last = getBeforeDestinationLocation(csv);
+
+            Segment segment = new Segment(last, dest, null);
+
+
 
             // Begin navigation & simulation
             provider.navigate(new Segment[] { segment });
@@ -105,14 +98,7 @@ public class TADTest extends ObaTestCase {
             float speed = Float.parseFloat(values[3]);
             String provider = values[4];
 
-            if (provider.equalsIgnoreCase("gps")) {
-                locations[i-1] = new Location(LocationManager.GPS_PROVIDER);
-            } else if (provider.equalsIgnoreCase("network")) {
-                locations[i-1] = new Location(LocationManager.NETWORK_PROVIDER);
-            } else {
-                locations[i-1] = new Location(LocationManager.PASSIVE_PROVIDER);
-            }
-
+            locations[i-1] = new Location(provider);
             locations[i-1].setLatitude(lat);
             locations[i-1].setLongitude(lng);
             //locations[i-1].setBearing(bearing);
@@ -122,5 +108,39 @@ public class TADTest extends ObaTestCase {
         }
 
         return locations;
+    }
+
+    private String getTripId(String csv)
+    {
+        String[] lines = csv.split("\n");
+        String[] details = lines[0].split(",");
+        return details[0];
+    }
+
+    private String getDestinationId(String csv)
+    {
+        String[] lines = csv.split("\n");
+        String[] details = lines[0].split(",");
+        return details[1];
+    }
+
+    private Location getDestinationLocation(String csv)
+    {
+        String[] lines = csv.split("\n");
+        String[] details = lines[0].split(",");
+        Location loc = new Location(LocationManager.GPS_PROVIDER);
+        loc.setLatitude(Double.parseDouble(details[2]));
+        loc.setLongitude(Double.parseDouble(details[3]));
+        return loc;
+    }
+
+    private Location getBeforeDestinationLocation(String csv)
+    {
+        String[] lines = csv.split("\n");
+        String[] details = lines[0].split(",");
+        Location loc = new Location(LocationManager.GPS_PROVIDER);
+        loc.setLatitude(Double.parseDouble(details[5]));
+        loc.setLongitude(Double.parseDouble(details[6]));
+        return loc;
     }
 }

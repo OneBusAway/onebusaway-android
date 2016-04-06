@@ -26,8 +26,8 @@ public class TADTest extends ObaTestCase {
     static final String TRIP_ID = "TEST";
     static final String STOP_ID = "Hillsborough Area Regional Transit_4601";
 
-    static final double DEST_LAT = 28.066095;
-    static final double DEST_LNG = -82.401875;
+    static final double DEST_LAT = 28.058490;
+    static final double DEST_LNG = -82.401790;
 
     static final double BEFORE_LAT = 28.063453;
     static final double BEFORE_LNG = -82.401853;
@@ -54,7 +54,7 @@ public class TADTest extends ObaTestCase {
             // Begin navigation & simulation
             provider.navigate(new Segment[] { segment });
 
-            Location[] locations = getTrip(csv);
+            //Location[] locations = getTrip(csv);
 
             int i = 0;
             for (Location l : getTrip(csv)) {
@@ -92,13 +92,18 @@ public class TADTest extends ObaTestCase {
         // time,lat,lon,elevation,accuracy,bearing,speed,satellites,provider
         for (int i = 1; i < lines.length; i++) {
             String[] values = lines[i].split(",");
-            double lat = Double.parseDouble(values[1]);
+            /*double lat = Double.parseDouble(values[1]);
             double lng = Double.parseDouble(values[2]);
             double alt = Double.parseDouble(values[3]);
             float acc = Float.parseFloat(values[4]);
             float bearing = Float.parseFloat(values[5]);
             float speed = Float.parseFloat(values[6]);
-            String provider = values[8];
+            String provider = values[8];*/
+
+            double lat = Double.parseDouble(values[1]);
+            double lng = Double.parseDouble(values[2]);
+            float speed = Float.parseFloat(values[3]);
+            String provider = values[4];
 
             if (provider.equalsIgnoreCase("gps")) {
                 locations[i-1] = new Location(LocationManager.GPS_PROVIDER);
@@ -110,10 +115,10 @@ public class TADTest extends ObaTestCase {
 
             locations[i-1].setLatitude(lat);
             locations[i-1].setLongitude(lng);
-            locations[i-1].setBearing(bearing);
+            //locations[i-1].setBearing(bearing);
             locations[i-1].setSpeed(speed);
-            locations[i-1].setAccuracy(acc);
-            locations[i-1].setAltitude(alt);
+            /*locations[i-1].setAccuracy(acc);
+            locations[i-1].setAltitude(alt);*/
         }
 
         return locations;

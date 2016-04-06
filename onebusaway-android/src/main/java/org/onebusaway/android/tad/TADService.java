@@ -18,6 +18,10 @@ import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 
 /**
@@ -38,6 +42,7 @@ public class TADService extends Service
     private String mDestinationStopId;              // Destination Stop ID
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
+    private Boolean mDebugMode = true;              // Debug Mode
 
     private TADNavigationServiceProvider mNavProvider;
 
@@ -45,6 +50,7 @@ public class TADService extends Service
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting Service");
         if (intent != null) {
+
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
             mBeforeStopId = intent.getStringExtra(BEFORE_STOP_ID);
             mTripId = intent.getStringExtra(TRIP_ID);
@@ -53,6 +59,7 @@ public class TADService extends Service
                     1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
             mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
+            setupLog();
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
             if (args != null && args.length == 3) {
@@ -107,6 +114,11 @@ public class TADService extends Service
     public void onLocationChanged(Location location) {
         Log.i(TAG, "Location Updated");
         mLastLocation = location;
+
+        if (mDebugMode) {
+            writeToLog(mLastLocation);
+        }
+
         if (mLastLocation != null) {
             mNavProvider.locationUpdated(mLastLocation);
         }
@@ -114,6 +126,42 @@ public class TADService extends Service
         // Trip is done? End service.
         if (mNavProvider.getFinished()) {
             this.stopSelf();
+        }
+    }
+
+    private void setupLog()
+    {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+                    getApplicationContext().openFileOutput(mTripId + "_" + mDestinationStopId +  ".txt", Context.MODE_PRIVATE)
+            );
+
+            Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
+            Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
+            String hdr = String.format("%s,%s,%f,%f,%s,%f,%f", mTripId, mDestinationStopId, dest.getLatitude(),
+                    dest.getLongitude(), last.getLatitude(), last.getLongitude());
+            outputStreamWriter.write(hdr);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
+    private void writeToLog(Location l) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+                    getApplicationContext().openFileOutput(mTripId + "_" + mDestinationStopId +  ".txt", Context.MODE_PRIVATE)
+            );
+            String log = mLastLocation.getTime() + "," + mLastLocation.getLatitude() + "," +
+                    mLastLocation.getLongitude() + "," + mLastLocation.getSpeed() + ","
+                    + mLastLocation.getProvider();
+
+            outputStreamWriter.append(log);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
         }
     }
 }

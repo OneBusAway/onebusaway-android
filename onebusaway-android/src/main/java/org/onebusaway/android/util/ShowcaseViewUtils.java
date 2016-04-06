@@ -339,9 +339,13 @@ public class ShowcaseViewUtils {
     }
 
     /**
-     * Resets all tutorials so they are shown to the user again
+     * Resets all tutorials so they are shown to the user again.  If any ShowcaseView is showing,
+     * it will be hidden.
      */
     public static void resetAllTutorials() {
+        if (mShowcaseView != null) {
+            mShowcaseView.hide();
+        }
         PreferenceUtils.saveBoolean(TUTORIAL_WELCOME, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_STAR_STOP, false);
@@ -355,5 +359,8 @@ public class ShowcaseViewUtils {
         PreferenceUtils.saveBoolean(TUTORIAL_VEHICLE_INFO_WINDOW, false);
         PreferenceUtils.saveBoolean(TUTORIAL_STARRED_STOPS_SORT, false);
         PreferenceUtils.saveBoolean(TUTORIAL_STARRED_STOPS_SHORTCUT, false);
+        PreferenceUtils.saveBoolean(TUTORIAL_SHOW_ARRIVAL_IN_HEADER, false);
+        PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_ROUTE_FILTER, false);
+        PreferenceUtils.saveBoolean(TUTORIAL_NIGHT_LIGHT, false);
     }
 }

@@ -52,7 +52,7 @@ public class TADTest extends ObaTestCase {
             int i = 0;
             for (Location l : getTrip(csv)) {
                 provider.locationUpdated(l);
-                Thread.sleep(100);
+                Thread.sleep(1000);
                 Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i++,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())

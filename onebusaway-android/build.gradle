@@ -111,6 +111,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "TAD_GPS_LOGGING", "false"
         }
 
         /**
@@ -149,6 +150,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "TAD_GPS_LOGGING", "true"
         }
 
         agencyY {
@@ -180,6 +182,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "\"http://test.seeclickfix.com/open311/v2/\""
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "TAD_GPS_LOGGING", "false"
         }
 
         /**

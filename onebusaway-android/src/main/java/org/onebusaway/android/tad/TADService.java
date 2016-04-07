@@ -13,6 +13,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
@@ -44,7 +45,6 @@ public class TADService extends Service
     private String mDestinationStopId;              // Destination Stop ID
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
-    private Boolean mDebugMode = true;              // Debug Mode
 
     private TADNavigationServiceProvider mNavProvider;
 
@@ -117,7 +117,7 @@ public class TADService extends Service
         Log.i(TAG, "Location Updated");
         mLastLocation = location;
 
-        if (mDebugMode) {
+        if (BuildConfig.TAD_GPS_LOGGING) {
             writeToLog(mLastLocation);
         }
 

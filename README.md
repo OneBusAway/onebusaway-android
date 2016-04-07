@@ -103,14 +103,24 @@ There are two ways to deploy OneBusAway Android in your city:
 
 ### When running the project, I get a NullPointerException in `BaseMapFragment`, related to `mMap`
 
-You're most likely trying to run the `amazon` build variant on an Google Android device, or the `google` build flavor on an Amazon device.
+You're most likely trying to run the `obaAmazon` build variant on an Google Android device, or the `obaGoogle` build flavor on an Amazon device.
 
 Please be sure to select the correct build flavor for your device/emulator when running the project:
 
-* In Android Studio, you'll see a "Build Variant" button on the very left side of the screen, collapsed in the dock.  Click on this, and select either `googleDebug` for Google devices, or `amazonDebug` for Amazon devices.
-* From the command line, run `gradlew installGoogleDebug` for Google devices, or `gradlew installAmazonDebug` for Amazon devices.
+* In Android Studio, you'll see a "Build Variant" button on the very left side of the screen, collapsed in the dock.  Click on this, and select either `obaGoogleDebug` for Google devices, or `obaAmazonDebug` for Amazon devices:
+* From the command line, run `gradlew installObaGoogleDebug` for Google devices, or `gradlew installObaAmazonDebug` for Amazon devices.
+
+![OneBusAway Alexa User Interface flow](https://02977090730444177945.googlegroups.com/attach/16c2dec220d69a/OBAAndroidGradleBuildFlavors.png?part=0.1&view=1&vt=ANaJVrEAdC5btUPS80q3eA4EO9z9asAZW7oRvJZMs5K8bZg0CCgIR8OwqvBR_21S58M2rbK7UVMbUc6QplQKuUyr5OwxLTu10NcK6R5XH3aKjktiU0cBONY)
 
 See the documentation at the top of the readme for more information on building via Android Studio or the command line.
+
+### When running the project I get prompted to install Amazon Maps.  I already have Google Maps installed.  What's going on?
+
+This is likely due to running the `obaAmazon` build variant on an Google Android device.  See the [top troubleshooting question](https://github.com/OneBusAway/onebusaway-android#when-running-the-project-i-get-a-nullpointerexception-in-basemapfragment-related-to-mmap), and make sure you select the `obaGoogleDebug` build variant.
+
+### When running the project I get prompted to install Google Play Services.  I have an Amazon Fire Phone that doesn't have Google Play Services.  What's going on?
+
+This is likely due to running the `obaGoogle` build variant on an Amazon Fire Phone.  See the [top troubleshooting question](https://github.com/OneBusAway/onebusaway-android#when-running-the-project-i-get-a-nullpointerexception-in-basemapfragment-related-to-mmap), and make sure you select the `obaAmazonDebug` build variant.
 
 ### When importing to Android Studio, I get an error "You are using an old, unsupported version of Gradle..."
 

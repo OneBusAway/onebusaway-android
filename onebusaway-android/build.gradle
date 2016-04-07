@@ -294,7 +294,7 @@ dependencies {
     // For sorting alphanumeric route names
     compile 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library
-    compile 'com.github.amlcurran.showcaseview:library:5.4.0'
+    compile 'com.github.amlcurran.showcaseview:library:5.4.3'
     // Google Play Services Maps (only for Google flavor)
     googleCompile 'com.google.android.gms:play-services-maps:8.3.0'
     // Amazon Maps (only for Amazon flavor)

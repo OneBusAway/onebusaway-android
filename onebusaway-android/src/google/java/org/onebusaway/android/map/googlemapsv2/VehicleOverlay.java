@@ -149,7 +149,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             mMarkerData = null;
         }
         if (mCustomInfoWindowAdapter != null) {
-            mCustomInfoWindowAdapter.clear();
+            mCustomInfoWindowAdapter.cancelUpdates();
         }
     }
 
@@ -282,8 +282,11 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
     @Override
     public void onInfoWindowClick(Marker marker) {
+        // Stop any callbacks to refresh the vehicle marker popup balloons
+        mCustomInfoWindowAdapter.cancelUpdates();
+
+        // Show trip details screen for the vehicle associated with this marker
         ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
-        // Show trip details screen for this vehicle
         TripDetailsActivity.start(mActivity, status.getActiveTripId());
     }
 
@@ -701,7 +704,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
         /**
          * Cancels any pending updates of the marker balloon contents
          */
-        public void clear() {
+        public void cancelUpdates() {
             if (mMarkerRefreshHandler != null) {
                 mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
             }

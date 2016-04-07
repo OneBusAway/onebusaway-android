@@ -22,6 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ImageSpan;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
@@ -154,6 +155,10 @@ public class ShowcaseViewUtils {
 
                     @Override
                     public void onShowcaseViewShow(ShowcaseView showcaseView) {
+                    }
+
+                    @Override
+                    public void onShowcaseViewTouchBlocked(MotionEvent motionEvent) {
                     }
                 };
                 break;

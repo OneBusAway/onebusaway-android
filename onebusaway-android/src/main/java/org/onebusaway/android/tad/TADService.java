@@ -40,7 +40,7 @@ public class TADService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting Service");
-        if (mLogFile == null) {
+        if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
             mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
                     mTripId + "_" + mDestinationStopId + ".txt");
         }

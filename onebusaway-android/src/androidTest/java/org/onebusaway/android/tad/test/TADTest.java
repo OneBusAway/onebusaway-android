@@ -19,33 +19,31 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
+    static final int SPEED_UP = 1;
     public void testTrip() {
         try {
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
             String csv = IOUtils.toString(reader);
 
-            String TRIP_ID = getTripId(csv);
-            String STOP_ID = getDestinationId(csv);
+            TADTrip trip = new TADTrip(csv);
+            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(trip.getTripId(), trip.getDestinationId());
 
-            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(TRIP_ID, STOP_ID);
-
-            // Construct Destination & Second-To-Last Locations
-            Location dest = getDestinationLocation(csv);
-            Location last = getBeforeDestinationLocation(csv);
-
-            Segment segment = new Segment(last, dest, null);
+            // Construct Destination & Second-To-Last Location
+            Segment segment = new Segment(trip.getBeforeLocation(), trip.getDestinationLocation(), null);
 
 
             // Begin navigation & simulation
             provider.navigate(new Segment[]{segment});
 
-            //Location[] locations = getTrip(csv);
 
-            int i = 0;
-            for (Location l : getTrip(csv)) {
+            Location[] points = trip.getPoints();
+            long[] pauses = trip.getTimes();
+
+            for (int i = 0; i < points.length; i++) {
+                Location l = points[i];
+                Thread.sleep(pauses[i] / SPEED_UP);
                 provider.locationUpdated(l);
-                Thread.sleep(500);
                 Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i++,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())
@@ -54,82 +52,75 @@ public class TADTest extends ObaTestCase {
 
             assertEquals(true, provider.getGetReady() && provider.getFinished());
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Log.e(TAG, e.toString());
         }
     }
 
-    /**
-     * Takes a CSV string and returns an array of Locations built from CSV data.
-     * The first line of the csv is assumed to be a header, and the columns as follows
-     * time, lat, lng, elevation, accuracy, bearing, speed, provider.
-     * Generated using GPS Logger for Android (https://github.com/mendhak/gpslogger)
-     * (Also, available on the play store).
-     *
-     * @param csv
-     * @return
-     */
-    private Location[] getTrip(String csv) {
-        String[] lines = csv.split("\n");
+    class TADTrip
+    {
+        String mTripId;
+        String mDestinationId;
+        String mBeforeId;
 
-        Location[] locations = new Location[lines.length - 1];
+        Location mDestinationLocation;
+        Location mBeforeLocation;
 
-        // Skip header and run through csv.
-        // Rows are formatted like this:
-        // time,lat,lon,elevation,accuracy,bearing,speed,satellites,provider
-        for (int i = 1; i < lines.length; i++) {
-            String[] values = lines[i].split(",");
-            /*double lat = Double.parseDouble(values[1]);
-            double lng = Double.parseDouble(values[2]);
-            double alt = Double.parseDouble(values[3]);
-            float acc = Float.parseFloat(values[4]);
-            float bearing = Float.parseFloat(values[5]);
-            float speed = Float.parseFloat(values[6]);
-            String provider = values[8];*/
+        Location[] mPoints;
+        long[] mTimes;
 
-            double lat = Double.parseDouble(values[1]);
-            double lng = Double.parseDouble(values[2]);
-            float speed = Float.parseFloat(values[3]);
-            String provider = values[4];
+        TADTrip(String csv)
+        {
+            String[] lines = csv.split("\n");
 
-            locations[i - 1] = new Location(provider);
-            locations[i - 1].setLatitude(lat);
-            locations[i - 1].setLongitude(lng);
-            //locations[i-1].setBearing(bearing);
-            locations[i - 1].setSpeed(speed);
-            /*locations[i-1].setAccuracy(acc);
-            locations[i-1].setAltitude(alt);*/
+            // Setup meta data.
+            String[] details = lines[0].split(",");
+            mTripId = details[0];
+            mDestinationId = details[1];
+            mBeforeId = details[4];
+
+            mDestinationLocation = new Location(LocationManager.GPS_PROVIDER);
+            mDestinationLocation.setLatitude(Double.parseDouble(details[2]));
+            mDestinationLocation.setLongitude(Double.parseDouble(details[3]));
+
+            mBeforeLocation = new Location(LocationManager.GPS_PROVIDER);
+            mBeforeLocation.setLatitude(Double.parseDouble(details[5]));
+            mBeforeLocation.setLongitude(Double.parseDouble(details[6]));
+
+
+
+            mPoints = new Location[lines.length - 1];
+            // Skip header and run through csv.
+            // Rows are formatted like this:
+            // time,lat,lng,speed,bearing,provider.
+            for (int i = 1; i < lines.length; i++) {
+                String[] values = lines[i].split(",");
+                double lat = Double.parseDouble(values[1]);
+                double lng = Double.parseDouble(values[2]);
+                float speed = Float.parseFloat(values[3]);
+                float bearing = Float.parseFloat(values[4]);
+                String provider = values[5];
+                mPoints[i - 1] = new Location(provider);
+                mPoints[i - 1].setLatitude(lat);
+                mPoints[i - 1].setLongitude(lng);
+                mPoints[i - 1].setBearing(bearing);
+                mPoints[i - 1].setSpeed(speed);
+            }
+
+            // Compute time differences between readings
+            // in ms.
+            mTimes = new long[mPoints.length];
+            for (int i = 1; i < mPoints.length; i++) {
+                mTimes[i] = mPoints[i].getTime() - mPoints[i-1].getTime();
+            }
         }
 
-        return locations;
-    }
+        public String getTripId() { return mTripId; }
+        public String getDestinationId() { return mDestinationId; }
+        public String getBeforeId() { return mBeforeId; }
+        public Location getDestinationLocation() { return mDestinationLocation; }
+        public Location getBeforeLocation() { return mBeforeLocation; }
+        public Location[] getPoints() { return mPoints; }
+        public long[] getTimes() { return mTimes; }
 
-    private String getTripId(String csv) {
-        String[] lines = csv.split("\n");
-        String[] details = lines[0].split(",");
-        return details[0];
-    }
-
-    private String getDestinationId(String csv) {
-        String[] lines = csv.split("\n");
-        String[] details = lines[0].split(",");
-        return details[1];
-    }
-
-    private Location getDestinationLocation(String csv) {
-        String[] lines = csv.split("\n");
-        String[] details = lines[0].split(",");
-        Location loc = new Location(LocationManager.GPS_PROVIDER);
-        loc.setLatitude(Double.parseDouble(details[2]));
-        loc.setLongitude(Double.parseDouble(details[3]));
-        return loc;
-    }
-
-    private Location getBeforeDestinationLocation(String csv) {
-        String[] lines = csv.split("\n");
-        String[] details = lines[0].split(",");
-        Location loc = new Location(LocationManager.GPS_PROVIDER);
-        loc.setLatitude(Double.parseDouble(details[5]));
-        loc.setLongitude(Double.parseDouble(details[6]));
-        return loc;
     }
 }

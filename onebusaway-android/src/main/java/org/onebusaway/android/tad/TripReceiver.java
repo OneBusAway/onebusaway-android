@@ -4,8 +4,6 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.speech.tts.TextToSpeech;
-import android.util.Log;
 
 import org.onebusaway.android.app.Application;
 
@@ -40,8 +38,7 @@ public class TripReceiver extends BroadcastReceiver {
 
     }
 
-    private void cancelTrip(int navId)
-    {
+    private void cancelTrip(int navId) {
         Context appCxt = Application.get().getApplicationContext();
         appCxt.stopService(new Intent(appCxt, TADService.class));
         NotificationManager manager = (NotificationManager)

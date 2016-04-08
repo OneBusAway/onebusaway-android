@@ -8,7 +8,6 @@ import android.location.Location;
 import android.location.LocationManager;
 
 import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.util.LocationHelper;
 
 /**
  *
@@ -17,7 +16,7 @@ public class Segment {
 
     private int idSegment;
 
-    public void setIdSegment(int idSegment)  {
+    public void setIdSegment(int idSegment) {
         this.idSegment = idSegment;
     }
 
@@ -27,7 +26,7 @@ public class Segment {
 
     private int agencyFeedIDTAD;
 
-    public void setAgencyFeedIDTAD(int agencyFeedIDTAD)  {
+    public void setAgencyFeedIDTAD(int agencyFeedIDTAD) {
         this.agencyFeedIDTAD = agencyFeedIDTAD;
     }
 
@@ -37,7 +36,7 @@ public class Segment {
 
     private String route_IDGTFS;
 
-    public void setRoute_IDGTFS(String route_IDGTFS)  {
+    public void setRoute_IDGTFS(String route_IDGTFS) {
         this.route_IDGTFS = route_IDGTFS;
     }
 
@@ -47,7 +46,7 @@ public class Segment {
 
     private String trip_headsignGTFS;
 
-    public void setTrip_headsignGTFS(String trip_headsignGTFS)  {
+    public void setTrip_headsignGTFS(String trip_headsignGTFS) {
         this.trip_headsignGTFS = trip_headsignGTFS;
     }
 
@@ -57,7 +56,7 @@ public class Segment {
 
     private int direction_IDGTFS;
 
-    public void setDirection_IDGTFS(int direction_IDGTFS)  {
+    public void setDirection_IDGTFS(int direction_IDGTFS) {
         this.direction_IDGTFS = direction_IDGTFS;
     }
 
@@ -67,7 +66,7 @@ public class Segment {
 
     private int idStopFrom;
 
-    public void setIdStopFrom(int idStopFrom)  {
+    public void setIdStopFrom(int idStopFrom) {
         this.idStopFrom = idStopFrom;
     }
 
@@ -77,7 +76,7 @@ public class Segment {
 
     private String idStopFromTransitAgencyGTFS;
 
-    public void setIdStopFromTransitAgencyGTFS(String idStopFromTransitAgencyGTFS)  {
+    public void setIdStopFromTransitAgencyGTFS(String idStopFromTransitAgencyGTFS) {
         this.idStopFromTransitAgencyGTFS = idStopFromTransitAgencyGTFS;
     }
 
@@ -87,12 +86,18 @@ public class Segment {
 
 
     private Location fromLocation;
-    public Location getFromLocation() { return fromLocation; }
-    public void setFromLocation(Location l) {fromLocation = l; }
+
+    public Location getFromLocation() {
+        return fromLocation;
+    }
+
+    public void setFromLocation(Location l) {
+        fromLocation = l;
+    }
 
     private int idStopTo;
 
-    public void setIdStopTo(int idStopTo)  {
+    public void setIdStopTo(int idStopTo) {
         this.idStopTo = idStopTo;
     }
 
@@ -102,7 +107,7 @@ public class Segment {
 
     private String idStopToTransitAgencyGTFS;
 
-    public void setIdStopToTransitAgencyGTFS(String idStopToTransitAgencyGTFS)  {
+    public void setIdStopToTransitAgencyGTFS(String idStopToTransitAgencyGTFS) {
         this.idStopToTransitAgencyGTFS = idStopToTransitAgencyGTFS;
     }
 
@@ -111,16 +116,28 @@ public class Segment {
     }
 
     private Location toLocation;
-    public Location getToLocation() { return toLocation; }
-    public void setToLocation(Location l) {toLocation = l; }
+
+    public Location getToLocation() {
+        return toLocation;
+    }
+
+    public void setToLocation(Location l) {
+        toLocation = l;
+    }
 
     private Location beforeLocation;
-    public Location getBeforeLocation() { return beforeLocation; }
-    public void setBeforeLocation(Location l) { beforeLocation = l; }
+
+    public Location getBeforeLocation() {
+        return beforeLocation;
+    }
+
+    public void setBeforeLocation(Location l) {
+        beforeLocation = l;
+    }
 
     private float AlertDistance;
 
-    public void setAlertDistance(float AlertDistance)  {
+    public void setAlertDistance(float AlertDistance) {
         this.AlertDistance = AlertDistance;
     }
 
@@ -129,16 +146,22 @@ public class Segment {
     }
 
     private String tripId;
-    public void setTripId(String trip) { tripId = trip; }
-    public String getTripId() { return tripId; }
+
+    public void setTripId(String trip) {
+        tripId = trip;
+    }
+
+    public String getTripId() {
+        return tripId;
+    }
 
     /**
-        Construct a segment from two stops. From Location remains null.
-        @param destination Destination Stop.
-        @param before Second-to-last stop.
+     * Construct a segment from two stops. From Location remains null.
+     *
+     * @param destination Destination Stop.
+     * @param before      Second-to-last stop.
      */
-    public Segment(ObaStop destination, ObaStop before)
-    {
+    public Segment(ObaStop destination, ObaStop before) {
         toLocation = new Location(LocationManager.GPS_PROVIDER);
         toLocation.setLatitude(destination.getLatitude());
         toLocation.setLongitude(destination.getLongitude());
@@ -149,12 +172,12 @@ public class Segment {
 
     /**
      * Construct a segment from locations.
+     *
      * @param beforeLoc Second to last location.
-     * @param toLoc Destination location.
-     * @param fromLoc User's from location.
+     * @param toLoc     Destination location.
+     * @param fromLoc   User's from location.
      */
-    public Segment(Location beforeLoc, Location toLoc, Location fromLoc)
-    {
+    public Segment(Location beforeLoc, Location toLoc, Location fromLoc) {
         fromLocation = fromLoc;
         toLocation = toLoc;
         beforeLocation = beforeLoc;

@@ -8,7 +8,6 @@
  */
 package org.onebusaway.android.tad;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -22,9 +21,7 @@ import android.util.Log;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaSituationElement;
 import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
@@ -39,8 +36,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     public static final String TAG = "TADNavServiceProvider";
     public static final int NOTIFICATION_ID = 33620;
-    private static final long[] VIBRATION_PATTERN = new long[] {
-      2000,1000,2000,1000,2000,1000,2000,1000,2000,1000
+    private static final long[] VIBRATION_PATTERN = new long[]{
+            2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
 
     public TADProximityCalculator mProxListener;
@@ -124,7 +121,9 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      *
      * @return
      */
-    public boolean getGetReady() { return getready; }
+    public boolean getGetReady() {
+        return getready;
+    }
 
     /**
      * Returns true if trip is done.
@@ -747,7 +746,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
         bldr = bldr.setDestinationId(mStopId);
         Intent intent = bldr.getIntent();
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(),1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pIntent = PendingIntent.getActivity(app.getApplicationContext(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // Create deletion intent to stop repeated voice comands.
         Intent receiverIntent = new Intent(app.getApplicationContext(), TripReceiver.class);
@@ -792,7 +791,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
-            mBuilder.addAction(R.drawable.ic_action_cancel,app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
+            mBuilder.addAction(R.drawable.ic_action_cancel, app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
             NotificationManager mNotificationManager = (NotificationManager)
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -801,14 +800,14 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
         } else if (status == 2) {   // Get ready to pack
             getready = true;
-            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+1);
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 1);
             receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
             String message = Application.get().getString(R.string.voice_get_ready);
             for (int i = 0; i < 2; i++) {
-                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
+                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
             }
 
             mBuilder.setContentText(message);
@@ -819,19 +818,19 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.notify(NOTIFICATION_ID+1, mBuilder.build());
+            mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
             mNotificationManager.cancel(NOTIFICATION_ID);
 
         } else if (status == 3) {   // Pull the cord
             finished = true;
             receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.DISMISS_NOTIFICATION);
-            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID+2);
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID + 2);
             PendingIntent pDelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
                     0, receiverIntent, 0);
 
             String message = Application.get().getString(R.string.voice_pull_cord);
             for (int i = 0; i < 10; i++) {
-                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD );
+                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
             }
 
             mBuilder.setContentText(message);
@@ -841,15 +840,16 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.notify(NOTIFICATION_ID+2, mBuilder.build());
+            mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
         }
     }
 
     /**
      * Speak specified message out loud using TTS
-    * @param message Message to be spoken.
+     *
+     * @param message   Message to be spoken.
      * @param queueFlag Flag to use when adding message to queue.
-    */
+     */
     private void Speak(String message, int queueFlag) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mTTS.speak(message, queueFlag, null, "TRIPMESSAGE");

@@ -1,38 +1,26 @@
 package org.onebusaway.android.tad;
 
-import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Environment;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.LocationHelper;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.RegionUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.DecimalFormat;
 
 /**
  * Created by azizmb on 2/18/16.
  */
 public class TADService extends Service
-    implements LocationHelper.Listener
-{
+        implements LocationHelper.Listener {
     public static final String TAG = "TADService";
 
     public static final String DESTINATION_ID = ".DestinationId";
@@ -84,7 +72,7 @@ public class TADService extends Service
         Segment segment = new Segment(last, dest, null);
 
         if (mNavProvider != null) {
-            mNavProvider.navigate(new Segment[] { segment });
+            mNavProvider.navigate(new Segment[]{segment});
         }
         return START_STICKY;
     }
@@ -131,18 +119,16 @@ public class TADService extends Service
         }
     }
 
-    private void setupLog()
-    {
+    private void setupLog() {
         try {
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
             String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId, dest.getLatitude(),
                     dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
             File f = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId +  ".txt");
+                    mTripId + "_" + mDestinationStopId + ".txt");
             FileUtils.write(f, hdr, false);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
     }
@@ -154,10 +140,9 @@ public class TADService extends Service
                     + l.getProvider() + "\n";
 
             File f = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId +  ".txt");
+                    mTripId + "_" + mDestinationStopId + ".txt");
             FileUtils.write(f, log, true);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
     }

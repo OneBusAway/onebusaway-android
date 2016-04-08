@@ -4,18 +4,13 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
 
-import com.google.android.gms.location.LocationServices;
-
 import org.apache.commons.io.IOUtils;
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
 
-import java.io.InputStream;
 import java.io.Reader;
-import java.util.Date;
 
 /**
  * Created by azizmb on 3/18/16.
@@ -24,8 +19,7 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    public void testTrip()
-    {
+    public void testTrip() {
         try {
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
@@ -43,9 +37,8 @@ public class TADTest extends ObaTestCase {
             Segment segment = new Segment(last, dest, null);
 
 
-
             // Begin navigation & simulation
-            provider.navigate(new Segment[] { segment });
+            provider.navigate(new Segment[]{segment});
 
             //Location[] locations = getTrip(csv);
 
@@ -71,14 +64,14 @@ public class TADTest extends ObaTestCase {
      * time, lat, lng, elevation, accuracy, bearing, speed, provider.
      * Generated using GPS Logger for Android (https://github.com/mendhak/gpslogger)
      * (Also, available on the play store).
+     *
      * @param csv
      * @return
      */
-    private Location[] getTrip(String csv)
-    {
+    private Location[] getTrip(String csv) {
         String[] lines = csv.split("\n");
 
-        Location[] locations = new Location[lines.length-1];
+        Location[] locations = new Location[lines.length - 1];
 
         // Skip header and run through csv.
         // Rows are formatted like this:
@@ -98,11 +91,11 @@ public class TADTest extends ObaTestCase {
             float speed = Float.parseFloat(values[3]);
             String provider = values[4];
 
-            locations[i-1] = new Location(provider);
-            locations[i-1].setLatitude(lat);
-            locations[i-1].setLongitude(lng);
+            locations[i - 1] = new Location(provider);
+            locations[i - 1].setLatitude(lat);
+            locations[i - 1].setLongitude(lng);
             //locations[i-1].setBearing(bearing);
-            locations[i-1].setSpeed(speed);
+            locations[i - 1].setSpeed(speed);
             /*locations[i-1].setAccuracy(acc);
             locations[i-1].setAltitude(alt);*/
         }
@@ -110,22 +103,19 @@ public class TADTest extends ObaTestCase {
         return locations;
     }
 
-    private String getTripId(String csv)
-    {
+    private String getTripId(String csv) {
         String[] lines = csv.split("\n");
         String[] details = lines[0].split(",");
         return details[0];
     }
 
-    private String getDestinationId(String csv)
-    {
+    private String getDestinationId(String csv) {
         String[] lines = csv.split("\n");
         String[] details = lines[0].split(",");
         return details[1];
     }
 
-    private Location getDestinationLocation(String csv)
-    {
+    private Location getDestinationLocation(String csv) {
         String[] lines = csv.split("\n");
         String[] details = lines[0].split(",");
         Location loc = new Location(LocationManager.GPS_PROVIDER);
@@ -134,8 +124,7 @@ public class TADTest extends ObaTestCase {
         return loc;
     }
 
-    private Location getBeforeDestinationLocation(String csv)
-    {
+    private Location getBeforeDestinationLocation(String csv) {
         String[] lines = csv.split("\n");
         String[] details = lines[0].split(",");
         Location loc = new Location(LocationManager.GPS_PROVIDER);

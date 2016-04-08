@@ -49,7 +49,9 @@ public class TADService extends Service
                     1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
             mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
-            setupLog();
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                setupLog();
+            }
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
             if (args != null && args.length == 3) {

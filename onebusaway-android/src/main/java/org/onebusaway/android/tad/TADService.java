@@ -35,10 +35,15 @@ public class TADService extends Service
     private String mTripId;                         // Trip ID
 
     private TADNavigationServiceProvider mNavProvider;
+    private File mLogFile;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting Service");
+        if (mLogFile == null) {
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
+                    mTripId + "_" + mDestinationStopId + ".txt");
+        }
         if (intent != null) {
 
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
@@ -127,11 +132,14 @@ public class TADService extends Service
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
             String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId, dest.getLatitude(),
                     dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
-            File f = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId + ".txt");
-            FileUtils.write(f, hdr, false);
+            if (mLogFile != null && mLogFile.canWrite()) {
+                FileUtils.write(mLogFile, hdr, false);
+            } else {
+                Log.e(TAG, "Failed to write to file");
+            }
+
         } catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+            Log.e(TAG, "File write failed: " + e.toString());
         }
     }
 
@@ -139,13 +147,17 @@ public class TADService extends Service
         try {
             String log = l.getTime() + "," + l.getLatitude() + "," +
                     l.getLongitude() + "," + l.getSpeed() + ","
+                    + l.getBearing() + ","
                     + l.getProvider() + "\n";
 
-            File f = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId + ".txt");
-            FileUtils.write(f, log, true);
+            if (mLogFile != null && mLogFile.canWrite()) {
+                FileUtils.write(mLogFile, log, true);
+            } else {
+                Log.e(TAG, "Failed to write to file");
+            }
+
         } catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+            Log.e(TAG, "File write failed: " + e.toString());
         }
     }
 }

@@ -56,6 +56,7 @@ public class TADTest extends ObaTestCase {
         }
     }
 
+    // Class for holding relevant details for testing.
     class TADTrip
     {
         String mTripId;
@@ -68,6 +69,16 @@ public class TADTest extends ObaTestCase {
         Location[] mPoints;
         long[] mTimes;
 
+        int getReadyIndex = -1;                    //  Index which getReady should be triggered.
+        int finishedIndex = -1;                    //  Index which finished should be triggered.
+
+        /**
+         * Constructor
+         * @param csv takes a csv string with the first row containing meta-data in the format
+         * of tripId,DestinationId,dest-lat,dest-lng,beforeDestinationId,before-lat,before-lng
+         * and all following rows holding data to construct location points in the format of
+         * time,lat,lng,speed,bearing,provider.
+         */
         TADTrip(String csv)
         {
             String[] lines = csv.split("\n");
@@ -121,6 +132,8 @@ public class TADTest extends ObaTestCase {
         public Location getBeforeLocation() { return mBeforeLocation; }
         public Location[] getPoints() { return mPoints; }
         public long[] getTimes() { return mTimes; }
+        public int getGetReadyIndex() { return getReadyIndex; }
+        public int getFinishedIndex() { return getFinishedIndex(); }
 
     }
 }

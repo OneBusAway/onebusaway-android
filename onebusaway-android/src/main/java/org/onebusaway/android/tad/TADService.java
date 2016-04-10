@@ -35,7 +35,7 @@ public class TADService extends Service
     private String mTripId;                         // Trip ID
 
     private TADNavigationServiceProvider mNavProvider;
-    private File mLogFile;
+    private File mLogFile = null;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -132,7 +132,7 @@ public class TADService extends Service
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
             String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId, dest.getLatitude(),
                     dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
-            if (mLogFile != null && mLogFile.canWrite()) {
+            if (mLogFile != null) {
                 FileUtils.write(mLogFile, hdr, false);
             } else {
                 Log.e(TAG, "Failed to write to file");

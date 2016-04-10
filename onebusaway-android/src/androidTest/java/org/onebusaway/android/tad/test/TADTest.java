@@ -19,7 +19,7 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    static final int SPEED_UP = 1;
+    static final int SPEED_UP = 2;
     public void testTrip() {
         try {
             // Read test CSV.
@@ -76,7 +76,7 @@ public class TADTest extends ObaTestCase {
          * Constructor
          * @param csv takes a csv string with the first row containing meta-data in the format
          * of tripId,DestinationId,dest-lat,dest-lng,beforeDestinationId,before-lat,before-lng
-         * and all following rows holding data to construct location points in the format of
+         * and all following rows holding data to construct location points of a trip in the format
          * time,lat,lng,speed,bearing,provider.
          */
         TADTrip(String csv)

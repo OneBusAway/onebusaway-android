@@ -40,6 +40,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
 
+
+
     public TADProximityCalculator mProxListener;
 
     private int timeout = 60;  //Timeout value for service provider action (default = 60 seconds);
@@ -404,8 +406,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      * @author Sean J. Barbeau, modified by Belov
      */
     public class TADProximityCalculator {
-        //TADMIDlet_Converted midlet;  //Holds references to the main MIDlet that is executing
         TADNavigationServiceProvider navProvider;  //Holds reference to main navigation provider for TAD
+
         //**  Proximity Listener variables **/
         private float radius = 100;  //Defines radius (in meters) for which the Proximity listener should be triggered (Default = 50)
         private float readyradius = 300; //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
@@ -668,7 +670,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 } catch (Exception e3) {
                     Log.d(TAG, "Warning - Could not set Distance...");
                 }
-                if (directdistance < 250) {
+                if (directdistance < 20) {
                     //Fire proximity event for getting ready 100 meters prior to 2nd to last stop
                     if (proximityEvent(1, -1)) {
                         navProvider.UpdateInterface(2);
@@ -684,7 +686,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                         navProvider.UpdateInterface(3);
                         Log.d(TAG, "-----Get off the bus!");
                         return 1; // Get off bus alert played
-
                     }
 
                 }

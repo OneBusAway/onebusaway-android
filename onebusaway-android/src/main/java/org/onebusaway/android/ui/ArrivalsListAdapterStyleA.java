@@ -88,9 +88,17 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         long eta = stopInfo.getEta();
         if (eta == 0) {
             etaView.setText(R.string.stop_info_eta_now);
+            minView.setText("mins");
             minView.setVisibility(View.GONE);
-        } else {
+        } else if (eta < 60) {
             etaView.setText(String.valueOf(eta));
+            minView.setText("mins");
+            minView.setVisibility(View.VISIBLE);
+        } else {
+            long hrs = eta / 60;
+            long min = eta % 60;
+            etaView.setText(String.format("%d:%02d", hrs, min));
+            minView.setText("hrs");
             minView.setVisibility(View.VISIBLE);
         }
 

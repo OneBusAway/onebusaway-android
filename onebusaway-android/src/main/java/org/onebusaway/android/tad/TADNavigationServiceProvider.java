@@ -40,6 +40,8 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
 
+    private static final int DISTANCE_THRESHOLD = 200 / 10;
+
 
 
     public TADProximityCalculator mProxListener;
@@ -670,7 +672,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                 } catch (Exception e3) {
                     Log.d(TAG, "Warning - Could not set Distance...");
                 }
-                if (directdistance < 20) {
+                if (directdistance < DISTANCE_THRESHOLD) {
                     //Fire proximity event for getting ready 100 meters prior to 2nd to last stop
                     if (proximityEvent(1, -1)) {
                         navProvider.UpdateInterface(2);

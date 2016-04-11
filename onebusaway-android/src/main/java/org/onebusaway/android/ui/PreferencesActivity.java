@@ -396,6 +396,7 @@ public class PreferencesActivity extends PreferenceActivity
             // Assume HTTP scheme if none is provided
             apiUrl = getString(R.string.http_prefix) + apiUrl;
         }
+
         return Patterns.WEB_URL.matcher(apiUrl).matches();
     }
 

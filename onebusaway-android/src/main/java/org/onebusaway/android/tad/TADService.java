@@ -37,6 +37,8 @@ public class TADService extends Service
     private TADNavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
+    private long finishedTime;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting Service");
@@ -122,8 +124,17 @@ public class TADService extends Service
 
         // Trip is done? End service.
         if (mNavProvider.getFinished()) {
-            this.stopSelf();
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                if (finishedTime == 0) {
+                    finishedTime = System.currentTimeMillis();
+                } else if (System.currentTimeMillis()-finishedTime >= 30000) {
+                    this.stopSelf();
+                }
+            } else {
+                this.stopSelf();
+            }
         }
+
     }
 
     private void setupLog() {

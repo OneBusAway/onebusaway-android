@@ -769,6 +769,7 @@
     <string name="voice_starting_trip">Starting trip now!</string>
     <string name="voice_exit_bus">Get off the bus now!</string>
     <string name="voice_pull_cord">Pull the cord!</string>
+    <string name="voice_arriving_destination">Arriving at destination!</string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

@@ -42,12 +42,12 @@ public class TADTest extends ObaTestCase {
 
             for (int i = 0; i < points.length; i++) {
                 Location l = points[i];
-                Thread.sleep(pauses[i] / SPEED_UP);
+                Thread.sleep((pauses[i] / SPEED_UP));
                 provider.locationUpdated(l);
-                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i++,
+                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
-                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())
-                ));
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
+                );
             }
 
             assertEquals(true, provider.getGetReady() && provider.getFinished());
@@ -105,12 +105,14 @@ public class TADTest extends ObaTestCase {
             // time,lat,lng,speed,bearing,provider.
             for (int i = 1; i < lines.length; i++) {
                 String[] values = lines[i].split(",");
+                long time = Long.parseLong(values[0]);
                 double lat = Double.parseDouble(values[1]);
                 double lng = Double.parseDouble(values[2]);
                 float speed = Float.parseFloat(values[3]);
                 float bearing = Float.parseFloat(values[4]);
                 String provider = values[5];
                 mPoints[i - 1] = new Location(provider);
+                mPoints[i - 1].setTime(time);
                 mPoints[i - 1].setLatitude(lat);
                 mPoints[i - 1].setLongitude(lng);
                 mPoints[i - 1].setBearing(bearing);

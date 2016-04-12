@@ -163,7 +163,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.d(TAG, "Could not get Segment ID");
+            Log.e(TAG, "Could not get Segment ID");
             return -1;
         }
     }
@@ -230,7 +230,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
      * Resets any current routes which might be currently navigated
      */
     public void reset() {
-
         mProxListener.listenForCoords(null, null, null);
     }
 
@@ -289,41 +288,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mProxListener.listenForDistance(alertdistance);
             mProxListener.listenForCoords(segment.getBeforeLocation(), segment.getToLocation(), segment.getFromLocation());
             Log.d(TAG, "Proximlistener parameters were set!");
-            //Try to cancel any existing registrations of the AVLServiceProvider
-            try {
-                //midlet.avlProvider.setAVLDataListener(null, null, null, "", "");
-            } catch (Exception e) {
-                Log.d(TAG, "WARNING - error attempting to cancel any existing AVLServiceProviders");
-            }
-
-            //Set AVLServiceProvider for new segment
-            Log.d(TAG, "Setting agency properties++++++...");
-            /*TransitAgencyAVLProperties agencyProperties = new TransitAgencyAVLProperties(segments[segmentIndex].getAgencyFeedIDTAD());
-            Log.d(TAG,"Setting avl data listener!");
-            if (this.midlet.avlProvider != null) {
-                this.midlet.avlProvider.setAVLDataListener(this.midlet.avlListener, this.midlet.avlListener, agencyProperties, segments[segmentIndex].getIdStopFromTransitAgencyGTFS(), segments[segmentIndex].getRoute_IDGTFS());
-                this.midlet.avlProvider.setArrivalReminder(midlet.AVL_ARRIVAL_REMINDER_TIME);
-                //Log.d(TAG,"AVL data listener: " + this.midlet.avlProvider.getAVLDataListener());
-                Log.d(TAG,"ARrival reminder: " + this.midlet.avlProvider.getArrivalReminder());
-                Log.d(TAG,"Properties were set!");
-            } else {
-                Log.d(TAG,"Tjhe avl provider was null!");
-            }*/
-            Log.d(TAG, "Trying yto update route info!");
-            //Update route info on screen
-
-            /*if (segments[segmentIndex].getTrip_headsignGTFS() != null) {
-                //Show headsign, since headsign info exists
-                this.midlet.getStringItem().setText(segments[segmentIndex].getTrip_headsignGTFS().trim());
-            } else {
-                //No headsign information exists.  Just show route number
-                this.midlet.getStringItem().setText("ROUTE " + segments[segmentIndex].getRoute_IDGTFS().trim());  //Set route name
-            }*/
-            Log.d(TAG, "Route info was updated!");
-
-            //NEW - Set boolean flag to allow navigation again for current segment
-        } else {
-            //throw new ServiceException("The NavigationProvider currently has no more segments to navigate.");
         }
     }
 
@@ -376,7 +340,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             }
             mProxListener.setTrigger(false); //Reset the proximity notification alert
         } catch (Exception e) {
-            Log.d(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
+            Log.e(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
             e.printStackTrace(); // See what happens!!!!!!!!
         }
     }
@@ -483,7 +447,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                                 trigger = false; //Reset the proximity notification alert
 
                             } catch (Exception e) {
-                                Log.d(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
+                                Log.e(TAG, "Error in TADProximityListener.proximityEvent(): " + e);
                             }
                         }
                     } else {

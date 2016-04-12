@@ -612,6 +612,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                 directdistance = secondtolastcoords.distanceTo(currentLocation);
                 Log.d(TAG, "Second to last stop coordinates: " + secondtolastcoords.getLatitude() + ", " + secondtolastcoords.getLongitude());
 
+                navProvider.updateInterface(1);                 // Update distance notification
+
                 // Check if distance from 2nd-to-last stop is less than threshold.
                 if (directdistance < DISTANCE_THRESHOLD) {
                     if (proximityEvent(1, -1)) {
@@ -629,8 +631,6 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                         return 1; // Get off bus alert played
                     }
                 }
-
-                navProvider.updateInterface(1);                 // Update distance notification
             }
             return 0; //No alerts played.
         }
@@ -704,36 +704,29 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
             Locale mLocale = Locale.getDefault();
 
-            if (!finished) {
-                if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
-                    Log.d(TAG, "Setting units automatically");
-                    // If the country is set to USA, assume imperial, otherwise metric
-                    // TODO - Method of guessing metric/imperial can definitely be improved
-                    if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
-                        mBuilder.setContentText(fmt.format(miles) + " miles away.");
-                    } else {
-                        mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
-                    }
-                } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
+            if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+                Log.d(TAG, "Setting units automatically");
+                // If the country is set to USA, assume imperial, otherwise metric
+                // TODO - Method of guessing metric/imperial can definitely be improved
+                if (mLocale.getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
                     mBuilder.setContentText(fmt.format(miles) + " miles away.");
                 } else {
                     mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
                 }
-
-                receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
-                receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
-                PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
-                        0, receiverIntent, 0);
-
-                mBuilder.addAction(R.drawable.ic_action_cancel, app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
-
-                mBuilder.setOngoing(true);
-
+            } else if (preferredUnits.equalsIgnoreCase(IMPERIAL)) {
+                mBuilder.setContentText(fmt.format(miles) + " miles away.");
             } else {
-                String message = Application.get().getString(R.string.voice_arriving_destination);
-                mBuilder.setContentText(message);
-                mBuilder.setOngoing(false);
+                mBuilder.setContentText(fmt.format(distance) + " kilometers away.");
             }
+
+            receiverIntent.putExtra(TripReceiver.ACTION_NUM, TripReceiver.CANCEL_TRIP);
+            receiverIntent.putExtra(TripReceiver.NOTIFICATION_ID, NOTIFICATION_ID);
+            PendingIntent pCancelIntent = PendingIntent.getBroadcast(app.getApplicationContext(),
+                    0, receiverIntent, 0);
+
+            mBuilder.addAction(R.drawable.ic_action_cancel, app.getString(R.string.stop_notify_cancel_trip), pCancelIntent);
+
+            mBuilder.setOngoing(true);
             NotificationManager mNotificationManager = (NotificationManager)
                     Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
@@ -771,7 +764,6 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
             for (int i = 0; i < 10; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
             }
-
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);
             mBuilder.setDeleteIntent(pDelIntent);
@@ -781,6 +773,16 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
             mNotificationManager.cancel(NOTIFICATION_ID + 1);
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
+
+            mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext())
+                        .setSmallIcon(R.drawable.ic_content_flag)
+                        .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
+                        .setContentIntent(pIntent)
+                        .setAutoCancel(true);
+            message = Application.get().getString(R.string.voice_arriving_destination);
+            mBuilder.setContentText(message);
+            mBuilder.setOngoing(false);
+            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
         }
     }
 

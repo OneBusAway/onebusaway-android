@@ -792,7 +792,6 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
 
             mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
-            mNotificationManager.cancel(NOTIFICATION_ID);
 
         } else if (status == 3) {   // Pull the cord
             finished = true;
@@ -812,7 +811,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
             NotificationManager mNotificationManager =
                     (NotificationManager) Application.get().getSystemService(Context.NOTIFICATION_SERVICE);
-
+            
+            mNotificationManager.cancel(NOTIFICATION_ID + 1);
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
         }
     }

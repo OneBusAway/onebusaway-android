@@ -485,30 +485,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                         if (t == 1) {
                             long time = System.currentTimeMillis();
                             Log.d(TAG, "Ending trip, going back to services");
-                            try {
-                                navProvider.segments = null;
-                                navProvider.segmentIndex = 0;
-                                Log.d(TAG, "Time setting variables to null: " + (System.currentTimeMillis() - time));
-                                time = System.currentTimeMillis();
-                                //this.midlet.getDisplay().setCurrent(this.midlet.getChooseService1());
-                                //this.midlet.communicator.clientNotification();
-                                Log.d(TAG, "Time showing GUI and notifying communicator: " + (System.currentTimeMillis() - time));
-                                time = System.currentTimeMillis();
-                                //Cancel any registration of the AVLServiceProvider & Listener
-                                try {
-                                    //midlet.avlProvider.setAVLDataListener(null, null, null, "", "");
-                                    //Reset AVLlistener, since the user is finished traveling and doesn't need AVL info
-                                    //midlet.avlListener.reset();
-                                } catch (Exception e) {
-                                    Log.d(TAG, "Error canceling the AVLServiceListener registration: " + e);
-                                }
-                                Log.d(TAG, "Time setting AVL Data Listener: " + (System.currentTimeMillis() - time));
-                                time = System.currentTimeMillis();
-
-
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error while sending distances to server");
-                            }
+                            navProvider.segments = null;
+                            navProvider.segmentIndex = 0;
                         }
                     }
                 }
@@ -633,41 +611,26 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                 //re-calculate the distance to second to last bus stop from the current location
                 directdistance = secondtolastcoords.distanceTo(currentLocation);
                 Log.d(TAG, "Second to last stop coordinates: " + secondtolastcoords.getLatitude() + ", " + secondtolastcoords.getLongitude());
-                try {
-                    navProvider.updateInterface(1);
 
-                } catch (Exception e3) {
-                    Log.d(TAG, "Warning - Could not set Distance...");
-                }
+                // Check if distance from 2nd-to-last stop is less than threshold.
                 if (directdistance < DISTANCE_THRESHOLD) {
-                    //Fire proximity event for getting ready 100 meters prior to 2nd to last stop
                     if (proximityEvent(1, -1)) {
                         navProvider.updateInterface(2);
                         Log.d(TAG, "-----Get ready!");
                         return 2; //Get ready alert played
                     }
                 }
-                if (StopDetector(directdistance, 1, currentLocation.getSpeed())) {
-                    //   if (this.endistance < 160) {
-                    //Fire proximity event for getting off the bus
 
+                // Check if pull the cord notification should be fired.
+                if (StopDetector(directdistance, 1, currentLocation.getSpeed())) {
                     if (proximityEvent(0, 0)) {
                         navProvider.updateInterface(3);
                         Log.d(TAG, "-----Get off the bus!");
                         return 1; // Get off bus alert played
                     }
-
                 }
-                //check if near final stop and reset the 2nd to last stop detection variables.
-                // This was replaced by the method resetVariablesAfterSegmentSwitching
-    /*            if (StopDetector(this.endistance, 0, 0)) {
-                    m100_a = false;
-                    m50_a = false;
-                    m20_a = false;
-                    m20_d = false;
-                    m50_d = false;
-                    m100_d = false;
-                }*/
+
+                navProvider.updateInterface(1);                 // Update distance notification
             }
             return 0; //No alerts played.
         }

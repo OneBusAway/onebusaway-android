@@ -9,9 +9,6 @@ import android.location.LocationManager;
 
 import org.onebusaway.android.io.elements.ObaStop;
 
-/**
- *
- */
 public class Segment {
 
     private int idSegment;

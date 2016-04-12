@@ -13,13 +13,13 @@ import org.onebusaway.android.tad.TADNavigationServiceProvider;
 import java.io.Reader;
 
 /**
- * Created by azizmb on 3/18/16.
+ * Created by azizmb9494 on 3/18/16.
  */
 public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    static final int SPEED_UP = 2;
+    static final int SPEED_UP = 3;
     public void testTrip() {
         try {
             // Read test CSV.
@@ -40,7 +40,7 @@ public class TADTest extends ObaTestCase {
             Location[] points = trip.getPoints();
             long[] pauses = trip.getTimes();
 
-            for (int i = 0; i < points.length; i++) {
+            for (int i = 0; i < trip.getReadyIndex; i++) {
                 Location l = points[i];
                 Thread.sleep((pauses[i] / SPEED_UP));
                 provider.locationUpdated(l);
@@ -49,8 +49,20 @@ public class TADTest extends ObaTestCase {
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
                 );
             }
+            boolean check1 = provider.getGetReady() && !provider.getFinished();
 
-            assertEquals(true, provider.getGetReady() && provider.getFinished());
+            for (int i = trip.getReadyIndex; i < points.length; i++) {
+                Location l = points[i];
+                Thread.sleep((pauses[i] / SPEED_UP));
+                provider.locationUpdated(l);
+                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
+                );
+            }
+            boolean check2 = provider.getGetReady() && provider.getFinished();
+
+            assertEquals(true, check1 && check2);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
@@ -117,6 +129,14 @@ public class TADTest extends ObaTestCase {
                 mPoints[i - 1].setLongitude(lng);
                 mPoints[i - 1].setBearing(bearing);
                 mPoints[i - 1].setSpeed(speed);
+            }
+
+            double minDist = Double.MAX_VALUE;
+            for (int i = 0; i < mPoints.length; i++) {
+                if (mPoints[i].distanceTo(mBeforeLocation) < minDist) {
+                    minDist = mPoints[i].distanceTo(mBeforeLocation);
+                    getReadyIndex = i;
+                }
             }
 
             // Compute time differences between readings

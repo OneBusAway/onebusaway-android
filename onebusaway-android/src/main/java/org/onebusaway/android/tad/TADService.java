@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by azizmb on 2/18/16.
+ * Created by azizmb9494 on 2/18/16.
  */
 public class TADService extends Service
         implements LocationHelper.Listener {

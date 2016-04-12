@@ -8,7 +8,7 @@ import android.content.Intent;
 import org.onebusaway.android.app.Application;
 
 /**
- * Created by azizmb on 3/16/16.
+ * Created by azizmb9494 on 3/16/16.
  */
 public class TripReceiver extends BroadcastReceiver {
     public static final String TAG = "BroadcastReceiver";

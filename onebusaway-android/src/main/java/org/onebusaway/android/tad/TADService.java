@@ -42,10 +42,6 @@ public class TADService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting Service");
-        if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
-            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId + ".txt");
-        }
         if (intent != null) {
 
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
@@ -56,9 +52,6 @@ public class TADService extends Service
                     1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
             mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
-            if (BuildConfig.TAD_GPS_LOGGING) {
-                setupLog();
-            }
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
             if (args != null && args.length == 3) {
@@ -67,6 +60,13 @@ public class TADService extends Service
                 mBeforeStopId = args[2];
                 mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId, 1);
             }
+        }
+
+        // Setup file for logging.
+        if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
+                    mTripId + "_" + mDestinationStopId + ".txt");
+            setupLog();
         }
 
         mLocationHelper = new LocationHelper(this, 1);

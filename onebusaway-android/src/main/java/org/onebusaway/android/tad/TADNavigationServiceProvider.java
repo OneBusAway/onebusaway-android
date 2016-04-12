@@ -353,33 +353,15 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
     private int sendCounter = 0;
 
-    public void run() {
+    public synchronized void run() {
+        int loc = mProxListener.checkProximityAll(currentLocation);
 
-        try {
-
-            //Get the last known location from location listener and send it to proximity listener.
-
-            //sends UDP data to server - Duplicated in LocListener
-          /*  JSR179LocationData loc = new JSR179LocationData(this.locListener.getLocationProvider(), candidate);
-            this.communicator.sendData(z);  //Send location data to the server   
-             */
-            int loc = mProxListener.checkProximityAll(currentLocation);
-
-            //if ((sendCounter++ % 4 == 0) || (loc.getAlert() == 1) || (loc.getAlert() == 2)) {
-            if (loc == 1) {
-                Log.d(TAG, "Alert 1");
-            } else if (loc == 2) {
-                Log.d(TAG, "Alert 2");
-            }
-            //} else {
-
-            //}
-
-        } catch (Exception e) {
-            //    e.printStackTrace();
-            Log.d(TAG, "Proximity Listener not Initialized ");
-            //Log.d(TAG, "Error in NSP, while attempting to send CP in UDP");
-        }
+        //if ((sendCounter++ % 4 == 0) || (loc.getAlert() == 1) || (loc.getAlert() == 2)) {
+        /*if (loc == 1) {
+            Log.d(TAG, "Alert 1");
+        } else if (loc == 2) {
+            Log.d(TAG, "Alert 2");
+        }*/
     }
 
     public void skipSegment() {

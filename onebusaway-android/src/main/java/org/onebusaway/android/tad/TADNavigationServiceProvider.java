@@ -40,7 +40,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000
     };
 
-    private static final int DISTANCE_THRESHOLD = 200 / 10;
+    private static final int DISTANCE_THRESHOLD = 200;
 
 
 
@@ -487,7 +487,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                             Log.d(TAG, "Alert 1 Screen showed to rider");
                             waitingForConfirm = true;
                             // GET READY.
-                            navProvider.UpdateInterface(3);
+                            //navProvider.UpdateInterface(3);
                             Log.d(TAG, "Calling way point reached!");
                             //this.navProvider.navlistener.waypointReached(this.lastcoords);
                             return true;
@@ -510,7 +510,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
                         if (t == 0) {
                             Log.d(TAG, "Alert 1 screen before last stop");
                             waitingForConfirm = true;
-                            navProvider.UpdateInterface(3);
+                            //navProvider.UpdateInterface(3);
                             Log.d(TAG, "Calling destination reached...");
                             return true;
                         }
@@ -539,7 +539,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
 
 
                             } catch (Exception e) {
-                                Log.d(TAG, "Error while sending distances to server");
+                                Log.e(TAG, "Error while sending distances to server");
                             }
                         }
                     }
@@ -547,7 +547,7 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             } else if (selection == 1) {
                 if (ready == false) {
                     ready = true;
-                    navProvider.UpdateInterface(3);
+                    //navProvider.UpdateInterface(3);
                     return true;
                 }
             }

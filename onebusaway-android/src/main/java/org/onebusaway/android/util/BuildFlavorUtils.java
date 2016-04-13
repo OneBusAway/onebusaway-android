@@ -33,6 +33,8 @@ public class BuildFlavorUtils {
 
     public static final String AMAZON_FLAVOR_PLATFORM = "amazon";
 
+    public static final String AGENCYY_FLAVOR_BRAND = "agencyY";
+
     public static final int ARRIVAL_INFO_STYLE_A = 0; // Original OBA style
 
     public static final int ARRIVAL_INFO_STYLE_B = 1; // Style used by York Region Transit

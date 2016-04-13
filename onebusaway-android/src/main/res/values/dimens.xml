@@ -79,6 +79,8 @@
     <!-- Route lines -->
     <dimen name="map_route_line_width">5dp</dimen>
     <dimen name="map_route_padding">16dp</dimen>
+    <!-- Report issue design margins -->
+    <dimen name="report_issue_margin">10dp</dimen>
     <dimen name="map_route_vehicle_markers_padding">15dp</dimen>
 
     <!-- About -->

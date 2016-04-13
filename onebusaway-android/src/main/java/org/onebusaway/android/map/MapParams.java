@@ -22,6 +22,10 @@ public class MapParams {
 
     public static final String STOP_ID = ".StopId";
 
+    public static final String STOP_NAME = ".StopName";
+
+    public static final String STOP_CODE = ".StopCode";
+
     public static final String ROUTE_ID = ".RouteId";
 
     public static final String CENTER_LAT = ".MapCenterLat";

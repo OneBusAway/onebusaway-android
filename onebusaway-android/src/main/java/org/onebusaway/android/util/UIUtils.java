@@ -22,6 +22,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
@@ -169,17 +170,23 @@ public final class UIUtils {
         }
     }
 
-    public static final String getRouteDisplayName(ObaRoute route) {
-        String result = route.getShortName();
-        if (!TextUtils.isEmpty(result)) {
-            return result;
+    public static final String getRouteDisplayName(String routeShortName, String routeLongName) {
+        if (!TextUtils.isEmpty(routeShortName)) {
+            return routeShortName;
         }
-        result = route.getLongName();
-        if (!TextUtils.isEmpty(result)) {
-            return result;
+        if (!TextUtils.isEmpty(routeLongName)) {
+            return routeLongName;
         }
         // Just so we never return null.
         return "";
+    }
+
+    public static final String getRouteDisplayName(ObaRoute route) {
+        return getRouteDisplayName(route.getShortName(), route.getLongName());
+    }
+
+    public static final String getRouteDisplayName(ObaArrivalInfo arrivalInfo) {
+        return getRouteDisplayName(arrivalInfo.getShortName(), arrivalInfo.getRouteLongName());
     }
 
     public static final String getRouteDescription(ObaRoute route) {
@@ -396,6 +403,59 @@ public final class UIUtils {
             context.startActivity(intent);
         } catch (ActivityNotFoundException e) {
             Toast.makeText(context, context.getString(R.string.browser_error), Toast.LENGTH_SHORT)
+                    .show();
+        }
+    }
+
+    public static void goToPhoneDialer(Context context, String url) {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse(url));
+        context.startActivity(intent);
+    }
+
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param location string that show the current location
+     */
+    public static void sendEmail(Context context, String email, String location) {
+        PackageManager pm = context.getPackageManager();
+        PackageInfo appInfo;
+        try {
+            appInfo = pm.getPackageInfo(context.getPackageName(),
+                    PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        String body;
+        if (location != null) {
+            body = context.getString(R.string.bug_report_body,
+                    appInfo.versionName,
+                    Build.MODEL,
+                    Build.VERSION.RELEASE,
+                    Build.VERSION.SDK_INT,
+                    location);
+        } else {
+            body = context.getString(R.string.bug_report_body_without_location,
+                    appInfo.versionName,
+                    Build.MODEL,
+                    Build.VERSION.RELEASE,
+                    Build.VERSION.SDK_INT);
+        }
+
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                new String[]{email});
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                context.getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            context.startActivity(Intent.createChooser(send,
+                    context.getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, R.string.bug_report_error, Toast.LENGTH_LONG)
                     .show();
         }
     }
@@ -1000,56 +1060,6 @@ public final class UIUtils {
         Rect rect = new Rect();
         view.getGlobalVisibleRect(rect);
         return rect.contains((int) event.getRawX(), (int) event.getRawY());
-    }
-
-    /**
-     * Opens a "Contact Us" email, based on the currently selected region
-     *
-     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
-     *                        null if one isn't available
-     */
-    public static void sendContactEmail(Context c, GoogleApiClient googleApiClient) {
-        PackageManager pm = c.getPackageManager();
-        PackageInfo appInfo;
-        try {
-            appInfo = pm.getPackageInfo(c.getPackageName(),
-                    PackageManager.GET_META_DATA);
-        } catch (PackageManager.NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region == null) {
-            return;
-        }
-
-        Location loc = Application.getLastKnownLocation(c, googleApiClient);
-
-        // appInfo.versionName
-        // Build.MODEL
-        // Build.VERSION.RELEASE
-        // Build.VERSION.SDK
-        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
-        final String body = c.getString(R.string.bug_report_body,
-                appInfo.versionName,
-                Build.MODEL,
-                Build.VERSION.RELEASE,
-                Build.VERSION.SDK_INT,
-                LocationUtils.printLocationDetails(loc));
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.putExtra(Intent.EXTRA_EMAIL,
-                new String[]{region.getContactEmail()});
-        send.putExtra(Intent.EXTRA_SUBJECT,
-                c.getString(R.string.bug_report_subject));
-        send.putExtra(Intent.EXTRA_TEXT, body);
-        send.setType("message/rfc822");
-        try {
-            c.startActivity(Intent.createChooser(send,
-                    c.getString(R.string.bug_report_subject)));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(c, R.string.bug_report_error, Toast.LENGTH_LONG)
-                    .show();
-        }
     }
 
     /**

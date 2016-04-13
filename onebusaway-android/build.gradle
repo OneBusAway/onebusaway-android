@@ -102,6 +102,9 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
         }
 
         /**
@@ -135,6 +138,9 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
         }
 
         agencyY {
@@ -161,6 +167,9 @@ android {
             buildConfigField "String", "FIXED_REGION_TWITTER_URL",
                     "\"http://mobile.twitter.com/OBA_tampa\""
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
+            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "\"937033cad3054ec58a1a8156dcdd6ad8a416af2f\""
+            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "\"http://test.seeclickfix.com/open311/v2/\""
         }
 
         /**
@@ -285,6 +294,8 @@ dependencies {
     compile 'com.android.support:cardview-v7:22.2.1'
     compile 'com.android.support:design:22.2.1'
     compile 'commons-io:commons-io:2.4'
+    // Open311 client library
+    compile 'edu.usf.cutr:open311client:1.0.7'
     // JSON data binding for OBA REST API responses
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'

@@ -41,7 +41,7 @@ public class TADService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "Starting Service");
+        Log.d(TAG, "Starting Service");
         if (intent != null) {
 
             mDestinationStopId = intent.getStringExtra(DESTINATION_ID);
@@ -72,7 +72,7 @@ public class TADService extends Service
         mLocationHelper = new LocationHelper(this, 1);
 
         if (mLocationHelper != null) {
-            Log.i(TAG, "Requesting Location Updates");
+            Log.d(TAG, "Requesting Location Updates");
             mLocationHelper.registerListener(this);
         }
 
@@ -111,7 +111,7 @@ public class TADService extends Service
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.i(TAG, "Location Updated");
+        Log.d(TAG, "Location Updated");
         mLastLocation = location;
 
         if (BuildConfig.TAD_GPS_LOGGING) {
@@ -127,7 +127,7 @@ public class TADService extends Service
             if (BuildConfig.TAD_GPS_LOGGING) {
                 if (finishedTime == 0) {
                     finishedTime = System.currentTimeMillis();
-                } else if (System.currentTimeMillis()-finishedTime >= 30000) {
+                } else if (System.currentTimeMillis() - finishedTime >= 30000) {
                     this.stopSelf();
                 }
             } else {

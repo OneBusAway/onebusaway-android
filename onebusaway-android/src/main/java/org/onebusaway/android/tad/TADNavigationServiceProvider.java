@@ -43,7 +43,6 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
     private static final int DISTANCE_THRESHOLD = 200;
 
 
-
     public TADProximityCalculator mProxListener;
 
     private int timeout = 60;  //Timeout value for service provider action (default = 60 seconds);
@@ -751,10 +750,10 @@ public class TADNavigationServiceProvider implements Runnable, TextToSpeech.OnIn
             mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
 
             mBuilder = new NotificationCompat.Builder(Application.get().getApplicationContext())
-                        .setSmallIcon(R.drawable.ic_content_flag)
-                        .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
-                        .setContentIntent(pIntent)
-                        .setAutoCancel(true);
+                    .setSmallIcon(R.drawable.ic_content_flag)
+                    .setContentTitle(Application.get().getResources().getString(R.string.stop_notify_title))
+                    .setContentIntent(pIntent)
+                    .setAutoCancel(true);
             message = Application.get().getString(R.string.voice_arriving_destination);
             mBuilder.setContentText(message);
             mBuilder.setOngoing(false);

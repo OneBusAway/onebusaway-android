@@ -9,7 +9,6 @@ import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
-import org.onebusaway.android.tripservice.BootstrapService;
 
 import java.io.Reader;
 
@@ -21,6 +20,7 @@ public class TADTest extends ObaTestCase {
     static final String TAG = "TADTest";
 
     static final int SPEED_UP = 3;
+
     public void testTripA() {
         try {
             // Read test CSV.
@@ -48,8 +48,7 @@ public class TADTest extends ObaTestCase {
     }
 
     // Class for holding relevant details for testing.
-    class TADTrip
-    {
+    class TADTrip {
         String mTripId;
         String mDestinationId;
         String mBeforeId;
@@ -65,13 +64,13 @@ public class TADTest extends ObaTestCase {
 
         /**
          * Constructor
+         *
          * @param csv takes a csv string with the first row containing meta-data in the format
-         * of tripId,DestinationId,dest-lat,dest-lng,beforeDestinationId,before-lat,before-lng
-         * and all following rows holding data to construct location points of a trip in the format
-         * time,lat,lng,speed,bearing,provider.
+         *            of tripId,DestinationId,dest-lat,dest-lng,beforeDestinationId,before-lat,before-lng
+         *            and all following rows holding data to construct location points of a trip in the format
+         *            time,lat,lng,speed,bearing,provider.
          */
-        TADTrip(String csv)
-        {
+        TADTrip(String csv) {
             String[] lines = csv.split("\n");
 
             // Setup meta data.
@@ -87,7 +86,6 @@ public class TADTest extends ObaTestCase {
             mBeforeLocation = new Location(LocationManager.GPS_PROVIDER);
             mBeforeLocation.setLatitude(Double.parseDouble(details[5]));
             mBeforeLocation.setLongitude(Double.parseDouble(details[6]));
-
 
 
             mPoints = new Location[lines.length - 1];
@@ -122,22 +120,47 @@ public class TADTest extends ObaTestCase {
             // in ms.
             mTimes = new long[mPoints.length];
             for (int i = 1; i < mPoints.length; i++) {
-                mTimes[i] = mPoints[i].getTime() - mPoints[i-1].getTime();
+                mTimes[i] = mPoints[i].getTime() - mPoints[i - 1].getTime();
             }
         }
 
-        public String getTripId() { return mTripId; }
-        public String getDestinationId() { return mDestinationId; }
-        public String getBeforeId() { return mBeforeId; }
-        public Location getDestinationLocation() { return mDestinationLocation; }
-        public Location getBeforeLocation() { return mBeforeLocation; }
-        public Location[] getPoints() { return mPoints; }
-        public long[] getTimes() { return mTimes; }
-        public int getGetReadyIndex() { return getReadyIndex; }
-        public int getFinishedIndex() { return getFinishedIndex(); }
+        public String getTripId() {
+            return mTripId;
+        }
 
-        public void runSimulation(Boolean expected1, Boolean expected2)
-        {
+        public String getDestinationId() {
+            return mDestinationId;
+        }
+
+        public String getBeforeId() {
+            return mBeforeId;
+        }
+
+        public Location getDestinationLocation() {
+            return mDestinationLocation;
+        }
+
+        public Location getBeforeLocation() {
+            return mBeforeLocation;
+        }
+
+        public Location[] getPoints() {
+            return mPoints;
+        }
+
+        public long[] getTimes() {
+            return mTimes;
+        }
+
+        public int getGetReadyIndex() {
+            return getReadyIndex;
+        }
+
+        public int getFinishedIndex() {
+            return getFinishedIndex();
+        }
+
+        public void runSimulation(Boolean expected1, Boolean expected2) {
             TADNavigationServiceProvider provider = new TADNavigationServiceProvider(mTripId, mDestinationId);
 
             // Construct Destination & Second-To-Last Location
@@ -178,7 +201,7 @@ public class TADTest extends ObaTestCase {
             }
             boolean check2 = provider.getGetReady() && provider.getFinished();
 
-            assertEquals(true, (check1==expected1) && (check2==expected2));
+            assertEquals(true, (check1 == expected1) && (check2 == expected2));
         }
 
     }

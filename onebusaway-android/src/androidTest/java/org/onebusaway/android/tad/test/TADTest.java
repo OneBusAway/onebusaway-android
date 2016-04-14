@@ -9,6 +9,7 @@ import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
+import org.onebusaway.android.tripservice.BootstrapService;
 
 import java.io.Reader;
 
@@ -20,49 +21,27 @@ public class TADTest extends ObaTestCase {
     static final String TAG = "TADTest";
 
     static final int SPEED_UP = 3;
-    public void testTrip() {
+    public void testTripA() {
         try {
             // Read test CSV.
             Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
             String csv = IOUtils.toString(reader);
 
             TADTrip trip = new TADTrip(csv);
-            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(trip.getTripId(), trip.getDestinationId());
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
 
-            // Construct Destination & Second-To-Last Location
-            Segment segment = new Segment(trip.getBeforeLocation(), trip.getDestinationLocation(), null);
+    public void testTripB() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_2"));
+            String csv = IOUtils.toString(reader);
 
-
-            // Begin navigation & simulation
-            provider.navigate(new Segment[]{segment});
-
-
-            Location[] points = trip.getPoints();
-            long[] pauses = trip.getTimes();
-
-            for (int i = 0; i < trip.getReadyIndex; i++) {
-                Location l = points[i];
-                Thread.sleep((pauses[i] / SPEED_UP));
-                provider.locationUpdated(l);
-                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
-                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
-                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
-                );
-            }
-            boolean check1 = provider.getGetReady() && !provider.getFinished();
-
-            for (int i = trip.getReadyIndex; i < points.length; i++) {
-                Location l = points[i];
-                Thread.sleep((pauses[i] / SPEED_UP));
-                provider.locationUpdated(l);
-                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
-                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
-                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
-                );
-            }
-            boolean check2 = provider.getGetReady() && provider.getFinished();
-
-            assertEquals(true, check1 && check2);
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
@@ -156,6 +135,51 @@ public class TADTest extends ObaTestCase {
         public long[] getTimes() { return mTimes; }
         public int getGetReadyIndex() { return getReadyIndex; }
         public int getFinishedIndex() { return getFinishedIndex(); }
+
+        public void runSimulation(Boolean expected1, Boolean expected2)
+        {
+            TADNavigationServiceProvider provider = new TADNavigationServiceProvider(mTripId, mDestinationId);
+
+            // Construct Destination & Second-To-Last Location
+            Segment segment = new Segment(mBeforeLocation, mDestinationLocation, null);
+
+
+            // Begin navigation & simulation
+            provider.navigate(new Segment[]{segment});
+
+
+            for (int i = 0; i < getReadyIndex; i++) {
+                Location l = mPoints[i];
+                try {
+                    Thread.sleep((mTimes[i] / SPEED_UP));
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                provider.locationUpdated(l);
+                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
+                );
+            }
+            boolean check1 = provider.getGetReady() && !provider.getFinished();
+
+            for (int i = getReadyIndex; i < mPoints.length; i++) {
+                Location l = mPoints[i];
+                try {
+                    Thread.sleep((mTimes[i] / SPEED_UP));
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                provider.locationUpdated(l);
+                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
+                );
+            }
+            boolean check2 = provider.getGetReady() && provider.getFinished();
+
+            assertEquals(true, (check1==expected1) && (check2==expected2));
+        }
 
     }
 }

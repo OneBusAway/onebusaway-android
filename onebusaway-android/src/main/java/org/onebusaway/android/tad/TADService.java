@@ -159,8 +159,8 @@ public class TADService extends Service
 
     private void writeToLog(Location l) {
         try {
-            String log = String.format("%d,%f,%f,%f,%f,%s\n", l.getTime(), l.getLatitude(), l.getLongitude(),
-                    l.getSpeed(), l.getBearing(), l.getProvider());
+            String log = String.format("%d,%f,%f,%f,%f,%f,%s\n", l.getTime(), l.getLatitude(), l.getLongitude(),
+                    l.getAltitude(),l.getSpeed(), l.getBearing(), l.getProvider());
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

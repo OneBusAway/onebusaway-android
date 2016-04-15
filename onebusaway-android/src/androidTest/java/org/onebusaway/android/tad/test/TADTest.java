@@ -97,13 +97,15 @@ public class TADTest extends ObaTestCase {
                 long time = Long.parseLong(values[0]);
                 double lat = Double.parseDouble(values[1]);
                 double lng = Double.parseDouble(values[2]);
-                float speed = Float.parseFloat(values[3]);
-                float bearing = Float.parseFloat(values[4]);
-                String provider = values[5];
+                double altitude = Double.parseDouble(values[3]);
+                float speed = Float.parseFloat(values[4]);
+                float bearing = Float.parseFloat(values[5]);
+                String provider = values[6];
                 mPoints[i - 1] = new Location(provider);
                 mPoints[i - 1].setTime(time);
                 mPoints[i - 1].setLatitude(lat);
                 mPoints[i - 1].setLongitude(lng);
+                mPoints[i - 1].setAltitude(altitude);
                 mPoints[i - 1].setBearing(bearing);
                 mPoints[i - 1].setSpeed(speed);
             }

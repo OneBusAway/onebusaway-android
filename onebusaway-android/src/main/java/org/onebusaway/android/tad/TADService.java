@@ -12,6 +12,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.LocationHelper;
+import org.onebusaway.android.util.LocationUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class TADService extends Service
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "Destroying Service.");
+        Log.d(TAG, "Destroying Service.");
         mLocationHelper.unregisterListener(this);
         super.onDestroy();
     }
@@ -112,15 +113,18 @@ public class TADService extends Service
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Location Updated");
+        if (LocationUtils.isDuplicate(mLastLocation, location)) {
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                writeToLog(location);
+            }
+
+            if (mLastLocation != null) {
+                mNavProvider.locationUpdated(location);
+            }
+        }
         mLastLocation = location;
 
-        if (BuildConfig.TAD_GPS_LOGGING) {
-            writeToLog(mLastLocation);
-        }
 
-        if (mLastLocation != null) {
-            mNavProvider.locationUpdated(mLastLocation);
-        }
 
         // Trip is done? End service.
         if (mNavProvider.getFinished()) {
@@ -134,7 +138,6 @@ public class TADService extends Service
                 this.stopSelf();
             }
         }
-
     }
 
     private void setupLog() {

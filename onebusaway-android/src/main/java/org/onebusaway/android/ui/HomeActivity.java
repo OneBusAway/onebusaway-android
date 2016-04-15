@@ -53,6 +53,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -63,6 +65,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -73,6 +76,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Collections;
@@ -121,6 +125,8 @@ public class HomeActivity extends AppCompatActivity
     private static final int HELP_DIALOG = 1;
 
     private static final int WHATSNEW_DIALOG = 2;
+
+    private static final int LEGEND_DIALOG = 3;
 
     //One week, in milliseconds
     private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
@@ -588,6 +594,9 @@ public class HomeActivity extends AppCompatActivity
 
             case WHATSNEW_DIALOG:
                 return createWhatsNewDialog();
+
+            case LEGEND_DIALOG:
+                return createLegendDialog();
         }
         return super.onCreateDialog(id);
     }
@@ -613,6 +622,15 @@ public class HomeActivity extends AppCompatActivity
                                 NavHelp.goHome(HomeActivity.this);
                                 break;
                             case 1:
+                                showDialog(LEGEND_DIALOG);
+                                break;
+                            case 2:
+                                showDialog(WHATSNEW_DIALOG);
+                                break;
+                            case 3:
+                                AgenciesActivity.start(HomeActivity.this);
+                                break;
+                            case 4:
                                 String twitterUrl = TWITTER_URL;
                                 if (Application.get().getCurrentRegion() != null &&
                                         !TextUtils.isEmpty(Application.get().getCurrentRegion()
@@ -626,13 +644,8 @@ public class HomeActivity extends AppCompatActivity
                                         getString(R.string.analytics_action_switch),
                                         getString(R.string.analytics_label_app_switch));
                                 break;
-                            case 2:
-                                AgenciesActivity.start(HomeActivity.this);
-                                break;
-                            case 3:
-                                showDialog(WHATSNEW_DIALOG);
-                                break;
-                            case 4:
+                            case 5:
+                                // Contact us
                                 goToSendFeedBack();
                                 break;
                         }
@@ -652,6 +665,64 @@ public class HomeActivity extends AppCompatActivity
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dismissDialog(WHATSNEW_DIALOG);
+                    }
+                }
+        );
+        return builder.create();
+    }
+
+    @SuppressWarnings("deprecation")
+    private Dialog createLegendDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.main_help_legend_title);
+
+        Resources resources = getResources();
+        LayoutInflater inflater = LayoutInflater.from(getApplicationContext());
+        View legendDialogView = inflater.inflate(R.layout.legend_dialog, null);
+        final float etaTextFontSize = 30;
+
+        // On time view
+        View etaAndMin = legendDialogView.findViewById(R.id.eta_view_ontime);
+        GradientDrawable d1 = (GradientDrawable) etaAndMin.getBackground();
+        d1.setColor(resources.getColor(R.color.stop_info_ontime));
+        etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
+        TextView etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView.setTextSize(etaTextFontSize);
+        etaTextView.setText("5");
+
+        // Early View
+        etaAndMin = legendDialogView.findViewById(R.id.eta_view_early);
+        d1 = (GradientDrawable) etaAndMin.getBackground();
+        d1.setColor(resources.getColor(R.color.stop_info_early));
+        etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
+        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView.setTextSize(etaTextFontSize);
+        etaTextView.setText("5");
+
+        // Delayed View
+        etaAndMin = legendDialogView.findViewById(R.id.eta_view_delayed);
+        d1 = (GradientDrawable) etaAndMin.getBackground();
+        d1.setColor(resources.getColor(R.color.stop_info_delayed));
+        etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.VISIBLE);
+        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView.setTextSize(etaTextFontSize);
+        etaTextView.setText("5");
+
+        // Scheduled View
+        etaAndMin = legendDialogView.findViewById(R.id.eta_view_scheduled);
+        d1 = (GradientDrawable) etaAndMin.getBackground();
+        d1.setColor(resources.getColor(R.color.stop_info_scheduled_time));
+        etaAndMin.findViewById(R.id.eta_realtime_indicator).setVisibility(View.INVISIBLE);
+        etaTextView = ((TextView) etaAndMin.findViewById(R.id.eta));
+        etaTextView.setTextSize(etaTextFontSize);
+        etaTextView.setText("5");
+
+        builder.setView(legendDialogView);
+
+        builder.setNeutralButton(R.string.main_help_close,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dismissDialog(LEGEND_DIALOG);
                     }
                 }
         );

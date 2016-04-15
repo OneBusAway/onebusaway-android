@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" android:orientation="vertical">
+
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical">
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:layout_marginLeft="14dp"
+                      android:layout_marginRight="24dp"
+                      android:layout_marginTop="16dp"
+                      android:layout_marginBottom="8dp">
+
+            <include
+                    android:id="@+id/eta_view_ontime"
+                    layout="@layout/eta_header_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="2"
+                    android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="3dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:background="@drawable/round_corners_style_b_header_status"/>
+
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    style="@style/legendDialogTextStyle"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/main_help_legend_ontime"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:layout_marginLeft="14dp"
+                      android:layout_marginRight="24dp"
+                      android:layout_marginTop="16dp"
+                      android:layout_marginBottom="8dp">
+
+            <include
+                    android:id="@+id/eta_view_early"
+                    layout="@layout/eta_header_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="2"
+                    android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="3dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:background="@drawable/round_corners_style_b_header_status"/>
+
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    style="@style/legendDialogTextStyle"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/main_help_legend_early"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:layout_marginLeft="14dp"
+                      android:layout_marginRight="24dp"
+                      android:layout_marginTop="16dp"
+                      android:layout_marginBottom="8dp">
+
+            <include
+                    android:id="@+id/eta_view_delayed"
+                    layout="@layout/eta_header_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="2"
+                    android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="3dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:background="@drawable/round_corners_style_b_header_status"/>
+
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    style="@style/legendDialogTextStyle"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/main_help_legend_late"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:layout_marginLeft="14dp"
+                      android:layout_marginRight="24dp"
+                      android:layout_marginTop="16dp"
+                      android:layout_marginBottom="8dp">
+
+            <include
+                    android:id="@+id/eta_view_scheduled"
+                    layout="@layout/eta_header_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="2"
+                    android:layout_marginLeft="@dimen/arrival_header_text_pad_left"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="3dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:gravity="right"
+                    android:orientation="horizontal"
+                    android:background="@drawable/round_corners_style_b_header_status"/>
+
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    style="@style/legendDialogTextStyle"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/main_help_legend_scheduled"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

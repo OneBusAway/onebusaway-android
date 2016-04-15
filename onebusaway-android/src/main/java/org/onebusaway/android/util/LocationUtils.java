@@ -122,6 +122,26 @@ public class LocationUtils {
     }
 
     /**
+     * Check if two locations are the exact same by comparing their timestamp, lat & lng.
+     * @param a First location
+     * @param b Second location
+     * @return true if same, false otherwise.
+     */
+    public static boolean isDuplicate(Location a, Location b)
+    {
+        if (a.getTime() != b.getTime())
+            return false;
+
+        if (a.getLatitude() != b.getLatitude())
+            return false;
+
+        if (a.getLongitude() != b.getLongitude())
+            return false;
+
+        return true;
+    }
+
+    /**
      * Converts a latitude/longitude to a Location.
      *
      * @param lat The latitude.

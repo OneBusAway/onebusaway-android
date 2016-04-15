@@ -19,7 +19,7 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    static final int SPEED_UP = 3;
+    static final int SPEED_UP = 20;
 
     public void testTripA() {
         try {
@@ -170,7 +170,6 @@ public class TADTest extends ObaTestCase {
             // Begin navigation & simulation
             provider.navigate(new Segment[]{segment});
 
-
             for (int i = 0; i < getReadyIndex; i++) {
                 Location l = mPoints[i];
                 try {
@@ -179,12 +178,13 @@ public class TADTest extends ObaTestCase {
                     Log.e(TAG, e.getMessage());
                 }
                 provider.locationUpdated(l);
-                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                Log.d(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
                 );
             }
-            boolean check1 = provider.getGetReady() && !provider.getFinished();
+            Boolean check1 = provider.getGetReady() && !provider.getFinished();
+            assertEquals(expected1, check1);
 
             for (int i = getReadyIndex; i < mPoints.length; i++) {
                 Location l = mPoints[i];
@@ -194,14 +194,14 @@ public class TADTest extends ObaTestCase {
                     Log.e(TAG, e.getMessage());
                 }
                 provider.locationUpdated(l);
-                Log.i(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                Log.d(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
                         Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
                 );
             }
-            boolean check2 = provider.getGetReady() && provider.getFinished();
 
-            assertEquals(true, (check1 == expected1) && (check2 == expected2));
+            Boolean check2 = provider.getGetReady() && provider.getFinished();
+            assertEquals(expected2, check2);
         }
 
     }

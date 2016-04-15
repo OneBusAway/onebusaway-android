@@ -92,6 +92,11 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         setupGooglePlayServices();
     }
 
+    /**
+     *
+     * @param context
+     * @param interval Faster interval in seconds.
+     */
     public LocationHelper(Context context, int interval) {
         mContext = context;
         UPDATE_INTERVAL = interval*MILLISECONDS_PER_SECOND;

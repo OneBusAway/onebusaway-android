@@ -19,7 +19,7 @@ public class TADTest extends ObaTestCase {
 
     static final String TAG = "TADTest";
 
-    static final int SPEED_UP = 20;
+    static final int SPEED_UP = 4;
 
     public void testTripA() {
         try {
@@ -68,7 +68,7 @@ public class TADTest extends ObaTestCase {
          * @param csv takes a csv string with the first row containing meta-data in the format
          *            of tripId,DestinationId,dest-lat,dest-lng,beforeDestinationId,before-lat,before-lng
          *            and all following rows holding data to construct location points of a trip in the format
-         *            time,lat,lng,speed,bearing,provider.
+         *            time,lat,lng,altitude,speed,bearing,provider.
          */
         TADTrip(String csv) {
             String[] lines = csv.split("\n");
@@ -91,7 +91,7 @@ public class TADTest extends ObaTestCase {
             mPoints = new Location[lines.length - 1];
             // Skip header and run through csv.
             // Rows are formatted like this:
-            // time,lat,lng,speed,bearing,provider.
+            // time,lat,lng,altitude,speed,bearing,provider.
             for (int i = 1; i < lines.length; i++) {
                 String[] values = lines[i].split(",");
                 long time = Long.parseLong(values[0]);
@@ -110,6 +110,7 @@ public class TADTest extends ObaTestCase {
                 mPoints[i - 1].setSpeed(speed);
             }
 
+            // Compute index of point nearest to second to last stop.
             double minDist = Double.MAX_VALUE;
             for (int i = 0; i < mPoints.length; i++) {
                 if (mPoints[i].distanceTo(mBeforeLocation) < minDist) {

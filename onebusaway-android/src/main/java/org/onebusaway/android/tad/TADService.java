@@ -144,8 +144,8 @@ public class TADService extends Service
         try {
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
-            String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId, dest.getLatitude(),
-                    dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
+            String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
+                    dest.getLatitude(), dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
             if (mLogFile != null) {
                 FileUtils.write(mLogFile, hdr, false);
             } else {
@@ -159,8 +159,8 @@ public class TADService extends Service
 
     private void writeToLog(Location l) {
         try {
-            String log = String.format("%d,%f,%f,%f,%f,%f,%s\n", l.getTime(), l.getLatitude(), l.getLongitude(),
-                    l.getAltitude(),l.getSpeed(), l.getBearing(), l.getProvider());
+            String log = String.format("%d,%f,%f,%f,%f,%f,%s\n", l.getTime(), l.getLatitude(),
+                    l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(), l.getProvider());
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

@@ -19,8 +19,8 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.report.ui.adapter.ReportTypeListAdapter;
-import org.onebusaway.android.report.ui.model.ReportTypeItem;
+import org.onebusaway.android.ui.MaterialListAdapter;
+import org.onebusaway.android.ui.MaterialListItem;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.res.TypedArray;
@@ -66,16 +66,16 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
         }
 
         Boolean isEmailDefined = isEmailDefined();
-        List<ReportTypeItem> reportTypeItems = new ArrayList<>();
+        List<MaterialListItem> materialListItems = new ArrayList<>();
         for (int i = 0; i < reportTypes.length; i++) {
             //Don't show the send app feedback section if email is not defined for region
             if (!isEmailDefined && getString(R.string.rt_app_feedback).equals(reportTypes[i]))
                 continue;
-            ReportTypeItem item = new ReportTypeItem(reportTypes[i], reportDesc[i], reportIcons.getResourceId(i, -1));
-            reportTypeItems.add(item);
+            MaterialListItem item = new MaterialListItem(reportTypes[i], reportDesc[i], reportIcons.getResourceId(i, -1));
+            materialListItems.add(item);
         }
 
-        ReportTypeListAdapter adapter = new ReportTypeListAdapter(getActivity(), reportTypeItems);
+        MaterialListAdapter adapter = new MaterialListAdapter(getActivity(), materialListItems);
         setListAdapter(adapter);
         getListView().setOnItemClickListener(this);
     }
@@ -93,7 +93,7 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        ReportTypeItem rti = (ReportTypeItem) getListView().getItemAtPosition(i);
+        MaterialListItem rti = (MaterialListItem) getListView().getItemAtPosition(i);
 
         if (getString(R.string.rt_customer_service).equals(rti.getTitle())) {
             goToCustomerServices();

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com)
+* Copyright (C) 2014-2016 University of South Florida (sjbarbeau@gmail.com)
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,21 +13,28 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.onebusaway.android.report.ui.model;
+package org.onebusaway.android.ui;
 
 /**
- * Model for report type
- * @author Cagri Cetin
+ * A model object for MaterialListAdapter
  */
-public class ReportTypeItem {
+public class MaterialListItem {
 
     private String title;
     private String desc;
+    private String id;
     private int icon;
 
-    public ReportTypeItem(String title, String desc, int icon) {
+    public MaterialListItem(String title, String desc, int icon) {
         this.title = title;
         this.desc = desc;
+        this.icon = icon;
+    }
+
+    public MaterialListItem(String title, String desc, String id, int icon) {
+        this.title = title;
+        this.desc = desc;
+        this.id = id;
         this.icon = icon;
     }
 
@@ -54,5 +61,13 @@ public class ReportTypeItem {
 
     public void setIcon(int icon) {
         this.icon = icon;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

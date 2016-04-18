@@ -15,11 +15,11 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
-import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
@@ -29,15 +29,16 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AgenciesFragment extends ListFragment
         implements LoaderManager.LoaderCallbacks<ObaAgenciesWithCoverageResponse> {
 
-    private Adapter mAdapter;
+    private ListAdapter mAdapter;
 
     private ObaAgenciesWithCoverageResponse mResponse;
 
@@ -51,7 +52,8 @@ public class AgenciesFragment extends ListFragment
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Go to the URL
-        ObaAgency agency = mResponse.getAgency(mAdapter.getItem(position).getId());
+        MaterialListItem item = (MaterialListItem) mAdapter.getItem(position);
+        ObaAgency agency = mResponse.getAgency(item.getId());
         if (!TextUtils.isEmpty(agency.getUrl())) {
             UIUtils.goToUrl(getActivity(), agency.getUrl());
         }
@@ -64,12 +66,12 @@ public class AgenciesFragment extends ListFragment
 
     @Override
     public void onLoadFinished(Loader<ObaAgenciesWithCoverageResponse> l,
-            ObaAgenciesWithCoverageResponse result) {
+                               ObaAgenciesWithCoverageResponse result) {
         // Create our generic adapter
         mResponse = result;
-        mAdapter = new Adapter(getActivity());
+        List<MaterialListItem> materialListItems = createListItems(result);
+        mAdapter = new MaterialListAdapter(getContext(), materialListItems);
         setListAdapter(mAdapter);
-        mAdapter.setData(Arrays.asList(result.getAgencies()));
     }
 
     @Override
@@ -99,23 +101,15 @@ public class AgenciesFragment extends ListFragment
         }
     }
 
-    //
-    // Adapter
-    //
-    private class Adapter extends ArrayAdapter<ObaAgencyWithCoverage> {
-
-        Adapter(Context context) {
-            super(context, android.R.layout.simple_list_item_2);
+    private List<MaterialListItem> createListItems(ObaAgenciesWithCoverageResponse result) {
+        List<MaterialListItem> materialListItems = new ArrayList<>();
+        for (int i = 0; i < result.getAgencies().length; i++) {
+            ObaAgencyWithCoverage obaAgencyWithCoverage = result.getAgencies()[i];
+            ObaAgency agency = result.getAgency(obaAgencyWithCoverage.getId());
+            MaterialListItem item = new MaterialListItem(agency.getName(), agency.getUrl(),
+                    obaAgencyWithCoverage.getId(), R.drawable.ic_maps_directions_bus);
+            materialListItems.add(item);
         }
-
-        @Override
-        protected void initView(View view, ObaAgencyWithCoverage coverage) {
-            TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-            TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-
-            ObaAgency agency = mResponse.getAgency(coverage.getId());
-            text1.setText(agency.getName());
-            text2.setText(agency.getUrl());
-        }
+        return materialListItems;
     }
 }

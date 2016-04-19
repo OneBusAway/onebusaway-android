@@ -13,10 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.onebusaway.android.report.ui.adapter;
+package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.report.ui.model.ReportTypeItem;
 
 import android.app.Activity;
 import android.content.Context;
@@ -30,16 +29,14 @@ import android.widget.TextView;
 import java.util.List;
 
 /**
- * Adapter for report types
- *
- * @author Cagri Cetin
+ * Adapter for material design lists
  */
-public class ReportTypeListAdapter extends BaseAdapter {
+public class MaterialListAdapter extends BaseAdapter {
 
     Context context;
-    List<ReportTypeItem> rowItem;
+    List<MaterialListItem> rowItem;
 
-    public ReportTypeListAdapter(Context context, List<ReportTypeItem> rowItem) {
+    public MaterialListAdapter(Context context, List<MaterialListItem> rowItem) {
         this.context = context;
         this.rowItem = rowItem;
     }
@@ -64,7 +61,7 @@ public class ReportTypeListAdapter extends BaseAdapter {
         if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) context
                     .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-            convertView = mInflater.inflate(R.layout.report_type_list_item, null);
+            convertView = mInflater.inflate(R.layout.material_list_item, null);
         }
 
         ImageView imgIcon = (ImageView) convertView.findViewById(R.id.rtl_icon);
@@ -73,7 +70,7 @@ public class ReportTypeListAdapter extends BaseAdapter {
         TextView txtTitle = (TextView) convertView.findViewById(R.id.rtl_title);
         TextView txtDesc = (TextView) convertView.findViewById(R.id.rtl_desc);
 
-        ReportTypeItem rowPos = rowItem.get(position);
+        MaterialListItem rowPos = rowItem.get(position);
         // setting the image resource and title
         imgIcon.setImageResource(rowPos.getIcon());
         txtTitle.setText(rowPos.getTitle());

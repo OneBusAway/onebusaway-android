@@ -60,6 +60,11 @@
         <item name="android:textSize">15sp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
+    <style name="legendDialogTextStyle">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textStyle">bold</item>
+    </style>
     <style name="LoadingProgress" parent="@style/Widget.AppCompat.ProgressBar">
         <item name="android:paddingRight">5sp</item>
     </style>

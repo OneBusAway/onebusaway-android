@@ -295,7 +295,7 @@ dependencies {
     compile 'com.android.support:design:22.2.1'
     compile 'commons-io:commons-io:2.4'
     // Open311 client library
-    compile 'edu.usf.cutr:open311client:1.0.7'
+    compile 'edu.usf.cutr:open311client:1.0.8'
     // JSON data binding for OBA REST API responses
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'

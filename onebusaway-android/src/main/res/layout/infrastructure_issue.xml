@@ -41,7 +41,7 @@
                 android:layout_toLeftOf="@+id/ri_info_text"
                 android:layout_toStartOf="@+id/ri_info_text"
                 android:layout_margin="4dp"
-                />
+        />
 
         <TextView
                 android:layout_width="wrap_content"
@@ -63,30 +63,40 @@
             android:layout_alignParentTop="true"
             android:animateLayoutChanges="true"
             android:gravity="center"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:weightSum="1">
 
-        <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_drawer_maps_place"
-                android:id="@+id/ri_header_location"
-                android:layout_alignParentTop="true"
-                android:layout_toLeftOf="@+id/ri_bus_stop_text"
-                android:layout_toStartOf="@+id/ri_bus_stop_text"
-                android:layout_margin="4dp"
-                />
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+        >
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Fixed Header"
-                android:layout_margin="4dp"
-                android:id="@+id/ri_bus_stop_text"
-                android:textColor="@android:color/white"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_centerVertical="true" android:layout_centerHorizontal="true"/>
+            <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_drawer_maps_place"
+                    android:id="@+id/ri_header_location"
+                    android:layout_alignParentTop="true"
+                    android:layout_toLeftOf="@+id/ri_bus_stop_text"
+                    android:layout_toStartOf="@+id/ri_bus_stop_text"
+                    android:layout_margin="4dp"
+            />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fixed Header"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:layout_margin="4dp"
+                    android:id="@+id/ri_bus_stop_text"
+                    android:textColor="@android:color/white"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_centerVertical="true"
+                    android:layout_centerHorizontal="true"/>
+        </LinearLayout>
     </RelativeLayout>
 
     <RelativeLayout

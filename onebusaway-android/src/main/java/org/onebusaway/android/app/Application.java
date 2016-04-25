@@ -442,6 +442,9 @@ public class Application extends android.app.Application {
             Open311Manager.getSettings().setDryRun(true);
         }
 
+        // Clear all open311 endpoints
+        Open311Manager.clearOpen311();
+
         // Read the open311 preferences from the region and set
         if (region != null && region.getOpen311Servers() != null) {
             for (ObaRegion.Open311Server open311Server : region.getOpen311Servers()) {
@@ -452,8 +455,6 @@ public class Application extends android.app.Application {
                         TextUtils.isEmpty(jurisdictionId) ? null : jurisdictionId);
                 Open311Manager.initOpen311WithOption(option);
             }
-        } else {
-           Open311Manager.clearOpen311();
         }
     }
 

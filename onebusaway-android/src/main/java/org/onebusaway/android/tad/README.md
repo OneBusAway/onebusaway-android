@@ -24,4 +24,11 @@ When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the TAD
 Service will log all co-ordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
 the "TADLog" folder on your external storage root directory. The filename
-format is <TRIPID>_<DEST_STOP_ID>.txt._
+format is <TRIPID>_<DEST_STOP_ID>.txt.
+
+***Testing***
+Once a a test trip has been generated, drop the generated txt file into
+the resources folder for the androidTest build. Then, in the TADTest
+file, a new test method can be created. In this method, a TADTrip object
+can be instantiated with the CSV string passed into the constructor and
+the runSimulation method called.

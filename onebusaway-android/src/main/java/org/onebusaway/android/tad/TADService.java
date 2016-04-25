@@ -3,6 +3,7 @@ package org.onebusaway.android.tad;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
@@ -159,8 +160,14 @@ public class TADService extends Service
 
     private void writeToLog(Location l) {
         try {
-            String log = String.format("%d,%f,%f,%f,%f,%f,%s\n", l.getTime(), l.getLatitude(),
-                    l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(), l.getProvider());
+            long time = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                time = l.getElapsedRealtimeNanos();
+            }
+
+            String log = String.format("%d,%f,%f,%f,%f,%f,%f,%s\n", time, l.getLatitude(),
+                    l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(),l.getAltitude(),
+                    l.getProvider());
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

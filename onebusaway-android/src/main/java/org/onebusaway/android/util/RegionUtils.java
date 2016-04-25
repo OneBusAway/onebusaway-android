@@ -597,6 +597,8 @@ public class RegionUtils {
         cr.delete(ObaContract.Regions.CONTENT_URI, null, null);
         // Should be a no-op?
         cr.delete(ObaContract.RegionBounds.CONTENT_URI, null, null);
+        // Delete all existing open311 endpoints
+        cr.delete(ObaContract.RegionOpen311Servers.CONTENT_URI, null, null);
 
         for (ObaRegion region : regions) {
             if (!isRegionUsable(region)) {

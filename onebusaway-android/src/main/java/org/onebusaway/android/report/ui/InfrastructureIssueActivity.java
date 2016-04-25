@@ -727,8 +727,9 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         // Create the service list
         List<Service> serviceList = new ArrayList<>();
 
-        // Add services to list
-        if (services != null && services.isSuccess()) {
+        // Add services to list if service response is successful
+        if (services != null && services.isSuccess() &&
+                Open311Manager.isAreaManagedByOpen311(services.getServiceList())) {
             for (Service s: services.getServiceList()) {
                 if (s.getService_name() != null && s.getService_code() != null) {
                     serviceList.add(s);

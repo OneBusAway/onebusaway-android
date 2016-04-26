@@ -703,6 +703,10 @@
         couldn\'t see you in the dark? Try the \"Night light\" via the \"More\" button at the top
         right of the screen.
     </string>
+    <string name="tutorial_send_feedback_title">Tell us what you think</string>
+    <string name="tutorial_send_feedback_text">Help us improve OneBusAway! Tap on \"Send feedback\"
+        in the main navigation panel.
+    </string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

@@ -70,6 +70,8 @@ public class ShowcaseViewUtils {
 
     public static final String TUTORIAL_NIGHT_LIGHT = ".tutorial_night_light";
 
+    public static final String TUTORIAL_SEND_FEEDBACK = ".tutorial_send_feedback";
+
     private static ShowcaseView mShowcaseView;
 
     /**
@@ -276,6 +278,11 @@ public class ShowcaseViewUtils {
                         r.getString(R.string.tutorial_night_light_text));
                 addIcon(activity, text, R.drawable.ic_navigation_more_vert);
                 break;
+            case TUTORIAL_SEND_FEEDBACK:
+                title = r.getString(R.string.tutorial_send_feedback_title);
+                text = new SpannableString(
+                        r.getString(R.string.tutorial_send_feedback_text));
+                break;
             default:
                 throw new IllegalArgumentException(
                         "tutorialType must be one of the TUTORIAL_* constants in ShowcaseViewUtils");
@@ -367,5 +374,6 @@ public class ShowcaseViewUtils {
         PreferenceUtils.saveBoolean(TUTORIAL_SHOW_ARRIVAL_IN_HEADER, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_ROUTE_FILTER, false);
         PreferenceUtils.saveBoolean(TUTORIAL_NIGHT_LIGHT, false);
+        PreferenceUtils.saveBoolean(TUTORIAL_SEND_FEEDBACK, false);
     }
 }

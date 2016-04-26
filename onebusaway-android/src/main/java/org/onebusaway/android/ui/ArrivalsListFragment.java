@@ -503,6 +503,8 @@ public class ArrivalsListFragment extends ListFragment
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_SHOW_ARRIVAL_IN_HEADER,
                         (AppCompatActivity) getActivity(), response);
             }
+            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_SEND_FEEDBACK,
+                    (AppCompatActivity) getActivity(), response);
             ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_NIGHT_LIGHT,
                     (AppCompatActivity) getActivity(), response);
         }

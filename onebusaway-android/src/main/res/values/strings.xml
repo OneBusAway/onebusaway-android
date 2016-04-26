@@ -136,7 +136,7 @@
     <string name="bus_options_menu_edit_reminder">Edit this reminder</string>
     <string name="bus_options_menu_show_only_this_route">Show only this route</string>
     <string name="bus_options_menu_show_route_schedule">Show route schedule</string>
-    <string name="bus_options_menu_report_trip_problem">Report problem with trip</string>
+    <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
     <!--  Stop Info -->
     <string name="stop_info_ontime">On time</string>
@@ -410,7 +410,7 @@
     <string name="report_problem_onvehicle_bus">Are you on this bus?</string>
     <string name="report_problem_uservehicle_hint">Bus number (optional)</string>
     <string name="report_problem_stop_activity_label">Report Stop Problem</string>
-    <string name="report_problem_trip_activity_label">Report Trip Problem</string>
+    <string name="report_problem_trip_activity_label">Report Arrival Time Problem</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">

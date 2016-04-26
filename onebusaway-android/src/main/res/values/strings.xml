@@ -106,7 +106,9 @@
         <b>Live buses on the map</b>
         - Tap on arrival times and choose \"Show route on map\"!\n&#8226;\u0020
         <b>Live trip status</b>
-        - Tap on arrival times and choose \"Show trip status\"!
+        - Tap on arrival times and choose \"Show trip status\"!\n&#8226;\u0020
+        <b>Improved feedback process</b>
+        - Tap \"Send feedback\" in the navigation drawer.
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>

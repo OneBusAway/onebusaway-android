@@ -135,7 +135,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report problem with trip");
+        assertEquals(options.get(6), "Report arrival time problem");
 
         isReminderVisible = true;
 
@@ -148,7 +148,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report problem with trip");
+        assertEquals(options.get(6), "Report arrival time problem");
 
         // Get a PSTA response - PSTA test data doesn't include route schedule URLs
         ObaArrivalInfoResponse response2 =
@@ -182,7 +182,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(5), "Report arrival time problem");
 
         isReminderVisible = true;
 
@@ -194,7 +194,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(5), "Report arrival time problem");
 
         // Now change route to favorite, and do all the above over again
         isRouteFavorite = true;
@@ -212,7 +212,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report problem with trip");
+        assertEquals(options.get(6), "Report arrival time problem");
 
         isReminderVisible = true;
 
@@ -225,7 +225,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Show route schedule");
-        assertEquals(options.get(6), "Report problem with trip");
+        assertEquals(options.get(6), "Report arrival time problem");
 
         // PSTA
         isReminderVisible = false;  // We don't have views here, so just fake it
@@ -239,7 +239,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Set a reminder");
         assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(5), "Report arrival time problem");
 
         isReminderVisible = true;
 
@@ -251,7 +251,7 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(2), "Show trip status");
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
-        assertEquals(options.get(5), "Report problem with trip");
+        assertEquals(options.get(5), "Report arrival time problem");
     }
 
     public void testArrivalTimeIndexSearch() {

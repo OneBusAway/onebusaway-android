@@ -938,11 +938,6 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        // If we're showing a tutorial, we don't want the user to be able to use the back button
-        if (ShowcaseViewUtils.isShowcaseViewShowing()) {
-            return;
-        }
-
         // Collapse the panel when the user presses the back button
         if (mSlidingPanel != null) {
             // Collapse the sliding panel if its anchored or expanded

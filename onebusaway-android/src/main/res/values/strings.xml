@@ -139,6 +139,7 @@
     <string name="bus_options_menu_report_trip_problem">Report arrival time problem</string>
 
     <!--  Stop Info -->
+    <string name="stop_info_code">#%1$s</string>
     <string name="stop_info_ontime">On time</string>
     <string name="stop_info_arrived_ontime">Arrived on time</string>
     <string name="stop_info_departed_ontime">Departed on time</string>

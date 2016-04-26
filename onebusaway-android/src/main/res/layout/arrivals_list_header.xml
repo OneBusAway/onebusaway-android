@@ -183,6 +183,20 @@
                         android:textIsSelectable="false"
                         android:layout_marginLeft="1dp"/>
 
+                <TextView
+                        android:id="@+id/stop_code"
+                        android:textSize="14sp"
+                        android:text="#3105"
+                        android:textColor="@color/header_text_faded_color"
+                        android:ellipsize="none"
+                        android:singleLine="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left|center_vertical"
+                        android:layout_weight=".05"
+                        android:textIsSelectable="false"
+                        android:layout_marginLeft="5dp"/>
+
                 <ImageButton
                         android:id="@+id/stop_info_button"
                         android:background="?attr/selectableItemBackground"

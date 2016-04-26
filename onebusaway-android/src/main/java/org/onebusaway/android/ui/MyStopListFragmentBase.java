@@ -136,12 +136,15 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         private final String uiName;
 
+        private final String code;
+
         public StopData(Cursor c, int row) {
             c.moveToPosition(row);
             id = c.getString(COL_ID);
             name = c.getString(COL_NAME);
             dir = c.getString(COL_DIRECTION);
             uiName = c.getString(COL_UI_NAME);
+            code = c.getString(COL_CODE);
         }
 
         public String getId() {
@@ -160,10 +163,15 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
             return uiName;
         }
 
+        public String getCode() {
+            return code;
+        }
+
         public ArrivalsListActivity.Builder getArrivalsList() {
             return new ArrivalsListActivity.Builder(getActivity(), id)
                     .setStopName(name)
-                    .setStopDirection(dir);
+                    .setStopDirection(dir)
+                    .setStopCode(code);
         }
     }
 }

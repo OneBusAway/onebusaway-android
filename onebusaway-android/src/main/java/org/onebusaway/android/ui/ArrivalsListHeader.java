@@ -78,6 +78,8 @@ class ArrivalsListHeader {
 
         String getStopId();
 
+        String getStopCode();
+
         void setUserStopName(String userName);
 
         long getLastGoodResponseTime();
@@ -145,6 +147,8 @@ class ArrivalsListHeader {
     private View mEditNameContainerView;
 
     private TextView mNameView;
+
+    private TextView mStopCodeView;
 
     private EditText mEditNameView;
 
@@ -315,6 +319,7 @@ class ArrivalsListHeader {
         mNameContainerView = mView.findViewById(R.id.stop_name_and_info_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
+        mStopCodeView = (TextView) mView.findViewById(R.id.stop_code);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
@@ -632,11 +637,19 @@ class ArrivalsListHeader {
     private void refreshName() {
         String name = mController.getStopName();
         String userName = mController.getUserStopName();
+        String code = mController.getStopCode();
 
         if (!TextUtils.isEmpty(userName)) {
             mNameView.setText(userName);
         } else if (name != null) {
             mNameView.setText(name);
+        }
+
+        if (!TextUtils.isEmpty(code)) {
+            mStopCodeView.setText(mContext.getString(R.string.stop_info_code, code));
+            mStopCodeView.setVisibility(View.VISIBLE);
+        } else {
+            mStopCodeView.setVisibility(View.GONE);
         }
     }
 

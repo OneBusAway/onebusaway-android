@@ -23,7 +23,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.report.connection.GeocoderTaskTemp;
+import org.onebusaway.android.report.connection.GeocoderTask;
 import org.onebusaway.android.report.connection.ServiceListTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.adapter.EntrySpinnerAdapter;
@@ -76,7 +76,7 @@ import edu.usf.cutr.open311client.models.ServiceListResponse;
 public class InfrastructureIssueActivity extends BaseReportActivity implements
         BaseMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
         ReportProblemFragmentBase.OnProblemReportedListener, IssueLocationHelper.Callback,
-        SimpleArrivalListFragment.Callback, GeocoderTaskTemp.Callback {
+        SimpleArrivalListFragment.Callback, GeocoderTask.Callback {
 
     private static final String SHOW_STOP_MARKER = ".showMarker";
 
@@ -567,7 +567,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * @param location takes location object
      */
     private void syncAddressString(Location location) {
-        GeocoderTaskTemp gct = new GeocoderTaskTemp(this, location, this);
+        GeocoderTask gct = new GeocoderTask(this, location, this);
         gct.execute();
     }
 

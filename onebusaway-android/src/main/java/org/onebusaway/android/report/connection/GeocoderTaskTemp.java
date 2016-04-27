@@ -24,7 +24,7 @@ import android.os.AsyncTask;
 import java.util.List;
 import java.util.Locale;
 
-public class GeoCoderTask extends AsyncTask<Void, Integer, String> {
+public class GeocoderTaskTemp extends AsyncTask<Void, Integer, String> {
 
     private Callback mCallback;
 
@@ -33,15 +33,16 @@ public class GeoCoderTask extends AsyncTask<Void, Integer, String> {
     private Context mContext;
 
     public interface Callback {
+
         /**
-         * Called when the GeoCoderTask is complete
+         * Called when the GeocoderTask is complete
          *
          * @param address the address string from given location
          */
-        void onGeoCoderTaskCompleted(String address);
+        void onGeocoderTaskCompleted(String address);
     }
 
-    public GeoCoderTask(Callback callback, Location location, Context context) {
+    public GeocoderTaskTemp(Callback callback, Location location, Context context) {
         this.mCallback = callback;
         this.mLocation = location;
         this.mContext = context;
@@ -76,6 +77,6 @@ public class GeoCoderTask extends AsyncTask<Void, Integer, String> {
 
     @Override
     protected void onPostExecute(String s) {
-        mCallback.onGeoCoderTaskCompleted(s);
+        mCallback.onGeocoderTaskCompleted(s);
     }
 }

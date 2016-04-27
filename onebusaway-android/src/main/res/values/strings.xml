@@ -563,28 +563,26 @@
     <string name="report_dialog_trip"> Please select an arrival time.</string>
 
     <!-- report issue screen-->
-    <string name="ri_desc">Issue Description</string>
+    <string name="ri_desc_hint">Issue description</string>
     <string name="ri_button_camera">Camera</string>
     <string name="ri_button_image">ADD IMAGE</string>
     <string name="ri_button_gallery">Gallery</string>
     <string name="ri_address_not_found">Address not found. Please check your address.</string>
-    <string name="ri_location_problem_info">Error getting location, please tap on map</string>
-    <string name="ri_location_problem">Error getting location</string>
     <string name="ri_service_description_problem">Service description could not be found.</string>
     <string name="ri_service_default">Choose a Problem</string>
     <string name="ri_service_stop">Stop Problem</string>
     <string name="ri_service_trip">Arrival Time Problem</string>
-    <string name="ri_user_name">First Name</string>
-    <string name="ri_user_lastname">Last Name</string>
-    <string name="ri_user_email">Email</string>
-    <string name="ri_user_phone">Phone Number</string>
+    <string name="ri_user_name_hint">First name</string>
+    <string name="ri_user_lastname_hint">Last name</string>
+    <string name="ri_user_email_hint">Email</string>
+    <string name="ri_user_phone_hint">Phone number</string>
     <string name="ri_no_trip">No arrival times, please check back later.</string>
     <string name="ri_anonymous_checkbox">Keep it anonymous</string>
     <string name="ri_submitting_message">Submitting your report</string>
     <string name="ri_unsuccessful_submit">An error occurred during submission, please try again later.</string>
 
     <!-- report issue types screen-->
-    <!-- Remote rt_infrastructure_problem and use rt_stop_problem -->
+    <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
     <string name="rt_infrastructure_problem">Report a Stop Problem</string>
     <string name="rt_customer_service">Contact Customer Service</string>
     <string name="rt_stop_problem">Report a Stop Problem</string>
@@ -600,6 +598,7 @@
     <string name="rt_message_arrival_problem">Vehicle never came, wrong arrival time, etc.</string>
     <string name="rt_message_app_feedback">App crash, bugs, etc.</string>
     <string name="rt_message_ideas">New ideas for future improvements</string>
+    <string name="rt_address_hint">Address of problem (optional)</string>
 
     <!-- Tutorial Fragment -->
     <string name="pager_button_prev">Previous</string>

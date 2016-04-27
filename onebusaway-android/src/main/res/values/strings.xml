@@ -596,8 +596,8 @@
     <string name="rt_message_customer_service">Driver compliments and complaints, lost &amp; found, etc.</string>
     <string name="rt_message_stop_problem">Missing route, wrong stop name, etc.</string>
     <string name="rt_message_arrival_problem">Vehicle never came, wrong arrival time, etc.</string>
-    <string name="rt_message_app_feedback">App crash, bugs, etc.</string>
-    <string name="rt_message_ideas">New ideas for future improvements</string>
+    <string name="rt_message_app_feedback">Design, bugs, etc.</string>
+    <string name="rt_message_ideas">Submit and vote on future improvements</string>
     <string name="rt_address_hint">Address of problem (optional)</string>
 
     <!-- Tutorial Fragment -->

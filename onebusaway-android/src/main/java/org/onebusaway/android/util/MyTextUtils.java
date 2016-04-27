@@ -49,4 +49,30 @@ public final class MyTextUtils {
 
         return builder.toString();
     }
+
+    /**
+     * Converts the given string to sentence case, where the first
+     * letter is capitalized and the rest of the string is in
+     * lower case.
+     *
+     * @param inputVal The string to convert.
+     * @return The converted string.
+     */
+    public static String toSentenceCase(String inputVal) {
+        if (inputVal == null)
+            return null;
+
+        if (inputVal.length() == 0)
+            return "";
+
+        // Strings with only one character uppercased.
+
+        if (inputVal.length() == 1)
+            return inputVal.toUpperCase();
+
+        // Otherwise uppercase first letter, lowercase the rest.
+
+        return inputVal.substring(0, 1).toUpperCase()
+                + inputVal.substring(1).toLowerCase();
+    }
 }

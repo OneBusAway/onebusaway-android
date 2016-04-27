@@ -139,7 +139,7 @@
                             android:inputType="textPostalAddress"
                             android:maxLines="2"
                             style="@style/MaterialItem"
-                            android:hint="Address"/>
+                            android:hint="@string/rt_address_hint"/>
 
                 </FrameLayout>
 

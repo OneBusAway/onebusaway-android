@@ -42,7 +42,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:id="@+id/ri_editTextDesc"
-                    android:hint="@string/ri_desc"
+                    android:hint="@string/ri_desc_hint"
+                    android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="4"
                     android:lines="2"
                     style="@style/MaterialItem"/>
@@ -132,7 +133,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:hint="@string/ri_user_name"
+                    android:hint="@string/ri_user_name_hint"
                     android:ems="10"
                     android:id="@+id/rici_name_editText"
                     style="@style/MaterialItem"
@@ -152,7 +153,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:hint="@string/ri_user_lastname"
+                    android:hint="@string/ri_user_lastname_hint"
                     android:ems="10"
                     android:id="@+id/rici_lastname_editText"
                     style="@style/MaterialItem"/>
@@ -174,7 +175,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress"
                     android:ems="10"
-                    android:hint="@string/ri_user_email"
+                    android:hint="@string/ri_user_email_hint"
                     style="@style/MaterialItem"
                     android:id="@+id/rici_email_editText" />
 
@@ -196,7 +197,7 @@
                     android:layout_height="wrap_content"
                     android:inputType="phone"
                     android:ems="10"
-                    android:hint="@string/ri_user_phone"
+                    android:hint="@string/ri_user_phone_hint"
                     style="@style/MaterialItem"
                     android:id="@+id/rici_phone_editText" />
 

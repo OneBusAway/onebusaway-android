@@ -28,6 +28,7 @@ import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
 import org.onebusaway.android.report.ui.model.AttributeValue;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
+import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -121,6 +122,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     // Open311 service description result for selected service code
     private ServiceDescription mServiceDescription;
+
+    // Store ServiceDescription Task Result if host activity haven't been created
+    private ServiceDescription mServiceDescriptionTaskResult;
 
     // Load dynamic open311 fields into info layout
     private LinearLayout mInfoLayout;
@@ -227,6 +231,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         if (mArrivalInfo != null) {
             outState.putSerializable(TRIP_INFO, mArrivalInfo);
         }
+        if (mIsProgressDialogShowing) {
+            // Dismiss the progress dialog when orientation change to prevent leaked window
+            mProgressDialog.dismiss();
+        }
         outState.putBoolean(SHOW_PROGRESS_DIALOG, mIsProgressDialogShowing);
         outState.putString(AGENCY_NAME, mAgencyName);
     }
@@ -259,6 +267,21 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     public void onStart() {
         super.onStart();
         ObaAnalytics.reportFragmentStart(this);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (mServiceDescriptionTaskResult != null) {
+            // Reload service description task if the activity restored
+            this.onServiceDescriptionTaskCompleted(mServiceDescriptionTaskResult);
+            mServiceDescriptionTaskResult = null;
+        }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
     }
 
     /**
@@ -347,13 +370,17 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      */
     @Override
     public void onServiceDescriptionTaskCompleted(ServiceDescription serviceDescription) {
-        showProgress(Boolean.FALSE);
-        if (serviceDescription.isSuccess()) {
-            createServiceDescriptionUI(serviceDescription);
+        if (isActivityAttached()) {
+            showProgress(Boolean.FALSE);
+            if (serviceDescription.isSuccess()) {
+                createServiceDescriptionUI(serviceDescription);
+            } else {
+                createToastMessage(getString(R.string.ri_service_description_problem));
+                // Close open311 fragment
+                ((InfrastructureIssueActivity) getActivity()).removeOpen311ProblemFragment();
+            }
         } else {
-            createToastMessage(getString(R.string.ri_service_description_problem));
-            // Close open311 fragment
-            ((InfrastructureIssueActivity) getActivity()).removeOpen311ProblemFragment();
+            mServiceDescriptionTaskResult = serviceDescription;
         }
     }
 
@@ -755,10 +782,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         ImageView icon = ((ImageView) layout.findViewById(R.id.ri_ic_question_answer));
         icon.setColorFilter(getResources().getColor(R.color.material_gray));
 
-        Spannable desc = new SpannableString(open311Attribute.getDescription());
+        Spannable desc = new SpannableString(MyTextUtils.toSentenceCase(open311Attribute.getDescription()));
         EditText editText = ((EditText) layout.findViewById(R.id.riti_editText));
         if (open311Attribute.getRequired()) {
-            Spannable req = new SpannableString("(Required)");
+            Spannable req = new SpannableString("(required)");
             req.setSpan(new ForegroundColorSpan(Color.RED), 0, req.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             editText.setHint(TextUtils.concat(desc, " ", req));
         } else {
@@ -1012,7 +1039,12 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     private String getCurrentAddress() {
-        return ((InfrastructureIssueActivity) getActivity()).getCurrentAddress();
+        String address = ((InfrastructureIssueActivity) getActivity()).getCurrentAddress();
+        if (TextUtils.isEmpty(address)) {
+            return null;
+        } else {
+            return address;
+        }
     }
 
     /**
@@ -1021,7 +1053,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      * @param visible show or hide the progress icon based
      */
     private void showProgress(Boolean visible) {
-        ((InfrastructureIssueActivity) getActivity()).showProgress(visible);
+        InfrastructureIssueActivity activity = ((InfrastructureIssueActivity) getActivity());
+        if (activity != null) {
+            activity.showProgress(visible);
+        }
     }
 
     /**
@@ -1053,6 +1088,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mIsProgressDialogShowing = false;
             mProgressDialog.dismiss();
         }
+    }
+
+    private boolean isActivityAttached() {
+        return getActivity() != null;
     }
 
     public void setOpen311(Open311 open311) {

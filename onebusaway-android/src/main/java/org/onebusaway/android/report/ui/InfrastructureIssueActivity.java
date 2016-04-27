@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.elements.ObaStopElement;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.report.connection.GeoCoderTask;
 import org.onebusaway.android.report.connection.ServiceListTask;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.adapter.EntrySpinnerAdapter;
@@ -44,7 +45,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -64,7 +64,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -77,7 +76,7 @@ import edu.usf.cutr.open311client.models.ServiceListResponse;
 public class InfrastructureIssueActivity extends BaseReportActivity implements
         BaseMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
         ReportProblemFragmentBase.OnProblemReportedListener, IssueLocationHelper.Callback,
-        SimpleArrivalListFragment.Callback {
+        SimpleArrivalListFragment.Callback, GeoCoderTask.Callback {
 
     private static final String SHOW_STOP_MARKER = ".showMarker";
 
@@ -469,6 +468,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     /**
      * Set action bar title by issue type
+     *
      * @param issueType could be stop, trip, dynamic_stop or dynamic_trip
      */
     private void setActionBarTitle(String issueType) {
@@ -480,6 +480,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             setTitle(getString(R.string.rt_infrastructure_problem_title));
         }
     }
+
     private void setupIconColors() {
         ((ImageView) findViewById(R.id.ri_ic_location)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
@@ -532,22 +533,15 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * @param location current issue location
      */
     private void syncAddress(Location location) {
-        String address = getAddressByLocation(location);
-        mAddressEditText.setText(address);
+        syncAddressString(location);
 
         showProgress(Boolean.TRUE);
 
         ServiceListRequest slr = new ServiceListRequest(location.getLatitude(), location.getLongitude());
-        slr.setAddress(address);
 
         List<Open311> open311List = Open311Manager.getAllOpen311();
         ServiceListTask serviceListTask = new ServiceListTask(slr, open311List, this);
         serviceListTask.execute();
-    }
-
-    private void syncAddressString(Location location) {
-        String address = getAddressByLocation(location);
-        mAddressEditText.setText(address);
     }
 
     /**
@@ -571,33 +565,10 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * Calculates the address of a given location
      *
      * @param location takes location object
-     * @return the current address in String
      */
-    private String getAddressByLocation(Location location) {
-        showProgress(Boolean.TRUE);
-        String address = null;
-        try {
-            Geocoder geo = new Geocoder(getApplicationContext(), Locale.getDefault());
-            List<Address> addresses = geo.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-            if (addresses.isEmpty()) {
-                address = getString(R.string.ri_location_problem);
-                addInfoText(getString(R.string.ri_location_problem_info));
-            } else if (addresses.size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                int addressLine = addresses.get(0).getMaxAddressLineIndex();
-                for (int i = 0; i < addressLine - 1; i++) {
-                    sb.append(addresses.get(0).getAddressLine(i)).append(", ");
-                }
-                sb.append(addresses.get(0).getAddressLine(addressLine - 1)).append(".");
-                address = sb.toString();
-            }
-        } catch (Exception e) {
-            address = getString(R.string.ri_location_problem);
-            addInfoText(getString(R.string.ri_location_problem_info));
-            e.printStackTrace();
-        }
-        showProgress(Boolean.FALSE);
-        return address;
+    private void syncAddressString(Location location) {
+        GeoCoderTask gct = new GeoCoderTask(this, location, this);
+        gct.execute();
     }
 
     /**
@@ -719,6 +690,16 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     /**
+     * Called when geo coder converts the location to an address string
+     *
+     * @param address the address string from given location
+     */
+    @Override
+    public void onGeoCoderTaskCompleted(String address) {
+        mAddressEditText.setText(address);
+    }
+
+    /**
      * Prepares the service lists and shows as categories in the screen
      * Adds static service categories (stop and trip problems) if they are
      * not specified by open311 endpoint
@@ -730,7 +711,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         // Add services to list if service response is successful
         if (services != null && services.isSuccess() &&
                 Open311Manager.isAreaManagedByOpen311(services.getServiceList())) {
-            for (Service s: services.getServiceList()) {
+            for (Service s : services.getServiceList()) {
                 if (s.getService_name() != null && s.getService_code() != null) {
                     serviceList.add(s);
                 }
@@ -750,10 +731,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             if (mIssueLocationHelper.getObaStop() == null) {
                 hideServicesSpinner();
                 // Show information to the user if there is no error on location
-                String infoText = ((TextView) findViewById(R.id.ri_info_text)).getText().toString();
-                if (!getString(R.string.ri_location_problem_info).equalsIgnoreCase(infoText)) {
-                    addInfoText(getString(R.string.report_dialog_out_of_region_message));
-                }
+                addInfoText(getString(R.string.report_dialog_out_of_region_message));
             }
         }
 
@@ -821,6 +799,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     /**
      * Programmatically select a issue category on rotation
+     *
      * @param spinnerItems the issue services loaded into the services spinner
      */
     private void restoreSelection(ArrayList<SpinnerItem> spinnerItems) {

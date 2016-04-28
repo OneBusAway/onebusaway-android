@@ -115,8 +115,9 @@
     <string name="main_help_legend_ontime">Green means \"On time\"</string>
     <string name="main_help_legend_late">Blue means \"Running late\"</string>
     <string name="main_help_legend_early">Red means \"Running early\"</string>
-    <string name="main_help_legend_scheduled">Gray means \"Scheduled arrival\" (no real-time vehicle
-    information is available)</string>
+    <string name="main_help_legend_scheduled">Gray means \"Scheduled arrival\" - We don\'t know
+        where the bus is now, but the schedule says there is an upcoming arrival
+    </string>
     <string name="main_nolocation_title">Location not enabled</string>
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
         now?

@@ -328,6 +328,12 @@ public class HomeActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onPause() {
+        ShowcaseViewUtils.hideShowcaseView();
+        super.onPause();
+    }
+
+    @Override
     public void onStop() {
         // Tear down GoogleApiClient
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {

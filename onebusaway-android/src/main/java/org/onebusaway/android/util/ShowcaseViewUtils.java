@@ -316,6 +316,15 @@ public class ShowcaseViewUtils {
     }
 
     /**
+     * Hides a currently showing ShowcaseView
+     */
+    public static void hideShowcaseView() {
+        if (mShowcaseView != null) {
+            mShowcaseView.hide();
+        }
+    }
+
+    /**
      * Adds the provided icon to the right side of the provided SpannableString
      *
      * @param text             SpannableString to add sort icon to

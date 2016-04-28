@@ -20,6 +20,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
@@ -168,6 +169,12 @@ public class ArrivalsListActivity extends AppCompatActivity {
             }
             ft.commit();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        ShowcaseViewUtils.hideShowcaseView();
+        super.onPause();
     }
 
     @Override

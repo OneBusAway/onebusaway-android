@@ -556,7 +556,7 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <!-- Issue reporting implementation-->
-    <string name="region_dialog_message"> Are you in %1$s</string>
+    <string name="region_dialog_message">Are you in the %1$s region?</string>
     <string name="preference_region_dialog_message"> Your region is currently set to %1$s.
     If we got this wrong, please tap on \'Your Region\' to change it!</string>
     <string name="preference_region_dialog_title">Please check region</string>

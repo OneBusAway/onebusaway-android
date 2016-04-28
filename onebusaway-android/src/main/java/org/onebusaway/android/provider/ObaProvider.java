@@ -238,7 +238,7 @@ public class ObaProvider extends ContentProvider {
             }
             if (oldVersion == 24) {
                 db.execSQL(
-                        "CREATE TABLE" +
+                        "CREATE TABLE " +
                                 ObaContract.NavStops.PATH + " (" +
                                 ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                                 + ObaContract.NavStops.NAV_ID + " VARCHAR NOT NULL, "

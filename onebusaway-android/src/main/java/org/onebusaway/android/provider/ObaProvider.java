@@ -28,12 +28,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
 public class ObaProvider extends ContentProvider {
+
+    public static final String TAG = "ObaProvider";
 
     /**
      * The database name cannot be changed.  It needs to remain the same to support backwards
@@ -57,6 +60,7 @@ public class ObaProvider extends ContentProvider {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.d(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
             if (oldVersion < 12) {
                 dropTables(db);
                 bootstrapDatabase(db);
@@ -222,6 +226,19 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.RegionOpen311Servers.BASE_URL + " VARCHAR NOT NULL " +
                                 ");");
             }
+        }
+
+        @Override
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            /**
+             * See #473 - This can happen if the user does a backup of stops/routes, updates to a
+             * new version of the app that includes a database upgrade, and then tries to restore
+             * the backup.  This is because our current backup/restore mechanism is simply copying
+             * the database. In this case, we should try to make sure the schema is current so no
+             * code fails on missing tables or columns.
+             */
+            Log.d(TAG, "Downgrading database from version " + oldVersion + " to " + newVersion);
+            onUpgrade(db, newVersion, newVersion);
         }
 
         private void bootstrapDatabase(SQLiteDatabase db) {

@@ -105,6 +105,8 @@
     <string name="analytics_label_experimental">Show Experimental Regions:\u0020</string>
     <string name="analytics_label_button_press_auto">Set region automatically</string>
     <string name="analytics_label_button_press_manual">Set region manually</string>
+    <string name="analytics_label_button_press_save_preference">Clicked Save to Storage</string>
+    <string name="analytics_label_button_press_restore_preference">Clicked Restore from Storage</string>
     <string name="analytics_label_edit_field">Edited Bookmark</string>
     <string name="analytics_label_edit_field_bookmark_delete">Edited Bookmark Group Deleted</string>
     <string name="analytics_label_set_region">Set Region:\u0020</string>

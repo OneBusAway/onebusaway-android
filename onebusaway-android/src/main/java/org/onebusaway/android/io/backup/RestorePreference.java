@@ -16,6 +16,7 @@
 package org.onebusaway.android.io.backup;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -86,6 +87,9 @@ public class RestorePreference extends Preference {
 
     void doRestore() {
         Context context = getContext();
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                context.getString(R.string.analytics_action_button_press),
+                context.getString(R.string.analytics_label_button_press_restore_preference));
         try {
             Backup.restore(context);
             Toast.makeText(context,

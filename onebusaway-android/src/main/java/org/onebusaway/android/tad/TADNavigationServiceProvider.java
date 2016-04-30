@@ -85,7 +85,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
             mTTS = new TextToSpeech(Application.get().getApplicationContext(), this);
         } else {
             String message = Application.get().getString(R.string.voice_starting_trip);
-            Speak(message, TextToSpeech.QUEUE_FLUSH);
+            speak(message, TextToSpeech.QUEUE_FLUSH);
         }
         mTripId = tripId;
         mStopId = stopId;
@@ -632,7 +632,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
             mTTS.setLanguage(Locale.getDefault());
             mTTS.setSpeechRate(0.75f);
             if (!resuming) {
-                Speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH);
+                speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH);
             }
         }
     }
@@ -708,7 +708,10 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
             String message = Application.get().getString(R.string.voice_get_ready);
             for (int i = 0; i < GET_READY_REPEAT; i++) {
-                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
+                speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
+                if (i < GET_READY_REPEAT-1) {
+                    silence(500, TextToSpeech.QUEUE_ADD);
+                }
             }
 
             mBuilder.setContentText(message);
@@ -731,7 +734,10 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
             String message = Application.get().getString(R.string.voice_pull_cord);
             // TODO: Slow down voice commands, add count as property.
             for (int i = 0; i < PULL_CORD_REPEAT; i++) {
-                Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
+                speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
+                if (i < PULL_CORD_REPEAT-1) {
+                    silence(500, TextToSpeech.QUEUE_ADD);
+                }
             }
             mBuilder.setContentText(message);
             mBuilder.setVibrate(VIBRATION_PATTERN);
@@ -761,11 +767,24 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      * @param message   Message to be spoken.
      * @param queueFlag Flag to use when adding message to queue.
      */
-    private void Speak(String message, int queueFlag) {
+    private void speak(String message, int queueFlag) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mTTS.speak(message, queueFlag, null, "TRIPMESSAGE");
         } else {
             mTTS.speak(message, queueFlag, null);
+        }
+    }
+
+    /**
+     * Play silence for specified duration.
+     * @param duration Time in ms to play silence.
+     * @param queueFlag Flag to use when adding to the queue.
+     */
+    private void silence(long duration, int queueFlag) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mTTS.playSilentUtterance(duration, queueFlag,"TRIPSILENCE");
+        } else {
+            mTTS.playSilence(duration, queueFlag, null);
         }
     }
 }

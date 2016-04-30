@@ -42,6 +42,10 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
 
     private static final int DISTANCE_THRESHOLD = 200;
 
+    // Number of times to repeat voice commands.
+    private static final int PULL_CORD_REPEAT = 10;
+    private static final int GET_READY_REPEAT = 2;
+
 
     public TADProximityCalculator mProxListener;
 
@@ -626,6 +630,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             mTTS.setLanguage(Locale.getDefault());
+            mTTS.setSpeechRate(0.75f);
             if (!resuming) {
                 Speak(Application.get().getString(R.string.voice_starting_trip), TextToSpeech.QUEUE_FLUSH);
             }
@@ -702,7 +707,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                     0, receiverIntent, 0);
 
             String message = Application.get().getString(R.string.voice_get_ready);
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < GET_READY_REPEAT; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
             }
 
@@ -724,7 +729,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
                     0, receiverIntent, 0);
 
             String message = Application.get().getString(R.string.voice_pull_cord);
-            for (int i = 0; i < 10; i++) {
+            // TODO: Slow down voice commands, add count as property.
+            for (int i = 0; i < PULL_CORD_REPEAT; i++) {
                 Speak(message, i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD);
             }
             mBuilder.setContentText(message);

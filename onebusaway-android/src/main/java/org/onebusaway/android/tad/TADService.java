@@ -160,14 +160,20 @@ public class TADService extends Service
 
     private void writeToLog(Location l) {
         try {
-            long time = 0;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                time = l.getElapsedRealtimeNanos();
+            String nanoTime = "";
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                nanoTime = Long.toString(l.getElapsedRealtimeNanos());
             }
 
-            String log = String.format("%d,%f,%f,%f,%f,%f,%f,%s\n", time, l.getLatitude(),
-                    l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(),l.getAltitude(),
-                    l.getProvider());
+            int satellites = 0;
+            if (l.getExtras() != null) {
+                satellites = l.getExtras().getInt("satellites", 0);
+            }
+
+            // TODO: Add isMockProvider
+            String log = String.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", nanoTime, l.getTime(),
+                    l.getLatitude(), l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(),
+                    l.getAccuracy(), satellites, l.getProvider());
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

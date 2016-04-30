@@ -2,6 +2,7 @@ package org.onebusaway.android.tad.test;
 
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.util.Log;
 
 import org.apache.commons.io.IOUtils;
@@ -94,16 +95,22 @@ public class TADTest extends ObaTestCase {
             // time,lat,lng,altitude,speed,bearing,provider.
             for (int i = 1; i < lines.length; i++) {
                 String[] values = lines[i].split(",");
-                long time = Long.parseLong(values[0]);
-                double lat = Double.parseDouble(values[1]);
-                double lng = Double.parseDouble(values[2]);
-                double altitude = Double.parseDouble(values[3]);
-                float speed = Float.parseFloat(values[4]);
-                float bearing = Float.parseFloat(values[5]);
-                float accuracy = Float.parseFloat(values[6]);
-                String provider = values[7];
+                String nanosStr = values[0];
+                long time = Long.parseLong(values[1]);
+                double lat = Double.parseDouble(values[2]);
+                double lng = Double.parseDouble(values[3]);
+                double altitude = Double.parseDouble(values[4]);
+                float speed = Float.parseFloat(values[5]);
+                float bearing = Float.parseFloat(values[6]);
+                float accuracy = Float.parseFloat(values[7]);
+                int sats = Integer.parseInt(values[8]);
+                String provider = values[9];
 
                 mPoints[i - 1] = new Location(provider);
+                if (!nanosStr.equals("") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                {
+                    mPoints[i - 1].setElapsedRealtimeNanos(Long.parseLong(nanosStr));
+                }
                 mPoints[i - 1].setTime(time);
                 mPoints[i - 1].setLatitude(lat);
                 mPoints[i - 1].setLongitude(lng);

@@ -32,3 +32,12 @@ the resources folder for the androidTest build. Then, in the TADTest
 file, a new test method can be created. In this method, a TADTrip object
 can be instantiated with the CSV string passed into the constructor and
 the runSimulation method called.
+
+***Idea Wishlist***
+- Favorite Trips: Allow person to bookmark a favorite TAD Trip. This 
+would involve storing a combo of the starting stop, destination stop &
+the trip Id. However, since Trip IDs are not persistent and are subject
+to expiration, a way to uniquely identify trips is needed.
+
+- Multi-Legged Trips: Maybe something for OTP, but have multi-bus
+trips. TAD already supports it by passing in an array of segments.

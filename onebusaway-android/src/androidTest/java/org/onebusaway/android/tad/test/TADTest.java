@@ -63,6 +63,8 @@ public class TADTest extends ObaTestCase {
         int getReadyIndex = -1;                    //  Index which getReady should be triggered.
         int finishedIndex = -1;                    //  Index which finished should be triggered.
 
+        boolean useElapsedNanos = false;           // Should use elapsed nanos instead of time.
+
         /**
          * Constructor
          *
@@ -109,8 +111,10 @@ public class TADTest extends ObaTestCase {
                 mPoints[i - 1] = new Location(provider);
                 if (!nanosStr.equals("") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 {
+                    useElapsedNanos = true;
                     mPoints[i - 1].setElapsedRealtimeNanos(Long.parseLong(nanosStr));
                 }
+
                 mPoints[i - 1].setTime(time);
                 mPoints[i - 1].setLatitude(lat);
                 mPoints[i - 1].setLongitude(lng);
@@ -129,11 +133,18 @@ public class TADTest extends ObaTestCase {
                 }
             }
 
-            // Compute time differences between readings
-            // in ms.
+            // Compute time differences between readings in ms, if realtime ns is available, use it
+            // else use getTime.
             mTimes = new long[mPoints.length];
-            for (int i = 1; i < mPoints.length; i++) {
-                mTimes[i] = mPoints[i].getTime() - mPoints[i - 1].getTime();
+            if (useElapsedNanos && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                for (int i = 1; i < mPoints.length; i++) {
+                    mTimes[i] = (mPoints[i].getElapsedRealtimeNanos() - mPoints[i-1].getElapsedRealtimeNanos());
+                    mTimes[i] /= 1000000;
+                }
+            } else {
+                for (int i = 1; i < mPoints.length; i++) {
+                    mTimes[i] = mPoints[i].getTime() - mPoints[i - 1].getTime();
+                }
             }
         }
 

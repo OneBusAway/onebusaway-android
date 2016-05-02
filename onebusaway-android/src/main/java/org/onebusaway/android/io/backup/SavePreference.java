@@ -16,6 +16,7 @@
 package org.onebusaway.android.io.backup;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaAnalytics;
 
 import android.content.Context;
 import android.os.Environment;
@@ -57,12 +58,14 @@ public class SavePreference extends Preference {
     @Override
     protected void onClick() {
         Context context = getContext();
+        ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                context.getString(R.string.analytics_action_button_press),
+                context.getString(R.string.analytics_label_button_press_save_preference));
         try {
             Backup.backup(context);
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_saved),
                     Toast.LENGTH_LONG).show();
-
         } catch (IOException e) {
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_save_error, e.getMessage()),

@@ -114,7 +114,15 @@ public class TADService extends Service
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Location Updated");
-        if (LocationUtils.isDuplicate(mLastLocation, location)) {
+        if (mLastLocation == null) {
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                writeToLog(location);
+            }
+
+            if (mLastLocation != null) {
+                mNavProvider.locationUpdated(location);
+            }
+        } else if (LocationUtils.isDuplicate(mLastLocation, location)) {
             if (BuildConfig.TAD_GPS_LOGGING) {
                 writeToLog(location);
             }
@@ -171,7 +179,7 @@ public class TADService extends Service
             }
 
             // TODO: Add isMockProvider
-            String log = String.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", nanoTime, l.getTime(),
+            String log = String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", nanoTime, l.getTime(),
                     l.getLatitude(), l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(),
                     l.getAccuracy(), satellites, l.getProvider());
 

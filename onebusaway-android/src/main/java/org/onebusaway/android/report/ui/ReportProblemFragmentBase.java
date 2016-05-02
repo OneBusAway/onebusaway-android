@@ -51,21 +51,12 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
     private static final int REPORT_LOADER = 100;
 
+    private ReportProblemFragmentCallback mCallback;
+
     /**
      * GoogleApiClient being used for Location Services
      */
     GoogleApiClient mGoogleApiClient;
-
-    private OnProblemReportedListener mCallback;
-
-    public interface OnProblemReportedListener{
-        /**
-         * Called when the problem submitted
-         * Callback mechanism implemented as described in Android best-practices documentation:
-         * http://developer.android.com/training/basics/fragments/communicating.html
-         */
-        void onSendReport();
-    }
 
     /**
      * Displays the problem categories
@@ -87,14 +78,6 @@ public abstract class ReportProblemFragmentBase extends Fragment
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
-
-        // This makes sure that the container activity has implemented
-        // the callback interface. If not, print error log
-        try {
-            mCallback = (OnProblemReportedListener) activity;
-        } catch (ClassCastException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -105,12 +88,13 @@ public abstract class ReportProblemFragmentBase extends Fragment
 
     @Override
     public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
+                             ViewGroup root, Bundle savedInstanceState) {
         if (root == null) {
             // Currently in a layout without a container, so no
             // reason to create our view.
             return null;
         }
+
         return inflater.inflate(getLayoutId(), null);
     }
 
@@ -165,7 +149,7 @@ public abstract class ReportProblemFragmentBase extends Fragment
                 getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_problem));
 
         //If the activity implements the callback, then notify
-        if (mCallback != null){
+        if (mCallback != null) {
             mCallback.onSendReport();
         }
     }
@@ -180,14 +164,8 @@ public abstract class ReportProblemFragmentBase extends Fragment
         UIUtils.showProgress(this, false);
 
         if ((response != null) && (response.getCode() == ObaApi.OBA_OK)) {
-            // If we're in our own activity specific to the fragment, then close it.
-            if (getActivity() instanceof ReportStopProblemActivity
-                    || getActivity() instanceof ReportTripProblemActivity) {
-                getActivity().finish();
-            } else {
-                // Manage the fragment backstack
-                mGoBackHandler.postDelayed(mGoBack, 100);
-            }
+            // Manage the fragment back stack
+            mGoBackHandler.postDelayed(mGoBack, 100);
         } else {
             Toast.makeText(getActivity(), R.string.report_problem_error, Toast.LENGTH_LONG).show();
         }
@@ -237,4 +215,9 @@ public abstract class ReportProblemFragmentBase extends Fragment
     protected abstract int getLayoutId();
 
     protected abstract ReportLoader createLoader(Bundle args);
+
+    public void setCallback(ReportProblemFragmentCallback callback) {
+        mCallback = callback;
+    }
+
 }

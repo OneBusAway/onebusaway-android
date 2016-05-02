@@ -102,7 +102,8 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
                     getString(R.string.analytics_action_problem),
                     getString(R.string.analytics_label_customer_service));
         } else if (getString(R.string.rt_infrastructure_problem).equals(rti.getTitle())) {
-            ((ReportActivity) getActivity()).createInfrastructureIssueActivity();
+            ((ReportActivity) getActivity()).createInfrastructureIssueActivity(
+                    getString(R.string.ri_selected_service_stop));
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_problem),

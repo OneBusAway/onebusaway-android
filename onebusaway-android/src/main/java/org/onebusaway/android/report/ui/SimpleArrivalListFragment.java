@@ -63,7 +63,7 @@ public class SimpleArrivalListFragment extends Fragment
 
     private String mBundleObaStopId;
 
-    private Callback callback;
+    private Callback mCallback;
 
     public static final String TAG = "SimpleArrivalListFragment";
 
@@ -245,8 +245,8 @@ public class SimpleArrivalListFragment extends Fragment
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    String agecnyName = findAgencyNameByRouteId(refs, arrivalInfo.getRouteId());
-                    callback.onArrivalItemClicked(arrivalInfo, agecnyName);
+                    String agencyName = findAgencyNameByRouteId(refs, arrivalInfo.getRouteId());
+                    mCallback.onArrivalItemClicked(arrivalInfo, agencyName);
                 }
             });
         }
@@ -273,6 +273,6 @@ public class SimpleArrivalListFragment extends Fragment
     }
 
     public void setCallback(Callback callback) {
-        this.callback = callback;
+        mCallback = callback;
     }
 }

@@ -75,7 +75,7 @@ import edu.usf.cutr.open311client.models.ServiceListResponse;
 
 public class InfrastructureIssueActivity extends BaseReportActivity implements
         BaseMapFragment.OnFocusChangedListener, ServiceListTask.Callback,
-        ReportProblemFragmentBase.OnProblemReportedListener, IssueLocationHelper.Callback,
+        ReportProblemFragmentCallback, IssueLocationHelper.Callback,
         SimpleArrivalListFragment.Callback, GeocoderTask.Callback {
 
     private static final String SHOW_STOP_MARKER = ".showMarker";
@@ -304,7 +304,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             outState.putBoolean(SHOW_CATEGORIES, true);
         }
 
-        if (isInfoVisiable()) {
+        if (isInfoVisible()) {
             String infoText = ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).getText().
                     toString();
             outState.putString(SHOW_INFO, infoText);
@@ -662,6 +662,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        // If a fragment closes via back button, show 'Choose a Problem' category
+        mServicesSpinner.setSelection(0);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -1001,7 +1008,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     private void showStopProblemFragment(ObaStop obaStop) {
-        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem, false);
+        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem, false, this);
     }
 
     private void showTripProblemFragment(ObaStop obaStop) {
@@ -1009,7 +1016,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             showArrivalListFragment(obaStop);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem, false);
+            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem, false, this);
             mArrivalInfo = null;
         }
     }
@@ -1040,7 +1047,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             showOpen311ProblemFragment(mSelectedTransitService, obaArrivalInfo);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, false);
+            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, false,
+                    this);
         }
     }
 
@@ -1059,12 +1067,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     private void showOpen311ProblemFragment(Service service) {
-        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service);
+        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service, this);
     }
 
     private void showOpen311ProblemFragment(Service service, ObaArrivalInfo obaArrivalInfo) {
         Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service,
-                obaArrivalInfo, mAgencyName);
+                obaArrivalInfo, mAgencyName, this);
     }
 
     public void removeOpen311ProblemFragment() {

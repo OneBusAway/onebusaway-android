@@ -24,7 +24,6 @@ import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.report.connection.ServiceDescriptionTask;
 import org.onebusaway.android.report.connection.ServiceRequestTask;
 import org.onebusaway.android.report.constants.ReportConstants;
-import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
 import org.onebusaway.android.report.ui.model.AttributeValue;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
@@ -152,6 +151,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private ServiceRequestTask mRequestTask;
 
+    private ReportProblemFragmentCallback mCallback;
+
     public static final String TAG = "Open311ProblemFragment";
 
     private static final String ATTRIBUTES = ".attributes";
@@ -168,7 +169,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
-                            String agencyName) {
+                            String agencyName, ReportProblemFragmentCallback callback) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Open311ProblemFragment fragment = new Open311ProblemFragment();
@@ -176,6 +177,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         fragment.setService(service);
         fragment.setArrivalInfo(obaArrivalInfo);
         fragment.setAgencyName(agencyName);
+        fragment.setCallback(callback);
 
         FragmentTransaction ft = fm.beginTransaction();
         ft.replace(containerViewId, fragment, TAG);
@@ -184,8 +186,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
-                            Open311 open311, Service service) {
-        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null);
+                            Open311 open311, Service service, ReportProblemFragmentCallback callback) {
+        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null, callback);
     }
 
     @Override
@@ -392,10 +394,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         showProgressDialog(false);
 
         if (response.isSuccess()) {
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.SUBMIT.toString(),
-                    getString(R.string.analytics_action_problem), getString(R.string.analytics_label_report_infrastructure));
-            (new ReportSuccessDialog()).show((getActivity()).getSupportFragmentManager(),
-                    ReportSuccessDialog.TAG);
+            mCallback.onSendReport();
         } else {
             String message = response.getErrorMessage();
             if (TextUtils.isEmpty(message)) {
@@ -1108,5 +1107,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public void setAgencyName(String agencyName) {
         this.mAgencyName = agencyName;
+    }
+
+    public void setCallback(ReportProblemFragmentCallback callback) {
+        mCallback = callback;
     }
 }

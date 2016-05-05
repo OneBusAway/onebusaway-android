@@ -51,16 +51,18 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     public static final String TAG = "ReportStopProblemFragment";
 
-    public static void show(AppCompatActivity activity, ObaStop stop) {
-        show(activity, stop, null);
-    }
-
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
-        show(activity, stop, containerViewId, true);
+    public static void show(AppCompatActivity activity, ObaStop stop,
+                            ReportProblemFragmentCallback callback) {
+        show(activity, stop, null, callback);
     }
 
     public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
-                            boolean showStopName) {
+                            ReportProblemFragmentCallback callback) {
+        show(activity, stop, containerViewId, true, callback);
+    }
+
+    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
+                            boolean showStopName, ReportProblemFragmentCallback callback) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -72,6 +74,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
         // Create the list fragment and add it as our sole content.
         ReportStopProblemFragment content = new ReportStopProblemFragment();
+        content.setCallback(callback);
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();
@@ -102,7 +105,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
         boolean showStopName = args.getBoolean(SHOW_STOP_NAME, true);
 
-        if (!showStopName){
+        if (!showStopName) {
             // Hide stop name header
             view.findViewById(R.id.stop_info_header).setVisibility(View.GONE);
         }

@@ -124,7 +124,6 @@
     <string name="analytics_label_customer_service_email_without_location">Send email without location</string>
     <string name="analytics_label_customer_service_phone">Make phone call</string>
     <string name="analytics_label_idea_scale">IdeaScale</string>
-    <string name="analytics_label_report_infrastructure">Reported Infrastructure Issue</string>
     <string name="analytics_label_talkback">Loaded view:\u0020</string>
     <string name="analytics_label_custom_url">Custom URL</string>
     <string name="analytics_label_star_route">Starred route</string>

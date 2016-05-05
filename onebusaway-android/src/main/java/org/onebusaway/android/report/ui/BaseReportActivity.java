@@ -119,7 +119,7 @@ public class BaseReportActivity extends AppCompatActivity {
         }
     }
 
-    protected  boolean isInfoVisiable() {
+    protected  boolean isInfoVisible() {
         if (mInfoHeader == null){
             mInfoHeader = (RelativeLayout) findViewById(R.id.ri_info_header);
         }

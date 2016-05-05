@@ -21,6 +21,13 @@ import org.onebusaway.android.report.constants.ReportConstants;
 
 public class ServiceUtils {
 
+    /**
+     * This method looks at the predefined transit keywords, and tries to determine if the this is
+     * a transit stop service (e.g., stop problem)
+     *
+     * @param key Service name
+     * @return true if it is a transit service
+     */
     public static boolean isTransitStopServiceByKey(String key) {
         String[] transitKeywords = Application.get().getResources().
                 getStringArray(R.array.report_stop_transit_category_keywords);
@@ -33,6 +40,13 @@ public class ServiceUtils {
         return false;
     }
 
+    /**
+     * This method looks at the predefined transit keywords, and tries to determine if the this is
+     * a transit trip service (e.g., arrival time problem)
+     *
+     * @param key Service name
+     * @return true if it is a transit service
+     */
     public static boolean isTransitTripServiceByKey(String key) {
         String[] transitKeywords = Application.get().getResources().
                 getStringArray(R.array.report_trip_transit_category_keywords);
@@ -45,19 +59,40 @@ public class ServiceUtils {
         return false;
     }
 
+    /**
+     * @param type Service type
+     * @return true if it is a transit stop service
+     */
     public static boolean isTransitStopServiceByType(String type) {
         return ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP.equals(type)
                 || ReportConstants.STATIC_TRANSIT_SERVICE_STOP.equals(type);
     }
 
-    public static boolean isTransitTripServiceByType(String key) {
-        return ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(key)
-                || ReportConstants.STATIC_TRANSIT_SERVICE_TRIP.equals(key);
+    /**
+     * @param type Service type
+     * @return true if it is a transit trip service
+     */
+    public static boolean isTransitTripServiceByType(String type) {
+        return ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(type)
+                || ReportConstants.STATIC_TRANSIT_SERVICE_TRIP.equals(type);
 
     }
 
+    /**
+     * @param type Service type
+     * @return true if it is a transit service
+     */
     public static boolean isTransitServiceByType(String type) {
         return isTransitStopServiceByType(type) || isTransitTripServiceByType(type);
+    }
+
+    /**
+     * @param type Service type
+     * @return true if it is a transit service and it is coming from open311 endpoint
+     */
+    public static boolean isTransitOpen311ServiceByType(String type) {
+        return ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(type)
+                || ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP.equals(type);
     }
 
     /**

@@ -344,7 +344,7 @@ public class ArrivalsListFragment extends ListFragment
             ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
             if (lastGood != null) {
                 setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations(),
-                        lastGood.getRefs());
+                        lastGood.getRefs(), System.currentTimeMillis());
             }
         }
 
@@ -409,6 +409,8 @@ public class ArrivalsListFragment extends ListFragment
         List<ObaSituation> situations = null;
         ObaReferences refs = null;
 
+        long currentTime;
+
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
                 mStop = result.getStop();
@@ -417,7 +419,8 @@ public class ArrivalsListFragment extends ListFragment
             info = result.getArrivalInfo();
             situations = result.getSituations();
             refs = result.getRefs();
-
+            // Use fresh server time to avoid potential clock sync issues
+            currentTime = result.getCurrentTime();
         } else {
             // If there was a last good response, then this is a refresh
             // and we should use a toast. Otherwise, it's a initial
@@ -434,9 +437,11 @@ public class ArrivalsListFragment extends ListFragment
             } else {
                 setEmptyText(UIUtils.getStopErrorString(getActivity(), result.getCode()));
             }
+            // Use device current time, as the server response may be old
+            currentTime = System.currentTimeMillis();
         }
 
-        setResponseData(info, situations, refs);
+        setResponseData(info, situations, refs, currentTime);
 
         // The list should now be shown.
         if (isResumed()) {
@@ -527,7 +532,7 @@ public class ArrivalsListFragment extends ListFragment
     }
 
     private void setResponseData(ObaArrivalInfo[] info, List<ObaSituation> situations,
-                                 ObaReferences refs) {
+            ObaReferences refs, long currentTime) {
         mArrivalInfo = info;
 
         mObaReferences = refs;
@@ -543,7 +548,7 @@ public class ArrivalsListFragment extends ListFragment
             // Reset the empty text just in case there is no data.
             setEmptyText(UIUtils.getNoArrivalsMessage(getActivity(),
                     getArrivalsLoader().getMinutesAfter(), false, false));
-            mAdapter.setData(info, mRoutesFilter, System.currentTimeMillis());
+            mAdapter.setData(info, mRoutesFilter, currentTime);
         }
 
         if (mHeader != null) {

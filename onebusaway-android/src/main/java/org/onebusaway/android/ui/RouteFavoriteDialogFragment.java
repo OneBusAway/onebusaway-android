@@ -51,7 +51,7 @@ public class RouteFavoriteDialogFragment extends android.support.v4.app.DialogFr
          * @param savedFavorite true if the user saved a new route/headsign/stop favorite, false
          *                      if they did not
          */
-        public void onSelectionComplete(boolean savedFavorite);
+        void onSelectionComplete(boolean savedFavorite);
     }
 
     /**

@@ -56,6 +56,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -265,6 +266,18 @@ public class ArrivalsListFragment extends ListFragment
         initArrivalInfoViews(BuildFlavorUtils.getArrivalInfoStyleFromPreferences(), inflater);
 
         return inflater.inflate(R.layout.fragment_arrivals_list, null);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        //This is required to avoid an NullPointerException when the user rotates
+        // their phone while setting a route favorite - see #480
+        RouteFavoriteDialogFragment dialogFragment = (RouteFavoriteDialogFragment)
+                getFragmentManager().findFragmentByTag(RouteFavoriteDialogFragment.TAG);
+        if (dialogFragment != null) {
+            setCallbackToDialogFragment(dialogFragment);
+        }
     }
 
     @Override
@@ -718,14 +731,8 @@ public class ArrivalsListFragment extends ListFragment
                             .setFavorite(!isRouteFavorite)
                             .build();
 
-                    routeDialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
-                        @Override
-                        public void onSelectionComplete(boolean savedFavorite) {
-                            if (savedFavorite) {
-                                refreshLocal();
-                            }
-                        }
-                    });
+                    setCallbackToDialogFragment(routeDialog);
+
                     routeDialog.show(getFragmentManager(), RouteFavoriteDialogFragment.TAG);
                 } else if (which == 1) {
                     showRouteOnMap(arrivalInfo);
@@ -759,6 +766,17 @@ public class ArrivalsListFragment extends ListFragment
         AlertDialog dialog = builder.create();
         dialog.setOwnerActivity(getActivity());
         dialog.show();
+    }
+
+    private void setCallbackToDialogFragment(RouteFavoriteDialogFragment routeDialog) {
+        routeDialog.setCallback(new RouteFavoriteDialogFragment.Callback() {
+            @Override
+            public void onSelectionComplete(boolean savedFavorite) {
+                if (savedFavorite) {
+                    refreshLocal();
+                }
+            }
+        });
     }
 
     public void showRouteOnMap(ArrivalInfo arrivalInfo) {

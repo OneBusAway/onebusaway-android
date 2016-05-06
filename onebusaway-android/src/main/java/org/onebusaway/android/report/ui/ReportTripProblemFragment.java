@@ -60,9 +60,12 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     public static final String TAG = "ReportTripProblemFragment";
 
+    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
+        show(activity, arrival, null);
+    }
+
     public static void show(AppCompatActivity activity, ObaArrivalInfo arrival,
-                            Integer containerViewId,
-                            ReportProblemFragmentCallback callback) {
+                            Integer containerViewId) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -74,7 +77,6 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
         // Create the list fragment and add it as our sole content.
         ReportTripProblemFragment content = new ReportTripProblemFragment();
-        content.setCallback(callback);
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();

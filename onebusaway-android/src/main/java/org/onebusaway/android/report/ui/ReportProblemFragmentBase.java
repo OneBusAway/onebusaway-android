@@ -78,6 +78,13 @@ public abstract class ReportProblemFragmentBase extends Fragment
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();
         }
+
+        try {
+            mCallback = (ReportProblemFragmentCallback) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("ReportProblemFragmentCallback should be implemented" +
+                    " in parent activity");
+        }
     }
 
     @Override
@@ -215,9 +222,4 @@ public abstract class ReportProblemFragmentBase extends Fragment
     protected abstract int getLayoutId();
 
     protected abstract ReportLoader createLoader(Bundle args);
-
-    public void setCallback(ReportProblemFragmentCallback callback) {
-        mCallback = callback;
-    }
-
 }

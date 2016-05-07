@@ -1047,11 +1047,11 @@ public class HomeActivity extends AppCompatActivity
 
     private void goToSendFeedBack() {
         if (mFocusedStop != null) {
-            ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(),
+            ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(), mFocusedStop.getStopCode(),
                     mFocusedStop.getLatitude(), mFocusedStop.getLongitude(), mGoogleApiClient);
         } else {
             Location loc = Application.getLastKnownLocation(this, mGoogleApiClient);
-            ReportActivity.start(this, null, null, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
+            ReportActivity.start(this, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
         }
     }
 

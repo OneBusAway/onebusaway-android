@@ -106,6 +106,7 @@ public class ReportActivity extends BaseReportActivity {
      * @param context         The context of the activity.
      * @param focusId         The stop to focus.
      * @param stopName        The stop name of the focus.
+     * @param stopCode        The stop code of the focus.
      * @param lat             The latitude of the map center.
      * @param lon             The longitude of the map center.
      * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
@@ -114,10 +115,28 @@ public class ReportActivity extends BaseReportActivity {
     public static void start(Context context,
                              String focusId,
                              String stopName,
+                             String stopCode,
                              double lat,
                              double lon,
                              GoogleApiClient googleApiClient) {
-        context.startActivity(makeIntent(context, focusId, stopName, lat, lon, googleApiClient));
+        context.startActivity(makeIntent(context, focusId, stopName, stopCode, lat, lon, googleApiClient));
+    }
+
+    /**
+     * Starts the MapActivity with a particular stop focused with the center of
+     * the map at a particular point.
+     *
+     * @param context         The context of the activity.
+     * @param lat             The latitude of the map center.
+     * @param lon             The longitude of the map center.
+     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
+     *                        null if one isn't available
+     */
+    public static void start(Context context,
+                             double lat,
+                             double lon,
+                             GoogleApiClient googleApiClient) {
+        context.startActivity(makeIntent(context, null, null, null, lat, lon, googleApiClient));
     }
 
     /**
@@ -132,16 +151,18 @@ public class ReportActivity extends BaseReportActivity {
      * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
      *                        null if one isn't available
      */
-    public static Intent makeIntent(Context context,
-                                    String focusId,
-                                    String stopName,
-                                    double lat,
-                                    double lon,
-                                    GoogleApiClient googleApiClient) {
+    private static Intent makeIntent(Context context,
+                                     String focusId,
+                                     String stopName,
+                                     String stopCode,
+                                     double lat,
+                                     double lon,
+                                     GoogleApiClient googleApiClient) {
 
         Intent myIntent = new Intent(context, ReportActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.STOP_NAME, stopName);
+        myIntent.putExtra(MapParams.STOP_CODE, stopCode);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
         myIntent.putExtra(MapParams.CENTER_LON, lon);
 

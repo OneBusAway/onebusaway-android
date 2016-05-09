@@ -22,6 +22,14 @@ public class TADTest extends ObaTestCase {
 
     static final int SPEED_UP = 4;
 
+    /*
+        Started: Corner of Fletcher Ave & 50th St, turning left onto 50th.
+        Destination: Holly Dr @ Pine Dr @ Crosswalk (W Bound)
+        Details: Turned left onto 50th St, then right onto USF Holly Drive & stayed on road until
+        arriving at destination.
+        Recorded In: Car
+        Device Used: Nexus 5
+     */
     public void testTripA() {
         try {
             // Read test CSV.
@@ -35,6 +43,14 @@ public class TADTest extends ObaTestCase {
         }
     }
 
+    /*
+        Started: Corner of Beard Dr & Magnolia Dr on USF, turning left onto Magnolia Dr.
+        Destination: Alumni Dr @ Leroy Collins @ Eng Bldg (E Bound)
+        Details: Turned left onto Magnolia Dr, then turned left at the light onto Alumni Dr, arrived
+        at destination then turned right onto Leroy Collins Blvd then right onto Fowler Ave.
+        Recorded In: Car
+        Device Used: Nexus 5
+     */
     public void testTripB() {
         try {
             // Read test CSV.
@@ -94,7 +110,7 @@ public class TADTest extends ObaTestCase {
             mPoints = new Location[lines.length - 1];
             // Skip header and run through csv.
             // Rows are formatted like this:
-            // time,lat,lng,altitude,speed,bearing,provider.
+            // realtime Nanos Elapsed,time,lat,lng,altitude,speed,bearing,accurarcy,satellites,provider.
             for (int i = 1; i < lines.length; i++) {
                 String[] values = lines[i].split(",");
                 String nanosStr = values[0];
@@ -109,6 +125,8 @@ public class TADTest extends ObaTestCase {
                 String provider = values[9];
 
                 mPoints[i - 1] = new Location(provider);
+
+                // Check if we can use elapsed nano seconds. Else, we'll use time.
                 if (!nanosStr.equals("") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 {
                     useElapsedNanos = true;
@@ -181,7 +199,7 @@ public class TADTest extends ObaTestCase {
         }
 
         public int getFinishedIndex() {
-            return getFinishedIndex();
+            return finishedIndex;
         }
 
         public void runSimulation(Boolean expected1, Boolean expected2) {

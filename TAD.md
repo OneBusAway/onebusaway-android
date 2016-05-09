@@ -1,5 +1,3 @@
-**Introduction**
-
 **Usage**
 1. View the Trip Status of a desired trip.
 2. Long tap the desired destination stop.
@@ -33,7 +31,7 @@ file, a new test method can be created. In this method, a TADTrip object
 can be instantiated with the CSV string passed into the constructor and
 the runSimulation method called.
 
-***Idea Wishlist***
+***(Potential) Idea Wishlist***
 - Favorite Trips: Allow person to bookmark a favorite TAD Trip. This 
 would involve storing a combo of the starting stop, destination stop &
 the trip Id. However, since Trip IDs are not persistent and are subject
@@ -41,3 +39,15 @@ to expiration, a way to uniquely identify trips is needed.
 
 - Multi-Legged Trips: Maybe something for OTP, but have multi-bus
 trips. TAD already supports it by passing in an array of segments.
+
+- Configurable Alert Triggering Threshold: As of right now, the distance 
+the person needs to be within from the second-to-last stop for the first 
+notification to be fired is fixed. Allowing it be possible for user to
+specify the threshold, or for the threshold to be dynamically calculated
+based on certain factors such as distance between stops would be neat 
+addition.
+
+- Advanced Location Logging: Currently, the location logger is built into
+TAD Service & transparently logs to a file when TAD is running. A toggle 
+could be added in the Advanced Settings menu for the user to switch on and
+off.

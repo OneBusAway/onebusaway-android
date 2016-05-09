@@ -44,9 +44,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     public static final String STOP_ID = ".StopId";
 
-    public static final String TRIP_NAME = ".TripName";
-
-    private static final String SHOW_TRIP_NAME = ".ShowTripName";
+    public static final String TRIP_HEADSIGN = ".TripHeadsign";
 
     public static final String TRIP_SERVICE_DATE = ".ServiceDate";
 
@@ -63,23 +61,16 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     public static final String TAG = "ReportTripProblemFragment";
 
     public static void show(AppCompatActivity activity, ObaArrivalInfo arrival,
-                            ReportProblemFragmentCallback callback) {
-        show(activity, arrival, null, true, callback);
-    }
-
-    public static void show(AppCompatActivity activity, ObaArrivalInfo arrival,
-                            Integer containerViewId, boolean showTripName,
+                            Integer containerViewId,
                             ReportProblemFragmentCallback callback) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
         args.putString(TRIP_ID, arrival.getTripId());
         args.putString(STOP_ID, arrival.getStopId());
-        // We don't use the stop name map here...we want the actual stop name.
-        args.putString(TRIP_NAME, arrival.getHeadsign());
+        args.putString(TRIP_HEADSIGN, arrival.getHeadsign());
         args.putLong(TRIP_SERVICE_DATE, arrival.getServiceDate());
         args.putString(TRIP_VEHICLE_ID, arrival.getVehicleId());
-        args.putBoolean(SHOW_TRIP_NAME, showTripName);
 
         // Create the list fragment and add it as our sole content.
         ReportTripProblemFragment content = new ReportTripProblemFragment();
@@ -111,14 +102,8 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        final TextView tripName = (TextView) view.findViewById(R.id.trip_name);
-        tripName.setText(MyTextUtils.toTitleCase(args.getString(TRIP_NAME)));
-
-        boolean showStopName = args.getBoolean(SHOW_TRIP_NAME, true);
-        if (!showStopName){
-            // Hide trip name header
-            view.findViewById(R.id.trip_info_header).setVisibility(View.GONE);
-        }
+        final TextView tripHeadsign = (TextView) view.findViewById(R.id.report_problem_headsign);
+        tripHeadsign.setText(MyTextUtils.toTitleCase(args.getString(TRIP_HEADSIGN)));
 
         // TODO: Switch this based on the trip mode
         final int tripArray = R.array.report_trip_problem_code_bus;
@@ -178,11 +163,11 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
     }
 
     private void setupIconColors() {
-        ((ImageView) getActivity().findViewById(R.id.ic_header_location)).setColorFilter(
-                getResources().getColor(android.R.color.white));
         ((ImageView) getActivity().findViewById(R.id.ic_category)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
         ((ImageView) getActivity().findViewById(R.id.ic_trip_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((ImageView) getActivity().findViewById(R.id.ic_headsign_info)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
     }
 

@@ -41,6 +41,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.net.Uri;
@@ -752,6 +753,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             addDescriptionText(mService.getDescription());
         }
 
+        if (mArrivalInfo != null && ServiceUtils.isTransitTripServiceByType(mService.getType())) {
+            createTripHeadsign(mArrivalInfo.getHeadsign());
+        }
+
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (!Boolean.valueOf(open311Attribute.getVariable())) {
                 addDescriptionText(open311Attribute.getDescription());
@@ -932,6 +937,22 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             mInfoLayout.addView(layout);
             mDynamicAttributeUIMap.put(open311Attribute.getCode(), cg);
         }
+    }
+
+    private void createTripHeadsign(String text) {
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        RelativeLayout layout = (RelativeLayout) inflater.inflate(
+                R.layout.report_issue_description_item, null, false);
+
+        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
+        TextView tv = ((TextView) layout.findViewById(R.id.riii_textView));
+        tv.setText(MyTextUtils.toSentenceCase(text));
+        tv.setTypeface(null, Typeface.NORMAL);
+
+        linear.addView(layout, 0);
+
+        ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
     }
 
     private void clearInfoField() {

@@ -20,7 +20,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaReportProblemWithStopRequest;
-import org.onebusaway.android.util.MyTextUtils;
 
 import android.content.Context;
 import android.location.Location;
@@ -43,34 +42,20 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     public static final String STOP_NAME = ".StopName";
 
-    private static final String SHOW_STOP_NAME = ".ShowStopName";
-
     public static final String CODE = ".Code";
 
     public static final String USER_COMMENT = ".UserComment";
 
     public static final String TAG = "ReportStopProblemFragment";
 
-    public static void show(AppCompatActivity activity, ObaStop stop,
-                            ReportProblemFragmentCallback callback) {
-        show(activity, stop, null, callback);
-    }
-
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
-                            ReportProblemFragmentCallback callback) {
-        show(activity, stop, containerViewId, true, callback);
-    }
-
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId,
-                            boolean showStopName, ReportProblemFragmentCallback callback) {
+    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId
+            , ReportProblemFragmentCallback callback) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
         args.putString(STOP_ID, stop.getId());
         // We don't use the stop name map here...we want the actual stop name.
         args.putString(STOP_NAME, stop.getName());
-
-        args.putBoolean(SHOW_STOP_NAME, showStopName);
 
         // Create the list fragment and add it as our sole content.
         ReportStopProblemFragment content = new ReportStopProblemFragment();
@@ -98,20 +83,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        // Set the stop name.
-        Bundle args = getArguments();
-        final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
-        stopName.setText(MyTextUtils.toTitleCase(args.getString(STOP_NAME)));
-
-        boolean showStopName = args.getBoolean(SHOW_STOP_NAME, true);
-
-        if (!showStopName) {
-            // Hide stop name header
-            view.findViewById(R.id.stop_info_header).setVisibility(View.GONE);
-        }
-        //
         // The code spinner
-        //
         mCodeView = (Spinner) view.findViewById(R.id.report_problem_code);
         ArrayAdapter<?> adapter = ArrayAdapter.createFromResource(
                 getActivity(), R.array.report_stop_problem_code,
@@ -148,8 +120,6 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
                 getResources().getColor(R.color.material_gray));
         ((ImageView) getActivity().findViewById(R.id.ic_action_info)).setColorFilter(
                 getResources().getColor(R.color.material_gray));
-        ((ImageView) getActivity().findViewById(R.id.ic_header_location)).setColorFilter(
-                getResources().getColor(android.R.color.white));
     }
 
     @Override

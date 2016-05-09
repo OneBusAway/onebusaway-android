@@ -23,42 +23,6 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
 
-        <!-- Header aligned to top -->
-        <RelativeLayout
-                android:id="@+id/stop_info_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/theme_primary_dark"
-                android:layout_alignParentTop="true"
-                android:animateLayoutChanges="true"
-                android:layout_marginBottom="16dp"
-                android:gravity="center">
-
-            <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:id="@+id/ic_header_location"
-                    android:src="@drawable/ic_drawer_maps_place"
-                    android:layout_alignParentTop="true"
-                    android:layout_toLeftOf="@+id/ri_info_text"
-                    android:layout_toStartOf="@+id/ri_info_text"
-                    android:layout_margin="4dp"
-                    />
-
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Fixed Header"
-                    android:id="@+id/stop_name"
-                    android:textColor="@android:color/white"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_alignBottom="@+id/ic_header_location"
-                    android:layout_toRightOf="@+id/ic_header_location"
-                    android:layout_toEndOf="@+id/ic_header_location"/>
-        </RelativeLayout>
-
         <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

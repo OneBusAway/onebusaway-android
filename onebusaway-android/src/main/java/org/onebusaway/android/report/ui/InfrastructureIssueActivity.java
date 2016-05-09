@@ -38,7 +38,6 @@ import org.onebusaway.android.util.LocationUtils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -1008,7 +1007,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     private void showStopProblemFragment(ObaStop obaStop) {
-        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem, false, this);
+        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem, this);
     }
 
     private void showTripProblemFragment(ObaStop obaStop) {
@@ -1016,7 +1015,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             showArrivalListFragment(obaStop);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem, false, this);
+            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem, this);
             mArrivalInfo = null;
         }
     }
@@ -1039,16 +1038,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
         removeFragmentByTag(SimpleArrivalListFragment.TAG);
 
-        addTripName(obaArrivalInfo.getHeadsign());
-
         if (mSelectedTransitService != null &&
                 ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(mSelectedTransitService.getType())) {
             // Show open311 defined issue reporting service
             showOpen311ProblemFragment(mSelectedTransitService, obaArrivalInfo);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, false,
-                    this);
+            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, this);
         }
     }
 
@@ -1091,21 +1087,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         removeFragmentByTag(SimpleArrivalListFragment.TAG);
 
         ((LinearLayout) findViewById(R.id.ri_report_stop_problem)).removeAllViews();
-    }
-
-    private void addTripName(String text) {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.report_issue_description_item, null, false);
-
-        LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
-        TextView tv = ((TextView) layout.findViewById(R.id.riii_textView));
-        tv.setText(text);
-        tv.setTypeface(null, Typeface.NORMAL);
-
-        linear.addView(layout);
-
-        ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
-                getResources().getColor(R.color.material_gray));
     }
 
     public IssueLocationHelper getIssueLocationHelper() {

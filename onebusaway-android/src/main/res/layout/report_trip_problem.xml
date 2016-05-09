@@ -24,41 +24,27 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
 
-        <!-- Header aligned to top -->
-        <RelativeLayout
-                android:id="@+id/trip_info_header"
+        <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/theme_primary_dark"
-                android:layout_alignParentTop="true"
-                android:animateLayoutChanges="true"
-                android:gravity="center"
-                android:layout_marginBottom="16dp">
+                style="@style/MaterialLayout"
+                android:orientation="horizontal">
 
-            <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:id="@+id/ic_header_location"
-                    android:src="@drawable/ic_drawer_maps_place"
-                    android:layout_alignParentTop="true"
-                    android:layout_toLeftOf="@+id/ri_info_text"
-                    android:layout_toStartOf="@+id/ri_info_text"
-                    android:layout_margin="4dp"
-                    />
+            <ImageView style="@style/MaterialSmallIcon"
+                       android:src="@drawable/ic_stop_info"
+                       android:id="@+id/ic_headsign_info"/>
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Fixed Header"
-                    android:id="@+id/trip_name"
-                    android:textColor="@android:color/white"
+                    android:id="@+id/report_problem_headsign"
+                    style="@style/MaterialItem"
+                    android:textSize="15sp"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_alignBottom="@+id/ic_header_location"
-                    android:layout_toRightOf="@+id/ic_header_location"
-                    android:layout_toEndOf="@+id/ic_header_location"/>
-        </RelativeLayout>
+                    android:textColor="@android:color/black"
+            />
+
+        </FrameLayout>
 
         <FrameLayout
                 android:layout_width="match_parent"

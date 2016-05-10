@@ -27,7 +27,7 @@ public class TADTest extends ObaTestCase {
         Destination: Holly Dr @ Pine Dr @ Crosswalk (W Bound)
         Details: Turned left onto 50th St, then right onto USF Holly Drive & stayed on road until
         arriving at destination.
-        Recorded In: Car
+        Recorded In: Car ('06 Saturn Ion 2 - Central Console)
         Device Used: Nexus 5
      */
     public void testTripA() {
@@ -48,7 +48,7 @@ public class TADTest extends ObaTestCase {
         Destination: Alumni Dr @ Leroy Collins @ Eng Bldg (E Bound)
         Details: Turned left onto Magnolia Dr, then turned left at the light onto Alumni Dr, arrived
         at destination then turned right onto Leroy Collins Blvd then right onto Fowler Ave.
-        Recorded In: Car
+        Recorded In: Car ('06 Saturn Ion 2 - Central Console)
         Device Used: Nexus 5
      */
     public void testTripB() {

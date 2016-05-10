@@ -170,7 +170,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
-                            String agencyName, ReportProblemFragmentCallback callback) {
+                            String agencyName) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Open311ProblemFragment fragment = new Open311ProblemFragment();
@@ -178,7 +178,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         fragment.setService(service);
         fragment.setArrivalInfo(obaArrivalInfo);
         fragment.setAgencyName(agencyName);
-        fragment.setCallback(callback);
 
         FragmentTransaction ft = fm.beginTransaction();
         ft.replace(containerViewId, fragment, TAG);
@@ -187,8 +186,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
-                            Open311 open311, Service service, ReportProblemFragmentCallback callback) {
-        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null, callback);
+                            Open311 open311, Service service) {
+        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null);
     }
 
     @Override
@@ -279,6 +278,13 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             // Reload service description task if the activity restored
             this.onServiceDescriptionTaskCompleted(mServiceDescriptionTaskResult);
             mServiceDescriptionTaskResult = null;
+        }
+
+        try {
+            mCallback = (ReportProblemFragmentCallback) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException("ReportProblemFragmentCallback should be implemented" +
+                    " in parent activity");
         }
     }
 
@@ -1128,9 +1134,5 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public void setAgencyName(String agencyName) {
         this.mAgencyName = agencyName;
-    }
-
-    public void setCallback(ReportProblemFragmentCallback callback) {
-        mCallback = callback;
     }
 }

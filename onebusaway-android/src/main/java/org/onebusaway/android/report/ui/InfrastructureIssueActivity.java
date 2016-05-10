@@ -1007,7 +1007,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     private void showStopProblemFragment(ObaStop obaStop) {
-        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem, this);
+        ReportStopProblemFragment.show(this, obaStop, R.id.ri_report_stop_problem);
     }
 
     private void showTripProblemFragment(ObaStop obaStop) {
@@ -1015,7 +1015,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             showArrivalListFragment(obaStop);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem, this);
+            ReportTripProblemFragment.show(this, mArrivalInfo, R.id.ri_report_stop_problem);
             mArrivalInfo = null;
         }
     }
@@ -1044,7 +1044,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             showOpen311ProblemFragment(mSelectedTransitService, obaArrivalInfo);
         } else {
             // Show default trip problem issue reporting
-            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem, this);
+            ReportTripProblemFragment.show(this, obaArrivalInfo, R.id.ri_report_stop_problem);
         }
     }
 
@@ -1063,12 +1063,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     private void showOpen311ProblemFragment(Service service) {
-        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service, this);
+        Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service);
     }
 
     private void showOpen311ProblemFragment(Service service, ObaArrivalInfo obaArrivalInfo) {
         Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service,
-                obaArrivalInfo, mAgencyName, this);
+                obaArrivalInfo, mAgencyName);
     }
 
     public void removeOpen311ProblemFragment() {

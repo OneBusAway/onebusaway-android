@@ -48,8 +48,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     public static final String TAG = "ReportStopProblemFragment";
 
-    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId
-            , ReportProblemFragmentCallback callback) {
+    public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
@@ -59,7 +58,6 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
         // Create the list fragment and add it as our sole content.
         ReportStopProblemFragment content = new ReportStopProblemFragment();
-        content.setCallback(callback);
         content.setArguments(args);
 
         FragmentTransaction ft = fm.beginTransaction();

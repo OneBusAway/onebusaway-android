@@ -72,6 +72,9 @@ public class ShowcaseViewUtils {
 
     public static final String TUTORIAL_SEND_FEEDBACK = ".tutorial_send_feedback";
 
+    public static final String TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES
+            = ".tutorial_send_feedback_open311_categories";
+
     private static ShowcaseView mShowcaseView;
 
     /**
@@ -283,6 +286,12 @@ public class ShowcaseViewUtils {
                 text = new SpannableString(
                         r.getString(R.string.tutorial_send_feedback_text));
                 break;
+            case TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES:
+                title = r.getString(R.string.tutorial_send_feedback_transit_service_title);
+                text = new SpannableString(
+                        r.getString(R.string.tutorial_send_feedback_transit_service_text));
+                target = new ViewTarget(R.id.ri_spinnerServices, activity);
+                break;
             default:
                 throw new IllegalArgumentException(
                         "tutorialType must be one of the TUTORIAL_* constants in ShowcaseViewUtils");
@@ -384,5 +393,6 @@ public class ShowcaseViewUtils {
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_ROUTE_FILTER, false);
         PreferenceUtils.saveBoolean(TUTORIAL_NIGHT_LIGHT, false);
         PreferenceUtils.saveBoolean(TUTORIAL_SEND_FEEDBACK, false);
+        PreferenceUtils.saveBoolean(TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES, false);
     }
 }

@@ -16,6 +16,7 @@
 package org.onebusaway.android.report.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -34,6 +35,8 @@ import org.onebusaway.android.report.ui.dialog.ReportSuccessDialog;
 import org.onebusaway.android.report.ui.util.IssueLocationHelper;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -97,6 +100,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     private static final String AGENCY_NAME = ".agencyName";
 
     private static final String ACTION_BAR_TITLE = ".actionBarTitle";
+
+    private static final String TUTORIAL_COUNTER = "tutorial_counter";
 
     /**
      * UI Elements
@@ -277,6 +282,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     protected void onStart() {
         super.onStart();
         ObaAnalytics.reportActivityStart(this);
+    }
+
+    @Override
+    protected void onPause() {
+        ShowcaseViewUtils.hideShowcaseView();
+        super.onPause();
     }
 
     @Override
@@ -833,6 +844,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      */
     private void selectDefaultTransitCategory(ArrayList<SpinnerItem> spinnerItems) {
         int selectPosition = -1;
+        Service selectedService = null;
         for (int i = 0; i < spinnerItems.size(); i++) {
             SpinnerItem item = spinnerItems.get(i);
             if (item instanceof ServiceSpinnerItem) {
@@ -851,6 +863,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
                 if (transitServiceFound) {
                     selectPosition = i;
+                    selectedService = service;
                     // If transit service selected and no bus stop selected remove markers
                     if (ServiceUtils.isTransitServiceByType(service.getType()) &&
                             mIssueLocationHelper.getObaStop() == null) {
@@ -864,10 +877,22 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         // Set mDefaultIssueType = null to prevent auto selections
         mDefaultIssueType = null;
 
+        // Give the user a break from tutorials - allow at least one interaction without a tutorial
+        int counter = Application.getPrefs().getInt(TUTORIAL_COUNTER, 0);
+        counter++;
+        PreferenceUtils.saveInt(TUTORIAL_COUNTER, counter);
+
         // Set selected category if it is in the spinner items list
         if (selectPosition != -1) {
             showServicesSpinner();
             mServicesSpinner.setSelection(selectPosition, true);
+            // Show tutorial if this geographic area supports Open311 services
+            if (counter % 2 == 0 && selectedService != null
+                    && ServiceUtils.isTransitOpen311ServiceByType(selectedService.getType())) {
+                ShowcaseViewUtils
+                        .showTutorial(ShowcaseViewUtils.TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES,
+                                this, null);
+            }
         }
     }
 

@@ -707,6 +707,10 @@
     <string name="tutorial_send_feedback_text">Help us improve OneBusAway! Tap on \"Send feedback\"
         in the main navigation panel.
     </string>
+    <string name="tutorial_send_feedback_transit_service_title">More than just transit</string>
+    <string name="tutorial_send_feedback_transit_service_text">You can report a variety of issue
+        types to your local government near this stop. Tap on the drop-down box to see a full list.
+    </string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

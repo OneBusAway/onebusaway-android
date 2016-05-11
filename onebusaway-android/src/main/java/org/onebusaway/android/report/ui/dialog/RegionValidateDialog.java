@@ -15,15 +15,17 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.report.ui.ReportActivity;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.report.constants.ReportConstants;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.util.PreferenceUtils;
 
 /**
  * Show to validate if the current user is in expected region
@@ -44,6 +46,8 @@ public class RegionValidateDialog extends BaseReportDialogFragment {
                 .setMessage(message.toString())
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        long regionId = Application.get().getCurrentRegion().getId();
+                        PreferenceUtils.saveLong(ReportConstants.PREF_VALIDATED_REGION_ID, regionId);
                         ((ReportActivity) getActivity()).createIssueTypeListFragment();
                     }
                 })

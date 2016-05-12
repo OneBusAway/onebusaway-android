@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida,
+ * Copyright (C) 2012-2016 Paul Watts (paulcwatts@gmail.com), University of South Florida,
  * Benjamin Du (bendu@me.com), and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -416,7 +416,7 @@ public class ArrivalsListFragment extends ListFragment
     @Override
     public void onLoadFinished(Loader<ObaArrivalInfoResponse> loader,
                                final ObaArrivalInfoResponse result) {
-        UIUtils.showProgress(this, false);
+        showProgress(false);
 
         ObaArrivalInfo[] info = null;
         List<ObaSituation> situations = null;
@@ -494,6 +494,14 @@ public class ArrivalsListFragment extends ListFragment
         showTutorials(result);
     }
 
+    @Override
+    protected void showProgress(boolean visibility) {
+        super.showProgress(visibility);
+        if (mHeader != null) {
+            mHeader.showProgress(visibility);
+        }
+    }
+
     private void showTutorials(ObaArrivalInfoResponse response) {
         // If we're already showing a ShowcaseView, we don't want to stack another on top
         if (ShowcaseViewUtils.isShowcaseViewShowing()) {
@@ -566,7 +574,7 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onLoaderReset(Loader<ObaArrivalInfoResponse> loader) {
-        UIUtils.showProgress(this, false);
+        showProgress(false);
         mAdapter.setData(null, mRoutesFilter, System.currentTimeMillis());
 
         mArrivalInfo = null;
@@ -1057,6 +1065,7 @@ public class ArrivalsListFragment extends ListFragment
 
     /**
      * Sets up the load more arrivals button in the empty list view
+     *
      * @param currentText the text that should populate the empty list entry, or null if no text
      *                    should be set at this point
      */
@@ -1441,7 +1450,7 @@ public class ArrivalsListFragment extends ListFragment
      */
     private void refresh() {
         if (isAdded()) {
-            UIUtils.showProgress(this, true);
+            showProgress(true);
             // Get last response length now, since its overwritten within
             // ArrivalsListLoader before onLoadFinished() is called
             ObaArrivalInfoResponse lastGood =

@@ -600,6 +600,8 @@
     <string name="rt_message_app_feedback">Design, bugs, etc.</string>
     <string name="rt_message_ideas">Submit and vote on future improvements</string>
     <string name="rt_address_hint">Address of problem (optional)</string>
+    <string name="rt_yes">YES</string>
+    <string name="rt_no">NO</string>
 
     <!-- Tutorial Fragment -->
     <string name="pager_button_prev">Previous</string>

@@ -15,17 +15,17 @@
 */
 package org.onebusaway.android.report.ui.dialog;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.report.constants.ReportConstants;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.util.PreferenceUtils;
+
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
 
 /**
  * Show to validate if the current user is in expected region
@@ -44,14 +44,14 @@ public class RegionValidateDialog extends BaseReportDialogFragment {
 
         AlertDialog dialog =  new AlertDialog.Builder(getActivity())
                 .setMessage(message.toString())
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.rt_yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         long regionId = Application.get().getCurrentRegion().getId();
                         PreferenceUtils.saveLong(ReportConstants.PREF_VALIDATED_REGION_ID, regionId);
                         ((ReportActivity) getActivity()).createIssueTypeListFragment();
                     }
                 })
-                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.rt_no, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         closeSuperActivity();
                         ((ReportActivity) getActivity()).createPreferencesActivity();

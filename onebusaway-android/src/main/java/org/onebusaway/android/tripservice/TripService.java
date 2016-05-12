@@ -111,6 +111,7 @@ public class TripService extends Service {
         public void taskComplete() {
             //Log.d(TAG, "Task complete: " + mStartId);
             // If we have notifications, then we can't stop ourselves.
+            //TODO: Is there actually a reason to not stop ourselves if we are no longer storing notifications?
             if (mNotifications.isEmpty()) {
                 stopSelfResult(mStartId);
             }
@@ -133,11 +134,6 @@ public class TripService extends Service {
                 //Log.d(TAG, "Stopping service");
                 stopSelf();
             }
-        }
-
-        @Override
-        public Notification getNotification(int id) {
-            return mNotifications.get(id);
         }
 
     }

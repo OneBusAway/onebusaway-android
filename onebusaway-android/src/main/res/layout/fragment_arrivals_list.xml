@@ -35,5 +35,7 @@
                   style="@style/ListHintText"
                   android:layout_width="fill_parent"
                   android:layout_height="wrap_content"/>
+
+        <include layout="@layout/refresh_loading"/>
     </FrameLayout>
 </LinearLayout>

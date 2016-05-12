@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2011-2016 The Android Open Source Project, University of South Florida
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,8 @@ public class ListFragment extends Fragment {
     TextView mStandardEmptyView;
 
     View mProgressContainer;
+
+    View mRefreshProgressContainer;
 
     View mListContainer;
 
@@ -159,7 +161,7 @@ public class ListFragment extends Fragment {
         mHandler.removeCallbacks(mRequestFocus);
         mList = null;
         mListShown = false;
-        mEmptyView = mProgressContainer = mListContainer = null;
+        mEmptyView = mProgressContainer = mRefreshProgressContainer = mListContainer = null;
         mStandardEmptyView = null;
         super.onDestroyView();
     }
@@ -341,6 +343,13 @@ public class ListFragment extends Fragment {
                 mStandardEmptyView.setVisibility(View.GONE);
             }
             mProgressContainer = root.findViewById(R.id.loading);
+            mRefreshProgressContainer = root.findViewById(R.id.refresh_loading);
+            // Set %50 transparency to progress bar
+            ProgressBar progressBar = (ProgressBar) root.findViewById(R.id.refresh_progress_small);
+            if (progressBar != null && progressBar.getIndeterminateDrawable() != null) {
+                progressBar.getIndeterminateDrawable().setAlpha(128);
+            }
+
             mListContainer = root.findViewById(R.id.listContainer);
             View rawListView = root.findViewById(android.R.id.list);
             if (!(rawListView instanceof ListView)) {
@@ -375,5 +384,16 @@ public class ListFragment extends Fragment {
             }
         }
         mHandler.post(mRequestFocus);
+    }
+
+    protected void showProgress(boolean visibility) {
+        if (mRefreshProgressContainer == null)
+            return;
+
+        if (visibility) {
+            mRefreshProgressContainer.setVisibility(View.VISIBLE);
+        } else {
+            mRefreshProgressContainer.setVisibility(View.GONE);
+        }
     }
 }

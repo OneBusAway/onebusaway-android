@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
+ * Copyright (C) 2011-2016 Paul Watts (paulcwatts@gmail.com),
  * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1314,6 +1314,17 @@ class ArrivalsListHeader {
         }
         if (mPopup2 != null) {
             mPopup2.dismiss();
+        }
+    }
+
+    public void showProgress(boolean visibility) {
+        if (mProgressBar == null)
+            return;
+
+        if (visibility) {
+            mProgressBar.setVisibility(View.VISIBLE);
+        } else {
+            mProgressBar.setVisibility(View.GONE);
         }
     }
 }

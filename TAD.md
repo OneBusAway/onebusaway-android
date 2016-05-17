@@ -1,4 +1,5 @@
 **Usage**
+
 1. View the Trip Status of a desired trip.
 2. Long tap the desired destination stop.
 3. Confirm that you want to start this trip.

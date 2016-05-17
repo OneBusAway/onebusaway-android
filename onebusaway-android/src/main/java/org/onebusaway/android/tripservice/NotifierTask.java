@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
- * University of South Florida (sjbarbeau@gmail.com)
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,15 +65,19 @@ public final class NotifierTask implements Runnable {
 
     private long mTimeDiff;
 
+    private boolean mIsArriving;
+
     public NotifierTask(Context context,
-            TaskContext taskContext,
-            Uri uri,
-            long timeDiff) {
+                        TaskContext taskContext,
+                        Uri uri,
+                        long timeDiff,
+                        boolean isArriving) {
         mContext = context;
         mTaskContext = taskContext;
         mCR = mContext.getContentResolver();
         mUri = uri;
         mTimeDiff = timeDiff;
+        mIsArriving = isArriving;
     }
 
     @Override
@@ -120,7 +123,7 @@ public final class NotifierTask implements Runnable {
                 new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification notification = createNotification(routeId, mTimeDiff,
+        Notification notification = createNotification(routeId, mTimeDiff, mIsArriving,
                 pendingContentIntent, pendingDeleteIntent);
 
         mTaskContext.setNotification(id, notification);
@@ -149,6 +152,7 @@ public final class NotifierTask implements Runnable {
      */
     private Notification createNotification(String routeId,
             long timeDiff,
+            boolean isArriving,
             PendingIntent contentIntent,
             PendingIntent deleteIntent) {
         final String title = mContext.getString(R.string.app_name);
@@ -161,23 +165,33 @@ public final class NotifierTask implements Runnable {
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(deleteIntent)
                 .setContentTitle(title)
-                .setContentText(getNotifyText(routeId, timeDiff))
+                .setContentText(getNotifyText(routeId, timeDiff, isArriving))
                 .build();
 
     }
 
-    private String getNotifyText(String routeId, long timeDiff) {
+    private String getNotifyText(String routeId, long timeDiff, boolean isArriving) {
         final String routeName = TripService.getRouteShortName(mContext, routeId);
-
         if (timeDiff <= 0) {
-            return mContext.getString(R.string.trip_stat_gone, routeName);
+            if (isArriving) {
+                return mContext.getString(R.string.trip_stat_gone_arrived, routeName);
+            } else {
+                return mContext.getString(R.string.trip_stat_gone_departed, routeName);
+            }
         } else if (timeDiff < ONE_MINUTE) {
-            return mContext.getString(R.string.trip_stat_lessthanone, routeName);
-        } else if (timeDiff < ONE_MINUTE * 2) {
-            return mContext.getString(R.string.trip_stat_one, routeName);
+            if (isArriving) {
+                return mContext.getString(R.string.trip_stat_lessthanone_arriving, routeName);
+            } else {
+                return mContext.getString(R.string.trip_stat_lessthanone_departing, routeName);
+            }
         } else {
-            return mContext.getString(R.string.trip_stat, routeName,
-                    (int) (timeDiff / ONE_MINUTE));
+            if (isArriving) {
+                return mContext.getString(R.string.trip_stat_arriving, routeName,
+                        (int) (timeDiff / ONE_MINUTE));
+            } else {
+                return mContext.getString(R.string.trip_stat_departing, routeName,
+                        (int) (timeDiff / ONE_MINUTE));
+            }
         }
     }
 }

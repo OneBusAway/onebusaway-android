@@ -21,6 +21,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentResolver;
@@ -28,6 +29,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Pair;
 
 /**
  * A task (thread) that is responsible for polling the server to determine if a Notification to
@@ -125,18 +127,19 @@ public final class PollerTask implements Runnable {
         ObaArrivalInfoResponse response = ObaArrivalInfoRequest
                 .newRequest(mContext, stopId).call();
 
-        Long departMS = null;
+        // Pair of eta and is arriving information
+        Pair<Long, Boolean> eta = null;
         if (response.getCode() == ObaApi.OBA_OK) {
-            departMS = checkArrivals(response, c);
+            eta = checkArrivals(response, c);
         }
 
-        if (departMS != null) {
-            final long diffTime = departMS - System.currentTimeMillis();
+        if (eta != null) {
+            final long diffTime = eta.first - response.getCurrentTime();
             if (diffTime <= reminderMS) {
                 // Bus is within the reminder interval (or it possibly has left!)
                 // Send off a notification.
                 //Log.d(TAG, "Notify for trip: " + alertUri);
-                TripService.notifyTrip(mContext, mUri, diffTime);
+                TripService.notifyTrip(mContext, mUri, diffTime, eta.second);
             }
         }
     }
@@ -146,11 +149,15 @@ public final class PollerTask implements Runnable {
         return (long) UIUtils.intForQuery(mContext, uri, ObaContract.Trips.REMINDER) * ONE_MINUTE;
     }
 
-    //
-    // Return the difference between now and the predicted/scheduled
-    // arrival time, or null if the arrival can't be found.
-    //
-    private Long checkArrivals(ObaArrivalInfoResponse response, Cursor c) {
+    /**
+     * Checks arrivals from given ObaArrivalInfoResponse
+     *
+     * @param response arrival information
+     * @param c holds the stored trip_id
+     * @return arrival or departure time and a boolean indicator that indicates if the first
+     * parameter is arrival or departure, or return null if the arrival can't be found.
+     */
+    private Pair<Long, Boolean> checkArrivals(ObaArrivalInfoResponse response, Cursor c) {
         final String tripId = c.getString(COL_TRIP_ID);
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         final int length = arrivals.length;
@@ -165,7 +172,9 @@ public final class PollerTask implements Runnable {
                     depart = info.getScheduledArrivalTime();
                 }
 
-                return depart;
+                ArrivalInfo arrivalInfo = new ArrivalInfo(mContext, info,
+                        response.getCurrentTime(), false);
+                return new Pair<>(depart, arrivalInfo.isArrival());
             }
         }
         // Didn't find it.

@@ -418,10 +418,12 @@
     <string name="trip_list_context_showroute">Show route</string>
 
     <!--  Trip notifications -->
-    <string name="trip_stat_gone">Route %s has departed.</string>
-    <string name="trip_stat_lessthanone">Route %s is less than a minute away!</string>
-    <string name="trip_stat_one">Route %s is 1 minute away!</string>
-    <string name="trip_stat">Route %1$s is %2$d minutes away!</string>
+    <string name="trip_stat_gone_arrived">Route %s has arrived.</string>
+    <string name="trip_stat_gone_departed">Route %s has departed.</string>
+    <string name="trip_stat_lessthanone_arriving">Route %s is arriving now!</string>
+    <string name="trip_stat_lessthanone_departing">Route %s is departing now!</string>
+    <string name="trip_stat_arriving">Route %1$s is arriving in %2$d min!</string>
+    <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
 
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Problem description (optional)</string>

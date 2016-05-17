@@ -84,6 +84,8 @@ public class TripService extends Service {
 
     private static final String EXTRA_TIMEDIFF = ".timeDiff";
 
+    private static final String IS_ARRIVING = ".isArriving";
+
     private ExecutorService mThreadPool;
 
     private NotificationManager mNM;
@@ -182,8 +184,9 @@ public class TripService extends Service {
         } else if (ACTION_NOTIFY.equals(action)) {
             // Create the notification
             long timeDiff = intent.getLongExtra(EXTRA_TIMEDIFF, 0);
-            mThreadPool.submit(new NotifierTask(this,
-                    taskContext, uri, timeDiff));
+            boolean isArriving = intent.getBooleanExtra(IS_ARRIVING, false);
+
+            mThreadPool.submit(new NotifierTask(this, taskContext, uri, timeDiff, isArriving));
             return START_REDELIVER_INTENT;
 
         } else if (ACTION_CANCEL.equals(action)) {
@@ -233,11 +236,12 @@ public class TripService extends Service {
         alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
     }
 
-    public static void notifyTrip(Context context, Uri alertUri, long diffTime) {
+    public static void notifyTrip(Context context, Uri alertUri, long diffTime, boolean isArriving) {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(ACTION_NOTIFY);
         intent.setData(alertUri);
         intent.putExtra(EXTRA_TIMEDIFF, diffTime);
+        intent.putExtra(IS_ARRIVING, isArriving);
         context.startService(intent);
     }
 

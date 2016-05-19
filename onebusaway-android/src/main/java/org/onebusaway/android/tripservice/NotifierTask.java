@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.Browser;
 import android.support.v4.app.NotificationCompat;
 
 /**
@@ -104,14 +103,9 @@ public final class NotifierTask implements Runnable {
         final String routeId = UIUtils.stringForQuery(mContext,
                 tripUri, ObaContract.Trips.ROUTE_ID);
 
-        // Set our state to notified
-//        Notification notification = mTaskContext.getNotification(id);
-
-        // #290 - Updating info on existing notifications is deprecated, so instead we
-        //        just send new ones each time. The notification manager handles preventing
-        //        duplicates of the same event.
-
-        // #104 - Instantiate the deleteIntent here, since we need to re-set it in setLatestInfo()
+        // Updating info on existing notifications is deprecated (see #290), so instead we
+        // just create a new Notification each time. The notification manager handles preventing
+        // duplicates of the same event.
         Intent deleteIntent = new Intent(mContext, TripService.class);
         deleteIntent.setAction(TripService.ACTION_CANCEL);
         deleteIntent.setData(mUri);
@@ -122,7 +116,7 @@ public final class NotifierTask implements Runnable {
                 new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification notification = createNotification(stopId, routeId, mTimeDiff,
+        Notification notification = createNotification(routeId, mTimeDiff,
                 pendingContentIntent, pendingDeleteIntent);
 
         mTaskContext.setNotification(id, notification);
@@ -139,35 +133,20 @@ public final class NotifierTask implements Runnable {
     };
     */
 
-    private Notification createNotification(PendingIntent deleteIntent) {
-        return new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.ic_stat_notification)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setOnlyAlertOnce(true)
-                        //.setLights(0xFF00FF00, 1000, 1000)
-                        //.setVibrate(VIBRATE_PATTERN)
-                .setDeleteIntent(deleteIntent)
-                .build();
-    }
-
     /**
-     * Create a notificaiton and populate it with our latest data.
+     * Create a notification and populate it with our latest data.  This method replaces
+     * an implementation using Notification.setLatestEventInfo((), which was deprecated (see #290).
      *
-     * #290 This method replaces setLatestInfo which previously required us to
-     * store notifications for updating.
-     *
-     * @param stopId stop identifier
      * @param routeId route identifer
      * @param timeDiff
      * @param contentIntent intent to fire on click
      * @param deleteIntent intent to remove/delete
      * @return
      */
-    private Notification createNotification(String stopId,
-                                            String routeId,
-                                            long timeDiff,
-                                            PendingIntent contentIntent,
-                                            PendingIntent deleteIntent) {
+    private Notification createNotification(String routeId,
+            long timeDiff,
+            PendingIntent contentIntent,
+            PendingIntent deleteIntent) {
         final String title = mContext.getString(R.string.app_name);
         return new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.drawable.ic_stat_notification)

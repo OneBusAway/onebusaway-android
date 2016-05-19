@@ -19,8 +19,6 @@ import android.app.Notification;
 
 public interface TaskContext {
 
-    //TODO: See if this code is now unnecessary... It looks like the notification manager replaces this.
-
     public void setNotification(int id, Notification notification);
 
     public void cancelNotification(int id);

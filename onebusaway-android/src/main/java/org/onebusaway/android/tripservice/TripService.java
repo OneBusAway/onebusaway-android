@@ -66,6 +66,10 @@ public class TripService extends Service {
 
     private NotificationManager mNM;
 
+    /**
+     * TODO - Remove mNotifications - it's now only used as a semaphore to synchronize the multiple
+     * tasks and shutdown of the Service.  However, this requires a new reminders impl (see #493).
+     */
     private ConcurrentHashMap<Integer, Notification> mNotifications;
 
     @Override
@@ -111,7 +115,6 @@ public class TripService extends Service {
         public void taskComplete() {
             //Log.d(TAG, "Task complete: " + mStartId);
             // If we have notifications, then we can't stop ourselves.
-            //TODO: Is there actually a reason to not stop ourselves if we are no longer storing notifications?
             if (mNotifications.isEmpty()) {
                 stopSelfResult(mStartId);
             }

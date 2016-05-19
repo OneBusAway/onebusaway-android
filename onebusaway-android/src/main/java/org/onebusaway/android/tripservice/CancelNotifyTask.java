@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 
+/**
+ * A task (thread) that is responsible for canceling a reminder.
+ */
 public final class CancelNotifyTask implements Runnable {
 
     private final Context mContext;

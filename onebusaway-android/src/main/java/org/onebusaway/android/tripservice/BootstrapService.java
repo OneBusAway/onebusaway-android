@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +22,10 @@ import android.content.Intent;
 
 public class BootstrapService extends BroadcastReceiver {
 
-    //
-    // This is solely responsible for starting the TripService
-    // when the device starts up.
-    //
+    /**
+     * This is solely responsible for starting the TripService when the device starts up to ensure
+     * that reminders are scheduled.
+     */
     @Override
     public void onReceive(Context context, Intent intent) {
         TripService.scheduleAll(context);

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@ import android.net.Uri;
 import android.text.format.Time;
 
 /**
- * This is the runnable that implements scheduling of trips.
+ * This is the runnable that implements scheduling of trips (for the reminder feature).
  * It can schedule one or many trips, depending on the URI.
  *
  * @author paulw

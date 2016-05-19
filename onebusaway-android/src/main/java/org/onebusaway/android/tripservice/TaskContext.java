@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,11 @@ package org.onebusaway.android.tripservice;
 
 import android.app.Notification;
 
+/**
+ * Interface that defines interactions between the Tasks (i.e., threads)- SchedularTask,
+ * PollerTask,
+ * NotifierTask, and CancelNotifyTask - and the Service that contains the running threads.
+ */
 public interface TaskContext {
 
     public void setNotification(int id, Notification notification);

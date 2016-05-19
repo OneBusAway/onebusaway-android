@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +29,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
+/**
+ * A task (thread) that is responsible for polling the server to determine if a Notification to
+ * remind the user of an arriving bus should be triggered.
+ */
 public final class PollerTask implements Runnable {
     //private static final String TAG = "PollerTask";
 

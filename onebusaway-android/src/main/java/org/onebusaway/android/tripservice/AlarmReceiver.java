@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
 
+/**
+ * Responsible for receiving Intents from the Android platform related to scheduled reminders.
+ *
+ * TODO - We should be extending the support library version of WakefulBroadcastReceiver and
+ * starting the service using startWakefulService().  See #493 for details.
+ */
 public class AlarmReceiver extends BroadcastReceiver {
 
     private static final String TAG = "AlarmReceiver";

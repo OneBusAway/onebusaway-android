@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +38,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * A container Service for a thread pool that manages the scheduling, polling, and notifying the
+ * user of an upcoming bus at their stop.. The thread pool can contain executing threads for
+ * various
+ * tasks related to the reminders feature - the SchedulerTask (executed when a new reminder is
+ * saved, or after boot (via BootstrapService) to register all reminders saved in the database with
+ * the Android platform), the PollerTask (triggered by the platform via AlarmReceiver to begin
+ * polling the server 30 min ahead of the scheduled time of the arrival for which the reminder is
+ * set), the NotifierTask (triggered by OBA Android when we should fire a notification for a
+ * reminder), or the CancelNotifyTask (for when a notification is canceled).
+ *
+ * This Service is not constructed to continously run - instead, it can shut down in between the
+ * execution of tasks.  For example, the PollerTask actually reschedules itself each time it polls
+ * (in PollerTask.poll1()), so the TripService service could shut down in between polling events.
+ *
+ * Following #290, mNotifications is only used as a semaphore to synchronize the multiple tasks and
+ * shutdown of the Service.  This is a complex implementation prone to multi-threading and
+ * synchronization issues.  We should examine a re-implementation of the reminder service - see
+ * #493
+ * for details.
+ */
 public class TripService extends Service {
 
     public static final String TAG = "TripService";

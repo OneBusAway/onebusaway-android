@@ -62,6 +62,7 @@
     <string name="analytics_action_problem">report_problem</string>
     <string name="analytics_action_touch_exploration">touch_exploration_on</string>
     <string name="analytics_action_customer_service">customer_service</string>
+    <string name="analytics_action_service_alerts">service_alerts</string>
 
     <string name="analytics_label_region">API Region:\u0020</string>
     <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
@@ -131,6 +132,7 @@
     <string name="analytics_label_analytic_preference">Set Send anonymous usage data:\u0020</string>
     <string name="analytics_label_show_departed_bus_preference">Show Departed Buses:\u0020</string>
     <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
+    <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>

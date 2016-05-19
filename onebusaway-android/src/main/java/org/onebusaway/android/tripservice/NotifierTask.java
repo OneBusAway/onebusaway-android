@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.Browser;
 import android.support.v4.app.NotificationCompat;
 
 /**
@@ -104,20 +105,26 @@ public final class NotifierTask implements Runnable {
                 tripUri, ObaContract.Trips.ROUTE_ID);
 
         // Set our state to notified
-        Notification notification = mTaskContext.getNotification(id);
+//        Notification notification = mTaskContext.getNotification(id);
+
+        // #290 - Updating info on existing notifications is deprecated, so instead we
+        //        just send new ones each time. The notification manager handles preventing
+        //        duplicates of the same event.
 
         // #104 - Instantiate the deleteIntent here, since we need to re-set it in setLatestInfo()
         Intent deleteIntent = new Intent(mContext, TripService.class);
         deleteIntent.setAction(TripService.ACTION_CANCEL);
         deleteIntent.setData(mUri);
-        PendingIntent pendingIntent = PendingIntent.getService(mContext, 0,
+        PendingIntent pendingDeleteIntent = PendingIntent.getService(mContext, 0,
                 deleteIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        if (notification == null) {
-            notification = createNotification(pendingIntent);
-        }
+        final PendingIntent pendingContentIntent = PendingIntent.getActivity(mContext, 0,
+                new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
-        setLatestInfo(notification, stopId, routeId, mTimeDiff, pendingIntent);
+        Notification notification = createNotification(stopId, routeId, mTimeDiff,
+                pendingContentIntent, pendingDeleteIntent);
+
         mTaskContext.setNotification(id, notification);
     }
 
@@ -143,24 +150,37 @@ public final class NotifierTask implements Runnable {
                 .build();
     }
 
-    @SuppressWarnings("deprecation")
-    private void setLatestInfo(Notification notification,
-            String stopId,
-            String routeId,
-            long timeDiff, PendingIntent deleteIntent) {
+    /**
+     * Create a notificaiton and populate it with our latest data.
+     *
+     * #290 This method replaces setLatestInfo which previously required us to
+     * store notifications for updating.
+     *
+     * @param stopId stop identifier
+     * @param routeId route identifer
+     * @param timeDiff
+     * @param contentIntent intent to fire on click
+     * @param deleteIntent intent to remove/delete
+     * @return
+     */
+    private Notification createNotification(String stopId,
+                                            String routeId,
+                                            long timeDiff,
+                                            PendingIntent contentIntent,
+                                            PendingIntent deleteIntent) {
         final String title = mContext.getString(R.string.app_name);
+        return new NotificationCompat.Builder(mContext)
+                .setSmallIcon(R.drawable.ic_stat_notification)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setOnlyAlertOnce(true)
+                        //.setLights(0xFF00FF00, 1000, 1000)
+                        //.setVibrate(VIBRATE_PATTERN)
+                .setContentIntent(contentIntent)
+                .setDeleteIntent(deleteIntent)
+                .setContentTitle(title)
+                .setContentText(getNotifyText(routeId, timeDiff))
+                .build();
 
-        final PendingIntent intent = PendingIntent.getActivity(mContext, 0,
-                new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        notification.setLatestEventInfo(mContext,
-                title,
-                getNotifyText(routeId, timeDiff),
-                intent);
-
-        // #104 - Bug in setLatestEventInfo() erases the deleteIntent, so reset it here
-        notification.deleteIntent = deleteIntent;
     }
 
     private String getNotifyText(String routeId, long timeDiff) {

@@ -79,7 +79,9 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //
 // We don't use the ListFragment because the support library's version of
@@ -1612,6 +1614,7 @@ public class ArrivalsListFragment extends ListFragment
         @Override
         public void onClick() {
             SituationActivity.start(getActivity(), mSituation);
+            reportAnalytics(mSituation);
         }
 
         @Override
@@ -1635,6 +1638,20 @@ public class ArrivalsListFragment extends ListFragment
                 return false;
             }
             return true;
+        }
+    }
+
+    private void reportAnalytics(ObaSituation situation) {
+        ObaSituation.AllAffects[] allAffects = situation.getAllAffects();
+        Set<String> agencyIds = new HashSet<>();
+        for (int i = 0; i < allAffects.length; i++) {
+            agencyIds.add(allAffects[i].getAgencyId());
+        }
+
+        for (String agencyId : agencyIds) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_service_alerts),
+                    getString(R.string.analytics_label_service_alerts) + agencyId);
         }
     }
 

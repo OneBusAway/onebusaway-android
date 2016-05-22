@@ -106,9 +106,19 @@
         <b>Buses en vivo desde el mapa</b>
         - ¡En los tiempos de llegada selecciona \"Mostrar la ruta sobre el mapa\"!\n&#8226;\u0020
         <b>Estado del viaje en vivo</b>
-        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!
+        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
+        <b>Mejora en Envio de Comentarios</b>
+        - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
+        <b>Corrección de errores</b>
     </string>
     <string name="main_help_close">Cerrar</string>
+    <string name="main_help_legend_title">Leyenda</string>
+    <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>
+    <string name="main_help_legend_late">Azul siginifica \"Llegando tarde\"</string>
+    <string name="main_help_legend_early">Rojo significa \"Legando antes\"</string>
+    <string name="main_help_legend_scheduled">Gris significa \"Llegada planificada\" - No sabemos
+        donde esta tu bus ahora, pero la programación dice que hay una próxima llegada
+    </string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
     <string name="main_nolocation">A OneBusAway le gustaria saber tú ubicación, ¿Quieres activarla
         ahora?
@@ -201,10 +211,10 @@
     <string name="stop_info_scheduled_arrival">Llegada planificada</string>
     <string name="stop_info_scheduled_departure">Salida planificada</string>
     <string name="stop_info_scheduled">Planificada</string>
-    <string name="stop_info_time_arriving_at">Llegando en %1s</string>
-    <string name="stop_info_time_departing_at">Saliendo en %1s</string>
-    <string name="stop_info_time_arrived_at">Llegó en %1s</string>
-    <string name="stop_info_time_departed_at">Salió en %1s</string>
+    <string name="stop_info_time_arriving_at">Llegando a las %1s</string>
+    <string name="stop_info_time_departing_at">Saliendo a las %1s</string>
+    <string name="stop_info_time_arrived_at">Llegó a las %1s</string>
+    <string name="stop_info_time_departed_at">Salió a las %1s</string>
 
     <string name="stop_info_frequency_from">Cada %1$d mins desde %2$s</string>
     <string name="stop_info_frequency_until">Cada %1$d mins hasta %2$s</string>
@@ -392,12 +402,7 @@
     <string name="trip_stat">¡La ruta %1$s está a %2$d minutos!</string>
 
     <!-- Report problem -->
-    <string name="report_problem_code">¿Cuál es el problema?</string>
-    <string name="report_problem_comment">¿Algo más?</string>
-    <string name="report_problem_comment_hint">opcional</string>
-    <string name="report_problem_email">Tu correo electrónico</string>
-    <string name="report_problem_email_hint">opcional</string>
-    <string name="report_problem_cancel">Cancelar</string>
+    <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
     <string name="report_problem_send">Enviar</string>
     <string name="report_problem_hint">¡Tus resortes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
     <string name="report_problem_sent">Reporte enviado, ¡Gracias!</string>
@@ -405,8 +410,7 @@
     <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">¿Estas en este bus?</string>
-    <string name="report_problem_vehiclenumber_bus">Número del bus</string>
-    <string name="report_problem_uservehicle_hint">opcional</string>
+    <string name="report_problem_uservehicle_hint">Número del bus (opcional)</string>
     <string name="report_problem_stop_activity_label">Reportar problema de Parada</string>
     <string name="report_problem_trip_activity_label">Reportar problema de Viaje</string>
 
@@ -457,6 +461,9 @@
     <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
     <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
         %1$s\nModelo: %2$s\nVersión SO: %3$s / %4$d\nLoc: %5$s
+    </string>
+    <string name="bug_report_body_without_location">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
+        %1$s\nModelo: %2$s\n nVersión SO: %3$s / %4$d
     </string>
     <string name="bug_report_error">No se puede enviar el informe de error: no se encontro una aplicación adecuada.
     </string>
@@ -548,6 +555,54 @@
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Abra la bandeja de navegación</string>
     <string name="navigation_drawer_close">Cierre la bandeja de navegación</string>
+
+    <!-- Issue reporting implementation-->
+    <string name="region_dialog_message">¿Estás en la región %1$s?</string>
+    <string name="preference_region_dialog_message"> Tu región está configurada en %1$s.
+    ¡Si esto esta mal, por favor toca en \'Tú región\' para cambiarlo!</string>
+    <string name="preference_region_dialog_title">Por favor, compruebe su región</string>
+    <string name="report_dialog_out_of_region_message"> Por favor, seleccione una parada.</string>
+    <string name="report_dialog_trip"> Por favor seleccione un tiempo de llegada.</string>
+
+    <!-- report issue screen-->
+    <string name="ri_desc_hint">Descripción de Problema</string>
+    <string name="ri_button_camera">Cámara</string>
+    <string name="ri_button_image">AÑADIR IMAGEN</string>
+    <string name="ri_button_gallery">Galería</string>
+    <string name="ri_address_not_found">Dirección no encontrada. Por favor, compruebe su dirección.</string>
+    <string name="ri_service_description_problem">La descripción del servicio no pudo ser encontrada.</string>
+    <string name="ri_service_default">Elija un Problema</string>
+    <string name="ri_service_stop">Problema de Parada</string>
+    <string name="ri_service_trip">Problema de Tiempo de Llegada</string>
+    <string name="ri_user_name_hint">Nombre</string>
+    <string name="ri_user_lastname_hint">Apellidos</string>
+    <string name="ri_user_email_hint">Correo electrónico</string>
+    <string name="ri_user_phone_hint">Número de Teléfono</string>
+    <string name="ri_no_trip">No hay tiempos de llegada, por favor, regrese mas tarde.</string>
+    <string name="ri_anonymous_checkbox">Mantenerlo anónimo</string>
+    <string name="ri_submitting_message">Enviar tu reporte</string>
+    <string name="ri_unsuccessful_submit">Ocurrio un error durante el envío, por favor, intenta más tarde.</string>
+
+    <!-- report issue types screen-->
+    <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
+    <string name="rt_infrastructure_problem">Reportar un Problema de Parada</string>
+    <string name="rt_customer_service">Contactar con el Servicio de Atneción al Cliente</string>
+    <string name="rt_stop_problem">Reportar un Problema de Parada</string>
+    <string name="rt_arrival_problem">Reportar un Problema de Tiempo de Llegada</string>
+    <string name="rt_infrastructure_problem_title">Reportar un Problema</string>
+    <string name="rt_stop_problem_title">Problema de Parada</string>
+    <string name="rt_arrival_problem_title">Problema de Tiempo de Llegada</string>
+    <string name="rt_app_feedback">Enviar Comentarios de la App</string>
+    <string name="rt_ideas">Ideas para Nuevas Funciones</string>
+    <string name="rt_message_infrastructure_problem">Ruta faltante, banco roto, etc.</string>
+    <string name="rt_message_customer_service">Felicitaciones o Quejas al conductor, objetos perdidos, etc.</string>
+    <string name="rt_message_stop_problem">Ruta faltante, mal nombre de la parada, etc.</string>
+    <string name="rt_message_arrival_problem">El vehiculo nunca llegó, mal tiempo de llegada, etc.</string>
+    <string name="rt_message_app_feedback">Diseño, errores, etc.</string>
+    <string name="rt_message_ideas">Enviar y votar sobre las futuras mejoras</string>
+    <string name="rt_address_hint">Dirección del problema (opcional)</string>
+    <string name="rt_yes">SI</string>
+    <string name="rt_no">NO</string>
 
     <!-- Tutorial Fragment -->
     <string name="pager_button_prev">Anterior</string>
@@ -651,6 +706,14 @@
         no te pudo ver en la oscuridad? Intenta la opción \"Iluminación de noche\" desde el botón \"Más\" en la parte superior
         derecha de la pantalla.
     </string>
+    <string name="tutorial_send_feedback_title">Dinos que es lo que piensas</string>
+    <string name="tutorial_send_feedback_text">¡Ayudanos a mejorar! Toca en \"Enviar comentarios\"
+        en el panel de navegación principal.
+    </string>
+    <string name="tutorial_send_feedback_transit_service_title">Más que sólo tránsito</string>
+    <string name="tutorial_send_feedback_transit_service_text">Puedes reportar una variedad de tipos de
+        problemas a tu gobierno local cerca a esta parada. Toca en el cuadro desplegable para ver una lista completa.
+    </string>
 
     <!-- About -->
     <string name="title_activity_about">Acerca de</string>
@@ -688,6 +751,8 @@
 
         "* Flechas por Zlatko Najdenovski, MK\n"
         "* Marcador en el Mapa por Housin Aziz, SE\n\n"
+        "* Incógnito por Christopher Schreiner\n"
+        "* Bandera Triángulo por Austin Andrews\n\n"
 
         "Gracias a Google por los iconos de material design
         (https://github.com/google/material-design-icons), "

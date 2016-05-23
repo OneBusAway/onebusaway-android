@@ -9,3 +9,5 @@ We'd like to thank the following developers who have contributed to OneBusAway A
 * Ben Du
 * Cagri Cetin
 * Mike Karabushin
+* Aziz Batihk
+* Charles Bond

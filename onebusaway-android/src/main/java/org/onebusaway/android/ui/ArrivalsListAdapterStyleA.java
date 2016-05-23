@@ -81,7 +81,10 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
                 R.drawable.focus_star_on :
                 R.drawable.focus_star_off);
 
-        route.setText(arrivalInfo.getShortName());
+        String shortName = arrivalInfo.getShortName();
+        route.setText(shortName);
+        UIUtils.maybeShrinkRouteName(getContext(), route, shortName);
+
         destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());
 

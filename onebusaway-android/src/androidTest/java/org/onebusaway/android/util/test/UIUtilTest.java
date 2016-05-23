@@ -1,5 +1,6 @@
 package org.onebusaway.android.util.test;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
@@ -16,6 +17,7 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
 import android.text.TextUtils;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -552,6 +554,25 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(29).getStatusText());
         assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
         assertEquals("On time", arrivalInfo.get(31).getStatusText());
+    }
+
+    public void testMaybeShrinkRouteName() {
+        TextView tv = new TextView(getContext());
+
+        String routeShortName = "TST";
+        float textSize = tv.getTextSize();
+        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
+        assertEquals(textSize, tv.getTextSize());
+
+        routeShortName = "Test";
+        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
+        assertEquals(getContext().getResources().getDimension(R.dimen.route_name_text_size_medium),
+                tv.getTextSize());
+
+        routeShortName = "Test2";
+        UIUtils.maybeShrinkRouteName(getContext(), tv, routeShortName);
+        assertEquals(getContext().getResources().getDimension(R.dimen.route_name_text_size_small),
+                tv.getTextSize());
     }
 
     /**

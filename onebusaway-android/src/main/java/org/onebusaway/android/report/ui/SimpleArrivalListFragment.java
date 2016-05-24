@@ -92,7 +92,7 @@ public class SimpleArrivalListFragment extends Fragment
         super.onSaveInstanceState(outState);
         if (mObaStop != null) {
             outState.putString(MapParams.STOP_ID, mObaStop.getId());
-        } else if (mBundleObaStopId != null ){
+        } else if (mBundleObaStopId != null) {
             outState.putString(MapParams.STOP_ID, mBundleObaStopId);
         }
     }
@@ -142,7 +142,7 @@ public class SimpleArrivalListFragment extends Fragment
     @Override
     public Loader<ObaArrivalInfoResponse> onCreateLoader(int id, Bundle args) {
         String stopId;
-        if (mObaStop == null){
+        if (mObaStop == null) {
             stopId = mBundleObaStopId;
         } else {
             stopId = mObaStop.getId();
@@ -195,7 +195,10 @@ public class SimpleArrivalListFragment extends Fragment
             view.findViewById(R.id.more_horizontal).setVisibility(View.INVISIBLE);
             view.findViewById(R.id.route_favorite).setVisibility(View.INVISIBLE);
 
-            route.setText(arrivalInfo.getShortName());
+            String routeShortName = arrivalInfo.getShortName();
+            route.setText(routeShortName);
+            UIUtils.maybeShrinkRouteName(getActivity(), route, routeShortName);
+
             destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
             status.setText(stopInfo.getStatusText());
 

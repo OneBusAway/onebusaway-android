@@ -41,6 +41,9 @@
 
     <!-- Other misc items -->
     <dimen name="route_button_width">48sp</dimen>
+    <dimen name="route_name_text_size_small">24sp</dimen>
+    <dimen name="route_name_text_size_medium">30sp</dimen>
+
 
     <!-- Arrival List Header -->
     <dimen name="arrival_header_height_no_arrivals">50dp</dimen>

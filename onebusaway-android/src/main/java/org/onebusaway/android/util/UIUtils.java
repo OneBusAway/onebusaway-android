@@ -17,8 +17,6 @@
 
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -50,7 +48,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -69,6 +66,7 @@ import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -1140,5 +1138,24 @@ public final class UIUtils {
                         DateUtils.FORMAT_NO_NOON |
                         DateUtils.FORMAT_NO_MIDNIGHT
         );
+    }
+
+    /**
+     * Set smaller text size if the route short name has more than 3 characters
+     *
+     * @param view Text view
+     * @param routeShortName Route short name
+     */
+    public static void maybeShrinkRouteName(Context context, TextView view, String routeShortName) {
+        if (routeShortName.length() < 4) {
+            // No-op if text is short enough to fit
+            return;
+        } else if (routeShortName.length() == 4) {
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources().
+                    getDimension(R.dimen.route_name_text_size_medium));
+        } else if (routeShortName.length() > 4) {
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.getResources().
+                    getDimension(R.dimen.route_name_text_size_small));
+        }
     }
 }

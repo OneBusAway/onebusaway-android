@@ -17,16 +17,18 @@
 <resources>
     <string-array name="main_help_options">
         <item>Aprende con el tutorial</item>
-        <item>Twitter</item>
-        <item>Agencias Soportadas</item>
+        <item>Leyenda</item>
         <item>Novedades en esta versión</item>
+        <item>Agencias Soportadas</item>
+        <item>Twitter</item>
         <item>Contactanos</item>
     </string-array>
     <string-array name="main_help_options_no_contact_us">
         <item>Aprende con el tutorial</item>
-        <item>Twitter</item>
-        <item>Agencias Soportadas</item>
+        <item>Leyenda</item>
         <item>Novedades en esta versión</item>
+        <item>Agencias Soportadas</item>
+        <item>Twitter</item>
     </string-array>
     <string-array name="route_favorite_options">
         <item>Esta parada</item>
@@ -127,4 +129,77 @@
         <item>un poco a la derecha</item>
         <!-- NNW -->
     </string-array>
+    <!-- Issue reporting -->
+    <string-array name="report_types">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_infrastructure_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+    <string-array name="report_types_desc">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_infrastructure_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_types_without_open311">
+        <item>@string/rt_customer_service</item>
+        <item>@string/rt_stop_problem</item>
+        <item>@string/rt_arrival_problem</item>
+        <item>@string/rt_app_feedback</item>
+        <item>@string/rt_ideas</item>
+    </string-array>
+
+    <string-array name="report_types_desc_without_open311">
+        <item>@string/rt_message_customer_service</item>
+        <item>@string/rt_message_stop_problem</item>
+        <item>@string/rt_message_arrival_problem</item>
+        <item>@string/rt_message_app_feedback</item>
+        <item>@string/rt_message_ideas</item>
+    </string-array>
+
+    <array name="report_types_icons_without_open311">
+        <item>@drawable/ic_customer_service</item>
+        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_arrival_time</item>
+        <item>@drawable/ic_app_feedback</item>
+        <item>@drawable/ic_light_bulb</item>
+    </array>
+
+    <string-array name="report_stop_issue_tutorial_desc">
+        <item>Clic en la parada del bus, que quieres reportar.</item>
+        <item>Entonces selecciona un problema a reportar en la sección de opciones.</item>
+        <item>Envía tu parada de bus relacionada al problema.</item>
+    </string-array>
+
+    <string-array name="report_stop_transit_category_keywords">
+        <item>tránsito</item>
+        <item>bus</item>
+        <item>parada</item>
+    </string-array>
+
+    <string-array name="report_trip_transit_category_keywords">
+        <item>viaje</item>
+        <item>llegada</item>
+        <item>planificada</item>
+    </string-array>
+
+    <string-array name="report_stop_id_field_keywords">
+        <item>parada</item>
+        <item>id</item>
+        <item>bus</item>
+    </string-array>
+
+
 </resources>

@@ -586,7 +586,7 @@
     <!-- report issue types screen-->
     <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->
     <string name="rt_infrastructure_problem">Reportar un Problema de Parada</string>
-    <string name="rt_customer_service">Contactar con el Servicio de Atención al Cliente</string>
+    <string name="rt_customer_service">Contactar al Servicio de Atención al Cliente</string>
     <string name="rt_stop_problem">Reportar un Problema de Parada</string>
     <string name="rt_arrival_problem">Reportar un Problema de Tiempo de Llegada</string>
     <string name="rt_infrastructure_problem_title">Reportar un Problema</string>

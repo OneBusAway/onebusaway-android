@@ -59,7 +59,7 @@
         encontrada. Si este era un
         atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
         región actual es
-        %1$s. Cambialo en \"Preferencias-> Tú región\").
+        %1$s. Cámbialo en \"Preferencias-> Tú región\").
     </string>
     <string name="internal_error">Uy, algo salió mal. Intenta de nuevo y puede que funcione.</string>
     <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manejar esta
@@ -114,24 +114,24 @@
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
     <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>
-    <string name="main_help_legend_late">Azul siginifica \"Llegando tarde\"</string>
-    <string name="main_help_legend_early">Rojo significa \"Legando antes\"</string>
+    <string name="main_help_legend_late">Azul significa \"Llegando tarde\"</string>
+    <string name="main_help_legend_early">Rojo significa \"Llegando antes\"</string>
     <string name="main_help_legend_scheduled">Gris significa \"Llegada planificada\" - No sabemos
         donde esta tu bus ahora, pero la programación dice que hay una próxima llegada
     </string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
-    <string name="main_nolocation">A OneBusAway le gustaria saber tú ubicación, ¿Quieres activarla
+    <string name="main_nolocation">A OneBusAway le gustaría saber tú ubicación, ¿Quieres activarla
         ahora?
     </string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
     <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>
-    <string name="main_outofrange">Usted esta fuera de área de servicio %1$s.\n\n¿Ir allí ahora?</string>
+    <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Ir allí ahora?</string>
     <string name="main_outofrange_yes">Llévame allí</string>
     <string name="main_outofrange_no">Quedarme donde estoy</string>
 
     <string name="bus_options_menu_add_star">Adicionar la ruta a favoritos</string>
-    <string name="bus_options_menu_remove_star">Remover la ruta de favortios</string>
+    <string name="bus_options_menu_remove_star">Remover la ruta de favoritos</string>
     <string name="bus_options_menu_show_route_on_map">Mostrar la ruta sobre el mapa</string>
     <string name="bus_options_menu_show_trip_details">Mostrar el estado del viaje</string>
     <string name="bus_options_menu_set_reminder">Adicionar un recordatorio</string>
@@ -226,12 +226,12 @@
     <string name="stop_info_option_sort_route">Ordenar por Ruta …</string>
     <string name="stop_info_option_refresh">Refrescar</string>
     <string name="stop_info_option_filter">Filtrar rutas</string>
-    <string name="stop_info_option_hide_header_arrivals">Ocultar las llegadas del encabezado</string>
+    <string name="stop_info_option_hide_header_arrivals">Ocultar las llegadas en el encabezado</string>
     <string name="stop_info_option_show_header_arrivals">Mostrar las llegadas en el encabezado</string>
     <string name="stop_info_option_editname">Editar el nombre de la parada</string>
     <string name="stop_info_option_addstar">Adicionar la parada a favoritos</string>
     <string name="stop_info_option_show_details">Mostrar los detalles de la parada</string>
-    <string name="stop_info_option_removestar">Remover la paradad de favoritos</string>
+    <string name="stop_info_option_removestar">Remover la parada de favoritos</string>
     <string name="stop_info_option_report_problem">Reportar un problema con la parada</string>
     <string name="stop_info_option_night_light">Iluminación de noche</string>
     <string name="stop_info_nodata_minutes">Sin llegadas en los próximos %1$d min.</string>
@@ -270,7 +270,7 @@
     </plurals>
     <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
     <string name="stop_info_item_options_title">Opciones de bus</string>
-    <string name="stop_info_filter_title">Solo mostrar estas rutas</string>
+    <string name="stop_info_filter_title">Mostrar sólo estas rutas</string>
     <string name="stop_info_filter_header">Mostrando %1$d de %2$d rutas</string>
     <string name="stop_info_filter_showall">(mostrar todas)</string>
     <string name="stop_info_save">Guardar</string>
@@ -313,7 +313,7 @@
     <string name="my_search_title">Buscar</string>
     <string name="my_no_recent_stops">No tienes paradas recientes.</string>
     <string name="my_no_starred_stops">No tienes paradas favoritas.\n\nPuedes adicionar paradas a favoritos en
-        la pantalla de llegadas de buses.
+        la pantalla de llegadas de los buses.
     </string>
     <string name="my_no_recent_routes">No tienes rutas recientes.</string>
     <!-- <string name="my_no_starred_routes">No tienes rutas favoritas.</string>-->
@@ -338,10 +338,10 @@
     <!-- Service Alerts  -->
     <string name="situation_activity_label">Servicio de Alertas</string>
     <string name="alert_content_description_warning">Advertencia sobre el Servicio - toque para deslizar hacia arriba
-        el panel y mostrar mas información.
+        el panel y ver más información.
     </string>
     <string name="alert_content_description_error">Advertencia Severa del Servicio - toque para deslizar 
-        hacia arriba el panel y mostrar mas información.
+        hacia arriba el panel y ver más información.
     </string>
 
     <!-- Find -->
@@ -404,7 +404,7 @@
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
     <string name="report_problem_send">Enviar</string>
-    <string name="report_problem_hint">¡Tus resortes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
+    <string name="report_problem_hint">¡Tus reportes ayudan a OneBusAway a encontrar y arreglar los problemas!</string>
     <string name="report_problem_sent">Reporte enviado, ¡Gracias!</string>
     <string name="report_problem_error">No se pudo enviar el reporte. ¿Intentar de nuevo?</string>
     <string name="report_problem_invalid_argument">Por favor, elija una categoría para el problema.</string>
@@ -514,7 +514,7 @@
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
     <string name="preferences_save_title">Guardar al almacenamiento</string>
-    <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las recientes busquedas</string>
+    <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
     <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
@@ -597,7 +597,7 @@
     <string name="rt_message_infrastructure_problem">Ruta faltante, banco roto, etc.</string>
     <string name="rt_message_customer_service">Felicitaciones o Quejas al conductor, objetos perdidos, etc.</string>
     <string name="rt_message_stop_problem">Ruta faltante, mal nombre de la parada, etc.</string>
-    <string name="rt_message_arrival_problem">El vehiculo nunca llegó, mal tiempo de llegada, etc.</string>
+    <string name="rt_message_arrival_problem">El vehículo nunca llegó, mal tiempo de llegada, etc.</string>
     <string name="rt_message_app_feedback">Diseño, errores, etc.</string>
     <string name="rt_message_ideas">Enviar y votar sobre las futuras mejoras</string>
     <string name="rt_address_hint">Dirección del problema (opcional)</string>
@@ -629,8 +629,8 @@
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>
-    <string name="night_light_dialog_message">¿Cansado de ver pasar su bus porque el conductor
-        no lo podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!
+    <string name="night_light_dialog_message">¿Cansado de ver pasar tu bus porque el conductor
+        no te podía ver en la oscuridad? ¡Enciende la luz parpadeante para la noche y hazte visible!
     </string>
     <string name="night_light_create_shortcut">Crear un acceso directo</string>
 
@@ -640,15 +640,15 @@
     <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
         de llegada.
     </string>
-    <string name="tutorial_arrival_header_arrival_info_title">¿Cuanto tiempo hasta que llegue tu bus?
+    <string name="tutorial_arrival_header_arrival_info_title">¿Cuánto tiempo hasta que llegue tu bus?
     </string>
-    <string name="tutorial_arrival_header_arrival_info_text">¡Largo tiempo! El color de fondo te indica
+    <string name="tutorial_arrival_header_arrival_info_text">¡Mucho tiempo! El color de fondo te indica
         si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>
     <string name="tutorial_arrival_header_star_stop_title">Destaca tus paradas favoritas</string>
     <string name="tutorial_arrival_header_star_stop_text">Toca sobre la estrella para guardar tus paradas
-        favoritas. Las paradas favoritas están disponivles en el panel de navegación principal.
+        favoritas. Las paradas favoritas están disponibles en el panel de navegación principal.
     </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
     </string>
@@ -673,12 +673,12 @@
     </string>
     <string name="tutorial_arrival_style_b_show_route_title">Ver la posición de los buses sobre el mapa
     </string>
-    <string name="tutorial_arrival_style_b_show_route_text">Toca sobre el icono de mapa para ver tu bus moverse
+    <string name="tutorial_arrival_style_b_show_route_text">Toca sobre el icono de mapa para ver el bus moverse
         en tiempo real.
     </string>
     <string name="tutorial_vehicle_icons_title">Toca sobre los iconos del bus para ver mas información</string>
-    <string name="tutorial_vehicle_icons_text">Consejo - Rota el mapa usando dos dedos si
-        accidentalmente tocas sobre una parada cercana en lugar de a un bus.
+    <string name="tutorial_vehicle_icons_text">Consejo - Rota el mapa usando dos (2) dedos si
+        accidentalmente tocas sobre una parada cercana en lugar de tocar sobre el bus.
     </string>
     <string name="tutorial_vehicle_info_window_title">Ver información del bus en vivo</string>
     <string name="tutorial_vehicle_info_window_text">Toca sobre la ventana emergente para ver la ruta de
@@ -689,8 +689,8 @@
         frecuencia de uso con el botón \"Ordenar\" en la parte superior de la pantalla.
     </string>
     <string name="tutorial_starred_stops_shortcut_title">Ahorra tiempo con accesos directos</string>
-    <string name="tutorial_starred_stops_shortcut_text">Presiona un largo tiempo sobre una parada para crear un acceso directo
-        en tu pantalla de inicio. ¡Toca sobre el acceso directo para ver instantaneamente las llegadas!
+    <string name="tutorial_starred_stops_shortcut_text">Presiona por un largo tiempo sobre una parada para crear un acceso directo
+        en tu pantalla de inicio. ¡Toca sobre el acceso directo para ver instantáneamente las llegadas!
     </string>
     <string name="tutorial_show_arrivals_in_header_title">Ver las rutas favoritas de primero</string>
     <string name="tutorial_show_arrivals_in_header_text">¿Quieres ver tus rutas favoritas sobre el
@@ -698,11 +698,11 @@
         derecha de la pantalla.
     </string>
     <string name="tutorial_arrival_route_filter_title">Filtrar las rutas no deseadas</string>
-    <string name="tutorial_arrival_route_filter_text">¿No te interesa la Ruta 6? Ocultada usando la
+    <string name="tutorial_arrival_route_filter_text">¿No te interesa la Ruta 6? Ocúltala usando la
         opción \"Filtrar rutas\" desde el botón \"Más\" en la parte superior derecha de la pantalla.
     </string>
     <string name="tutorial_night_light_title">Iluminación en la noche</string>
-    <string name="tutorial_night_light_text">¿Estás cansado de que el bus continue de largo porque el conductor
+    <string name="tutorial_night_light_text">¿Estás cansado de que el bus continúe de largo porque el conductor
         no te pudo ver en la oscuridad? Intenta la opción \"Iluminación de noche\" desde el botón \"Más\" en la parte superior
         derecha de la pantalla.
     </string>

@@ -18,6 +18,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
@@ -51,7 +52,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
             long currentTime) {
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
-                    ArrivalInfo.convertObaArrivalInfo(getContext(),
+                    ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                             arrivals, routesFilter, currentTime, false);
             setData(list);
         } else {

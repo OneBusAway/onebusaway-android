@@ -29,7 +29,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Pair;
 
 /**
  * A task (thread) that is responsible for polling the server to determine if a Notification to
@@ -122,59 +121,47 @@ public final class PollerTask implements Runnable {
 
         final String tripId = c.getString(COL_TRIP_ID);
         final String stopId = c.getString(COL_STOP_ID);
-        final long reminderMS = getReminderMS(tripId, stopId);
+        final long reminderMin = getReminderMin(tripId, stopId);
 
         ObaArrivalInfoResponse response = ObaArrivalInfoRequest
                 .newRequest(mContext, stopId).call();
 
-        // Pair of eta and is arriving information
-        Pair<Long, Boolean> eta = null;
+        // Arrival information
+        ArrivalInfo arrivalInfo = null;
         if (response.getCode() == ObaApi.OBA_OK) {
-            eta = checkArrivals(response, c);
+            arrivalInfo = checkArrivals(response, c.getString(COL_TRIP_ID));
         }
 
-        if (eta != null) {
-            final long diffTime = eta.first - response.getCurrentTime();
-            if (diffTime <= reminderMS) {
+        if (arrivalInfo != null) {
+            if (arrivalInfo.getEta() <= reminderMin) {
                 // Bus is within the reminder interval (or it possibly has left!)
                 // Send off a notification.
                 //Log.d(TAG, "Notify for trip: " + alertUri);
-                TripService.notifyTrip(mContext, mUri, diffTime, eta.second);
+                TripService.notifyTrip(mContext, mUri, arrivalInfo.getNotifyText());
             }
         }
     }
 
-    private long getReminderMS(String tripId, String stopId) {
+    private long getReminderMin(String tripId, String stopId) {
         final Uri uri = ObaContract.Trips.buildUri(tripId, stopId);
-        return (long) UIUtils.intForQuery(mContext, uri, ObaContract.Trips.REMINDER) * ONE_MINUTE;
+        return (long) UIUtils.intForQuery(mContext, uri, ObaContract.Trips.REMINDER);
     }
 
     /**
      * Checks arrivals from given ObaArrivalInfoResponse
      *
      * @param response arrival information
-     * @param c holds the stored trip_id
-     * @return arrival or departure time and a boolean indicator that indicates if the first
-     * parameter is arrival or departure, or return null if the arrival can't be found.
+     * @param tripId
+     * @return ArrivalInfo, or return null if the arrival can't be found.
      */
-    private Pair<Long, Boolean> checkArrivals(ObaArrivalInfoResponse response, Cursor c) {
-        final String tripId = c.getString(COL_TRIP_ID);
+    private ArrivalInfo checkArrivals(ObaArrivalInfoResponse response, String tripId) {
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         final int length = arrivals.length;
         for (int i = 0; i < length; ++i) {
             ObaArrivalInfo info = arrivals[i];
             if (tripId.equals(info.getTripId())) {
                 // We found the trip. We notify when the reminder time
-                // when calculated with the *predicted* arrival time
-                // is past now.
-                long depart = info.getPredictedArrivalTime();
-                if (depart == 0) {
-                    depart = info.getScheduledArrivalTime();
-                }
-
-                ArrivalInfo arrivalInfo = new ArrivalInfo(mContext, info,
-                        response.getCurrentTime(), false);
-                return new Pair<>(depart, arrivalInfo.isArrival());
+                return new ArrivalInfo(mContext, info, response.getCurrentTime(), false);
             }
         }
         // Didn't find it.

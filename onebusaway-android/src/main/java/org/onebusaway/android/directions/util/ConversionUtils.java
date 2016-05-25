@@ -17,7 +17,7 @@
 package org.onebusaway.android.directions.util;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.ui.ArrivalInfo;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
@@ -360,7 +360,7 @@ public class ConversionUtils {
         timezone = noDeviceTimezoneNote;
 
         int color = applicationContext.getResources().getColor(
-                ArrivalInfo.computeColorFromDeviation(
+                ArrivalInfoUtils.computeColorFromDeviation(
                         calNewTime.getTimeInMillis() - calOldTime.getTimeInMillis()));
 
         newTimeString = new SpannableString(timeFormat.format(calNewTime.getTime()) + " ");

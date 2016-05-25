@@ -30,6 +30,7 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
@@ -838,7 +839,7 @@ public class ArrivalsListFragment extends ListFragment
         ArrayList<ArrivalInfo> list = null;
 
         if (mArrivalInfo != null) {
-            list = ArrivalInfo.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter,
+            list = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(), mArrivalInfo, mRoutesFilter,
                     System.currentTimeMillis(), true);
         }
         return list;

@@ -30,6 +30,7 @@ import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.MathUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -729,7 +730,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
             if (isRealtime) {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-                colorResource = ArrivalInfo.computeColorFromDeviation(deviationMin);
+                colorResource = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
             } else {
                 colorResource = R.color.stop_info_scheduled_time;
             }
@@ -857,9 +858,9 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
             if (isRealtime) {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-                String statusString = ArrivalInfo.computeArrivalLabelFromDelay(r, deviationMin);
+                String statusString = ArrivalInfoUtils.computeArrivalLabelFromDelay(r, deviationMin);
                 statusView.setText(statusString);
-                statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
+                statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
                 d.setColor(r.getColor(statusColor));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
             } else {

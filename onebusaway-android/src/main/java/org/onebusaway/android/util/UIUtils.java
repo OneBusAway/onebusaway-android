@@ -34,6 +34,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentQueryMap;
@@ -56,6 +57,7 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -376,6 +378,60 @@ public final class UIUtils {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Generates the dialog text that is used to show detailed information about a particular stop
+     *
+     * @return a pair of Strings consisting of the <dialog title, dialog message>
+     */
+    public static Pair<String, String> createStopDetailsDialogText(Context context, String stopName,
+            String stopUserName, String stopCode, String stopDirection,
+            List<String> routeDisplayNames) {
+        final String newLine = "\n";
+        String title = "";
+        StringBuilder message = new StringBuilder();
+
+        if (!TextUtils.isEmpty(stopUserName)) {
+            title = stopUserName;
+            if (stopName != null) {
+                // Show official stop name in addition to user name
+                message.append(
+                        context.getString(R.string.stop_info_official_stop_name_label, stopName))
+                        .append(newLine);
+            }
+        } else if (stopName != null) {
+            title = stopName;
+        }
+
+        if (stopCode != null) {
+            message.append(context.getString(R.string.stop_details_code, stopCode) + newLine);
+        }
+
+        // Routes that serve this stop
+        if (routeDisplayNames != null) {
+            String routes = context.getString(R.string.stop_info_route_ids_label) + " " + UIUtils
+                    .formatRouteDisplayNames(routeDisplayNames, new ArrayList<String>());
+            message.append(routes);
+        }
+
+        if (!TextUtils.isEmpty(stopDirection)) {
+            message.append(newLine)
+                    .append(context.getString(UIUtils.getStopDirectionText(stopDirection)));
+        }
+        return new Pair(title, message.toString());
+    }
+
+    /**
+     * Builds an AlertDialog with the given title and message
+     *
+     * @return an AlertDialog with the given title and message
+     */
+    public static AlertDialog buildAlertDialog(Context context, String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        return builder.create();
     }
 
     /**

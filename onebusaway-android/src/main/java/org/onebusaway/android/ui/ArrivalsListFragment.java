@@ -61,6 +61,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -1236,45 +1237,20 @@ public class ArrivalsListFragment extends ListFragment
 
     private void showStopDetailsDialog() {
         // Create dialog contents
-        final String newLine = "\n";
-        String name = getStopName();
-        String userName = getUserStopName();
-        String title = "";
-
-        StringBuilder message = new StringBuilder();
-
-        if (!TextUtils.isEmpty(userName)) {
-            title = userName;
-            if (name != null) {
-                // Show official stop name in addition to user name
-                message.append(
-                        getString(R.string.stop_info_official_stop_name_label, name) + newLine);
-            }
-        } else if (name != null) {
-            title = name;
-        }
-
+        String stopCode = null;
         if (mStop != null) {
-            message.append(getString(R.string.stop_details_code, mStop.getStopCode()) + newLine);
+            stopCode = mStop.getStopCode();
         }
+        Pair stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+                getStopName(),
+                getUserStopName(),
+                stopCode,
+                getStopDirection(),
+                getRouteDisplayNames());
 
-        // Routes that serve this stop
-        List<String> routeDisplayNames = getRouteDisplayNames();
-        if (routeDisplayNames != null) {
-            String routes = getString(R.string.stop_info_route_ids_label) + " " + UIUtils
-                    .formatRouteDisplayNames(routeDisplayNames, new ArrayList<String>());
-            message.append(routes);
-        }
-
-        String direction = getStopDirection();
-        if (!TextUtils.isEmpty(direction)) {
-            message.append(newLine + getString(UIUtils.getStopDirectionText(direction)));
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(title);
-        builder.setMessage(message.toString());
-        builder.create().show();
+        UIUtils.buildAlertDialog(getContext(),
+                (String) stopDetails.first,
+                (String) stopDetails.second).show();
 
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 getString(R.string.analytics_action_button_press),

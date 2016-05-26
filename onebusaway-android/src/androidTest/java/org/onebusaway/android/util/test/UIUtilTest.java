@@ -16,6 +16,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.widget.TextView;
 
@@ -254,6 +255,89 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(options.get(3), "Edit this reminder");
         assertEquals(options.get(4), "Show only this route");
         assertEquals(options.get(5), "Report arrival time problem");
+    }
+
+    public void testCreateStopDetailsDialogText() {
+        final String newLine = "\n";
+        Pair stopDetails;
+        StringBuilder expectedMessage;
+
+        // Stop details
+        String stopName = "University Area Transit Center";
+        String stopUserName = null;
+        String stopCode = "6497";
+        String stopDirection = null;
+        List<String> routeDisplayNames = new ArrayList<>();
+        routeDisplayNames.add("5");
+
+        // Test without stop nickname or direction
+        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+                stopName,
+                stopUserName,
+                stopCode,
+                stopDirection,
+                routeDisplayNames);
+        assertEquals(stopName, (String) stopDetails.first);
+        expectedMessage = new StringBuilder();
+        expectedMessage.append("Stop # " + stopCode);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Routes: " + routeDisplayNames.get(0));
+        assertEquals(expectedMessage.toString(), (String) stopDetails.second);
+
+        // Test with stop nickname and without direction
+        stopUserName = "My stop nickname";
+        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+                stopName,
+                stopUserName,
+                stopCode,
+                stopDirection,
+                routeDisplayNames);
+        assertEquals(stopUserName, (String) stopDetails.first);
+        expectedMessage = new StringBuilder();
+        expectedMessage.append("Official name: " + stopName);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Stop # " + stopCode);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Routes: " + routeDisplayNames.get(0));
+        assertEquals(expectedMessage.toString(), (String) stopDetails.second);
+
+        // Test without stop nickname and with direction
+        stopUserName = null;
+        stopDirection = "S";
+        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+                stopName,
+                stopUserName,
+                stopCode,
+                stopDirection,
+                routeDisplayNames);
+        assertEquals(stopName, (String) stopDetails.first);
+        expectedMessage = new StringBuilder();
+        expectedMessage.append("Stop # " + stopCode);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Routes: " + routeDisplayNames.get(0));
+        expectedMessage.append(newLine);
+        expectedMessage.append(getContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        assertEquals(expectedMessage.toString(), (String) stopDetails.second);
+
+        // Test with stop nickname and direction
+        stopUserName = "My stop nickname";
+        stopDirection = "S";
+        stopDetails = UIUtils.createStopDetailsDialogText(getContext(),
+                stopName,
+                stopUserName,
+                stopCode,
+                stopDirection,
+                routeDisplayNames);
+        assertEquals(stopUserName, (String) stopDetails.first);
+        expectedMessage = new StringBuilder();
+        expectedMessage.append("Official name: " + stopName);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Stop # " + stopCode);
+        expectedMessage.append(newLine);
+        expectedMessage.append("Routes: " + routeDisplayNames.get(0));
+        expectedMessage.append(newLine);
+        expectedMessage.append(getContext().getString(UIUtils.getStopDirectionText(stopDirection)));
+        assertEquals(expectedMessage.toString(), (String) stopDetails.second);
     }
 
     public void testArrivalTimeIndexSearch() {

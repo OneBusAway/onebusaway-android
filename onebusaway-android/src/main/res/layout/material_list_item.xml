@@ -19,7 +19,8 @@
                 android:orientation="horizontal">
 
     <RelativeLayout android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="72dp"
                     android:layout_marginLeft="16dp"
                     android:layout_marginRight="16dp">
 
@@ -29,7 +30,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                >
+        >
 
             <ImageView
                     android:id="@+id/rtl_icon"
@@ -38,7 +39,7 @@
                     android:maxHeight="40dp"
                     android:maxWidth="40dp"
                     style="@style/MaterialSmallIcon"
-                    />
+            />
 
         </LinearLayout>
 
@@ -48,7 +49,9 @@
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/rtl_list"
                 android:layout_toEndOf="@+id/rtl_list"
-                android:layout_marginLeft="16dp">
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp">
 
 
             <TextView

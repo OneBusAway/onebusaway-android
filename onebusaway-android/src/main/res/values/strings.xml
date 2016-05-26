@@ -278,6 +278,7 @@
     <string name="stop_info_clear">Clear</string>
     <string name="stop_info_old_data">Data updated %s</string>
     <string name="stop_info_favorite">Favorite stop</string>
+    <string name="stop_info_official_stop_name_label">Official name: %1$s</string>
     <string name="stop_info_route_ids_label">Routes:</string>
     <string name="stop_info_header_arrival_info">%1$d min</string>
     <string name="stop_info_header_just_left">just left</string>

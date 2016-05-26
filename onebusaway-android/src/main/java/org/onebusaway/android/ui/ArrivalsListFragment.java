@@ -1241,13 +1241,18 @@ public class ArrivalsListFragment extends ListFragment
         String userName = getUserStopName();
         String title = "";
 
+        StringBuilder message = new StringBuilder();
+
         if (!TextUtils.isEmpty(userName)) {
             title = userName;
+            if (name != null) {
+                // Show official stop name in addition to user name
+                message.append(
+                        getString(R.string.stop_info_official_stop_name_label, name) + newLine);
+            }
         } else if (name != null) {
             title = name;
         }
-
-        StringBuilder message = new StringBuilder();
 
         if (mStop != null) {
             message.append(getString(R.string.stop_details_code, mStop.getStopCode()) + newLine);

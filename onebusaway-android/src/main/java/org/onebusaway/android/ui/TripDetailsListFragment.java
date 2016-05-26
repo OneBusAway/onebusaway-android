@@ -63,11 +63,15 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String STOP_ID = ".StopId";
 
+    public static final String ROUTE_ID = ".RouteId";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
 
     private String mTripId;
+
+    private String mRouteId;
 
     private String mStopId;
 
@@ -114,6 +118,11 @@ public class TripDetailsListFragment extends ListFragment {
 
         getListView().setOnItemClickListener(mClickListener);
 
+        // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
+        if (savedInstanceState != null) {
+            mRouteId = savedInstanceState.getString(ROUTE_ID);
+        }
+
         Bundle args = getArguments();
         mTripId = args.getString(TRIP_ID);
         if (mTripId == null) {
@@ -135,6 +144,14 @@ public class TripDetailsListFragment extends ListFragment {
             return null;
         }
         return inflater.inflate(R.layout.trip_details, null);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mRouteId != null) {
+            outState.putString(ROUTE_ID, mRouteId);
+        }
     }
 
     @Override
@@ -186,13 +203,7 @@ public class TripDetailsListFragment extends ListFragment {
             refresh();
             return true;
         } else if (id == R.id.show_on_map) {
-            if (mTripInfo != null) {
-                String tripId = mTripInfo.getId();
-                ObaReferences refs = mTripInfo.getRefs();
-                ObaTrip trip = refs.getTrip(tripId);
-                ObaRoute route = refs.getRoute(trip.getRouteId());
-                HomeActivity.start(getActivity(), route.getId());
-            }
+            HomeActivity.start(getActivity(), mRouteId);
             return true;
         }
         return false;
@@ -260,7 +271,8 @@ public class TripDetailsListFragment extends ListFragment {
         String tripId = mTripInfo.getId();
 
         ObaTrip trip = refs.getTrip(tripId);
-        ObaRoute route = refs.getRoute(trip.getRouteId());
+        mRouteId = trip.getRouteId();
+        ObaRoute route = refs.getRoute(mRouteId);
         TextView shortName = (TextView) getView().findViewById(R.id.short_name);
         shortName.setText(route.getShortName());
 

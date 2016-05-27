@@ -16,7 +16,9 @@
 package org.onebusaway.android.io.backup;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.region.ObaRegionsTask;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -56,7 +58,7 @@ public class RestorePreference extends Preference {
         final String state = Environment.getExternalStorageState();
         // Also, this is only enabled if there's a backup file
         return (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state) ||
-                        Environment.MEDIA_MOUNTED.equals(state)) &&
+                Environment.MEDIA_MOUNTED.equals(state)) &&
                 Backup.isRestoreAvailable(getContext());
     }
 
@@ -86,16 +88,26 @@ public class RestorePreference extends Preference {
     }
 
     void doRestore() {
-        Context context = getContext();
+        final Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 context.getString(R.string.analytics_action_button_press),
                 context.getString(R.string.analytics_label_button_press_restore_preference));
         try {
             Backup.restore(context);
-            Toast.makeText(context,
-                    context.getString(R.string.preferences_db_restored),
-                    Toast.LENGTH_LONG).show();
 
+            Context activityContext = getContext();
+            if (activityContext != null) {
+                ObaRegionsTask task = new ObaRegionsTask(activityContext, new ObaRegionsTask.Callback() {
+                    @Override
+                    public void onRegionTaskFinished(boolean currentRegionChanged) {
+                        Toast.makeText(context,
+                                R.string.preferences_db_restored,
+                                Toast.LENGTH_LONG).show();
+                    }
+                }, true, true);
+                task.setProgressDialogMessage(context.getString(R.string.preferences_restore_loading));
+                task.execute();
+            }
         } catch (IOException e) {
             Toast.makeText(context,
                     context.getString(R.string.preferences_db_restore_error, e.getMessage()),

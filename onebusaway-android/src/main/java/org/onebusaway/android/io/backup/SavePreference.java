@@ -16,6 +16,7 @@
 package org.onebusaway.android.io.backup;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 
 import android.content.Context;
@@ -57,7 +58,7 @@ public class SavePreference extends Preference {
 
     @Override
     protected void onClick() {
-        Context context = getContext();
+        Context context = Application.get().getApplicationContext();
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                 context.getString(R.string.analytics_action_button_press),
                 context.getString(R.string.analytics_label_button_press_save_preference));

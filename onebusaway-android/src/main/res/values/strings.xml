@@ -529,6 +529,7 @@
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
     </string>
+    <string name="preferences_restore_loading">Restoring from storage&#8230;</string>
     <string name="preferences_db_restored">Restore successful! Please restart OneBusAway.</string>
     <string name="preferences_db_restore_error">Unable to restore: %1$s</string>
 

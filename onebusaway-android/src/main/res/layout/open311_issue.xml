@@ -25,6 +25,14 @@
             android:layout_height="wrap_content"
             android:id="@+id/ri_contents">
 
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/ri_info_layout">
+
+        </LinearLayout>
+
         <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,29 +76,21 @@
                     android:background="@color/light_gray"
                     android:id="@+id/ri_imageView"
                     style="@style/MaterialItem"/>
-                <Button
-                        android:layout_width="120dp"
-                        android:layout_height="32dp"
-                        android:layout_marginLeft="176dp"
-                        android:background="@color/material_background"
-                        android:text="@string/ri_button_image"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:textColor="@android:color/black"
-                        android:layout_gravity="top"
-                        android:id="@+id/ri_attach_image"
-                        />
+            <Button
+                    android:layout_width="120dp"
+                    android:layout_height="32dp"
+                    android:layout_marginLeft="176dp"
+                    android:background="@color/material_background"
+                    android:text="@string/ri_button_image"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textColor="@android:color/black"
+                    android:layout_gravity="top"
+                    android:id="@+id/ri_attach_image"
+            />
 
         </FrameLayout>
-
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/ri_info_layout">
-
-        </LinearLayout>
 
         <FrameLayout
                 android:layout_width="match_parent"
@@ -99,7 +99,7 @@
                 android:orientation="horizontal">
 
             <ImageView style="@style/MaterialSmallIcon"
-                       android:layout_marginTop="12dp"
+                       android:layout_marginTop="18dp"
                        android:src="@drawable/ic_incognito"
                        android:id="@+id/ri_ic_anonymous"/>
 
@@ -113,7 +113,7 @@
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@android:color/black"
-                    />
+            />
 
 
         </FrameLayout>
@@ -137,7 +137,7 @@
                     android:ems="10"
                     android:id="@+id/rici_name_editText"
                     style="@style/MaterialItem"
-                    />
+            />
 
 
         </FrameLayout>
@@ -177,7 +177,7 @@
                     android:ems="10"
                     android:hint="@string/ri_user_email_hint"
                     style="@style/MaterialItem"
-                    android:id="@+id/rici_email_editText" />
+                    android:id="@+id/rici_email_editText"/>
 
         </FrameLayout>
 
@@ -199,7 +199,7 @@
                     android:ems="10"
                     android:hint="@string/ri_user_phone_hint"
                     style="@style/MaterialItem"
-                    android:id="@+id/rici_phone_editText" />
+                    android:id="@+id/rici_phone_editText"/>
 
         </FrameLayout>
 

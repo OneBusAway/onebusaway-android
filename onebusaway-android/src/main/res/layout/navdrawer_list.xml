@@ -17,7 +17,6 @@
 -->
 <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/navdrawer_items_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
@@ -25,4 +24,19 @@
         android:layout_marginBottom="8dp"
         android:background="@color/navdrawer_background"
         android:clickable="true"
-        android:orientation="vertical"/>
+        android:orientation="vertical">
+    <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/navdrawer_items_list"
+                      android:orientation="vertical">
+
+        </LinearLayout>
+
+
+    </ScrollView>
+
+</LinearLayout>

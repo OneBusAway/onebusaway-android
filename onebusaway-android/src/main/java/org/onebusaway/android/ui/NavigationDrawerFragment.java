@@ -22,7 +22,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -39,6 +39,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -120,11 +121,9 @@ public class NavigationDrawerFragment extends Fragment {
     // Navigation drawer:
     private DrawerLayout mDrawerLayout;
 
-    private ViewGroup mDrawerItemsListContainer;
+    private View mDrawerItemsListContainer;
 
     private View mFragmentContainerView;
-
-    private boolean mFromSavedInstanceState;
 
     public NavigationDrawerFragment() {
     }
@@ -139,7 +138,6 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-            mFromSavedInstanceState = true;
             Log.d(TAG, "Using position from savedInstanceState = " + mCurrentSelectedPosition);
         } else {
             // Try to get the saved position from preferences
@@ -161,14 +159,10 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mDrawerItemsListContainer = (ViewGroup) inflater
+        mDrawerItemsListContainer = inflater
                 .inflate(R.layout.navdrawer_list, container, false);
 
         return mDrawerItemsListContainer;
-    }
-
-    public boolean isDrawerOpen() {
-        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
     }
 
     /**
@@ -289,10 +283,10 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            mCallbacks = (NavigationDrawerCallbacks) activity;
+            mCallbacks = (NavigationDrawerCallbacks) context;
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
         }
@@ -324,23 +318,7 @@ public class NavigationDrawerFragment extends Fragment {
             return true;
         }
 
-//        if (item.getItemId() == R.id.action_example) {
-//            Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
-//            return true;
-//        }
-
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * Per the navigation drawer design guidelines, updates the action bar to show the global app
-     * 'context', rather than just what's in the current screen.
-     */
-    private void showGlobalContextActionBar() {
-        ActionBar actionBar = getActionBar();
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setTitle(R.string.app_name);
     }
 
     private ActionBar getActionBar() {
@@ -350,7 +328,7 @@ public class NavigationDrawerFragment extends Fragment {
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface NavigationDrawerCallbacks {
+    public interface NavigationDrawerCallbacks {
 
         /**
          * Called when an item in the navigation drawer is selected.
@@ -381,18 +359,23 @@ public class NavigationDrawerFragment extends Fragment {
         }
 
         mNavDrawerItemViews = new View[mNavDrawerItems.size()];
-        mDrawerItemsListContainer.removeAllViews();
         int i = 0;
+
+        LinearLayout containerLayout = (LinearLayout) mDrawerItemsListContainer.
+                findViewById(R.id.navdrawer_items_list);
+
+        containerLayout.removeAllViews();
+
         for (int itemId : mNavDrawerItems) {
-            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, mDrawerItemsListContainer);
-            mDrawerItemsListContainer.addView(mNavDrawerItemViews[i]);
+            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+            containerLayout.addView(mNavDrawerItemViews[i]);
             ++i;
         }
     }
 
     private View makeNavDrawerItem(final int itemId, ViewGroup container) {
         boolean selected = mCurrentSelectedPosition == itemId;
-        int layoutToInflate = 0;
+        int layoutToInflate;
         if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
             layoutToInflate = R.layout.navdrawer_separator;
         } else if (itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL) {

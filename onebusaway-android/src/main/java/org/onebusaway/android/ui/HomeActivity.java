@@ -59,6 +59,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -115,8 +116,6 @@ public class HomeActivity extends AppCompatActivity
     }
 
     public static final String TWITTER_URL = "http://mobile.twitter.com/onebusaway";
-
-    public static final String STOP_ID = ".StopId";
 
     private static final String WHATS_NEW_VER = "whatsNewVer";
 
@@ -217,6 +216,17 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
+     * Starts the MapActivity with a particular stop focused with the center of
+     * the map at a particular point.
+     *
+     * @param context The context of the activity.
+     * @param stop    The stop to focus on.
+     */
+    public static final void start(Context context, ObaStop stop) {
+        context.startActivity(makeIntent(context, stop));
+    }
+
+    /**
      * Starts the MapActivity in "RouteMode", which shows stops along a route,
      * and does not get new stops when the user pans the map.
      *
@@ -244,6 +254,23 @@ public class HomeActivity extends AppCompatActivity
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
         myIntent.putExtra(MapParams.CENTER_LON, lon);
+        return myIntent;
+    }
+
+    /**
+     * Returns an intent that will start the MapActivity with a particular stop
+     * focused with the center of the map at a particular point.
+     *
+     * @param context The context of the activity.
+     * @param stop    The stop to focus on.
+     */
+    public static final Intent makeIntent(Context context, ObaStop stop) {
+        Intent myIntent = new Intent(context, HomeActivity.class);
+        myIntent.putExtra(MapParams.STOP_ID, stop.getId());
+        myIntent.putExtra(MapParams.STOP_NAME, stop.getName());
+        myIntent.putExtra(MapParams.STOP_CODE, stop.getStopCode());
+        myIntent.putExtra(MapParams.CENTER_LAT, stop.getLatitude());
+        myIntent.putExtra(MapParams.CENTER_LON, stop.getLongitude());
         return myIntent;
     }
 
@@ -346,7 +373,12 @@ public class HomeActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mFocusedStopId != null) {
-            outState.putString(STOP_ID, mFocusedStopId);
+            outState.putString(MapParams.STOP_ID, mFocusedStopId);
+
+            if (mFocusedStop != null) {
+                outState.putString(MapParams.STOP_CODE, mFocusedStop.getStopCode());
+                outState.putString(MapParams.STOP_NAME, mFocusedStop.getName());
+            }
         }
     }
 
@@ -786,7 +818,8 @@ public class HomeActivity extends AppCompatActivity
         if (stop != null) {
             mFocusedStopId = stop.getId();
             // A stop on the map was just tapped, show it in the sliding panel
-            updateArrivalListFragment(stop.getId(), stop, routes);
+            updateArrivalListFragment(stop.getId(), stop.getName(), stop.getStopCode(), stop,
+                    routes);
 
             //Analytics
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -963,8 +996,23 @@ public class HomeActivity extends AppCompatActivity
         super.onBackPressed();
     }
 
-    private void updateArrivalListFragment(String stopId, ObaStop stop,
-                                           HashMap<String, ObaRoute> routes) {
+    /**
+     * Create a new fragment to show the arrivals list for the given stop.  An ObaStop object
+     * should
+     * be passed in if available.  In all cases a stopId, stopName, and stopCode must be provided.
+     *
+     * @param stopId   Stop ID of the stop to show arrivals for
+     * @param stopName Stop name of the stop to show arrivals for
+     * @param stopCode Stop Code (rider-facing ID) of the stop to show arrivals for
+     * @param stop     The ObaStop object for the stop to show arrivals for, or null if we don't
+     *                 have
+     *                 this yet.
+     * @param routes   A HashMap of all route display names that serve this stop - key is routeId,
+     *                 or
+     *                 null if we don't have this yet.
+     */
+    private void updateArrivalListFragment(@NonNull String stopId, @NonNull String stopName,
+            @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -985,9 +1033,12 @@ public class HomeActivity extends AppCompatActivity
             // before getting an API response
             intent = new ArrivalsListFragment.IntentBuilder(this, stop, routes).build();
         } else {
-            // All we have is a stopId (likely started from Intent or after rotating device)
+            // We don't have an ObaStop (likely started from Intent or after rotating device)
             // Some fields will be blank until we get an API response
-            intent = new ArrivalsListFragment.IntentBuilder(this, stopId).build();
+            intent = new ArrivalsListFragment.IntentBuilder(this, stopId)
+                    .setStopName(stopName)
+                    .setStopCode(stopCode)
+                    .build();
         }
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
@@ -1386,15 +1437,19 @@ public class HomeActivity extends AppCompatActivity
      */
     private void setupMapState(Bundle savedInstanceState) {
         String stopId;
+        String stopName;
+        String stopCode;
         // Check savedInstanceState to see if there is a previous state for this activity
         if (savedInstanceState != null) {
             // We're recreating an instance with a previous state, so show the focused stop in panel
-            stopId = savedInstanceState.getString(STOP_ID);
+            stopId = savedInstanceState.getString(MapParams.STOP_ID);
+            stopName = savedInstanceState.getString(MapParams.STOP_NAME);
+            stopCode = savedInstanceState.getString(MapParams.STOP_CODE);
 
             if (stopId != null) {
                 mFocusedStopId = stopId;
                 // We don't have an ObaStop or ObaRoute mapping, so just pass in null for those
-                updateArrivalListFragment(stopId, null, null);
+                updateArrivalListFragment(stopId, stopName, stopCode, null, null);
             }
         } else {
             // Check intent passed into Activity
@@ -1402,12 +1457,14 @@ public class HomeActivity extends AppCompatActivity
             if (bundle != null) {
                 // Did this activity start to focus on a stop?  If so, set focus and show arrival info
                 stopId = bundle.getString(MapParams.STOP_ID);
+                stopName = bundle.getString(MapParams.STOP_NAME);
+                stopCode = bundle.getString(MapParams.STOP_CODE);
                 double lat = bundle.getDouble(MapParams.CENTER_LAT);
                 double lon = bundle.getDouble(MapParams.CENTER_LON);
 
                 if (stopId != null && lat != 0.0 && lon != 0.0) {
                     mFocusedStopId = stopId;
-                    updateArrivalListFragment(stopId, null, null);
+                    updateArrivalListFragment(stopId, stopName, stopCode, null, null);
                 }
             }
         }

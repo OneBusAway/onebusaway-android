@@ -96,6 +96,8 @@ public class ArrivalsListFragment extends ListFragment
 
     public static final String STOP_NAME = ".StopName";
 
+    public static final String STOP_CODE = ".StopCode";
+
     public static final String STOP_DIRECTION = ".StopDir";
 
     /**
@@ -218,6 +220,7 @@ public class ArrivalsListFragment extends ListFragment
             mIntent = new Intent(context, ArrivalsListFragment.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stop.getId()));
             setStopName(stop.getName());
+            setStopCode(stop.getStopCode());
             setStopDirection(stop.getDirection());
             setStopRoutes(UIUtils.serializeRouteDisplayNames(stop, routes));
             setStopLocation(stop.getLocation());
@@ -225,6 +228,11 @@ public class ArrivalsListFragment extends ListFragment
 
         public IntentBuilder setStopName(String stopName) {
             mIntent.putExtra(ArrivalsListFragment.STOP_NAME, stopName);
+            return this;
+        }
+
+        public IntentBuilder setStopCode(String stopCode) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_CODE, stopCode);
             return this;
         }
 
@@ -628,10 +636,7 @@ public class ArrivalsListFragment extends ListFragment
         final int id = item.getItemId();
         if (id == R.id.show_on_map) {
             if (mStop != null) {
-                HomeActivity.start(getActivity(),
-                        mStop.getId(),
-                        mStop.getLatitude(),
-                        mStop.getLongitude());
+                HomeActivity.start(getActivity(), mStop);
             }
             return true;
         } else if (id == R.id.refresh) {

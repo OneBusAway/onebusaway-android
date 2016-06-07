@@ -27,7 +27,31 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+<<<<<<< 8fb7ada7860d56925ded95ad73321303969d7d55
 import com.google.android.gms.common.api.GoogleApiClient;
+=======
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
+
+>>>>>>> Fix #525 - Support User Location Via ZIP Code
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
 import com.amazon.geo.mapsv2.OnMapReadyCallback;
@@ -58,25 +82,6 @@ import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -378,6 +383,25 @@ public class BaseMapFragment extends SupportMapFragment
         MapDialogFragment.newInstance(id, this).show(getFragmentManager(), MapDialogFragment.TAG);
     }
 
+    private void setLocationByZip(final String zip) {
+        final Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                Location l = LocationUtils.getLocationFromZip(
+                        Application.get().getApplicationContext(), zip);
+                if (l != null && mLocationHelper != null) {
+                    mLocationHelper.onLocationChanged(l);
+                    setMyLocation(l, true, true);
+                } else {
+                    Toast.makeText(Application.get().getApplicationContext(),
+                            getString(R.string.main_ziplocation_error),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        super.onActivityResult(requestCode, resultCode, data);
@@ -592,6 +616,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     @SuppressWarnings("deprecation")
+<<<<<<< 8fb7ada7860d56925ded95ad73321303969d7d55
     public boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
         if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
                 getActivity())) {
@@ -605,6 +630,23 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
+=======
+    public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
+        Location lastLocation = Application.getLastKnownLocation(this.getActivity(), null);
+        if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
+                getActivity())) {
+
+            String zipCodeKey = getString(R.string.preference_key_zip_code);
+            String zip = PreferenceUtils.getString(zipCodeKey);
+            if (zip != null) {
+                setLocationByZip(zip);
+                return;
+            } else {
+                showDialog(MapDialogFragment.NOLOCATION_DIALOG);
+            }
+        }
+
+>>>>>>> Fix #525 - Support User Location Via ZIP Code
         if (lastLocation == null) {
             Toast.makeText(getActivity(),
                     getResources()
@@ -1051,6 +1093,42 @@ public class BaseMapFragment extends SupportMapFragment
                             }
                     )
                     .setNegativeButton(android.R.string.no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    createZipCodeDialog().show();
+                                }
+                            }
+                    );
+            return builder.create();
+        }
+
+        private Dialog createZipCodeDialog() {
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+            final EditText zipInput = new EditText(this.getContext());
+            zipInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+            final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_ziplocation_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setMessage(R.string.main_ziplocation)
+                    .setView(zipInput)
+                    .setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    final String zip = zipInput.getText().toString().trim();
+                                    if (zip != null && LocationUtils.isValidZipCode(zip)) {
+                                        mMapFragment.setLocationByZip(zip);
+                                    } else {
+                                        createZipCodeDialog().show();
+                                    }
+                                }
+                            }
+                    )
+                    .setNegativeButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {

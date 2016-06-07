@@ -16,17 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -53,6 +42,17 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -65,6 +65,8 @@ public class PreferencesActivity extends PreferenceActivity
     public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
     Preference regionPref;
+
+    Preference zipPref;
 
     Preference customApiUrlPref;
 
@@ -111,6 +113,10 @@ public class PreferencesActivity extends PreferenceActivity
 
         aboutPref = findPreference(getString(R.string.preferences_key_about));
         aboutPref.setOnPreferenceClickListener(this);
+
+        zipPref = findPreference(getString(R.string.preference_key_zip_code));
+        zipPref.setOnPreferenceChangeListener(this);
+
 
         SharedPreferences settings = Application.getPrefs();
         autoSelectInitialValue = settings
@@ -282,6 +288,10 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
             AboutActivity.start(this);
+        } else if (pref.equals(zipPref)) {
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_button_press),
+                    getString(R.string.analytics_label_button_zip));
         }
         return true;
     }

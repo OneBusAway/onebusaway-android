@@ -203,6 +203,16 @@ public class LocationUtilsTest extends AndroidTestCase {
         }
     }
 
+    public void testZipCodes() {
+        assertEquals(LocationUtils.isValidZipCode("33620"), true);
+        assertEquals(LocationUtils.isValidZipCode("94103"), true);
+        assertEquals(LocationUtils.isValidZipCode("33620-9998"), true);
+        assertEquals(LocationUtils.isValidZipCode("33620-"), false);
+        assertEquals(LocationUtils.isValidZipCode("3360"), false);
+        assertEquals(LocationUtils.isValidZipCode("33620-13993"), false);
+        assertEquals(LocationUtils.isValidZipCode("33620-1"), false);
+    }
+
     /**
      * Tests whether location is fresh (i.e., fairly recent)
      *

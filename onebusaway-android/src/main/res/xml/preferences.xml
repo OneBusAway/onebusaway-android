@@ -26,6 +26,11 @@
                 android:title="@string/preferences_auto_select_region_title"
                 android:summary="@string/preferences_auto_select_region_summary"
                 android:defaultValue="true"/>
+        <EditTextPreference
+                android:key="@string/preference_key_zip_code"
+                android:title="@string/preference_key_zip_code_title"
+                android:summary="@string/preference_key_zip_code_summary"
+                android:inputType="number" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_display">
         <CheckBoxPreference

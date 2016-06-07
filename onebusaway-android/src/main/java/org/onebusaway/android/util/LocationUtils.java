@@ -15,14 +15,9 @@
  */
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
-
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,7 +26,17 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Utilities to help obtain and process location data
@@ -211,6 +216,46 @@ public class LocationUtils {
                 .addConnectionCallbacks(locCallback)
                 .addOnConnectionFailedListener(locCallback)
                 .build();
+    }
+
+    /**
+     * Checks if string is a valid zip code.
+     * E.g, #####-#### or #####.
+     * @param zip ZIP Code as String.
+     * @return Whether string is valid zip.
+     */
+    public static boolean isValidZipCode(String zip)
+    {
+        Pattern pattern = Pattern.compile("^\\d{5}(?:-\\d{4})?$");
+        return pattern.matcher(zip).matches();
+    }
+
+    /**
+     * Attempts to retrieves location from zip code.
+     * Note: This method makes server calls & blocks thread. Do not
+     * run this on the UI thread.
+     * @param context App Context.
+     * @param zip Zip Code string.
+     * @return Location containing latitude & longitude. Null if fails.
+     */
+    public static Location getLocationFromZip(Context context, String zip)
+    {
+        try {
+            Geocoder geocoder = new Geocoder(context);
+            List<Address> addressList = geocoder.getFromLocationName(zip, 1);
+            if (addressList != null && !addressList.isEmpty()) {
+                Address addr = addressList.get(0);
+                Location l = new Location("zip");
+                l.setLatitude(addr.getLatitude());
+                l.setLongitude(addr.getLongitude());
+                l.setAccuracy(1000);
+                return l;
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /**

@@ -71,6 +71,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
     private ProgressDialog mProgressDialog;
 
+    private String mProgressDialogMessage;
+
     private ObaRegionsTask.Callback mCallback;
 
     private final boolean mForceReload;
@@ -118,8 +120,11 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     @Override
     protected void onPreExecute() {
         if (mShowProgressDialog && UIUtils.canManageDialog(mContext)) {
+            if (mProgressDialogMessage == null){
+                mProgressDialogMessage = mContext.getString(R.string.region_detecting_server);
+            }
             mProgressDialog = ProgressDialog.show(mContext, "",
-                    mContext.getString(R.string.region_detecting_server), true);
+                    mProgressDialogMessage, true);
             mProgressDialog.setIndeterminate(true);
             mProgressDialog.setCancelable(false);
             mProgressDialog.show();
@@ -264,5 +269,9 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         };
         mPauseForCallbackHandler.postDelayed(mPauseForCallback,
                 CALLBACK_DELAY);
+    }
+
+    public void setProgressDialogMessage(String progressDialogMessage) {
+        mProgressDialogMessage = progressDialogMessage;
     }
 }

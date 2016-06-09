@@ -87,7 +87,7 @@ abstract class MyTabActivityBase extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            NavHelp.goHome(this);
+            NavHelp.goHome(this, false);
             return true;
         }
         return false;

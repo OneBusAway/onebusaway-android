@@ -109,6 +109,8 @@
         - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
         <b>Improved feedback process</b>
         - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
+        <b>Improved tutorial</b>
+        - Fewer popups, setting to show or hide\n&#8226;\u0020
         <b>Bug fixes</b>
     </string>
     <string name="main_help_close">Close</string>
@@ -506,6 +508,11 @@
         show arrival info in the header at the top of the screen (doesn\'t affect map view)
     </string>
 
+    <string name="preferences_show_tutorial_screens_title">Show tutorial screens</string>
+    <string name="preferences_show_tutorial_screens_summary">Display informational popups explaining
+        how to use features
+    </string>
+
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
     <string name="preferences_arrival_info_style_options_b">Cards</string>
 
@@ -641,24 +648,21 @@
     <string name="tutorial_welcome_text">Tap on a stop (green dot on the map) to see arrival
         times.
     </string>
+    <string name="tutorial_opt_out_dialog_title">Show tutorial?</string>
+    <string name="tutorial_opt_out_dialog_text">Would you like to see popup descriptions for how to
+        use OneBusAway? You can always turn the popups on or off in Settings, or show the
+        tutorial later via \"Help->Show Tutorial\".
+    </string>
     <string name="tutorial_arrival_header_arrival_info_title">How long until your bus arrives?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">This long! Colored background tells you
         if the bus is early (red) or late (blue). On time = green background. If we don\'t know
         where the bus is, the scheduled time is shown (gray background).
     </string>
-    <string name="tutorial_arrival_header_star_stop_title">Star your favorite stops</string>
-    <string name="tutorial_arrival_header_star_stop_text">Tap on the star to save your favorite
-        stops. Starred stops are available via the main navigation panel.
-    </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Slide up to show more arrivals
     </string>
     <string name="tutorial_arrival_header_sliding_panel_text">Tap on the arrow or drag the panel up
         to see more arrivals for this stop.
-    </string>
-    <string name="tutorial_arrival_info_more_title">Use your transit super powers wisely!</string>
-    <string name="tutorial_arrival_info_more_text">Tap on the 3 dots to set reminders, star favorite
-        routes, view a route on the map, and more…
     </string>
     <string name="tutorial_arrival_sort_title">Sort by ETA or route</string>
     <string name="tutorial_arrival_sort_text">Arrivals can be sorted by estimated arrival time, or
@@ -672,19 +676,6 @@
     <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
         looked at via the \"More\" button at the top right of the screen.
     </string>
-    <string name="tutorial_arrival_style_b_show_route_title">View live vehicle positions on the map
-    </string>
-    <string name="tutorial_arrival_style_b_show_route_text">Tap on the map icon to see your bus move
-        in real-time.
-    </string>
-    <string name="tutorial_vehicle_icons_title">Tap on vehicle icons to see details</string>
-    <string name="tutorial_vehicle_icons_text">Hint - Rotate the map using two fingers if you
-        accidentally tap on a nearby stop instead of the vehicle.
-    </string>
-    <string name="tutorial_vehicle_info_window_title">See live vehicle details</string>
-    <string name="tutorial_vehicle_info_window_text">Tap on the popup balloon to view the transit
-        line and real-time trip status for that vehicle.
-    </string>
     <string name="tutorial_starred_stops_sort_title">Sort your starred stops</string>
     <string name="tutorial_starred_stops_sort_text">Organize your favorite stops by name or
         frequency of use with the \"Sort\" button at the top of the screen.
@@ -692,24 +683,6 @@
     <string name="tutorial_starred_stops_shortcut_title">Save time with shortcuts</string>
     <string name="tutorial_starred_stops_shortcut_text">Long-press on a stop to create a shortcut on
         your home screen. Tap on the shortcut to instantly see arrivals!
-    </string>
-    <string name="tutorial_show_arrivals_in_header_title">Show favorite routes on top</string>
-    <string name="tutorial_show_arrivals_in_header_text">Want to see your starred routes above the
-        stop name? Try the \"Show arrivals in header\" option via the \"More\" button at the top
-        right of the screen.
-    </string>
-    <string name="tutorial_arrival_route_filter_title">Filter unwanted routes</string>
-    <string name="tutorial_arrival_route_filter_text">Don\'t care about Route 6? Hide it using the
-        \"Filter routes\" option via the \"More\" button at the top right of the screen.
-    </string>
-    <string name="tutorial_night_light_title">Light up the night</string>
-    <string name="tutorial_night_light_text">Tired of watching your bus fly by because the driver
-        couldn\'t see you in the dark? Try the \"Night light\" via the \"More\" button at the top
-        right of the screen.
-    </string>
-    <string name="tutorial_send_feedback_title">Tell us what you think</string>
-    <string name="tutorial_send_feedback_text">Help us improve OneBusAway! Tap on \"Send feedback\"
-        in the main navigation panel.
     </string>
     <string name="tutorial_send_feedback_transit_service_title">More than just transit</string>
     <string name="tutorial_send_feedback_transit_service_text">You can report a variety of issue

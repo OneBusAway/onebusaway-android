@@ -31,7 +31,6 @@ import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.MathUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -43,7 +42,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Handler;
 import android.support.v4.util.LruCache;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -680,9 +678,6 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
                 mMarkerRefreshHandler.removeCallbacks(mMarkerRefresh);
                 mMarkerRefreshHandler.postDelayed(mMarkerRefresh, MARKER_REFRESH_PERIOD);
             }
-
-            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_VEHICLE_INFO_WINDOW,
-                    (AppCompatActivity) mActivity, null);
 
             return view;
         }

@@ -135,6 +135,7 @@ public class MyStarredStopsFragment extends MyStopListFragmentBase {
                     .show(getActivity().getSupportFragmentManager(), "confirm_clear_starred_stops");
             return true;
         } else if (id == R.id.sort_stops) {
+            ShowcaseViewUtils.doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SORT);
             showSortByDialog();
         }
         return false;

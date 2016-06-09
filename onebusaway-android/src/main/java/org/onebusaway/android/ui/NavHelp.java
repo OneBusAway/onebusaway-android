@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.util.ShowcaseViewUtils;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -36,13 +38,21 @@ final class NavHelp {
         if (UP_MODE_BACK.equals(mode)) {
             activity.finish();
         } else {
-            goHome(activity);
+            goHome(activity, false);
         }
     }
 
-    public static void goHome(Context context) {
+    /**
+     * Go back to the HomeActivity
+     *
+     * @param showTutorial true if the welcome tutorial should be started, false if it should not
+     */
+    public static void goHome(Context context, boolean showTutorial) {
         Intent intent = new Intent(context, HomeActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (showTutorial) {
+            intent.putExtra(ShowcaseViewUtils.TUTORIAL_WELCOME, true);
+        }
         context.startActivity(intent);
     }
 }

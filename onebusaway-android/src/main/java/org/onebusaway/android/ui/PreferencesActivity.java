@@ -24,7 +24,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
@@ -263,8 +262,8 @@ public class PreferencesActivity extends PreferenceActivity
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_tutorial));
-            ShowcaseViewUtils.resetAllTutorials();
-            NavHelp.goHome(this);
+            ShowcaseViewUtils.resetAllTutorials(this);
+            NavHelp.goHome(this, true);
         } else if (pref.equals(donatePref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
@@ -305,7 +304,7 @@ public class PreferencesActivity extends PreferenceActivity
             } else {
                 //User cleared the API URL preference value, so re-initialize regions
                 Log.d(TAG, "User entered blank API URL, re-initializing regions...");
-                NavHelp.goHome(this);
+                NavHelp.goHome(this, false);
             }
         } else if (preference.equals(analyticsPref) && newValue instanceof Boolean) {
             Boolean isAnalyticsActive = (Boolean) newValue;
@@ -332,7 +331,7 @@ public class PreferencesActivity extends PreferenceActivity
         if (currentValue && !autoSelectInitialValue) {
             Log.d(TAG,
                     "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
-            NavHelp.goHome(this);
+            NavHelp.goHome(this, false);
         }
         super.onDestroy();
     }
@@ -447,7 +446,7 @@ public class PreferencesActivity extends PreferenceActivity
             changePreferenceSummary(getString(R.string.preference_key_region));
 
             // Since the current region was updated as a result of enabling/disabling experimental servers, go home
-            NavHelp.goHome(this);
+            NavHelp.goHome(this, false);
         }
     }
 }

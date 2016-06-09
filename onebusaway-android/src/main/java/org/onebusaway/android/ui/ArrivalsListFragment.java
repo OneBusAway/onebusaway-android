@@ -115,8 +115,6 @@ public class ArrivalsListFragment extends ListFragment
      */
     public static final String EXTERNAL_HEADER = ".ExternalHeader";
 
-    private static final String TUTORIAL_COUNTER = "tutorial_counter";
-
     private static final long RefreshPeriod = 60 * 1000;
 
     private static int TRIPS_FOR_STOP_LOADER = 1;
@@ -489,12 +487,13 @@ public class ArrivalsListFragment extends ListFragment
             }
         }
 
+        ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT,
+                (AppCompatActivity) getActivity(), null);
+
         // Notify listener that we have new arrival info
         if (mListener != null) {
             mListener.onArrivalTimesUpdated(result);
         }
-
-        showTutorials(result);
     }
 
     @Override
@@ -502,35 +501,6 @@ public class ArrivalsListFragment extends ListFragment
         super.showProgress(visibility);
         if (mHeader != null) {
             mHeader.showProgress(visibility);
-        }
-    }
-
-    private void showTutorials(ObaArrivalInfoResponse response) {
-        // If we're already showing a ShowcaseView, we don't want to stack another on top
-        if (ShowcaseViewUtils.isShowcaseViewShowing()) {
-            return;
-        }
-        /**
-         * The ShowcaseViewUtils.showTutorial() method takes care of checking if a tutorial has
-         * already been shown, so we can just list the tutorials in order of how they should be
-         * shown to the user.
-         */
-        int counter = Application.getPrefs().getInt(TUTORIAL_COUNTER, 0);
-        counter++;
-        PreferenceUtils.saveInt(TUTORIAL_COUNTER, counter);
-        // Give the user a break from tutorials for lesser important ones - only show every 3rd time
-        if (counter % 3 == 0) {
-            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_ROUTE_FILTER,
-                    (AppCompatActivity) getActivity(), response);
-            if (!mExternalHeader) {
-                // This menu option only shows up if we're not in the sliding panel
-                ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_SHOW_ARRIVAL_IN_HEADER,
-                        (AppCompatActivity) getActivity(), response);
-            }
-            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_SEND_FEEDBACK,
-                    (AppCompatActivity) getActivity(), response);
-            ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_NIGHT_LIGHT,
-                    (AppCompatActivity) getActivity(), response);
         }
     }
 
@@ -638,6 +608,7 @@ public class ArrivalsListFragment extends ListFragment
             refresh();
             return true;
         } else if (id == R.id.sort_arrivals) {
+            ShowcaseViewUtils.doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT);
             doSortBy();
         } else if (id == R.id.filter) {
             if (mStop != null) {

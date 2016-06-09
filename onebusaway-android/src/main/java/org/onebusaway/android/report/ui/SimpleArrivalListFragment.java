@@ -42,6 +42,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,7 +66,7 @@ public class SimpleArrivalListFragment extends Fragment
 
     private Callback mCallback;
 
-    public static final String TAG = "SimpleArrivalListFragment";
+    public static final String TAG = "SimpArrivalListFragment";
 
     private static int ARRIVALS_LIST_LOADER = 3;
 
@@ -81,10 +82,14 @@ public class SimpleArrivalListFragment extends Fragment
         fragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fragment.setCallback(callback);
 
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(containerViewId, fragment, TAG);
-        ft.addToBackStack(null);
-        ft.commit();
+        try {
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.replace(containerViewId, fragment, TAG);
+            ft.addToBackStack(null);
+            ft.commit();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Cannot show SimpleArrivalListFragment after onSaveInstanceState has been called");
+        }
     }
 
     @Override

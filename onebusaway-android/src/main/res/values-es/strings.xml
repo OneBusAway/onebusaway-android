@@ -509,7 +509,7 @@
     </string>
 
     <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
-    <string name="preferences_show_tutorial_screens_summary">Desplegar los ventanas emergentes informacionales explicando
+    <string name="preferences_show_tutorial_screens_summary">Desplegar las ventanas emergentes informacionales explicando
         como usar las funciones
     </string>
 
@@ -650,9 +650,9 @@
         de llegada.
     </string>
     <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
-    <string name="tutorial_opt_out_dialog_text">¿te gustaría ver las ventanas emergentes que describen como
+    <string name="tutorial_opt_out_dialog_text">¿Te gustaría ver las ventanas emergentes que describen como
         usar OneBusAway? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
-        tutorial despues en la opción \"Ayuda->Mostrar tutorial\".
+        tutorial después en la opción \"Ayuda->Aprende con el tutorial\".
     </string>
     <string name="tutorial_arrival_header_arrival_info_title">¿Cuánto tiempo hasta que llegue tu bus?
     </string>

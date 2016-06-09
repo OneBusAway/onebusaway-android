@@ -409,7 +409,6 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_label_button_press_help));
                 break;
             case NAVDRAWER_ITEM_SEND_FEEDBACK:
-                Log.d(TAG, "TODO - show send feedback fragment");
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_feedback));
@@ -1055,7 +1054,11 @@ public class HomeActivity extends AppCompatActivity
                     mFocusedStop.getLatitude(), mFocusedStop.getLongitude(), mGoogleApiClient);
         } else {
             Location loc = Application.getLastKnownLocation(this, mGoogleApiClient);
-            ReportActivity.start(this, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
+            if (loc != null) {
+                ReportActivity.start(this, loc.getLatitude(), loc.getLongitude(), mGoogleApiClient);
+            } else {
+                ReportActivity.start(this, mGoogleApiClient);
+            }
         }
     }
 

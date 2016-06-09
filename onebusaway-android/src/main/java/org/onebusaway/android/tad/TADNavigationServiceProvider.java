@@ -67,8 +67,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     private Location currentLocation = null;
 
     private boolean resuming = false;   // Is Trip being resumed?
-    private boolean finished = false;   // Trip has finished.
-    private boolean getready = false;   // Get Ready triggered.
+    public static boolean finished = false;   // Trip has finished.  //Change to public
+    public static boolean getready = false;   // Get Ready triggered. //Change to public
 
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
     SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
@@ -101,6 +101,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
         mStopId = stopId;
     }
 
+
     /**
      * Initialize tad proximityListener
      * Proximity listener will be created only upon selection of service to navigate
@@ -128,7 +129,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      *
      * @return
      */
-    public boolean getGetReady() {
+    public static boolean getGetReady() {
         return getready;
     }
 
@@ -137,7 +138,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      *
      * @return
      */
-    public boolean getFinished() {
+    public static boolean getFinished() {
         return finished;
     }
 
@@ -199,7 +200,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     public void navigate(Segment[] segments) {
 
         Log.d(TAG, "Starting navigation for service");
-        //Create a new istance and rewrite the old one with a blank slate of ProximityListener
+        //Create a new instance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
         this.segments = segments;
         segmentIndex = 0;

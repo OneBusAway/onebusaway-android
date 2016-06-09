@@ -36,6 +36,11 @@ public class TADService extends Service
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
 
+    private int CoordinatesID = 0;
+
+    private boolean getReadyFlag = false;
+    private boolean pullTheCordFlag = false;
+
     private TADNavigationServiceProvider mNavProvider;
     private File mLogFile = null;
 
@@ -53,6 +58,7 @@ public class TADService extends Service
             ObaContract.NavStops.insert(Application.get().getApplicationContext(),
                     1, 1, mTripId, mDestinationStopId, mBeforeStopId);
 
+
             mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId);
         } else {
             String[] args = ObaContract.NavStops.getDetails(Application.get().getApplicationContext(), "1");
@@ -61,6 +67,7 @@ public class TADService extends Service
                 mDestinationStopId = args[1];
                 mBeforeStopId = args[2];
                 mNavProvider = new TADNavigationServiceProvider(mTripId, mDestinationStopId, 1);
+
             }
         }
 
@@ -153,8 +160,10 @@ public class TADService extends Service
         try {
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
+
             String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
                     dest.getLatitude(), dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
+
             if (mLogFile != null) {
                 FileUtils.write(mLogFile, hdr, false);
             } else {
@@ -178,10 +187,18 @@ public class TADService extends Service
                 satellites = l.getExtras().getInt("satellites", 0);
             }
 
+            //Increments the id for each coordinate
+            CoordinatesID++;
+
+
+            getReadyFlag = TADNavigationServiceProvider.getGetReady();
+            pullTheCordFlag = TADNavigationServiceProvider.getFinished();
+
+
             // TODO: Add isMockProvider
-            String log = String.format("%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", nanoTime, l.getTime(),
-                    l.getLatitude(), l.getLongitude(), l.getAltitude(),l.getSpeed(), l.getBearing(),
-                    l.getAccuracy(), satellites, l.getProvider());
+            String log = String.format("%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", CoordinatesID, getReadyFlag,
+                    pullTheCordFlag, nanoTime, l.getTime(), l.getLatitude(), l.getLongitude(), l.getAltitude(),
+                    l.getSpeed(), l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

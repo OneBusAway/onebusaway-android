@@ -122,8 +122,7 @@ public class ReportActivity extends BaseReportActivity {
     }
 
     /**
-     * Starts the MapActivity with a particular stop focused with the center of
-     * the map at a particular point.
+     * Starts the MapActivity with the center of the map at a given lat and lon.
      *
      * @param context         The context of the activity.
      * @param lat             The latitude of the map center.
@@ -136,6 +135,18 @@ public class ReportActivity extends BaseReportActivity {
                              double lon,
                              GoogleApiClient googleApiClient) {
         context.startActivity(makeIntent(context, null, null, null, lat, lon, googleApiClient));
+    }
+
+    /**
+     * Starts the MapActivity with the center of 0 lat and 0 lon to reflect the lack of location.
+     *
+     * @param context         The context of the activity.
+     * @param googleApiClient The GoogleApiClient being used to obtain fused provider updates, or
+     *                        null if one isn't available
+     */
+    public static void start(Context context,
+                             GoogleApiClient googleApiClient) {
+        context.startActivity(makeIntent(context, null, null, null, 0d, 0d, googleApiClient));
     }
 
     /**

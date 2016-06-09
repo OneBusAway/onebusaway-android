@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -101,6 +102,9 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                 showOnMap(getListView(), info.position);
                 return true;
             case CONTEXT_MENU_CREATE_SHORTCUT:
+                ShowcaseViewUtils
+                        .doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT);
+
                 StopData stopData = getStopData(getListView(), info.position);
                 final Intent shortcutIntent =
                         UIUtils.makeShortcut(getActivity(), stopData.uiName,

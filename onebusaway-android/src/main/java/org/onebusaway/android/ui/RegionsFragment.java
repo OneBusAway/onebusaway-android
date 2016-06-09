@@ -137,7 +137,7 @@ public class RegionsFragment extends ListFragment
                 getString(R.string.analytics_action_set_region),
                 getString(R.string.analytics_label_set_region)+ region.getName());
 
-        NavHelp.goHome(getActivity());
+        NavHelp.goHome(getActivity(), false);
     }
 
     @Override

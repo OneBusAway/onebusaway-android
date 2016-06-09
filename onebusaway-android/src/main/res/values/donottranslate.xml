@@ -36,6 +36,9 @@
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
     <string name="preference_key_tutorial">preference_key_tutorial</string>
     <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
+    <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
+    <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens
+    </string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

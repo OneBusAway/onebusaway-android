@@ -11,6 +11,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
@@ -18,6 +19,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -34,16 +36,13 @@ public class ShowcaseViewUtils {
 
     public static final String TUTORIAL_WELCOME = ".tutorial_welcome";
 
+    public static final String TUTORIAL_OPT_OUT_DIALOG = ".tutorial_opt_out_dialog";
+
     public static final String TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO
             = ".tutorial_arrival_header_arrival_info";
 
-    public static final String TUTORIAL_ARRIVAL_HEADER_STAR_STOP
-            = ".tutorial_arrival_header_star_stop";
-
     public static final String TUTORIAL_ARRIVAL_HEADER_SLIDING_PANEL
             = ".tutorial_arrival_header_sliding_panel";
-
-    public static final String TUTORIAL_ARRIVAL_INFO_MORE = ".tutorial_arrival_info_more";
 
     public static final String TUTORIAL_ARRIVAL_SORT = ".tutorial_arrival_sort";
 
@@ -52,25 +51,9 @@ public class ShowcaseViewUtils {
 
     public static final String TUTORIAL_RECENT_STOPS_ROUTES = ".tutorial_recent_stops_routes";
 
-    public static final String TUTORIAL_ARRIVAL_STYLE_B_SHOW_ROUTE
-            = ".tutorial_arrival_style_b_show_route_items";
-
-    public static final String TUTORIAL_VEHICLE_ICONS = ".tutorial_vehicle_icons";
-
-    public static final String TUTORIAL_VEHICLE_INFO_WINDOW = ".tutorial_vehicle_info_window";
-
     public static final String TUTORIAL_STARRED_STOPS_SORT = ".tutorial_starred_stops_sort";
 
     public static final String TUTORIAL_STARRED_STOPS_SHORTCUT = ".tutorial_starred stops_shortcut";
-
-    public static final String TUTORIAL_SHOW_ARRIVAL_IN_HEADER
-            = ".tutorial_show_arrivals_in_header";
-
-    public static final String TUTORIAL_ARRIVAL_ROUTE_FILTER = ".tutorial_arrival_route_filter";
-
-    public static final String TUTORIAL_NIGHT_LIGHT = ".tutorial_night_light";
-
-    public static final String TUTORIAL_SEND_FEEDBACK = ".tutorial_send_feedback";
 
     public static final String TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES
             = ".tutorial_send_feedback_open311_categories";
@@ -114,9 +97,22 @@ public class ShowcaseViewUtils {
         }
 
         SharedPreferences settings = Application.getPrefs();
-        boolean showedTutorial = settings.getBoolean(tutorialType, false);
-        if (showedTutorial) {
-            // If we've already shown this tutorial to the user, do nothing
+
+        // If user has opted out of tutorials, do nothing
+        boolean showTutorials = settings.getBoolean(
+                activity.getString(R.string.preference_key_show_tutorial_screens), true);
+        if (!showTutorials) {
+            return;
+        }
+
+        // If we've already shown this tutorial to the user, do nothing
+        boolean showedThisTutorial = settings.getBoolean(tutorialType, false);
+        if (showedThisTutorial) {
+            return;
+        }
+
+        // Make sure we're not spamming the user with tutorials
+        if (giveUserTutorialBreak(activity, tutorialType)) {
             return;
         }
 
@@ -167,33 +163,11 @@ public class ShowcaseViewUtils {
                     }
                 };
                 break;
-            case TUTORIAL_ARRIVAL_HEADER_STAR_STOP:
-                title = r.getString(R.string.tutorial_arrival_header_star_stop_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_arrival_header_star_stop_text));
-                target = new ViewTarget(R.id.stop_favorite, activity);
-                break;
             case TUTORIAL_ARRIVAL_HEADER_SLIDING_PANEL:
                 title = r.getString(R.string.tutorial_arrival_header_sliding_panel_title);
                 text = new SpannableString(
                         r.getString(R.string.tutorial_arrival_header_sliding_panel_text));
                 target = new ViewTarget(R.id.expand_collapse, activity);
-                moveButtonLeft = true;
-                break;
-            case TUTORIAL_ARRIVAL_INFO_MORE:
-                if (response == null) {
-                    throw new IllegalArgumentException(
-                            "ObaArrivalInfoResponse must be provided for the '" + tutorialType
-                                    + "' tutorial type.");
-                }
-                if (response.getArrivalInfo().length < 1) {
-                    // We need at least one arrival time
-                    return;
-                }
-                title = r.getString(R.string.tutorial_arrival_info_more_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_arrival_info_more_text));
-                target = new ViewTarget(R.id.eta_more_vert, activity);
                 moveButtonLeft = true;
                 break;
             case TUTORIAL_ARRIVAL_SORT:
@@ -222,32 +196,6 @@ public class ShowcaseViewUtils {
                         r.getString(R.string.tutorial_recent_stops_routes_text));
                 addIcon(activity, text, R.drawable.ic_navigation_more_vert);
                 break;
-            case TUTORIAL_ARRIVAL_STYLE_B_SHOW_ROUTE:
-                if (response == null) {
-                    throw new IllegalArgumentException(
-                            "ObaArrivalInfoResponse must be provided for the '" + tutorialType
-                                    + "' tutorial type.");
-                }
-                if (response.getArrivalInfo().length < 1) {
-                    // We need at least one arrival time
-                    return;
-                }
-                title = r.getString(R.string.tutorial_arrival_style_b_show_route_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_arrival_style_b_show_route_text));
-                target = new ViewTarget(R.id.mapImageBtn, activity);
-                moveButtonLeft = true;
-                break;
-            case TUTORIAL_VEHICLE_ICONS:
-                title = r.getString(R.string.tutorial_vehicle_icons_title);
-                text = new SpannableString(r.getString(R.string.tutorial_vehicle_icons_text));
-                // No target, as we can't target map markers
-                break;
-            case TUTORIAL_VEHICLE_INFO_WINDOW:
-                title = r.getString(R.string.tutorial_vehicle_info_window_title);
-                text = new SpannableString(r.getString(R.string.tutorial_vehicle_info_window_text));
-                // No target, as we can't target custom map info window contents
-                break;
             case TUTORIAL_STARRED_STOPS_SORT:
                 title = r.getString(R.string.tutorial_starred_stops_sort_title);
                 text = new SpannableString(r.getString(R.string.tutorial_starred_stops_sort_text));
@@ -262,29 +210,6 @@ public class ShowcaseViewUtils {
                 title = r.getString(R.string.tutorial_starred_stops_shortcut_title);
                 text = new SpannableString(
                         r.getString(R.string.tutorial_starred_stops_shortcut_text));
-                break;
-            case TUTORIAL_SHOW_ARRIVAL_IN_HEADER:
-                title = r.getString(R.string.tutorial_show_arrivals_in_header_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_show_arrivals_in_header_text));
-                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
-                break;
-            case TUTORIAL_ARRIVAL_ROUTE_FILTER:
-                title = r.getString(R.string.tutorial_arrival_route_filter_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_arrival_route_filter_text));
-                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
-                break;
-            case TUTORIAL_NIGHT_LIGHT:
-                title = r.getString(R.string.tutorial_night_light_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_night_light_text));
-                addIcon(activity, text, R.drawable.ic_navigation_more_vert);
-                break;
-            case TUTORIAL_SEND_FEEDBACK:
-                title = r.getString(R.string.tutorial_send_feedback_title);
-                text = new SpannableString(
-                        r.getString(R.string.tutorial_send_feedback_text));
                 break;
             case TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES:
                 title = r.getString(R.string.tutorial_send_feedback_transit_service_title);
@@ -312,7 +237,7 @@ public class ShowcaseViewUtils {
         }
 
         // Set the preference for this tutorial type so it doesn't show again
-        PreferenceUtils.saveBoolean(tutorialType, true);
+        doNotShowTutorial(tutorialType);
     }
 
     /**
@@ -331,6 +256,69 @@ public class ShowcaseViewUtils {
         if (mShowcaseView != null) {
             mShowcaseView.hide();
         }
+    }
+
+    /**
+     * Give the user a break from tutorials - only show every 10th time, unless its the beginning
+     * three important screens
+     *
+     * @param tutorialType type of tutorial to show, defined by the TUTORIAL_* constants in
+     *                     ShowcaseViewUtils
+     * @return true if we should give the user a break and not show a tutorial, false if it's ok
+     * to show them one
+     */
+    private static boolean giveUserTutorialBreak(Context context, String tutorialType) {
+        final String TUTORIAL_COUNTER = context.getString(R.string.preference_key_tutorial_counter);
+        if (!(tutorialType.equals(TUTORIAL_WELCOME) ||
+                tutorialType.equals(TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO) ||
+                tutorialType.equals(TUTORIAL_ARRIVAL_HEADER_SLIDING_PANEL))) {
+
+            int counter = Application.getPrefs().getInt(TUTORIAL_COUNTER, 0);
+            counter++;
+            PreferenceUtils.saveInt(TUTORIAL_COUNTER, counter);
+
+            if (!(counter % 10 == 0)) {
+                // Wait longer to show the next tutorial
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates a dialog that prompts the user if they want to see tutorial popups
+     *
+     * @return a dialog that prompts the user if they want to see tutorial popups
+     */
+    public static void showOptOutDialog(final AppCompatActivity activity) {
+        final String showTutorialsKey = activity
+                .getString(R.string.preference_key_show_tutorial_screens);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(R.string.tutorial_opt_out_dialog_title)
+                .setMessage(R.string.tutorial_opt_out_dialog_text)
+                .setPositiveButton(R.string.rt_yes,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Make sure tutorials are enabled - they will show on their own
+                                PreferenceUtils.saveBoolean(showTutorialsKey, true);
+                                // Show the welcome tutorial
+                                showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, activity, null);
+                            }
+                        })
+                .setNegativeButton(R.string.rt_no,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Turn off all tutorials
+                                PreferenceUtils.saveBoolean(showTutorialsKey, false);
+                            }
+                        });
+        builder.create().show();
+
+        // Don't show this dialog again
+        PreferenceUtils.saveBoolean(TUTORIAL_OPT_OUT_DIALOG, false);
     }
 
     /**
@@ -369,30 +357,40 @@ public class ShowcaseViewUtils {
     }
 
     /**
+     * Sets a particular tutorial to the "viewed" state, so a user won't ever see it again.
+     *
+     * This is also useful in the case where a user has already found a particular feature but we
+     * haven't yet shown them the tutorial for that feature.  In this case, they don't need to see
+     * the tutorial for that feature, so we can avoid annoying them with another popup for something
+     * they already know.
+     *
+     * @param tutorialType type of tutorial to not show, defined by the TUTORIAL_* constants in
+     *                     ShowcaseViewUtils
+     */
+    public static void doNotShowTutorial(String tutorialType) {
+        PreferenceUtils.saveBoolean(tutorialType, true);
+    }
+
+    /**
      * Resets all tutorials so they are shown to the user again.  If any ShowcaseView is showing,
      * it will be hidden.
      */
-    public static void resetAllTutorials() {
+    public static void resetAllTutorials(Context context) {
         if (mShowcaseView != null) {
             mShowcaseView.hide();
         }
+        PreferenceUtils
+                .saveBoolean(context.getString(R.string.preference_key_show_tutorial_screens),
+                        true);
+
         PreferenceUtils.saveBoolean(TUTORIAL_WELCOME, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_ARRIVAL_INFO, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_STAR_STOP, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_SLIDING_PANEL, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_INFO_MORE, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_SORT, false);
         PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_HEADER_STAR_ROUTE, false);
         PreferenceUtils.saveBoolean(TUTORIAL_RECENT_STOPS_ROUTES, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_STYLE_B_SHOW_ROUTE, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_VEHICLE_ICONS, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_VEHICLE_INFO_WINDOW, false);
         PreferenceUtils.saveBoolean(TUTORIAL_STARRED_STOPS_SORT, false);
         PreferenceUtils.saveBoolean(TUTORIAL_STARRED_STOPS_SHORTCUT, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_SHOW_ARRIVAL_IN_HEADER, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_ARRIVAL_ROUTE_FILTER, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_NIGHT_LIGHT, false);
-        PreferenceUtils.saveBoolean(TUTORIAL_SEND_FEEDBACK, false);
         PreferenceUtils.saveBoolean(TUTORIAL_SEND_FEEDBACK_OPEN311_CATEGORIES, false);
     }
 }

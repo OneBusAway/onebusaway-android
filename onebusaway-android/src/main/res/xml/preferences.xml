@@ -34,6 +34,11 @@
                 android:summary="@string/preferences_show_negative_arrivals_summary"
                 android:defaultValue="true"/>
         <CheckBoxPreference
+                android:key="@string/preference_key_show_tutorial_screens"
+                android:title="@string/preferences_show_tutorial_screens_title"
+                android:summary="@string/preferences_show_tutorial_screens_summary"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
                 android:key="@string/preference_key_show_header_arrivals"
                 android:title="@string/preferences_show_header_arrivals_title"
                 android:summary="@string/preferences_show_header_arrivals_summary"

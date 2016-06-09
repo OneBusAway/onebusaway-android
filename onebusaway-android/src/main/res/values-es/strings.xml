@@ -109,6 +109,8 @@
         - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
         <b>Mejora en Envio de Comentarios</b>
         - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
+        <b>Mejora del tutorial</b>
+        - Menos ventanas emergentes, permitir mostrarlo u ocultarlo\n&#8226;\u0020
         <b>Corrección de errores</b>
     </string>
     <string name="main_help_close">Cerrar</string>
@@ -278,6 +280,7 @@
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_old_data">Datos actualizados el %s</string>
     <string name="stop_info_favorite">Parada Favorita</string>
+    <string name="stop_info_official_stop_name_label">Nombre oficial: %1$s</string>
     <string name="stop_info_route_ids_label">Rutas:</string>
     <string name="stop_info_header_arrival_info">%1$d min</string>
     <string name="stop_info_header_just_left">acaba de irse</string>
@@ -505,6 +508,11 @@
         muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
     </string>
 
+    <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
+    <string name="preferences_show_tutorial_screens_summary">Desplegar los ventanas emergentes informacionales explicando
+        como usar las funciones
+    </string>
+
     <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>
     <string name="preferences_arrival_info_style_options_b">Tarjetas</string>
 
@@ -521,6 +529,7 @@
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
     </string>
+    <string name="preferences_restore_loading">Restaurando desde el almacenamiento&#8230;</string>
     <string name="preferences_db_restored">¡Restauración exitosa! Por favor reinicia OneBusAway.</string>
     <string name="preferences_db_restore_error">No se puede restaurar: %1$s</string>
 
@@ -640,24 +649,21 @@
     <string name="tutorial_welcome_text">Toca una parada (punto verde en el mapa) para ver los tiempos
         de llegada.
     </string>
+    <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
+    <string name="tutorial_opt_out_dialog_text">¿te gustaría ver las ventanas emergentes que describen como
+        usar OneBusAway? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
+        tutorial despues en la opción \"Ayuda->Mostrar tutorial\".
+    </string>
     <string name="tutorial_arrival_header_arrival_info_title">¿Cuánto tiempo hasta que llegue tu bus?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">¡Mucho tiempo! El color de fondo te indica
         si el bus esta adelantado (rojo) o va atrasado (azul). Si es verde se encuentra a tiempo. Si nosotros no sabemos
         donde se encuentra el bus, se muestra el tiempo planificado (gris).
     </string>
-    <string name="tutorial_arrival_header_star_stop_title">Destaca tus paradas favoritas</string>
-    <string name="tutorial_arrival_header_star_stop_text">Toca sobre la estrella para guardar tus paradas
-        favoritas. Las paradas favoritas están disponibles en el panel de navegación principal.
-    </string>
     <string name="tutorial_arrival_header_sliding_panel_title">Desliza hacia arriba para ver más llegadas
     </string>
     <string name="tutorial_arrival_header_sliding_panel_text">Toca sobre la flecha o desliza el panel hacia arriba
         para ver mas llegadas de buses en esta parada.
-    </string>
-    <string name="tutorial_arrival_info_more_title">¡Usa tus super poderes de tránsito sabiamente!</string>
-    <string name="tutorial_arrival_info_more_text">Toca sobre los 3 puntos para establecer recordatorios, agregar una ruta a
-        favoritos, ver una ruta sobre el mapa, y mucho más ...
     </string>
     <string name="tutorial_arrival_sort_title">Ordenar por ETA o rutas</string>
     <string name="tutorial_arrival_sort_text">Las llegadas puedes ser ordenadas por el tiempo estimado de llegada (ETA en inglés), u
@@ -671,19 +677,6 @@
     <string name="tutorial_recent_stops_routes_text">Encuentra las paradas y rutas que recientemente has mirado
         accediendo por medio del botón \"Más\" en la parte superior derecha de la pantalla.
     </string>
-    <string name="tutorial_arrival_style_b_show_route_title">Ver la posición de los buses sobre el mapa
-    </string>
-    <string name="tutorial_arrival_style_b_show_route_text">Toca sobre el icono de mapa para ver el bus moverse
-        en tiempo real.
-    </string>
-    <string name="tutorial_vehicle_icons_title">Toca sobre los iconos del bus para ver mas información</string>
-    <string name="tutorial_vehicle_icons_text">Consejo - Rota el mapa usando dos (2) dedos si
-        accidentalmente tocas sobre una parada cercana en lugar de tocar sobre el bus.
-    </string>
-    <string name="tutorial_vehicle_info_window_title">Ver información del bus en vivo</string>
-    <string name="tutorial_vehicle_info_window_text">Toca sobre la ventana emergente para ver la ruta de
-        tránsito y su estado en tiempo real para ese bus.
-    </string>
     <string name="tutorial_starred_stops_sort_title">Ordenar tus paradas favoritas</string>
     <string name="tutorial_starred_stops_sort_text">Organiza tus paradas favoritas por nombre o
         frecuencia de uso con el botón \"Ordenar\" en la parte superior de la pantalla.
@@ -691,24 +684,6 @@
     <string name="tutorial_starred_stops_shortcut_title">Ahorra tiempo con accesos directos</string>
     <string name="tutorial_starred_stops_shortcut_text">Presiona por un largo tiempo sobre una parada para crear un acceso directo
         en tu pantalla de inicio. ¡Toca sobre el acceso directo para ver instantáneamente las llegadas!
-    </string>
-    <string name="tutorial_show_arrivals_in_header_title">Ver las rutas favoritas de primero</string>
-    <string name="tutorial_show_arrivals_in_header_text">¿Quieres ver tus rutas favoritas sobre el
-        nombre de la parada? Intenta la opción \"Mostrar las llegadas en el encabezado\" desde el botón \"Más\" en la parte superior
-        derecha de la pantalla.
-    </string>
-    <string name="tutorial_arrival_route_filter_title">Filtrar las rutas no deseadas</string>
-    <string name="tutorial_arrival_route_filter_text">¿No te interesa la Ruta 6? Ocúltala usando la
-        opción \"Filtrar rutas\" desde el botón \"Más\" en la parte superior derecha de la pantalla.
-    </string>
-    <string name="tutorial_night_light_title">Iluminación en la noche</string>
-    <string name="tutorial_night_light_text">¿Estás cansado de que el bus continúe de largo porque el conductor
-        no te pudo ver en la oscuridad? Intenta la opción \"Iluminación de noche\" desde el botón \"Más\" en la parte superior
-        derecha de la pantalla.
-    </string>
-    <string name="tutorial_send_feedback_title">Dinos que es lo que piensas</string>
-    <string name="tutorial_send_feedback_text">¡Ayudanos a mejorar! Toca en \"Enviar comentarios\"
-        en el panel de navegación principal.
     </string>
     <string name="tutorial_send_feedback_transit_service_title">Más que sólo tránsito</string>
     <string name="tutorial_send_feedback_transit_service_text">Puedes reportar una variedad de tipos de

@@ -52,6 +52,10 @@ public class MapParams {
 
     public static final String MODE_STOP = "StopMode";
 
+    public static final String MODE_DIRECTIONS = "DirectionsMode";
+
+    public static final String ITINERARY = ".Itinerary";
+
     public static final int DEFAULT_ZOOM = 18;
 
     public static final int DEFAULT_MAP_PADDING = 0;

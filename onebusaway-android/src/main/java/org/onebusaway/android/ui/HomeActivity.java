@@ -85,6 +85,7 @@ import java.util.HashMap;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
@@ -422,6 +423,14 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_action_button_press),
                             getString(R.string.analytics_label_button_press_reminders));
                 }
+                break;
+            case NAVDRAWER_ITEM_PLAN_TRIP:
+                Intent planTrip = new Intent(HomeActivity.this, TripPlanActivity.class);
+                startActivity(planTrip);
+                ObaAnalytics
+                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                getString(R.string.analytics_action_button_press),
+                                getString(R.string.analytics_label_button_press_tripplan));
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
@@ -998,6 +1007,14 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
+     * Redraw navigation drawer. This is necessary because we do not know whether to draw the
+     * "Plan A Trip" option until a region is selected.
+     */
+    public void redrawNavigationDrawerFragment() {
+        mNavigationDrawerFragment.populateNavDrawer();
+    }
+
+    /**
      * Create a new fragment to show the arrivals list for the given stop.  An ObaStop object
      * should
      * be passed in if available.  In all cases a stopId, stopName, and stopCode must be provided.
@@ -1274,7 +1291,31 @@ public class HomeActivity extends AppCompatActivity
                 SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
         mSlidingPanel.setOverlayed(true);
         mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
-        mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+        mSlidingPanel.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+
+                if (previousState == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                    return;
+                }
+
+                switch(newState) {
+                    case EXPANDED:
+                        onPanelExpanded(panel);
+                        break;
+                    case COLLAPSED:
+                        onPanelCollapsed(panel);
+                        break;
+                    case ANCHORED:
+                        onPanelAnchored(panel);
+                        break;
+                    case HIDDEN:
+                        onPanelHidden(panel);
+                        break;
+                }
+            }
+
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
                 Log.d(TAG, "onPanelSlide, offset " + slideOffset);
@@ -1283,7 +1324,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelExpanded(View panel) {
                 Log.d(TAG, "onPanelExpanded");
                 if (mArrivalsListHeader != null) {
@@ -1298,7 +1338,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelCollapsed(View panel) {
                 Log.d(TAG, "onPanelCollapsed");
                 if (mMapFragment != null) {
@@ -1318,7 +1357,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelAnchored(View panel) {
                 Log.d(TAG, "onPanelAnchored");
                 if (mMapFragment != null) {
@@ -1340,7 +1378,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelHidden(View panel) {
                 Log.d(TAG, "onPanelHidden");
                 // We need to hide the panel when switching between fragments via the navdrawer,

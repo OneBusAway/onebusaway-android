@@ -25,6 +25,7 @@
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
+    <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
@@ -418,6 +419,7 @@
     <string name="report_problem_uservehicle_hint">Bus number (optional)</string>
     <string name="report_problem_stop_activity_label">Report Stop Problem</string>
     <string name="report_problem_trip_activity_label">Report Arrival Time Problem</string>
+    <string name="report_problem_report">Report</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -475,6 +477,9 @@
     </string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>
+    <string name="bug_report_body_OTP">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nUnable to plan to URL: %5$s
+    </string>
 
     <!-- Android Maps v2 -->
     <string name="install_google_maps_positive_button">Install</string>
@@ -488,6 +493,7 @@
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
+    <string name="preferences_category_notifications">Notifications</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
@@ -511,6 +517,11 @@
     <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
     <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
         show arrival info in the header at the top of the screen (doesn\'t affect map view)
+    </string>
+
+    <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
+    <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
+        notifications if the trip is delayed or no longer recommended.
     </string>
 
     <string name="preferences_show_tutorial_screens_title">Show tutorial screens</string>
@@ -748,4 +759,244 @@
         (https://github.com/google/material-design-icons), "
         "licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).\n\n"
     </string>
+
+    <!-- Trip Planner strings -->
+
+    <string name="title_activity_trip_plan">Trip Planner (beta)</string>
+    <string name="error_while_retrieving_data">Error while retrieving data</string>
+    <string name="trip_plan_from">From: </string>
+    <string name="trip_plan_to">To: </string>
+    <string name="trip_plan_when">When</string>
+    <string name="trip_plan_leaving">Leaving</string>
+    <string name="trip_plan_arriving">Arriving</string>
+    <string name="trip_plan_plan_my_trip">Plan My Trip</string>
+    <string name="trip_plan_stop_connector">at</string>
+
+    <string name="trip_plan_location_hint">Enter address or location name</string>
+
+    <string name="trip_plan_switch_view">Switch View:</string>
+    <string name="trip_plan_list_view">List View</string>
+    <string name="trip_plan_map_view">Map View</string>
+
+    <string name="task_progress_tripplanner_progress">Planning trip. Please wait&#8230;</string>
+    <string name="tripplanner_no_server_selected_error">No region selected</string>
+    <string name="tripplanner_results_title">Planning Results</string>
+    <string name="tripplanner_error_dialog_title">Planning not possible</string>
+    <!-- Errors -->
+    <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
+    <string name="tripplanner_error_request_timeout">Region is not responding, please try again later</string>
+    <string name="tripplanner_error_system">Region is offline, please try again later</string>
+    <string name="tripplanner_error_outside_bounds">Origin or destination is outside transportation network coverage</string>
+    <string name="tripplanner_error_path_not_found">Couldn\'t find a matching route between origin and destination</string>
+    <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>
+    <string name="tripplanner_error_bogus_parameter">Something went wrong.  Change your trip options and try again.</string>
+    <string name="tripplanner_error_geocode_from_not_found">Origin not found</string>
+    <string name="tripplanner_error_geocode_to_not_found">Destination not found</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">Origin and destination not found</string>
+    <string name="tripplanner_error_too_close">Trip is too short</string>
+    <string name="tripplanner_error_location_not_accessible">Chosen location is not accessible</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Origin is uncertain</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Destination  is uncertain</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">Origin and destination are uncertain</string>
+    <string name="tripplanner_error_triangle">Something went wrong.  Change your bike options and try again</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Current Location</string>
+    <string name="tripplanner_error_no_location">Please enter a location for the start and end of your trip.</string>
+
+    <string name="tripplanner_no_contact">There is no OpenTripPlanner contact for this region.</string>
+
+    <string name="tripplanner_reverse">Reverse</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Step-by-step screen -->
+
+    <!-- Title -->
+    <string name="step_by_step_title">Directions</string>
+
+    <!-- Top headers -->
+    <string name="step_by_step_header_from">From</string>
+    <string name="step_by_step_header_to">To</string>
+    <string name="step_by_step_header_departure">Dep.</string>
+    <string name="step_by_step_header_arrival">Arr.</string>
+
+    <!-- Drop down menu components -->
+    <string name="step_by_step_walking_duration">walking</string>
+    <string name="step_by_step_total_duration">takes</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Transit -->
+
+    <!-- Transit instruction start -->
+    <string name="step_by_step_transit_get_on">Get on</string>
+    <string name="step_by_step_transit_get_off">Get off</string>
+    <!--                This is exactly the formula that should be used, because the app won't include
+                    the destination stop under this text, so would be best to avoid expressions like
+                     "stops to destination". For example in the trip Barcelona/Paris/London/New York,
+                      stops in between are Paris and London, and not New York. See #394 for reference.-->
+    <string name="step_by_step_transit_stops_in_between">stops in between</string>
+    <string name="step_by_step_transit_stops_in_between_singular">stop in between</string>
+
+    <!-- Transit description start -->
+    <string name="step_by_step_transit_connector_stop_name">At</string>
+
+    <!-- Transit headsign connector -->
+    <string name="step_by_step_transit_connector_headsign">to</string>
+
+    <!-- Real time -->
+    <string name="step_by_step_transit_warning_live_udpates">Live updates</string>
+
+    <!-- Modes -->
+
+    <!-- Modes -->
+    <string name="step_by_step_transit_mode_tram">tram</string>
+    <string name="step_by_step_transit_mode_subway">subway</string>
+    <string name="step_by_step_transit_mode_rail">rail</string>
+    <string name="step_by_step_transit_mode_bus">bus</string>
+    <string name="step_by_step_transit_mode_ferry">ferry</string>
+    <string name="step_by_step_transit_mode_cable_car">cable car</string>
+    <string name="step_by_step_transit_mode_gondola">gondola</string>
+    <string name="step_by_step_transit_mode_funicular">funicular</string>
+
+    <!-- Non-transit -->
+
+    <!--  Main direction components -->
+    <string name="step_by_step_non_transit_mode_car_action">Drive</string>
+    <string name="step_by_step_non_transit_mode_walk_action">Walk</string>
+    <string name="step_by_step_non_transit_mode_bicycle_action">Bike</string>
+    <string name="step_by_step_non_transit_from">from</string>
+    <string name="step_by_step_non_transit_to">to</string>
+
+    <!-- Subdirection components -->
+
+    <!-- Connectors -->
+    <string name="step_by_step_non_transit_turn">Turn</string>
+    <string name="step_by_step_non_transit_heading">heading</string>
+    <string name="step_by_step_non_transit_connector_street_name">on</string>
+    <string name="step_by_step_non_transit_connector_street_name_roundabout">to</string>
+
+    <!-- Relative directions -->
+    <string name="step_by_step_non_transit_dir_relative_circle_clockwise">At the roundabout take the</string>
+    <string name="step_by_step_non_transit_dir_relative_circle_counterclockwise">At the roundabout take the</string>
+    <string name="step_by_step_non_transit_dir_relative_continue">Continue</string>
+    <string name="step_by_step_non_transit_dir_relative_depart">Depart</string>
+    <string name="step_by_step_non_transit_dir_relative_elevator">Take elevator</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_left">Turn sharp left</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_right">Turn sharp right</string>
+    <string name="step_by_step_non_transit_dir_relative_left">left</string>
+    <string name="step_by_step_non_transit_dir_relative_right">right</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_left">Turn slight left</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_right">Turn slight right</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_left">Make left u-turn</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_right">Make right u-turn</string>
+
+    <!-- Absolute directions -->
+    <string name="step_by_step_non_transit_dir_absolute_east">east</string>
+    <string name="step_by_step_non_transit_dir_absolute_north">north</string>
+    <string name="step_by_step_non_transit_dir_absolute_northeast">northeast</string>
+    <string name="step_by_step_non_transit_dir_absolute_northwest">northwest</string>
+    <string name="step_by_step_non_transit_dir_absolute_south">south</string>
+    <string name="step_by_step_non_transit_dir_absolute_southeast">southeast</string>
+    <string name="step_by_step_non_transit_dir_absolute_southwest">southwest</string>
+    <string name="step_by_step_non_transit_dir_absolute_west">west</string>
+
+    <!-- Roundabouts -->
+
+    <!-- Exit ordinals -->
+    <string name="step_by_step_non_transit_roundabout_ordinal_first">first</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_second">second</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_third">third</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fourth">fourth</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fifth">fifth</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_sixth">sixth</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_seventh">seventh</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_eighth">eighth</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_ninth">ninth</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_tenth">tenth</string>
+
+    <!-- To complement the step_by_step_non_transit_roundabout_number for a bigger ordinal -->
+    <string name="step_by_step_non_transit_roundabout_number">number</string>
+
+    <!-- After the ordinal -->
+    <string name="step_by_step_non_transit_roundabout_exit">exit</string>
+
+    <!-- Street type -->
+    <string name="street_type_bike_path">bike path</string>
+    <string name="street_type_open_area">open area</string>
+    <string name="street_type_path">path</string>
+    <string name="street_type_bridleway">bridleway</string>
+    <string name="street_type_footpath">footpath</string>
+    <string name="street_type_platform">platform</string>
+    <string name="street_type_footbridge">footbridge</string>
+    <string name="street_type_underpass">underpass</string>
+    <string name="street_type_road">road</string>
+    <string name="street_type_ramp">ramp</string>
+    <string name="street_type_link">link</string>
+    <string name="street_type_service_road">service road</string>
+    <string name="street_type_alley">alley</string>
+    <string name="street_type_parking_aisle">parking aisle</string>
+    <string name="street_type_byway">byway</string>
+    <string name="street_type_track">track</string>
+    <string name="street_type_sidewalk">sidewalk</string>
+    <string name="street_type_steps">steps</string>
+
+    <!-- Notifications specific -->
+
+    <!-- Button -->
+    <string name="notification_disable_updates_button">Cancel updates for this trip</string>
+
+    <!-- Toast -->
+    <string name="notification_disable_updates_info">Updates cancelled</string>
+
+    <!-- Text -->
+    <string name="notification_stop_name_conector">at</string>
+    <string name="notification_two_delays_connector">and</string>
+    <string name="notification_origin">origin</string>
+    <string name="notification_destination">destination</string>
+
+    <!-- Obtaining real time updates -->
+    <string name="toast_realtime_updates_fail">Realtime updates not available for this trip, times might be outdated</string>
+
+    <!-- Units -->
+    <string name="hours_abbreviation">h</string>
+    <string name="hours_full">hours</string>
+    <string name="hour_singular">hour</string>
+
+    <string name="seconds_abbrevation">s</string>
+    <string name="seconds_full">seconds</string>
+    <string name="seconds_singular">second</string>
+
+    <string name="minute_singular">minute</string>
+
+    <!-- Connectors -->
+    <string name="time_connector_next_day">tomorrow</string>
+    <string name="time_connector_before_time">at</string>
+    <string name="time_connector_before_date">on</string>
+
+    <!-- Used to introduce route names in itineraries drop down (map view and step-by-step) and map mode markers popups -->
+    <string name="connector_before_route">Route</string>
+
+
+    <!-- Real time -->
+    <string name="map_markers_warning_live_updates">Live updates</string>
+    <string name="map_markers_warning_live_updates_on_time">On time</string>
+    <string name="map_markers_warning_live_updates_early_arrival">early</string>
+    <string name="map_markers_warning_live_updates_late_arrival">delay</string>
+
+    <string name="trip_plan_not_recommended">Your trip is no longer recommended for this route.</string>
+    <string name="trip_plan_delay">Your trip is delayed.</string>
+    <string name="trip_plan_early">Your trip is early.</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Additional Trip Preferences</string>
+    <string name="minimize_transfers">Minimize transfers</string>
+    <string name="maximum_walk_distance">Maximum walk distance: </string>
+    <string name="wheelchair_accessible">Avoid stairs</string>
+
+    <string name="travel_by_label">Travel by: </string>
+    <string name="transit_mode_transit">Transit</string>
+    <string name="transit_mode_bus">Bus only</string>
+    <string name="transit_mode_rail">Rail only</string>
+
 </resources>

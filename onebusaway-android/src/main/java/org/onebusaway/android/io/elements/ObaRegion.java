@@ -116,4 +116,14 @@ public interface ObaRegion {
      * @return the StopInfo URL for the region (see #103)
      */
     public String getStopInfoUrl();
+
+    /**
+     * @return the OpenTripPlanner URL for the region
+     */
+    public String getOtpBaseUrl();
+
+    /**
+     * @return The email of the party responsible for this region's OTP server.
+     */
+    public String getOtpContactEmail();
 }

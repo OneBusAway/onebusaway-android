@@ -51,6 +51,13 @@
                 android:defaultValue="@string/preferences_preferred_units_option_automatic">
         </ListPreference>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/preferences_category_notifications">
+        <CheckBoxPreference
+            android:key="@string/preference_key_trip_plan_notifications"
+            android:title="@string/preferences_trip_plan_notifications_title"
+            android:summary="@string/preferences_trip_plan_notifications_summary"
+            android:defaultValue="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_backup">
         <org.onebusaway.android.io.backup.SavePreference
                 android:title="@string/preferences_save_title"

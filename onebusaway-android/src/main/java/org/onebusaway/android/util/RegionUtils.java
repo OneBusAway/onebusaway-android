@@ -28,6 +28,7 @@ import org.onebusaway.android.provider.ObaContract;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
@@ -40,6 +41,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A class containing utility methods related to handling multiple regions in OneBusAway
@@ -277,6 +279,51 @@ public class RegionUtils {
     }
 
     /**
+     *
+     * @return OTP server URL with trimmed trailing slash, or null if none defined for region.
+     */
+    public static String getOtpBaseUrl() {
+        ObaRegion region = Application.get().getCurrentRegion();
+        String otpBaseUrl = region.getOtpBaseUrl();
+
+        if (otpBaseUrl == null)
+            return null;
+
+        // Trim trailing slash if it exists.
+        return otpBaseUrl.replaceFirst("/$", "");
+    }
+
+    /**
+     *
+     * @return returns true if preferred units are metric, false if Imperial
+     */
+    public static boolean getUnitsAreMetric(Context context) {
+        String IMPERIAL = context.getString(R.string.preferences_preferred_units_option_imperial);
+        String METRIC = context.getString(R.string.preferences_preferred_units_option_metric);
+        String AUTOMATIC = context.getString(R.string.preferences_preferred_units_option_automatic);
+
+        SharedPreferences mSettings = Application.getPrefs();
+
+        String preferredUnits = mSettings
+                .getString(context.getString(R.string.preference_key_preferred_units),
+                        AUTOMATIC);
+
+        if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+            Log.d(TAG, "Setting units automatically");
+            // If the country is set to USA, assume imperial, otherwise metric
+            // TODO - Method of guessing metric/imperial can definitely be improved
+            if (Locale.getDefault().getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
+                // Assume imperial
+                return false;
+            } else {
+                // Assume metric
+                return true;
+            }
+        } else
+            return preferredUnits.equalsIgnoreCase(METRIC);
+    }
+
+    /**
      * Gets regions from either the server, local provider, or if both fails the regions file
      * packaged
      * with the APK.  Includes fail-over logic to prefer sources in above order, with server being
@@ -361,7 +408,8 @@ public class RegionUtils {
                     ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
                     ObaContract.Regions.TWITTER_URL,
                     ObaContract.Regions.EXPERIMENTAL,
-                    ObaContract.Regions.STOP_INFO_URL
+                    ObaContract.Regions.STOP_INFO_URL,
+                    ObaContract.Regions.OTP_BASE_URL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -404,7 +452,8 @@ public class RegionUtils {
                         c.getInt(8) > 0,            // Supports Siri Realtime
                         c.getString(9),              // Twitter URL
                         c.getInt(10) > 0,            // Experimental
-                        c.getString(11)             // StopInfoUrl
+                        c.getString(11),             // StopInfoUrl
+                        c.getString(12)              // OTP Base URL
                 ));
 
             } while (c.moveToNext());
@@ -584,7 +633,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
-                BuildConfig.FIXED_REGION_STOP_INFO_URL);
+                BuildConfig.FIXED_REGION_STOP_INFO_URL,
+                BuildConfig.FIXED_REGION_OTP_BASE_URL);
         return region;
     }
 
@@ -650,6 +700,7 @@ public class RegionUtils {
         values.put(ObaContract.Regions.TWITTER_URL, region.getTwitterUrl());
         values.put(ObaContract.Regions.EXPERIMENTAL, region.getExperimental());
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
+        values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
         return values;
     }
 

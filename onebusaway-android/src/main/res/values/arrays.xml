@@ -201,5 +201,10 @@
         <item>bus</item>
     </string-array>
 
+    <string-array name="transit_mode_array">
+        <item>@string/transit_mode_transit</item>
+        <item>@string/transit_mode_bus</item>
+        <item>@string/transit_mode_rail</item>
+    </string-array>
 
 </resources>

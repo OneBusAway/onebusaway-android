@@ -89,4 +89,10 @@
     <!-- About -->
     <dimen name="app_bar_height">180dp</dimen>
     <dimen name="text_margin">16dp</dimen>
+
+    <!-- Dialog -->
+    <dimen name="dialog_margin">32dp</dimen>
+    <dimen name="dialog_title_margin">8dp</dimen>
+    <dimen name="dialog_title_text_size">24sp</dimen>
+
 </resources>

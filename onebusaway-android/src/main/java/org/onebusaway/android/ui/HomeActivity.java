@@ -87,6 +87,7 @@ import java.util.HashMap;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
@@ -424,6 +425,11 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_action_button_press),
                             getString(R.string.analytics_label_button_press_reminders));
                 }
+                break;
+            case NAVDRAWER_ITEM_PLAN_TRIP:
+                Intent planTrip = new Intent(HomeActivity.this, TripPlanActivity.class);
+                startActivity(planTrip);
+                // TODO - Analytics
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);

@@ -35,6 +35,10 @@ repositories {
         // for Amazon Maps
         url uri('../.m2/repository')
     }
+    maven {
+        // CUTR Releases
+        url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
+    }
 }
 
 android {
@@ -105,6 +109,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
         }
 
         /**
@@ -141,6 +146,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
+            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
         }
 
         agencyY {
@@ -170,6 +176,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "\"937033cad3054ec58a1a8156dcdd6ad8a416af2f\""
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "\"http://test.seeclickfix.com/open311/v2/\""
+            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
         }
 
         /**
@@ -314,4 +321,7 @@ dependencies {
     googleCompile 'com.google.android.gms:play-services-maps:9.0.1'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
+    // POJOs used for full data-binding via Jackson
+    compile 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
+
 }

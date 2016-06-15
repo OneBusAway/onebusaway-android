@@ -611,7 +611,8 @@ public class BaseMapFragment extends SupportMapFragment
     //
     // Error handlers
     //
-    public static void showMapError(Context context, ObaResponse response) {
+    public static void showMapError(ObaResponse response) {
+        Context context = Application.get().getApplicationContext();
         Toast.makeText(context,
                 context.getString(UIUtils.getMapErrorString(context, response.getCode())),
                 Toast.LENGTH_LONG).show();

@@ -271,7 +271,7 @@ public class StopMapController implements MapModeController,
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapFragment.showMapError(mCallback.getActivity(), response);
+            BaseMapFragment.showMapError(response);
             return;
         }
 

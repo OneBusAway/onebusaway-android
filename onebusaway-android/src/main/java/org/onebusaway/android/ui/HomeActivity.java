@@ -885,7 +885,7 @@ public class HomeActivity extends AppCompatActivity
 
             // Since mFocusedStop was null, the layout changed, and we should recenter map on stop
             if (mMapFragment != null && mSlidingPanel != null) {
-                mMapFragment.setMapCenter(mFocusedStop.getLocation(), true,
+                mMapFragment.setMapCenter(mFocusedStop.getLocation(), false,
                         mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED);
             }
 

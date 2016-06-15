@@ -26,6 +26,7 @@ import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteRequest;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -211,6 +212,32 @@ public class RouteMapController implements MapModeController {
         outState.putString(MapParams.ROUTE_ID, mRouteId);
         outState.putBoolean(MapParams.ZOOM_TO_ROUTE, mZoomToRoute);
         outState.putBoolean(MapParams.ZOOM_INCLUDE_CLOSEST_VEHICLE, mZoomIncludeClosestVehicle);
+
+        Location centerLocation = mFragment.getMapView().getMapCenterAsLocation();
+        outState.putDouble(MapParams.CENTER_LAT, centerLocation.getLatitude());
+        outState.putDouble(MapParams.CENTER_LON, centerLocation.getLongitude());
+        outState.putFloat(MapParams.ZOOM, mFragment.getMapView().getZoomLevelAsFloat());
+    }
+
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        String stopId = savedInstanceState.getString(MapParams.STOP_ID);
+        if (stopId == null) {
+            // If there is no focused stop then restore the map state otherwise
+            // let the BaseMapFragment to handle map state with focused stop
+
+            float mapZoom = savedInstanceState.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
+            if (mapZoom != MapParams.DEFAULT_ZOOM) {
+                mFragment.getMapView().setZoom(mapZoom);
+            }
+
+            double lat = savedInstanceState.getDouble(MapParams.CENTER_LAT);
+            double lon = savedInstanceState.getDouble(MapParams.CENTER_LON);
+            if (lat != 0.0d && lon != 0.0d) {
+                Location location = LocationUtils.makeLocation(lat, lon);
+                mFragment.getMapView().setMapCenter(location, false, false);
+            }
+        }
     }
 
     @Override

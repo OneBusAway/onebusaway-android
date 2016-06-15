@@ -245,6 +245,12 @@ public class StopMapController implements MapModeController,
     }
 
     @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        // We don't need to handle the view state here. This is already been handled in HomeActivity
+        // when the bus stop is selected on the map
+    }
+
+    @Override
     public void onLocation() {
         refresh();
     }

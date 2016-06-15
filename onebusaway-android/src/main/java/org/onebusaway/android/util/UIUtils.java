@@ -596,6 +596,15 @@ public final class UIUtils {
         }
     }
 
+    /**
+     * Returns the resource ID for a user-friendly error message based on device state (if a
+     * network
+     * connection is available or airplane mode is on) or an OBA REST API response code
+     *
+     * @param code The status code (one of the ObaApi.OBA_* constants)
+     * @return the resource ID for a user-friendly error message based on device state (if a network
+     * connection is available or airplane mode is on) or an OBA REST API response code
+     */
     public static final int getMapErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
@@ -616,12 +625,34 @@ public final class UIUtils {
         }
     }
 
+    /**
+     * Returns true if the device is in Airplane Mode, and false if the device isn't in Airplane
+     * mode or if it can't be determined
+     * @param context
+     * @return true if the device is in Airplane Mode, and false if the device isn't in Airplane
+     * mode or if it can't be determined
+     */
     public static boolean isAirplaneMode(Context context) {
+        if (context == null) {
+            // If the context is null, we can't get airplane mode state - assume no
+            return false;
+        }
         ContentResolver cr = context.getContentResolver();
         return Settings.System.getInt(cr, Settings.System.AIRPLANE_MODE_ON, 0) != 0;
     }
 
+    /**
+     * Returns true if the device is connected to a network, and false if the device isn't or if it
+     * can't be determined
+     * @param context
+     * @return true if the device is connected to a network, and false if the device isn't or if it
+     * can't be determined
+     */
     public static boolean isConnected(Context context) {
+        if (context == null) {
+            // If the context is null, we can't get connected state - assume yes
+            return true;
+        }
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 

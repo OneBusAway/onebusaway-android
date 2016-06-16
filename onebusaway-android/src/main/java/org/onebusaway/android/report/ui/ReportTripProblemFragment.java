@@ -29,6 +29,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -58,7 +59,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
 
     public static final String USER_VEHICLE_NUM = ".UserVehicleNum";
 
-    public static final String TAG = "ReportTripProblemFragment";
+    public static final String TAG = "RprtTripProblemFragment";
 
     public static void show(AppCompatActivity activity, ObaArrivalInfo arrival) {
         show(activity, arrival, null);
@@ -86,7 +87,11 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
             ft.replace(containerViewId, content, TAG);
         }
         ft.addToBackStack(null);
-        ft.commit();
+        try {
+            ft.commit();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Cannot show ReportTripProblemFragment after onSaveInstanceState has been called");
+        }
     }
 
     private TextView mUserComment;

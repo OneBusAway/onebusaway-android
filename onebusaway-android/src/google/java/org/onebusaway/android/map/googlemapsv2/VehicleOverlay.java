@@ -15,6 +15,21 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.os.Handler;
+import android.support.v4.util.LruCache;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -33,21 +48,6 @@ import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.util.MathUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.os.Handler;
-import android.support.v4.util.LruCache;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -58,6 +58,10 @@ import java.util.concurrent.TimeUnit;
  * A map overlay that shows vehicle positions on the map
  */
 public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
+
+    interface Controller {
+        String getFocusedStopId();
+    }
 
     private static final String TAG = "VehicleOverlay";
 
@@ -70,6 +74,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
     private ObaTripsForRouteResponse mLastResponse;
 
     private CustomInfoWindowAdapter mCustomInfoWindowAdapter;
+
+    private Controller mController;
 
     private static final int NORTH = 0;
 
@@ -94,7 +100,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
     private static Bitmap[] vehicle_icons = new Bitmap[NUM_DIRECTIONS];  // Black vehicle icons
 
     private static LruCache<String, Bitmap> mVehicleColoredIconCache;
-            // Colored versions of vehicle_icons
+    // Colored versions of vehicle_icons
 
     /**
      * If a vehicle moves less than this distance (in meters), it will be animated, otherwise it
@@ -110,6 +116,10 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
         // Set adapter for custom info window that appears when tapping on vehicle markers
         mCustomInfoWindowAdapter = new CustomInfoWindowAdapter(mActivity);
         mMap.setInfoWindowAdapter(mCustomInfoWindowAdapter);
+    }
+
+    public void setController(Controller controller) {
+        mController = controller;
     }
 
     /**
@@ -246,7 +256,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
     /**
      * Add a Bitmap for a colored vehicle icon to the cache
-     * @param key Key for the Bitmap to be added, created by createBitmapCacheKey(halfWind, colorResource)
+     *
+     * @param key    Key for the Bitmap to be added, created by createBitmapCacheKey(halfWind, colorResource)
      * @param bitmap Bitmap to be added that is a colored version of the core black vehicle icons
      */
     private void addBitmapToCache(String key, Bitmap bitmap) {
@@ -258,6 +269,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
     /**
      * Get a Bitmap for a colored vehicle icon from the cache
+     *
      * @param key Key for the Bitmap, created by createBitmapCacheKey(halfWind, colorResource)
      * @return Bitmap that is a colored version of the core black vehicle icons corresponding to the given key
      */
@@ -268,9 +280,10 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
     /**
      * Creates a key for the vehicle colored icons cache, based on the halfWind (direction) and
      * colorResource
-     * @param halfWind an index between 0 and numHalfWinds-1 that can be used to retrieve
-     * the direction name for that heading (known as "boxing the compass", down to the half-wind
-     * level).
+     *
+     * @param halfWind      an index between 0 and numHalfWinds-1 that can be used to retrieve
+     *                      the direction name for that heading (known as "boxing the compass", down to the half-wind
+     *                      level).
      * @param colorResource the color resource ID for the schedule deviation
      * @return a String key for this direction and color vehicle bitmap icon
      */
@@ -285,7 +298,12 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
 
         // Show trip details screen for the vehicle associated with this marker
         ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
-        TripDetailsActivity.start(mActivity, status.getActiveTripId());
+
+        if (mController != null && mController.getFocusedStopId() != null) {
+            TripDetailsActivity.start(mActivity, status.getActiveTripId(), mController.getFocusedStopId());
+        } else {
+            TripDetailsActivity.start(mActivity, status.getActiveTripId());
+        }
     }
 
     private void setupMarkerData() {
@@ -389,18 +407,18 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
         /**
          * Places a marker on the map for this vehicle, and adds it to our marker HashMap
          *
-         * @param l Location to add the marker at
+         * @param l          Location to add the marker at
          * @param isRealtime true if the marker shown indicate real-time info, false if it should indicate schedule
-         * @param status   the vehicles status to add to the map
-         * @param response the response which contained the provided status
+         * @param status     the vehicles status to add to the map
+         * @param response   the response which contained the provided status
          */
         private void addMarkerToMap(Location l, boolean isRealtime, ObaTripStatus status,
-                ObaTripsForRouteResponse response) {
+                                    ObaTripsForRouteResponse response) {
 
             Marker m = mMap.addMarker(new MarkerOptions()
-                            .position(MapHelpV2.makeLatLng(l))
-                            .title(status.getVehicleId())
-                            .icon(getVehicleIcon(isRealtime, status, response))
+                    .position(MapHelpV2.makeLatLng(l))
+                    .title(status.getVehicleId())
+                    .icon(getVehicleIcon(isRealtime, status, response))
             );
             mVehicleMarkers.put(status.getActiveTripId(), m);
             mVehicles.put(m, status);
@@ -417,7 +435,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
          * @param response   response containing the provided status
          */
         private void updateMarker(Marker m, Location l, boolean isRealtime, ObaTripStatus status,
-                ObaTripsForRouteResponse response) {
+                                  ObaTripsForRouteResponse response) {
             boolean showInfo = m.isInfoWindowShown();
             m.setIcon(getVehicleIcon(isRealtime, status, response));
             // Update Hashmap with newest status - needed to show info when tapping on marker
@@ -441,8 +459,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
          * Removes any markers that don't currently represent active vehicles running a route
          *
          * @param activeTripIds a set of active tripIds that are currently running the routes.  Any
-         *                         markers for tripIds that aren't in this set will be removed
-         *                         from the map.
+         *                      markers for tripIds that aren't in this set will be removed
+         *                      from the map.
          * @return the number of removed markers
          */
         private int removeInactiveMarkers(HashSet<String> activeTripIds) {
@@ -495,7 +513,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
          * @return an icon for the vehicle that should be shown on the map
          */
         private BitmapDescriptor getVehicleIcon(boolean isRealtime, ObaTripStatus status,
-                ObaTripsForRouteResponse response) {
+                                                ObaTripsForRouteResponse response) {
             int colorResource;
             Resources r = Application.get().getResources();
 

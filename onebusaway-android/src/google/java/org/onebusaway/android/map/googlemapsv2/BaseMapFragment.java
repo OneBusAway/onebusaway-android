@@ -16,6 +16,25 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -46,25 +65,6 @@ import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,7 +91,8 @@ public class BaseMapFragment extends SupportMapFragment
         MapModeController.ObaMapView,
         LocationSource, LocationHelper.Listener,
         com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
-        StopOverlay.OnFocusChangedListener, OnMapReadyCallback {
+        StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
+        VehicleOverlay.Controller {
 
     public static final String TAG = "BaseMapFragment";
 
@@ -172,7 +173,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
         mMap = getMap();
@@ -337,6 +338,7 @@ public class BaseMapFragment extends SupportMapFragment
         Activity a = getActivity();
         if (mVehicleOverlay == null && a != null) {
             mVehicleOverlay = new VehicleOverlay(a, mMap);
+            mVehicleOverlay.setController(this);
         }
     }
 
@@ -518,7 +520,7 @@ public class BaseMapFragment extends SupportMapFragment
     final Handler mStopChangedHandler = new Handler();
 
     public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
-            final Location location) {
+                               final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
         mStopChangedHandler.post(new Runnable() {
             public void run() {
@@ -526,6 +528,7 @@ public class BaseMapFragment extends SupportMapFragment
                     mFocusStopId = stop.getId();
                     //Log.d(TAG, "Focused changed to " + stop.getName());
                 } else {
+                    mFocusStopId = null;
                     //Log.d(TAG, "Removed focus");
                 }
 
@@ -642,7 +645,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void setMapCenter(Location location, boolean animateToLocation,
-            boolean overlayExpanded) {
+                             boolean overlayExpanded) {
         if (mMap != null) {
             CameraPosition cp = mMap.getCameraPosition();
 
@@ -778,7 +781,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void zoomIncludeClosestVehicle(HashSet<String> routeIds,
-            ObaTripsForRouteResponse response) {
+                                          ObaTripsForRouteResponse response) {
         if (mMap == null) {
             return;
         }
@@ -816,6 +819,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     /**
      * Clears any stop markers from the map
+     *
      * @param clearFocusedStop true to clear the currently focused stop, false to leave it on map
      */
     @Override
@@ -876,6 +880,14 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void postInvalidate() {
         // Do nothing - calling `this.postInvalidate()` causes a StackOverflowError
+    }
+
+    //
+    // VehicleOverlay.Controller
+    //
+    @Override
+    public String getFocusedStopId() {
+        return mFocusStopId;
     }
 
     //

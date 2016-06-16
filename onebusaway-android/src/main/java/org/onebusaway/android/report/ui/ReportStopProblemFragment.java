@@ -28,6 +28,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -46,7 +47,7 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
 
     public static final String USER_COMMENT = ".UserComment";
 
-    public static final String TAG = "ReportStopProblemFragment";
+    public static final String TAG = "RprtStopProblemFragment";
 
     public static void show(AppCompatActivity activity, ObaStop stop, Integer containerViewId) {
         FragmentManager fm = activity.getSupportFragmentManager();
@@ -68,7 +69,11 @@ public class ReportStopProblemFragment extends ReportProblemFragmentBase {
             ft.replace(containerViewId, content, TAG);
         }
         ft.addToBackStack(null);
-        ft.commit();
+        try {
+            ft.commit();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Cannot show ReportStopProblemFragment after onSaveInstanceState has been called");
+        }
     }
 
     private TextView mUserComment;

@@ -60,6 +60,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -179,10 +180,14 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         fragment.setArrivalInfo(obaArrivalInfo);
         fragment.setAgencyName(agencyName);
 
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(containerViewId, fragment, TAG);
-        ft.addToBackStack(null);
-        ft.commit();
+        try {
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.replace(containerViewId, fragment, TAG);
+            ft.addToBackStack(null);
+            ft.commit();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Cannot show Open311ProblemFragment after onSaveInstanceState has been called");
+        }
     }
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
@@ -364,6 +369,10 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     private void callServiceDescription() {
+        if (mOpen311 == null) {
+            return;
+        }
+
         showProgress(Boolean.TRUE);
         Location location = getIssueLocationHelper().getIssueLocation();
         ServiceDescriptionRequest sdr = new ServiceDescriptionRequest(location.getLatitude(),
@@ -668,6 +677,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      */
     private List<AttributeValue> createAttributeValues(ServiceDescription serviceDescription) {
         List<AttributeValue> values = new ArrayList<>();
+
+        if (serviceDescription == null) {
+            return values;
+        }
+
         for (Open311Attribute open311Attribute : serviceDescription.getAttributes()) {
             if (Boolean.valueOf(open311Attribute.getVariable())) {
                 if (Open311DataType.STRING.equals(open311Attribute.getDatatype())

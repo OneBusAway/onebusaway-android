@@ -101,6 +101,7 @@ public final class UIUtils {
         if (!(activity instanceof HomeActivity)) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
+
     }
 
     /**

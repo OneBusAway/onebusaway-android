@@ -16,28 +16,28 @@
 package org.onebusaway.android.ui;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlaceAutocomplete;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.util.LocationUtil;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.directions.util.ConversionUtils;
 import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -47,10 +47,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.ViewGroup;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -68,36 +71,36 @@ import java.util.Locale;
 
 public class TripPlanFragment extends Fragment {
 
-    private static final int FROM_ADDRESS_GEOCODE = 1;
-    private static final int TO_ADDRESS_GEOCODE = 2;
+    private static final int USE_FROM_ADDRESS = 1;
+    private static final int USE_TO_ADDRESS = 2;
 
-    private TextView fromAddressTextArea;
-    private TextView toAddressTextArea;
-    private ImageButton planMyTripButton;
-    private ImageButton fromCurrentLocationImageButton;
-    private ImageButton toCurrentLocationImageButton;
-    private TextView date;
-    private TextView time;
-    private TextView leavingChoice;
+    private AutoCompleteTextView mFromAddressTextArea;
+    private AutoCompleteTextView mToAddressTextArea;
+    private Button mPlanMyTripButton;
+    private ImageButton mFromCurrentLocationImageButton;
+    private ImageButton mToCurrentLocationImageButton;
+    private TextView mDate;
+    private TextView mTime;
+    private TextView mLeavingChoice;
 
-    Calendar myCalendar;
-    boolean leaving = true;
+    Calendar mMyCalendar;
+    boolean mLeaving = true;
 
     protected GoogleApiClient mGoogleApiClient;
     private static final String TAG = "TripPlanFragment";
 
-    private CustomAddress fromAddress, toAddress;
+    private CustomAddress mFromAddress, mToAddress;
 
-    private TripRequestBuilder builder;
+    private TripRequestBuilder mBuilder;
 
     private void resetDateTimeLabels() {
         String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
-                .format(myCalendar.getTime());
+                .format(mMyCalendar.getTime());
         String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
-                .format(myCalendar.getTime());
+                .format(mMyCalendar.getTime());
 
-        date.setText(dateText);
-        time.setText(timeText);
+        mDate.setText(dateText);
+        mTime.setText(timeText);
     }
 
     // Create view, initialize state
@@ -113,31 +116,31 @@ public class TripPlanFragment extends Fragment {
         }
 
         Bundle bundle = getArguments();
-        builder = new TripRequestBuilder(bundle);
+        mBuilder = new TripRequestBuilder(bundle);
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan, container, false);
         setHasOptionsMenu(true);
 
-        fromAddressTextArea = (TextView) view.findViewById(R.id.fromAddressTextArea);
-        toAddressTextArea = (TextView) view.findViewById(R.id.toAddressTextArea);
-        planMyTripButton = (ImageButton) view.findViewById(R.id.planMyTripButton);
-        fromCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.fromCurrentLocationImageButton);
-        toCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.toCurrentLocationImageButton);
-        date = (TextView) view.findViewById(R.id.date);
-        time = (TextView) view.findViewById(R.id.time);
-        leavingChoice = (TextView) view.findViewById(R.id.leavingChoice);
+        mFromAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.fromAddressTextArea);
+        mToAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.toAddressTextArea);
+        mPlanMyTripButton = (Button) view.findViewById(R.id.planMyTripButton);
+        mFromCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.fromCurrentLocationImageButton);
+        mToCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.toCurrentLocationImageButton);
+        mDate = (TextView) view.findViewById(R.id.date);
+        mTime = (TextView) view.findViewById(R.id.time);
+        mLeavingChoice = (TextView) view.findViewById(R.id.leavingChoice);
 
-        leavingChoice.setOnClickListener(new View.OnClickListener() {
+        mLeavingChoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (leaving) {
-                    leaving = false;
-                    leavingChoice.setText(getString(R.string.trip_plan_arriving));
-                    builder.setArrivalTime(myCalendar);
+                if (mLeaving) {
+                    mLeaving = false;
+                    mLeavingChoice.setText(getString(R.string.trip_plan_arriving));
+                    mBuilder.setArrivalTime(mMyCalendar);
                 } else {
-                    leaving = true;
-                    leavingChoice.setText(getString(R.string.trip_plan_leaving));
-                    builder.setDepartureTime(myCalendar);
+                    mLeaving = true;
+                    mLeavingChoice.setText(getString(R.string.trip_plan_leaving));
+                    mBuilder.setDepartureTime(mMyCalendar);
                 }
             }
         });
@@ -145,17 +148,17 @@ public class TripPlanFragment extends Fragment {
         final TimePickerDialog.OnTimeSetListener timeCallback = new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hour, int minute) {
-                myCalendar.set(Calendar.HOUR_OF_DAY, hour);
-                myCalendar.set(Calendar.MINUTE, minute);
+                mMyCalendar.set(Calendar.HOUR_OF_DAY, hour);
+                mMyCalendar.set(Calendar.MINUTE, minute);
                 resetDateTimeLabels();
-                builder.setDateTime(myCalendar);
+                mBuilder.setDateTime(mMyCalendar);
             }
         };
 
-        time.setOnClickListener(new View.OnClickListener() {
+        mTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new TimePickerDialog(v.getContext(), timeCallback, myCalendar.get(Calendar.HOUR_OF_DAY), myCalendar.get(Calendar.MINUTE), false).show();
+                new TimePickerDialog(v.getContext(), timeCallback, mMyCalendar.get(Calendar.HOUR_OF_DAY), mMyCalendar.get(Calendar.MINUTE), false).show();
             }
         });
 
@@ -164,80 +167,80 @@ public class TripPlanFragment extends Fragment {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear,
                                   int dayOfMonth) {
-                myCalendar.set(Calendar.YEAR, year);
-                myCalendar.set(Calendar.MONTH, monthOfYear);
-                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                mMyCalendar.set(Calendar.YEAR, year);
+                mMyCalendar.set(Calendar.MONTH, monthOfYear);
+                mMyCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 resetDateTimeLabels();
-                builder.setDateTime(myCalendar);
+                mBuilder.setDateTime(mMyCalendar);
             }
 
         };
 
-        date.setOnClickListener(new View.OnClickListener() {
+        mDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new DatePickerDialog(view.getContext(), dateCallback, myCalendar
-                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
-                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                new DatePickerDialog(view.getContext(), dateCallback, mMyCalendar
+                        .get(Calendar.YEAR), mMyCalendar.get(Calendar.MONTH),
+                        mMyCalendar.get(Calendar.DAY_OF_MONTH)).show();
             }
         });
 
         ImageButton resetTimeButton = (ImageButton) view.findViewById(R.id.resetTimeImageButton);
-        resetTimeButton.setColorFilter(Color.WHITE);
 
         resetTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                myCalendar = Calendar.getInstance();
-                builder.setDateTime(myCalendar);
+                mMyCalendar = Calendar.getInstance();
+                mBuilder.setDateTime(mMyCalendar);
                 resetDateTimeLabels();
             }
         });
 
-        fromAddressTextArea.setOnClickListener(new StartAutocompleteOnClick(FROM_ADDRESS_GEOCODE));
-        toAddressTextArea.setOnClickListener(new StartAutocompleteOnClick(TO_ADDRESS_GEOCODE));
+        setUpAutocomplete(mFromAddressTextArea, USE_FROM_ADDRESS);
+        setUpAutocomplete(mToAddressTextArea, USE_TO_ADDRESS);
 
-        toCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
+        mToCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setAddressText(toAddressTextArea, getString(R.string.tripplanner_current_location));
-                toAddress = makeAddressFromLocation();
+                mToAddressTextArea.setText(getString(R.string.tripplanner_current_location));
+                mToAddress = makeAddressFromLocation();
             }
         });
 
-        fromCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
+        mFromCurrentLocationImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setAddressText(fromAddressTextArea, getString(R.string.tripplanner_current_location));
-                fromAddress = makeAddressFromLocation();
+                mFromAddressTextArea.setText(getString(R.string.tripplanner_current_location));
+                mFromAddress = makeAddressFromLocation();
             }
         });
 
-        planMyTripButton.setOnClickListener(new View.OnClickListener() {
+        mPlanMyTripButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                if (fromAddress == null || toAddress == null) {
+                if (mFromAddress == null || mToAddress == null) {
                     makeNoLocationToast();
                     return;
                 }
 
-                builder
-                        .setFrom(fromAddress)
-                        .setTo(toAddress);
+                mBuilder
+                        .setFrom(mFromAddress)
+                        .setTo(mToAddress);
 
-                if (leaving)
-                    builder.setDepartureTime(myCalendar);
-                else
-                    builder.setArrivalTime(myCalendar);
-
+                if (mLeaving) {
+                    mBuilder.setDepartureTime(mMyCalendar);
+                }
+                else {
+                    mBuilder.setArrivalTime(mMyCalendar);
+                }
 
                 ((TripPlanActivity) getActivity()).route();
 
             }
         });
 
-        // Start: default fromAddress is Current Location, to address is unset
+        // Start: default from address is Current Location, to address is unset
 
         return view;
     }
@@ -247,33 +250,37 @@ public class TripPlanFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        fromAddress = builder.getFrom();
+        mFromAddress = mBuilder.getFrom();
 
-        if (fromAddress == null)
-            fromAddress = makeAddressFromLocation();
-        else
-            setAddressText(fromAddressTextArea, fromAddress.toString());
-
-
-        toAddress = builder.getTo();
-        if (toAddress != null)
-            setAddressText(toAddressTextArea, toAddress.toString());
+        if (mFromAddress == null) {
+            mFromAddress = makeAddressFromLocation();
+        }
+        else {
+            mFromAddressTextArea.setText(mFromAddress.toString());
+        }
 
 
-        if (myCalendar == null) {
-            Date date = builder.getDateTime();
-            if (date == null)
+        mToAddress = mBuilder.getTo();
+        if (mToAddress != null) {
+            mToAddressTextArea.setText(mToAddress.toString());
+        }
+
+
+        if (mMyCalendar == null) {
+            Date date = mBuilder.getDateTime();
+            if (date == null) {
                 date = new Date();
-            myCalendar = Calendar.getInstance();
-            myCalendar.setTime(date);
+            }
+            mMyCalendar = Calendar.getInstance();
+            mMyCalendar.setTime(date);
         }
 
 
         resetDateTimeLabels();
 
-        boolean leaving = builder.getArriveBy();
+        boolean leaving = mBuilder.getArriveBy();
         String leavingString = getString(leaving ? R.string.trip_plan_arriving : R.string.trip_plan_leaving);
-        leavingChoice.setText(leavingString);
+        mLeavingChoice.setText(leavingString);
     }
 
     @Override
@@ -298,30 +305,69 @@ public class TripPlanFragment extends Fragment {
 
     private void advancedSettings() {
 
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity())
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
+
+        final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
+        final boolean unitsAreImperial = !PreferenceUtils.getUnitsAreMetricFromPreferences(getContext());
+
+        dialogBuilder.setTitle(R.string.trip_plan_advanced_settings)
                 .setView(R.layout.trip_plan_advanced_settings_dialog);
+
+        dialogBuilder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which) {
+
+                Dialog dialog = (Dialog) dialogInterface;
+
+                boolean optimizeTransfers = ((CheckBox) dialog.findViewById(R.id.checkbox_minimize_transfers))
+                        .isChecked();
+
+                Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
+
+                int modeId = transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0);
+
+                boolean wheelchair = ((CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible))
+                        .isChecked();
+
+                String maxWalkString = ((EditText) dialog.findViewById(
+                        R.id.number_maximum_walk_distance)).getText().toString();
+                double maxWalkDistance;
+                if (TextUtils.isEmpty(maxWalkString)) {
+                    maxWalkDistance = Double.MAX_VALUE;
+                } else {
+                    double d = Double.parseDouble(maxWalkString);
+                    maxWalkDistance = unitsAreImperial ? ConversionUtils.feetToMeters(d) : d;
+                }
+
+                mBuilder.setOptimizeTransfers(optimizeTransfers)
+                        .setModeSetById(modeId)
+                        .setWheelchairAccessible(wheelchair)
+                        .setMaxWalkDistance(maxWalkDistance);
+            }
+        });
+
 
         final AlertDialog dialog = dialogBuilder.create();
 
         dialog.show();
 
-        final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
-        final CheckBox minimizeTransfersCheckbox = (CheckBox) dialog.findViewById(R.id.checkbox_minimize_transfers);
-        final Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
-        final CheckBox wheelchairCheckbox = (CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible);
-        final EditText maxWalkEditText = (EditText) dialog.findViewById(
+        CheckBox minimizeTransfersCheckbox = (CheckBox) dialog.findViewById(R.id.checkbox_minimize_transfers);
+        Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
+        CheckBox wheelchairCheckbox = (CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible);
+        EditText maxWalkEditText = (EditText) dialog.findViewById(
                 R.id.number_maximum_walk_distance);
 
-        minimizeTransfersCheckbox.setChecked(builder.getOptimizeTransfers());
+        minimizeTransfersCheckbox.setChecked(mBuilder.getOptimizeTransfers());
 
-        wheelchairCheckbox.setChecked(builder.getWheelchairAccessible());
+        wheelchairCheckbox.setChecked(mBuilder.getWheelchairAccessible());
 
         ArrayAdapter adapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.transit_mode_array, R.layout.advanced_settings_spinner_item);
+                R.array.transit_mode_array, android.R.layout.simple_spinner_item);
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTravelBy.setAdapter(adapter);
 
-        int modeSetId = builder.getModeSetId();
+        int modeSetId = mBuilder.getModeSetId();
         if (modeSetId != -1) {
             for (int i = 0; i < transitModeResource.length(); i++) {
                 if (transitModeResource.getResourceId(i, -1) == modeSetId) {
@@ -331,47 +377,20 @@ public class TripPlanFragment extends Fragment {
             }
         }
 
-        final boolean unitsAreImperial = !RegionUtils.getUnitsAreMetric(getContext());
-
-        Double maxWalk = builder.getMaxWalkDistance();
+        Double maxWalk = mBuilder.getMaxWalkDistance();
         if (maxWalk != null && Double.MAX_VALUE != maxWalk) {
-            if (unitsAreImperial)
-                maxWalk *= 3.281;
+            if (unitsAreImperial) {
+                maxWalk = ConversionUtils.metersToFeet(maxWalk);
+            }
             maxWalkEditText.setText(String.format("%d", maxWalk.longValue()));
         }
 
 
         if (unitsAreImperial) {
             TextView label = (TextView) dialog.findViewById(R.id.label_minimum_walk_distance);
-            label.setText(getString(R.string.distance_feet));
+            label.setText(getString(R.string.feet_abbreviation));
         }
 
-        dialog.findViewById(R.id.advanced_settings_ok).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-
-                boolean optimizeTransfers = minimizeTransfersCheckbox.isChecked();
-
-                int modeId = transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0);
-
-                boolean wheelchair = wheelchairCheckbox.isChecked();
-
-                String maxWalkString = maxWalkEditText.getText().toString();
-                double maxWalkDistance;
-                if (TextUtils.isEmpty(maxWalkString)) {
-                    maxWalkDistance = Double.MAX_VALUE;
-                } else {
-                    double d = Double.parseDouble(maxWalkString);
-                    maxWalkDistance = unitsAreImperial ? d / 3.281 : d;
-                }
-
-                builder.setOptimizeTransfers(optimizeTransfers)
-                        .setModeSetById(modeId)
-                        .setWheelchairAccessible(wheelchair)
-                        .setMaxWalkDistance(maxWalkDistance);
-            }
-        });
     }
 
     private void makeNoLocationToast() {
@@ -383,8 +402,9 @@ public class TripPlanFragment extends Fragment {
 
         Location loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
         if (loc == null) {
-            if (getContext() != null)
+            if (getContext() != null) {
                 Toast.makeText(getContext(), getString(R.string.main_location_unavailable), Toast.LENGTH_SHORT).show();
+            }
             return null;
         }
         CustomAddress address = new CustomAddress(locale);
@@ -401,64 +421,57 @@ public class TripPlanFragment extends Fragment {
             return;
         }
 
-        Place place = PlaceAutocomplete.getPlace(getActivity(), intent);
+        CustomAddress address = MapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
 
         // note that onResume will run after this function. We need to put new objects in the bundle.
 
-        if (requestCode == FROM_ADDRESS_GEOCODE) {
-            fromAddress = new CustomAddress();
-            builder.setFrom(fromAddress);
-            handlePlaceResult(place, fromAddress, fromAddressTextArea);
-        } else if (requestCode == TO_ADDRESS_GEOCODE) {
-            toAddress = new CustomAddress();
-            builder.setTo(toAddress);
-            handlePlaceResult(place, toAddress, toAddressTextArea);
+        if (requestCode == USE_FROM_ADDRESS) {
+            mFromAddress = address;
+            mBuilder.setFrom(mFromAddress);
+            mFromAddressTextArea.setText(mFromAddress.toString());
+        } else if (requestCode == USE_TO_ADDRESS) {
+            mToAddress = address;
+            mBuilder.setTo(mToAddress);
+            mToAddressTextArea.setText(mToAddress.toString());
         }
 
     }
 
-    private void handlePlaceResult(Place place, CustomAddress address, TextView tv) {
-        address.setAddressLine(0, place.getName().toString());
-        address.setAddressLine(1, place.getAddress().toString());
+    private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
 
-        LatLng loc = place.getLatLng();
+        ObaRegion region = Application.get().getCurrentRegion();
 
-        address.setLatitude(loc.latitude);
-        address.setLongitude(loc.longitude);
+        // Use Google widget if available
 
-        setAddressText(tv, place.getName());
-    }
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
+                == ConnectionResult.SUCCESS) {
 
-    public void setAddressText(TextView tv, CharSequence text) {
-        tv.setTextColor(getResources().getColor(R.color.body_text_1));
-        tv.setText(text);
-    }
+            tv.setFocusable(false);
+            tv.setOnClickListener(new MapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
 
-    private class StartAutocompleteOnClick implements View.OnClickListener {
-
-        int requestCode;
-
-        StartAutocompleteOnClick(int requestCode) {
-            this.requestCode = requestCode;
+            return;
         }
 
-        @Override
-        public void onClick(View v) {
-            try {
-                ObaRegion region = Application.get().getCurrentRegion();
-                LatLngBounds bounds = LocationUtil.getRegionBounds(region);
+        // else, set up autocomplete with Android geocoder
 
-                Intent intent =
-                        new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
-                                .setBoundsBias(bounds)
-                                .build(getActivity());
+        tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
 
-                startActivityForResult(intent, requestCode);
-            } catch (Exception e) {
-                Log.e(TAG, "Error getting autocomplete: " + e.toString());
+        tv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                CustomAddress addr = (CustomAddress) parent.getAdapter().getItem(position);
+
+                if (use == USE_FROM_ADDRESS) {
+                    mFromAddress = addr;
+                    mBuilder.setFrom(mFromAddress);
+                }
+                else if (use == USE_TO_ADDRESS) {
+                    mToAddress = addr;
+                    mBuilder.setTo(mToAddress);
+                }
             }
+        });
 
-        }
     }
 }
 

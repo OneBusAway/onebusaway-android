@@ -25,11 +25,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import android.content.Context;
-import android.util.Log;
-
 import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.routing.patch.AlertHeaderText;
+
+import android.content.Context;
+import android.util.Log;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -247,7 +247,7 @@ public class JacksonConfig {
             module.addDeserializer(AlertHeaderText.class, new JsonDeserializer<AlertHeaderText>() {
                 @Override
                 public AlertHeaderText deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-                    Log.i(TAG, "Ignoring AlertHeaderText object.");
+                    Log.d(TAG, "Ignoring AlertHeaderText object.");
                     return null;
                 }
             });

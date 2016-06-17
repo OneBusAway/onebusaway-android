@@ -22,11 +22,12 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.api.model.Itinerary;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -37,42 +38,88 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String TAG = "TripPlanActivity";
 
-    TripRequestBuilder builder;
+    TripRequestBuilder mBuilder;
+
+    TripRequest mTripRequest = null;
+
+    boolean mPostSaveInstanceState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_trip_plan);
 
         UIUtils.setupActionBar(this);
 
         Bundle bundle = (savedInstanceState == null) ? new Bundle() : savedInstanceState;
-        builder = new TripRequestBuilder(bundle);
+        mBuilder = new TripRequestBuilder(bundle);
 
-        if (getSupportFragmentManager().findFragmentById(R.id.trip_plan_fragment_container) != null)
-            return;
+        // Check which fragment to create
+        boolean haveTripPlan = bundle.getSerializable(OTPConstants.ITINERARIES) != null;
 
-        TripPlanFragment fragment = new TripPlanFragment();
+        Fragment fragment = haveTripPlan ? new TripResultsFragment() : new TripPlanFragment();
+
         fragment.setArguments(bundle);
-
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.trip_plan_fragment_container, fragment).commit();
+
+        // if planning in progress, reshow dialog
+        if (mTripRequest != null) {
+            mTripRequest.showProgressDialog();
+        }
+
+        mPostSaveInstanceState = false;
     }
 
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        if (builder != null)
-            builder.copyIntoBundle(bundle);
+
+        if (mBuilder != null) {
+            mBuilder.copyIntoBundle(bundle);
+            // We also saved the itinerary into this bundle.
+            ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) mBuilder.getBundle()
+                    .getSerializable(OTPConstants.ITINERARIES);
+            if (itineraries != null)
+                bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+        }
+
+        mPostSaveInstanceState = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // Close possible progress dialog.
+        if (mTripRequest != null) {
+            ProgressDialog dialog = mTripRequest.getProgressDialog();
+            if (dialog != null && dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
     }
 
     public void route() {
-        builder.setListener(this).execute(this);
+        mTripRequest = mBuilder.setListener(this).execute(this);
     }
 
     @Override
     public void onTripRequestComplete(List<Itinerary> itineraries) {
-        Log.i(TAG, "Successfully routed. Itineraries are " + itineraries);
+        Log.d(TAG, "Successfully routed. Itineraries are " + itineraries);
+
+        mTripRequest = null;
+
+        // We can't save the itinerary if this method is called after onSaveInstanceState.
+        // Ultimately the architecture should be changed, but for now simply tell the
+        // user to try again.
+        if (mPostSaveInstanceState) {
+            Toast.makeText(this,
+                    getString(R.string.tripplanner_error_not_defined),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (itineraries.size() > 0) {
 
@@ -85,10 +132,10 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 return;
             }
 
-            TripResultsFragment resultsFragment = new TripResultsFragment();
-
-            Bundle bundle = builder.getBundle();
+            Bundle bundle = mBuilder.getBundle();
             bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<>(itineraries));
+
+            TripResultsFragment resultsFragment = new TripResultsFragment();
             resultsFragment.setArguments(bundle);
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
@@ -98,7 +145,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             transaction.replace(R.id.trip_plan_fragment_container, resultsFragment);
             transaction.addToBackStack(null);
 
-            // Commit the transaction
+            // Commit the transaction.
             transaction.commit();
 
         } else {
@@ -112,10 +159,24 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     @Override
     public boolean onSupportNavigateUp() {
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_plan_fragment_container);
-        if (fragment == null || fragment instanceof TripPlanFragment)
-            return super.onSupportNavigateUp();
 
-        getSupportFragmentManager().popBackStack();
+        if (fragment == null || fragment instanceof TripPlanFragment) {
+            return super.onSupportNavigateUp();
+        }
+
+        int nBackStack = getSupportFragmentManager().getBackStackEntryCount();
+
+        // If we rotated we need to create new TripPlanFragment
+        if (nBackStack > 0) {
+            getSupportFragmentManager().popBackStack();
+        }
+        else {
+            Fragment newFragment = new TripPlanFragment();
+            newFragment.setArguments(mBuilder.getBundle());
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.trip_plan_fragment_container, newFragment).commit();
+        }
+
         return true;
     }
 

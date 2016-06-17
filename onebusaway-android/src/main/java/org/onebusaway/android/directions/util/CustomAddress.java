@@ -83,7 +83,7 @@ public class CustomAddress extends Address {
         }
         if (TextUtils.isEmpty(sb.toString())) {
             int maxLines = (ADDRESS_MAX_LINES_TO_SHOW > getMaxAddressLineIndex())
-                    ? getMaxAddressLineIndex() : ADDRESS_MAX_LINES_TO_SHOW;
+                    ? getMaxAddressLineIndex() + 1 : ADDRESS_MAX_LINES_TO_SHOW;
             sb.append(getAddressLine(0));
             for (int i = 1; i < maxLines; i++) {
                 if (getAddressLine(i) != null) {
@@ -92,46 +92,6 @@ public class CustomAddress extends Address {
             }
         }
         return sb.toString();
-    }
-
-    public String getStringAddress(boolean multiline) {
-        int maxLines = (ADDRESS_MAX_LINES_TO_SHOW > getMaxAddressLineIndex())
-                ? getMaxAddressLineIndex() : ADDRESS_MAX_LINES_TO_SHOW;
-
-        if (maxLines >= 0) {
-
-            String result = getAddressLine(0);
-            this.getAdminArea();
-            if (multiline) {
-                for (int i = 1; i < maxLines; i++) {
-                    if (i == 1) {
-                        result += "\n";
-                        if (getAddressLine(i) != null) {
-                            result += getAddressLine(i);
-                        }
-                    } else if (i == 2) {
-                        result += "\n";
-                        if (getAddressLine(i) != null) {
-                            result += getAddressLine(i);
-                        }
-                    } else {
-                        if (getAddressLine(i) != null) {
-                            result += ", " + getAddressLine(i);
-                        }
-                    }
-                }
-            } else {
-                for (int i = 1; i < maxLines; i++) {
-                    if (getAddressLine(i) != null) {
-                        result += ", " + getAddressLine(i);
-                    }
-                }
-            }
-
-            return result;
-        } else {
-            return null;
-        }
     }
 
     public static final Parcelable.Creator<CustomAddress> CREATOR =

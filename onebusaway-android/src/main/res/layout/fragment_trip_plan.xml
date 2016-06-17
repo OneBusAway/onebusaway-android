@@ -77,8 +77,11 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="match_parent"
                                         android:id="@+id/fromCurrentLocationImageButton"
-                                        android:src="@drawable/ic_action_mylocation_white"
-                                        android:background="#00000000"/>
+                                        android:background="#00000000"
+                                        android:src="@drawable/ic_my_location"
+                                        android:tint="@android:color/white"
+                                        />
+
                             </LinearLayout>
 
                         </LinearLayout>
@@ -91,7 +94,7 @@
                                 android:layout_marginLeft="10dp"
                                 android:layout_marginRight="10dp">
 
-                            <TextView
+                            <AutoCompleteTextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="30dp"
                                     android:textAppearance="?android:attr/textAppearanceLarge"
@@ -107,7 +110,9 @@
                                     android:textIsSelectable="false"
                                     android:layout_marginLeft="2dp"
                                     android:layout_marginRight="2dp"
-                                    android:layout_marginTop="20dp"/>
+                                    android:layout_marginTop="20dp"
+                                    android:singleLine="true"
+                                    android:ellipsize="end"/>
 
                         </LinearLayout>
 
@@ -151,13 +156,15 @@
                                     android:gravity="right"
                                     android:paddingRight="10dp">
 
+
                                 <ImageButton
                                         android:layout_width="wrap_content"
                                         android:layout_height="match_parent"
                                         android:id="@+id/toCurrentLocationImageButton"
-                                        android:src="@drawable/ic_action_mylocation_white"
                                         android:background="#00000000"
-                                        android:layout_gravity="right"/>
+                                        android:src="@drawable/ic_my_location"
+                                        android:tint="@android:color/white" />
+
                             </LinearLayout>
 
                         </LinearLayout>
@@ -171,13 +178,13 @@
                                 android:layout_marginRight="10dp">
 
 
-                            <TextView
-                                    android:layout_width="wrap_content"
+                            <AutoCompleteTextView
+                                    android:layout_width="match_parent"
                                     android:layout_height="30dp"
                                     android:textAppearance="?android:attr/textAppearanceLarge"
-                                    android:text="@string/trip_plan_location_hint"
+                                    android:hint="@string/trip_plan_location_hint"
                                     android:id="@+id/toAddressTextArea"
-                                    android:textColor="@color/body_text_2"
+                                    android:textColor="@color/body_text_1"
                                     android:background="@drawable/bottom_line_grey"
                                     android:textSize="20sp"
                                     android:linksClickable="true"
@@ -186,7 +193,9 @@
                                     android:textIsSelectable="false"
                                     android:layout_marginLeft="2dp"
                                     android:layout_marginRight="2dp"
-                                    android:layout_marginTop="20dp"/>
+                                    android:layout_marginTop="20dp"
+                                    android:singleLine="true"
+                                    android:ellipsize="end"/>
 
                         </LinearLayout>
                     </LinearLayout>
@@ -226,15 +235,16 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:gravity="right"
-                                    android:paddingRight="15dp">
+                                    android:paddingRight="10dp">
 
                                 <ImageButton
-                                        android:layout_width="22dp"
-                                        android:layout_height="22dp"
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
                                         android:scaleType="fitXY"
                                         android:id="@+id/resetTimeImageButton"
                                         android:src="@drawable/ic_arrival_time"
                                         android:background="#00000000"
+                                        android:tint="@android:color/white"
                                         android:layout_gravity="center_vertical"/>
 
                             </LinearLayout>
@@ -305,16 +315,14 @@
                     </LinearLayout>
                 </FrameLayout>
 
-                <ImageButton
-                        android:background="@color/theme_primary"
+                <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/planMyTripButton"
                         android:layout_gravity="right"
-                        android:src="@drawable/plan_my_trip"
+                        android:text="@string/trip_plan_plan_my_trip"
                         android:layout_marginRight="10dp"
-                        android:layout_marginTop="10dp"
-                        android:padding="10dp"/>
+                        android:layout_marginTop="10dp" />
 
             </LinearLayout>
         </FrameLayout>

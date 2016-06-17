@@ -40,67 +40,106 @@
                 android:weightSum="1"
                 android:layout_weight="1.10">
 
-            <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:id="@+id/imageView"
-                    android:src="@drawable/trip_results_left"
-                    android:background="#00000000"
-                    android:nestedScrollingEnabled="true"
-                    android:layout_marginTop="25dp"
-                    android:layout_marginBottom="25dp"/>
-
             <LinearLayout
                     android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="108dp"
-                    android:layout_weight="1">
+                    android:layout_width="wrap_content"
+                    android:layout_height="108dp">
 
-                <TextView
-                        android:layout_width="fill_parent"
+                <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="Medium Text"
-                        android:id="@+id/arrivalDepartureTextView"
-                        android:layout_marginLeft="5dp"
-                        android:layout_marginTop="19dp"
-                        android:textColor="@color/trip_plan_headers"
-                        android:maxLines="1"/>
+                        android:layout_gravity="center">
 
-                <TextView
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="Medium Text"
-                        android:id="@+id/originTextView"
-                        android:layout_marginLeft="5dp"
-                        android:textColor="@color/trip_plan_headers"
-                        android:layout_marginTop="1dp"
-                        android:maxLines="1"/>
+                    <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_marginTop="9dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_arrival_time"
+                            android:tint="@color/trip_plan_header_muted"/>
 
-                <TextView
-                        android:layout_width="fill_parent"
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?android:attr/textAppearanceMedium"
+                            android:text="Medium Text"
+                            android:id="@+id/arrivalDepartureTextView"
+                            android:layout_marginLeft="5dp"
+                            android:layout_marginTop="19dp"
+                            android:textColor="@color/trip_plan_headers"
+                            android:maxLines="1"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" >
+
+                    <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_drawer_maps_place"
+                            android:tint="@color/trip_plan_header_muted" />
+
+                    <TextView
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?android:attr/textAppearanceMedium"
+                            android:text="Medium Text"
+                            android:id="@+id/originTextView"
+                            android:layout_marginLeft="5dp"
+                            android:textColor="@color/trip_plan_headers"
+                            android:layout_marginTop="1dp"
+                            android:maxLines="1"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        android:text="Medium Text"
-                        android:id="@+id/destinationTextView"
-                        android:layout_marginLeft="5dp"
-                        android:textColor="@color/trip_plan_headers"
-                        android:layout_marginTop="1dp"
-                        android:maxLines="1"/>
+                        android:layout_gravity="center">
+
+                    <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@drawable/ic_drawer_maps_place"
+                            android:tint="@color/trip_plan_header_muted" />
+
+                    <TextView
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?android:attr/textAppearanceMedium"
+                            android:text="Medium Text"
+                            android:id="@+id/destinationTextView"
+                            android:layout_marginLeft="5dp"
+                            android:textColor="@color/trip_plan_headers"
+                            android:layout_marginTop="1dp"
+                            android:maxLines="1"/>
+
+                </LinearLayout>
+
             </LinearLayout>
+
+            <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
             <Button
                     android:layout_width="wrap_content"
                     android:layout_height="61dp"
+                    android:layout_marginRight="10dp"
                     android:id="@+id/changeButton"
                     android:background="#00ffffff"
-                    android:layout_marginRight="10px"
                     android:scaleType="centerInside"
                     android:text="@string/tripplanner_reverse"
                     android:textColor="@color/trip_plan_header_muted"
-                    android:drawableLeft="@drawable/trip_planner_change"
-            />
+                    android:drawableLeft="@drawable/ic_swap_vert"
+                    android:drawableTint="@color/trip_plan_header_muted"/>
+
         </LinearLayout>
 
     </LinearLayout>
@@ -234,7 +273,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/switchViewImageView"
                 android:layout_gravity="center_horizontal"
-                android:src="@drawable/ic_action_map"/>
+                android:src="@drawable/ic_arrivals_styleb_action_map"
+                android:tint="@color/theme_primary" />
 
         <TextView
                 android:layout_width="wrap_content"

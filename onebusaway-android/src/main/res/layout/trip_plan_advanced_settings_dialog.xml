@@ -19,18 +19,7 @@
               android:layout_height="fill_parent"
               android:paddingLeft="@dimen/dialog_margin"
               android:paddingRight="@dimen/dialog_margin"
-              android:paddingTop="@dimen/dialog_margin"
-              android:paddingBottom="@dimen/dialog_margin"
-              android:background="@color/theme_primary">
-
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/trip_plan_advanced_settings"
-            android:textAlignment="center"
-            android:textSize="@dimen/dialog_title_text_size"
-            android:textColor="@color/trip_plan_headers"
-            android:paddingBottom="@dimen/dialog_title_margin"/>
+              android:paddingTop="@dimen/dialog_margin">
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -40,28 +29,14 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/travel_by_label"
-                android:textColor="@color/trip_plan_headers"/>
+                android:text="@string/travel_by_label" />
 
         <Spinner
                 android:id="@+id/spinner_travel_by"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/trip_plan_headers"/>
+                android:layout_height="wrap_content" />
 
     </LinearLayout>
-
-    <CheckBox android:id="@+id/checkbox_minimize_transfers"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/minimize_transfers"
-              android:textColor="@color/trip_plan_headers"/>
-
-    <CheckBox android:id="@+id/checkbox_wheelchair_acccesible"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/wheelchair_accessible"
-              android:textColor="@color/trip_plan_headers"/>
 
     <LinearLayout
             android:layout_width="fill_parent"
@@ -71,32 +46,30 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/maximum_walk_distance"
-                android:textColor="@color/trip_plan_headers"/>
+                android:text="@string/maximum_walk_distance" />
 
         <EditText
                 android:id="@+id/number_maximum_walk_distance"
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
-                android:inputType="number"
-                android:textColor="@color/trip_plan_headers"/>
+                android:inputType="number" />
 
         <TextView
                 android:id="@+id/label_minimum_walk_distance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/trip_plan_headers"
-                android:text="@string/distance_meters"/>
+                android:text="@string/meters_abbreviation"/>
 
     </LinearLayout>
 
-    <Button
-            android:id="@+id/advanced_settings_ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ok"
-            android:textColor="@android:color/white"
-            android:background="@color/theme_primary_dark"
-            android:layout_gravity="right"/>
+    <CheckBox android:id="@+id/checkbox_minimize_transfers"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/minimize_transfers" />
+
+    <CheckBox android:id="@+id/checkbox_wheelchair_acccesible"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/wheelchair_accessible" />
 
 </LinearLayout>

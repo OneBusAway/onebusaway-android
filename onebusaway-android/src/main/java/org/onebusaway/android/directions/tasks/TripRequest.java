@@ -16,10 +16,18 @@
 
 package org.onebusaway.android.directions.tasks;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.directions.util.JacksonConfig;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.error.PlannerError;
+import org.opentripplanner.api.ws.Message;
+import org.opentripplanner.api.ws.Request;
+import org.opentripplanner.api.ws.Response;
+import org.opentripplanner.routing.core.TraverseMode;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.AsyncTask;
@@ -33,21 +41,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
-
-
-import org.opentripplanner.api.model.error.PlannerError;
-import org.opentripplanner.api.ws.Message;
-import org.opentripplanner.api.ws.Request;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.ws.Response;
-import org.opentripplanner.routing.core.TraverseMode;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.directions.util.JacksonConfig;
 
 /**
  * AsyncTask that invokes a trip planning request to the OTP Server
@@ -72,59 +67,55 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     public static final int HTTP_CONNECTION_TIMEOUT = 15000;
     public static final int HTTP_SOCKET_TIMEOUT = 15000;
 
-    private Response response;
+    private Response mResponse;
 
-    private ProgressDialog progressDialog;
+    private ProgressDialog mProgressDialog;
 
-    private WeakReference<Activity> activity;
+    private WeakReference<Activity> mActivity;
 
-    private Context context;
+    private Resources mResources;
 
-    private Resources resources;
+    private String mBaseUrl;
 
-    private String currentRequestString = "";
-
-    private String baseURL;
-
-    private Callback callback;
+    private Callback mCallback;
 
     // change Server object to baseUrl string.
-    public TripRequest(WeakReference<Activity> activity, Context context, Resources resources,
-                       String baseURL, Callback callback) {
-        this.activity = activity;
-        this.context = context;
-        this.baseURL = baseURL;
-        this.callback = callback;
-        this.resources = resources;
-        if (activity != null) {
-            Activity activityRetrieved = activity.get();
-            if (activityRetrieved != null)
-                progressDialog = new ProgressDialog(activityRetrieved);
-        }
+    public TripRequest(WeakReference<Activity> activity, Resources resources,
+                       String baseUrl, Callback callback) {
+        this.mActivity = activity;
+        this.mBaseUrl = baseUrl;
+        this.mCallback = callback;
+        this.mResources = resources;
     }
 
     protected void onPreExecute() {
-        if (activity.get() != null) {
-            progressDialog.setIndeterminate(true);
-            progressDialog.setCancelable(true);
-            Activity activityRetrieved = activity.get();
+        showProgressDialog();
+    }
+
+    /**
+     * Show the progress dialog for this request.
+     * Called when request starts, or by caller activity (ie in onCreate after a rotation)
+     */
+    public void showProgressDialog() {
+        if (mActivity.get() != null) {
+            Activity activityRetrieved = mActivity.get();
             if (activityRetrieved != null) {
-                progressDialog = ProgressDialog.show(activityRetrieved, "",
-                        resources.getText(R.string.task_progress_tripplanner_progress), true);
+                mProgressDialog = ProgressDialog.show(activityRetrieved, "",
+                        mResources.getText(R.string.task_progress_tripplanner_progress), true);
             }
         }
     }
 
     protected Long doInBackground(Request... reqs) {
         long totalSize = 0;
-        if (baseURL == null) {
-            if (activity.get() != null) {
-                activity.get().runOnUiThread(new Runnable() {
+        if (mBaseUrl == null) {
+            if (mActivity.get() != null) {
+                mActivity.get().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        progressDialog.dismiss();
-                        Toast.makeText(activity.get(),
-                                resources.getString(R.string.toast_no_server_selected_error),
+                        mProgressDialog.dismiss();
+                        Toast.makeText(mActivity.get(),
+                                mResources.getString(R.string.toast_no_server_selected_error),
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -134,7 +125,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
         } else {
             String prefix = FOLDER_STRUCTURE_PREFIX_NEW;
             for (Request req : reqs) {
-                response = requestPlan(req, prefix, baseURL);
+                mResponse = requestPlan(req, prefix, mBaseUrl);
             }
         }
         return totalSize;
@@ -143,14 +134,14 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     protected void onCancelled(Long result) {
 
         try {
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
+            if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                mProgressDialog.dismiss();
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in TripRequest Cancelled dismissing dialog: " + e);
         }
 
-        Activity activityRetrieved = activity.get();
+        Activity activityRetrieved = mActivity.get();
         if (activityRetrieved != null) {
             AlertDialog.Builder geocoderAlert = new AlertDialog.Builder(activityRetrieved);
             geocoderAlert.setTitle(R.string.tripplanner_results_title)
@@ -170,47 +161,48 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     protected void onPostExecute(Long result) {
 
-        if (result == null)
+        if (result == null) {
             return;
+        }
 
-        if (activity.get() != null) {
+        if (mActivity.get() != null) {
             try {
-                if (progressDialog != null && progressDialog.isShowing()) {
-                    progressDialog.dismiss();
+                if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                    mProgressDialog.dismiss();
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error in TripRequest PostExecute dismissing dialog: " + e);
             }
         }
 
-        if (response != null && response.getPlan() != null
-                && response.getPlan().getItinerary().get(0) != null) {
+        if (mResponse != null && mResponse.getPlan() != null
+                && mResponse.getPlan().getItinerary().get(0) != null) {
 
-            callback.onTripRequestComplete(response.getPlan().getItinerary());
+            mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary());
         } else {
-            Log.e(TAG, "Response: " + response);
-            Activity activityRetrieved = activity.get();
+            Log.d(TAG, "Response: " + mResponse);
+            Activity activityRetrieved = mActivity.get();
             if (activityRetrieved != null) {
                 AlertDialog.Builder feedback = new AlertDialog.Builder(activityRetrieved);
-                feedback.setTitle(resources
+                feedback.setTitle(mResources
                         .getString(R.string.tripplanner_error_dialog_title));
-                feedback.setNeutralButton(resources.getString(android.R.string.ok),
+                feedback.setNeutralButton(mResources.getString(android.R.string.ok),
                         null);
-                String msg = resources
+                String msg = mResources
                         .getString(R.string.tripplanner_error_not_defined);
 
 
-                if (response != null && response.getError() != null) {
-                    PlannerError error = response.getError();
+                if (mResponse != null && mResponse.getError() != null) {
+                    PlannerError error = mResponse.getError();
                     int errorCode = error.getId();
 
-                    if (response != null && response.getError() != null
+                    if (mResponse != null && mResponse.getError() != null
                             && errorCode != Message.PLAN_OK
                             .getId()) {
 
-                        msg = getErrorMessage(response.getError().getId());
+                        msg = getErrorMessage(mResponse.getError().getId());
                         if (msg == null) {
-                            msg = response.getError().getMsg();
+                            msg = mResponse.getError().getMsg();
                         }
                     }
                 }
@@ -224,45 +216,45 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     protected String getErrorMessage(int errorCode) {
         if (errorCode == Message.SYSTEM_ERROR.getId()) {
-            return (resources.getString(R.string.tripplanner_error_system));
+            return (mResources.getString(R.string.tripplanner_error_system));
         } else if (errorCode == Message.OUTSIDE_BOUNDS.getId()) {
-            return (resources.getString(R.string.tripplanner_error_outside_bounds));
+            return (mResources.getString(R.string.tripplanner_error_outside_bounds));
         } else if (errorCode == Message.PATH_NOT_FOUND.getId()) {
-            return (resources.getString(R.string.tripplanner_error_path_not_found));
+            return (mResources.getString(R.string.tripplanner_error_path_not_found));
         } else if (errorCode == Message.NO_TRANSIT_TIMES.getId()) {
-            return (resources.getString(R.string.tripplanner_error_no_transit_times));
+            return (mResources.getString(R.string.tripplanner_error_no_transit_times));
         } else if (errorCode == Message.REQUEST_TIMEOUT.getId()) {
-            return (resources.getString(R.string.tripplanner_error_request_timeout));
+            return (mResources.getString(R.string.tripplanner_error_request_timeout));
         } else if (errorCode == Message.BOGUS_PARAMETER.getId()) {
-            return (resources.getString(R.string.tripplanner_error_bogus_parameter));
+            return (mResources.getString(R.string.tripplanner_error_bogus_parameter));
         } else if (errorCode == Message.GEOCODE_FROM_NOT_FOUND.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_from_not_found));
         } else if (errorCode == Message.GEOCODE_TO_NOT_FOUND.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_to_not_found));
         } else if (errorCode == Message.GEOCODE_FROM_TO_NOT_FOUND.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_from_to_not_found));
         } else if (errorCode == Message.TOO_CLOSE.getId()) {
-            return (resources.getString(R.string.tripplanner_error_too_close));
+            return (mResources.getString(R.string.tripplanner_error_too_close));
         } else if (errorCode == Message.LOCATION_NOT_ACCESSIBLE.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_location_not_accessible));
         } else if (errorCode == Message.GEOCODE_FROM_AMBIGUOUS.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_from_ambiguous));
         } else if (errorCode == Message.GEOCODE_TO_AMBIGUOUS.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_to_ambiguous));
         } else if (errorCode == Message.GEOCODE_FROM_TO_AMBIGUOUS.getId()) {
-            return (resources
+            return (mResources
                     .getString(R.string.tripplanner_error_geocode_from_to_ambiguous));
         } else if (errorCode == Message.UNDERSPECIFIED_TRIANGLE.getId()
                 || errorCode == Message.TRIANGLE_NOT_AFFINE.getId()
                 || errorCode == Message.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.getId()
                 || errorCode == Message.TRIANGLE_VALUES_NOT_SET.getId()) {
-            return (resources.getString(R.string.tripplanner_error_triangle));
+            return (mResources.getString(R.string.tripplanner_error_triangle));
         } else {
             return null;
         }
@@ -302,8 +294,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
         Log.d(TAG, "URL: " + u);
 
-        currentRequestString = u;
-
         HttpURLConnection urlConnection = null;
         URL url;
         Response plan = null;
@@ -335,6 +325,15 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             }
         }
         return plan;
+    }
+
+    /**
+     * Return Progress Dialog.
+     *
+     * @return progress dialog for this request.
+     */
+    public ProgressDialog getProgressDialog() {
+        return mProgressDialog;
     }
 
     /**

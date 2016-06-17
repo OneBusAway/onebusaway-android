@@ -18,14 +18,14 @@ package org.onebusaway.android.directions.util;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.model.Direction;
-import org.opentripplanner.api.model.RelativeDirection;
-import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.patch.Alerts;
 import org.opentripplanner.api.model.AbsoluteDirection;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.api.model.Place;
+import org.opentripplanner.api.model.RelativeDirection;
 import org.opentripplanner.api.model.WalkStep;
+import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.core.TraverseModeSet;
+import org.opentripplanner.routing.patch.Alerts;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -33,6 +33,7 @@ import android.content.res.Resources;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -47,6 +48,8 @@ import java.util.List;
  */
 
 public class DirectionsGenerator {
+
+    private static final String TAG = "DirectionsGenerator";
 
     public static final String PREFERENCE_KEY_API_VERSION = "last_api_version";
 
@@ -126,8 +129,6 @@ public class DirectionsGenerator {
                     addDirection(directions.get(1));
                 }
             }
-
-            //			directionText+=leg.mode+"\n";
         }
     }
 
@@ -187,7 +188,7 @@ public class DirectionsGenerator {
         ArrayList<Direction> subDirections = new ArrayList<Direction>(walkSteps.size());
 
         for (WalkStep step : walkSteps) {
-            int subdirection_icon = R.drawable.clear;
+            int subdirection_icon = -1;
             Direction dir = new Direction();
             String subDirectionText = "";
 
@@ -556,78 +557,61 @@ public class DirectionsGenerator {
     }
 
     public static int getModeIcon(TraverseModeSet mode) {
-        if (/*mode.contains(TraverseMode.FERRY) && TODO */
-                mode.contains(TraverseMode.BUSISH) &&
+        if (mode.contains(TraverseMode.BUSISH) &&
                         mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.mode_transit;
+            return R.drawable.ic_maps_directions_bus;
         } else if (mode.contains(TraverseMode.BUSISH)) {
-            return R.drawable.mode_bus;
+            return R.drawable.ic_maps_directions_bus;
         } else if (mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.mode_train;
+            return R.drawable.ic_directions_railway;
         } else if (mode.contains(TraverseMode.FERRY)) {
-            return R.drawable.mode_ferry;
+            return R.drawable.ic_directions_boat;
         } else if (mode.contains(TraverseMode.GONDOLA)) {
-            return R.drawable.mode_ferry;
+            return R.drawable.ic_directions_boat;
         } else if (mode.contains(TraverseMode.SUBWAY)) {
-            return R.drawable.mode_metro;
+            return R.drawable.ic_directions_subway;
         } else if (mode.contains(TraverseMode.TRAM)) {
-            return R.drawable.mode_train;
+            return R.drawable.ic_directions_railway;
         } else if (mode.contains(TraverseMode.WALK)) {
-            return R.drawable.mode_walk;
+            return R.drawable.ic_directions_walk;
         } else if (mode.contains(TraverseMode.BICYCLE)) {
-            return R.drawable.mode_bike;
+            return R.drawable.ic_directions_bike;
         } else {
-            return R.drawable.icon;
-        }
-    }
-
-    public static int getNotificationIcon(TraverseModeSet mode) {
-        if (/*mode.contains(TraverseMode.FERRY) && TODO */
-                mode.contains(TraverseMode.BUSISH) &&
-                        mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.transit_notification;
-        } else if (mode.contains(TraverseMode.BUSISH)) {
-            return R.drawable.bus_notification;
-        } else if (mode.contains(TraverseMode.TRAINISH)) {
-            return R.drawable.train_notification;
-        } else if (mode.contains(TraverseMode.FERRY)) {
-            return R.drawable.ferry_notification;
-        } else if (mode.contains(TraverseMode.SUBWAY)) {
-            return R.drawable.metro_notification;
-        } else {
-            return R.drawable.icon;
+            Log.d(TAG, "No icon for mode set: " + mode);
+            return -1;
         }
     }
 
     public static int getRelativeDirectionIcon(RelativeDirection relDir, Resources resources) {
         if (relDir.equals(RelativeDirection.CIRCLE_CLOCKWISE)) {
-            return R.drawable.circle_clockwise;
+            return R.drawable.ic_rotary_clockwise;
         } else if (relDir.equals(RelativeDirection.CIRCLE_COUNTERCLOCKWISE)) {
-            return R.drawable.circle_counterclockwise;
+            return R.drawable.ic_rotary_counterclockwise;
         } else if (relDir.equals(RelativeDirection.CONTINUE)) {
-            return R.drawable.reldir_continue;
+            return R.drawable.ic_continue;
         } else if (relDir.equals(RelativeDirection.DEPART)) {
-            return R.drawable.clear;
+            return R.drawable.ic_depart;
         } else if (relDir.equals(RelativeDirection.ELEVATOR)) {
-            return R.drawable.elevator;
+            return R.drawable.ic_elevator;
         } else if (relDir.equals(RelativeDirection.HARD_LEFT)) {
-            return R.drawable.hard_left;
+            return R.drawable.ic_turn_sharp_left;
         } else if (relDir.equals(RelativeDirection.HARD_RIGHT)) {
-            return R.drawable.hard_right;
+            return R.drawable.ic_turn_sharp_right;
         } else if (relDir.equals(RelativeDirection.LEFT)) {
-            return R.drawable.left;
+            return R.drawable.ic_turn_left;
         } else if (relDir.equals(RelativeDirection.RIGHT)) {
-            return R.drawable.right;
+            return R.drawable.ic_turn_right;
         } else if (relDir.equals(RelativeDirection.SLIGHTLY_LEFT)) {
-            return R.drawable.slightly_left;
+            return R.drawable.ic_turn_slight_left;
         } else if (relDir.equals(RelativeDirection.SLIGHTLY_RIGHT)) {
-            return R.drawable.slightly_right;
+            return R.drawable.ic_turn_slight_right;
         } else if (relDir.equals(RelativeDirection.UTURN_LEFT)) {
-            return R.drawable.uturn_left;
+            return R.drawable.ic_uturn_left;
         } else if (relDir.equals(RelativeDirection.UTURN_RIGHT)) {
-            return R.drawable.uturn_right;
+            return R.drawable.ic_uturn_right;
         } else {
-            return R.drawable.clear;
+            Log.d(TAG, "No icon for direction: " + relDir);
+            return -1;
         }
     }
 
@@ -668,9 +652,11 @@ public class DirectionsGenerator {
     private String getTransitTitle(Leg leg) {
         String[] possibleTitles = {leg.tripShortName, leg.routeShortName, leg.route, leg.routeId};
 
-        for (int i = 0; i < possibleTitles.length; i++)
-            if (!TextUtils.isEmpty(possibleTitles[i]))
+        for (int i = 0; i < possibleTitles.length; i++) {
+            if (!TextUtils.isEmpty(possibleTitles[i])) {
                 return possibleTitles[i];
+            }
+        }
 
         return null;
     }
@@ -694,8 +680,9 @@ public class DirectionsGenerator {
                         token += mode + " ";
                     }
                     lastIsBus = true;
-                } else
+                } else {
                     lastIsBus = false;
+                }
 
                 token += getTransitTitle(leg);
 

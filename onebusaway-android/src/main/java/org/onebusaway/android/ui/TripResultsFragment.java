@@ -15,24 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ExpandableListView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.view.MenuItem;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
+import org.onebusaway.android.R;
 import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.directions.realtime.RealtimeService;
 import org.onebusaway.android.directions.realtime.RealtimeServiceImpl;
@@ -43,30 +26,46 @@ import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.R;
 import org.opentripplanner.api.model.Itinerary;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ExpandableListView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 public class TripResultsFragment extends Fragment {
-    private BaseMapFragment mapFragment;
-
-    private ExpandableListView directionsListView;
-
-    private boolean showingMap;
 
     private static final String TAG = "TripResultsFragment";
 
-    private TextView arrivalDepartureTextView;
-    private TextView originTextView;
+    private BaseMapFragment mMapFragment;
+    private ExpandableListView mDirectionsListView;
+    private boolean mShowingMap;
 
-    private TextView destinationTextView;
-    private Button changeButton;
-    private LinearLayout switchViewLayout;
-    private ImageView switchViewImageView;
-    private TextView switchViewTextView;
+    private TextView mArrivalDepartureTextView;
+    private TextView mOriginTextView;
 
-    private RoutingOptionPicker[] options = new RoutingOptionPicker[3];
+    private TextView mDestinationTextView;
+    private Button mChangeButton;
+    private LinearLayout mSwitchViewLayout;
+    private ImageView mSwitchViewImageView;
+    private TextView mSwitchViewTextView;
 
-    private RealtimeService realtimeService;
+    private RoutingOptionPicker[] mOptions = new RoutingOptionPicker[3];
+
+    private RealtimeService mRealtimeService;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -74,29 +73,29 @@ public class TripResultsFragment extends Fragment {
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan_results, container, false);
 
-        arrivalDepartureTextView = (TextView) view.findViewById(R.id.arrivalDepartureTextView);
-        originTextView = (TextView) view.findViewById(R.id.originTextView);
-        destinationTextView = (TextView) view.findViewById(R.id.destinationTextView);
-        changeButton = (Button) view.findViewById(R.id.changeButton);
+        mArrivalDepartureTextView = (TextView) view.findViewById(R.id.arrivalDepartureTextView);
+        mOriginTextView = (TextView) view.findViewById(R.id.originTextView);
+        mDestinationTextView = (TextView) view.findViewById(R.id.destinationTextView);
+        mChangeButton = (Button) view.findViewById(R.id.changeButton);
 
-        switchViewLayout = (LinearLayout) view.findViewById(R.id.switchViewLayout);
-        switchViewTextView = (TextView) view.findViewById(R.id.switchViewText);
-        switchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
+        mSwitchViewLayout = (LinearLayout) view.findViewById(R.id.switchViewLayout);
+        mSwitchViewTextView = (TextView) view.findViewById(R.id.switchViewText);
+        mSwitchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
 
-        directionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
+        mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
 
-        options[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration);
-        options[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration);
-        options[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration);
+        mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration);
+        mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration);
+        mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration);
 
-        switchViewLayout.setOnClickListener(new View.OnClickListener() {
+        mSwitchViewLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showMap(!showingMap);
+                showMap(!mShowingMap);
             }
         });
 
-        changeButton.setOnClickListener(new View.OnClickListener() {
+        mChangeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 TripRequestBuilder builder = new TripRequestBuilder(getArguments());
@@ -112,7 +111,7 @@ public class TripResultsFragment extends Fragment {
             }
         });
 
-        realtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
+        mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
 
         initMap();
         initInfo(0);
@@ -136,7 +135,7 @@ public class TripResultsFragment extends Fragment {
     }
 
     private void initMap() {
-        mapFragment = new BaseMapFragment();
+        mMapFragment = new BaseMapFragment();
 
         Bundle bundle = new Bundle();
         bundle.putString(MapParams.MODE, MapParams.MODE_DIRECTIONS);
@@ -145,23 +144,25 @@ public class TripResultsFragment extends Fragment {
         getActivity().setIntent(intent);
 
         getChildFragmentManager().beginTransaction()
-                .add(R.id.mapFragment, mapFragment).commit();
+                .add(R.id.mapFragment, mMapFragment).commit();
+
+        showMap(false);
     }
 
-    private Bundle mapBundle = new Bundle();
+    private Bundle mMapBundle = new Bundle();
 
     private void showMap(boolean show) {
 
-        showingMap = show;
+        mShowingMap = show;
         if (show) {
             getActivity().findViewById(R.id.mapFragment).bringToFront();
-            mapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mapBundle);
-            switchViewImageView.setImageResource(R.drawable.ic_action_dots);
-            switchViewTextView.setText(getString(R.string.trip_plan_list_view));
+            mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
+            mSwitchViewImageView.setImageResource(R.drawable.ic_more_vert);
+            mSwitchViewTextView.setText(getString(R.string.trip_plan_list_view));
         } else {
-            directionsListView.bringToFront();
-            switchViewImageView.setImageResource(R.drawable.ic_action_map);
-            switchViewTextView.setText(getString(R.string.trip_plan_map_view));
+            mDirectionsListView.bringToFront();
+            mSwitchViewImageView.setImageResource(R.drawable.ic_arrivals_styleb_action_map);
+            mSwitchViewTextView.setText(getString(R.string.trip_plan_map_view));
         }
     }
 
@@ -170,26 +171,26 @@ public class TripResultsFragment extends Fragment {
         String startAddress = getFromAddress().getAddressLine(0);
         String endAddress = getToAddress().getAddressLine(0);
 
-        originTextView.setText(startAddress);
-        destinationTextView.setText(endAddress);
+        mOriginTextView.setText(startAddress);
+        mDestinationTextView.setText(endAddress);
 
         Date date = getRequestDate();
         String format = String.format(OTPConstants.TRIP_RESULTS_TIME_STRING_FORMAT,
                 getString(R.string.time_connector_before_time));
         String timeString = new SimpleDateFormat(format, Locale.getDefault()).format(date);
-        arrivalDepartureTextView.setText(timeString);
+        mArrivalDepartureTextView.setText(timeString);
 
-        for (int i = 0; i < options.length; i++) {
-            options[i].setItinerary(i);
+        for (int i = 0; i < mOptions.length; i++) {
+            mOptions[i].setItinerary(i);
         }
 
-        options[trip].updateInfo();
-        options[trip].updateMap();
+        mOptions[trip].updateInfo();
+        mOptions[trip].updateMap();
 
     }
 
     public void displayNewResults() {
-        showMap(showingMap);
+        showMap(mShowingMap);
         initInfo(0);
     }
 
@@ -248,7 +249,7 @@ public class TripResultsFragment extends Fragment {
         }
 
         void select() {
-            for (RoutingOptionPicker picker : options)
+            for (RoutingOptionPicker picker : mOptions)
                 picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_option_background));
             linearLayout.setBackgroundResource(R.drawable.bottom_line_grey_blue);
         }
@@ -280,16 +281,16 @@ public class TripResultsFragment extends Fragment {
                     getActivity(),
                     R.layout.list_direction_item, R.layout.list_subdirection_item, direction_data);
 
-            directionsListView.setAdapter(adapter);
+            mDirectionsListView.setAdapter(adapter);
 
-            directionsListView.setGroupIndicator(null);
+            mDirectionsListView.setGroupIndicator(null);
 
-            realtimeService.onItinerarySelected(itinerary, rank);
+            mRealtimeService.onItinerarySelected(itinerary, rank);
         }
 
         private void updateMap() {
-            mapBundle.putSerializable(MapParams.ITINERARY, itinerary);
-            mapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mapBundle);
+            mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
+            mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
         }
     }
 }

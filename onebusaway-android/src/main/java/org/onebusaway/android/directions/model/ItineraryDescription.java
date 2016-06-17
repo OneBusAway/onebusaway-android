@@ -16,11 +16,11 @@
 
 package org.onebusaway.android.directions.model;
 
-import android.util.Log;
-
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.routing.core.TraverseMode;
+
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,43 +32,50 @@ public class ItineraryDescription {
 
     private static final String TAG = "ItineraryDescription";
 
-    private int rank;
+    private int mRank;
 
-    private List<String> tripIds;
+    private List<String> mTripIds;
 
     public ItineraryDescription(Itinerary itinerary, int rank) {
 
-        this.rank = rank;
+        this.mRank = rank;
 
-        tripIds = new ArrayList<>();
+        mTripIds = new ArrayList<>();
 
         for (Leg leg : itinerary.legs) {
             TraverseMode traverseMode = TraverseMode.valueOf(leg.mode);
 
-            if (traverseMode.isTransit())
-                tripIds.add(leg.tripId);
+            if (traverseMode.isTransit()) {
+                mTripIds.add(leg.tripId);
+            }
 
         }
     }
 
     public int getRank() {
-        return rank;
+        return mRank;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o == null)
+        if (o == null) {
             return false;
-        if (!(o instanceof ItineraryDescription))
+        }
+        if (!(o instanceof ItineraryDescription)) {
             return false;
+        }
         ItineraryDescription d = (ItineraryDescription) o;
-        if (d.rank != this.rank)
+        if (d.mRank != this.mRank) {
             return false;
-        if (d.tripIds.size() != this.tripIds.size())
+        }
+        if (d.mTripIds.size() != this.mTripIds.size()) {
             return false;
-        for (int i = 0; i < this.tripIds.size(); i++)
-            if (!tripIds.get(i).equals(d.tripIds.get(i)))
+        }
+        for (int i = 0; i < this.mTripIds.size(); i++) {
+            if (!mTripIds.get(i).equals(d.mTripIds.get(i))) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -77,10 +84,11 @@ public class ItineraryDescription {
     // Right now we never send two notifications, but we may in future.
     // First trip ID suffices.
     public int getId() {
-        if (tripIds == null || tripIds.isEmpty())
+        if (mTripIds == null || mTripIds.isEmpty()) {
             return -1;
+        }
         try {
-            String tripId = tripIds.get(0).split(":")[1];
+            String tripId = mTripIds.get(0).split(":")[1];
             return Integer.parseInt(tripId);
         } catch (Exception ex) {
             Log.e(TAG, "Error calculating trip ID: " + ex.getMessage());

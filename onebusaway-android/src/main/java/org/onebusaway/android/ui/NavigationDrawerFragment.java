@@ -19,6 +19,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
@@ -341,13 +342,17 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     /** Populates the navigation drawer with the appropriate items. */
-    private void populateNavDrawer() {
+    public void populateNavDrawer() {
         mNavDrawerItems.clear();
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
-        mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+
+        if (Application.get().getCurrentRegion() != null &&
+            Application.get().getCurrentRegion().getOtpBaseUrl() != null) {
+            mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+        }
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
 

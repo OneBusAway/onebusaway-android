@@ -16,6 +16,15 @@
  */
 package org.onebusaway.android.directions.realtime;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.directions.model.ItineraryDescription;
+import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.ui.TripPlanActivity;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -31,15 +40,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.R;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.onebusaway.android.ui.TripPlanActivity;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -62,11 +62,11 @@ public class RealtimeServiceImpl implements RealtimeService {
 
     Intent mTripUpdateIntent;
 
-    Bundle bundle;
+    Bundle mBundle;
 
-    ItineraryDescription itineraryDescription;
+    ItineraryDescription mItineraryDescription;
 
-    boolean registered;
+    boolean mRegistered;
 
     public RealtimeServiceImpl(Context context, Activity mActivity, Bundle bundle) {
         this.mActivity = mActivity;
@@ -79,9 +79,9 @@ public class RealtimeServiceImpl implements RealtimeService {
         mTripUpdateIntent = new Intent(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION);
         mAlarmIntentTripUpdate = PendingIntent.getBroadcast(mApplicationContext, 0, mTripUpdateIntent, 0);
 
-        this.bundle = bundle;
+        this.mBundle = bundle;
 
-        registered = false;
+        mRegistered = false;
     }
 
     @Override
@@ -95,23 +95,26 @@ public class RealtimeServiceImpl implements RealtimeService {
 
             boolean realtimeLegsOnItineraries = false;
 
-            for (Leg leg : itinerary.legs)
-                if (leg.realTime)
+            for (Leg leg : itinerary.legs) {
+                if (leg.realTime) {
                     realtimeLegsOnItineraries = true;
+                }
+            }
 
             if (realtimeLegsOnItineraries) {
 
-                Log.i(TAG, "Starting realtime updates for itinerary");
+                Log.d(TAG, "Starting realtime updates for itinerary");
 
-                itineraryDescription = new ItineraryDescription(itinerary, rank);
+                mItineraryDescription = new ItineraryDescription(itinerary, rank);
 
                 mApplicationContext.registerReceiver(broadcastReceiver, mIntentFilter);
                 mAlarmMgr.setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
                         OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, mAlarmIntentTripUpdate);
-                registered = true;
+                mRegistered = true;
 
-            } else
-                Log.i(TAG, "No realtime legs on itinerary");
+            } else {
+                Log.d(TAG, "No realtime legs on itinerary");
+            }
 
         }
     }
@@ -126,20 +129,21 @@ public class RealtimeServiceImpl implements RealtimeService {
                     return;
                 }
 
-                int rank = itineraryDescription.getRank();
+                int rank = mItineraryDescription.getRank();
                 Itinerary it = itineraries.get(rank);
 
-                if (!new ItineraryDescription(it, rank).equals(itineraryDescription)) {
-                    Log.i(TAG, "Itinerary no longer matches");
-                    showNotification(itineraryDescription);
+                if (!new ItineraryDescription(it, rank).equals(mItineraryDescription)) {
+                    Log.d(TAG, "Itinerary no longer matches");
+                    showNotification(mItineraryDescription);
                     disableListenForTripUpdates();
-                } else
-                    Log.i(TAG, "Itinerary matches.");
+                } else {
+                    Log.d(TAG, "Itinerary matches.");
+                }
 
             }
         };
 
-        TripRequestBuilder builder = new TripRequestBuilder(bundle)
+        TripRequestBuilder builder = new TripRequestBuilder(mBundle)
                 .setListener(callback)
                 .setDepartureTime(Calendar.getInstance()); // TODO: future trips?
 
@@ -151,11 +155,11 @@ public class RealtimeServiceImpl implements RealtimeService {
     }
 
     public void disableListenForTripUpdates() {
-        if (registered) {
+        if (mRegistered) {
             mAlarmMgr.cancel(mAlarmIntentTripUpdate);
             mApplicationContext.unregisterReceiver(broadcastReceiver);
         }
-        registered = false;
+        mRegistered = false;
     }
 
     private void showNotification(ItineraryDescription description) {
@@ -201,7 +205,6 @@ public class RealtimeServiceImpl implements RealtimeService {
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "received action: " + intent.getAction());
             if (intent.getAction().equals(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION)) {
                 checkForItineraryChange();
 

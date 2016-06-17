@@ -16,11 +16,12 @@
 
 package org.onebusaway.android.directions.util;
 
-import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.R;
+import org.onebusaway.android.directions.model.Direction;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -41,25 +42,25 @@ import java.util.ArrayList;
 
 public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
 
-    Context context;
+    Context mContext;
 
-    int directionLayoutResourceId;
+    int mDirectionLayoutResourceId;
 
-    int subDirectionLayoutResourceId;
+    int mSubDirectionLayoutResourceId;
 
-    Direction data[] = null;
+    Direction mData[] = null;
 
     public DirectionExpandableListAdapter(Context context, int directionLayoutResourceId,
                                           int subDirectionLayoutResourceId, Direction[] data) {
-        this.directionLayoutResourceId = directionLayoutResourceId;
-        this.subDirectionLayoutResourceId = subDirectionLayoutResourceId;
-        this.context = context;
-        this.data = data;
+        this.mDirectionLayoutResourceId = directionLayoutResourceId;
+        this.mSubDirectionLayoutResourceId = subDirectionLayoutResourceId;
+        this.mContext = context;
+        this.mData = data;
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        ArrayList<Direction> subDirections = data[groupPosition].getSubDirections();
+        ArrayList<Direction> subDirections = mData[groupPosition].getSubDirections();
 
         if (subDirections != null && !subDirections.isEmpty()) {
             return subDirections.get(childPosition);
@@ -75,7 +76,7 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        ArrayList<Direction> subDirections = data[groupPosition].getSubDirections();
+        ArrayList<Direction> subDirections = mData[groupPosition].getSubDirections();
 
         if (subDirections != null) {
             return subDirections.size();
@@ -92,8 +93,8 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         DirectionHolder holder = null;
 
         if (row == null) {
-            LayoutInflater inflater = ((Activity) context).getLayoutInflater();
-            row = inflater.inflate(subDirectionLayoutResourceId, parent, false);
+            LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
+            row = inflater.inflate(mSubDirectionLayoutResourceId, parent, false);
 
             holder = new DirectionHolder();
             holder.imgIcon = (ImageView) row.findViewById(R.id.imgIcon);
@@ -104,25 +105,29 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
             holder = (DirectionHolder) row.getTag();
         }
 
-        Direction dir = data[groupPosition];
         Direction subDirection = (Direction) getChild(groupPosition, childPosition);
         CharSequence text = subDirection == null ? "null here" : subDirection.getDirectionText();
         holder.txtDirection.setText(text);
-        holder.imgIcon.setImageResource(subDirection.getIcon());
+
+        if (subDirection.getIcon() != -1) {
+            holder.imgIcon.setImageResource(subDirection.getIcon());
+            holder.imgIcon.setColorFilter(Color.GRAY);
+        }
+        else {
+            holder.imgIcon.setVisibility(View.INVISIBLE);
+        }
 
         return row;
-
-//        return textView;
     }
 
     @Override
     public Object getGroup(int groupPosition) {
-        return data[groupPosition];
+        return mData[groupPosition];
     }
 
     @Override
     public int getGroupCount() {
-        return data.length;
+        return mData.length;
     }
 
     @Override
@@ -138,8 +143,8 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         DirectionHolder holder = null;
 
         if (row == null) {
-            LayoutInflater inflater = ((Activity) context).getLayoutInflater();
-            row = inflater.inflate(directionLayoutResourceId, parent, false);
+            LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
+            row = inflater.inflate(mDirectionLayoutResourceId, parent, false);
 
             holder = new DirectionHolder();
             holder.imgIcon = (ImageView) row.findViewById(R.id.imgIcon);
@@ -151,12 +156,18 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
             holder = (DirectionHolder) row.getTag();
         }
 
-        Direction dir = data[groupPosition];
+        Direction dir = mData[groupPosition];
 
         if (!dir.isTransit()) {
             holder.txtDirection.setText(dir.getDirectionIndex() + ". " + dir.getDirectionText());
             holder.imgIcon.setVisibility(View.VISIBLE);
-            holder.imgIcon.setImageResource(dir.getIcon());
+            if (dir.getIcon() != -1) {
+                holder.imgIcon.setImageResource(dir.getIcon());
+                holder.imgIcon.setColorFilter(Color.GRAY);
+            }
+            else {
+                holder.imgIcon.setVisibility(View.INVISIBLE);
+            }
         } else {
             CharSequence textBeforeTime = dir.getDirectionIndex() + ". " + dir.getService();
             CharSequence text;
@@ -186,6 +197,7 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
             } else {
                 holder.imgIcon.setVisibility(View.VISIBLE);
                 holder.imgIcon.setImageResource(dir.getIcon());
+                holder.imgIcon.setColorFilter(Color.GRAY);
                 holder.noIconText.setVisibility(View.INVISIBLE);
             }
         }

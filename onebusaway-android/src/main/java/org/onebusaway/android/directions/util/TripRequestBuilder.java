@@ -16,6 +16,19 @@
 
 package org.onebusaway.android.directions.util;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.util.RegionUtils;
+import org.opentripplanner.api.ws.Request;
+import org.opentripplanner.routing.core.OptimizeType;
+import org.opentripplanner.routing.core.TraverseMode;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
@@ -25,19 +38,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
-import android.app.Activity;
-import android.content.Context;
-import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.util.RegionUtils;
-import org.opentripplanner.routing.core.OptimizeType;
-import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.api.ws.Request;
 
 public class TripRequestBuilder {
 
@@ -53,62 +53,62 @@ public class TripRequestBuilder {
     private static final String MODE_SET = ".MODE_SET";
     private static final String DATE_TIME = ".DATE_TIME";
 
-    private TripRequest.Callback listener;
+    private TripRequest.Callback mListener;
 
-    private Bundle bundle;
+    private Bundle mBundle;
 
     public TripRequestBuilder(Bundle bundle) {
-        this.bundle = bundle;
+        this.mBundle = bundle;
     }
 
     public TripRequestBuilder setDepartureTime(Calendar calendar) {
-        bundle.putBoolean(ARRIVE_BY, false);
+        mBundle.putBoolean(ARRIVE_BY, false);
         setDateTime(calendar.getTime());
         return this;
     }
 
     public TripRequestBuilder setArrivalTime(Calendar calendar) {
-        bundle.putBoolean(ARRIVE_BY, true);
+        mBundle.putBoolean(ARRIVE_BY, true);
         setDateTime(calendar.getTime());
         return this;
     }
 
     // default value is false
     public boolean getArriveBy() {
-        Boolean b = bundle.getBoolean(ARRIVE_BY);
+        Boolean b = mBundle.getBoolean(ARRIVE_BY);
         return b == null ? false : b;
     }
 
     public TripRequestBuilder setFrom(CustomAddress from) {
-        bundle.putParcelable(FROM_ADDRESS, from);
+        mBundle.putParcelable(FROM_ADDRESS, from);
         return this;
     }
 
     public CustomAddress getFrom() {
-        return (CustomAddress) bundle.getParcelable(FROM_ADDRESS);
+        return (CustomAddress) mBundle.getParcelable(FROM_ADDRESS);
     }
 
     public CustomAddress getTo() {
-        return (CustomAddress) bundle.getParcelable(TO_ADDRESS);
+        return (CustomAddress) mBundle.getParcelable(TO_ADDRESS);
     }
 
     public TripRequestBuilder setTo(CustomAddress to) {
-        bundle.putParcelable(TO_ADDRESS, to);
+        mBundle.putParcelable(TO_ADDRESS, to);
         return this;
     }
 
     public TripRequestBuilder setListener(TripRequest.Callback listener) {
-        this.listener = listener;
+        this.mListener = listener;
         return this;
     }
 
     public TripRequestBuilder setOptimizeTransfers(boolean set) {
-        bundle.putSerializable(OPTIMIZE_TRANSFERS, set ? OptimizeType.TRANSFERS : OptimizeType.QUICK);
+        mBundle.putSerializable(OPTIMIZE_TRANSFERS, set ? OptimizeType.TRANSFERS : OptimizeType.QUICK);
         return this;
     }
 
     private OptimizeType getOptimizeType() {
-        OptimizeType type = (OptimizeType) bundle.getSerializable(OPTIMIZE_TRANSFERS);
+        OptimizeType type = (OptimizeType) mBundle.getSerializable(OPTIMIZE_TRANSFERS);
         return type == null ? OptimizeType.QUICK : type;
     }
 
@@ -117,21 +117,21 @@ public class TripRequestBuilder {
     }
 
     public TripRequestBuilder setWheelchairAccessible(boolean wheelchair) {
-        bundle.putBoolean(WHEELCHAIR_ACCESSIBLE, wheelchair);
+        mBundle.putBoolean(WHEELCHAIR_ACCESSIBLE, wheelchair);
         return this;
     }
 
     public boolean getWheelchairAccessible() {
-        return bundle.getBoolean(WHEELCHAIR_ACCESSIBLE);
+        return mBundle.getBoolean(WHEELCHAIR_ACCESSIBLE);
     }
 
     public TripRequestBuilder setMaxWalkDistance(double walkDistance) {
-        bundle.putDouble(MAX_WALK_DISTANCE, walkDistance);
+        mBundle.putDouble(MAX_WALK_DISTANCE, walkDistance);
         return this;
     }
 
     public Double getMaxWalkDistance() {
-        Double d = bundle.getDouble(MAX_WALK_DISTANCE);
+        Double d = mBundle.getDouble(MAX_WALK_DISTANCE);
         return d != 0 ? d : null;
     }
 
@@ -162,7 +162,7 @@ public class TripRequestBuilder {
 
         String modeString = TextUtils.join(",", modes);
 
-        bundle.putString(MODE_SET, modeString);
+        mBundle.putString(MODE_SET, modeString);
 
         return this;
     }
@@ -171,14 +171,17 @@ public class TripRequestBuilder {
 
         List<TraverseMode> modes = getModes();
 
-        if (modes.contains(TraverseMode.BUSISH))
+        if (modes.contains(TraverseMode.BUSISH)) {
             return R.string.transit_mode_bus;
+        }
 
-        if (modes.contains(TraverseMode.TRAINISH))
+        if (modes.contains(TraverseMode.TRAINISH)) {
             return R.string.transit_mode_rail;
+        }
 
-        if (modes.contains(TraverseMode.TRANSIT))
+        if (modes.contains(TraverseMode.TRANSIT)) {
             return R.string.transit_mode_transit;
+        }
 
         return -1;
     }
@@ -186,10 +189,11 @@ public class TripRequestBuilder {
     private List<TraverseMode> getModes() {
         List<TraverseMode> modes = new ArrayList<>();
 
-        String modeString = bundle.getString(MODE_SET);
+        String modeString = mBundle.getString(MODE_SET);
 
-        if (modeString == null)
+        if (modeString == null) {
             return Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+        }
 
         String[] tokens = modeString.split(",");
         for (String tok : tokens) {
@@ -201,10 +205,10 @@ public class TripRequestBuilder {
     }
 
     private String getModeString() {
-        return bundle.getString(MODE_SET);
+        return mBundle.getString(MODE_SET);
     }
 
-    public void execute(Activity activity) {
+    public TripRequest execute(Activity activity) {
 
 
         String from = getAddressString(getFrom());
@@ -223,8 +227,9 @@ public class TripRequestBuilder {
         request.setWheelchair(getWheelchairAccessible());
 
         Double maxWalkDistance = getMaxWalkDistance();
-        if (maxWalkDistance != null)
+        if (maxWalkDistance != null) {
             request.setMaxWalkDistance(maxWalkDistance);
+        }
 
         Date d = getDateTime();
         String date = new SimpleDateFormat(OTPConstants.FORMAT_OTP_SERVER_DATE_REQUEST).format(d);
@@ -232,27 +237,31 @@ public class TripRequestBuilder {
         request.setDateTime(date, time);
 
         // request mode set does not work properly
-        String modeString = bundle.getString(MODE_SET);
-        if (modeString != null)
+        String modeString = mBundle.getString(MODE_SET);
+        if (modeString != null) {
             request.getParameters().put("mode", modeString);
+        }
 
         // Our default. This could be configurable.
         request.setShowIntermediateStops(true);
 
         // TripRequest will accept a null value and give a user-friendly error
-        String otpBaseUrl = RegionUtils.getOtpBaseUrl();
+        String otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+        String fmtOtpBaseUrl = otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
 
         TripRequest tripRequest;
 
-        if (activity == null)
-            tripRequest = new TripRequest(new WeakReference<Activity>(null), null, null, otpBaseUrl, listener);
+        if (activity == null) {
+            tripRequest = new TripRequest(new WeakReference<Activity>(null), null, fmtOtpBaseUrl, mListener);
+        }
         else {
-            Context context = activity.getApplicationContext();
             WeakReference<Activity> ref = new WeakReference<Activity>(activity);
-            tripRequest = new TripRequest(ref, context, activity.getResources(), otpBaseUrl, listener);
+            tripRequest = new TripRequest(ref, activity.getResources(), fmtOtpBaseUrl, mListener);
         }
 
         tripRequest.execute(request);
+
+        return tripRequest;
     }
 
     public void execute() {
@@ -260,8 +269,9 @@ public class TripRequestBuilder {
     }
 
     private String getAddressString(CustomAddress address) {
-        if (address == null)
+        if (address == null) {
             return null;
+        }
 
         if (address.hasLatitude() && address.hasLongitude()) {
             double lat = address.getLatitude();
@@ -279,7 +289,7 @@ public class TripRequestBuilder {
     }
 
     public TripRequestBuilder setDateTime(Date d) {
-        bundle.putLong(DATE_TIME, d.getTime());
+        mBundle.putLong(DATE_TIME, d.getTime());
         return this;
     }
 
@@ -288,15 +298,17 @@ public class TripRequestBuilder {
     }
 
     public Date getDateTime() {
-        Long time = bundle.getLong(DATE_TIME);
-        if (time == null || time == 0L)
+        Long time = mBundle.getLong(DATE_TIME);
+        if (time == null || time == 0L) {
             return null;
-        else
+        }
+        else {
             return new Date(time);
+        }
     }
 
     public Bundle getBundle() {
-        return bundle;
+        return mBundle;
     }
 
     public void copyIntoBundle(Bundle target) {
@@ -305,11 +317,13 @@ public class TripRequestBuilder {
         target.putParcelable(TO_ADDRESS, getTo());
         target.putSerializable(OPTIMIZE_TRANSFERS, getOptimizeType());
         target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible());
-        if (getMaxWalkDistance() != null)
+        if (getMaxWalkDistance() != null) {
             target.putDouble(MAX_WALK_DISTANCE, getMaxWalkDistance());
+        }
         target.putString(MODE_SET, getModeString());
-        if (getDateTime() != null)
+        if (getDateTime() != null) {
             target.putLong(DATE_TIME, getDateTime().getTime());
+        }
     }
 }
 

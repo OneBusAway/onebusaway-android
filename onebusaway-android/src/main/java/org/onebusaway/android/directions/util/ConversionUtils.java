@@ -16,18 +16,20 @@
 
 package org.onebusaway.android.directions.util;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.ui.ArrivalInfo;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.routing.core.TraverseMode;
+
 import android.content.Context;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.RegionUtils;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.routing.core.TraverseMode;
+import android.util.Log;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -48,6 +50,19 @@ import java.util.TimeZone;
 
 public class ConversionUtils {
 
+    private static final String TAG = "ConversionUtils";
+
+    private static final double FEET_PER_METER = 3.281;
+
+    /**
+     * Given start time and end time strings, compute the delta between them.
+     * Strings should be in the OTP server return format, specified in OTPConstants
+     *
+     * @param startTimeText start time
+     * @param endTimeText end time
+     * @param applicationContext context to look up resources
+     * @return duration
+     */
     public static double getDuration(String startTimeText, String endTimeText,
                                      Context applicationContext) {
         double duration = 0;
@@ -59,8 +74,7 @@ public class ConversionUtils {
             startTime = (Date) formatter.parse(startTimeText);
             endTime = (Date) formatter.parse(endTimeText);
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Log.e(TAG, "Exception: " + e);
         }
 
         duration = 0;
@@ -77,32 +91,34 @@ public class ConversionUtils {
     }
 
     /**
+     * Return a formatted String for a distance. Should be in proper units according to
+     * preferences (either metric or imperial).
      *
-     * @param meters
-     * @param applicationContext
-     * @return
+     * @param meters distance in meters
+     * @param applicationContext context to look up resources
+     * @return formatted string of distance
      */
     public static String getFormattedDistance(Double meters, Context applicationContext) {
         String text = "";
 
-        if (RegionUtils.getUnitsAreMetric(applicationContext)) {
+        if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
             if (meters < 1000) {
                 text += String.format(OTPConstants.FORMAT_DISTANCE_METERS, meters) + " " + applicationContext
-                        .getResources().getString(R.string.distance_meters);
+                        .getResources().getString(R.string.meters_abbreviation);
             } else {
                 meters = meters / 1000;
                 text += String.format(OTPConstants.FORMAT_DISTANCE_KILOMETERS, meters) + " "
-                        + applicationContext.getResources().getString(R.string.distance_kilometers);
+                        + applicationContext.getResources().getString(R.string.kilometers_abbreviation);
             }
         } else {
             double feet = meters * 3.281;
             if (feet < 1000) {
                 text += String.format(OTPConstants.FORMAT_DISTANCE_METERS, feet) + " " + applicationContext
-                        .getResources().getString(R.string.distance_feet);
+                        .getResources().getString(R.string.feet_abbreviation);
             } else {
                 feet = feet / 5280;
                 text += String.format(OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet) + " "
-                        + applicationContext.getResources().getString(R.string.distance_miles);
+                        + applicationContext.getResources().getString(R.string.miles_abbreviation);
             }
         }
 
@@ -110,10 +126,11 @@ public class ConversionUtils {
     }
 
     /**
+     * Get a formatted string for a duration.
      *
-     * @param sec
-     * @param applicationContext
-     * @return
+     * @param sec duration in seconds
+     * @param applicationContext context to look up resources
+     * @return formatted duration string
      */
     public static String getFormattedDurationText(long sec, Context applicationContext) {
         String text = "";
@@ -125,38 +142,41 @@ public class ConversionUtils {
         long s = (sec % 3600) % 60;
         if (h > 0) {
             text += Long.toString(h) + applicationContext.getResources()
-                    .getString(R.string.time_short_hours);
+                    .getString(R.string.hours_abbreviation);
         }
         text += Long.toString(m) + applicationContext.getResources()
-                .getString(R.string.time_short_minutes);
+                .getString(R.string.minutes_abbreviation);
         text += Long.toString(s) + applicationContext.getResources()
-                .getString(R.string.time_short_seconds);
+                .getString(R.string.seconds_abbrevation);
         return text;
     }
 
     /**
+     * Get duration text but disallow "seconds" units.
      *
-     * @param sec
-     * @return
+     * @param sec duration in seconds
+     * @param longFormat true for long units ("minutes"), false for short units ("min")
+     * @param applicationContext context to look up resources
+     * @return formatted duration text
      */
     public static String getFormattedDurationTextNoSeconds(long sec, boolean longFormat, Context applicationContext) {
         String text = "";
         long h = sec / 3600;
         long m = (sec % 3600) / 60;
         String longMinutes = applicationContext.getResources()
-                .getString(R.string.time_long_minutes);
+                .getString(R.string.minutes_full);
         String longMinutesSingular = applicationContext.getResources()
-                .getString(R.string.time_long_minutes);
+                .getString(R.string.minutes_abbreviation);
         String shortMinutes = applicationContext.getResources()
-                .getString(R.string.time_short_minutes);
+                .getString(R.string.minutes_abbreviation);
         if (longFormat) {
             longMinutes = applicationContext.getResources()
-                    .getString(R.string.time_full_minutes);
+                    .getString(R.string.minutes_full);
             longMinutesSingular = applicationContext.getResources()
-                    .getString(R.string.time_full_minutes_singular);
+                    .getString(R.string.minute_singular);
         }
         String shortHours = applicationContext.getResources()
-                .getString(R.string.time_short_hours);
+                .getString(R.string.hours_abbreviation);
         if (h > 0) {
             text += Long.toString(h) + shortHours;
             text += " " + Long.toString(m) + shortMinutes;
@@ -335,8 +355,10 @@ public class ConversionUtils {
                 .getString(R.string.time_connector_before_time) + " ";
         timezone = noDeviceTimezoneNote;
 
-        int color = 1; /*TODO*/ //getDelayColor(calNewTime.getTimeInMillis() - calOldTime.getTimeInMillis(),
-                //applicationContext);
+        int color = applicationContext.getResources().getColor(
+                ArrivalInfo.computeColorFromDeviation(
+                        calNewTime.getTimeInMillis() - calOldTime.getTimeInMillis()));
+
         newTimeString = new SpannableString(timeFormat.format(calNewTime.getTime()) + " ");
         newTimeString.setSpan(new ForegroundColorSpan(color), 0, newTimeString.length(), 0);
         if (calOldTime.get(Calendar.HOUR_OF_DAY) != calNewTime.get(Calendar.HOUR_OF_DAY)
@@ -351,16 +373,6 @@ public class ConversionUtils {
         return timeUpdatedString;
     }
 
-
-    public static int getDelayColor(long delay, Context applicationContext) {
-        if (delay == 0) {
-            return applicationContext.getResources().getColor(R.color.trip_plan_ontime);
-        } else if (delay > 0) {
-            return applicationContext.getResources().getColor(R.color.trip_plan_late);
-        } else {
-            return applicationContext.getResources().getColor(R.color.trip_plan_early);
-        }
-    }
 
     public static boolean isToday(Calendar cal) {
         Calendar actualTime = Calendar.getInstance();
@@ -447,7 +459,7 @@ public class ConversionUtils {
 
         if (routeShortName != null || routeLongName != null) {
             if (routeLongName != null) {
-                if (includeShortName && routeShortName != null){
+                if (includeShortName && routeShortName != null) {
                     routeName = routeShortName + " " + "(" + routeLongName + ")";
                 }
                 else{
@@ -461,4 +473,23 @@ public class ConversionUtils {
         return routeName;
     }
 
+    /**
+     * Convert meters to feet.
+     *
+     * @param meters
+     * @return feet
+     */
+    public static double metersToFeet(double meters) {
+        return meters * FEET_PER_METER;
+    }
+
+    /**
+     * Convert feet to meters.
+     *
+     * @param feet
+     * @return meters
+     */
+    public static double feetToMeters(double feet) {
+        return feet / FEET_PER_METER;
+    }
 }

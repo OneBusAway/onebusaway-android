@@ -43,6 +43,7 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -509,6 +510,11 @@ public class BaseMapFragment extends SupportMapFragment
                     Toast.LENGTH_LONG
             ).show();
         }
+
+        // If region changed and in HomeActivity, redraw nav drawer (possible add Plan a Trip).
+        if (currentRegionChanged && getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).redrawNavigationDrawerFragment();
+        }
     }
 
     public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {
@@ -701,8 +707,9 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes, boolean clear) {
         if (mMap != null) {
-            if (clear)
+            if (clear) {
                 mLineOverlay.clear();
+            }
             PolylineOptions lineOptions;
 
             int totalPoints = 0;

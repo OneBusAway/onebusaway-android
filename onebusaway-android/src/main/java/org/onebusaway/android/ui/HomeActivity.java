@@ -429,7 +429,10 @@ public class HomeActivity extends AppCompatActivity
             case NAVDRAWER_ITEM_PLAN_TRIP:
                 Intent planTrip = new Intent(HomeActivity.this, TripPlanActivity.class);
                 startActivity(planTrip);
-                // TODO - Analytics
+                ObaAnalytics
+                        .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                getString(R.string.analytics_action_button_press),
+                                getString(R.string.analytics_label_button_press_tripplan));
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
@@ -1003,6 +1006,14 @@ public class HomeActivity extends AppCompatActivity
             }
         }
         super.onBackPressed();
+    }
+
+    /**
+     * Redraw navigation drawer. This is necessary because we do not know whether to draw the
+     * "Plan A Trip" option until a region is selected.
+     */
+    public void redrawNavigationDrawerFragment() {
+        mNavigationDrawerFragment.populateNavDrawer();
     }
 
     /**

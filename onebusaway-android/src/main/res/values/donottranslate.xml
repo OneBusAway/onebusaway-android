@@ -90,6 +90,7 @@
     <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
+    <string name="analytics_label_button_press_tripplan">Clicked Trip Plan Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_tutorial">Clicked Tutorial Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>

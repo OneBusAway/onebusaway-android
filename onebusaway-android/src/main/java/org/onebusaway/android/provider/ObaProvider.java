@@ -225,6 +225,9 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.RegionOpen311Servers.API_KEY + " VARCHAR NOT NULL, " +
                                 ObaContract.RegionOpen311Servers.BASE_URL + " VARCHAR NOT NULL " +
                                 ");");
+                ++oldVersion;
+            }
+            if (oldVersion == 23) {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.OTP_BASE_URL + " VARCHAR");

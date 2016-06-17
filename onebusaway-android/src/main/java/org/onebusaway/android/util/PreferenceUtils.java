@@ -19,9 +19,12 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
+
+import java.util.Locale;
 
 /**
  * A class containing utility methods related to preferences
@@ -117,5 +120,40 @@ public class PreferenceUtils {
 
     public static long getLong(String key, long defaultValue) {
         return Application.getPrefs().getLong(key, defaultValue);
+    }
+
+    /**
+     * Returns true if preferred units are metric, false if Imperial. If set to Automatic,
+     * assume Imperial if the default locale is the US, metric otherwise.
+     *
+     * @param context context to get string resources from
+     * @return returns true if preferred units are metric, false if Imperial
+     */
+    public static boolean getUnitsAreMetricFromPreferences(Context context) {
+
+        // This implementation taken from RegionsFragment
+
+        String IMPERIAL = context.getString(R.string.preferences_preferred_units_option_imperial);
+        String METRIC = context.getString(R.string.preferences_preferred_units_option_metric);
+        String AUTOMATIC = context.getString(R.string.preferences_preferred_units_option_automatic);
+
+        SharedPreferences mSettings = Application.getPrefs();
+
+        String preferredUnits = mSettings
+                .getString(context.getString(R.string.preference_key_preferred_units),
+                        AUTOMATIC);
+
+        if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
+            // If the country is set to USA, assume imperial, otherwise metric
+            // TODO - Method of guessing metric/imperial can definitely be improved
+            if (Locale.getDefault().getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
+                // Assume imperial
+                return false;
+            } else {
+                // Assume metric
+                return true;
+            }
+        } else
+            return preferredUnits.equalsIgnoreCase(METRIC);
     }
 }

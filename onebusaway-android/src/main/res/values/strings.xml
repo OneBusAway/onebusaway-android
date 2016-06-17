@@ -746,6 +746,7 @@
     <string name="trip_plan_when">When</string>
     <string name="trip_plan_leaving">Leaving ▾</string>
     <string name="trip_plan_arriving">Arriving ▾</string>
+    <string name="trip_plan_plan_my_trip">Plan My Trip</string>
 
     <string name="trip_plan_location_hint">Enter address or location name</string>
 
@@ -779,12 +780,6 @@
     <string name="tripplanner_error_no_location">Please enter a location for the start and end of your trip.</string>
 
     <string name="tripplanner_reverse">Reverse</string>
-
-    <!-- Units -->
-    <string name="distance_kilometers">km</string>
-    <string name="distance_meters">m</string>
-    <string name="distance_miles">mi</string>
-    <string name="distance_feet">ft</string>
 
     <!-- Instructions generation -->
 
@@ -938,18 +933,15 @@
     <string name="toast_realtime_updates_fail">Realtime updates not available for this trip, times might be outdated</string>
 
     <!-- Units -->
-    <string name="time_short_hours">h</string>
-    <string name="time_short_minutes">m</string>
-    <string name="time_short_seconds">s</string>
-    <string name="time_long_hours">h</string>
-    <string name="time_long_minutes">min</string>
-    <string name="time_long_seconds">sec</string>
-    <string name="time_full_hours">hours</string>
-    <string name="time_full_minutes">minutes</string>
-    <string name="time_full_seconds">seconds</string>
-    <string name="time_full_hours_singular">hour</string>
-    <string name="time_full_minutes_singular">minute</string>
-    <string name="time_full_seconds_singular">second</string>
+    <string name="hours_abbreviation">h</string>
+    <string name="hours_full">hours</string>
+    <string name="hour_singular">hour</string>
+
+    <string name="seconds_abbrevation">s</string>
+    <string name="seconds_full">seconds</string>
+    <string name="seconds_singular">second</string>
+
+    <string name="minute_singular">minute</string>
 
     <!-- Connectors -->
     <string name="time_connector_next_day">tomorrow</string>
@@ -974,7 +966,7 @@
     <string name="maximum_walk_distance">Maximum walk distance: </string>
     <string name="wheelchair_accessible">Wheelchair accessible</string>
 
-    <string name="travel_by_label">Travel by</string>
+    <string name="travel_by_label">Travel by: </string>
     <string name="transit_mode_transit">Transit</string>
     <string name="transit_mode_bus">Bus only</string>
     <string name="transit_mode_rail">Rail only</string>

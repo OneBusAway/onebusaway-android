@@ -16,7 +16,6 @@
 
 package org.onebusaway.android.map;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaShapeElement;
 import org.opentripplanner.api.model.EncodedPolylineBean;
@@ -37,7 +36,7 @@ public class DirectionsMapController implements MapModeController {
 
     private final Callback mFragment;
 
-    private Itinerary itinerary;
+    private Itinerary mItinerary;
 
     public DirectionsMapController(Callback callback) {
         mFragment = callback;
@@ -46,8 +45,9 @@ public class DirectionsMapController implements MapModeController {
     @Override
     public void setState(Bundle args) {
 
-        if (args != null)
-            itinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
+        if (args != null) {
+            mItinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
+        }
 
         onResume();
     }
@@ -93,10 +93,11 @@ public class DirectionsMapController implements MapModeController {
     public void onResume() {
 
         clearCurrentState();
-        if (itinerary == null)
+        if (mItinerary == null) {
             return;
+        }
 
-        for (Leg leg : itinerary.legs) {
+        for (Leg leg : mItinerary.legs) {
             LegShape shape = new LegShape(leg.legGeometry);
             int color = resolveColor(leg);
             mFragment.getMapView().setRouteOverlay(color, new LegShape[]{shape}, false);
@@ -135,8 +136,9 @@ public class DirectionsMapController implements MapModeController {
             }
         }
 
-        if (TraverseMode.valueOf(leg.mode).isTransit())
+        if (TraverseMode.valueOf(leg.mode).isTransit()) {
             return Color.BLUE;
+        }
 
         return Color.GRAY;
     }

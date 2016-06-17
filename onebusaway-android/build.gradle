@@ -317,11 +317,10 @@ dependencies {
     compile 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library
     compile 'com.github.amlcurran.showcaseview:library:5.4.3'
+    // POJOs used for full data-binding via Jackson
+    compile 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Google Play Services Maps (only for Google flavor)
     googleCompile 'com.google.android.gms:play-services-maps:9.0.1'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
-    // POJOs used for full data-binding via Jackson
-    compile 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
-
 }

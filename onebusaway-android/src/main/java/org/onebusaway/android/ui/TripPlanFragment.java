@@ -28,7 +28,7 @@ import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
+import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -421,7 +421,7 @@ public class TripPlanFragment extends Fragment {
             return;
         }
 
-        CustomAddress address = MapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
+        CustomAddress address = ProprietaryMapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
 
         // note that onResume will run after this function. We need to put new objects in the bundle.
 
@@ -447,7 +447,7 @@ public class TripPlanFragment extends Fragment {
                 == ConnectionResult.SUCCESS) {
 
             tv.setFocusable(false);
-            tv.setOnClickListener(new MapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
+            tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
 
             return;
         }

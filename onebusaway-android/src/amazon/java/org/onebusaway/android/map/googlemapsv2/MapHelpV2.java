@@ -26,23 +26,17 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.LatLngBounds;
 
-import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaTripDetails;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
 
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
-import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.View;
 
 import java.util.HashSet;
 
@@ -52,8 +46,6 @@ import java.util.HashSet;
 public class MapHelpV2 {
 
     public static final String TAG = "MapHelpV2";
-
-    private static final String PLACES_ADDRESS_SEPARATOR = ",";
 
     /**
      * Converts a latitude/longitude to a LatLng.
@@ -214,65 +206,4 @@ public class MapHelpV2 {
         return makeLatLng(closestVehicleLocation);
     }
 
-    /**
-     * Decode the result of an Intent to Google Places Autocomplete into a CustomAddress.
-     * Here because of LatLng, Place which are specific to Google Places API.
-     */
-    public static CustomAddress getCustomAddressFromPlacesIntent(Context context, Intent intent) {
-        Place place = PlaceAutocomplete.getPlace(context, intent);
-
-        CustomAddress address = new CustomAddress();
-
-        address.setAddressLine(0, place.getName().toString());
-
-        String addressString = place.getAddress().toString();
-        String[] tokens = addressString.split(PLACES_ADDRESS_SEPARATOR);
-
-        for (int i = 0; i < tokens.length; i++) {
-            address.setAddressLine(i + 1, tokens[i]);
-        }
-
-        LatLng loc = place.getLatLng();
-
-        address.setLatitude(loc.latitude);
-        address.setLongitude(loc.longitude);
-
-        return address;
-    }
-
-    /**
-     * Helper class to start Google Places Autocomplete when a field is clicked.
-     * Does not check that Google API is available.
-     * Here because of the use of LatLngBounds. Decode result with
-     * getCustomAddressFromPlacesIntent.
-     */
-    public static class StartPlacesAutocompleteOnClick implements View.OnClickListener {
-
-        int mRequestCode;
-        Fragment mFragment;
-        ObaRegion mRegion;
-
-        public StartPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region) {
-            mRequestCode = requestCode;
-            mFragment = fragment;
-            mRegion = region;
-        }
-
-        @Override
-        public void onClick(View v) {
-            try {
-                LatLngBounds bounds = MapHelpV2.getRegionBounds(mRegion);
-
-                Intent intent =
-                        new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
-                                .setBoundsBias(bounds)
-                                .build(mFragment.getActivity());
-
-                mFragment.startActivityForResult(intent, mRequestCode);
-            } catch (Exception e) {
-                Log.e(TAG, "Error getting autocomplete: " + e.toString());
-            }
-
-        }
-    }
 }

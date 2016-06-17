@@ -971,8 +971,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
         linear.addView(layout, 0);
 
-        ((ImageView) layout.findViewById(R.id.ic_action_info)).setColorFilter(
-                getResources().getColor(R.color.material_gray));
+        ImageView imageView = (ImageView) layout.findViewById(R.id.ic_action_info);
+        imageView.setImageResource(R.drawable.ic_trip_details);
+        imageView.setColorFilter(getResources().getColor(R.color.material_gray));
     }
 
     private void clearInfoField() {

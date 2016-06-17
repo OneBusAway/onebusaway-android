@@ -41,7 +41,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -68,6 +67,8 @@ public class RealtimeServiceImpl implements RealtimeService {
 
     boolean mRegistered;
 
+    private static final long DELAY_THRESHOLD_SEC = 120;
+
     public RealtimeServiceImpl(Context context, Activity mActivity, Bundle bundle) {
         this.mActivity = mActivity;
         this.mApplicationContext = context;
@@ -85,7 +86,7 @@ public class RealtimeServiceImpl implements RealtimeService {
     }
 
     @Override
-    public void onItinerarySelected(Itinerary itinerary, int rank) {
+    public void onItinerarySelected(Itinerary itinerary) {
 
         disableListenForTripUpdates();
 
@@ -105,7 +106,7 @@ public class RealtimeServiceImpl implements RealtimeService {
 
                 Log.d(TAG, "Starting realtime updates for itinerary");
 
-                mItineraryDescription = new ItineraryDescription(itinerary, rank);
+                mItineraryDescription = new ItineraryDescription(itinerary);
 
                 mApplicationContext.registerReceiver(broadcastReceiver, mIntentFilter);
                 mAlarmMgr.setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
@@ -129,28 +130,56 @@ public class RealtimeServiceImpl implements RealtimeService {
                     return;
                 }
 
-                int rank = mItineraryDescription.getRank();
-                Itinerary it = itineraries.get(rank);
+                // Check each itinerary. Notify user if our *current* itinerary doesn't exist
+                // or has a lower rank.
+                for (int i = 0; i < itineraries.size(); i++) {
+                    ItineraryDescription other = new ItineraryDescription(itineraries.get(i));
 
-                if (!new ItineraryDescription(it, rank).equals(mItineraryDescription)) {
-                    Log.d(TAG, "Itinerary no longer matches");
-                    showNotification(mItineraryDescription);
-                    disableListenForTripUpdates();
-                } else {
-                    Log.d(TAG, "Itinerary matches.");
+                    if (mItineraryDescription.itineraryMatches(other)) {
+
+                        long delay = mItineraryDescription.getDelay(other);
+                        Log.d(TAG, "Delay on itinerary: " + delay);
+
+                        if (Math.abs(delay) > DELAY_THRESHOLD_SEC) {
+                            Log.d(TAG, "Notify due to large delay.");
+                            showNotification(mItineraryDescription, 
+                                    (delay > 0) ? R.string.trip_plan_delay : R.string.trip_plan_early);
+                            disableListenForTripUpdates();
+                            return;
+                        }
+
+                        // Otherwise, we are still good.
+                        Log.d(TAG, "Itinerary exists and is not delayed.");
+                        checkDisableDueToTimeout();
+
+                        return;
+                    }
+
                 }
+
+                Log.d(TAG, "Did not find a matching itinerary in new call.");
+                showNotification(mItineraryDescription, R.string.trip_plan_not_recommended);
+                disableListenForTripUpdates();
 
             }
         };
 
+        // Create trip request from the original. Do not update the departure time.
         TripRequestBuilder builder = new TripRequestBuilder(mBundle)
-                .setListener(callback)
-                .setDepartureTime(Calendar.getInstance()); // TODO: future trips?
+                .setListener(callback);
 
         try {
             builder.execute();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // If the end time for this itinerary has passed, disable trip updates.
+    private void checkDisableDueToTimeout() {
+        if (mItineraryDescription.isExpired()) {
+            Log.d(TAG, "End of trip has passed.");
+            disableListenForTripUpdates();
         }
     }
 
@@ -162,13 +191,9 @@ public class RealtimeServiceImpl implements RealtimeService {
         mRegistered = false;
     }
 
-    private void showNotification(ItineraryDescription description) {
+    private void showNotification(ItineraryDescription description, int message) {
 
-        NotificationCompat.InboxStyle inboxStyle =
-                new NotificationCompat.InboxStyle();
-
-        String itineraryChange = getResources().getString(R.string.itinerary_change_notification);
-        inboxStyle.addLine(itineraryChange);
+        String itineraryChange = getResources().getString(message);
 
         Intent notificationIntentOpenApp = new Intent(mApplicationContext, mActivity.getClass());
         notificationIntentOpenApp.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -182,11 +207,11 @@ public class RealtimeServiceImpl implements RealtimeService {
                 new NotificationCompat.Builder(mApplicationContext)
                         .setSmallIcon(R.drawable.ic_stat_notification)
                         .setContentTitle(getResources().getString(R.string.title_activity_trip_plan))
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(itineraryChange))
                         .setContentText(itineraryChange)
                         .setPriority(NotificationCompat.PRIORITY_MAX)
                         .setContentIntent(notificationOpenAppPendingIntent);
 
-        mBuilder.setStyle(inboxStyle);
         NotificationManager notificationManager =
                 (NotificationManager) mApplicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = mBuilder.build();

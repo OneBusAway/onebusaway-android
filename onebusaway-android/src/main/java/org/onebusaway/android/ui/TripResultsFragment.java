@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.directions.realtime.RealtimeService;
 import org.onebusaway.android.directions.realtime.RealtimeServiceImpl;
@@ -31,6 +32,7 @@ import org.opentripplanner.api.model.Itinerary;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -117,6 +119,12 @@ public class TripResultsFragment extends Fragment {
         initInfo(0);
 
         return view;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mRealtimeService.disableListenForTripUpdates();
     }
 
     @Override
@@ -231,7 +239,6 @@ public class TripResultsFragment extends Fragment {
         TextView durationView;
 
         Itinerary itinerary;
-        int rank;
 
         RoutingOptionPicker(View view, int linearLayout, int titleView, int durationView) {
             this.linearLayout = (LinearLayout) view.findViewById(linearLayout);
@@ -256,8 +263,6 @@ public class TripResultsFragment extends Fragment {
 
 
         void setItinerary(int rank) {
-            this.rank = rank;
-
             List<Itinerary> trips = getItineraries();
             if (rank >= trips.size()) {
                 this.itinerary = null;
@@ -285,7 +290,10 @@ public class TripResultsFragment extends Fragment {
 
             mDirectionsListView.setGroupIndicator(null);
 
-            mRealtimeService.onItinerarySelected(itinerary, rank);
+            if(Application.getPrefs()
+                    .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
+                mRealtimeService.onItinerarySelected(itinerary);
+            }
         }
 
         private void updateMap() {

@@ -20,7 +20,7 @@ import org.opentripplanner.api.model.Itinerary;
 
 public interface RealtimeService {
 
-    void onItinerarySelected(Itinerary itinerary, int rank);
+    void onItinerarySelected(Itinerary itinerary);
 
     void disableListenForTripUpdates();
 

@@ -55,6 +55,22 @@ public class ConversionUtils {
     private static final double FEET_PER_METER = 3.281;
 
     /**
+     * Given a date string from an OTP server, parse it into a java Date.
+     *
+     * @param text string from OTP
+     * @return parsed date object, or null if there is an error with parsing.
+     */
+    public static Date parseOtpDate(String text) {
+        try {
+            long ms = Long.parseLong(text);
+            return new Date(ms);
+        } catch (NumberFormatException ex) {
+            Log.e(TAG, "Error processing OTP response time text: " + text);
+            return null;
+        }
+    }
+
+    /**
      * Given start time and end time strings, compute the delta between them.
      * Strings should be in the OTP server return format, specified in OTPConstants
      *
@@ -66,18 +82,10 @@ public class ConversionUtils {
     public static double getDuration(String startTimeText, String endTimeText,
                                      Context applicationContext) {
         double duration = 0;
-        DateFormat formatter;
-        Date startTime = null, endTime = null;
-//		2012-03-09T22:46:00-05:00
-        formatter = new SimpleDateFormat(OTPConstants.FORMAT_OTP_SERVER_DATE_RESPONSE);
-        try {
-            startTime = (Date) formatter.parse(startTimeText);
-            endTime = (Date) formatter.parse(endTimeText);
-        } catch (ParseException e) {
-            Log.e(TAG, "Exception: " + e);
-        }
 
-        duration = 0;
+        Date startTime = parseOtpDate(startTimeText);
+        Date endTime = parseOtpDate(endTimeText);
+
         if (startTime != null && endTime != null) {
             if (PreferenceManager.getDefaultSharedPreferences(applicationContext)
                     .getInt(OTPConstants.PREFERENCE_KEY_API_VERSION, OTPConstants.API_VERSION_V1)

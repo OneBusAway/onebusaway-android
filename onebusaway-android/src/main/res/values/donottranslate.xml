@@ -39,6 +39,7 @@
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens
     </string>
+    <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notificaitons</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

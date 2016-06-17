@@ -16,13 +16,13 @@
 
 package org.onebusaway.android.directions.model;
 
+import org.onebusaway.android.directions.util.ConversionUtils;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
 import org.opentripplanner.routing.core.TraverseMode;
 
-import android.util.Log;
-
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,13 +32,11 @@ public class ItineraryDescription {
 
     private static final String TAG = "ItineraryDescription";
 
-    private int mRank;
-
     private List<String> mTripIds;
 
-    public ItineraryDescription(Itinerary itinerary, int rank) {
+    private Date mEndDate;
 
-        this.mRank = rank;
+    public ItineraryDescription(Itinerary itinerary) {
 
         mTripIds = new ArrayList<>();
 
@@ -50,50 +48,66 @@ public class ItineraryDescription {
             }
 
         }
+
+        Leg last = itinerary.legs.get(itinerary.legs.size() - 1);
+        mEndDate = ConversionUtils.parseOtpDate(last.endTime);
     }
 
-    public int getRank() {
-        return mRank;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
-        }
-        if (!(o instanceof ItineraryDescription)) {
-            return false;
-        }
-        ItineraryDescription d = (ItineraryDescription) o;
-        if (d.mRank != this.mRank) {
-            return false;
-        }
-        if (d.mTripIds.size() != this.mTripIds.size()) {
+    /**
+     * Check if this itinerary matches the itinerary of another ItineraryDescription
+     *
+     * @param other object to compare to
+     * @return true if matches, false otherwise
+     */
+    public boolean itineraryMatches(ItineraryDescription other) {
+        if (other.mTripIds.size() != this.mTripIds.size()) {
             return false;
         }
         for (int i = 0; i < this.mTripIds.size(); i++) {
-            if (!mTripIds.get(i).equals(d.mTripIds.get(i))) {
+            if (!mTripIds.get(i).equals(other.mTripIds.get(i))) {
                 return false;
             }
         }
-
         return true;
     }
 
-    // For the notification, we need an ID so we don't get duplicates.
-    // Right now we never send two notifications, but we may in future.
-    // First trip ID suffices.
+    /**
+     * Check the delay on this itinerary relative to a newer one.
+     * Positive indicates a delay, negative indicates running early.
+     *
+     * @param other Newer itinerary to use to calculate delay.
+     * @return delay in seconds
+     */
+    public long getDelay(ItineraryDescription other) {
+        return (other.getEndDate().getTime() - this.getEndDate().getTime())/1000;
+    }
+
+    /**
+     * Return an ID for this ItineraryDescription.
+     * The notification requires an ID so it does not create duplicates. Right now, sending a
+     * notification cancels out the RealtimeService, so we do not send multiple notifications,
+     * but we may in future.
+     * Use the hash code of the trips array.
+     *
+     * @return ID for this itinerary description. Not guaranteed to be unique.
+     */
     public int getId() {
         if (mTripIds == null || mTripIds.isEmpty()) {
             return -1;
         }
-        try {
-            String tripId = mTripIds.get(0).split(":")[1];
-            return Integer.parseInt(tripId);
-        } catch (Exception ex) {
-            Log.e(TAG, "Error calculating trip ID: " + ex.getMessage());
-            return 0;
-        }
+        return mTripIds.hashCode();
+    }
+
+    public Date getEndDate() {
+        return mEndDate;
+    }
+
+    /**
+     *
+     * @return true if the itinerary's end date has passed
+     */
+    public boolean isExpired() {
+        return getEndDate().before(new Date());
     }
 
 }

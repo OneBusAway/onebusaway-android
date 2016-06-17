@@ -484,6 +484,7 @@
     <string name="preferences_category_location">Location</string>
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
+    <string name="preferences_category_notifications">Notifications</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
@@ -507,6 +508,11 @@
     <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
     <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
         show arrival info in the header at the top of the screen (doesn\'t affect map view)
+    </string>
+
+    <string name="preferences_trip_plan_notifications_title">Trip plan notifications</string>
+    <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
+        notifications if the trip is delayed or no longer recommended.
     </string>
 
     <string name="preferences_show_tutorial_screens_title">Show tutorial screens</string>
@@ -958,7 +964,9 @@
     <string name="map_markers_warning_live_updates_early_arrival">early</string>
     <string name="map_markers_warning_live_updates_late_arrival">delay</string>
 
-    <string name="itinerary_change_notification">Your trip is no longer recommended for this route.</string>
+    <string name="trip_plan_not_recommended">Your trip is no longer recommended for this route.</string>
+    <string name="trip_plan_delay">Your trip is delayed.</string>
+    <string name="trip_plan_early">Your trip is early.</string>
 
     <!-- Trip plan advanced settings -->
     <string name="trip_plan_advanced_settings">Additional Trip Preferences</string>

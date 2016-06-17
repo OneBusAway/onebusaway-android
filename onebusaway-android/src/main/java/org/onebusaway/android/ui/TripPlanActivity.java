@@ -42,8 +42,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     TripRequest mTripRequest = null;
 
-    boolean mPostSaveInstanceState = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,9 +67,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             mTripRequest.showProgressDialog();
         }
 
-        mPostSaveInstanceState = false;
     }
-
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
@@ -85,8 +81,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
         }
 
-        mPostSaveInstanceState = true;
     }
+
 
     @Override
     public void onStop() {
@@ -110,16 +106,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         Log.d(TAG, "Successfully routed. Itineraries are " + itineraries);
 
         mTripRequest = null;
-
-        // We can't save the itinerary if this method is called after onSaveInstanceState.
-        // Ultimately the architecture should be changed, but for now simply tell the
-        // user to try again.
-        if (mPostSaveInstanceState) {
-            Toast.makeText(this,
-                    getString(R.string.tripplanner_error_not_defined),
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         if (itineraries.size() > 0) {
 
@@ -146,7 +132,17 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             transaction.addToBackStack(null);
 
             // Commit the transaction.
-            transaction.commit();
+            try {
+                transaction.commit();
+            } catch(IllegalStateException ex) {
+                // We can't save the itinerary if this method is called after onSaveInstanceState.
+                // Ultimately the architecture should be changed, but for now simply tell the
+                // user to try again.
+                Log.e(TAG, "Error attempting to switch fragments. Likely screen rotated during trip plan.");
+                Toast.makeText(this,
+                        getString(R.string.tripplanner_error_not_defined),
+                        Toast.LENGTH_SHORT).show();
+            }
 
         } else {
             Toast.makeText(this,

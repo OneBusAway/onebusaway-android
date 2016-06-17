@@ -31,7 +31,7 @@
                 android:orientation="horizontal">
 
             <ImageView style="@style/MaterialSmallIcon"
-                       android:src="@drawable/ic_stop_info"
+                       android:src="@drawable/ic_trip_details"
                        android:id="@+id/ic_headsign_info"/>
 
             <TextView

@@ -1370,7 +1370,8 @@ public class ArrivalsListFragment extends ListFragment
 
     private void goToTripDetails(ArrivalInfo stop) {
         TripDetailsActivity.start(getActivity(),
-                stop.getInfo().getTripId(), stop.getInfo().getStopId());
+                stop.getInfo().getTripId(), stop.getInfo().getStopId(),
+                TripDetailsListFragment.SCROLL_MODE_STOP);
     }
 
     private void goToRoute(ArrivalInfo stop) {

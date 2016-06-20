@@ -20,136 +20,15 @@
               android:weightSum="1"
               android:background="#eeeeee">
 
-    <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="108dp"
-            android:gravity="center_vertical"
-            android:weightSum="1">
 
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="0dp"
-                android:background="@color/theme_primary"
-                android:gravity="center_vertical"
-                android:paddingLeft="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginTop="10dp"
-                android:weightSum="1"
-                android:layout_weight="1.10">
 
-            <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="wrap_content"
-                    android:layout_height="108dp">
-
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center">
-
-                    <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_marginTop="9dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_arrival_time"
-                            android:tint="@color/trip_plan_header_muted"/>
-
-                    <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:text="Medium Text"
-                            android:id="@+id/arrivalDepartureTextView"
-                            android:layout_marginLeft="5dp"
-                            android:layout_marginTop="19dp"
-                            android:textColor="@color/trip_plan_headers"
-                            android:maxLines="1"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" >
-
-                    <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_drawer_maps_place"
-                            android:tint="@color/trip_plan_header_muted" />
-
-                    <TextView
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:text="Medium Text"
-                            android:id="@+id/originTextView"
-                            android:layout_marginLeft="5dp"
-                            android:textColor="@color/trip_plan_headers"
-                            android:layout_marginTop="1dp"
-                            android:maxLines="1"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center">
-
-                    <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_drawer_maps_place"
-                            android:tint="@color/trip_plan_header_muted" />
-
-                    <TextView
-                            android:layout_width="fill_parent"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:text="Medium Text"
-                            android:id="@+id/destinationTextView"
-                            android:layout_marginLeft="5dp"
-                            android:textColor="@color/trip_plan_headers"
-                            android:layout_marginTop="1dp"
-                            android:maxLines="1"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-            <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="61dp"
-                    android:layout_marginRight="10dp"
-                    android:id="@+id/changeButton"
-                    android:background="#00ffffff"
-                    android:scaleType="centerInside"
-                    android:text="@string/tripplanner_reverse"
-                    android:textColor="@color/trip_plan_header_muted"
-                    android:drawableLeft="@drawable/ic_swap_vert"
-                    android:drawableTint="@color/trip_plan_header_muted"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
 
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp">
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+    >
 
         <LinearLayout
                 android:orientation="vertical"
@@ -160,8 +39,7 @@
                 android:background="@drawable/bottom_line_grey_blue"
                 android:gravity="center_vertical"
                 android:id="@+id/option1LinearLayout"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp">
+                android:padding="4dp">
 
             <TextView
                     android:layout_width="wrap_content"
@@ -175,11 +53,14 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Medium Text"
                     android:id="@+id/option1Duration"
-                    android:textColor="@color/body_text_2"
-                    android:textSize="15sp"/>
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option1Interval"
+                    android:textColor="@color/body_text_2" />
 
         </LinearLayout>
 
@@ -192,9 +73,7 @@
                 android:background="@color/trip_option_background"
                 android:gravity="center_vertical"
                 android:id="@+id/option2LinearLayout"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp">
-
+                android:padding="4dp">
 
             <TextView
                     android:layout_width="wrap_content"
@@ -208,11 +87,14 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Medium Text"
                     android:id="@+id/option2Duration"
-                    android:textColor="@color/body_text_2"
-                    android:textSize="15sp"/>
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option2Interval"
+                    android:textColor="@color/body_text_2" />
 
         </LinearLayout>
 
@@ -224,8 +106,8 @@
                 android:background="@color/trip_option_background"
                 android:gravity="center_vertical"
                 android:id="@+id/option3LinearLayout"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp">
+                android:padding="4dp"
+                >
 
             <TextView
                     android:layout_width="wrap_content"
@@ -234,17 +116,19 @@
                     android:id="@+id/option3Title"
                     android:textColor="@color/body_text_2"
                     android:singleLine="true"
-                    android:ellipsize="end"
-            />
+                    android:ellipsize="end" />
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:text="Medium Text"
                     android:id="@+id/option3Duration"
-                    android:textColor="@color/body_text_2"
-                    android:textSize="15sp"/>
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option3Interval"
+                    android:textColor="@color/body_text_2" />
 
         </LinearLayout>
     </LinearLayout>

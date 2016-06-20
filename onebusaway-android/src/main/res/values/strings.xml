@@ -747,12 +747,13 @@
 
     <string name="title_activity_trip_plan">Trip Planner</string>
     <string name="error_while_retrieving_data">Error while retrieving data</string>
-    <string name="trip_plan_from">From</string>
-    <string name="trip_plan_to">To</string>
+    <string name="trip_plan_from">From: </string>
+    <string name="trip_plan_to">To: </string>
     <string name="trip_plan_when">When</string>
-    <string name="trip_plan_leaving">Leaving ▾</string>
-    <string name="trip_plan_arriving">Arriving ▾</string>
+    <string name="trip_plan_leaving">Leaving</string>
+    <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_plan_my_trip">Plan My Trip</string>
+    <string name="trip_plan_stop_connector">at</string>
 
     <string name="trip_plan_location_hint">Enter address or location name</string>
 

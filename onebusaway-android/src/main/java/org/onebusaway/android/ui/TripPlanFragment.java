@@ -76,15 +76,14 @@ public class TripPlanFragment extends Fragment {
 
     private AutoCompleteTextView mFromAddressTextArea;
     private AutoCompleteTextView mToAddressTextArea;
-    private Button mPlanMyTripButton;
     private ImageButton mFromCurrentLocationImageButton;
     private ImageButton mToCurrentLocationImageButton;
     private TextView mDate;
     private TextView mTime;
-    private TextView mLeavingChoice;
+    private Spinner mLeavingChoice;
+    ArrayAdapter<CharSequence> mLeavingChoiceAdapter;
 
     Calendar mMyCalendar;
-    boolean mLeaving = true;
 
     protected GoogleApiClient mGoogleApiClient;
     private static final String TAG = "TripPlanFragment";
@@ -123,27 +122,18 @@ public class TripPlanFragment extends Fragment {
 
         mFromAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.fromAddressTextArea);
         mToAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.toAddressTextArea);
-        mPlanMyTripButton = (Button) view.findViewById(R.id.planMyTripButton);
         mFromCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.fromCurrentLocationImageButton);
         mToCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.toCurrentLocationImageButton);
         mDate = (TextView) view.findViewById(R.id.date);
         mTime = (TextView) view.findViewById(R.id.time);
-        mLeavingChoice = (TextView) view.findViewById(R.id.leavingChoice);
+        mLeavingChoice = (Spinner) view.findViewById(R.id.leavingChoiceSpinner);
 
-        mLeavingChoice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mLeaving) {
-                    mLeaving = false;
-                    mLeavingChoice.setText(getString(R.string.trip_plan_arriving));
-                    mBuilder.setArrivalTime(mMyCalendar);
-                } else {
-                    mLeaving = true;
-                    mLeavingChoice.setText(getString(R.string.trip_plan_leaving));
-                    mBuilder.setDepartureTime(mMyCalendar);
-                }
-            }
-        });
+        mLeavingChoiceAdapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.trip_plan_leaving_arriving_array, android.R.layout.simple_spinner_item);
+        mLeavingChoiceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mLeavingChoice.setAdapter(mLeavingChoiceAdapter);
+
+        // set onclick adapter in onresume so we do not fire it when setting it.
 
         final TimePickerDialog.OnTimeSetListener timeCallback = new TimePickerDialog.OnTimeSetListener() {
             @Override
@@ -152,6 +142,7 @@ public class TripPlanFragment extends Fragment {
                 mMyCalendar.set(Calendar.MINUTE, minute);
                 resetDateTimeLabels();
                 mBuilder.setDateTime(mMyCalendar);
+                checkRequestAndSubmit();
             }
         };
 
@@ -172,6 +163,7 @@ public class TripPlanFragment extends Fragment {
                 mMyCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 resetDateTimeLabels();
                 mBuilder.setDateTime(mMyCalendar);
+                checkRequestAndSubmit();
             }
 
         };
@@ -215,34 +207,16 @@ public class TripPlanFragment extends Fragment {
             }
         });
 
-        mPlanMyTripButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (mFromAddress == null || mToAddress == null) {
-                    makeNoLocationToast();
-                    return;
-                }
-
-                mBuilder
-                        .setFrom(mFromAddress)
-                        .setTo(mToAddress);
-
-                if (mLeaving) {
-                    mBuilder.setDepartureTime(mMyCalendar);
-                }
-                else {
-                    mBuilder.setArrivalTime(mMyCalendar);
-                }
-
-                ((TripPlanActivity) getActivity()).route();
-
-            }
-        });
 
         // Start: default from address is Current Location, to address is unset
 
         return view;
+    }
+
+    private void checkRequestAndSubmit() {
+        if (mBuilder.ready()) {
+            ((TripPlanActivity) getActivity()).route();
+        }
     }
 
     // Populate data fields
@@ -266,6 +240,9 @@ public class TripPlanFragment extends Fragment {
         }
 
 
+        boolean arriving = mBuilder.getArriveBy();
+
+
         if (mMyCalendar == null) {
             Date date = mBuilder.getDateTime();
             if (date == null) {
@@ -273,14 +250,38 @@ public class TripPlanFragment extends Fragment {
             }
             mMyCalendar = Calendar.getInstance();
             mMyCalendar.setTime(date);
-        }
 
+            if (arriving) {
+                mBuilder.setArrivalTime(mMyCalendar);
+            } else {
+                mBuilder.setDepartureTime(mMyCalendar);
+            }
+        }
 
         resetDateTimeLabels();
 
-        boolean leaving = mBuilder.getArriveBy();
-        String leavingString = getString(leaving ? R.string.trip_plan_arriving : R.string.trip_plan_leaving);
-        mLeavingChoice.setText(leavingString);
+        String leavingChoice = getString(arriving ? R.string.trip_plan_arriving : R.string.trip_plan_leaving);
+        mLeavingChoice.setSelection(mLeavingChoiceAdapter.getPosition(leavingChoice), false);
+
+        mLeavingChoice.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                String item = (String) parent.getItemAtPosition(position);
+
+                if (item.equals(getString(R.string.trip_plan_arriving))) {
+                    mBuilder.setArrivalTime(mMyCalendar);
+                } else {
+                    mBuilder.setDepartureTime(mMyCalendar);
+                }
+                checkRequestAndSubmit();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // do nothing
+            }
+        });
     }
 
     @Override
@@ -294,9 +295,13 @@ public class TripPlanFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            advancedSettings();
-            return true;
+        switch(id) {
+            case R.id.action_settings:
+                advancedSettings();
+                return true;
+            case R.id.action_reverse:
+                reverseTrip();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -343,6 +348,8 @@ public class TripPlanFragment extends Fragment {
                         .setModeSetById(modeId)
                         .setWheelchairAccessible(wheelchair)
                         .setMaxWalkDistance(maxWalkDistance);
+
+                checkRequestAndSubmit();
             }
         });
 
@@ -393,6 +400,20 @@ public class TripPlanFragment extends Fragment {
 
     }
 
+    private void reverseTrip() {
+        mFromAddress = mBuilder.getTo();
+        mToAddress = mBuilder.getFrom();
+
+        mBuilder
+                .setFrom(mFromAddress)
+                .setTo(mToAddress);
+
+        mFromAddressTextArea.setText(mFromAddress.toString());
+        mToAddressTextArea.setText(mToAddress.toString());
+
+        ((TripPlanActivity) getActivity()).route();
+    }
+
     private void makeNoLocationToast() {
         Toast.makeText(getContext(), getString(R.string.tripplanner_error_no_location), Toast.LENGTH_SHORT).show();
     }
@@ -435,6 +456,8 @@ public class TripPlanFragment extends Fragment {
             mToAddressTextArea.setText(mToAddress.toString());
         }
 
+        checkRequestAndSubmit();
+
     }
 
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
@@ -469,6 +492,8 @@ public class TripPlanFragment extends Fragment {
                     mToAddress = addr;
                     mBuilder.setTo(mToAddress);
                 }
+
+                checkRequestAndSubmit();
             }
         });
 

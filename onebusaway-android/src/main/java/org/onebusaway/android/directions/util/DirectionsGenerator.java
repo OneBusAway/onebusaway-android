@@ -38,7 +38,9 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Generates a set of step-by-step directions that can be shown to the user from a list of trip
@@ -428,6 +430,8 @@ public class DirectionsGenerator {
                 return resources.getString(R.string.step_by_step_transit_mode_gondola);
             } else if (mode.equals(TraverseMode.FUNICULAR)) {
                 return resources.getString(R.string.step_by_step_transit_mode_funicular);
+            } else if (mode.equals(TraverseMode.WALK)) {
+                return resources.getString(R.string.step_by_step_non_transit_mode_walk_action);
             }
         }
         return null;
@@ -662,35 +666,26 @@ public class DirectionsGenerator {
     }
 
     public String getItineraryTitle() {
-        boolean lastIsBus = false;
+
+        if (legs.size() == 1) {
+            TraverseMode mode = TraverseMode.valueOf(legs.get(0).mode);
+            if (!mode.isTransit()) {
+                return getLocalizedMode(mode, applicationContext.getResources());
+            }
+        }
 
         List<String> tokens = new ArrayList<>();
 
         for (Leg leg : legs) {
             TraverseMode traverseMode = TraverseMode.valueOf(leg.mode);
-            ;
+
             if (traverseMode.isTransit()) {
-
-                String token = "";
-
-                if (traverseMode.equals(TraverseMode.BUS)) {
-                    if (!lastIsBus) {
-                        String mode = getLocalizedMode(traverseMode, applicationContext.getResources());
-                        mode = Character.toUpperCase(mode.charAt(0)) + mode.substring(1);
-                        token += mode + " ";
-                    }
-                    lastIsBus = true;
-                } else {
-                    lastIsBus = false;
-                }
-
-                token += getTransitTitle(leg);
-
-                tokens.add(token);
+                tokens.add(getTransitTitle(leg));
             }
         }
 
         return TextUtils.join(", ", tokens);
+
     }
 
 }

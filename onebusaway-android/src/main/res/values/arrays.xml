@@ -207,4 +207,9 @@
         <item>@string/transit_mode_rail</item>
     </string-array>
 
+    <string-array name="trip_plan_leaving_arriving_array">
+        <item>@string/trip_plan_leaving</item>
+        <item>@string/trip_plan_arriving</item>
+    </string-array>
+
 </resources>

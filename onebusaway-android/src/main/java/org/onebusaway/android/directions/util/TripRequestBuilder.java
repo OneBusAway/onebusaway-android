@@ -325,5 +325,9 @@ public class TripRequestBuilder {
             target.putLong(DATE_TIME, getDateTime().getTime());
         }
     }
+
+    public boolean ready() {
+        return getFrom() != null && getTo() != null && getDateTime() != null;
+    }
 }
 

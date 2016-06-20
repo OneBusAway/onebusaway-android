@@ -15,19 +15,26 @@
  */
 package org.onebusaway.android.ui;
 
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.TripPlan;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Layout;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -41,6 +48,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     TripRequestBuilder mBuilder;
 
     TripRequest mTripRequest = null;
+
+    SlidingUpPanelLayout mPanel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +65,36 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         // Check which fragment to create
         boolean haveTripPlan = bundle.getSerializable(OTPConstants.ITINERARIES) != null;
 
-        Fragment fragment = haveTripPlan ? new TripResultsFragment() : new TripPlanFragment();
-
+        TripPlanFragment fragment = new TripPlanFragment();
         fragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.trip_plan_fragment_container, fragment).commit();
+
+
+        if (haveTripPlan) {
+            initResultsFragment();
+        }
 
         // if planning in progress, reshow dialog
         if (mTripRequest != null) {
             mTripRequest.showProgressDialog();
         }
+
+
+        mPanel = (SlidingUpPanelLayout) findViewById(R.id.trip_plan_sliding_layout);
+
+        // Set the height of the panel after drawing occurs.
+        final ViewGroup layout = (ViewGroup)findViewById(R.id.trip_plan_fragment_container);
+        ViewTreeObserver vto = layout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                int viewHeight = findViewById(android.R.id.content).getHeight();
+                int height = layout.getMeasuredHeight();
+                mPanel.setPanelHeight(viewHeight - height);
+            }
+        });
 
     }
 
@@ -98,7 +127,31 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     }
 
     public void route() {
+        // Remove results fragment if it exists
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
+        if(fragment != null)
+            getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+
         mTripRequest = mBuilder.setListener(this).execute(this);
+    }
+
+    private void initResultsFragment() {
+        TripResultsFragment fragment = new TripResultsFragment();
+        fragment.setArguments(mBuilder.getBundle());
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.trip_results_fragment_container, fragment).commit();
+
+        getSupportFragmentManager().executePendingTransactions();
+
+        if (fragment.getView() != null) {
+            fragment.getView().post(new Runnable() {
+                @Override
+                public void run() {
+                    mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+                }
+            });
+        }
+
     }
 
     @Override
@@ -121,19 +174,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             Bundle bundle = mBuilder.getBundle();
             bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<>(itineraries));
 
-            TripResultsFragment resultsFragment = new TripResultsFragment();
-            resultsFragment.setArguments(bundle);
-
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.trip_plan_fragment_container, resultsFragment);
-            transaction.addToBackStack(null);
-
             // Commit the transaction.
             try {
-                transaction.commit();
+                initResultsFragment();
             } catch(IllegalStateException ex) {
                 // We can't save the itinerary if this method is called after onSaveInstanceState.
                 // Ultimately the architecture should be changed, but for now simply tell the
@@ -149,31 +192,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                     getString(R.string.tripplanner_error_bogus_parameter),
                     Toast.LENGTH_SHORT).show();
         }
-    }
-
-    /* If back is pressed from results fragment, we go to plan fragment. */
-    @Override
-    public boolean onSupportNavigateUp() {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_plan_fragment_container);
-
-        if (fragment == null || fragment instanceof TripPlanFragment) {
-            return super.onSupportNavigateUp();
-        }
-
-        int nBackStack = getSupportFragmentManager().getBackStackEntryCount();
-
-        // If we rotated we need to create new TripPlanFragment
-        if (nBackStack > 0) {
-            getSupportFragmentManager().popBackStack();
-        }
-        else {
-            Fragment newFragment = new TripPlanFragment();
-            newFragment.setArguments(mBuilder.getBundle());
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.trip_plan_fragment_container, newFragment).commit();
-        }
-
-        return true;
     }
 
 }

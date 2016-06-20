@@ -106,13 +106,18 @@ public class ProprietaryMapHelpV2 {
 
         CustomAddress address = new CustomAddress();
 
-        address.setAddressLine(0, place.getName().toString());
+        String placeName = place.getName().toString();
+        address.setAddressLine(0, placeName);
 
         String addressString = place.getAddress().toString();
         String[] tokens = addressString.split(PLACES_ADDRESS_SEPARATOR);
 
-        for (int i = 0; i < tokens.length; i++) {
-            address.setAddressLine(i + 1, tokens[i]);
+        // Posible that first line of address is place name.
+        int start = placeName.equals(tokens[0]) ? 1 : 0;
+
+        int j = 1; // address line index
+        for (int i = start; i < tokens.length; i++) {
+            address.setAddressLine(j++, tokens[i]);
         }
 
         LatLng loc = place.getLatLng();

@@ -20,6 +20,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.directions.realtime.RealtimeService;
 import org.onebusaway.android.directions.realtime.RealtimeServiceImpl;
+import org.onebusaway.android.directions.util.ConversionUtils;
 import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
 import org.onebusaway.android.directions.util.DirectionsGenerator;
@@ -56,11 +57,6 @@ public class TripResultsFragment extends Fragment {
     private ExpandableListView mDirectionsListView;
     private boolean mShowingMap;
 
-    private TextView mArrivalDepartureTextView;
-    private TextView mOriginTextView;
-
-    private TextView mDestinationTextView;
-    private Button mChangeButton;
     private LinearLayout mSwitchViewLayout;
     private ImageView mSwitchViewImageView;
     private TextView mSwitchViewTextView;
@@ -75,20 +71,15 @@ public class TripResultsFragment extends Fragment {
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan_results, container, false);
 
-        mArrivalDepartureTextView = (TextView) view.findViewById(R.id.arrivalDepartureTextView);
-        mOriginTextView = (TextView) view.findViewById(R.id.originTextView);
-        mDestinationTextView = (TextView) view.findViewById(R.id.destinationTextView);
-        mChangeButton = (Button) view.findViewById(R.id.changeButton);
-
         mSwitchViewLayout = (LinearLayout) view.findViewById(R.id.switchViewLayout);
         mSwitchViewTextView = (TextView) view.findViewById(R.id.switchViewText);
         mSwitchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
 
         mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
 
-        mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration);
-        mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration);
-        mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration);
+        mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration, R.id.option1Interval);
+        mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
+        mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration, R.id.option3Interval);
 
         mSwitchViewLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,21 +88,6 @@ public class TripResultsFragment extends Fragment {
             }
         });
 
-        mChangeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TripRequestBuilder builder = new TripRequestBuilder(getArguments());
-
-                CustomAddress fromAddress = builder.getTo();
-                CustomAddress toAddress = builder.getFrom();
-
-                builder
-                        .setFrom(fromAddress)
-                        .setTo(toAddress);
-
-                ((TripPlanActivity) getActivity()).route();
-            }
-        });
 
         mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
 
@@ -176,18 +152,6 @@ public class TripResultsFragment extends Fragment {
 
     public void initInfo(int trip) {
 
-        String startAddress = getFromAddress().getAddressLine(0);
-        String endAddress = getToAddress().getAddressLine(0);
-
-        mOriginTextView.setText(startAddress);
-        mDestinationTextView.setText(endAddress);
-
-        Date date = getRequestDate();
-        String format = String.format(OTPConstants.TRIP_RESULTS_TIME_STRING_FORMAT,
-                getString(R.string.time_connector_before_time));
-        String timeString = new SimpleDateFormat(format, Locale.getDefault()).format(date);
-        mArrivalDepartureTextView.setText(timeString);
-
         for (int i = 0; i < mOptions.length; i++) {
             mOptions[i].setItinerary(i);
         }
@@ -216,34 +180,23 @@ public class TripResultsFragment extends Fragment {
         return fromString + " - " + toString;
     }
 
-
     private List<Itinerary> getItineraries() {
         return (List<Itinerary>) getArguments().getSerializable(OTPConstants.ITINERARIES);
-    }
-
-    private CustomAddress getFromAddress() {
-        return new TripRequestBuilder(getArguments()).getFrom();
-    }
-
-    private CustomAddress getToAddress() {
-        return new TripRequestBuilder(getArguments()).getTo();
-    }
-
-    private Date getRequestDate() {
-        return new TripRequestBuilder(getArguments()).getDateTime();
     }
 
     private class RoutingOptionPicker {
         LinearLayout linearLayout;
         TextView titleView;
         TextView durationView;
+        TextView intervalView;
 
         Itinerary itinerary;
 
-        RoutingOptionPicker(View view, int linearLayout, int titleView, int durationView) {
+        RoutingOptionPicker(View view, int linearLayout, int titleView, int durationView, int intervalView) {
             this.linearLayout = (LinearLayout) view.findViewById(linearLayout);
             this.titleView = (TextView) view.findViewById(titleView);
             this.durationView = (TextView) view.findViewById(durationView);
+            this.intervalView = (TextView) view.findViewById(intervalView);
 
             this.linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -271,10 +224,15 @@ public class TripResultsFragment extends Fragment {
             }
 
             this.itinerary = trips.get(rank);
+
+
             String title = new DirectionsGenerator(itinerary.legs, getContext()).getItineraryTitle();
-            String duration = formatTimeString(itinerary.startTime, itinerary.duration * 1000);
+            String duration = ConversionUtils.getFormattedDurationTextNoSeconds(itinerary.duration, false, getContext());
+            String interval = formatTimeString(itinerary.startTime, itinerary.duration * 1000);
+
             titleView.setText(title);
             durationView.setText(duration);
+            intervalView.setText(interval);
         }
 
         void updateInfo() {

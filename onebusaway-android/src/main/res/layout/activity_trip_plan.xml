@@ -16,7 +16,35 @@
     limitations under the License.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:id="@+id/trip_plan_fragment_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout
+            xmlns:sothree="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/trip_plan_sliding_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="bottom"
+            sothree:umanoPanelHeight="340dp"
+            sothree:umanoShadowHeight="5dp"
+            sothree:umanoParalaxOffset="100dp"
+            sothree:umanoFadeColor="@android:color/transparent"
+            sothree:umanoInitialState="collapsed">
+
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                     android:id="@+id/trip_plan_fragment_container"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content" />
+
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                     android:id="@+id/trip_results_fragment_container"
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"/>
+
+    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
+
+
+</LinearLayout>

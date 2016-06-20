@@ -24,4 +24,8 @@
           android:title="@string/trip_plan_advanced_settings"
           android:orderInCategory="100"
           app:showAsAction="never"/>
+    <item android:id="@+id/action_reverse"
+        android:title="@string/tripplanner_reverse"
+        android:orderInCategory="100"
+        app:showAsAction="never"/>
 </menu>

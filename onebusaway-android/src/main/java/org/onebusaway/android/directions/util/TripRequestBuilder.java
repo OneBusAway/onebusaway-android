@@ -311,6 +311,10 @@ public class TripRequestBuilder {
         return mBundle;
     }
 
+    /**
+     * Copy all the data from this builder's bundle into another bundle
+     * @param target bundle
+     */
     public void copyIntoBundle(Bundle target) {
         target.putBoolean(ARRIVE_BY, getArriveBy());
         target.putParcelable(FROM_ADDRESS, getFrom());
@@ -326,6 +330,10 @@ public class TripRequestBuilder {
         }
     }
 
+    /**
+     * Determine whether this trip request can be submitted to an OTP server.
+     * @return true if ready to submit, false otherwise
+     */
     public boolean ready() {
         return getFrom() != null && getTo() != null && getDateTime() != null;
     }

@@ -27,6 +27,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import java.util.List;
 
@@ -38,6 +39,8 @@ public class DirectionsMapController implements MapModeController {
 
     private Itinerary mItinerary;
 
+    private boolean mZoomed = false;
+
     public DirectionsMapController(Callback callback) {
         mFragment = callback;
     }
@@ -47,6 +50,7 @@ public class DirectionsMapController implements MapModeController {
 
         if (args != null) {
             mItinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
+            mZoomed = false;
         }
 
         onResume();
@@ -103,7 +107,6 @@ public class DirectionsMapController implements MapModeController {
             mFragment.getMapView().setRouteOverlay(color, new LegShape[]{shape}, false);
         }
 
-        mFragment.getMapView().zoomToRoute();
     }
 
     @Override
@@ -123,7 +126,11 @@ public class DirectionsMapController implements MapModeController {
 
     @Override
     public void notifyMapChanged() {
-        // Don't care
+        if (!mZoomed && mFragment.getView() != null &&
+                mFragment.getView().getVisibility() == View.VISIBLE) {
+            mFragment.getMapView().zoomToRoute();
+            mZoomed = true;
+        }
     }
 
     private static int resolveColor(Leg leg) {

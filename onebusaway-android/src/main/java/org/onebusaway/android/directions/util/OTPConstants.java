@@ -52,6 +52,10 @@ public class OTPConstants {
 
     public static final String ITINERARIES = "org.onebusaway.android.Itineraries";
 
+    public static final String SELECTED_ITINERARY = "org.onebusaway.android.SELECTED_ITINERARY";
+
+    public static final String SHOW_MAP = "org.onebusaway.android.SHOW_MAP";
+
     public static final String FORMAT_OTP_SERVER_DATE_REQUEST = "MM-dd-yyyy";
 
     public static final String FORMAT_OTP_SERVER_TIME_REQUEST = "hh:mma";

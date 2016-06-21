@@ -53,7 +53,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -133,7 +132,7 @@ public class TripPlanFragment extends Fragment {
         mLeavingChoiceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mLeavingChoice.setAdapter(mLeavingChoiceAdapter);
 
-        // set onclick adapter in onresume so we do not fire it when setting it.
+        // set mLeavingChoice onclick adapter in onresume so we do not fire it when setting it.
 
         final TimePickerDialog.OnTimeSetListener timeCallback = new TimePickerDialog.OnTimeSetListener() {
             @Override
@@ -185,6 +184,7 @@ public class TripPlanFragment extends Fragment {
                 mMyCalendar = Calendar.getInstance();
                 mBuilder.setDateTime(mMyCalendar);
                 resetDateTimeLabels();
+                checkRequestAndSubmit();
             }
         });
 
@@ -196,6 +196,8 @@ public class TripPlanFragment extends Fragment {
             public void onClick(View v) {
                 mToAddressTextArea.setText(getString(R.string.tripplanner_current_location));
                 mToAddress = makeAddressFromLocation();
+                mBuilder.setTo(mToAddress);
+                checkRequestAndSubmit();
             }
         });
 
@@ -204,6 +206,8 @@ public class TripPlanFragment extends Fragment {
             public void onClick(View v) {
                 mFromAddressTextArea.setText(getString(R.string.tripplanner_current_location));
                 mFromAddress = makeAddressFromLocation();
+                mBuilder.setFrom(mFromAddress);
+                checkRequestAndSubmit();
             }
         });
 
@@ -228,6 +232,7 @@ public class TripPlanFragment extends Fragment {
 
         if (mFromAddress == null) {
             mFromAddress = makeAddressFromLocation();
+            mBuilder.setFrom(mFromAddress);
         }
         else {
             mFromAddressTextArea.setText(mFromAddress.toString());

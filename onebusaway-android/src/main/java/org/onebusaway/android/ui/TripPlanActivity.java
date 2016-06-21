@@ -23,18 +23,14 @@ import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.TripPlan;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Layout;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -103,13 +99,23 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         if (mBuilder != null) {
             mBuilder.copyIntoBundle(bundle);
-            // We also saved the itinerary into this bundle.
-            ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) mBuilder.getBundle()
-                    .getSerializable(OTPConstants.ITINERARIES);
-            if (itineraries != null)
-                bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
-        }
 
+            // We also saved the itineraries and the results state in this bundle.
+
+            Bundle source = mBuilder.getBundle();
+
+            ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) source
+                    .getSerializable(OTPConstants.ITINERARIES);
+            if (itineraries != null) {
+                bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+            }
+
+            int rank = source.getInt(OTPConstants.SELECTED_ITINERARY);
+            bundle.putInt(OTPConstants.SELECTED_ITINERARY, rank);
+
+            boolean showMap = source.getBoolean(OTPConstants.SHOW_MAP);
+            bundle.putBoolean(OTPConstants.SHOW_MAP, showMap);
+        }
     }
 
 
@@ -136,6 +142,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     }
 
     private void initResultsFragment() {
+
         TripResultsFragment fragment = new TripResultsFragment();
         fragment.setArguments(mBuilder.getBundle());
         getSupportFragmentManager().beginTransaction()
@@ -162,7 +169,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         if (itineraries.size() > 0) {
 
-            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_plan_fragment_container);
+            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
             if (fragment != null && fragment instanceof TripResultsFragment) {
                 Bundle bundle = fragment.getArguments();
                 bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<>(itineraries));

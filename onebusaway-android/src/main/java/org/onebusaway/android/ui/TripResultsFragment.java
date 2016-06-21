@@ -21,11 +21,9 @@ import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.directions.realtime.RealtimeService;
 import org.onebusaway.android.directions.realtime.RealtimeServiceImpl;
 import org.onebusaway.android.directions.util.ConversionUtils;
-import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
 import org.onebusaway.android.directions.util.DirectionsGenerator;
 import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.opentripplanner.api.model.Itinerary;
@@ -33,13 +31,12 @@ import org.opentripplanner.api.model.Itinerary;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -55,7 +52,8 @@ public class TripResultsFragment extends Fragment {
 
     private BaseMapFragment mMapFragment;
     private ExpandableListView mDirectionsListView;
-    private boolean mShowingMap;
+    private View mMapFragmentFrame;
+    private boolean mShowingMap = false;
 
     private LinearLayout mSwitchViewLayout;
     private ImageView mSwitchViewImageView;
@@ -76,6 +74,7 @@ public class TripResultsFragment extends Fragment {
         mSwitchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
 
         mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
+        mMapFragmentFrame = view.findViewById(R.id.mapFragment);
 
         mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration, R.id.option1Interval);
         mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
@@ -91,8 +90,10 @@ public class TripResultsFragment extends Fragment {
 
         mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
 
-        initMap();
-        initInfo(0);
+        int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
+        mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);
+
+        initInfoAndMap(rank);
 
         return view;
     }
@@ -118,28 +119,27 @@ public class TripResultsFragment extends Fragment {
         return false;
     }
 
-    private void initMap() {
+    private Bundle mMapBundle = new Bundle();
+
+    private void initMap(int trip) {
         mMapFragment = new BaseMapFragment();
 
-        Bundle bundle = new Bundle();
-        bundle.putString(MapParams.MODE, MapParams.MODE_DIRECTIONS);
+        Itinerary itinerary = getItineraries().get(trip);
+        mMapBundle.putString(MapParams.MODE, MapParams.MODE_DIRECTIONS);
+        mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
 
-        Intent intent = new Intent().putExtras(bundle);
+        Intent intent = new Intent().putExtras(mMapBundle);
         getActivity().setIntent(intent);
 
         getChildFragmentManager().beginTransaction()
                 .add(R.id.mapFragment, mMapFragment).commit();
-
-        showMap(false);
     }
-
-    private Bundle mMapBundle = new Bundle();
 
     private void showMap(boolean show) {
 
         mShowingMap = show;
         if (show) {
-            getActivity().findViewById(R.id.mapFragment).bringToFront();
+            mMapFragmentFrame.bringToFront();
             mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
             mSwitchViewImageView.setImageResource(R.drawable.ic_more_vert);
             mSwitchViewTextView.setText(getString(R.string.trip_plan_list_view));
@@ -148,22 +148,26 @@ public class TripResultsFragment extends Fragment {
             mSwitchViewImageView.setImageResource(R.drawable.ic_arrivals_styleb_action_map);
             mSwitchViewTextView.setText(getString(R.string.trip_plan_map_view));
         }
+
+        getArguments().putBoolean(OTPConstants.SHOW_MAP, mShowingMap);
     }
 
-    public void initInfo(int trip) {
+    private void initInfoAndMap(int trip) {
+
+        initMap(trip);
 
         for (int i = 0; i < mOptions.length; i++) {
             mOptions[i].setItinerary(i);
         }
 
-        mOptions[trip].updateInfo();
-        mOptions[trip].updateMap();
+        mOptions[trip].select();
 
+        showMap(mShowingMap);
     }
 
     public void displayNewResults() {
         showMap(mShowingMap);
-        initInfo(0);
+        initInfoAndMap(0);
     }
 
     private String toDateFmt(long ms) {
@@ -191,6 +195,7 @@ public class TripResultsFragment extends Fragment {
         TextView intervalView;
 
         Itinerary itinerary;
+        int rank;
 
         RoutingOptionPicker(View view, int linearLayout, int titleView, int durationView, int intervalView) {
             this.linearLayout = (LinearLayout) view.findViewById(linearLayout);
@@ -212,6 +217,11 @@ public class TripResultsFragment extends Fragment {
             for (RoutingOptionPicker picker : mOptions)
                 picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_option_background));
             linearLayout.setBackgroundResource(R.drawable.bottom_line_grey_blue);
+
+            updateInfo();
+            updateMap();
+
+            getArguments().putInt(OTPConstants.SELECTED_ITINERARY, rank);
         }
 
 
@@ -224,7 +234,7 @@ public class TripResultsFragment extends Fragment {
             }
 
             this.itinerary = trips.get(rank);
-
+            this.rank = rank;
 
             String title = new DirectionsGenerator(itinerary.legs, getContext()).getItineraryTitle();
             String duration = ConversionUtils.getFormattedDurationTextNoSeconds(itinerary.duration, false, getContext());
@@ -254,7 +264,7 @@ public class TripResultsFragment extends Fragment {
             }
         }
 
-        private void updateMap() {
+        void updateMap() {
             mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
             mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
         }

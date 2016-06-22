@@ -417,6 +417,7 @@
     <string name="report_problem_uservehicle_hint">Bus number (optional)</string>
     <string name="report_problem_stop_activity_label">Report Stop Problem</string>
     <string name="report_problem_trip_activity_label">Report Arrival Time Problem</string>
+    <string name="report_problem_report">Report</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -470,6 +471,9 @@
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d
     </string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
+    </string>
+    <string name="bug_report_body_OTP">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nUnable to plan to URL: %5$s
     </string>
 
     <!-- Android Maps v2 -->

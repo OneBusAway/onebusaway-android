@@ -30,6 +30,7 @@
                     android:text="@string/trip_plan_from"
                     android:textColor="@color/trip_plan_label"
                     android:id="@+id/trip_plan_from"
+                    android:layout_gravity="center_vertical"
             />
 
             <AutoCompleteTextView
@@ -43,6 +44,7 @@
                     android:singleLine="true"
                     android:ellipsize="end"
                     android:layout_marginLeft="4dp"
+                    android:layout_gravity="center_vertical"
             />
 
 
@@ -53,7 +55,7 @@
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
                     android:tint="@color/trip_plan_label"
-                    android:baselineAlignBottom="true"
+                    android:layout_gravity="center_vertical"
             />
 
         </TableRow>
@@ -66,6 +68,7 @@
                     android:text="@string/trip_plan_to"
                     android:textColor="@color/trip_plan_label"
                     android:id="@+id/trip_plan_to"
+                    android:layout_gravity="center_vertical"
             />
 
             <AutoCompleteTextView
@@ -78,6 +81,7 @@
                     android:linksClickable="true"
                     android:singleLine="true"
                     android:layout_marginLeft="4dp"
+                    android:layout_gravity="center_vertical"
             />
 
             <ImageButton
@@ -87,7 +91,7 @@
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
                     android:tint="@color/trip_plan_label"
-                    android:baselineAlignBottom="true"
+                    android:layout_gravity="center_vertical"
             />
 
         </TableRow>
@@ -98,12 +102,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingTop="8dp" >
+                android:paddingTop="8dp">
 
             <Spinner
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/leavingChoiceSpinner" />
+                    android:id="@+id/leavingChoiceSpinner"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall"/>
 
             <EditText
                     android:layout_width="wrap_content"
@@ -112,14 +118,18 @@
                     android:text="June 14"
                     android:layout_marginLeft="8dp"
                     android:inputType="none"
-                    android:focusable="false"/>
+                    android:focusable="false"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+            />
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:color="@color/trip_plan_label"
                     android:text="@string/trip_plan_stop_connector"
-                    android:layout_marginLeft="8dp" />
+                    android:layout_marginLeft="8dp"
+                    android:layout_gravity="center_vertical"/>
 
             <EditText
                     android:layout_width="wrap_content"
@@ -129,8 +139,8 @@
                     android:layout_marginLeft="8dp"
                     android:inputType="none"
                     android:focusable="false"
-            />
-
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
 
             <View
                 android:layout_width="0dp"
@@ -139,13 +149,14 @@
             />
 
             <ImageButton
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:scaleType="fitXY"
                     android:id="@+id/resetTimeImageButton"
                     android:src="@drawable/ic_arrival_time"
                     android:background="#00000000"
                     android:tint="@color/trip_plan_label"
+                    android:layout_gravity="center_vertical"
             />
 
         </LinearLayout>

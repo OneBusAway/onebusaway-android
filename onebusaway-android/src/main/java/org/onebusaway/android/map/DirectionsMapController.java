@@ -18,6 +18,7 @@ package org.onebusaway.android.map;
 
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaShapeElement;
+import org.onebusaway.android.util.LocationUtils;
 import org.opentripplanner.api.model.EncodedPolylineBean;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.model.Leg;
@@ -40,6 +41,10 @@ public class DirectionsMapController implements MapModeController {
     private Itinerary mItinerary;
 
     private boolean mZoomed = false;
+
+    private boolean mHasRoute = false;
+
+    private Location mCenter;
 
     public DirectionsMapController(Callback callback) {
         mFragment = callback;
@@ -101,10 +106,19 @@ public class DirectionsMapController implements MapModeController {
             return;
         }
 
+        // Set route overlays for map. If there are no routes (ie start and end are same location)
+        // zoom to origin.
+
+        Leg firstLeg = mItinerary.legs.get(0);
+        mCenter = LocationUtils.makeLocation(firstLeg.from.getLat(), firstLeg.from.getLon());
+
         for (Leg leg : mItinerary.legs) {
             LegShape shape = new LegShape(leg.legGeometry);
-            int color = resolveColor(leg);
-            mFragment.getMapView().setRouteOverlay(color, new LegShape[]{shape}, false);
+            if (shape.getLength() > 0) {
+                mHasRoute = true;
+                int color = resolveColor(leg);
+                mFragment.getMapView().setRouteOverlay(color, new LegShape[]{shape}, false);
+            }
         }
 
     }
@@ -128,7 +142,15 @@ public class DirectionsMapController implements MapModeController {
     public void notifyMapChanged() {
         if (!mZoomed && mFragment.getView() != null &&
                 mFragment.getView().getVisibility() == View.VISIBLE) {
-            mFragment.getMapView().zoomToRoute();
+
+            ObaMapView view = mFragment.getMapView();
+
+            if (mHasRoute) {
+                view.zoomToRoute();
+            } else {
+                view.setMapCenter(mCenter, false, false);
+                view.setZoom(MapParams.DEFAULT_ZOOM);
+            }
             mZoomed = true;
         }
     }

@@ -125,8 +125,7 @@ public class RealtimeServiceImpl implements RealtimeService {
             @Override
             public void onTripRequestComplete(List<Itinerary> itineraries) {
                 if (itineraries == null || itineraries.isEmpty()) {
-                    Log.e(TAG, "Failure checking itineraries");
-                    disableListenForTripUpdates();
+                    onTripRequestFailure(-1, null);
                     return;
                 }
 
@@ -161,6 +160,13 @@ public class RealtimeServiceImpl implements RealtimeService {
                 showNotification(mItineraryDescription, R.string.trip_plan_not_recommended);
                 disableListenForTripUpdates();
 
+            }
+
+            @Override
+            public void onTripRequestFailure(int result, String url) {
+                Log.e(TAG, "Failure checking itineraries. Result=" + result + ", url=" + url);
+                disableListenForTripUpdates();
+                return;
             }
         };
 

@@ -473,6 +473,25 @@ public final class UIUtils {
      * @param location string that show the current location
      */
     public static void sendEmail(Context context, String email, String location) {
+        sendEmail(context, email, location, R.string.bug_report_body);
+    }
+
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param url URL which caused planning to fail
+     */
+    public static void sendEmailOTP(Context context, String email, String url) {
+        sendEmail(context, email, url, R.string.bug_report_body_OTP);
+    }
+
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param extra extra data for email
+     * @param bugReportBody string resource for bug report
+     */
+    private static void sendEmail(Context context, String email, String extra, int bugReportBody) {
         PackageManager pm = context.getPackageManager();
         PackageInfo appInfo;
         try {
@@ -483,13 +502,13 @@ public final class UIUtils {
             return;
         }
         String body;
-        if (location != null) {
-            body = context.getString(R.string.bug_report_body,
+        if (extra != null) {
+            body = context.getString(bugReportBody,
                     appInfo.versionName,
                     Build.MODEL,
                     Build.VERSION.RELEASE,
                     Build.VERSION.SDK_INT,
-                    location);
+                    extra);
         } else {
             body = context.getString(R.string.bug_report_body_without_location,
                     appInfo.versionName,

@@ -19,16 +19,13 @@ package org.onebusaway.android.directions.tasks;
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.util.JacksonConfig;
 import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.error.PlannerError;
 import org.opentripplanner.api.ws.Message;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.routing.core.TraverseMode;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -57,6 +54,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     public interface Callback {
         void onTripRequestComplete(List<Itinerary> itineraries);
+        void onTripRequestFailure(int errorCode, String url);
     }
 
     // Constants that are defined in OTPApp in CUTR OTP Android app
@@ -76,6 +74,8 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     private Resources mResources;
 
     private String mBaseUrl;
+
+    private String mRequestUrl;
 
     private Callback mCallback;
 
@@ -141,22 +141,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             Log.e(TAG, "Error in TripRequest Cancelled dismissing dialog: " + e);
         }
 
-        Activity activityRetrieved = mActivity.get();
-        if (activityRetrieved != null) {
-            AlertDialog.Builder geocoderAlert = new AlertDialog.Builder(activityRetrieved);
-            geocoderAlert.setTitle(R.string.tripplanner_results_title)
-                    .setMessage(R.string.tripplanner_error_request_timeout)
-                    .setCancelable(false)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-
-            AlertDialog alert = geocoderAlert.create();
-            alert.show();
-        }
-
-        Log.e(TAG, "No route to display!");
+        mCallback.onTripRequestFailure(Message.REQUEST_TIMEOUT.getId(), mRequestUrl);
     }
 
     protected void onPostExecute(Long result) {
@@ -179,86 +164,19 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
                 && mResponse.getPlan().getItinerary().get(0) != null) {
 
             mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary());
+
         } else {
-            Log.d(TAG, "Response: " + mResponse);
-            Activity activityRetrieved = mActivity.get();
-            if (activityRetrieved != null) {
-                AlertDialog.Builder feedback = new AlertDialog.Builder(activityRetrieved);
-                feedback.setTitle(mResources
-                        .getString(R.string.tripplanner_error_dialog_title));
-                feedback.setNeutralButton(mResources.getString(android.R.string.ok),
-                        null);
-                String msg = mResources
-                        .getString(R.string.tripplanner_error_not_defined);
 
-
-                if (mResponse != null && mResponse.getError() != null) {
-                    PlannerError error = mResponse.getError();
-                    int errorCode = error.getId();
-
-                    if (mResponse != null && mResponse.getError() != null
-                            && errorCode != Message.PLAN_OK
-                            .getId()) {
-
-                        msg = getErrorMessage(mResponse.getError().getId());
-                        if (msg == null) {
-                            msg = mResponse.getError().getMsg();
-                        }
-                    }
-                }
-                feedback.setMessage(msg);
-                feedback.create().show();
+            Log.e(TAG, "Error retrieving routing from OTP server: " + mResponse);
+            int errorCode = -1;
+            if (mResponse != null && mResponse.getError() != null) {
+                errorCode = mResponse.getError().getId();
             }
+            mCallback.onTripRequestFailure(errorCode, mRequestUrl);
 
-            Log.e(TAG, "No route to display!");
         }
     }
 
-    protected String getErrorMessage(int errorCode) {
-        if (errorCode == Message.SYSTEM_ERROR.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_system));
-        } else if (errorCode == Message.OUTSIDE_BOUNDS.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_outside_bounds));
-        } else if (errorCode == Message.PATH_NOT_FOUND.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_path_not_found));
-        } else if (errorCode == Message.NO_TRANSIT_TIMES.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_no_transit_times));
-        } else if (errorCode == Message.REQUEST_TIMEOUT.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_request_timeout));
-        } else if (errorCode == Message.BOGUS_PARAMETER.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_bogus_parameter));
-        } else if (errorCode == Message.GEOCODE_FROM_NOT_FOUND.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_from_not_found));
-        } else if (errorCode == Message.GEOCODE_TO_NOT_FOUND.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_to_not_found));
-        } else if (errorCode == Message.GEOCODE_FROM_TO_NOT_FOUND.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_from_to_not_found));
-        } else if (errorCode == Message.TOO_CLOSE.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_too_close));
-        } else if (errorCode == Message.LOCATION_NOT_ACCESSIBLE.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_location_not_accessible));
-        } else if (errorCode == Message.GEOCODE_FROM_AMBIGUOUS.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_from_ambiguous));
-        } else if (errorCode == Message.GEOCODE_TO_AMBIGUOUS.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_to_ambiguous));
-        } else if (errorCode == Message.GEOCODE_FROM_TO_AMBIGUOUS.getId()) {
-            return (mResources
-                    .getString(R.string.tripplanner_error_geocode_from_to_ambiguous));
-        } else if (errorCode == Message.UNDERSPECIFIED_TRIANGLE.getId()
-                || errorCode == Message.TRIANGLE_NOT_AFFINE.getId()
-                || errorCode == Message.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.getId()
-                || errorCode == Message.TRIANGLE_VALUES_NOT_SET.getId()) {
-            return (mResources.getString(R.string.tripplanner_error_triangle));
-        } else {
-            return null;
-        }
-    }
 
     protected Response requestPlan(Request requestParams, String prefix, String baseURL) {
         HashMap<String, String> tmp = requestParams.getParameters();
@@ -291,6 +209,9 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
         }
 
         String u = baseURL + prefix + PLAN_LOCATION + params;
+
+        // Save url for error reporting purposes
+        mRequestUrl = u;
 
         Log.d(TAG, "URL: " + u);
 

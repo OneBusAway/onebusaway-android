@@ -39,7 +39,7 @@
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens
     </string>
-    <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notificaitons</string>
+    <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -124,6 +124,7 @@
     <string name="analytics_label_stop_problem">Stop Problem</string>
     <string name="analytics_label_trip_problem">Trip Problem</string>
     <string name="analytics_label_app_feedback">Send Email Link</string>
+    <string name="analytics_label_app_feedback_otp">Reported OTP problem</string>
     <string name="analytics_label_app_feedback_without_location">Send Email Link without location</string>
     <string name="analytics_label_customer_service">Customer Service</string>
     <string name="analytics_label_customer_service_web">Open web page</string>

@@ -90,7 +90,7 @@ public class UriAssert extends Assert {
     /**
      * Check request for matching Uri.
      *
-     * @param expectedUri The Uri the test should expect (query values are ignored, use
+     * @param expectedUriString The Uri the test should expect (query values are ignored, use
      *                    expectedQuery)
      */
     public static void assertUriMatch(String expectedUriString, RequestBase actualRequest) {
@@ -100,7 +100,7 @@ public class UriAssert extends Assert {
     /**
      * Check request for matching Uri.
      *
-     * @param expectedUri   The Uri the test should expect (query values are ignored, use
+     * @param expectedUriString   The Uri the test should expect (query values are ignored, use
      *                      expectedQuery)
      * @param expectedQuery A Map of query key/values required to be in the Uri.
      *                      Use asterisk to require key, but ignore value. Order is irrelevant.

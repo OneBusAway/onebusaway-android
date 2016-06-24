@@ -220,7 +220,7 @@ public class MockRegion {
 
         return new ObaRegionElement(
                 0,
-                "Test-RegionWithHttps",
+                "Test-RegionWithHttpsAndPort",
                 true,
                 "https://api.tampa.onebusaway.org:8443/api/",
                 null,

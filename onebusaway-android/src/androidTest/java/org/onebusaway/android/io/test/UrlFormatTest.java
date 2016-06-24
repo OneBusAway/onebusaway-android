@@ -243,6 +243,52 @@ public class UrlFormatTest extends ObaTestCase {
         );
     }
 
+    public void testHttps() {
+        ObaRegion region = MockRegion.getRegionWithHttps();
+
+        // Test by setting API directly
+        Application.get().setCustomApiUrl(region.getObaBaseUrl());
+        _assertUrlHttps();
+    }
+
+    private void _assertUrlHttps() {
+        ObaArrivalInfoRequest.Builder builder =
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_3105");
+        ObaArrivalInfoRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "https://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
+    public void testHttpsAndPort() {
+        ObaRegion region = MockRegion.getRegionWithHttpsAndPort();
+
+        // Test by setting API directly
+        Application.get().setCustomApiUrl(region.getObaBaseUrl());
+        _assertUrlHttpsWithPort();
+    }
+
+    private void _assertUrlHttpsWithPort() {
+        ObaArrivalInfoRequest.Builder builder =
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "Hillsborough Area Regional Transit_3105");
+        ObaArrivalInfoRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "https://api.tampa.onebusaway.org:8443/api/api/where/arrivals-and-departures-for-stop/Hillsborough%20Area%20Regional%20Transit_3105.json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
+
     public void testRegionBaseUrls() {
         // Checks all bundled region base URLs to make sure they are real URLs
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(getContext());

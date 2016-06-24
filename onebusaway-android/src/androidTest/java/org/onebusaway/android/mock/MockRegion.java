@@ -175,6 +175,68 @@ public class MockRegion {
     }
 
     /**
+     * Returns a test version of the Tampa region using HTTPS (i.e.,
+     * https://api.tampa.onebusaway.org/api/), as the base URL
+     *
+     * @return a test version of the Tampa region using HTTPS (i.e.,
+     * https://api.tampa.onebusaway.org/api/), as the base URL
+     */
+    public static ObaRegion getRegionWithHttps() {
+        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+                0.5424609999999994, 0.576357999999999);
+        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        bounds[0] = bound;
+
+        return new ObaRegionElement(
+                0,
+                "Test-RegionWithHttps",
+                true,
+                "https://api.tampa.onebusaway.org/api/",
+                null,
+                bounds,
+                new ObaRegionElement.Open311Server[0],
+                "en_US",
+                "test@test.org",
+                true,
+                true,
+                false,
+                null,
+                false,
+                null);
+    }
+
+    /**
+     * Returns a test version of the Tampa region using HTTPS and a port (i.e.,
+     * https://api.tampa.onebusaway.org:8443/api/), as the base URL
+     *
+     * @return a test version of the Tampa region using HTTPS and a port (i.e.,
+     * https://api.tampa.onebusaway.org:8443/api), as the base URL
+     */
+    public static ObaRegion getRegionWithHttpsAndPort() {
+        ObaRegionElement.Bounds bound = new ObaRegionElement.Bounds(27.976910500000002, -82.445851,
+                0.5424609999999994, 0.576357999999999);
+        ObaRegionElement.Bounds[] bounds = new ObaRegionElement.Bounds[1];
+        bounds[0] = bound;
+
+        return new ObaRegionElement(
+                0,
+                "Test-RegionWithHttps",
+                true,
+                "https://api.tampa.onebusaway.org:8443/api/",
+                null,
+                bounds,
+                new ObaRegionElement.Open311Server[0],
+                "en_US",
+                "test@test.org",
+                true,
+                true,
+                false,
+                null,
+                false,
+                null);
+    }
+
+    /**
      * Returns a test version of the Tampa region without an OBA Discovery or Real-time APIs
      *
      * @return a test version of the Tampa region without an OBA Discovery or Real-time APIs

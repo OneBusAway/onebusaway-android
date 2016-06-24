@@ -80,6 +80,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         ReportProblemFragmentCallback, IssueLocationHelper.Callback,
         SimpleArrivalListFragment.Callback, GeocoderTask.Callback {
 
+    private static final int REQUEST_CODE = 0;
+
     private static final String SHOW_STOP_MARKER = ".showMarker";
 
     private static final String SELECTED_SERVICE = ".selectedService";
@@ -172,29 +174,50 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     /**
      * Starts the InfrastructureIssueActivity.
      *
-     * @param activity The context of the activity.
+     * startActivityForResult was used to close the calling activity. This used in BaseReportActivity
+     * to close it when a user submits an issue.
+     *
+     * @param activity The parent activity.
      * @param intent   The Intent containing focusId, lat, lon of the map
      */
     public static void start(Activity activity, Intent intent) {
-        activity.startActivityForResult(makeIntent(activity, intent), 0);
+        activity.startActivityForResult(makeIntent(activity, intent), REQUEST_CODE);
     }
 
     /**
      * Starts the InfrastructureIssueActivity with a given open311 service category selected
      *
-     * @param activity The context of the activity.
+     * startActivityForResult was used to close the calling activity. This used in BaseReportActivity
+     * to close it when a user submits an issue.
+     *
+     * @param activity The parent activity.
      * @param intent   The Intent containing focusId, lat, lon of the map
      */
     public static void startWithService(Activity activity, Intent intent, String serviceKeyword) {
         intent = makeIntent(activity, intent);
         intent.putExtra(SELECTED_SERVICE, serviceKeyword);
-        activity.startActivityForResult(intent, 0);
+        activity.startActivityForResult(intent, REQUEST_CODE);
     }
 
     /**
      * Starts the InfrastructureIssueActivity with a given open311 service category selected
      *
-     * @param activity       The context of the activity.
+     * @param context The context of the parent activity.
+     * @param intent   The Intent containing focusId, lat, lon of the map
+     */
+    public static void startWithService(Context context, Intent intent, String serviceKeyword) {
+        intent = makeIntent(context, intent);
+        intent.putExtra(SELECTED_SERVICE, serviceKeyword);
+        context.startActivity(intent);
+    }
+
+    /**
+     * Starts the InfrastructureIssueActivity with a given open311 service category selected
+     *
+     * startActivityForResult was used to close the calling activity. This used in BaseReportActivity
+     * to close it when a user submits an issue.
+     *
+     * @param activity       The parent activity.
      * @param intent         The Intent containing focusId, lat, lon of the map
      * @param obaArrivalInfo Arrival info for trip problems
      */
@@ -206,7 +229,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         intent.putExtra(TRIP_INFO, obaArrivalInfo);
         intent.putExtra(AGENCY_NAME, agencyName);
 
-        activity.startActivityForResult(intent, 0);
+        activity.startActivityForResult(intent, REQUEST_CODE);
     }
 
     /**

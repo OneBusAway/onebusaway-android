@@ -14,11 +14,12 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              style="@style/ListItem"
-              android:id="@+id/stop_list_container"
-              android:layout_width="fill_parent"
-                android:layout_height="77dp"
-              android:orientation="horizontal">
+                style="@style/ListItem"
+                android:id="@+id/stop_list_container"
+                android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:minHeight="77dp"
+                android:orientation="horizontal">
     <ImageView
             android:id="@+id/stop_favorite"
             android:src="@drawable/ic_toggle_star"
@@ -47,7 +48,9 @@
                 style="@style/Line1Text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"/>
+                android:layout_gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="1"/>
         <TextView
                 android:id="@+id/direction"
                 style="@style/Line2Text"

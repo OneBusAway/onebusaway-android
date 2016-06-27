@@ -15,7 +15,14 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+
 import org.onebusaway.android.R;
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.io.elements.ObaRegion;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -25,11 +32,18 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.View;
 
 /**
  * Helper methods specific to Google Maps API v2
  */
 public class ProprietaryMapHelpV2 {
+
+    private static final String TAG = "ProprietaryMapHelpV2";
+
+    private static final String PLACES_ADDRESS_SEPARATOR = ",";
 
     /**
      * Returns true if Android Maps V2 is installed, false if it is not
@@ -82,4 +96,72 @@ public class ProprietaryMapHelpV2 {
         AlertDialog dialog = builder.create();
         dialog.show();
     }
+
+    /**
+     * Decode the result of an Intent to Google Places Autocomplete into a CustomAddress.
+     * Here because of LatLng, Place which are specific to Google Places API.
+     */
+    public static CustomAddress getCustomAddressFromPlacesIntent(Context context, Intent intent) {
+        Place place = PlaceAutocomplete.getPlace(context, intent);
+
+        CustomAddress address = new CustomAddress();
+
+        String placeName = place.getName().toString();
+        address.setAddressLine(0, placeName);
+
+        String addressString = place.getAddress().toString();
+        String[] tokens = addressString.split(PLACES_ADDRESS_SEPARATOR);
+
+        // Posible that first line of address is place name.
+        int start = placeName.equals(tokens[0]) ? 1 : 0;
+
+        int j = 1; // address line index
+        for (int i = start; i < tokens.length; i++) {
+            address.setAddressLine(j++, tokens[i]);
+        }
+
+        LatLng loc = place.getLatLng();
+
+        address.setLatitude(loc.latitude);
+        address.setLongitude(loc.longitude);
+
+        return address;
+    }
+
+    /**
+     * Helper class to start Google Places Autocomplete when a field is clicked.
+     * Does not check that Google API is available.
+     * Here because of the use of LatLngBounds. Decode result with
+     * getCustomAddressFromPlacesIntent.
+     */
+    public static class StartPlacesAutocompleteOnClick implements View.OnClickListener {
+
+        int mRequestCode;
+        Fragment mFragment;
+        ObaRegion mRegion;
+
+        public StartPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region) {
+            mRequestCode = requestCode;
+            mFragment = fragment;
+            mRegion = region;
+        }
+
+        @Override
+        public void onClick(View v) {
+            try {
+                LatLngBounds bounds = MapHelpV2.getRegionBounds(mRegion);
+
+                Intent intent =
+                        new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                .setBoundsBias(bounds)
+                                .build(mFragment.getActivity());
+
+                mFragment.startActivityForResult(intent, mRequestCode);
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting autocomplete: " + e.toString());
+            }
+
+        }
+    }
+
 }

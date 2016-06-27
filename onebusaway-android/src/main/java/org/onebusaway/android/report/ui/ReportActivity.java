@@ -16,13 +16,6 @@
 
 package org.onebusaway.android.report.ui;
 
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.Window;
-
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
@@ -38,6 +31,13 @@ import org.onebusaway.android.ui.PreferencesActivity;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.Window;
 
 /**
  * Fragment Activity for handling all report

@@ -194,4 +194,5 @@ public class MapHelpV2 {
 
         return makeLatLng(closestVehicleLocation);
     }
+
 }

@@ -19,10 +19,14 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.io.elements.ObaRegion;
 
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +35,10 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,6 +57,11 @@ public class LocationUtils {
     public static final float ACC_THRESHOLD = 50f;  // 50 meters
 
     public static final long TIME_THRESHOLD = TimeUnit.MINUTES.toMillis(10);  // 10 minutes
+
+    private static final int GEOCODER_MAX_RESULTS = 5;
+    //in meters
+    private static final int GEOCODING_MAX_ERROR = 100;
+
 
     public static Location getDefaultSearchCenter() {
         ObaRegion region = Application.get().getCurrentRegion();
@@ -237,4 +250,149 @@ public class LocationUtils {
             Log.d(TAG, "GoogleApiClient.onConnectionFailed");
         }
     }
+
+    public static List<CustomAddress> processGeocoding(Context context, ObaRegion region,
+                                                            String... reqs) {
+        return processGeocoding(context, region, false, reqs);
+    }
+
+    public static List<CustomAddress> processGeocoding(Context context, ObaRegion region, boolean geocodingForMarker, String... reqs) {
+        ArrayList<CustomAddress> addressesReturn = new ArrayList<CustomAddress>();
+
+        String address = reqs[0];
+
+        if (address == null || address.equalsIgnoreCase("")) {
+            return null;
+        }
+
+        double latitude = 0, longitude = 0;
+        boolean latLngSet = false;
+
+        try {
+            if (reqs.length >= 3) {
+                latitude = Double.parseDouble(reqs[1]);
+                longitude = Double.parseDouble(reqs[2]);
+                latLngSet = true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Geocoding without reference latitude/longitude");
+        }
+
+        if (address.equalsIgnoreCase(context.getString(R.string.tripplanner_current_location))) {
+            if (latLngSet) {
+                CustomAddress addressReturn = new CustomAddress(context.getResources().getConfiguration().locale);
+                addressReturn.setLatitude(latitude);
+                addressReturn.setLongitude(longitude);
+                addressReturn.setAddressLine(addressReturn.getMaxAddressLineIndex() + 1,
+                        context.getString(R.string.tripplanner_current_location));
+
+                addressesReturn.add(addressReturn);
+
+                return addressesReturn;
+            }
+            return null;
+        }
+
+        List<CustomAddress> addresses = new ArrayList<>();
+
+        // Originally checks app preferences. Could add this as a preference.
+
+        Geocoder gc = new Geocoder(context);
+        try {
+            List<Address> androidTypeAddresses;
+            if (region != null) {
+
+                double[] regionSpan = new double[4];
+                RegionUtils.getRegionSpan(region, regionSpan);
+                double minLat = regionSpan[2] - (regionSpan[0] / 2);
+                double minLon = regionSpan[3] - (regionSpan[1] / 2);
+                double maxLat = regionSpan[2] + (regionSpan[0] / 2);
+                double maxLon = regionSpan[3] + (regionSpan[1] / 2);
+
+                androidTypeAddresses = gc.getFromLocationName(address,
+                        GEOCODER_MAX_RESULTS, minLat, minLon, maxLat, maxLon);
+            } else {
+                androidTypeAddresses = gc.getFromLocationName(address,
+                        GEOCODER_MAX_RESULTS);
+            }
+            for (Address androidTypeAddress : androidTypeAddresses) {
+                addresses.add(new CustomAddress(androidTypeAddress));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        addresses = filterAddressesBBox(region, addresses);
+
+        boolean resultsCloseEnough = true;
+
+        if (geocodingForMarker && latLngSet) {
+            float results[] = new float[1];
+            resultsCloseEnough = false;
+
+            for (CustomAddress addressToCheck : addresses) {
+                Location.distanceBetween(latitude, longitude,
+                        addressToCheck.getLatitude(), addressToCheck.getLongitude(), results);
+                if (results[0] < GEOCODING_MAX_ERROR) {
+                    resultsCloseEnough = true;
+                    break;
+                }
+            }
+        }
+
+        if ((addresses == null) || addresses.isEmpty() || !resultsCloseEnough) {
+            if (addresses == null) {
+                addresses = new ArrayList<CustomAddress>();
+            }
+            Log.e(TAG, "Geocoder did not find enough addresses: " + addresses);
+        }
+
+        addresses = filterAddressesBBox(region, addresses);
+
+        if (geocodingForMarker && latLngSet && addresses != null && !addresses.isEmpty()) {
+            float results[] = new float[1];
+            float minDistanceToOriginalLatLon = Float.MAX_VALUE;
+            CustomAddress closestAddress = addresses.get(0);
+
+            for (CustomAddress addressToCheck : addresses) {
+                Location.distanceBetween(latitude, longitude,
+                        addressToCheck.getLatitude(), addressToCheck.getLongitude(), results);
+                if (results[0] < minDistanceToOriginalLatLon) {
+                    closestAddress = addressToCheck;
+                    minDistanceToOriginalLatLon = results[0];
+                }
+            }
+            addressesReturn.add(closestAddress);
+        } else {
+            addressesReturn.addAll(addresses);
+        }
+
+        return addressesReturn;
+    }
+
+    /**
+     * Filters the addresses obtained in geocoding process, removing the
+     * results outside server limits.
+     *
+     * @param addresses list of addresses to filter
+     * @return a new list filtered
+     */
+    private static List<CustomAddress> filterAddressesBBox(ObaRegion region, List<CustomAddress> addresses) {
+        if ((!(addresses == null || addresses.isEmpty())) && region != null) {
+            for (Iterator<CustomAddress> it = addresses.iterator(); it.hasNext(); ) {
+                CustomAddress address = it.next();
+
+                Location loc = new Location("");
+                loc.setLatitude(address.getLatitude());
+                loc.setLongitude(address.getLongitude());
+
+                if (!RegionUtils.isLocationWithinRegion(loc, region)) {
+                    it.remove();
+                }
+            }
+        }
+        return addresses;
+    }
+
 }

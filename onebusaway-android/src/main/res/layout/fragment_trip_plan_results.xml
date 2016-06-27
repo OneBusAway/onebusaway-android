@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:weightSum="1"
+              android:background="#eeeeee">
+
+
+
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+    >
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="1dp"
+                android:background="@drawable/bottom_line_grey_blue"
+                android:gravity="center_vertical"
+                android:id="@+id/option1LinearLayout"
+                android:padding="4dp">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option1Title"
+                    android:textColor="@color/body_text_2"
+                    android:singleLine="true"
+                    android:ellipsize="end"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option1Duration"
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option1Interval"
+                    android:textColor="@color/body_text_2" />
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="1dp"
+                android:background="@color/trip_option_background"
+                android:gravity="center_vertical"
+                android:id="@+id/option2LinearLayout"
+                android:padding="4dp">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option2Title"
+                    android:textColor="@color/body_text_2"
+                    android:singleLine="true"
+                    android:ellipsize="end"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option2Duration"
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option2Interval"
+                    android:textColor="@color/body_text_2" />
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/trip_option_background"
+                android:gravity="center_vertical"
+                android:id="@+id/option3LinearLayout"
+                android:padding="4dp"
+                >
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option3Title"
+                    android:textColor="@color/body_text_2"
+                    android:singleLine="true"
+                    android:ellipsize="end" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option3Duration"
+                    android:textColor="@color/body_text_2" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option3Interval"
+                    android:textColor="@color/body_text_2" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/switchViewLayout"
+            android:layout_marginTop="2dp"
+            android:background="@android:color/white"
+            android:layout_marginBottom="2dp">
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/trip_plan_switch_view"
+                android:id="@+id/textView2"
+                android:gravity="center_vertical"
+                android:layout_marginLeft="10dp"/>
+
+        <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/switchViewImageView"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_arrivals_styleb_action_map"
+                android:tint="@color/theme_primary" />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/trip_plan_map_view"
+                android:id="@+id/switchViewText"
+                android:gravity="center_vertical"/>
+
+    </LinearLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/directionsFrame">
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/mapFragment"/>
+
+        <ExpandableListView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@android:color/white"
+                android:id="@+id/directionsListView"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/mapFrame">
+
+    </FrameLayout>
+
+</LinearLayout>

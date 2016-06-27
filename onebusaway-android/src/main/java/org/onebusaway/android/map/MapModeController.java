@@ -100,6 +100,8 @@ public interface MapModeController {
         // Set lines to be shown on the map view
         void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes);
 
+        void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes, boolean clear);
+
         /**
          * Updates markers for the provided routeIds from the status info from the given
          * ObaTripsForRouteResponse

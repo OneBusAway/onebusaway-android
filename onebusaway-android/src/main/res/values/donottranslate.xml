@@ -39,9 +39,11 @@
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens
     </string>
+    <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notificaitons</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
+
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>
 
@@ -89,6 +91,7 @@
     <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
+    <string name="analytics_label_button_press_tripplan">Clicked Trip Plan Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_tutorial">Clicked Tutorial Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>

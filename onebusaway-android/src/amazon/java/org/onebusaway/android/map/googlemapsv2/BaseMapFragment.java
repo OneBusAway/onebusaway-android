@@ -67,11 +67,13 @@ import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaResponse;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
+import org.onebusaway.android.map.DirectionsMapController;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -402,6 +404,8 @@ public class BaseMapFragment extends SupportMapFragment
             mController = new RouteMapController(this);
         } else if (MapParams.MODE_STOP.equals(mode)) {
             mController = new StopMapController(this);
+        } else if (MapParams.MODE_DIRECTIONS.equals(mode)) {
+            mController = new DirectionsMapController(this);
         }
         mController.setState(args);
         mController.onResume();
@@ -524,6 +528,11 @@ public class BaseMapFragment extends SupportMapFragment
                             Application.get().getCurrentRegion().getName()),
                     Toast.LENGTH_LONG
             ).show();
+        }
+
+        // If region changed and in HomeActivity, redraw nav drawer (possible add Plan a Trip).
+        if (currentRegionChanged && getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).redrawNavigationDrawerFragment();
         }
     }
 
@@ -717,9 +726,11 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
-    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes) {
+    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes, boolean clear) {
         if (mMap != null) {
-            mLineOverlay.clear();
+            if (clear) {
+                mLineOverlay.clear();
+            }
             PolylineOptions lineOptions;
 
             int totalPoints = 0;
@@ -739,6 +750,11 @@ public class BaseMapFragment extends SupportMapFragment
 
             Log.d(TAG, "Total points for route polylines = " + totalPoints);
         }
+    }
+
+    @Override
+    public void setRouteOverlay(int lineOverlayColor, ObaShape[] shapes) {
+        setRouteOverlay(lineOverlayColor, shapes, true);
     }
 
     /**

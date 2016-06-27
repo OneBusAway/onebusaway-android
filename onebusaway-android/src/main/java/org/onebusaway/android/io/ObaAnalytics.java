@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.support.v4.app.Fragment;
-
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -29,6 +23,12 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.support.v4.app.Fragment;
 
 import java.security.MessageDigest;
 

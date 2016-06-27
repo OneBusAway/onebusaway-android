@@ -21,6 +21,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.ui.MaterialListAdapter;
 import org.onebusaway.android.ui.MaterialListItem;
+import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.res.TypedArray;
@@ -128,6 +129,7 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             String email = getString(R.string.ri_app_feedback_email);
             String locationString = getActivity().getIntent()
                     .getStringExtra(BaseReportActivity.LOCATION_STRING);
+
             UIUtils.sendEmail(getActivity(), email, locationString);
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),

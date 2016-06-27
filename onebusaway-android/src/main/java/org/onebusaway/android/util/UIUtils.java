@@ -470,9 +470,33 @@ public final class UIUtils {
     /**
      * Opens email apps based on the given email address
      * @param email address
-     * @param location string that show the current location
+     * @param location string that shows the current location
      */
     public static void sendEmail(Context context, String email, String location) {
+        String obaRegionName = RegionUtils.getObaRegionName();
+        Boolean autoRegion = Application.get().getPrefs()
+                .getBoolean(context.getString(R.string.preference_key_auto_select_region),
+                        Boolean.FALSE);
+        String regionSelectionMethod;
+        if (autoRegion) {
+            regionSelectionMethod = context.getString(R.string.region_selected_auto);
+        } else {
+            regionSelectionMethod = context.getString(R.string.region_selected_manually);
+        }
+
+        UIUtils.sendEmail(context, email, location, obaRegionName, regionSelectionMethod);
+    }
+
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param location string that shows the current location
+     * @param regionName name of the current api region
+     * @param regionSelectionMethod string that shows if the current api region selected manually or
+     *                              automatically
+     */
+    private static void sendEmail(Context context, String email, String location, String regionName,
+                                 String regionSelectionMethod) {
         PackageManager pm = context.getPackageManager();
         PackageInfo appInfo;
         try {
@@ -489,6 +513,8 @@ public final class UIUtils {
                     Build.MODEL,
                     Build.VERSION.RELEASE,
                     Build.VERSION.SDK_INT,
+                    regionName,
+                    regionSelectionMethod,
                     location);
         } else {
             body = context.getString(R.string.bug_report_body_without_location,

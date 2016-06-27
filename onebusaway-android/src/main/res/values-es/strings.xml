@@ -463,7 +463,7 @@
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
     <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
-        %1$s\nModelo: %2$s\nVersión SO: %3$s / %4$d\nLoc: %5$s
+        %1$s\nModelo: %2$s\nVersión SO: %3$s / %4$d\nRegion/API: %5$s (%6$s)\nLoc: %7$s
     </string>
     <string name="bug_report_body_without_location">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
         %1$s\nModelo: %2$s\n nVersión SO: %3$s / %4$d

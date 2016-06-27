@@ -654,7 +654,7 @@
     <string name="tutorial_opt_out_dialog_title">Show tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">Would you like to see popup descriptions for how to
         use OneBusAway? You can always turn the popups on or off in Settings, or show the
-        tutorial later via \"Help->Show Tutorial\".
+        tutorial later via Help.
     </string>
     <string name="tutorial_arrival_header_arrival_info_title">How long until your bus arrives?
     </string>

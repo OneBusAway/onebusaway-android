@@ -15,12 +15,6 @@
  */
 package org.onebusaway.android.io;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.location.Location;
-import android.support.v4.app.Fragment;
-
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -28,9 +22,13 @@ import com.google.android.gms.analytics.Tracker;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.RegionUtils;
 
-import java.security.MessageDigest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.location.Location;
+import android.support.v4.app.Fragment;
 
 /**
  * Analytics class for tracking the app
@@ -111,7 +109,7 @@ public class ObaAnalytics {
         if (isAnalyticsActive()) {
             Tracker tracker = Application.get().getTracker(Application.TrackerName.APP_TRACKER);
             Tracker tracker2 = Application.get().getTracker(Application.TrackerName.GLOBAL_TRACKER);
-            String obaRegionName = getObaRegionName();
+            String obaRegionName = RegionUtils.getObaRegionName();
 
             tracker.send(new HitBuilders.EventBuilder()
                     .setCategory(category)
@@ -219,24 +217,5 @@ public class ObaAnalytics {
     private static Boolean isAnalyticsActive() {
         SharedPreferences settings = Application.getPrefs();
         return settings.getBoolean(Application.get().getString(R.string.preferences_key_analytics), Boolean.TRUE);
-    }
-
-    private static String getObaRegionName() {
-        String regionName = null;
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region != null && region.getName() != null) {
-            regionName = region.getName();
-        } else if (Application.get().getCustomApiUrl() != null) {
-            MessageDigest digest;
-            try {
-                digest = MessageDigest.getInstance("SHA-1");
-                digest.update(Application.get().getCustomApiUrl().getBytes());
-                regionName = Application.get().getString(R.string.analytics_label_custom_url) +
-                        ": " + Application.getHex(digest.digest());
-            } catch (Exception e) {
-                regionName = Application.get().getString(R.string.analytics_label_custom_url);
-            }
-        }
-        return regionName;
     }
 }

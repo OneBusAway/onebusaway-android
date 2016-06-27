@@ -16,6 +16,7 @@
 package org.onebusaway.android.report.ui.dialog;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaAgencyWithCoverage;
@@ -23,6 +24,7 @@ import org.onebusaway.android.io.request.ObaAgenciesWithCoverageRequest;
 import org.onebusaway.android.io.request.ObaAgenciesWithCoverageResponse;
 import org.onebusaway.android.report.ui.BaseReportActivity;
 import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
@@ -123,6 +125,7 @@ public class CustomerServiceDialog extends DialogFragment implements
                     public void onClick(View view) {
                         String locationString = getActivity().getIntent().
                                 getStringExtra(BaseReportActivity.LOCATION_STRING);
+
                         UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
 
                         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),

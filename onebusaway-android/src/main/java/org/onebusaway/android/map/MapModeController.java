@@ -192,6 +192,8 @@ public interface MapModeController {
 
     void onSaveInstanceState(Bundle outState);
 
+    void onViewStateRestored(Bundle savedInstanceState);
+
     /**
      * Called when we have the user's location,
      * or when they explicitly said to go to their location.

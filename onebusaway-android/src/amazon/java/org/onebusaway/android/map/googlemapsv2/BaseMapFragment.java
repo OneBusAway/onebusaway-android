@@ -333,6 +333,12 @@ public class BaseMapFragment extends SupportMapFragment
         outState.putInt(MapParams.MAP_PADDING_BOTTOM, mMapPaddingBottom);
     }
 
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        mController.onViewStateRestored(savedInstanceState);
+        super.onViewStateRestored(savedInstanceState);
+    }
+
     public boolean isRouteDisplayed() {
         return (mController != null) &&
                 MapParams.MODE_ROUTE.equals(mController.getMode());

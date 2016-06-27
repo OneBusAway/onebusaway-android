@@ -458,12 +458,14 @@
     <string name="region_disabled_auto_selection">Disabled automatic region selection. You can
         enable in Preferences.
     </string>
+    <string name="region_selected_auto">selected automatically</string>
+    <string name="region_selected_manually">selected manually</string>
     <string name="region_region_found">Found %1$s region</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nLoc: %5$s
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nRegion/API: %5$s (%6$s)\nLoc: %7$s
     </string>
     <string name="bug_report_body_without_location">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d

@@ -33,6 +33,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
 
+import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -111,6 +112,35 @@ public class RegionUtils {
             }
         }
         return closestRegion;
+    }
+
+    /**
+     * Get the region name if it is available. If there is a custom url instead of a region from
+     * the region api, then hash the custom url and return it.
+     *
+     * @return regionName
+     */
+    public static String getObaRegionName() {
+        String regionName = null;
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null && region.getName() != null) {
+            regionName = region.getName();
+        } else if (Application.get().getCustomApiUrl() != null) {
+            regionName = createHashCode(Application.get().getCustomApiUrl().getBytes());
+        }
+        return regionName;
+    }
+
+    private static String createHashCode(byte[] bytes) {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-1");
+            digest.update(bytes);
+            return Application.get().getString(R.string.analytics_label_custom_url) +
+                    ": " + Application.getHex(digest.digest());
+        } catch (Exception e) {
+            return Application.get().getString(R.string.analytics_label_custom_url);
+        }
     }
 
     /**

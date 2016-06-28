@@ -860,8 +860,8 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
                             .position(latLng)
             );
 
-            // This doesn't look good since when bouncing, the focus marker is drawn behind
-            // the bus stop marker.  If only we could control z-order...
+            // TODO - This doesn't look good since when bouncing, the focus marker is drawn behind
+            // the bus stop marker.  Maybe fix with new z-order property?
             // animateMarker(mCurrentFocusMarker);
         }
 

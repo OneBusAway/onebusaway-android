@@ -221,6 +221,10 @@ public class RouteMapController implements MapModeController {
 
     @Override
     public void onViewStateRestored(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            return;
+        }
+
         String stopId = savedInstanceState.getString(MapParams.STOP_ID);
         if (stopId == null) {
             // If there is no focused stop then restore the map state otherwise

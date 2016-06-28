@@ -291,6 +291,9 @@ public class ShowcaseViewUtils {
      * @return a dialog that prompts the user if they want to see tutorial popups
      */
     public static void showOptOutDialog(final AppCompatActivity activity) {
+        if (!UIUtils.canManageDialog(activity)) {
+            return;
+        }
         final String showTutorialsKey = activity
                 .getString(R.string.preference_key_show_tutorial_screens);
 

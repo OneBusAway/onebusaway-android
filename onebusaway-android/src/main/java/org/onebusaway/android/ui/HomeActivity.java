@@ -1057,48 +1057,6 @@ public class HomeActivity extends AppCompatActivity
         return LocationUtils.printLocationDetails(loc);
     }
 
-    private void goToContactEmail(Context ctxt) {
-        PackageManager pm = ctxt.getPackageManager();
-        PackageInfo appInfo = null;
-        try {
-            appInfo = pm.getPackageInfo(ctxt.getPackageName(),
-                    PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
-        }
-        ObaRegion region = Application.get().getCurrentRegion();
-        if (region == null) {
-            return;
-        }
-
-        // appInfo.versionName
-        // Build.MODEL
-        // Build.VERSION.RELEASE
-        // Build.VERSION.SDK
-        // %s\nModel: %s\nOS Version: %s\nSDK Version: %s\
-        final String body = ctxt.getString(R.string.bug_report_body,
-                appInfo.versionName,
-                Build.MODEL,
-                Build.VERSION.RELEASE,
-                Build.VERSION.SDK_INT,
-                getLocationString(ctxt));
-        Intent send = new Intent(Intent.ACTION_SEND);
-        send.putExtra(Intent.EXTRA_EMAIL,
-                new String[]{region.getContactEmail()});
-        send.putExtra(Intent.EXTRA_SUBJECT,
-                ctxt.getString(R.string.bug_report_subject));
-        send.putExtra(Intent.EXTRA_TEXT, body);
-        send.setType("message/rfc822");
-        try {
-            ctxt.startActivity(Intent.createChooser(send,
-                    ctxt.getString(R.string.bug_report_subject)));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(ctxt, R.string.bug_report_error, Toast.LENGTH_LONG)
-                    .show();
-        }
-    }
-
     private void goToSendFeedBack() {
         if (mFocusedStop != null) {
             ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(), mFocusedStop.getStopCode(),

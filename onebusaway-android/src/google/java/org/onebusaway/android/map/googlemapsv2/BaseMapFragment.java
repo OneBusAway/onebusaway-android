@@ -16,25 +16,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -63,7 +44,27 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -233,10 +234,15 @@ public class BaseMapFragment extends SupportMapFragment
             initMapState(savedInstanceState);
         } else {
             Bundle args = getActivity().getIntent().getExtras();
-            // The rest of this code assumes a bundle exists,
-            // even if it's empty
+            // The rest of this code assumes a bundle exists, even if it's empty
             if (args == null) {
                 args = new Bundle();
+            }
+            double lat = args.getDouble(MapParams.CENTER_LAT, 0.0d);
+            double lon = args.getDouble(MapParams.CENTER_LON, 0.0d);
+            if (lat == 0.0d && lon == 0.0d) {
+                // Try to restore the latest map view location
+                PreferenceUtils.maybeRestoreMapViewToBundle(args);
             }
             initMapState(args);
         }
@@ -273,6 +279,10 @@ public class BaseMapFragment extends SupportMapFragment
         if (mController != null) {
             mController.onPause();
         }
+        Location center = getMapCenterAsLocation();
+
+        PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(),
+                getZoomLevelAsFloat());
 
         mRunning = false;
         super.onPause();

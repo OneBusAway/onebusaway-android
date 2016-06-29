@@ -44,6 +44,7 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -232,10 +233,15 @@ public class BaseMapFragment extends SupportMapFragment
             initMapState(savedInstanceState);
         } else {
             Bundle args = getActivity().getIntent().getExtras();
-            // The rest of this code assumes a bundle exists,
-            // even if it's empty
+            // The rest of this code assumes a bundle exists, even if it's empty
             if (args == null) {
                 args = new Bundle();
+            }
+            double lat = args.getDouble(MapParams.CENTER_LAT, 0.0d);
+            double lon = args.getDouble(MapParams.CENTER_LON, 0.0d);
+            if (lat == 0.0d && lon == 0.0d) {
+                // Try to restore the latest map view location
+                PreferenceUtils.maybeRestoreMapViewToBundle(args);
             }
             initMapState(args);
         }
@@ -272,6 +278,10 @@ public class BaseMapFragment extends SupportMapFragment
         if (mController != null) {
             mController.onPause();
         }
+        Location center = getMapCenterAsLocation();
+
+        PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(),
+                getZoomLevelAsFloat());
 
         mRunning = false;
         super.onPause();

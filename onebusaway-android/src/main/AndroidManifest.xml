@@ -230,6 +230,14 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
         </receiver>
+        <!-- Legacy Receiver for backwards-compatibility support with v1.x - See Issue #558 -->
+        <receiver android:name="com.joulespersecond.seattlebusbot.AlarmReceiver">
+            <intent-filter>
+                <!-- Should match constants for actions defined in TripService -->
+                <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
+                <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
+            </intent-filter>
+        </receiver>
 
         <meta-data
                 android:name="com.google.android.gms.version"

@@ -17,11 +17,13 @@ package org.onebusaway.android.util;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.map.MapParams;
 
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Bundle;
 
 /**
  * A class containing utility methods related to preferences
@@ -92,6 +94,54 @@ public class PreferenceUtils {
         saveBoolean(Application.getPrefs(), key, value);
     }
 
+    @TargetApi(9)
+    public static void saveFloat(SharedPreferences prefs, String key, float value) {
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putFloat(key, value);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        } else {
+            edit.commit();
+        }
+    }
+
+    public static void saveFloat(String key, float value) {
+        saveFloat(Application.getPrefs(), key, value);
+    }
+
+    @TargetApi(9)
+    public static void saveDouble(SharedPreferences prefs, String key, double value) {
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putLong(key, Double.doubleToRawLongBits(value));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        } else {
+            edit.commit();
+        }
+    }
+
+    @TargetApi(9)
+    public static void saveDouble(String key, double value) {
+        saveDouble(Application.getPrefs(), key, value);
+    }
+
+    /**
+     * Gets a double for the provided key from preferences, or the default value if the preference
+     * doesn't currently have a value
+     *
+     * @param key          key for the preference
+     * @param defaultValue the default value to return if the key doesn't have a value
+     * @return a double from preferences, or the default value if it doesn't exist
+     */
+    public static Double getDouble(String key, double defaultValue) {
+        if (!Application.getPrefs().contains(key)) {
+            return defaultValue;
+        }
+        return Double.longBitsToDouble(Application.getPrefs().getLong(key, 0));
+    }
+
     /**
      * Returns the currently selected stop sort order as the index in R.array.sort_stops
      *
@@ -111,11 +161,45 @@ public class PreferenceUtils {
         return 0;  // Default to the first option
     }
 
+    /**
+     * Saves provided MapView center location and zoom level to preferences
+     *
+     * @param lat  latitude of map center
+     * @param lon  longitude of map center
+     * @param zoom zoom level of map
+     */
+    public static void saveMapViewToPreferences(double lat, double lon, float zoom) {
+        saveDouble(MapParams.CENTER_LAT, lat);
+        saveDouble(MapParams.CENTER_LON, lon);
+        saveFloat(MapParams.ZOOM, zoom);
+    }
+
+    /**
+     * Retrieves the map view location and zoom level from a preference and stores it in the
+     * provided bundle, if a valid lat/long and zoom level has been previously saved to prefs
+     *
+     * @param b bundle to store the map view center and zoom level in
+     */
+    public static void maybeRestoreMapViewToBundle(Bundle b) {
+        Double lat = PreferenceUtils.getDouble(MapParams.CENTER_LAT, 0.0d);
+        Double lon = PreferenceUtils.getDouble(MapParams.CENTER_LON, 0.0d);
+        float zoom = PreferenceUtils.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
+        if (lat != 0.0 && lon != 0.0 && zoom != 0.0) {
+            b.putDouble(MapParams.CENTER_LAT, lat);
+            b.putDouble(MapParams.CENTER_LON, lon);
+            b.putFloat(MapParams.ZOOM, zoom);
+        }
+    }
+
     public static String getString(String key) {
         return Application.getPrefs().getString(key, null);
     }
 
     public static long getLong(String key, long defaultValue) {
         return Application.getPrefs().getLong(key, defaultValue);
+    }
+
+    public static float getFloat(String key, float defaultValue) {
+        return Application.getPrefs().getFloat(key, defaultValue);
     }
 }

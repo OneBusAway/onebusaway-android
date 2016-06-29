@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.tripservice;
+package com.joulespersecond.seattlebusbot;
 
 import org.onebusaway.android.util.ReminderUtils;
 
@@ -26,16 +26,16 @@ import android.util.Log;
 /**
  * Responsible for receiving Intents from the Android platform related to scheduled reminders.
  *
- * TODO - We should be extending the support library version of WakefulBroadcastReceiver and
- * starting the service using startWakefulService().  See #493 for details.
+ * Used to provide backwards compatibility with reminders created with v1.x - see Issue #558.
  */
+@Deprecated
 public class AlarmReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "AlarmReceiver";
+    private static final String TAG = "LegacyAlarmReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "Received alarm");
+        Log.d(TAG, "Received legacy alarm");
         ReminderUtils.startReminderService(context, intent, TAG);
     }
 }

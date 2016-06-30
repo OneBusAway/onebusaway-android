@@ -44,7 +44,6 @@ import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -78,7 +77,6 @@ import android.view.animation.Transformation;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.Date;
@@ -1284,7 +1282,9 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
                 Log.d(TAG, "onPanelSlide, offset " + slideOffset);
-                mArrivalsListHeader.closeStatusPopups();
+                if (mArrivalsListHeader != null) {
+                    mArrivalsListHeader.closeStatusPopups();
+                }
             }
 
             @Override

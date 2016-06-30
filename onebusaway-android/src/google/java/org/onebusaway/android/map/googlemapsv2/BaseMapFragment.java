@@ -503,6 +503,10 @@ public class BaseMapFragment extends SupportMapFragment
     //
     @Override
     public void onRegionTaskFinished(boolean currentRegionChanged) {
+        if (!isAdded()) {
+            // Too early or late in the Fragment lifecycle to take any action
+            return;
+        }
         if (currentRegionChanged
                 && Application
                 .getLastKnownLocation(this.getActivity(), mLocationHelper.getGoogleApiClient())

@@ -183,17 +183,11 @@ public class BaseMapFragment extends SupportMapFragment
         mLocationHelper = new LocationHelper(getActivity());
         mLocationHelper.registerListener(this);
 
-        mMap = getMap();
-
         if (MapHelpV2.isMapsInstalled(getActivity())) {
-            if (mMap != null) {
-                initMap(savedInstanceState);
-            } else {
-                // Save the savedInstanceState
-                mLastSavedInstanceState = savedInstanceState;
-                // Register for an async callback when the map is ready
-                getMapAsync(this);
-            }
+            // Save the savedInstanceState
+            mLastSavedInstanceState = savedInstanceState;
+            // Register for an async callback when the map is ready
+            getMapAsync(this);
         } else {
             MapHelpV2.promptUserInstallMaps(getActivity());
         }
@@ -213,6 +207,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onMapReady(com.google.android.gms.maps.GoogleMap map) {
+        mMap = map;
         initMap(mLastSavedInstanceState);
     }
 

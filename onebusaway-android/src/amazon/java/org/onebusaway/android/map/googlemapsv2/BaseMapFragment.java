@@ -188,17 +188,11 @@ public class BaseMapFragment extends SupportMapFragment
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
-        mMap = getMap();
-
         if (MapHelpV2.isMapsInstalled(getActivity())) {
-            if (mMap != null) {
-                initMap(savedInstanceState);
-            } else {
-                // Save the savedInstanceState
-                mLastSavedInstanceState = savedInstanceState;
-                // Register for an async callback when the map is ready
-                getMapAsync(this);
-            }
+            // Save the savedInstanceState
+            mLastSavedInstanceState = savedInstanceState;
+            // Register for an async callback when the map is ready
+            getMapAsync(this);
         } else {
             MapHelpV2.promptUserInstallMaps(getActivity());
         }

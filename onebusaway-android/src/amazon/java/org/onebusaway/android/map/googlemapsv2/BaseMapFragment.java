@@ -290,10 +290,12 @@ public class BaseMapFragment extends SupportMapFragment
         if (mController != null) {
             mController.onPause();
         }
-        Location center = getMapCenterAsLocation();
 
-        PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(),
-                getZoomLevelAsFloat());
+        Location center = getMapCenterAsLocation();
+        if (center != null) {
+            PreferenceUtils.saveMapViewToPreferences(center.getLatitude(), center.getLongitude(),
+                    getZoomLevelAsFloat());
+        }
 
         mRunning = false;
         super.onPause();

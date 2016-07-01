@@ -664,7 +664,7 @@ class ArrivalsListHeader {
                         R.drawable.focus_star_off);
 
                 mEtaRouteName1.setText(info1.getShortName());
-                mEtaRouteDirection1.setText(info1.getHeadsign());
+                mEtaRouteDirection1.setText(UIUtils.formatHeadsign(info1.getHeadsign()));
                 long eta = mArrivalInfo.get(i1).getEta();
                 if (eta == 0) {
                     mEtaArrivalInfo1.setText(mContext.getString(R.string.stop_info_eta_now));
@@ -727,7 +727,7 @@ class ArrivalsListHeader {
                             R.drawable.focus_star_on :
                             R.drawable.focus_star_off);
                     mEtaRouteName2.setText(info2.getShortName());
-                    mEtaRouteDirection2.setText(info2.getHeadsign());
+                    mEtaRouteDirection2.setText(UIUtils.formatHeadsign(info2.getHeadsign()));
                     eta = mArrivalInfo.get(i2).getEta();
 
                     if (eta == 0) {
@@ -943,7 +943,7 @@ class ArrivalsListHeader {
                 public void onClick(View v) {
                     // Show dialog for setting route favorite
                     RouteFavoriteDialogFragment dialog = new RouteFavoriteDialogFragment.Builder(
-                            info1.getRouteId(), info1.getHeadsign())
+                            info1.getRouteId(), UIUtils.formatHeadsign(info1.getHeadsign()))
                             .setRouteShortName(info1.getShortName())
                             .setRouteLongName(info1.getRouteLongName())
                             .setStopId(info1.getStopId())

@@ -97,6 +97,16 @@ public class UIUtilTest extends ObaTestCase {
     }
 
     /**
+     * Tests formatting trip headsigns
+     */
+    public void testFormatHeadsign() {
+        assertEquals("North to University Area TC",
+                UIUtils.formatHeadsign("North to University Area TC"));
+        assertEquals("North To University Area Tc",
+                UIUtils.formatHeadsign("NORTH TO UNIVERSITY AREA TC"));
+    }
+
+    /**
      * Tests building the trip options menu, based on various route/trip parameters
      */
     public void testBuildTripOptions() {

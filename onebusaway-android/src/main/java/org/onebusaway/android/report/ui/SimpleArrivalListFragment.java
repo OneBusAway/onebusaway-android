@@ -28,7 +28,6 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.ArrivalsListLoader;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Intent;
@@ -204,7 +203,7 @@ public class SimpleArrivalListFragment extends Fragment
             route.setText(routeShortName);
             UIUtils.maybeShrinkRouteName(getActivity(), route, routeShortName);
 
-            destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
+            destination.setText(UIUtils.formatHeadsign(arrivalInfo.getHeadsign()));
             status.setText(stopInfo.getStatusText());
 
             long eta = stopInfo.getEta();

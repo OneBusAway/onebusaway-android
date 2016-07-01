@@ -20,7 +20,6 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
@@ -195,7 +194,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         });
 
         routeName.setText(arrivalInfo.getShortName());
-        destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
+        destination.setText(UIUtils.formatHeadsign(arrivalInfo.getHeadsign()));
 
         // Loop through the arrival times and create the TableRows that contains the data
         for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {

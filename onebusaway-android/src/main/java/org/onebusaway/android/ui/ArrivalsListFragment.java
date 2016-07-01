@@ -739,8 +739,12 @@ public class ArrivalsListFragment extends ListFragment
                 } else if ((!hasUrl && which == 5) || (hasUrl && which == 6)) {
                     // Find agency name
                     String routeId = arrivalInfo.getInfo().getRouteId();
-                    String agencyId = mObaReferences.getRoute(routeId).getAgencyId();
-                    String agencyName = mObaReferences.getAgency(agencyId).getName();
+                    String agencyName = null;
+
+                    if (mObaReferences != null) {
+                        String agencyId = mObaReferences.getRoute(routeId).getAgencyId();
+                        agencyName = mObaReferences.getAgency(agencyId).getName();
+                    }
 
                     Intent intent = makeIntent(getActivity(), mStop.getId(), mStop.getName(),
                             mStop.getStopCode(), mStop.getLatitude(), mStop.getLongitude());

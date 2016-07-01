@@ -20,7 +20,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentResolver;
 import android.database.ContentObserver;
@@ -182,7 +182,7 @@ public final class MyRemindersFragment extends ListFragment
                 } else if (columnIndex == COL_HEADSIGN) {
                     String headSign = cursor.getString(columnIndex);
                     TextView text = (TextView) view;
-                    text.setText(MyTextUtils.toTitleCase(headSign));
+                    text.setText(UIUtils.formatHeadsign(headSign));
                     return true;
                 } else if (columnIndex == COL_DEPARTURE) {
                     TextView text = (TextView) view;

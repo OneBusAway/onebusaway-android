@@ -20,7 +20,7 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaReportProblemWithTripRequest;
-import org.onebusaway.android.util.MyTextUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.location.Location;
@@ -110,7 +110,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         // Set the stop name.
         Bundle args = getArguments();
         final TextView tripHeadsign = (TextView) view.findViewById(R.id.report_problem_headsign);
-        tripHeadsign.setText(MyTextUtils.toTitleCase(args.getString(TRIP_HEADSIGN)));
+        tripHeadsign.setText(UIUtils.formatHeadsign(args.getString(TRIP_HEADSIGN)));
 
         // TODO: Switch this based on the trip mode
         final int tripArray = R.array.report_trip_problem_code_bus;

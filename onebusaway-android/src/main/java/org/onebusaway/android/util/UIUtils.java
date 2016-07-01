@@ -202,6 +202,24 @@ public final class UIUtils {
         return MyTextUtils.toTitleCase(longName);
     }
 
+    /**
+     * Returns a formatted trip headsign for displaying in the UI.  If the headsign IS ALL CAPS,
+     * it will be converted to title case (Is All Caps), otherwise the returned string will match
+     * the input.
+     *
+     * @param headsign headsign to be formatted
+     * @return a formatted trip headsign for displaying in the UI.  If the headsign IS ALL CAPS,
+     * it will be converted to title case (Is All Caps), otherwise the returned string will match
+     * the input.
+     */
+    public static String formatHeadsign(String headsign) {
+        if (MyTextUtils.isAllCaps(headsign)) {
+            return MyTextUtils.toTitleCase(headsign);
+        } else {
+            return headsign;
+        }
+    }
+
     // Shows or hides the view, depending on whether or not the direction is
     // available.
     public static final void setStopDirection(View v, String direction, boolean show) {

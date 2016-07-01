@@ -334,7 +334,7 @@ public class TripInfoActivity extends AppCompatActivity {
             routeName.setText(getString(R.string.trip_info_route, mRouteName));
 
             final TextView headsign = (TextView) view.findViewById(R.id.headsign);
-            headsign.setText(MyTextUtils.toTitleCase(mHeadsign));
+            headsign.setText(UIUtils.formatHeadsign(mHeadsign));
 
             final TextView departText = (TextView) view.findViewById(R.id.departure_time);
             departText.setText(getDepartureTime(getActivity(), mDepartTime));

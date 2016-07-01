@@ -51,6 +51,16 @@ public final class MyTextUtils {
     }
 
     /**
+     * Returns true if the provided string is all caps, and false if it is not
+     *
+     * @param str
+     * @return true if the provided string is all caps, and false if it is not
+     */
+    public static boolean isAllCaps(String str) {
+        return str.equals(str.toUpperCase());
+    }
+
+    /**
      * Converts the given string to sentence case, where the first
      * letter is capitalized and the rest of the string is in
      * lower case.

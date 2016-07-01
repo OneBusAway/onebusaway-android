@@ -18,7 +18,6 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
@@ -85,7 +84,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         route.setText(shortName);
         UIUtils.maybeShrinkRouteName(getContext(), route, shortName);
 
-        destination.setText(MyTextUtils.toTitleCase(arrivalInfo.getHeadsign()));
+        destination.setText(UIUtils.formatHeadsign(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());
 
         long eta = stopInfo.getEta();

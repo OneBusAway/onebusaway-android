@@ -391,6 +391,9 @@ public class TripDetailsListFragment extends ListFragment {
     private final AdapterView.OnItemClickListener mClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (mTripInfo == null || mTripInfo.getSchedule() == null) {
+                return;
+            }
             ObaTripSchedule.StopTime time = mTripInfo.getSchedule().getStopTimes()[position];
             ObaReferences refs = mTripInfo.getRefs();
             String stopId = time.getStopId();

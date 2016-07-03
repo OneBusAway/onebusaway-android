@@ -67,8 +67,8 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
     private Location currentLocation = null;
 
     private boolean resuming = false;   // Is Trip being resumed?
-    public static boolean finished = false;   // Trip has finished.  //Change to public
-    public static boolean getready = false;   // Get Ready triggered. //Change to public
+    public boolean finished = false;   // Trip has finished.  //Change to public
+    public boolean getready = false;   // Get Ready triggered. //Change to public
 
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
     SharedPreferences mSettings = Application.getPrefs();  // Shared Prefs
@@ -129,7 +129,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      *
      * @return
      */
-    public static boolean getGetReady() {
+    public boolean getGetReady() {
         return getready;
     }
 
@@ -138,7 +138,7 @@ public class TADNavigationServiceProvider implements TextToSpeech.OnInitListener
      *
      * @return
      */
-    public static boolean getFinished() {
+    public boolean getFinished() {
         return finished;
     }
 

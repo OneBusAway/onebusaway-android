@@ -36,7 +36,7 @@ public class TADService extends Service
     private String mBeforeStopId;                   // Before Destination Stop ID
     private String mTripId;                         // Trip ID
 
-    private int CoordinatesID = 0;
+    private int CoordinatesID =0;
 
     private boolean getReadyFlag = false;
     private boolean pullTheCordFlag = false;
@@ -122,20 +122,20 @@ public class TADService extends Service
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Location Updated");
         if (mLastLocation == null) {
-            if (BuildConfig.TAD_GPS_LOGGING) {
-                writeToLog(location);
-            }
 
             if (mLastLocation != null) {
                 mNavProvider.locationUpdated(location);
             }
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                writeToLog(location);
+            }
+
         } else if (LocationUtils.isDuplicate(mLastLocation, location)) {
-            if (BuildConfig.TAD_GPS_LOGGING) {
-                writeToLog(location);
-            }
-
             if (mLastLocation != null) {
                 mNavProvider.locationUpdated(location);
+            }
+            if (BuildConfig.TAD_GPS_LOGGING) {
+                writeToLog(location);
             }
         }
         mLastLocation = location;
@@ -187,18 +187,20 @@ public class TADService extends Service
                 satellites = l.getExtras().getInt("satellites", 0);
             }
 
-            //Increments the id for each coordinate
-            CoordinatesID++;
 
 
-            getReadyFlag = TADNavigationServiceProvider.getGetReady();
-            pullTheCordFlag = TADNavigationServiceProvider.getFinished();
+            getReadyFlag =mNavProvider.getGetReady();
+            pullTheCordFlag = mNavProvider.getFinished();
 
 
             // TODO: Add isMockProvider
-            String log = String.format("%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n", CoordinatesID, getReadyFlag,
-                    pullTheCordFlag, nanoTime, l.getTime(), l.getLatitude(), l.getLongitude(), l.getAltitude(),
-                    l.getSpeed(), l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
+            String log = String.format("%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
+                    CoordinatesID, getReadyFlag,pullTheCordFlag, nanoTime, l.getTime(),
+                    l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(),
+                    l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
+
+            //Increments the id for each coordinate
+            CoordinatesID++;
 
             if (mLogFile != null && mLogFile.canWrite()) {
                 FileUtils.write(mLogFile, log, true);

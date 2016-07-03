@@ -10,6 +10,8 @@ import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
+import org.onebusaway.android.tad.TADService;
+
 
 import java.io.Reader;
 
@@ -21,20 +23,23 @@ public class TADTest extends ObaTestCase {
     static final String TAG = "TADTest";
 
     static final int SPEED_UP = 4;
+    private int i = 0;
+    private int getReadyID;
+    private int pullCordID;
 
-    /*
-        Started: Corner of Fletcher Ave & 50th St, turning left onto 50th.
-        Destination: Holly Dr @ Pine Dr @ Crosswalk (W Bound)
-        Details: Turned left onto 50th St, then right onto USF Holly Drive & stayed on road until
-        arriving at destination.
-        Recorded In: Car ('06 Saturn Ion 2 - Central Console)
-        Device Used: Nexus 5
-     */
+
+      /* Started Stop: Mckinley Dr @ DOT Bldg
+       Destination Stop: University Area Transit Center
+       Recorded In: Bus (Route 5) 9 stops
+       Device Used: Nexus 5 */
+
     public void testTripA() {
         try {
             // Read test CSV.
-            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_1"));
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripa"));
             String csv = IOUtils.toString(reader);
+            getReadyID = 858;
+            pullCordID = 978;
 
             TADTrip trip = new TADTrip(csv);
             trip.runSimulation(true, true);
@@ -43,19 +48,19 @@ public class TADTest extends ObaTestCase {
         }
     }
 
-    /*
-        Started: Corner of Beard Dr & Magnolia Dr on USF, turning left onto Magnolia Dr.
-        Destination: Alumni Dr @ Leroy Collins @ Eng Bldg (E Bound)
-        Details: Turned left onto Magnolia Dr, then turned left at the light onto Alumni Dr, arrived
-        at destination then turned right onto Leroy Collins Blvd then right onto Fowler Ave.
-        Recorded In: Car ('06 Saturn Ion 2 - Central Console)
-        Device Used: Nexus 5
-     */
+    /* Started Stop: Alumni Dr @ Leroy Collins @ Eng Bldg
+       Destination Stop: Mckinley Dr @ Fowler Ave
+       Recorded In: Car following Route 5 - 1 stops
+       Device Used: Nexus 5
+    */
+
     public void testTripB() {
         try {
             // Read test CSV.
-            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_trip_coords_2"));
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripb"));
             String csv = IOUtils.toString(reader);
+            getReadyID = 1;
+            pullCordID = 14;
 
             TADTrip trip = new TADTrip(csv);
             trip.runSimulation(true, true);
@@ -63,6 +68,102 @@ public class TADTest extends ObaTestCase {
             Log.e(TAG, e.toString());
         }
     }
+
+
+
+    /* Started Stop: Dale Mabry Hwy @ Linebaugh Av
+       Destination Stop: Dale Mabry Hwy @ Hudson Ln @ Taco Bell
+       Recorded In: Bus (Route 36) 4 stops
+       Device Used: Nexus 5 */
+    public void testTripC() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripc"));
+            String csv = IOUtils.toString(reader);
+            getReadyID = 95;
+            pullCordID = 109;
+
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+
+    /* Started Stop: Linebaugh @ Henderson Av
+       Destination Stop: Anderson Rd @ 8110
+       Recorded In: Bus (Route 7) 4 stops
+       Device Used: Nexus 5 */
+   public void testTripE() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripe"));
+            String csv = IOUtils.toString(reader);
+            getReadyID = 372;
+            pullCordID = 660;
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    /*Started Stop: Himes Av @ Colwell Av
+      Destination Stop: Himes Av @ Hillsborough Av
+      Recorded In: Bus (Route 36) 12 stops
+      Device Used: Nexus 5 */
+
+    public void testTripF() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripf"));
+            String csv = IOUtils.toString(reader);
+            getReadyID = 801;
+            pullCordID = 837;
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    /*Started Stop: Gunn Hwy @ Premier North Dr
+     Destination Stop: Bush Blvd @ Armenia Av
+     Recorded In: Bus (Route 39) 3 stops
+     Device Used: Nexus 5 */
+   public void testTripG() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_tripg"));
+            String csv = IOUtils.toString(reader);
+            getReadyID = 183;
+            pullCordID = 208;
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    /*Started Stop: Alumni Dr @ Beard
+    Destination Stop: Magnolia Dr @ Alumni Dr
+    Recorded In: Car following Route 5 (1 stop)
+    Device Used: Nexus 5 */
+    public void testTripH() {
+        try {
+            // Read test CSV.
+            Reader reader = Resources.read(getContext(), Resources.getTestUri("tad_triph"));
+            String csv = IOUtils.toString(reader);
+            getReadyID = 1;
+            pullCordID = 18;
+            TADTrip trip = new TADTrip(csv);
+            trip.runSimulation(true, true);
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
 
     // Class for holding relevant details for testing.
     class TADTrip {
@@ -73,13 +174,16 @@ public class TADTest extends ObaTestCase {
         Location mDestinationLocation;
         Location mBeforeLocation;
 
+
         Location[] mPoints;
+
         long[] mTimes;
 
         int getReadyIndex = -1;                    //  Index which getReady should be triggered.
         int finishedIndex = -1;                    //  Index which finished should be triggered.
 
         boolean useElapsedNanos = false;           // Should use elapsed nanos instead of time.
+
 
         /**
          * Constructor
@@ -106,23 +210,33 @@ public class TADTest extends ObaTestCase {
             mBeforeLocation.setLatitude(Double.parseDouble(details[5]));
             mBeforeLocation.setLongitude(Double.parseDouble(details[6]));
 
-
             mPoints = new Location[lines.length - 1];
+
+
             // Skip header and run through csv.
             // Rows are formatted like this:
             // realtime Nanos Elapsed,time,lat,lng,altitude,speed,bearing,accurarcy,satellites,provider.
             for (int i = 1; i < lines.length; i++) {
+
+
+
                 String[] values = lines[i].split(",");
-                String nanosStr = values[0];
-                long time = Long.parseLong(values[1]);
-                double lat = Double.parseDouble(values[2]);
-                double lng = Double.parseDouble(values[3]);
-                double altitude = Double.parseDouble(values[4]);
-                float speed = Float.parseFloat(values[5]);
-                float bearing = Float.parseFloat(values[6]);
-                float accuracy = Float.parseFloat(values[7]);
-                int sats = Integer.parseInt(values[8]);
-                String provider = values[9];
+                int coordinateIndex = Integer.parseInt(values[0]);
+                String getReadyValue = values[1];
+                String pullTheCordValue = values[2];
+                String nanosStr = values[3];
+                long time = Long.parseLong(values[4]);
+                double lat = Double.parseDouble(values[5]);
+                double lng = Double.parseDouble(values[6]);
+                double altitude = Double.parseDouble(values[7]);
+                float speed = Float.parseFloat(values[8]);
+                float bearing = Float.parseFloat(values[9]);
+                float accuracy = Float.parseFloat(values[10]);
+                int sats = Integer.parseInt(values[11]);
+                String provider = values[12];
+
+
+
 
                 mPoints[i - 1] = new Location(provider);
 
@@ -140,6 +254,8 @@ public class TADTest extends ObaTestCase {
                 mPoints[i - 1].setBearing(bearing);
                 mPoints[i - 1].setAccuracy(accuracy);
                 mPoints[i - 1].setSpeed(speed);
+
+
             }
 
             // Compute index of point nearest to second to last stop.
@@ -194,6 +310,8 @@ public class TADTest extends ObaTestCase {
             return mTimes;
         }
 
+
+
         public int getGetReadyIndex() {
             return getReadyIndex;
         }
@@ -212,23 +330,33 @@ public class TADTest extends ObaTestCase {
             // Begin navigation & simulation
             provider.navigate(new Segment[]{segment});
 
-            for (int i = 0; i < getReadyIndex; i++) {
+            for (int i = 0; i <=  getReadyID; i++) {
                 Location l = mPoints[i];
-                try {
-                    Thread.sleep((mTimes[i] / SPEED_UP));
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
-                }
-                provider.locationUpdated(l);
-                Log.d(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
-                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
-                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
-                );
-            }
-            Boolean check1 = provider.getGetReady() && !provider.getFinished();
-            assertEquals(expected1, check1);
 
-            for (int i = getReadyIndex; i < mPoints.length; i++) {
+                try {
+                    Thread.sleep((mTimes[i] / SPEED_UP));
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                provider.locationUpdated(l);
+
+                    if(provider.getGetReady() && i < getReadyID)
+                    {
+                        fail("Get ready triggered too soon");
+                    }
+
+                Log.d(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
+                        l.getLatitude(), l.getLongitude(), l.getSpeed(),
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())));
+
+            }
+
+
+          Boolean check1 = provider.getGetReady() && !provider.getFinished();
+          assertEquals(expected1, check1);
+
+
+            for (int i = getReadyID; i <= pullCordID; i++) {
                 Location l = mPoints[i];
                 try {
                     Thread.sleep((mTimes[i] / SPEED_UP));
@@ -236,10 +364,18 @@ public class TADTest extends ObaTestCase {
                     Log.e(TAG, e.getMessage());
                 }
                 provider.locationUpdated(l);
+
+                if(provider.getFinished() && i < pullCordID)
+                {
+                    fail("Pull the Cord triggered too soon");
+                }
+
+
                 Log.d(TAG, String.format("%d: (%f, %f, %f)\tR:%s  F:%s", i,
                         l.getLatitude(), l.getLongitude(), l.getSpeed(),
-                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished()))
-                );
+                        Boolean.toString(provider.getGetReady()), Boolean.toString(provider.getFinished())));
+
+
             }
 
             Boolean check2 = provider.getGetReady() && provider.getFinished();

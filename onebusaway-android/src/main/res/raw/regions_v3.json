@@ -38,7 +38,8 @@
             "lonSpan": 0.3967700000000036
           }
         ],
-        "otpBaseUrl": "http://otp-fl.camsys-apps.com:8080/otp/", 
+        "otpBaseUrl": "http://otp-fl.camsys-apps.com:8080/otp/",
+        "otpContactEmail": "onebusaway@gohart.org",
         "contactEmail": "onebusaway@gohart.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -113,7 +114,8 @@
             "lonSpan": 0.784555996061
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "onebusaway@soundtransit.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -146,7 +148,8 @@
             "lonSpan": 0.23146799999999246
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "MTABusTime@mtahq.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -209,7 +212,8 @@
             "lonSpan": 0.5820399999999921
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "onebusaway@ce.gatech.edu", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -236,7 +240,8 @@
             "lonSpan": 0.7805199999999957
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "feedback@wmata.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -263,7 +268,8 @@
             "lonSpan": 0.49329600000000084
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "transitinfo@york.ca", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -290,7 +296,8 @@
             "lonSpan": 0.10181500000000199
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "bear-transit@v-a.io", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -324,6 +331,7 @@
           }
         ],
         "otpBaseUrl": "http://developer.onebusaway.org/ma-otp/otp",
+        "otpContactEmail": "sjacobs@camsys.com",
         "open311Servers": [],
         "contactEmail": "sbrown@camsys.com",
         "stopInfoUrl": null,
@@ -351,7 +359,8 @@
             "lonSpan": 0.2674852336517013
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "obasupport@octo3.fi", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -378,7 +387,8 @@
             "lonSpan": 0.2974530000000044
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "info@rvtd.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -405,7 +415,8 @@
             "lonSpan": 0.4220969999999937
           }
         ],
-        "otpBaseUrl": null, 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
         "contactEmail": "jespejo@sanjoaquinrtd.com", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -432,8 +443,9 @@
             "lonSpan": 1.093941754416008
           }
         ],
-        "otpBaseUrl": null, 
-        "contactEmail": "helpdesk@sdmts.com", 
+        "otpBaseUrl": null,
+        "otpContactEmail": null,
+        "contactEmail": "helpdesk@sdmts.com",
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 

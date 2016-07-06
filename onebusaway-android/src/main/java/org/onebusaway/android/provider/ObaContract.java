@@ -396,6 +396,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String OTP_BASE_URL = "otp_base_url";
+
+        /**
+         * The email of the person responsible for the OTP server.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String OTP_CONTACT_EMAIL = "otp_contact_email";
     }
 
     protected interface RegionBoundsColumns {
@@ -1093,7 +1101,8 @@ public final class ObaContract {
                     TWITTER_URL,
                     EXPERIMENTAL,
                     STOP_INFO_URL,
-                    OTP_BASE_URL
+                    OTP_BASE_URL,
+                    OTP_CONTACT_EMAIL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1118,7 +1127,8 @@ public final class ObaContract {
                             c.getString(9),              // Twitter URL
                             c.getInt(10) > 0,               // Experimental
                             c.getString(11),              // StopInfoUrl
-                            c.getString(12)               // OtpBaseUrl
+                            c.getString(12),              // OtpBaseUrl
+                            c.getString(13)               // OtpContactEmail
                     );
                 } finally {
                     c.close();

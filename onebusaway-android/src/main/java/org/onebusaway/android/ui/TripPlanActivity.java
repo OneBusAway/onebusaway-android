@@ -267,8 +267,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         feedback.setNegativeButton(R.string.report_problem_report, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // This will become a separate OTP email address
-                String email = Application.get().getCurrentRegion().getContactEmail();
+                String email = Application.get().getCurrentRegion().getOtpContactEmail();
                 if (!TextUtils.isEmpty(email)) {
                     UIUtils.sendEmailOTP(TripPlanActivity.this, email, url);
                     ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),

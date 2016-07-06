@@ -78,6 +78,7 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 0.090694,
                 0.126793);
         assertNull(ps.getOtpBaseUrl());
+        assertNull(ps.getOtpContactEmail());
     }
 
     private void _assertAtlanta(ObaRegion at) {

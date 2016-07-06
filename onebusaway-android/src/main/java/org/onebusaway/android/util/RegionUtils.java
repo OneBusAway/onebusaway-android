@@ -372,7 +372,8 @@ public class RegionUtils {
                     ObaContract.Regions.TWITTER_URL,
                     ObaContract.Regions.EXPERIMENTAL,
                     ObaContract.Regions.STOP_INFO_URL,
-                    ObaContract.Regions.OTP_BASE_URL
+                    ObaContract.Regions.OTP_BASE_URL,
+                    ObaContract.Regions.OTP_CONTACT_EMAIL
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -416,7 +417,8 @@ public class RegionUtils {
                         c.getString(9),              // Twitter URL
                         c.getInt(10) > 0,            // Experimental
                         c.getString(11),             // StopInfoUrl
-                        c.getString(12)              // OTP Base URL
+                        c.getString(12),             // OTP Base URL
+                        c.getString(13)              // OTP Contact Email
                 ));
 
             } while (c.moveToNext());
@@ -597,7 +599,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
                 BuildConfig.FIXED_REGION_STOP_INFO_URL,
-                BuildConfig.FIXED_REGION_OTP_BASE_URL);
+                BuildConfig.FIXED_REGION_OTP_BASE_URL,
+                BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL);
         return region;
     }
 
@@ -664,6 +667,7 @@ public class RegionUtils {
         values.put(ObaContract.Regions.EXPERIMENTAL, region.getExperimental());
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
         values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
+        values.put(ObaContract.Regions.OTP_CONTACT_EMAIL, region.getOtpContactEmail());
         return values;
     }
 

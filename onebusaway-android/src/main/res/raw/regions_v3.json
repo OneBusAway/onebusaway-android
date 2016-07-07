@@ -39,7 +39,7 @@
           }
         ],
         "otpBaseUrl": "http://otp-fl.camsys-apps.com:8080/otp/",
-        "otpContactEmail": "onebusaway@gohart.org",
+        "otpContactEmail": "opentripplanner@camsys.com",
         "contactEmail": "onebusaway@gohart.org", 
         "stopInfoUrl": null, 
         "active": true, 
@@ -331,7 +331,7 @@
           }
         ],
         "otpBaseUrl": "http://developer.onebusaway.org/ma-otp/otp",
-        "otpContactEmail": "sjacobs@camsys.com",
+        "otpContactEmail": "opentripplanner@camsys.com",
         "open311Servers": [],
         "contactEmail": "sbrown@camsys.com",
         "stopInfoUrl": null,

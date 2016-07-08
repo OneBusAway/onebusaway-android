@@ -1106,8 +1106,7 @@ public class BaseMapFragment extends SupportMapFragment
         private Dialog createZipCodeDialog() {
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
             DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
-            final EditText zipInput = new EditText(this.getContext());
-            zipInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+            final EditText zipInput = (EditText)this.getActivity().findViewById(R.id.zipText);
 
             final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
                     .setTitle(R.string.main_ziplocation_title)

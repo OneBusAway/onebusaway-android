@@ -260,6 +260,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 alpha = (int) (.35f * 255);  // X percent transparency
             }
             d.setAlpha(alpha);
+            // Set text color w/ alpha, but increase it a bit to give text better contrast
+            estimatedView.setTextColor(UIUtils.getTransparentColor(
+                    context.getResources().getColor(colorCode), alpha * 2));
 
             // Set padding on status view
             int pSides = UIUtils.dpToPixels(context, 5);

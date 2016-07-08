@@ -1289,4 +1289,19 @@ public final class UIUtils {
                     getDimension(R.dimen.route_name_text_size_small));
         }
     }
+
+    /**
+     * Transforms a given opaque color into the same color but with the given alpha value
+     *
+     * @param solidColor hex color value that is completely opaque
+     * @param alpha      Specify an alpha value. 0 means fully transparent, and 255 means fully
+     *                   opaque.
+     * @return the provided color with the given alpha value
+     */
+    public static int getTransparentColor(int solidColor, int alpha) {
+        int r = Color.red(solidColor);
+        int g = Color.green(solidColor);
+        int b = Color.blue(solidColor);
+        return Color.argb(alpha, r, g, b);
+    }
 }

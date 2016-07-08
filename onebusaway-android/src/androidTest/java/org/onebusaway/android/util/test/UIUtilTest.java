@@ -16,6 +16,7 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
+import android.graphics.Color;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.widget.TextView;
@@ -708,6 +709,27 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals(35, arrivalInfo.get(29).getEta());
         assertEquals(35, arrivalInfo.get(30).getEta());
         assertEquals(35, arrivalInfo.get(31).getEta());
+    }
+
+    public void testGetTransparentColor() {
+        String colorString = "#777777";
+        int alpha = 127;
+        int color = Color.parseColor(colorString);
+        int newColor = UIUtils.getTransparentColor(color, alpha);
+
+        int r = Color.red(color);
+        int g = Color.green(color);
+        int b = Color.blue(color);
+
+        int newR = Color.red(newColor);
+        int newG = Color.green(newColor);
+        int newB = Color.blue(newColor);
+        int newAlpha = Color.alpha(newColor);
+
+        assertEquals(r, newR);
+        assertEquals(g, newG);
+        assertEquals(b, newB);
+        assertEquals(alpha, newAlpha);
     }
 
     private String formatTime(long time) {

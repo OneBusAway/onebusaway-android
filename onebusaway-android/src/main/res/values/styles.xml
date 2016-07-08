@@ -166,21 +166,21 @@
     </style>
     <style name="ArrivalsListNextTimeETA">
         <item name="android:textSize">22sp</item>
-        <item name="android:textColor">@color/stop_info_scheduled_time</item>
+        <item name="android:textColor">@android:color/black</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="ArrivalsListNextTimeSched">
         <item name="android:textSize">22sp</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/stop_info_scheduled_time</item>
     </style>
     <style name="ArrivalsListSched">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:paddingTop">1dp</item>
         <item name="android:paddingBottom">1dp</item>
     </style>
     <style name="ArrivalsListETA">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/stop_info_scheduled_time</item>
         <item name="android:paddingTop">1dp</item>
         <item name="android:paddingBottom">1dp</item>

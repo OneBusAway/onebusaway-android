@@ -226,6 +226,7 @@ public class LocationUtils {
      */
     public static boolean isValidZipCode(String zip)
     {
+        zip = zip.trim();
         Pattern pattern = Pattern.compile("^\\d{5}(?:-\\d{4})?$");
         return pattern.matcher(zip).matches();
     }

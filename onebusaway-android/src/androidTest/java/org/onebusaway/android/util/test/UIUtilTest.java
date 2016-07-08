@@ -10,6 +10,7 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.io.test.ObaTestCase;
+import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.mock.MockObaStop;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
@@ -17,6 +18,8 @@ import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
 
 import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.widget.TextView;
@@ -734,5 +737,44 @@ public class UIUtilTest extends ObaTestCase {
 
     private String formatTime(long time) {
         return UIUtils.formatTime(getContext(), time);
+    }
+
+    /**
+     * Tests getting map view center information from a bundle
+     */
+    public void testGetMapCenter() {
+        // Check null and empty bundles
+        Bundle b = null;
+        assertNull(UIUtils.getMapCenter(b));
+
+        b = new Bundle();
+        assertNull(UIUtils.getMapCenter(b));
+
+        // Check single params
+        b.putDouble(MapParams.CENTER_LAT, 0.0);
+        assertNull(UIUtils.getMapCenter(b));
+
+        b = new Bundle();
+        b.putDouble(MapParams.CENTER_LON, 0.0);
+        assertNull(UIUtils.getMapCenter(b));
+
+        // Check invalid lat/long
+        b = new Bundle();
+        b.putDouble(MapParams.CENTER_LAT, 0.0);
+        b.putDouble(MapParams.CENTER_LON, 0.0);
+        assertNull(UIUtils.getMapCenter(b));
+
+        // Check valid lat/long
+        final double lat = 28.343243;
+        final double lon = -87.234234;
+
+        b = new Bundle();
+        b.putDouble(MapParams.CENTER_LAT, lat);
+        b.putDouble(MapParams.CENTER_LON, lon);
+        Location l = UIUtils.getMapCenter(b);
+        assertNotNull(l);
+
+        assertEquals(lat, l.getLatitude());
+        assertEquals(lon, l.getLongitude());
     }
 }

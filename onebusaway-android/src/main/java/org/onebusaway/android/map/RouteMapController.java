@@ -302,6 +302,7 @@ public class RouteMapController implements MapModeController {
                     ObaMapView obaMapView = mFragment.getMapView();
                     // We want to preserve the current zoom and center.
                     Bundle bundle = new Bundle();
+                    bundle.putBoolean(MapParams.DO_N0T_CENTER_ON_LOCATION, true);
                     bundle.putFloat(MapParams.ZOOM, obaMapView.getZoomLevelAsFloat());
                     Location point = obaMapView.getMapCenterAsLocation();
                     bundle.putDouble(MapParams.CENTER_LAT, point.getLatitude());

@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -177,6 +178,9 @@ public class BaseMapFragment extends SupportMapFragment
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
 
+        mLocationHelper = new LocationHelper(getActivity());
+        mLocationHelper.registerListener(this);
+
         mMap = getMap();
 
         if (MapHelpV2.isMapsInstalled(getActivity())) {
@@ -191,9 +195,6 @@ public class BaseMapFragment extends SupportMapFragment
         } else {
             MapHelpV2.promptUserInstallMaps(getActivity());
         }
-
-        mLocationHelper = new LocationHelper(getActivity());
-        mLocationHelper.registerListener(this);
 
         // If we have a recent location, show this while we're waiting on the LocationHelper
         Location l = Application
@@ -275,7 +276,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onPause() {
-        mLocationHelper.onPause();
+        if (mLocationHelper != null) {
+            mLocationHelper.onPause();
+        }
         if (mController != null) {
             mController.onPause();
         }
@@ -509,11 +512,15 @@ public class BaseMapFragment extends SupportMapFragment
             // Too early or late in the Fragment lifecycle to take any action
             return;
         }
-        if (currentRegionChanged
-                && Application
-                .getLastKnownLocation(this.getActivity(), mLocationHelper.getGoogleApiClient())
-                == null) {
-            // Move map view after a new region has been selected, if we don't have user location
+
+        Location l = Application
+                .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
+        // If the region changed, and we don't have a location or the map center is still (0,0),
+        // then zoom to the region
+        if (currentRegionChanged &&
+                (l == null ||
+                        (getMapCenterAsLocation().getLatitude() == 0.0 &&
+                                getMapCenterAsLocation().getLongitude() == 0.0))) {
             zoomToRegion();
         }
 
@@ -562,25 +569,41 @@ public class BaseMapFragment extends SupportMapFragment
         });
     }
 
+    /**
+     * Sets the map view to the last available location
+     *
+     * @param useDefaultZoom    true if the CAMERA_DEFAULT_ZOOM should be used, false if the
+     *                          current
+     *                          zoom level should be kept
+     * @param animateToLocation true if the map should animate the transition to the new view, or
+     *                          false if it should snap to the new view without animation
+     * @return true if there was a a location to set the map view to, false if there was not
+     */
     @Override
     @SuppressWarnings("deprecation")
-    public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
+    public boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
         if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
                 getActivity())) {
             showDialog(MapDialogFragment.NOLOCATION_DIALOG);
-            return;
+            return false;
         }
 
-        Location lastLocation = Application.getLastKnownLocation(this.getActivity(), null);
+        GoogleApiClient apiClient = null;
+        if (mLocationHelper != null) {
+            apiClient = mLocationHelper.getGoogleApiClient();
+        }
+
+        Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
         if (lastLocation == null) {
             Toast.makeText(getActivity(),
                     getResources()
                             .getString(R.string.main_waiting_for_location),
                     Toast.LENGTH_SHORT).show();
-            return;
+            return false;
         }
 
         setMyLocation(lastLocation, useDefaultZoom, animateToLocation);
+        return true;
     }
 
     private void setMyLocation(Location l, boolean useDefaultZoom, boolean animateToLocation) {
@@ -611,7 +634,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    void zoomToRegion() {
+    public void zoomToRegion() {
         // If we have a region, then zoom to it.
         ObaRegion region = Application.get().getCurrentRegion();
 

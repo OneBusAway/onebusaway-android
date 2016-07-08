@@ -25,6 +25,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.view.RealtimeIndicatorView;
@@ -49,10 +50,12 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -1303,5 +1306,27 @@ public final class UIUtils {
         int g = Color.green(solidColor);
         int b = Color.blue(solidColor);
         return Color.argb(alpha, r, g, b);
+    }
+
+    /**
+     * Returns the location of the map center if it has been previously saved in the bundle, or
+     * null if it wasn't saved in the bundle.
+     *
+     * @param b bundle to check for the map center
+     * @return the location of the map center if it has been previously saved in the bundle, or null
+     * if it wasn't saved in the bundle.
+     */
+    public static Location getMapCenter(Bundle b) {
+        if (b == null) {
+            return null;
+        }
+        Location center = null;
+        double lat = b.getDouble(MapParams.CENTER_LAT);
+        double lon = b.getDouble(MapParams.CENTER_LON);
+
+        if (lat != 0.0 && lon != 0.0) {
+            center = LocationUtils.makeLocation(lat, lon);
+        }
+        return center;
     }
 }

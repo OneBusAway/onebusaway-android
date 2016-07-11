@@ -497,7 +497,7 @@ public final class UIUtils {
      */
     public static void sendEmail(Context context, String email, String location) {
         String obaRegionName = RegionUtils.getObaRegionName();
-        Boolean autoRegion = Application.get().getPrefs()
+        boolean autoRegion = Application.getPrefs()
                 .getBoolean(context.getString(R.string.preference_key_auto_select_region), true);
         String regionSelectionMethod;
         if (autoRegion) {

@@ -66,9 +66,12 @@ public interface MapModeController {
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
-        void setMyLocation(boolean useDefaultZoom, boolean animateToLocation);
+        boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation);
 
         void notifyOutOfRange();
+
+        // Zooms to the region bounds, if a region has been set
+        void zoomToRegion();
     }
 
     /**

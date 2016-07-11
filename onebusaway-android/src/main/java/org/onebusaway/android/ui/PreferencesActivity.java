@@ -375,7 +375,7 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_auto_select_region))) {
             //Analytics
             boolean autoSelect = settings
-                    .getBoolean(getString(R.string.preference_key_auto_select_region), false);
+                    .getBoolean(getString(R.string.preference_key_auto_select_region), true);
             if (autoSelect) {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),

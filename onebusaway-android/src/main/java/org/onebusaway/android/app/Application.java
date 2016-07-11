@@ -492,7 +492,7 @@ public class Application extends android.app.Application {
         Boolean experimentalRegions = getPrefs().getBoolean(getString(R.string.preference_key_experimental_regions),
                 Boolean.FALSE);
         Boolean autoRegion = getPrefs().getBoolean(getString(R.string.preference_key_auto_select_region),
-                Boolean.FALSE);
+                true);
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                 getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_experimental)
                         + (experimentalRegions ? "YES" : "NO"));

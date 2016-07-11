@@ -464,10 +464,11 @@
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nRegion/API: %5$s (%6$s)\nLoc: %7$s
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
+        Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
     </string>
     <string name="bug_report_body_without_location">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\n
     </string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>

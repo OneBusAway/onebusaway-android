@@ -456,7 +456,12 @@
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Palaute</string>
     <string name="bug_report_body">Valitukset, kiitokset ja virheraportit ovat tervetulleita!\n\n\nApp Version:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nRegion/API: %5$s (%6$s)\nLoc: %7$s
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
+        Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s
+    </string>
+    <string name="bug_report_body_without_location">Valitukset, kiitokset ja virheraportit ovat
+        tervetulleita!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d
     </string>
     <string name="bug_report_error">Virheraporttia ei pystytä lähettämään: sopivaa ohjelmaa ei löytynyt.
     </string>

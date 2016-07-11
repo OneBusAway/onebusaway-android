@@ -17,6 +17,8 @@
 
 package org.onebusaway.android.util;
 
+import com.google.android.gms.common.GoogleApiAvailability;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -519,27 +521,38 @@ public final class UIUtils {
     private static void sendEmail(Context context, String email, String location, String regionName,
                                  String regionSelectionMethod) {
         PackageManager pm = context.getPackageManager();
-        PackageInfo appInfo;
+        PackageInfo appInfoOba;
+        PackageInfo appInfoGps;
+        String obaVersion = "";
+        String googlePlayServicesAppVersion = "";
         try {
-            appInfo = pm.getPackageInfo(context.getPackageName(),
+            appInfoOba = pm.getPackageInfo(context.getPackageName(),
                     PackageManager.GET_META_DATA);
+            obaVersion = appInfoOba.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
+            // Leave version as empty string
+        }
+        try {
+            appInfoGps = pm.getPackageInfo(GoogleApiAvailability.GOOGLE_PLAY_SERVICES_PACKAGE, 0);
+            googlePlayServicesAppVersion = appInfoGps.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            // Leave version as empty string
         }
         String body;
         if (location != null) {
             body = context.getString(R.string.bug_report_body,
-                    appInfo.versionName,
+                    obaVersion,
                     Build.MODEL,
                     Build.VERSION.RELEASE,
                     Build.VERSION.SDK_INT,
+                    googlePlayServicesAppVersion,
+                    GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
                     regionName,
                     regionSelectionMethod,
                     location);
         } else {
             body = context.getString(R.string.bug_report_body_without_location,
-                    appInfo.versionName,
+                    obaVersion,
                     Build.MODEL,
                     Build.VERSION.RELEASE,
                     Build.VERSION.SDK_INT);

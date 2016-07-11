@@ -17,7 +17,7 @@
 package org.onebusaway.android.region;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
@@ -110,7 +110,8 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
         this.mCallback = callback;
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        if (api.isGooglePlayServicesAvailable(context)
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
             mGoogleApiClient.connect();

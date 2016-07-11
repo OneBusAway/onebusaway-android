@@ -16,7 +16,7 @@
 package org.onebusaway.android.util;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -186,7 +186,8 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mContext)
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        if (api.isGooglePlayServicesAvailable(mContext)
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = new GoogleApiClient.Builder(mContext)
                     .addApi(LocationServices.API)

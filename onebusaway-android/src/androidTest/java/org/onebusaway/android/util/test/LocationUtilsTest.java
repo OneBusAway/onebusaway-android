@@ -1,7 +1,7 @@
 package org.onebusaway.android.util.test;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.app.Application;
@@ -33,7 +33,8 @@ public class LocationUtilsTest extends AndroidTestCase {
         super.setUp();
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        if (api.isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getContext());
             mGoogleApiClient.connect();
@@ -187,7 +188,8 @@ public class LocationUtilsTest extends AndroidTestCase {
         Location loc;
 
         // Test with Google Play Services, if its supported, and if we're not running on an emulator
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getContext())
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        if (api.isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS &&
                 !TestUtils.isRunningOnEmulator()) {
             /**

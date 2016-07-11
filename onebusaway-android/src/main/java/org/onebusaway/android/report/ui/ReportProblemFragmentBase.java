@@ -16,7 +16,7 @@
 package org.onebusaway.android.report.ui;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.R;
@@ -71,9 +71,10 @@ public abstract class ReportProblemFragmentBase extends Fragment
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getActivity())
+        if (api.isGooglePlayServicesAvailable(getActivity())
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(getActivity());
             mGoogleApiClient.connect();

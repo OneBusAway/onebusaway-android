@@ -17,7 +17,7 @@
 package org.onebusaway.android.ui;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -1262,7 +1262,8 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupGooglePlayServices() {
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this)
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        if (api.isGooglePlayServicesAvailable(this)
                 == ConnectionResult.SUCCESS) {
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(this);
             mGoogleApiClient.connect();

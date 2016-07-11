@@ -17,7 +17,7 @@
 package org.onebusaway.android.map;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.app.Application;
@@ -160,9 +160,10 @@ public class StopMapController implements MapModeController,
 
     public StopMapController(Callback callback) {
         mCallback = callback;
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
 
         // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(mCallback.getActivity())
+        if (api.isGooglePlayServicesAvailable(mCallback.getActivity())
                 == ConnectionResult.SUCCESS) {
             Context context = mCallback.getActivity();
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);

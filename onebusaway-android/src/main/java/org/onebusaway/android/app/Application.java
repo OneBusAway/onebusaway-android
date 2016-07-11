@@ -18,7 +18,7 @@ package org.onebusaway.android.app;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.BuildConfig;
@@ -227,10 +227,11 @@ public class Application extends android.app.Application {
      * Android Location API
      */
     private static Location getLocation2(Context cxt, GoogleApiClient client) {
+        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         Location playServices = null;
         if (client != null &&
                 cxt != null &&
-                GooglePlayServicesUtil.isGooglePlayServicesAvailable(cxt)
+                api.isGooglePlayServicesAvailable(cxt)
                         == ConnectionResult.SUCCESS
                 && client.isConnected()) {
             playServices = FusedLocationApi.getLastLocation(client);

@@ -790,6 +790,8 @@
     <string name="tripplanner_current_location">Current Location</string>
     <string name="tripplanner_error_no_location">Please enter a location for the start and end of your trip.</string>
 
+    <string name="tripplanner_no_contact">There is no OpenTripPlanner contact for this region.</string>
+
     <string name="tripplanner_reverse">Reverse</string>
 
     <!-- Instructions generation -->

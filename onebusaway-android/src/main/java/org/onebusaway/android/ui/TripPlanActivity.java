@@ -274,6 +274,11 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                             getString(R.string.analytics_action_problem),
                             getString(R.string.analytics_label_app_feedback_otp));
                 }
+                else {
+                    Toast.makeText(TripPlanActivity.this,
+                            getString(R.string.tripplanner_no_contact),
+                            Toast.LENGTH_SHORT).show();
+                }
                 clearBundleErrors();
             }
         });

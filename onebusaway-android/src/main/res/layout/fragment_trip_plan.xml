@@ -54,7 +54,7 @@
                     android:id="@+id/fromCurrentLocationImageButton"
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
-                    android:tint="@color/trip_plan_label"
+                    android:tint="@color/material_gray"
                     android:layout_gravity="center_vertical"
             />
 
@@ -90,7 +90,7 @@
                     android:id="@+id/toCurrentLocationImageButton"
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
-                    android:tint="@color/trip_plan_label"
+                    android:tint="@color/material_gray"
                     android:layout_gravity="center_vertical"
             />
 
@@ -155,7 +155,7 @@
                     android:id="@+id/resetTimeImageButton"
                     android:src="@drawable/ic_arrival_time"
                     android:background="#00000000"
-                    android:tint="@color/trip_plan_label"
+                    android:tint="@color/material_gray"
                     android:layout_gravity="center_vertical"
             />
 

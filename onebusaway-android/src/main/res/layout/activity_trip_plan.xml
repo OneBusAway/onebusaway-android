@@ -29,7 +29,7 @@
             android:gravity="bottom"
             sothree:umanoPanelHeight="340dp"
             sothree:umanoShadowHeight="5dp"
-            sothree:umanoParalaxOffset="100dp"
+            sothree:umanoParallaxOffset="100dp"
             sothree:umanoFadeColor="@android:color/transparent"
             sothree:umanoInitialState="collapsed">
 
@@ -41,7 +41,7 @@
         <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
                      android:id="@+id/trip_results_fragment_container"
                      android:layout_width="match_parent"
-                     android:layout_height="wrap_content"/>
+                     android:layout_height="match_parent"/>
 
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 

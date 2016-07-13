@@ -1339,14 +1339,32 @@ public class HomeActivity extends AppCompatActivity
                 SlidingUpPanelLayout.PanelState.HIDDEN);  // Don't show the panel until we have content
         mSlidingPanel.setOverlayed(true);
         mSlidingPanel.setAnchorPoint(MapModeController.OVERLAY_PERCENTAGE);
-        mSlidingPanel.setPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+        mSlidingPanel.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener() {
+
+            @Override
+            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+                switch(newState) {
+                    case EXPANDED:
+                        onPanelExpanded(panel);
+                        break;
+                    case COLLAPSED:
+                        onPanelCollapsed(panel);
+                        break;
+                    case ANCHORED:
+                        onPanelAnchored(panel);
+                        break;
+                    case HIDDEN:
+                        onPanelHidden(panel);
+                        break;
+                }
+            }
+
             @Override
             public void onPanelSlide(View panel, float slideOffset) {
                 Log.d(TAG, "onPanelSlide, offset " + slideOffset);
                 mArrivalsListHeader.closeStatusPopups();
             }
 
-            @Override
             public void onPanelExpanded(View panel) {
                 Log.d(TAG, "onPanelExpanded");
                 if (mArrivalsListHeader != null) {
@@ -1361,7 +1379,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelCollapsed(View panel) {
                 Log.d(TAG, "onPanelCollapsed");
                 if (mMapFragment != null) {
@@ -1381,7 +1398,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelAnchored(View panel) {
                 Log.d(TAG, "onPanelAnchored");
                 if (mMapFragment != null) {
@@ -1403,7 +1419,6 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
 
-            @Override
             public void onPanelHidden(View panel) {
                 Log.d(TAG, "onPanelHidden");
                 // We need to hide the panel when switching between fragments via the navdrawer,

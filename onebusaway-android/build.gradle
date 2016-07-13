@@ -315,7 +315,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     // Bottom sliding panel
-    compile 'com.sothree.slidinguppanel:library:3.1.1'
+    compile 'com.sothree.slidinguppanel:library:3.3.0'
     // For sorting alphanumeric route names
     compile 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library

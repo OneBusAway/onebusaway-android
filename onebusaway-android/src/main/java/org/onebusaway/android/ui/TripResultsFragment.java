@@ -38,6 +38,7 @@ import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +50,7 @@ public class TripResultsFragment extends Fragment {
 
     private static final String TAG = "TripResultsFragment";
 
+    private View mDirectionsFrame;
     private BaseMapFragment mMapFragment;
     private ExpandableListView mDirectionsListView;
     private View mMapFragmentFrame;
@@ -62,6 +64,26 @@ public class TripResultsFragment extends Fragment {
 
     private RealtimeService mRealtimeService;
 
+    private Listener mListener;
+
+    private Bundle mMapBundle = new Bundle();
+
+    // This listener is a helper for the parent activity to handle the sliding panel,
+    // which interacts with sliding views (ie list view and map view) in subtle ways.
+
+    public interface Listener {
+
+        /**
+         * Called when the result views have been created
+         *
+         * @param containerView the view which contains the directions list and the map
+         * @param listView the directions list view
+         * @param mapView the map frame
+         */
+        void onResultViewCreated(View containerView, ListView listView, View mapView);
+
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +94,7 @@ public class TripResultsFragment extends Fragment {
         mSwitchViewTextView = (TextView) view.findViewById(R.id.switchViewText);
         mSwitchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
 
+        mDirectionsFrame = view.findViewById(R.id.directionsFrame);
         mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
         mMapFragmentFrame = view.findViewById(R.id.mapFragment);
 
@@ -86,13 +109,16 @@ public class TripResultsFragment extends Fragment {
             }
         });
 
-
         mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
 
         int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
         mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);
 
         initInfoAndMap(rank);
+
+        if (mListener != null) {
+            mListener.onResultViewCreated(mDirectionsFrame, mDirectionsListView, mMapFragmentFrame);
+        }
 
         return view;
     }
@@ -118,7 +144,24 @@ public class TripResultsFragment extends Fragment {
         return false;
     }
 
-    private Bundle mMapBundle = new Bundle();
+    /**
+     * Set the listener for this fragment.
+     *
+     * @param listener the new listener
+     */
+    public void setListener(Listener listener) {
+        mListener = listener;
+    }
+
+    /**
+     * Get whether map is showing.
+     *
+     * @return true if map is showing, false otherwise
+     */
+    public boolean isMapShowing() {
+        return mShowingMap;
+    }
+
 
     private void initMap(int trip) {
         mMapFragment = new BaseMapFragment();

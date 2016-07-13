@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
+import com.sothree.slidinguppanel.ScrollableViewHelper;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.R;
@@ -35,15 +36,18 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class TripPlanActivity extends AppCompatActivity implements TripRequest.Callback {
+public class TripPlanActivity extends AppCompatActivity implements TripRequest.Callback,
+        TripResultsFragment.Listener {
 
     private static final String TAG = "TripPlanActivity";
 
@@ -58,6 +62,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     private static final String PLAN_ERROR_CODE = "org.onebusaway.android.PLAN_ERROR_CODE";
 
     private static final String PLAN_ERROR_URL = "org.onebusaway.android.PLAN_ERROR_URL";
+
+    TripResultsFragment mResultsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +150,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     }
 
-
     @Override
     public void onStop() {
         super.onStop();
@@ -178,15 +183,16 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private void initResultsFragment() {
 
-        TripResultsFragment fragment = new TripResultsFragment();
-        fragment.setArguments(mBuilder.getBundle());
+        mResultsFragment = new TripResultsFragment();
+        mResultsFragment.setListener(this);
+        mResultsFragment.setArguments(mBuilder.getBundle());
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.trip_results_fragment_container, fragment).commit();
+                .add(R.id.trip_results_fragment_container, mResultsFragment).commit();
 
         getSupportFragmentManager().executePendingTransactions();
 
-        if (fragment.getView() != null) {
-            fragment.getView().post(new Runnable() {
+        if (mResultsFragment.getView() != null) {
+            mResultsFragment.getView().post(new Runnable() {
                 @Override
                 public void run() {
                     mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
@@ -331,4 +337,22 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         mBuilder.getBundle().remove(PLAN_ERROR_URL);
     }
 
+    // Handle the sliding panel's interactions with the list view and the map view.
+    @Override
+    public void onResultViewCreated(View container, final ListView listView, View mapView) {
+
+        mPanel.setScrollableViewHelper(new ScrollableViewHelper() {
+            @Override
+            public int getScrollableViewScrollPosition(View scrollableView, boolean isSlidingUp) {
+                if (mResultsFragment.isMapShowing()) {
+                    return 1; // map can scroll infinitely, so return a positive value
+                }
+                else {
+                    return super.getScrollableViewScrollPosition(listView, isSlidingUp);
+                }
+            }
+        });
+
+        mPanel.setScrollableView(container);
+    }
 }

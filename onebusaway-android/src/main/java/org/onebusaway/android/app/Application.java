@@ -141,7 +141,11 @@ public class Application extends android.app.Application {
     public static synchronized Location getLastKnownLocation(Context cxt, GoogleApiClient client) {
         if (mLastKnownLocation == null) {
             // Try to get a last known location from the location providers
-            mLastKnownLocation = getLocation2(cxt, client);
+            try {
+                mLastKnownLocation = getLocation2(cxt, client);
+            } catch (SecurityException e) {
+                Log.e(TAG, "User may have denied location permission - " + e);
+            }
         }
         // Pass back last known saved location, hopefully from past location listener updates
         return mLastKnownLocation;
@@ -225,8 +229,10 @@ public class Application extends android.app.Application {
      *               isn't available
      * @return a recent location, considering both Google Play Services (if available) and the
      * Android Location API
+     * @throws SecurityException if the user has remove location permissions
      */
-    private static Location getLocation2(Context cxt, GoogleApiClient client) {
+    private static Location getLocation2(Context cxt, GoogleApiClient client)
+            throws SecurityException {
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         Location playServices = null;
         if (client != null &&

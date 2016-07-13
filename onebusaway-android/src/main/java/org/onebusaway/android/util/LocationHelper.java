@@ -93,7 +93,11 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         // If this is the first listener, make sure we're monitoring the sensors to provide updates
         if (mListeners.size() == 1) {
             // Listen for location
-            registerAllProviders();
+            try {
+                registerAllProviders();
+            } catch (SecurityException e) {
+                Log.e(TAG, "User may have denied location permission - " + e);
+            }
         }
     }
 
@@ -117,16 +121,24 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     }
 
     public synchronized void onResume() {
-        registerAllProviders();
+        try {
+            registerAllProviders();
+        } catch (SecurityException e) {
+            Log.e(TAG, "User may have denied location permission - " + e);
+        }
     }
 
     public synchronized void onPause() {
-        mLocationManager.removeUpdates(this);
+        try {
+            mLocationManager.removeUpdates(this);
 
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
+            // Tear down GoogleApiClient
+            if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+                FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+                mGoogleApiClient.disconnect();
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "User may have denied location permission - " + e);
         }
     }
 
@@ -163,7 +175,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
 
     }
 
-    private void registerAllProviders() {
+    private void registerAllProviders() throws SecurityException {
         List<String> providers = mLocationManager.getProviders(true);
         for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
             mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
@@ -202,7 +214,11 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Location Services connected");
         // Request location updates
-        FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        try {
+            FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        } catch (SecurityException e) {
+            Log.e(TAG, "User may have denied location permission - " + e);
+        }
     }
 
     @Override

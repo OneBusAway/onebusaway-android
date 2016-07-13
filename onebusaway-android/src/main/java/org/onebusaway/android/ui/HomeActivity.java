@@ -1050,11 +1050,6 @@ public class HomeActivity extends AppCompatActivity
         moveMyLocationButton();
     }
 
-    private String getLocationString(Context context) {
-        Location loc = Application.getLastKnownLocation(context, mGoogleApiClient);
-        return LocationUtils.printLocationDetails(loc);
-    }
-
     private void goToSendFeedBack() {
         if (mFocusedStop != null) {
             ReportActivity.start(this, mFocusedStopId, mFocusedStop.getName(), mFocusedStop.getStopCode(),

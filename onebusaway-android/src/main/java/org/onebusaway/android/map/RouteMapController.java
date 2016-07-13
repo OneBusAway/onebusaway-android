@@ -426,7 +426,7 @@ public class RouteMapController implements MapModeController {
 
             ObaMapView obaMapView = mFragment.getMapView();
 
-            if (response.getCode() != ObaApi.OBA_OK) {
+            if (response == null || response.getCode() != ObaApi.OBA_OK) {
                 BaseMapFragment.showMapError(response);
                 return;
             }
@@ -521,7 +521,7 @@ public class RouteMapController implements MapModeController {
 
             ObaMapView obaMapView = mFragment.getMapView();
 
-            if (response.getCode() != ObaApi.OBA_OK) {
+            if (response == null || response.getCode() != ObaApi.OBA_OK) {
                 BaseMapFragment.showMapError(response);
                 return;
             }

@@ -31,6 +31,7 @@ import com.google.android.gms.maps.model.VisibleRegion;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -650,9 +651,18 @@ public class BaseMapFragment extends SupportMapFragment
     //
     public static void showMapError(ObaResponse response) {
         Context context = Application.get().getApplicationContext();
-        Toast.makeText(context,
-                context.getString(UIUtils.getMapErrorString(context, response.getCode())),
-                Toast.LENGTH_LONG).show();
+        int code;
+        if (response != null) {
+            code = response.getCode();
+        } else {
+            // If we don't even have a response object, something went really wrong
+            code = ObaApi.OBA_INTERNAL_ERROR;
+        }
+        if (UIUtils.canManageDialog(context)) {
+            Toast.makeText(context,
+                    context.getString(UIUtils.getMapErrorString(context, code)),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     //

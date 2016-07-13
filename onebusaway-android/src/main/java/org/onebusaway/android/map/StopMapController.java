@@ -303,11 +303,8 @@ public class StopMapController implements MapModeController,
             StopsResponse _response) {
         mCallback.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
-        if (response == null) {
-            return;
-        }
 
-        if (response.getCode() != ObaApi.OBA_OK) {
+        if (response == null || response.getCode() != ObaApi.OBA_OK) {
             BaseMapFragment.showMapError(response);
             return;
         }

@@ -48,8 +48,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
@@ -614,7 +612,7 @@ public class ArrivalsListFragment extends ListFragment
             return true;
         } else if (id == R.id.sort_arrivals) {
             ShowcaseViewUtils.doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_ARRIVAL_SORT);
-            doSortBy();
+            showSortByDialog();
         } else if (id == R.id.filter) {
             if (mStop != null) {
                 showRoutesFilterDialog();
@@ -1117,41 +1115,51 @@ public class ArrivalsListFragment extends ListFragment
         setListAdapter(mAdapter);
     }
 
-    private void doSortBy() {
-        // Switch sort order and show Toast
-        Resources r = getActivity().getResources();
-        SharedPreferences settings = Application.getPrefs();
-        String currentValue = settings
-                .getString(getString(R.string.preference_key_arrival_info_style), null);
-        String[] styles = getResources()
-                .getStringArray(R.array.arrival_info_style_options);
-        int newValue;
-
-        if (currentValue.equalsIgnoreCase(styles[0])) {
-            // Currently we're sorting by ETA - change to sorting by route
-            newValue = 1;
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getActivity().getString(R.string.analytics_action_button_press),
-                    getActivity().getString(R.string.analytics_label_sort_by_route_arrival));
-        } else {
-            // Currently we're sorting by route - change to sorting by eta
-            newValue = 0;
-            //Analytics
-            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    getActivity().getString(R.string.analytics_action_button_press),
-                    getActivity().getString(R.string.analytics_label_sort_by_eta_arrival));
-        }
-
-        PreferenceUtils.saveString(getResources()
-                        .getString(R.string.preference_key_arrival_info_style),
-                styles[newValue]);
-        checkAdapterStylePreference();
-        refreshLocal();
-        getLoaderManager().restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
+    private void showSortByDialog() {
+        // Do callback when user taps on button, so they can see result of dialog selection
         if (mListener != null) {
             mListener.onSortBySelected();
         }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.menu_option_sort_by);
+
+        int currentArrivalInfoStyle = BuildFlavorUtils.getArrivalInfoStyleFromPreferences();
+        builder.setSingleChoiceItems(R.array.sort_arrivals, currentArrivalInfoStyle,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int index) {
+                        if (index == 0) {
+                            // Sort by eta
+                            Log.d(TAG, "Sort by ETA");
+                            ObaAnalytics.reportEventWithCategory(
+                                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                    getActivity().getString(R.string.analytics_action_button_press),
+                                    getActivity().getString(
+                                            R.string.analytics_label_sort_by_eta_arrival));
+                        } else if (index == 1) {
+                            // Sort by route
+                            Log.d(TAG, "Sort by route");
+                            ObaAnalytics.reportEventWithCategory(
+                                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                    getActivity().getString(R.string.analytics_action_button_press),
+                                    getActivity().getString(
+                                            R.string.analytics_label_sort_by_route_arrival));
+                        }
+                        String[] styles = getResources()
+                                .getStringArray(R.array.arrival_info_style_options);
+                        PreferenceUtils.saveString(getResources()
+                                        .getString(R.string.preference_key_arrival_info_style),
+                                styles[index]);
+                        checkAdapterStylePreference();
+                        refreshLocal();
+                        getLoaderManager()
+                                .restartLoader(TRIPS_FOR_STOP_LOADER, null, mTripsForStopCallback);
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.setOwnerActivity(getActivity());
+        dialog.show();
     }
 
     /**

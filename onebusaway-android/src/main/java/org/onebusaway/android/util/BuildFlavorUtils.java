@@ -90,7 +90,7 @@ public class BuildFlavorUtils {
         if (arrivalInfoStylePref.equalsIgnoreCase(arrivalInfoStyleOptionB)) {
             return ARRIVAL_INFO_STYLE_B;
         }
-        // Return style B by default
-        return ARRIVAL_INFO_STYLE_B;
+        // Return style A by default
+        return ARRIVAL_INFO_STYLE_A;
     }
 }

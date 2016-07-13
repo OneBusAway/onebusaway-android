@@ -320,7 +320,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onResume() {
-        mLocationHelper.onResume();
+        if (mLocationHelper != null) {
+            mLocationHelper.onResume();
+        }
         mRunning = true;
 
         if (mController != null) {
@@ -657,9 +659,13 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    //
-    // Error handlers
-    //
+    /**
+     * Shows error messages related to stops, routes, and vehicles on the map, based on the
+     * response
+     * from the server
+     *
+     * @param response the response from the server, or null if the response object was null
+     */
     public static void showMapError(ObaResponse response) {
         Context context = Application.get().getApplicationContext();
         int code;

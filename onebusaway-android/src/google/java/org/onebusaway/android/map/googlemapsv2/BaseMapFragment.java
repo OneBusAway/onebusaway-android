@@ -309,7 +309,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onResume() {
-        mLocationHelper.onResume();
+        if (mLocationHelper != null) {
+            mLocationHelper.onResume();
+        }
         mRunning = true;
 
         if (mController != null) {

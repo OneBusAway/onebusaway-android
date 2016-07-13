@@ -17,9 +17,12 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -69,5 +72,62 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
     @Override
     protected String getLastTabPref() {
         return "RecentRoutesStopsActivity.LastTab";
+    }
+
+    /**
+     * Override default tab handling behavior of MyTabActivityBase - use tab text instead of tag
+     * for saving to preference. See #585.
+     */
+    @Override
+    protected void restoreDefaultTab() {
+        final String def;
+        if (mDefaultTab != null) {
+            def = mDefaultTab;
+            if (def != null) {
+                // Find this tab...
+                final ActionBar bar = getSupportActionBar();
+                for (int i = 0; i < bar.getTabCount(); ++i) {
+                    ActionBar.Tab tab = bar.getTabAt(i);
+                    // Still use tab.getTag() here, as its driven by intent or saved instance state
+                    if (def.equals(tab.getTag())) {
+                        tab.select();
+                    }
+                }
+            }
+        } else {
+            SharedPreferences settings = Application.getPrefs();
+            def = settings.getString(getLastTabPref(), null);
+            if (def != null) {
+                // Find this tab...
+                final ActionBar bar = getSupportActionBar();
+                for (int i = 0; i < bar.getTabCount(); ++i) {
+                    ActionBar.Tab tab = bar.getTabAt(i);
+                    if (def.equals(tab.getText())) {
+                        tab.select();
+                    }
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Override default tab handling behavior of MyTabActivityBase - use tab text instead of tag
+     * for saving to preference. See #585.
+     */
+    @Override
+    public void onDestroy() {
+        // If there was a tab in the intent, don't save it
+        if (mDefaultTab == null) {
+            final ActionBar bar = getSupportActionBar();
+            final ActionBar.Tab tab = bar.getSelectedTab();
+            PreferenceUtils.saveString(getLastTabPref(), (String) tab.getText());
+
+            // Assign a value to mDefaultTab so that super().onDestroy() doesn't overwrite the
+            // preference we set above.  FIXME - this is a total hack.
+            mDefaultTab = "hack";
+        }
+
+        super.onDestroy();
     }
 }

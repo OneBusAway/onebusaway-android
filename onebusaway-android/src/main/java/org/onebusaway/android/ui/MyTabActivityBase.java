@@ -44,7 +44,7 @@ abstract class MyTabActivityBase extends AppCompatActivity {
 
     protected Location mSearchCenter;
 
-    private String mDefaultTab;
+    protected String mDefaultTab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

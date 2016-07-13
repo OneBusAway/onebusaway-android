@@ -109,8 +109,9 @@
         - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
         <b>Improved feedback process</b>
         - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
+        <b>Add description for arrivals \"Sort\" button</b>\n&#8226;\u0020
         <b>Bug fixes</b>
-        - Broken shortcuts / reminders, out of region / location off, clipped text, crashes
+        - Auto-center on location, recents not remembering last tab, headsign formatting, crashes
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>

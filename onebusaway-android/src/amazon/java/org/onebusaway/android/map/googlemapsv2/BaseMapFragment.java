@@ -27,7 +27,30 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+<<<<<<< 8fb7ada7860d56925ded95ad73321303969d7d55
 import com.google.android.gms.common.api.GoogleApiClient;
+=======
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
+
+>>>>>>> Fix #525 - Support User Location Via ZIP Code
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.LocationSource;
 import com.amazon.geo.mapsv2.OnMapReadyCallback;
@@ -59,25 +82,6 @@ import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,80 +112,57 @@ public class BaseMapFragment extends SupportMapFragment
         VehicleOverlay.Controller {
 
     public static final String TAG = "BaseMapFragment";
-
-    private static final int REQUEST_NO_LOCATION = 41;
-
     //
     // Location Services and Maps API v2 constants
     //
     public static final float CAMERA_DEFAULT_ZOOM = 16.0f;
-
     public static final float DEFAULT_MAP_PADDING_DP = 20.0f;
-
+    private static final int REQUEST_NO_LOCATION = 41;
+    //
+    // Stop changed handler
+    //
+    final Handler mStopChangedHandler = new Handler();
+    // Listen to map tap events
+    OnFocusChangedListener mOnFocusChangedListener;
+    LocationHelper mLocationHelper;
+    Bundle mLastSavedInstanceState;
     // Keep track of current map padding
     private int mMapPaddingLeft = 0;
-
     private int mMapPaddingTop = 0;
-
     private int mMapPaddingRight = 0;
-
     private int mMapPaddingBottom = 0;
-
     // Use fully-qualified class name to avoid import statement, because it interferes with scripted
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
     private com.amazon.geo.mapsv2.AmazonMap mMap;
-
     private String mFocusStopId;
-
     // The Fragment controls the stop overlay, since that
     // is used by both modes.
     private StopOverlay mStopOverlay;
-
     private VehicleOverlay mVehicleOverlay;
-
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
-
     private boolean mRunning = false;
-
     private MapModeController mController;
-
     private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
-
     // Markers that are added to the map by classes external to this map package
     private SimpleMarkerOverlay mSimpleMarkerOverlay;
-
     // We have to convert from LatLng to Location, so hold references to both
     private LatLng mCenter;
-
     private Location mCenterLocation;
-
     private OnLocationChangedListener mListener;
-
-    // Listen to map tap events
-    OnFocusChangedListener mOnFocusChangedListener;
-
-    LocationHelper mLocationHelper;
-
-    Bundle mLastSavedInstanceState;
-
-    public interface OnFocusChangedListener {
-
-        /**
-         * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
-         * or when the user taps on an area away from the map for the first time after a stop
-         * is already selected, which removes focus
-         *
-         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
-         * @param routes   a HashMap of all route display names that serve this stop - key is
-         *                 routeId
-         * @param location the user touch location on the map
-         */
-        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
-    }
 
     public static BaseMapFragment newInstance() {
         return new BaseMapFragment();
+    }
+
+    //
+    // Error handlers
+    //
+    public static void showMapError(ObaResponse response) {
+        Context context = Application.get().getApplicationContext();
+        Toast.makeText(context,
+                context.getString(UIUtils.getMapErrorString(context, response.getCode())),
+                Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -389,6 +370,25 @@ public class BaseMapFragment extends SupportMapFragment
 //        }
 //    }
 
+    private void setLocationByZip(final String zip) {
+        final Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                Location l = LocationUtils.getLocationFromZip(
+                        Application.get().getApplicationContext(), zip);
+                if (l != null && mLocationHelper != null) {
+                    mLocationHelper.onLocationChanged(l);
+                    setMyLocation(l, true, true);
+                } else {
+                    Toast.makeText(Application.get().getApplicationContext(),
+                            getString(R.string.main_ziplocation_error),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
     //
     // Fragment Controller
     //
@@ -554,11 +554,6 @@ public class BaseMapFragment extends SupportMapFragment
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
-    //
-    // Stop changed handler
-    //
-    final Handler mStopChangedHandler = new Handler();
-
     public void onFocusChanged(final ObaStop stop, final HashMap<String, ObaRoute> routes,
                                final Location location) {
         // Run in a separate thread, to avoid blocking UI for long running events
@@ -592,6 +587,7 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     @SuppressWarnings("deprecation")
+<<<<<<< 8fb7ada7860d56925ded95ad73321303969d7d55
     public boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
         if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
                 getActivity())) {
@@ -605,6 +601,23 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         Location lastLocation = Application.getLastKnownLocation(getActivity(), apiClient);
+=======
+    public void setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
+        Location lastLocation = Application.getLastKnownLocation(this.getActivity(), null);
+        if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
+                getActivity())) {
+
+            String zipCodeKey = getString(R.string.preference_key_zip_code);
+            String zip = PreferenceUtils.getString(zipCodeKey);
+            if (zip != null && !zip.isEmpty()) {
+                setLocationByZip(zip);
+                return;
+            } else {
+                showDialog(MapDialogFragment.NOLOCATION_DIALOG);
+            }
+        }
+
+>>>>>>> Fix #525 - Support User Location Via ZIP Code
         if (lastLocation == null) {
             Toast.makeText(getActivity(),
                     getResources()
@@ -656,26 +669,16 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    //
-    // Error handlers
-    //
-    public static void showMapError(ObaResponse response) {
-        Context context = Application.get().getApplicationContext();
-        Toast.makeText(context,
-                context.getString(UIUtils.getMapErrorString(context, response.getCode())),
-                Toast.LENGTH_LONG).show();
-    }
-
-    //
-    // MapView interactions
-    //
-
     @Override
     public void setZoom(float zoomLevel) {
         if (mMap != null) {
             mMap.moveCamera(CameraUpdateFactory.zoomTo(zoomLevel));
         }
     }
+
+    //
+    // MapView interactions
+    //
 
     @Override
     public Location getMapCenterAsLocation() {
@@ -914,12 +917,12 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    // Maps V2 Location updates
-
     @Override
     public void activate(OnLocationChangedListener listener) {
         mListener = listener;
     }
+
+    // Maps V2 Location updates
 
     @Override
     public void deactivate() {
@@ -946,6 +949,21 @@ public class BaseMapFragment extends SupportMapFragment
         return mFocusStopId;
     }
 
+    public interface OnFocusChangedListener {
+
+        /**
+         * Called when a stop on the map is clicked (i.e., tapped), which sets focus to a stop,
+         * or when the user taps on an area away from the map for the first time after a stop
+         * is already selected, which removes focus
+         *
+         * @param stop     the ObaStop that obtained focus, or null if no stop is in focus
+         * @param routes   a HashMap of all route display names that serve this stop - key is
+         *                 routeId
+         * @param location the user touch location on the map
+         */
+        void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
+    }
+
     //
     // Dialogs
     //
@@ -953,16 +971,11 @@ public class BaseMapFragment extends SupportMapFragment
     public static class MapDialogFragment extends android.support.v4.app.DialogFragment {
 
         private static final String TAG = "MapDialogFragment";
-
-        int mDialogType;
-
-        private static BaseMapFragment mMapFragment;
-
         private final static String DIALOG_TYPE_KEY = "dialog_type";
-
         private static final int NOLOCATION_DIALOG = 103;
-
         private static final int OUTOFRANGE_DIALOG = 104;
+        private static BaseMapFragment mMapFragment;
+        int mDialogType;
 
         /**
          * Creates a new dialog of type NOLOCATION_DIALOG or OUTOFRANGE_DIALOG
@@ -1051,6 +1064,43 @@ public class BaseMapFragment extends SupportMapFragment
                             }
                     )
                     .setNegativeButton(android.R.string.no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    createZipCodeDialog().show();
+                                }
+                            }
+                    );
+            return builder.create();
+        }
+
+        private Dialog createZipCodeDialog() {
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            final EditText zipInput = (EditText)inflater.inflate(R.layout.zipcode_text, null, false);
+
+            final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_ziplocation_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setMessage(R.string.main_ziplocation)
+                    .setView(zipInput)
+                    .setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    final String zip = zipInput.getText().toString().trim();
+                                    if (zip != null && LocationUtils.isValidZipCode(zip)) {
+                                        mMapFragment.setLocationByZip(zip);
+                                    } else {
+                                        createZipCodeDialog().show();
+                                    }
+                                }
+                            }
+                    )
+                    .setNegativeButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {

@@ -39,6 +39,7 @@
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
     <string name="preference_key_show_tutorial_screens">preference_key_show_tutorial_screens
     </string>
+    <string name="preference_key_zip_code">preference_zip_code</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -106,6 +107,7 @@
     </string>
     <string name="analytics_label_button_press_experimental_off">Turned off Experimental Regions
     </string>
+    <string name="analytics_label_button_zip">zip_code</string>
     <string name="analytics_label_experimental">Show Experimental Regions:\u0020</string>
     <string name="analytics_label_button_press_auto">Set region automatically</string>
     <string name="analytics_label_button_press_manual">Set region manually</string>

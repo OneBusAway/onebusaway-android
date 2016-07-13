@@ -124,6 +124,12 @@
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
         now?
     </string>
+    <string name="main_ziplocation_title">Find Location By ZIP</string>
+    <string name="main_ziplocation">Would you like OneBus Away to find your approximate location
+        using a zip code instead?
+    </string>
+    <string name="main_ziplocation_error">Unable to find location by ZIP.</string>
+
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>
@@ -576,6 +582,12 @@
     <string name="preference_region_dialog_title">Please check region</string>
     <string name="report_dialog_out_of_region_message"> Please select a stop.</string>
     <string name="report_dialog_trip"> Please select an arrival time.</string>
+
+    <!-- Zip Code Location-->
+    <string name="preference_key_zip_code_title">ZIP Code</string>
+    <string name="preference_key_zip_code_summary">Use ZIP Code to find approximate
+    location when Location Services are not available.
+    </string>
 
     <!-- report issue screen-->
     <string name="ri_desc_hint">Issue description</string>

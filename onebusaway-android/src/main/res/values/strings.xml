@@ -700,7 +700,7 @@
     <string name="location_security_exception_message">It looks like you may have denied location
         permissions for the app via the system settings. Location services will not be available.
         If you\'d like to re-enable location permissions, go to your Android system settings, choose
-        OneBusAway and then Permissions, and re-enable Location.
+        \"OneBusAway\" and then \"Permissions\", and re-enable \"Location\".
     </string>
 
     <!-- About -->

@@ -695,6 +695,14 @@
         problemas a tu gobierno local cerca a esta parada. Toca en el cuadro desplegable para ver una lista completa.
     </string>
 
+    <!-- Location Security Exception -->
+    <string name="location_security_exception_title">Permisos de ubicación denegados</string>
+    <string name="location_security_exception_message">Parece que has podido negar los permisos
+        de ubicación para la aplicación en la configuración del sistema. Los servicios de ubicación no estarán disponibles.
+        Si quieres habilitar los permisos de ubicación, ve a la configuración de tu sistema Android, elige
+        \"OneBusAway\" y luego en \"Permisos\", y habilita \"Ubicación\".
+    </string>
+
     <!-- About -->
     <string name="title_activity_about">Acerca de</string>
     <string name="about_text">

@@ -256,9 +256,10 @@ public class TripResultsFragment extends Fragment {
         }
 
         void select() {
-            for (RoutingOptionPicker picker : mOptions)
-                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_option_background));
-            linearLayout.setBackgroundResource(R.drawable.bottom_line_grey_blue);
+            for (RoutingOptionPicker picker : mOptions) {
+                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.theme_primary));
+            }
+            linearLayout.setBackgroundColor(getResources().getColor(R.color.theme_primary_dark));
 
             updateInfo();
             updateMap();

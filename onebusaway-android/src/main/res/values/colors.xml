@@ -91,14 +91,6 @@
     <color name="tutorial_text">#bfffffff</color>
 
     <!-- Trip Planning -->
-    <color name="trip_plan_headers">@android:color/white</color>
-    <color name="trip_option_background">@color/theme_muted</color>
-    <color name="trip_plan_header_muted">#bfffffff</color>
-
-    <color name="trip_plan_late">#FF0000D0</color>
-    <color name="trip_plan_ontime">#FF00D000</color>
-    <color name="trip_plan_early">#FFD00000</color>
-
     <color name="trip_plan_label">@android:color/black</color>
 
 

@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginRight="1dp"
-                android:background="@drawable/bottom_line_grey_blue"
+                android:background="@color/theme_primary_dark"
                 android:gravity="center_vertical"
                 android:id="@+id/option1LinearLayout"
                 android:padding="4dp">
@@ -42,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:id="@+id/option1Title"
-                    android:textColor="@color/body_text_2"
+                    android:textColor="@color/header_text_color"
                     android:singleLine="true"
                     android:ellipsize="end"/>
 
@@ -50,13 +50,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option1Duration"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option1Interval"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
         </LinearLayout>
 
@@ -66,7 +66,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginRight="1dp"
-                android:background="@color/trip_option_background"
+                android:background="@color/theme_primary"
                 android:gravity="center_vertical"
                 android:id="@+id/option2LinearLayout"
                 android:padding="4dp">
@@ -76,7 +76,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:id="@+id/option2Title"
-                    android:textColor="@color/body_text_2"
+                    android:textColor="@color/header_text_color"
                     android:singleLine="true"
                     android:ellipsize="end"/>
 
@@ -84,13 +84,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option2Duration"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option2Interval"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
         </LinearLayout>
 
@@ -99,7 +99,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/trip_option_background"
+                android:background="@color/theme_primary"
                 android:gravity="center_vertical"
                 android:id="@+id/option3LinearLayout"
                 android:padding="4dp"
@@ -110,7 +110,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:id="@+id/option3Title"
-                    android:textColor="@color/body_text_2"
+                    android:textColor="@color/header_text_color"
                     android:singleLine="true"
                     android:ellipsize="end" />
 
@@ -118,13 +118,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option3Duration"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/option3Interval"
-                    android:textColor="@color/body_text_2" />
+                    android:textColor="@color/header_text_faded_color" />
 
         </LinearLayout>
     </LinearLayout>

@@ -695,6 +695,14 @@
         types to your local government near this stop. Tap on the drop-down box to see a full list.
     </string>
 
+    <!-- Location Security Exception -->
+    <string name="location_security_exception_title">Location permissions denied</string>
+    <string name="location_security_exception_message">It looks like you may have denied location
+        permissions for the app via the system settings. Location services will not be available.
+        If you\'d like to re-enable location permissions, go to your Android system settings, choose
+        OneBusAway and then Permissions, and re-enable Location.
+    </string>
+
     <!-- About -->
     <string name="title_activity_about">About</string>
     <string name="about_text">

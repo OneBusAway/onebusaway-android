@@ -21,12 +21,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -78,6 +82,9 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
 
+    private static final String PREFERENCE_SHOWED_DIALOG
+            = "showed_location_security_exception_dialog";
+
     public LocationHelper(Context context) {
         mContext = context;
         mLocationManager = (LocationManager) Application.get().getBaseContext()
@@ -97,6 +104,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
                 registerAllProviders();
             } catch (SecurityException e) {
                 Log.e(TAG, "User may have denied location permission - " + e);
+                maybeShowSecurityDialog();
             }
         }
     }
@@ -125,6 +133,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
             registerAllProviders();
         } catch (SecurityException e) {
             Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 
@@ -139,6 +148,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
             }
         } catch (SecurityException e) {
             Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 
@@ -210,6 +220,27 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
         }
     }
 
+    /**
+     * Shows the security dialog once if the user has disabled location permissions manually
+     */
+    private void maybeShowSecurityDialog() {
+        if (mContext != null && UIUtils.canManageDialog(mContext)) {
+            final SharedPreferences sp = Application.getPrefs();
+            if (!sp.getBoolean(PREFERENCE_SHOWED_DIALOG, false)) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                builder.setTitle(R.string.location_security_exception_title);
+                builder.setCancelable(false);
+                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        sp.edit().putBoolean(PREFERENCE_SHOWED_DIALOG, true).commit();
+                    }
+                });
+                builder.setMessage(R.string.location_security_exception_message);
+                builder.create().show();
+            }
+        }
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
         Log.d(TAG, "Location Services connected");
@@ -218,6 +249,7 @@ public class LocationHelper implements com.google.android.gms.location.LocationL
             FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         } catch (SecurityException e) {
             Log.e(TAG, "User may have denied location permission - " + e);
+            maybeShowSecurityDialog();
         }
     }
 

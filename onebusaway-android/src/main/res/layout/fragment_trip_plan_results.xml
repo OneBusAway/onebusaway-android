@@ -129,39 +129,31 @@
         </LinearLayout>
     </LinearLayout>
 
-
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
             android:layout_height="24dp"
-            android:id="@+id/switchViewLayout"
-            android:layout_marginTop="2dp"
-            android:background="@android:color/white"
-            android:layout_marginBottom="2dp">
+        >
 
-        <TextView
-                android:layout_width="wrap_content"
+        <android.support.design.widget.TabLayout
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/trip_plan_switch_view"
-                android:id="@+id/textView2"
-                android:gravity="center_vertical"
-                android:layout_marginLeft="10dp"/>
+                android:id="@+id/tab_layout_switch_view">
 
-        <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:id="@+id/switchViewImageView"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/ic_arrivals_styleb_action_map"
-                android:tint="@color/theme_primary" />
+            <android.support.design.widget.TabItem
+                    android:id="@+id/tab_list_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="@string/trip_plan_list_view"
+            />
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="@string/trip_plan_map_view"
-                android:id="@+id/switchViewText"
-                android:gravity="center_vertical"/>
+            <android.support.design.widget.TabItem
+                    android:id="@+id/tab_map_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="@string/trip_plan_map_view"/>
+
+        </android.support.design.widget.TabLayout>
 
     </LinearLayout>
 

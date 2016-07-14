@@ -30,6 +30,8 @@ import org.opentripplanner.api.model.Itinerary;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.TabItem;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -50,15 +52,13 @@ public class TripResultsFragment extends Fragment {
 
     private static final String TAG = "TripResultsFragment";
 
+    private static final int MAP_TAB_POSITION = 1;
+
     private View mDirectionsFrame;
     private BaseMapFragment mMapFragment;
     private ExpandableListView mDirectionsListView;
     private View mMapFragmentFrame;
     private boolean mShowingMap = false;
-
-    private LinearLayout mSwitchViewLayout;
-    private ImageView mSwitchViewImageView;
-    private TextView mSwitchViewTextView;
 
     private RoutingOptionPicker[] mOptions = new RoutingOptionPicker[3];
 
@@ -90,10 +90,6 @@ public class TripResultsFragment extends Fragment {
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan_results, container, false);
 
-        mSwitchViewLayout = (LinearLayout) view.findViewById(R.id.switchViewLayout);
-        mSwitchViewTextView = (TextView) view.findViewById(R.id.switchViewText);
-        mSwitchViewImageView = (ImageView) view.findViewById(R.id.switchViewImageView);
-
         mDirectionsFrame = view.findViewById(R.id.directionsFrame);
         mDirectionsListView = (ExpandableListView) view.findViewById(R.id.directionsListView);
         mMapFragmentFrame = view.findViewById(R.id.mapFragment);
@@ -102,19 +98,35 @@ public class TripResultsFragment extends Fragment {
         mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
         mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration, R.id.option3Interval);
 
-        mSwitchViewLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showMap(!mShowingMap);
-            }
-        });
-
         mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
 
         int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
         mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);
 
         initInfoAndMap(rank);
+
+        TabLayout tabLayout = (TabLayout) view.findViewById(R.id.tab_layout_switch_view);
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                boolean show = (tab.getPosition() == MAP_TAB_POSITION);
+                showMap(show);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                // unused
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                // unused
+            }
+        });
+
+        if (mShowingMap) {
+            tabLayout.getTabAt(MAP_TAB_POSITION).select();
+        }
 
         if (mListener != null) {
             mListener.onResultViewCreated(mDirectionsFrame, mDirectionsListView, mMapFragmentFrame);
@@ -183,12 +195,8 @@ public class TripResultsFragment extends Fragment {
         if (show) {
             mMapFragmentFrame.bringToFront();
             mMapFragment.setMapMode(MapParams.MODE_DIRECTIONS, mMapBundle);
-            mSwitchViewImageView.setImageResource(R.drawable.ic_more_vert);
-            mSwitchViewTextView.setText(getString(R.string.trip_plan_list_view));
         } else {
             mDirectionsListView.bringToFront();
-            mSwitchViewImageView.setImageResource(R.drawable.ic_arrivals_styleb_action_map);
-            mSwitchViewTextView.setText(getString(R.string.trip_plan_map_view));
         }
 
         getArguments().putBoolean(OTPConstants.SHOW_MAP, mShowingMap);

@@ -118,6 +118,9 @@ public interface MapModeController {
         // Zoom to line overlay of route
         void zoomToRoute();
 
+        // Zoom to line overlay of itinerary
+        void zoomToItinerary();
+
         /**
          * Zoom to include the closest vehicle from the response within the map view
          *

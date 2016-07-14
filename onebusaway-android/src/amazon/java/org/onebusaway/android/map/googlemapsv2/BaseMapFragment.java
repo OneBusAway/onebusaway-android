@@ -794,6 +794,30 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
+    @Override
+    public void zoomToItinerary() {
+        if (mMap != null) {
+            if (!mLineOverlay.isEmpty()) {
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (Polyline p : mLineOverlay) {
+                    for (LatLng l : p.getPoints()) {
+                        builder.include(l);
+                    }
+                }
+
+                Activity a = getActivity();
+                if (a != null) {
+                    int padding = UIUtils.dpToPixels(a, DEFAULT_MAP_PADDING_DP);
+                    mMap.moveCamera(
+                            (CameraUpdateFactory.newLatLngBounds(builder.build(),
+                                    getResources().getDisplayMetrics().widthPixels,
+                                    getResources().getDisplayMetrics().heightPixels,
+                                    padding)));
+                }
+            }
+        }
+    }
+
     /**
      * Zoom to include the current map bounds plus the location of the nearest vehicle
      *

@@ -28,7 +28,6 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 
 import java.util.List;
 
@@ -39,8 +38,6 @@ public class DirectionsMapController implements MapModeController {
     private final Callback mFragment;
 
     private Itinerary mItinerary;
-
-    private boolean mZoomed = false;
 
     private boolean mHasRoute = false;
 
@@ -55,7 +52,6 @@ public class DirectionsMapController implements MapModeController {
 
         if (args != null) {
             mItinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
-            mZoomed = false;
         }
 
         onResume();
@@ -114,6 +110,7 @@ public class DirectionsMapController implements MapModeController {
 
         for (Leg leg : mItinerary.legs) {
             LegShape shape = new LegShape(leg.legGeometry);
+
             if (shape.getLength() > 0) {
                 mHasRoute = true;
                 int color = resolveColor(leg);
@@ -121,6 +118,7 @@ public class DirectionsMapController implements MapModeController {
             }
         }
 
+        zoom();
     }
 
     @Override
@@ -140,18 +138,17 @@ public class DirectionsMapController implements MapModeController {
 
     @Override
     public void notifyMapChanged() {
-        if (!mZoomed && mFragment.getView() != null &&
-                mFragment.getView().getVisibility() == View.VISIBLE) {
+        // Don't care
+    }
 
-            ObaMapView view = mFragment.getMapView();
+    private void zoom() {
+        ObaMapView view = mFragment.getMapView();
 
-            if (mHasRoute) {
-                view.zoomToRoute();
-            } else {
-                view.setMapCenter(mCenter, false, false);
-                view.setZoom(MapParams.DEFAULT_ZOOM);
-            }
-            mZoomed = true;
+        if (mHasRoute) {
+            view.zoomToItinerary();
+        } else {
+            view.setMapCenter(mCenter, false, false);
+            view.setZoom(MapParams.DEFAULT_ZOOM);
         }
     }
 

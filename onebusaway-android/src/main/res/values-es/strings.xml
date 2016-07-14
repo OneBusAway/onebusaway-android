@@ -109,9 +109,9 @@
         - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
         <b>Mejora en Envio de Comentarios</b>
         - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
-        <b>Mejora del tutorial</b>
-        - Menos ventanas emergentes, permitir mostrarlo u ocultarlo\n&#8226;\u0020
+        <b>Adición de descripción para el botón de \"Ordernar\" de llegadas</b>\n&#8226;\u0020
         <b>Corrección de errores</b>
+        - Centrar automáticamente sobre la ubicación, los recientes no recordaban la última pestaña, formateo en las direcciones de viajes, bloqueos
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
@@ -128,7 +128,9 @@
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
     <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>
-    <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Ir allí ahora?</string>
+    <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Mover
+        el mapa a %1$s ahora?
+    </string>
     <string name="main_outofrange_yes">Llévame allí</string>
     <string name="main_outofrange_no">Quedarme donde estoy</string>
 
@@ -458,16 +460,18 @@
     <string name="region_disabled_auto_selection">Selección de región automática deshabilitada. Puedes
         habilitarla en Preferencias.
     </string>
-    <string name="region_region_found">Se encontrarón %1$s regiones</string>
+    <string name="region_selected_auto">seleccionada automáticamente</string>
+    <string name="region_selected_manually">seleccionada manualmente</string>
+    <string name="region_region_found">Se encontró la región %1$s</string>
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
-    <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
-        %1$s\nModelo: %2$s\nVersión SO: %3$s / %4$d\nGoogle Play Services App: %5$s\n
+    <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
     </string>
-    <string name="bug_report_body_without_location">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nVersión de la App:
-        %1$s\nModelo: %2$s\n nVersión SO: %3$s / %4$d\n\n
+    <string name="bug_report_body_without_location">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\n
     </string>
     <string name="bug_report_error">No se puede enviar el informe de error: no se encontro una aplicación adecuada.
     </string>

@@ -265,9 +265,9 @@ public class TripResultsFragment extends Fragment {
 
         void select() {
             for (RoutingOptionPicker picker : mOptions) {
-                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.theme_primary));
+                picker.linearLayout.setBackgroundColor(getResources().getColor(R.color.trip_option_background));
             }
-            linearLayout.setBackgroundColor(getResources().getColor(R.color.theme_primary_dark));
+            linearLayout.setBackgroundResource(R.drawable.trip_option_selected_item);
 
             updateInfo();
             updateMap();

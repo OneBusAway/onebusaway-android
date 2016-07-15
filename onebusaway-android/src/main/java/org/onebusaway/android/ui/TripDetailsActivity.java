@@ -46,6 +46,11 @@ public class TripDetailsActivity extends AppCompatActivity {
             return this;
         }
 
+        public Builder setScrollMode(String mode) {
+            mIntent.putExtra(TripDetailsListFragment.SCROLL_MODE, mode);
+            return this;
+        }
+
         public Builder setUpMode(String mode) {
             mIntent.putExtra(NavHelp.UP_MODE, mode);
             return this;
@@ -64,9 +69,14 @@ public class TripDetailsActivity extends AppCompatActivity {
         new Builder(context, tripId).start();
     }
 
-    public static void start(Context context, String tripId, String stopId) {
-        new Builder(context, tripId).setStopId(stopId).start();
+    public static void start(Context context, String tripId, String mode) {
+        new Builder(context, tripId).setScrollMode(mode).start();
     }
+
+    public static void start(Context context, String tripId, String stopId, String mode) {
+        new Builder(context, tripId).setStopId(stopId).setScrollMode(mode).start();
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

@@ -16,18 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
@@ -51,6 +39,18 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +65,12 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String ROUTE_ID = ".RouteId";
 
+    public static final String SCROLL_MODE = ".ScrollMode";
+
+    public static final String SCROLL_MODE_VEHICLE = "vehicle";
+
+    public static final String SCROLL_MODE_STOP = "stop";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
@@ -74,6 +80,8 @@ public class TripDetailsListFragment extends ListFragment {
     private String mRouteId;
 
     private String mStopId;
+
+    private String mScrollMode;
 
     private Integer mStopIndex;
 
@@ -131,6 +139,7 @@ public class TripDetailsListFragment extends ListFragment {
         }
 
         mStopId = args.getString(STOP_ID);
+        mScrollMode = args.getString(SCROLL_MODE);
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
@@ -227,31 +236,7 @@ public class TripDetailsListFragment extends ListFragment {
             mAdapter = new TripDetailsAdapter();
             getListView().setDivider(null);
             setListAdapter(mAdapter);
-
-            // Scroll to stop if we have the stopId available
-            if (mStopId != null) {
-                mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
-                if (mStopIndex != null) {
-                    listView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listView.setSelection(mStopIndex);
-                        }
-                    });
-                }
-            } else {
-                // If we don't have a stop, then scroll to the current position of the bus
-                final Integer nextStop = mAdapter.getNextStopIndex();
-                if (nextStop != null) {
-                    listView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listView.setSelection(nextStop - 1);
-                        }
-                    });
-                }
-            }
-            mAdapter.notifyDataSetChanged();
+            setScroller(listView);
         } else {  // refresh, keep scroll position
             int index = listView.getFirstVisiblePosition();
             View v = listView.getChildAt(0);
@@ -703,5 +688,68 @@ public class TripDetailsListFragment extends ListFragment {
         public Integer getNextStopIndex() {
             return mNextStopIndex;
         }
+    }
+
+    private void setScroller(final ListView listView)
+    {
+        if (mScrollMode == null) {
+            // Don't automatically scroll to stop or vehicle icon
+            return;
+        }
+
+        switch (mScrollMode) {
+            case SCROLL_MODE_VEHICLE: {
+                // Scroll to bus marker if scroll mode is set to vehicle & we have index.
+                final Integer nextStop = mAdapter.getNextStopIndex();
+                if (nextStop != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(nextStop - 1);
+                        }
+                    });
+                } else {
+                    // If we couldn't get the bus marker, fall back to stop.
+                    mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                    if (mStopIndex != null) {
+                        listView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                listView.setSelection(mStopIndex);
+                            }
+                        });
+                    }
+                }
+                break;
+            }
+
+            case SCROLL_MODE_STOP: {
+                // Scroll to stop if we have the stopId available
+                if (mStopId != null) {
+                    mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                    if (mStopIndex != null) {
+                        listView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                listView.setSelection(mStopIndex);
+                            }
+                        });
+                    }
+                } else {
+                    // If we don't have a stop, then scroll to the current position of the bus
+                    final Integer nextStop = mAdapter.getNextStopIndex();
+                    if (nextStop != null) {
+                        listView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                listView.setSelection(nextStop - 1);
+                            }
+                        });
+                    }
+                }
+                break;
+            }
+        }
+        mAdapter.notifyDataSetChanged();
     }
 }

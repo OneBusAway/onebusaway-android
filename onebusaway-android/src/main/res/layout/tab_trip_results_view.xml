@@ -16,30 +16,25 @@
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="horizontal"
-              android:layout_height="match_parent"
+              android:layout_height="wrap_content"
               android:layout_width="match_parent"
               android:gravity="center"
+              android:layout_gravity="center"
 >
-
-    <ImageView
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:id="@android:id/icon"
-            android:layout_gravity="bottom"
-            android:tint="@color/navdrawer_icon_tint"
-    />
 
     <!-- styles copied from R.style.TextAppearance_Design_Tab -->
     <TextView
             android:id="@android:id/text1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:layout_gravity="center"
             android:ellipsize="end"
             android:singleLine="true"
             android:textSize="@dimen/trip_results_tab_text_size"
             android:textColor="@color/body_text_1"
             android:textAllCaps="true"
+            android:drawablePadding="4dp"
     />
 
 </LinearLayout>

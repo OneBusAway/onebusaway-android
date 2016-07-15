@@ -94,6 +94,7 @@
     <color name="trip_plan_label">@android:color/black</color>
     <color name="trip_option_background">@color/theme_primary</color>
     <color name="trip_option_selected">@android:color/white</color>
+    <color name="trip_option_icon_tint">#888</color>
 
 
 </resources>

@@ -29,8 +29,11 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.opentripplanner.api.model.Itinerary;
 
 import android.content.Intent;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.design.widget.TabItem;
+import android.support.annotation.DrawableRes;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -38,7 +41,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -52,6 +54,7 @@ public class TripResultsFragment extends Fragment {
 
     private static final String TAG = "TripResultsFragment";
 
+    private static final int LIST_TAB_POSITION = 0;
     private static final int MAP_TAB_POSITION = 1;
 
     private View mDirectionsFrame;
@@ -124,6 +127,9 @@ public class TripResultsFragment extends Fragment {
             }
         });
 
+        setTabDrawable(tabLayout.getTabAt(LIST_TAB_POSITION), R.drawable.ic_list);
+        setTabDrawable(tabLayout.getTabAt(MAP_TAB_POSITION), R.drawable.ic_arrivals_styleb_action_map);
+
         if (mShowingMap) {
             tabLayout.getTabAt(MAP_TAB_POSITION).select();
         }
@@ -174,6 +180,19 @@ public class TripResultsFragment extends Fragment {
         return mShowingMap;
     }
 
+    private void setTabDrawable(TabLayout.Tab tab, @DrawableRes int res) {
+        View view = tab.getCustomView();
+        TextView tv = ((TextView) view.findViewById(android.R.id.text1));
+
+        Drawable drawable = getResources().getDrawable(res);
+
+        int dp = (int) getResources().getDimension(R.dimen.trip_results_icon_size);
+        drawable.setBounds(0, 0, dp, dp);
+
+        drawable.setColorFilter(getResources().getColor(R.color.trip_option_icon_tint), PorterDuff.Mode.SRC_IN);
+
+        tv.setCompoundDrawables(drawable, null, null, null);
+    }
 
     private void initMap(int trip) {
         mMapFragment = new BaseMapFragment();

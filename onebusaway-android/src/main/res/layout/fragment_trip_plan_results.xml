@@ -136,7 +136,6 @@
             android:id="@+id/tab_layout_switch_view">
 
         <android.support.design.widget.TabItem
-                android:id="@+id/tab_list_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="@string/trip_plan_list_view"
@@ -145,7 +144,6 @@
         />
 
         <android.support.design.widget.TabItem
-                android:id="@+id/tab_map_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="@string/trip_plan_map_view"

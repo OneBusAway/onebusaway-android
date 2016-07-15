@@ -98,5 +98,6 @@
     <!-- Tab size -->
     <dimen name="trip_results_tab_size">32sp</dimen>
     <dimen name="trip_results_tab_text_size">14sp</dimen>
+    <dimen name="trip_results_icon_size">24dp</dimen>
 
 </resources>

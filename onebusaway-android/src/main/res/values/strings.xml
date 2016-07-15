@@ -25,7 +25,7 @@
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
-    <string name="navdrawer_item_plan_trip">Plan a trip</string>
+    <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
@@ -514,7 +514,7 @@
         show arrival info in the header at the top of the screen (doesn\'t affect map view)
     </string>
 
-    <string name="preferences_trip_plan_notifications_title">Trip plan notifications</string>
+    <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">After planning a trip, send
         notifications if the trip is delayed or no longer recommended.
     </string>
@@ -749,7 +749,7 @@
 
     <!-- Trip Planner strings -->
 
-    <string name="title_activity_trip_plan">Trip Planner</string>
+    <string name="title_activity_trip_plan">Trip Planner (beta)</string>
     <string name="error_while_retrieving_data">Error while retrieving data</string>
     <string name="trip_plan_from">From: </string>
     <string name="trip_plan_to">To: </string>

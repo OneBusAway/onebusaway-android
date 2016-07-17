@@ -31,11 +31,11 @@ import org.opentripplanner.api.ws.Message;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -63,6 +63,10 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String PLAN_ERROR_URL = "org.onebusaway.android.PLAN_ERROR_URL";
 
+    private static final String PANEL_STATE_EXPANDED = "org.onebusaway.android.PANEL_STATE_EXPANDED";
+
+    private static final String SHOW_ERROR_DIALOG = "org.onebusaway.android.SHOW_ERROR_DIALOG";
+
     TripResultsFragment mResultsFragment;
 
     @Override
@@ -75,6 +79,33 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         Bundle bundle = (savedInstanceState == null) ? new Bundle() : savedInstanceState;
         mBuilder = new TripRequestBuilder(bundle);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Bundle bundle = mBuilder.getBundle();
+        boolean newItineraries = false;
+
+        // see if there is data from intent
+        Intent intent = getIntent();
+        if (intent != null && intent.getExtras() != null) {
+            ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) intent.getExtras().getSerializable(OTPConstants.ITINERARIES);
+
+            if (itineraries != null) {
+                bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+                newItineraries = true;
+            }
+
+            if (intent.getStringExtra(PLAN_ERROR_URL) != null) {
+                bundle.putSerializable(SHOW_ERROR_DIALOG, true);
+                bundle.putInt(PLAN_ERROR_CODE, intent.getIntExtra(PLAN_ERROR_CODE, 0));
+                bundle.putString(PLAN_ERROR_URL, intent.getStringExtra(PLAN_ERROR_URL));
+            }
+
+            setIntent(null);
+        }
 
         // Check which fragment to create
         boolean haveTripPlan = bundle.getSerializable(OTPConstants.ITINERARIES) != null;
@@ -84,24 +115,23 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.trip_plan_fragment_container, fragment).commit();
 
+        mPanel = (SlidingUpPanelLayout) findViewById(R.id.trip_plan_sliding_layout);
+
+        mPanel.setEnabled(haveTripPlan);
 
         if (haveTripPlan) {
             initResultsFragment();
+            if (bundle.getBoolean(PANEL_STATE_EXPANDED) || newItineraries) {
+                mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
+            }
         }
-
-        // if planning in progress, reshow dialog
-        if (mTripRequest != null) {
-            mTripRequest.showProgressDialog();
-        }
-
-        // if were showing error dialog, reshow it
-        int planErrorCode = bundle.getInt(PLAN_ERROR_CODE);
-        String planErrorUrl = bundle.getString(PLAN_ERROR_URL);
-        if (!TextUtils.isEmpty(planErrorUrl)) {
+        
+        // show error dialog if necessary
+        if (bundle.getBoolean(SHOW_ERROR_DIALOG)) {
+            int planErrorCode = intent.getIntExtra(PLAN_ERROR_CODE, 0);
+            String planErrorUrl = intent.getStringExtra(PLAN_ERROR_URL);
             showFeedbackDialog(planErrorCode, planErrorUrl);
         }
-
-        mPanel = (SlidingUpPanelLayout) findViewById(R.id.trip_plan_sliding_layout);
 
         // Set the height of the panel after drawing occurs.
         final ViewGroup layout = (ViewGroup)findViewById(R.id.trip_plan_fragment_container);
@@ -116,6 +146,11 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             }
         });
 
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        setIntent(intent);
     }
 
     @Override
@@ -140,29 +175,29 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             boolean showMap = source.getBoolean(OTPConstants.SHOW_MAP);
             bundle.putBoolean(OTPConstants.SHOW_MAP, showMap);
 
-            int planErrorCode = source.getInt(PLAN_ERROR_CODE);
-            String planErrorUrl = source.getString(PLAN_ERROR_URL);
-            if (!TextUtils.isEmpty(planErrorUrl)) {
-                bundle.putInt(PLAN_ERROR_CODE, planErrorCode);
-                bundle.putString(PLAN_ERROR_URL, planErrorUrl);
-            }
+            boolean panelStateExpanded = (mPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED);
+            bundle.putBoolean(PANEL_STATE_EXPANDED, panelStateExpanded);
+
+            boolean showError = source.getBoolean(SHOW_ERROR_DIALOG);
+            bundle.putBoolean(SHOW_ERROR_DIALOG, showError);
+
         }
 
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
 
         // Close possible progress dialog.
         if (mTripRequest != null) {
             ProgressDialog dialog = mTripRequest.getProgressDialog();
-            if (dialog != null && dialog.isShowing()) {
+            if (dialog != null) {
                 dialog.dismiss();
             }
         }
 
-        if (mFeedbackDialog != null && mFeedbackDialog.isShowing()) {
+        if (mFeedbackDialog != null) {
             mFeedbackDialog.dismiss();
         }
     }
@@ -183,6 +218,13 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private void initResultsFragment() {
 
+        mResultsFragment = (TripResultsFragment) getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
+        if (mResultsFragment != null) {
+            // bundle arguments already set
+            mResultsFragment.displayNewResults();
+            return;
+        }
+
         mResultsFragment = new TripResultsFragment();
         mResultsFragment.setListener(this);
         mResultsFragment.setArguments(mBuilder.getBundle());
@@ -191,64 +233,28 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         getSupportFragmentManager().executePendingTransactions();
 
-        if (mResultsFragment.getView() != null) {
-            mResultsFragment.getView().post(new Runnable() {
-                @Override
-                public void run() {
-                    mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
-                }
-            });
-        }
-
     }
 
     @Override
     public void onTripRequestComplete(List<Itinerary> itineraries) {
-        Log.d(TAG, "Successfully routed. Itineraries are " + itineraries);
+        // send intent to ourselves...
+        Intent intent = new Intent(this, TripPlanActivity.class)
+                .setAction(Intent.ACTION_MAIN)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries);
 
-        mTripRequest = null;
-
-        if (itineraries.size() > 0) {
-
-            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
-            if (fragment != null && fragment instanceof TripResultsFragment) {
-                Bundle bundle = fragment.getArguments();
-                bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<>(itineraries));
-                // bundle arguments already set
-                ((TripResultsFragment) fragment).displayNewResults();
-                return;
-            }
-
-            Bundle bundle = mBuilder.getBundle();
-            bundle.putSerializable(OTPConstants.ITINERARIES, new ArrayList<>(itineraries));
-
-            // Commit the transaction.
-            try {
-                initResultsFragment();
-            } catch(IllegalStateException ex) {
-                // We can't save the itinerary if this method is called after onSaveInstanceState.
-                // Ultimately the architecture should be changed, but for now simply tell the
-                // user to try again.
-                Log.e(TAG, "Error attempting to switch fragments. Likely screen rotated during trip plan.");
-                Toast.makeText(this,
-                        getString(R.string.tripplanner_error_not_defined),
-                        Toast.LENGTH_SHORT).show();
-            }
-
-        } else {
-            Toast.makeText(this,
-                    getString(R.string.tripplanner_error_bogus_parameter),
-                    Toast.LENGTH_SHORT).show();
-        }
+        startActivity(intent);
     }
 
     @Override
     public void onTripRequestFailure(int errorCode, String url) {
-        Bundle bundle = mBuilder.getBundle();
-        bundle.putInt(PLAN_ERROR_CODE, errorCode);
-        bundle.putString(PLAN_ERROR_URL, url);
+        Intent intent = new Intent(this, TripPlanActivity.class)
+                .setAction(Intent.ACTION_MAIN)
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(PLAN_ERROR_CODE, errorCode)
+                .putExtra(PLAN_ERROR_URL, url);
 
-        showFeedbackDialog(errorCode, url);
+        startActivity(intent);
     }
 
     private void showFeedbackDialog(int errorCode, final String url) {
@@ -259,6 +265,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             msg = getErrorMessage(errorCode);
         }
 
+        final Bundle bundle = mBuilder.getBundle();
+
         AlertDialog.Builder feedback = new AlertDialog.Builder(this)
                 .setTitle(R.string.tripplanner_error_dialog_title)
                 .setMessage(msg);
@@ -266,6 +274,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         feedback.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                bundle.putBoolean(SHOW_ERROR_DIALOG, false);
                 clearBundleErrors();
             }
         });
@@ -285,6 +294,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                             getString(R.string.tripplanner_no_contact),
                             Toast.LENGTH_SHORT).show();
                 }
+                bundle.putBoolean(SHOW_ERROR_DIALOG, false);
                 clearBundleErrors();
             }
         });
@@ -341,18 +351,20 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     @Override
     public void onResultViewCreated(View container, final ListView listView, View mapView) {
 
-        mPanel.setScrollableViewHelper(new ScrollableViewHelper() {
-            @Override
-            public int getScrollableViewScrollPosition(View scrollableView, boolean isSlidingUp) {
-                if (mResultsFragment.isMapShowing()) {
-                    return 1; // map can scroll infinitely, so return a positive value
+        if (mPanel != null) {
+            mPanel.setScrollableViewHelper(new ScrollableViewHelper() {
+                @Override
+                public int getScrollableViewScrollPosition(View scrollableView, boolean isSlidingUp) {
+                    if (mResultsFragment.isMapShowing()) {
+                        return 1; // map can scroll infinitely, so return a positive value
+                    } else {
+                        return super.getScrollableViewScrollPosition(listView, isSlidingUp);
+                    }
                 }
-                else {
-                    return super.getScrollableViewScrollPosition(listView, isSlidingUp);
-                }
-            }
-        });
+            });
 
-        mPanel.setScrollableView(container);
+            mPanel.setScrollableView(container);
+        }
+
     }
 }

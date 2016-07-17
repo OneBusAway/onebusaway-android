@@ -36,6 +36,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -125,7 +126,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 mPanel.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
         }
-        
+
         // show error dialog if necessary
         if (bundle.getBoolean(SHOW_ERROR_DIALOG)) {
             int planErrorCode = intent.getIntExtra(PLAN_ERROR_CODE, 0);
@@ -200,6 +201,25 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         if (mFeedbackDialog != null) {
             mFeedbackDialog.dismiss();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mPanel != null && mPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
+            mPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return false;
     }
 
     public void route() {
@@ -365,6 +385,5 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
             mPanel.setScrollableView(container);
         }
-
     }
 }

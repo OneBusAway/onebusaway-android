@@ -1343,6 +1343,11 @@ public class HomeActivity extends AppCompatActivity
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
+
+                if (previousState == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                    return;
+                }
+
                 switch(newState) {
                     case EXPANDED:
                         onPanelExpanded(panel);

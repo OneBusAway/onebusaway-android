@@ -127,10 +127,14 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         // Check which fragment to create
         boolean haveTripPlan = bundle.getSerializable(OTPConstants.ITINERARIES) != null;
 
-        TripPlanFragment fragment = new TripPlanFragment();
-        fragment.setArguments(bundle);
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.trip_plan_fragment_container, fragment).commit();
+        TripPlanFragment fragment = (TripPlanFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.trip_plan_fragment_container);
+        if (fragment == null) {
+            fragment = new TripPlanFragment();
+            fragment.setArguments(bundle);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.trip_plan_fragment_container, fragment).commit();
+        }
 
         mPanel = (SlidingUpPanelLayout) findViewById(R.id.trip_plan_sliding_layout);
 

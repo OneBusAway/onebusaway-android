@@ -979,7 +979,7 @@
     <string name="trip_plan_advanced_settings">Additional Trip Preferences</string>
     <string name="minimize_transfers">Minimize transfers</string>
     <string name="maximum_walk_distance">Maximum walk distance: </string>
-    <string name="wheelchair_accessible">Wheelchair accessible</string>
+    <string name="wheelchair_accessible">Avoid stairs</string>
 
     <string name="travel_by_label">Travel by: </string>
     <string name="transit_mode_transit">Transit</string>

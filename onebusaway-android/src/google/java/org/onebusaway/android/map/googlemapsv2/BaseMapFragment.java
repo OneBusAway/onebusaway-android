@@ -635,8 +635,18 @@ public class BaseMapFragment extends SupportMapFragment
 
         if (region != null && mMap != null) {
             LatLngBounds b = MapHelpV2.getRegionBounds(region);
+
+            //Setting the width and height of your screen
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int height = getResources().getDisplayMetrics().heightPixels;
+            // Set the individual padding using mMap.setPadding(left, top, right, bottom),
+            // this padding will be permanent and below padding = 0 will not change the padding
+            // set by the setPadding(left, top, right, bottom).
+            // padding = 0 is the just default padding in place user will not set the padding
+            // mMap.setPadding(left, top, right, bottom).
             int padding = 0;
-            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, padding)));
+
+            mMap.animateCamera((CameraUpdateFactory.newLatLngBounds(b, width, height, padding)));
         }
     }
 

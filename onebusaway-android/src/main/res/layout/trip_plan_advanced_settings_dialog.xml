@@ -44,8 +44,9 @@
             android:orientation="horizontal">
 
         <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dip"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/maximum_walk_distance" />
 
         <EditText

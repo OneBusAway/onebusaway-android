@@ -163,7 +163,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             @Override
             public void onGlobalLayout() {
                 layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                int viewHeight = findViewById(android.R.id.content).getHeight();
+                int viewHeight = mPanel.getHeight();
                 int height = layout.getMeasuredHeight();
                 mPanel.setPanelHeight(viewHeight - height);
             }

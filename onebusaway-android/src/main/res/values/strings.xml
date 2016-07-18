@@ -766,7 +766,7 @@
     <string name="trip_plan_map_view">Map View</string>
 
     <string name="task_progress_tripplanner_progress">Planning trip. Please wait&#8230;</string>
-    <string name="toast_no_server_selected_error">No region selected</string>
+    <string name="tripplanner_no_server_selected_error">No region selected</string>
     <string name="tripplanner_results_title">Planning Results</string>
     <string name="tripplanner_error_dialog_title">Planning not possible</string>
     <!-- Errors -->

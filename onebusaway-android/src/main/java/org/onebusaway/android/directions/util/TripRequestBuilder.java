@@ -252,11 +252,11 @@ public class TripRequestBuilder {
         TripRequest tripRequest;
 
         if (activity == null) {
-            tripRequest = new TripRequest(new WeakReference<Activity>(null), null, fmtOtpBaseUrl, mListener);
+            tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
         }
         else {
             WeakReference<Activity> ref = new WeakReference<Activity>(activity);
-            tripRequest = new TripRequest(ref, activity.getResources(), fmtOtpBaseUrl, mListener);
+            tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
         }
 
         tripRequest.execute(request);

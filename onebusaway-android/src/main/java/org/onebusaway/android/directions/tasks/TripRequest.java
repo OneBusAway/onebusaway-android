@@ -16,7 +16,6 @@
 
 package org.onebusaway.android.directions.tasks;
 
-import org.onebusaway.android.R;
 import org.onebusaway.android.directions.util.JacksonConfig;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.ws.Message;
@@ -24,16 +23,11 @@ import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.routing.core.TraverseMode;
 
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
@@ -51,11 +45,12 @@ import java.util.List;
 
 public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
-
     public interface Callback {
         void onTripRequestComplete(List<Itinerary> itineraries);
         void onTripRequestFailure(int errorCode, String url);
     }
+
+    public static int NO_SERVER_SELECTED = 1000;
 
     // Constants that are defined in OTPApp in CUTR OTP Android app
     private static final String TAG = "TripRequest";
@@ -67,12 +62,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     private Response mResponse;
 
-    private ProgressDialog mProgressDialog;
-
-    private WeakReference<Activity> mActivity;
-
-    private Resources mResources;
-
     private String mBaseUrl;
 
     private String mRequestUrl;
@@ -80,47 +69,21 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     private Callback mCallback;
 
     // change Server object to baseUrl string.
-    public TripRequest(WeakReference<Activity> activity, Resources resources,
-                       String baseUrl, Callback callback) {
-        this.mActivity = activity;
+    public TripRequest(String baseUrl, Callback callback) {
         this.mBaseUrl = baseUrl;
         this.mCallback = callback;
-        this.mResources = resources;
-    }
-
-    protected void onPreExecute() {
-        showProgressDialog();
     }
 
     /**
      * Show the progress dialog for this request.
      * Called when request starts, or by caller activity (ie in onCreate after a rotation)
      */
-    public void showProgressDialog() {
-        if (mActivity.get() != null) {
-            Activity activityRetrieved = mActivity.get();
-            if (activityRetrieved != null) {
-                mProgressDialog = ProgressDialog.show(activityRetrieved, "",
-                        mResources.getText(R.string.task_progress_tripplanner_progress), true);
-            }
-        }
-    }
+
 
     protected Long doInBackground(Request... reqs) {
         long totalSize = 0;
         if (mBaseUrl == null) {
-            if (mActivity.get() != null) {
-                mActivity.get().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgressDialog.dismiss();
-                        Toast.makeText(mActivity.get(),
-                                mResources.getString(R.string.toast_no_server_selected_error),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-            }
+            mCallback.onTripRequestFailure(NO_SERVER_SELECTED, null);
             return null;
         } else {
             String prefix = FOLDER_STRUCTURE_PREFIX_NEW;
@@ -132,15 +95,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     }
 
     protected void onCancelled(Long result) {
-
-        try {
-            if (mProgressDialog != null && mProgressDialog.isShowing()) {
-                mProgressDialog.dismiss();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error in TripRequest Cancelled dismissing dialog: " + e);
-        }
-
         mCallback.onTripRequestFailure(Message.REQUEST_TIMEOUT.getId(), mRequestUrl);
     }
 
@@ -148,16 +102,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
         if (result == null) {
             return;
-        }
-
-        if (mActivity.get() != null) {
-            try {
-                if (mProgressDialog != null && mProgressDialog.isShowing()) {
-                    mProgressDialog.dismiss();
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error in TripRequest PostExecute dismissing dialog: " + e);
-            }
         }
 
         if (mResponse != null && mResponse.getPlan() != null
@@ -246,15 +190,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             }
         }
         return plan;
-    }
-
-    /**
-     * Return Progress Dialog.
-     *
-     * @return progress dialog for this request.
-     */
-    public ProgressDialog getProgressDialog() {
-        return mProgressDialog;
     }
 
     /**

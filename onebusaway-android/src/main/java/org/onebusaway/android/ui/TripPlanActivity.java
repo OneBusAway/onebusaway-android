@@ -68,7 +68,13 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String SHOW_ERROR_DIALOG = "org.onebusaway.android.SHOW_ERROR_DIALOG";
 
+    private static final String REQUEST_LOADING = "org.onebusaway.android.REQUEST_LOADING";
+
     TripResultsFragment mResultsFragment;
+
+    private ProgressDialog mProgressDialog;
+
+    boolean mRequestLoading = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +98,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         // see if there is data from intent
         Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null) {
+
+            mTripRequest = null;
+
             ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) intent.getExtras().getSerializable(OTPConstants.ITINERARIES);
 
             if (itineraries != null) {
@@ -99,13 +108,20 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 newItineraries = true;
             }
 
-            if (intent.getStringExtra(PLAN_ERROR_URL) != null) {
+            if (intent.getIntExtra(PLAN_ERROR_CODE, -1) != -1) {
                 bundle.putSerializable(SHOW_ERROR_DIALOG, true);
                 bundle.putInt(PLAN_ERROR_CODE, intent.getIntExtra(PLAN_ERROR_CODE, 0));
                 bundle.putString(PLAN_ERROR_URL, intent.getStringExtra(PLAN_ERROR_URL));
             }
 
             setIntent(null);
+            bundle.putBoolean(REQUEST_LOADING, false);
+            mRequestLoading = false;
+
+        }
+
+        if (mRequestLoading || bundle.getBoolean(REQUEST_LOADING)) {
+            showProgressDialog();
         }
 
         // Check which fragment to create
@@ -182,20 +198,19 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             boolean showError = source.getBoolean(SHOW_ERROR_DIALOG);
             bundle.putBoolean(SHOW_ERROR_DIALOG, showError);
 
+            bundle.putBoolean(REQUEST_LOADING, mRequestLoading);
         }
 
     }
 
     @Override
     public void onPause() {
+
         super.onPause();
 
         // Close possible progress dialog.
-        if (mTripRequest != null) {
-            ProgressDialog dialog = mTripRequest.getProgressDialog();
-            if (dialog != null) {
-                dialog.dismiss();
-            }
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
         }
 
         if (mFeedbackDialog != null) {
@@ -223,6 +238,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     }
 
     public void route() {
+
         // Remove results fragment if it exists
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
         if(fragment != null)
@@ -234,6 +250,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         Bundle bundle = mBuilder.getBundle();
         bundle.remove(OTPConstants.ITINERARIES);
         bundle.remove(OTPConstants.SELECTED_ITINERARY);
+
+        showProgressDialog();
     }
 
     private void initResultsFragment() {
@@ -257,6 +275,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     @Override
     public void onTripRequestComplete(List<Itinerary> itineraries) {
+
         // send intent to ourselves...
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
@@ -268,6 +287,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     @Override
     public void onTripRequestFailure(int errorCode, String url) {
+
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -323,6 +343,15 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         mFeedbackDialog.show();
     }
 
+    private void showProgressDialog() {
+        mRequestLoading = true;
+
+        if (mProgressDialog == null || !mProgressDialog.isShowing()) {
+            mProgressDialog = ProgressDialog.show(this, "",
+                    getResources().getText(R.string.task_progress_tripplanner_progress), true);
+        }
+    }
+
     private String getErrorMessage(int errorCode) {
         if (errorCode == Message.SYSTEM_ERROR.getId()) {
             return (getString(R.string.tripplanner_error_system));
@@ -357,7 +386,10 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 || errorCode == Message.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.getId()
                 || errorCode == Message.TRIANGLE_VALUES_NOT_SET.getId()) {
             return (getString(R.string.tripplanner_error_triangle));
-        } else {
+        } else if (errorCode == TripRequest.NO_SERVER_SELECTED) {
+            return getString(R.string.tripplanner_no_server_selected_error);
+        }
+        else {
             return null;
         }
     }

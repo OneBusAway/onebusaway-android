@@ -342,7 +342,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onViewStateRestored(Bundle savedInstanceState) {
-        mController.onViewStateRestored(savedInstanceState);
+        if (mController != null) {
+            mController.onViewStateRestored(savedInstanceState);
+        }
         super.onViewStateRestored(savedInstanceState);
     }
 

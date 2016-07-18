@@ -70,6 +70,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String REQUEST_LOADING = "org.onebusaway.android.REQUEST_LOADING";
 
+    // flag to indicate intent sent by this class
+    private static final String INTENT_SOURCE = "org.onebusaway.android.INTENT_SOURCE";
+
     TripResultsFragment mResultsFragment;
 
     private ProgressDialog mProgressDialog;
@@ -97,9 +100,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         // see if there is data from intent
         Intent intent = getIntent();
-        if (intent != null && intent.getExtras() != null) {
-
-            mTripRequest = null;
+        if (intent != null && intent.getExtras() != null
+                && intent.getBooleanExtra(INTENT_SOURCE, false)) {
 
             ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) intent.getExtras().getSerializable(OTPConstants.ITINERARIES);
 
@@ -284,7 +286,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries);
+                .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries)
+                .putExtra(INTENT_SOURCE, true);
 
         startActivity(intent);
     }
@@ -296,7 +299,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(PLAN_ERROR_CODE, errorCode)
-                .putExtra(PLAN_ERROR_URL, url);
+                .putExtra(PLAN_ERROR_URL, url)
+                .putExtra(INTENT_SOURCE, true);
 
         startActivity(intent);
     }

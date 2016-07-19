@@ -101,6 +101,7 @@
     <string name="main_option_preferences">Settings</string>
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
+    <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Fresh new look</b>
         - Yay material design!\n&#8226;\u0020
@@ -113,6 +114,18 @@
         <b>Add description for arrivals \"Sort\" button</b>\n&#8226;\u0020
         <b>Bug fixes</b>
         - Auto-center on location, recents not remembering last tab, headsign formatting, crashes
+    </string>
+    <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
+        <b>Fresh new look</b>
+        - Yay material design!\n&#8226;\u0020
+        <b>Live buses on the map</b>
+        - Tap on arrival times and choose \"Show route on map\"\n&#8226;\u0020
+        <b>Live trip status</b>
+        - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
+        <b>Improved feedback process</b>
+        - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
+        <b>Trip planning (Tampa Bay-only)</b>
+        - Check it out in navigation drawer!
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>

@@ -291,6 +291,8 @@ public class HomeActivity extends AppCompatActivity
 
     private int mWhatsNewMessage = R.string.main_help_whatsnew;
 
+    private int mWhatsNewMessageTripPlan = R.string.main_help_whatsnew_trip_plan;
+
     SlidingPanelController mSlidingPanelController;
 
     @Override
@@ -707,10 +709,22 @@ public class HomeActivity extends AppCompatActivity
 
     @SuppressWarnings("deprecation")
     private Dialog createWhatsNewDialog() {
+        Integer whatsNew = null;
+        if (Application.get().getCurrentRegion() != null) {
+            if (Application.get().getCurrentRegion().getOtpBaseUrl() == null) {
+                // Show normal message - region doesn't have OTP URL
+                whatsNew = mWhatsNewMessage;
+            }
+        }
+        // Either region hasn't been selected yet, or it has an OTP URL - show trip plan message
+        if (whatsNew == null) {
+            whatsNew = mWhatsNewMessageTripPlan;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.mipmap.ic_launcher);
-        builder.setMessage(mWhatsNewMessage);
+        builder.setMessage(whatsNew);
         builder.setNeutralButton(R.string.main_help_close,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {

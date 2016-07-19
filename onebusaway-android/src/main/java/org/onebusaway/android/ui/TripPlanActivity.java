@@ -24,6 +24,7 @@ import org.onebusaway.android.directions.tasks.TripRequest;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.api.model.Itinerary;
 import org.opentripplanner.api.ws.Message;
@@ -32,6 +33,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -332,7 +334,12 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             public void onClick(DialogInterface dialog, int which) {
                 String email = Application.get().getCurrentRegion().getOtpContactEmail();
                 if (!TextUtils.isEmpty(email)) {
-                    UIUtils.sendEmailOTP(TripPlanActivity.this, email, url);
+                    Location loc = Application.getLastKnownLocation(getApplicationContext(), null);
+                    String locString = null;
+                    if (loc != null) {
+                        locString = LocationUtils.printLocationDetails(loc);
+                    }
+                    UIUtils.sendEmail(TripPlanActivity.this, email, locString, url);
                     ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getString(R.string.analytics_action_problem),
                             getString(R.string.analytics_label_app_feedback_otp));

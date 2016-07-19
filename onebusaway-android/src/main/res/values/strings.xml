@@ -481,6 +481,7 @@
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Feedback</string>
+    <string name="bug_report_subject_trip_plan">OneBusAway Android: Trip Plan Feedback</string>
     <string name="bug_report_body">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
@@ -490,8 +491,15 @@
     </string>
     <string name="bug_report_error">Unable to send the bug report: no suitable application found.
     </string>
-    <string name="bug_report_body_OTP">Complaints, kudos, or bug reports are welcome!\n\n\nApp Version:
-        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nUnable to plan to URL: %5$s
+    <string name="bug_report_body_trip_plan">Complaints, kudos, or bug reports are welcome!\n\n\nApp
+        Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
+        Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
+        Unable to plan trip using URL: %10$s\n\n
+    </string>
+    <string name="bug_report_body_trip_plan_without_location">Complaints, kudos, or bug reports are
+        welcome!\n\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\nUnable to plan trip using URL: %5$s\n\n
     </string>
 
     <!-- Android Maps v2 -->
@@ -816,7 +824,8 @@
     <string name="tripplanner_current_location">Current Location</string>
     <string name="tripplanner_error_no_location">Please enter a location for the start and end of your trip.</string>
 
-    <string name="tripplanner_no_contact">There is no OpenTripPlanner contact for this region.</string>
+    <string name="tripplanner_no_contact">There is no trip planning contact for this region.
+    </string>
 
     <string name="tripplanner_reverse">Reverse</string>
 

@@ -16,6 +16,7 @@
 
 package org.onebusaway.android.directions.util;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class OTPConstants {
@@ -60,5 +61,5 @@ public class OTPConstants {
 
     public static final String FORMAT_OTP_SERVER_TIME_REQUEST = "hh:mma";
 
-
+    public static final Locale OTP_LOCALE = Locale.US;
 }

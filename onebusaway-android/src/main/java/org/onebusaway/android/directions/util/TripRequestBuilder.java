@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class TripRequestBuilder {
 
@@ -232,8 +233,10 @@ public class TripRequestBuilder {
         }
 
         Date d = getDateTime();
-        String date = new SimpleDateFormat(OTPConstants.FORMAT_OTP_SERVER_DATE_REQUEST).format(d);
-        String time = new SimpleDateFormat(OTPConstants.FORMAT_OTP_SERVER_TIME_REQUEST).format(d);
+
+        // OTP expects date/time in this format
+        String date = getFormattedDate(OTPConstants.FORMAT_OTP_SERVER_DATE_REQUEST, d);
+        String time = getFormattedDate(OTPConstants.FORMAT_OTP_SERVER_TIME_REQUEST, d);
         request.setDateTime(date, time);
 
         // request mode set does not work properly
@@ -276,7 +279,7 @@ public class TripRequestBuilder {
         if (address.hasLatitude() && address.hasLongitude()) {
             double lat = address.getLatitude();
             double lon = address.getLongitude();
-            return String.format("%g,%g", lat, lon);
+            return String.format(OTPConstants.OTP_LOCALE, "%g,%g", lat, lon);
         }
         // Not set via geocoder OR via location service. Use raw string (set in TripPlanFragment to first line of address).
         String line = address.getAddressLine(0);
@@ -336,6 +339,10 @@ public class TripRequestBuilder {
      */
     public boolean ready() {
         return getFrom() != null && getTo() != null && getDateTime() != null;
+    }
+
+    private static String getFormattedDate(String format, Date date) {
+        return new SimpleDateFormat(format, OTPConstants.OTP_LOCALE).format(date);
     }
 }
 

@@ -233,7 +233,7 @@ public class LocationUtils {
             implements GoogleApiClient.ConnectionCallbacks,
             GoogleApiClient.OnConnectionFailedListener {
 
-        private static final String TAG = "LocationServicesCallback";
+        private static final String TAG = "LocationServicesCallbck";
 
         @Override
         public void onConnected(Bundle bundle) {

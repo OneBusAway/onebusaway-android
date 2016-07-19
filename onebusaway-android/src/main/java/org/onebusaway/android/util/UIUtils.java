@@ -573,6 +573,53 @@ public final class UIUtils {
         }
     }
 
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param url URL which caused planning to fail
+     */
+    public static void sendEmailOTP(Context context, String email, String url) {
+        PackageManager pm = context.getPackageManager();
+        PackageInfo appInfo;
+        try {
+            appInfo = pm.getPackageInfo(context.getPackageName(),
+                    PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Do nothing, perhaps we'll get to show it again? Or never.
+            return;
+        }
+        String body;
+        if (url != null) {
+            body = context.getString(R.string.bug_report_body_OTP,
+                    appInfo.versionName,
+                    Build.MODEL,
+                    Build.VERSION.RELEASE,
+                    Build.VERSION.SDK_INT,
+                    url);
+        } else {
+            body = context.getString(R.string.bug_report_body_without_location,
+                    appInfo.versionName,
+                    Build.MODEL,
+                    Build.VERSION.RELEASE,
+                    Build.VERSION.SDK_INT);
+        }
+
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.putExtra(Intent.EXTRA_EMAIL,
+                new String[]{email});
+        send.putExtra(Intent.EXTRA_SUBJECT,
+                context.getString(R.string.bug_report_subject));
+        send.putExtra(Intent.EXTRA_TEXT, body);
+        send.setType("message/rfc822");
+        try {
+            context.startActivity(Intent.createChooser(send,
+                    context.getString(R.string.bug_report_subject)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, R.string.bug_report_error, Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+
     public static final String getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {

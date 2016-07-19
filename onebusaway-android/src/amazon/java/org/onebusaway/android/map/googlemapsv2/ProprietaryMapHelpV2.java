@@ -18,9 +18,14 @@ package org.onebusaway.android.map.googlemapsv2;
 import com.amazon.geo.mapsv2.util.AmazonMapsRuntimeUtil;
 import com.amazon.geo.mapsv2.util.ConnectionResult;
 
+import org.onebusaway.android.directions.util.CustomAddress;
+import org.onebusaway.android.io.elements.ObaRegion;
+
 import android.app.Activity;
 import android.content.Context;
-
+import android.content.Intent;
+import android.support.v4.app.Fragment;
+import android.view.View;
 /**
  * Helper methods specific to Amazon Maps API v2
  */
@@ -38,6 +43,29 @@ public class ProprietaryMapHelpV2 {
             int resultCode = AmazonMapsRuntimeUtil
                     .isAmazonMapsRuntimeAvailable(context);
             AmazonMapsRuntimeUtil.getErrorDialog(resultCode, a, 0).show();
+        }
+    }
+
+    /* unused */
+    public static CustomAddress getCustomAddressFromPlacesIntent(Context context, Intent intent) {
+        return null;
+    }
+
+    public static class StartPlacesAutocompleteOnClick implements View.OnClickListener {
+
+        int mRequestCode;
+        Fragment mFragment;
+        ObaRegion mRegion;
+
+        public StartPlacesAutocompleteOnClick(int requestCode, Fragment fragment, ObaRegion region) {
+            mRequestCode = requestCode;
+            mFragment = fragment;
+            mRegion = region;
+        }
+
+        @Override
+        public void onClick(View v) {
+           /* unused */
         }
     }
 }

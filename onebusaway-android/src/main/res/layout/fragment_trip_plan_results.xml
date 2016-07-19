@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:weightSum="1"
+              android:background="#eeeeee">
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp">
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginRight="1dp"
+                android:background="@color/theme_primary"
+                android:gravity="center_vertical"
+                android:id="@+id/option1LinearLayout"
+                android:padding="4dp">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option1Title"
+                    android:textColor="@color/header_text_color"
+                    android:singleLine="true"
+                    android:ellipsize="end"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option1Duration"
+                    android:textColor="@color/header_text_faded_color" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option1Interval"
+                    android:textColor="@color/header_text_faded_color" />
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginRight="1dp"
+                android:background="@color/theme_primary"
+                android:gravity="center_vertical"
+                android:id="@+id/option2LinearLayout"
+                android:padding="4dp">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option2Title"
+                    android:textColor="@color/header_text_color"
+                    android:singleLine="true"
+                    android:ellipsize="end"/>
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option2Duration"
+                    android:textColor="@color/header_text_faded_color" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option2Interval"
+                    android:textColor="@color/header_text_faded_color" />
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@color/theme_primary"
+                android:gravity="center_vertical"
+                android:id="@+id/option3LinearLayout"
+                android:padding="4dp"
+                >
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/option3Title"
+                    android:textColor="@color/header_text_color"
+                    android:singleLine="true"
+                    android:ellipsize="end" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option3Duration"
+                    android:textColor="@color/header_text_faded_color" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/option3Interval"
+                    android:textColor="@color/header_text_faded_color" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <android.support.design.widget.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/trip_results_tab_size"
+            android:id="@+id/tab_layout_switch_view">
+
+        <android.support.design.widget.TabItem
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/trip_plan_list_view"
+                android:icon="@drawable/ic_list"
+                android:layout="@layout/tab_trip_results_view"
+        />
+
+        <android.support.design.widget.TabItem
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/trip_plan_map_view"
+                android:icon="@drawable/ic_arrivals_styleb_action_map"
+                android:layout="@layout/tab_trip_results_view"
+        />
+
+    </android.support.design.widget.TabLayout>
+
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:id="@+id/directionsFrame">
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/mapFragment"/>
+
+        <ExpandableListView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:background="@android:color/white"
+                android:id="@+id/directionsListView"/>
+
+    </FrameLayout>
+
+</LinearLayout>

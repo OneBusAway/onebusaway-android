@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_margin="16dp">
+
+    <TableLayout android:layout_width="match_parent"
+                 android:layout_height="wrap_content">
+
+        <TableRow android:layout_width="wrap_content">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/trip_plan_from"
+                    android:textColor="@color/trip_plan_label"
+                    android:id="@+id/trip_plan_from"
+                    android:layout_gravity="center_vertical"
+            />
+
+            <AutoCompleteTextView
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/tripplanner_current_location"
+                    android:id="@+id/fromAddressTextArea"
+                    android:textColor="@color/body_text_1"
+                    android:linksClickable="true"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:layout_marginLeft="4dp"
+                    android:layout_gravity="center_vertical"
+            />
+
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/fromCurrentLocationImageButton"
+                    android:background="#00000000"
+                    android:src="@drawable/ic_my_location"
+                    android:tint="@color/material_gray"
+                    android:layout_gravity="center_vertical"
+            />
+
+        </TableRow>
+
+        <TableRow android:layout_width="wrap_content">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/trip_plan_to"
+                    android:textColor="@color/trip_plan_label"
+                    android:id="@+id/trip_plan_to"
+                    android:layout_gravity="center_vertical"
+            />
+
+            <AutoCompleteTextView
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:id="@+id/toAddressTextArea"
+                    android:hint="@string/trip_plan_location_hint"
+                    android:textColor="@color/body_text_1"
+                    android:linksClickable="true"
+                    android:singleLine="true"
+                    android:layout_marginLeft="4dp"
+                    android:layout_gravity="center_vertical"
+            />
+
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/toCurrentLocationImageButton"
+                    android:background="#00000000"
+                    android:src="@drawable/ic_my_location"
+                    android:tint="@color/material_gray"
+                    android:layout_gravity="center_vertical"
+            />
+
+        </TableRow>
+
+    </TableLayout>
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="8dp">
+
+            <Spinner
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/leavingChoiceSpinner"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+            <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+            />
+
+            <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/date"
+                    android:text="June 14"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+            />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:color="@color/trip_plan_label"
+                    android:text="@string/trip_plan_stop_connector"
+                    android:layout_marginLeft="8dp"
+                    android:layout_gravity="center_vertical"/>
+
+            <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/time"
+                    android:text="04:01 pm"
+                    android:layout_marginLeft="8dp"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:layout_gravity="center_vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+            />
+
+            <ImageButton
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitXY"
+                    android:id="@+id/resetTimeImageButton"
+                    android:src="@drawable/ic_arrival_time"
+                    android:background="#00000000"
+                    android:tint="@color/material_gray"
+                    android:layout_gravity="center_vertical"
+            />
+
+        </LinearLayout>
+
+</LinearLayout>

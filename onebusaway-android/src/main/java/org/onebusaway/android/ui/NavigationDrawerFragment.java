@@ -19,6 +19,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
@@ -73,6 +74,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
 
+    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -89,7 +92,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_my_reminders,
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
-            R.string.navdrawer_item_send_feedback
+            R.string.navdrawer_item_send_feedback,
+            R.string.navdrawer_item_plan_trip
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -100,6 +104,7 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Settings
             0, // Help
             0, // Send feedback
+            R.drawable.ic_maps_directions // Plan a trip
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -337,12 +342,17 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     /** Populates the navigation drawer with the appropriate items. */
-    private void populateNavDrawer() {
+    public void populateNavDrawer() {
         mNavDrawerItems.clear();
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
+
+        if (Application.get().getCurrentRegion() != null &&
+            Application.get().getCurrentRegion().getOtpBaseUrl() != null) {
+            mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+        }
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
 
@@ -468,6 +478,7 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean isNewActivityItem(int itemId) {
         return itemId == NAVDRAWER_ITEM_SETTINGS ||
                 itemId == NAVDRAWER_ITEM_HELP ||
-                itemId == NAVDRAWER_ITEM_SEND_FEEDBACK;
+                itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
+                itemId == NAVDRAWER_ITEM_PLAN_TRIP;
     }
 }

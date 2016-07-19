@@ -164,6 +164,10 @@ public class ObaRegionElement implements ObaRegion {
 
     private final String stopInfoUrl;
 
+    private final String otpBaseUrl;
+
+    private final String otpContactEmail;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -180,6 +184,8 @@ public class ObaRegionElement implements ObaRegion {
         twitterUrl = "";
         experimental = true;
         stopInfoUrl = "";
+        otpBaseUrl = "";
+        otpContactEmail = "";
     }
 
     public ObaRegionElement(long id,
@@ -196,7 +202,9 @@ public class ObaRegionElement implements ObaRegion {
                             boolean supportsSiriRealtimeApis,
                             String twitterUrl,
                             boolean experimental,
-                            String stopInfoUrl) {
+                            String stopInfoUrl,
+                            String otpBaseUrl,
+                            String otpContactEmail) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -212,6 +220,8 @@ public class ObaRegionElement implements ObaRegion {
         this.twitterUrl = twitterUrl;
         this.experimental = experimental;
         this.stopInfoUrl = stopInfoUrl;
+        this.otpBaseUrl = otpBaseUrl;
+        this.otpContactEmail = otpContactEmail;
     }
 
     @Override
@@ -290,6 +300,16 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public String getOtpBaseUrl() {
+        return otpBaseUrl;
+    }
+
+    @Override
+    public String getOtpContactEmail() {
+        return otpContactEmail;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -337,6 +357,8 @@ public class ObaRegionElement implements ObaRegion {
                 ", twitterUrl='" + twitterUrl + '\'' +
                 ", experimental=" + experimental +
                 ", stopInfoUrl='" + stopInfoUrl + '\'' +
+                ", otpBaseUrl='" + otpBaseUrl + '\'' +
+                ", otpContactEmail='" + otpContactEmail + '\'' +
                 '}';
     }
 }

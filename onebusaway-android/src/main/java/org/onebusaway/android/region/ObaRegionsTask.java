@@ -73,7 +73,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
 
     private String mProgressDialogMessage;
 
-    private ObaRegionsTask.Callback mCallback;
+    private List<ObaRegionsTask.Callback> mCallbacks = new ArrayList<>();
 
     private final boolean mForceReload;
 
@@ -85,29 +85,28 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     GoogleApiClient mGoogleApiClient;
 
     /**
-     * @param callback a callback will be made via this interface after the task is complete
-     *                 (null if no callback is requested)
+     * @param callbacks a callback will be made to all interfaces in this list after the task is
+     *                 complete (null if no callbacks are requested)
      */
-    public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback) {
-        this.mContext = context;
-        this.mCallback = callback;
+    public ObaRegionsTask(Context context, List<ObaRegionsTask.Callback> callbacks) {
+        mContext = context;
+        mCallbacks = callbacks;
         mForceReload = false;
         mShowProgressDialog = true;
     }
 
     /**
-     * @param callback           a callback will be made via this interface after the task is
-     *                           complete
-     *                           (null if no callback is requested)
+     * @param callbacks          a callback will be made to all interfaces in this list after the
+     *                           task is complete (null if no callbacks are requested)
      * @param force              true if the task should be forced to update region info from the
      *                           server, false if it can return local info
      * @param showProgressDialog true if a progress dialog should be shown to the user during the
      *                           task, false if it should not
      */
-    public ObaRegionsTask(Context context, ObaRegionsTask.Callback callback, boolean force,
+    public ObaRegionsTask(Context context, List<ObaRegionsTask.Callback> callbacks, boolean force,
                           boolean showProgressDialog) {
-        this.mContext = context;
-        this.mCallback = callback;
+        mContext = context;
+        mCallbacks = callbacks;
         mForceReload = force;
         mShowProgressDialog = showProgressDialog;
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
@@ -257,14 +256,18 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
     }
 
     private void doCallback(final boolean currentRegionChanged) {
-        //If we execute on same thread immediately after setting Region, map UI may try to call
-        //OBA REST API before the new region info is set in Application.  So, pause briefly.
+        // If we execute on same thread immediately after setting Region, map UI may try to call
+        // OBA REST API before the new region info is set in Application.  So, pause briefly.
         final Handler mPauseForCallbackHandler = new Handler();
         final Runnable mPauseForCallback = new Runnable() {
             public void run() {
-                //Map may not have triggered call to OBA REST API, so we force one here
-                if (mCallback != null) {
-                    mCallback.onRegionTaskFinished(currentRegionChanged);
+                // Map may not have triggered call to OBA REST API, so we force one here
+                if (mCallbacks != null) {
+                    for (Callback callback : mCallbacks) {
+                        if (callback != null) {
+                            callback.onRegionTaskFinished(currentRegionChanged);
+                        }
+                    }
                 }
             }
         };

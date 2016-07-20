@@ -77,10 +77,13 @@ import android.view.animation.Transformation;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
@@ -93,7 +96,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawe
 
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener,
-        NavigationDrawerCallbacks {
+        NavigationDrawerCallbacks, ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
 
@@ -313,8 +316,6 @@ public class HomeActivity extends AppCompatActivity
         setupGooglePlayServices();
 
         UIUtils.setupActionBar(this);
-
-        autoShowWhatsNew();
 
         checkRegionStatus();
 
@@ -803,8 +804,13 @@ public class HomeActivity extends AppCompatActivity
         return builder.create();
     }
 
+    /**
+     * Show the "What's New" message if a new version was just installed
+     *
+     * @return true if a new version was just installed, false if not
+     */
     @SuppressWarnings("deprecation")
-    private void autoShowWhatsNew() {
+    private boolean autoShowWhatsNew() {
         SharedPreferences settings = Application.getPrefs();
 
         // Get the current app version.
@@ -815,7 +821,7 @@ public class HomeActivity extends AppCompatActivity
                     PackageManager.GET_META_DATA);
         } catch (NameNotFoundException e) {
             // Do nothing, perhaps we'll get to show it again? Or never.
-            return;
+            return false;
         }
 
         final int oldVer = settings.getInt(WHATS_NEW_VER, 0);
@@ -830,7 +836,9 @@ public class HomeActivity extends AppCompatActivity
             // having the app run again).
             TripService.scheduleAll(this);
             PreferenceUtils.saveInt(WHATS_NEW_VER, appInfo.versionCode);
+            return true;
         }
+        return false;
     }
 
     /**
@@ -1024,7 +1032,7 @@ public class HomeActivity extends AppCompatActivity
      * Redraw navigation drawer. This is necessary because we do not know whether to draw the
      * "Plan A Trip" option until a region is selected.
      */
-    public void redrawNavigationDrawerFragment() {
+    private void redrawNavigationDrawerFragment() {
         mNavigationDrawerFragment.populateNavDrawer();
     }
 
@@ -1151,9 +1159,38 @@ public class HomeActivity extends AppCompatActivity
         }
 
         //Check region status, possibly forcing a reload from server and checking proximity to current region
-        ObaRegionsTask task = new ObaRegionsTask(this, mMapFragment, forceReload,
-                showProgressDialog);
+        List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
+        callbacks.add(mMapFragment);
+        callbacks.add(this);
+        ObaRegionsTask task = new ObaRegionsTask(this, callbacks, forceReload, showProgressDialog);
         task.execute();
+    }
+
+    //
+    // Region Task Callback
+    //
+    @Override
+    public void onRegionTaskFinished(boolean currentRegionChanged) {
+        // Show "What's New" (which might need refreshed Regions API contents)
+        boolean update = autoShowWhatsNew();
+
+        // Redraw nav drawer if the region changed, or if we just installed a new version
+        if (currentRegionChanged || update) {
+            redrawNavigationDrawerFragment();
+        }
+
+        // If region changed and was auto-selected, show user what region we're using
+        if (currentRegionChanged
+                && Application.getPrefs()
+                .getBoolean(getString(R.string.preference_key_auto_select_region), true)
+                && Application.get().getCurrentRegion() != null
+                && UIUtils.canManageDialog(this)) {
+            Toast.makeText(getApplicationContext(),
+                    getString(R.string.region_region_found,
+                            Application.get().getCurrentRegion().getName()),
+                    Toast.LENGTH_LONG
+            ).show();
+        }
     }
 
     private void setupMyLocationButton() {

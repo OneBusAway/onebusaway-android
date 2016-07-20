@@ -43,6 +43,7 @@
                     android:linksClickable="true"
                     android:singleLine="true"
                     android:ellipsize="end"
+                    android:requiresFadingEdge="horizontal"
                     android:layout_marginLeft="4dp"
                     android:layout_gravity="center_vertical"
             />
@@ -81,6 +82,7 @@
                     android:textColor="@color/body_text_1"
                     android:linksClickable="true"
                     android:singleLine="true"
+                    android:requiresFadingEdge="horizontal"
                     android:layout_marginLeft="4dp"
                     android:layout_gravity="center_vertical"
             />

@@ -45,7 +45,6 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -532,25 +531,6 @@ public class BaseMapFragment extends SupportMapFragment
                         (mapCenter != null && mapCenter.getLatitude() == 0.0 &&
                                 mapCenter.getLongitude() == 0.0))) {
             zoomToRegion();
-        }
-
-        // If region changed and was auto-selected, show user what region we're using
-        if (currentRegionChanged
-                && Application.getPrefs()
-                .getBoolean(getString(R.string.preference_key_auto_select_region), true)
-                && Application.get().getCurrentRegion() != null
-                && mRunning
-                && UIUtils.canManageDialog(getActivity())) {
-            Toast.makeText(getActivity(),
-                    getString(R.string.region_region_found,
-                            Application.get().getCurrentRegion().getName()),
-                    Toast.LENGTH_LONG
-            ).show();
-        }
-
-        // If region changed and in HomeActivity, redraw nav drawer (possible add Plan a Trip).
-        if (currentRegionChanged && getActivity() instanceof HomeActivity) {
-            ((HomeActivity) getActivity()).redrawNavigationDrawerFragment();
         }
     }
 

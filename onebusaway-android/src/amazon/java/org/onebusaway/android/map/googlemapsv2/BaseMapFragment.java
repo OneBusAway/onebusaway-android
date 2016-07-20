@@ -544,25 +544,6 @@ public class BaseMapFragment extends SupportMapFragment
                                 mapCenter.getLongitude() == 0.0))) {
             zoomToRegion();
         }
-
-        // If region changed and was auto-selected, show user what region we're using
-        if (currentRegionChanged
-                && Application.getPrefs()
-                .getBoolean(getString(R.string.preference_key_auto_select_region), true)
-                && Application.get().getCurrentRegion() != null
-                && mRunning
-                && UIUtils.canManageDialog(getActivity())) {
-            Toast.makeText(getActivity(),
-                    getString(R.string.region_region_found,
-                            Application.get().getCurrentRegion().getName()),
-                    Toast.LENGTH_LONG
-            ).show();
-        }
-
-        // If region changed and in HomeActivity, redraw nav drawer (possible add Plan a Trip).
-        if (currentRegionChanged && getActivity() instanceof HomeActivity) {
-            ((HomeActivity) getActivity()).redrawNavigationDrawerFragment();
-        }
     }
 
     public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {

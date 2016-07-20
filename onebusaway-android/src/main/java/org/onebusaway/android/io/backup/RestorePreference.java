@@ -29,6 +29,8 @@ import android.util.AttributeSet;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RestorePreference extends Preference {
 
@@ -97,14 +99,16 @@ public class RestorePreference extends Preference {
 
             Context activityContext = getContext();
             if (activityContext != null) {
-                ObaRegionsTask task = new ObaRegionsTask(activityContext, new ObaRegionsTask.Callback() {
+                List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
+                callbacks.add(new ObaRegionsTask.Callback() {
                     @Override
                     public void onRegionTaskFinished(boolean currentRegionChanged) {
                         Toast.makeText(context,
                                 R.string.preferences_db_restored,
                                 Toast.LENGTH_LONG).show();
                     }
-                }, true, true);
+                });
+                ObaRegionsTask task = new ObaRegionsTask(activityContext, callbacks, true, true);
                 task.setProgressDialogMessage(context.getString(R.string.preferences_restore_loading));
                 task.execute();
             }

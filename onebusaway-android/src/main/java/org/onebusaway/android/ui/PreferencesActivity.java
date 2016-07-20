@@ -55,6 +55,8 @@ import android.widget.Toast;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PreferencesActivity extends PreferenceActivity
         implements Preference.OnPreferenceClickListener, OnPreferenceChangeListener,
@@ -352,7 +354,9 @@ public class PreferencesActivity extends PreferenceActivity
             which will survive orientation changes.
             */
             setProgressBarIndeterminateVisibility(true);
-            ObaRegionsTask task = new ObaRegionsTask(this, this, true, false);
+            List<ObaRegionsTask.Callback> callbacks = new ArrayList<>();
+            callbacks.add(this);
+            ObaRegionsTask task = new ObaRegionsTask(this, callbacks, true, false);
             task.execute();
 
             // Wait to change the region preference description until the task callback

@@ -25,6 +25,7 @@
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
+    <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">Iniciar el servicio del viaje</string>
@@ -100,6 +101,7 @@
     <string name="main_option_preferences">Configuración</string>
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
+    <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Nueva Interfaz</b>
         - ¡Material design ha llegado!\n&#8226;\u0020
@@ -112,6 +114,18 @@
         <b>Adición de descripción para el botón de \"Ordernar\" de llegadas</b>\n&#8226;\u0020
         <b>Corrección de errores</b>
         - Centrar automáticamente sobre la ubicación, los recientes no recordaban la última pestaña, formateo en las direcciones de viajes, bloqueos
+    </string>
+    <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
+        <b>Nueva Interfaz</b>
+        - ¡Material design ha llegado!\n&#8226;\u0020
+        <b>Buses en vivo desde el mapa</b>
+        - ¡En los tiempos de llegada selecciona \"Mostrar la ruta sobre el mapa\"!\n&#8226;\u0020
+        <b>Estado del viaje en vivo</b>
+        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
+        <b>Mejora en Envio de Comentarios</b>
+        - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
+        <b>Planeación de Viajes (Sólo en Tampa Bay)</b>
+        - ¡Compruebalo en el menú de navegación!
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
@@ -334,7 +348,7 @@
 
     <string name="my_context_get_stop_info">Mostrar información de llegadas</string>
     <string name="my_context_get_route_info">Mostrar información de la ruta</string>
-    <string name="my_context_create_shortcut">Crear un acceso directo</string>
+    <string name="my_context_create_shortcut">Crear un acceso directo en la pantalla de inicio</string>
     <string name="my_context_showonmap">Mostrar sobre el mapa</string>
     <string name="my_context_remove_recent">Remover de recientes</string>
     <string name="my_context_remove_star">Remover de favoritos</string>
@@ -418,6 +432,7 @@
     <string name="report_problem_uservehicle_hint">Número del bus (opcional)</string>
     <string name="report_problem_stop_activity_label">Reportar problema de Parada</string>
     <string name="report_problem_trip_activity_label">Reportar problema de Viaje</string>
+    <string name="report_problem_report">Reportar</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -466,6 +481,7 @@
 
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
+    <string name="bug_report_subject_trip_plan">OneBusAway Android: Comentarios del Planeador de Viajes</string>
     <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
@@ -474,6 +490,16 @@
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\n
     </string>
     <string name="bug_report_error">No se puede enviar el informe de error: no se encontro una aplicación adecuada.
+    </string>>
+    <string name="bug_report_body_trip_plan">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp
+        Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
+        Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
+        Unable to plan trip using URL: %10$s\n\n
+    </string>
+    <string name="bug_report_body_trip_plan_without_location">¡Quejas, felicitaciones, o reporte de errores son 
+        bienvenidos!\n\nApp Version:
+        %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\nUnable to plan trip using URL: %5$s\n\n
     </string>
 
     <!-- Android Maps v2 -->
@@ -488,6 +514,7 @@
     <string name="preferences_category_location">Ubicación</string>
     <string name="preferences_category_display">Pantalla</string>
     <string name="preferences_category_backup">Respaldar</string>
+    <string name="preferences_category_notifications">Notificaciones</string>
     <string name="preferences_category_advanced">Avanzado</string>
     <string name="preferences_screen_advanced_summary">Profundizar en aspectos prácticos</string>
     <string name="preferences_category_about">Acerca de</string>
@@ -511,6 +538,11 @@
     <string name="preferences_show_header_arrivals_title">Ver llegadas sobre el nombre de parada</string>
     <string name="preferences_show_header_arrivals_summary">Cuando se visualizan paradas favoritas,
         muestra la información de llegadas en el encabezado en la parte superior de la pantalla (esto no afecta en la vista del mapa)
+    </string>
+
+    <string name="preferences_trip_plan_notifications_title">Notificaciones del Planeador de Viajes (beta)</string>
+    <string name="preferences_trip_plan_notifications_summary">Después de que planeas un viaje, enviar
+        notificaciones sobre si el viaje esta atrasado o ya no es recomendado.
     </string>
 
     <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
@@ -657,7 +689,7 @@
     <string name="tutorial_opt_out_dialog_title">¿Mostrar el tutorial?</string>
     <string name="tutorial_opt_out_dialog_text">¿Te gustaría ver las ventanas emergentes que describen como
         usar OneBusAway? Siempre puedes activar o desactivar estas ventanas emergentes en Configuración o ver el
-        tutorial después en la opción \"Ayuda->Aprende con el tutorial\".
+        tutorial después en Ayuda.
     </string>
     <string name="tutorial_arrival_header_arrival_info_title">¿Cuánto tiempo hasta que llegue tu bus?
     </string>
@@ -748,4 +780,245 @@
         (https://github.com/google/material-design-icons), "
         "licenciadas bajo CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).\n\n"
     </string>
+
+    <!-- Trip Planner strings -->
+
+    <string name="title_activity_trip_plan">Planeador de Viajes (beta)</string>
+    <string name="error_while_retrieving_data">Error mientras se recuperaban los datos</string>
+    <string name="trip_plan_from">Origen: </string>
+    <string name="trip_plan_to">Destino: </string>
+    <string name="trip_plan_when">Cuando</string>
+    <string name="trip_plan_leaving">Saliendo</string>
+    <string name="trip_plan_arriving">Llegando</string>
+    <string name="trip_plan_plan_my_trip">Planear mi Viaje</string>
+    <string name="trip_plan_stop_connector">a las</string>
+
+    <string name="trip_plan_location_hint">Indique una dirección o lugar</string>
+
+    <string name="trip_plan_switch_view">Cambiar de vista:</string>
+    <string name="trip_plan_list_view">Vista de Lista</string>
+    <string name="trip_plan_map_view">Vista de Mapa</string>
+
+    <string name="task_progress_tripplanner_progress">Planeando viaje. Por favor espere&#8230;</string>
+    <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>
+    <string name="tripplanner_results_title">Resultados de Planeación</string>
+    <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>
+    <!-- Errors -->
+    <string name="tripplanner_error_not_defined">Lo sentimos, algo salió mal. Por favor, inténtalo de nuevo.</string>
+    <string name="tripplanner_error_request_timeout">La región no esta respondiendo, por favor inténtalo de nuevo más tarde</string>
+    <string name="tripplanner_error_system">La región esta fuera de íinea, por favor inténtalo de nuevo más tarder</string>
+    <string name="tripplanner_error_outside_bounds">El origen o el destino están por fuera de la red de cobertura de transporte</string>
+    <string name="tripplanner_error_path_not_found">No fue posible encontrar una ruta entre el origen y el destino</string>
+    <string name="tripplanner_error_no_transit_times">No se tienen información  de horarios de tránsito en las fechas seleccionadas</string>
+    <string name="tripplanner_error_bogus_parameter">Algo salió mal. Cambia las opciones de viaje y vuelve a intentarlo.</string>
+    <string name="tripplanner_error_geocode_from_not_found">El origen no fue encontrado</string>
+    <string name="tripplanner_error_geocode_to_not_found">El destino no fue encontrado</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">El origen y el destino no fueron encontrados</string>
+    <string name="tripplanner_error_too_close">El viaje es muy corto</string>
+    <string name="tripplanner_error_location_not_accessible">La ubicación elegida no es accesible</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">El origen es incierto</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">El destino es incierto</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">El origen y el destino son inciertos</string>
+    <string name="tripplanner_error_triangle">Algo salió mal. Cambia las opciones de bicicleta y vuelve a intentarlo</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Ubicación actual</string>
+    <string name="tripplanner_error_no_location">Por favor ingresa una ubicación para el origen y el destino de tu viaje.</string>
+
+    <string name="tripplanner_no_contact">No existe un contacto del planeador de viajes para esta región.
+    </string>
+
+    <string name="tripplanner_reverse">Invertir</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Step-by-step screen -->
+
+    <!-- Title -->
+    <string name="step_by_step_title">Direcciones</string>
+
+    <!-- Top headers -->
+    <string name="step_by_step_header_from">Desde</string>
+    <string name="step_by_step_header_to">Hasta</string>
+    <string name="step_by_step_header_departure">Sal.</string>
+    <string name="step_by_step_header_arrival">Lle.</string>
+
+    <!-- Drop down menu components -->
+    <string name="step_by_step_walking_duration">caminar</string>
+    <string name="step_by_step_total_duration">toma</string>
+
+    <!-- Instructions generation -->
+
+    <!-- Transit -->
+
+    <!-- Transit instruction start -->
+    <string name="step_by_step_transit_get_on">Subir en</string>
+    <string name="step_by_step_transit_get_off">Bajarte en</string>
+    <!--                This is exactly the formula that should be used, because the app won't include
+                    the destination stop under this text, so would be best to avoid expressions like
+                     "stops to destination". For example in the trip Barcelona/Paris/London/New York,
+                      stops in between are Paris and London, and not New York. See #394 for reference.-->
+    <string name="step_by_step_transit_stops_in_between">paradas intermedias</string>
+    <string name="step_by_step_transit_stops_in_between_singular">parada intermedia</string>
+
+    <!-- Transit description start -->
+    <string name="step_by_step_transit_connector_stop_name">Desde</string>
+
+    <!-- Transit headsign connector -->
+    <string name="step_by_step_transit_connector_headsign">hasta</string>
+
+    <!-- Real time -->
+    <string name="step_by_step_transit_warning_live_udpates">Actualizaciones en vivo</string>
+
+    <!-- Modes -->
+
+    <!-- Modes -->
+    <string name="step_by_step_transit_mode_tram">tranvía</string>
+    <string name="step_by_step_transit_mode_subway">metro</string>
+    <string name="step_by_step_transit_mode_rail">tren</string>
+    <string name="step_by_step_transit_mode_bus">bus</string>
+    <string name="step_by_step_transit_mode_ferry">transbordador</string>
+    <string name="step_by_step_transit_mode_cable_car">teleférico</string>
+    <string name="step_by_step_transit_mode_gondola">góndola</string>
+    <string name="step_by_step_transit_mode_funicular">funicular</string>
+
+    <!-- Non-transit -->
+
+    <!--  Main direction components -->
+    <string name="step_by_step_non_transit_mode_car_action">Conducir</string>
+    <string name="step_by_step_non_transit_mode_walk_action">Caminar</string>
+    <string name="step_by_step_non_transit_mode_bicycle_action">Bicicleta</string>
+    <string name="step_by_step_non_transit_from">desde</string>
+    <string name="step_by_step_non_transit_to">hasta</string>
+
+    <!-- Subdirection components -->
+
+    <!-- Connectors -->
+    <string name="step_by_step_non_transit_turn">Giro</string>
+    <string name="step_by_step_non_transit_heading">dirección</string>
+    <string name="step_by_step_non_transit_connector_street_name">en</string>
+    <string name="step_by_step_non_transit_connector_street_name_roundabout">a</string>
+
+    <!-- Relative directions -->
+    <string name="step_by_step_non_transit_dir_relative_circle_clockwise">En la glorieta tomar la</string>
+    <string name="step_by_step_non_transit_dir_relative_circle_counterclockwise">En la glorieta tomar la</string>
+    <string name="step_by_step_non_transit_dir_relative_continue">Continuar</string>
+    <string name="step_by_step_non_transit_dir_relative_depart">Salir</string>
+    <string name="step_by_step_non_transit_dir_relative_elevator">Tome el ascensor</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_left">Gire a la izquierda</string>
+    <string name="step_by_step_non_transit_dir_relative_hard_right">Gire a la derecha</string>
+    <string name="step_by_step_non_transit_dir_relative_left">a la izquierda</string>
+    <string name="step_by_step_non_transit_dir_relative_right">a la derecha</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_left">Doble a la izquierda</string>
+    <string name="step_by_step_non_transit_dir_relative_slightly_right">Doble a la derecha</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_left">Hacer giro en retorno a la izquierda</string>
+    <string name="step_by_step_non_transit_dir_relative_uturn_right">Hacer giro en retorno a la derecha</string>
+
+    <!-- Absolute directions -->
+    <string name="step_by_step_non_transit_dir_absolute_east">este</string>
+    <string name="step_by_step_non_transit_dir_absolute_north">norte</string>
+    <string name="step_by_step_non_transit_dir_absolute_northeast">Noroeste</string>
+    <string name="step_by_step_non_transit_dir_absolute_northwest">Noreste</string>
+    <string name="step_by_step_non_transit_dir_absolute_south">sur</string>
+    <string name="step_by_step_non_transit_dir_absolute_southeast">suroeste</string>
+    <string name="step_by_step_non_transit_dir_absolute_southwest">sureste</string>
+    <string name="step_by_step_non_transit_dir_absolute_west">oeste</string>
+
+    <!-- Roundabouts -->
+
+    <!-- Exit ordinals -->
+    <string name="step_by_step_non_transit_roundabout_ordinal_first">primero</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_second">segundo</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_third">tercero</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fourth">cuarto</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_fifth">quinto</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_sixth">sexto</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_seventh">séptimo</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_eighth">octavo</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_ninth">noveno</string>
+    <string name="step_by_step_non_transit_roundabout_ordinal_tenth">décimo</string>
+
+    <!-- To complement the step_by_step_non_transit_roundabout_number for a bigger ordinal -->
+    <string name="step_by_step_non_transit_roundabout_number">número</string>
+
+    <!-- After the ordinal -->
+    <string name="step_by_step_non_transit_roundabout_exit">salida</string>
+
+    <!-- Street type -->
+    <string name="street_type_bike_path">ciclovía</string>
+    <string name="street_type_open_area">área abierta</string>
+    <string name="street_type_path">camino</string>
+    <string name="street_type_bridleway">camino de herradura</string>
+    <string name="street_type_footpath">sendero</string>
+    <string name="street_type_platform">plataforma</string>
+    <string name="street_type_footbridge">puente peatonal</string>
+    <string name="street_type_underpass">paso subterráneo</string>
+    <string name="street_type_road">carretera</string>
+    <string name="street_type_ramp">rampa</string>
+    <string name="street_type_link">enlace</string>
+    <string name="street_type_service_road">vía de acceso</string>
+    <string name="street_type_alley">callejón</string>
+    <string name="street_type_parking_aisle">pasillo de estacionamiento</string>
+    <string name="street_type_byway">camino apartado</string>
+    <string name="street_type_track">pista</string>
+    <string name="street_type_sidewalk">acera</string>
+    <string name="street_type_steps">pasos</string>
+
+    <!-- Notifications specific -->
+
+    <!-- Button -->
+    <string name="notification_disable_updates_button">Cancelar actualizaciones de este viaje</string>
+
+    <!-- Toast -->
+    <string name="notification_disable_updates_info">Actualizaciones canceladas</string>
+
+    <!-- Text -->
+    <string name="notification_stop_name_conector">a</string>
+    <string name="notification_two_delays_connector">y</string>
+    <string name="notification_origin">origen</string>
+    <string name="notification_destination">destino</string>
+
+    <!-- Obtaining real time updates -->
+    <string name="toast_realtime_updates_fail">Las actualizaciones en tiempo real no están disponibles en este viaje, los tiempos pueden estar desactualizados</string>
+
+    <!-- Units -->
+    <string name="hours_abbreviation">h</string>
+    <string name="hours_full">horas</string>
+    <string name="hour_singular">hora</string>
+
+    <string name="seconds_abbrevation">s</string>
+    <string name="seconds_full">segundos</string>
+    <string name="seconds_singular">segundo</string>
+
+    <string name="minute_singular">minuto</string>
+
+    <!-- Connectors -->
+    <string name="time_connector_next_day">mañana</string>
+    <string name="time_connector_before_time">a las</string>
+    <string name="time_connector_before_date">el</string>
+
+    <!-- Used to introduce route names in itineraries drop down (map view and step-by-step) and map mode markers popups -->
+    <string name="connector_before_route">Ruta</string>
+
+
+    <!-- Real time -->
+    <string name="map_markers_warning_live_updates">Actualizaciones en vivo</string>
+    <string name="map_markers_warning_live_updates_on_time">A tiempo</string>
+    <string name="map_markers_warning_live_updates_early_arrival">adelantado</string>
+    <string name="map_markers_warning_live_updates_late_arrival">atrasado</string>
+
+    <string name="trip_plan_not_recommended">No se recomienda su viaje para esta ruta.</string>
+    <string name="trip_plan_delay">Tú viaje esta atrasado.</string>
+    <string name="trip_plan_early">Tú viaje esta adelantado.</string>
+
+    <!-- Trip plan advanced settings -->
+    <string name="trip_plan_advanced_settings">Preferencias adicionales de Viaje</string>
+    <string name="minimize_transfers">Reducir el minimo de transferencias</string>
+    <string name="maximum_walk_distance">Distancia máxima a pie: </string>
+    <string name="wheelchair_accessible">Evitar las escaleras</string>
+
+    <string name="travel_by_label">Viajar por: </string>
+    <string name="transit_mode_transit">Tránsito</string>
+    <string name="transit_mode_bus">Solamente en Bus</string>
+    <string name="transit_mode_rail">Solamente en Tren</string>
+
 </resources>

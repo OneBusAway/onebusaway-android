@@ -35,6 +35,9 @@
 # Keep all OneBusAway Android classes
 -keep class org.onebusaway.android.** { *; }
 
+# Keep all OpenTripPlanner POJO classes
+-keep class org.opentripplanner.** { *; }
+
 # SearchView
 -keep class android.support.v7.widget.SearchView { *; }
 

@@ -304,7 +304,12 @@ public class StopMapController implements MapModeController,
         mCallback.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
 
-        if (response == null || response.getCode() != ObaApi.OBA_OK) {
+        if (response == null) {
+            // Initial install can generate a null response if all is still ok, so do nothing (#615)
+            return;
+        }
+
+        if (response.getCode() != ObaApi.OBA_OK) {
             BaseMapFragment.showMapError(response);
             return;
         }

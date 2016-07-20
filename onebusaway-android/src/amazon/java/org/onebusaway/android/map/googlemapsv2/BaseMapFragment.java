@@ -537,10 +537,11 @@ public class BaseMapFragment extends SupportMapFragment
                 .getLastKnownLocation(getActivity(), mLocationHelper.getGoogleApiClient());
         // If the region changed, and we don't have a location or the map center is still (0,0),
         // then zoom to the region
+        Location mapCenter = getMapCenterAsLocation();
         if (currentRegionChanged &&
                 (l == null ||
-                        (getMapCenterAsLocation().getLatitude() == 0.0 &&
-                                getMapCenterAsLocation().getLongitude() == 0.0))) {
+                        (mapCenter != null && mapCenter.getLatitude() == 0.0 &&
+                                mapCenter.getLongitude() == 0.0))) {
             zoomToRegion();
         }
 

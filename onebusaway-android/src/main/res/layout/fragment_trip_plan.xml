@@ -51,6 +51,7 @@
             <ImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
                     android:id="@+id/fromCurrentLocationImageButton"
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"
@@ -87,6 +88,7 @@
             <ImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
                     android:id="@+id/toCurrentLocationImageButton"
                     android:background="#00000000"
                     android:src="@drawable/ic_my_location"

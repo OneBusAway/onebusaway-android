@@ -51,7 +51,9 @@
                 android:defaultValue="@string/preferences_preferred_units_option_automatic">
         </ListPreference>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/preferences_category_notifications">
+    <PreferenceCategory
+            android:key="@string/preference_key_notifications"
+            android:title="@string/preferences_category_notifications">
         <CheckBoxPreference
             android:key="@string/preference_key_trip_plan_notifications"
             android:title="@string/preferences_trip_plan_notifications_title"

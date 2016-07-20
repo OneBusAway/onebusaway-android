@@ -38,6 +38,7 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
+import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
@@ -157,6 +158,21 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+
+        // Remove preferences for notifications if no trip planning
+        String otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+        if (TextUtils.isEmpty(otpBaseUrl)) {
+            PreferenceCategory notifications = (PreferenceCategory)
+                    findPreference(getString(R.string.preference_key_notifications));
+
+            Preference tripPlan = findPreference(
+                    getString(R.string.preference_key_trip_plan_notifications));
+            notifications.removePreference(tripPlan);
+
+            if (notifications.getPreferenceCount() == 0) {
+                getPreferenceScreen().removePreference(notifications);
+            }
+        }
     }
 
     @Override

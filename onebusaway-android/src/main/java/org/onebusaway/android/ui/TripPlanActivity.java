@@ -50,7 +50,7 @@ import java.util.List;
 
 
 public class TripPlanActivity extends AppCompatActivity implements TripRequest.Callback,
-        TripResultsFragment.Listener {
+        TripResultsFragment.Listener, TripPlanFragment.Listener {
 
     private static final String TAG = "TripPlanActivity";
 
@@ -136,6 +136,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         if (fragment == null) {
             fragment = new TripPlanFragment();
             fragment.setArguments(bundle);
+            fragment.setListener(this);
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.trip_plan_fragment_container, fragment).commit();
         }
@@ -245,7 +246,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         return false;
     }
 
-    public void route() {
+    @Override
+    public void onTripRequestReady() {
 
         // Remove results fragment if it exists
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);

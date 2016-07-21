@@ -338,7 +338,8 @@ public class TripRequestBuilder {
      * @return true if ready to submit, false otherwise
      */
     public boolean ready() {
-        return getFrom() != null && getTo() != null && getDateTime() != null;
+        return getFrom() != null && getFrom().isSet() && getTo() != null
+                && getTo().isSet() && getDateTime() != null;
     }
 
     private static String getFormattedDate(String format, Date date) {

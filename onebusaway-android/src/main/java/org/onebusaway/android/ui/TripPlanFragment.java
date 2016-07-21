@@ -70,6 +70,17 @@ import java.util.Locale;
 
 public class TripPlanFragment extends Fragment {
 
+    /**
+     * Allows calling activity to register to know when to send request.
+     */
+    interface Listener {
+
+        /**
+         * Called when the fields have been populated and a trip plan can occur.
+         */
+        void onTripRequestReady();
+    }
+
     private static final int USE_FROM_ADDRESS = 1;
     private static final int USE_TO_ADDRESS = 2;
 
@@ -90,6 +101,8 @@ public class TripPlanFragment extends Fragment {
     private CustomAddress mFromAddress, mToAddress;
 
     private TripRequestBuilder mBuilder;
+
+    private Listener mListener;
 
     private void resetDateTimeLabels() {
         String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
@@ -211,7 +224,6 @@ public class TripPlanFragment extends Fragment {
             }
         });
 
-
         // Start: default from address is Current Location, to address is unset
 
         return view;
@@ -219,7 +231,7 @@ public class TripPlanFragment extends Fragment {
 
     private void checkRequestAndSubmit() {
         if (mBuilder.ready()) {
-            ((TripPlanActivity) getActivity()).route();
+            mListener.onTripRequestReady();
         }
     }
 
@@ -234,19 +246,19 @@ public class TripPlanFragment extends Fragment {
             mFromAddress = makeAddressFromLocation();
             mBuilder.setFrom(mFromAddress);
         }
-        else {
-            mFromAddressTextArea.setText(mFromAddress.toString());
-        }
 
+        setAddressText(mFromAddressTextArea, mFromAddress);
 
         mToAddress = mBuilder.getTo();
-        if (mToAddress != null) {
-            mToAddressTextArea.setText(mToAddress.toString());
+
+        if (mToAddress == null) {
+            mToAddress = CustomAddress.getEmptyAddress();
+            mBuilder.setTo(mToAddress);
         }
 
+        setAddressText(mToAddressTextArea, mToAddress);
 
         boolean arriving = mBuilder.getArriveBy();
-
 
         if (mMyCalendar == null) {
             Date date = mBuilder.getDateTime();
@@ -312,6 +324,14 @@ public class TripPlanFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Set Listener of this fragment.
+     *
+     * @param listener
+     */
+    public void setListener(Listener listener) {
+        mListener = listener;
+    }
 
     private void advancedSettings() {
 
@@ -413,10 +433,21 @@ public class TripPlanFragment extends Fragment {
                 .setFrom(mFromAddress)
                 .setTo(mToAddress);
 
-        mFromAddressTextArea.setText(mFromAddress.toString());
-        mToAddressTextArea.setText(mToAddress.toString());
+        setAddressText(mFromAddressTextArea, mFromAddress);
+        setAddressText(mToAddressTextArea, mToAddress);
 
-        ((TripPlanActivity) getActivity()).route();
+        if (mBuilder.ready()) {
+            mListener.onTripRequestReady();
+        }
+    }
+
+    private void setAddressText(TextView tv, CustomAddress address) {
+        if (address != null && address.getAddressLine(0) != null) {
+            tv.setText(address.toString());
+        }
+        else {
+            tv.setText(null);
+        }
     }
 
     private void makeNoLocationToast() {
@@ -424,19 +455,22 @@ public class TripPlanFragment extends Fragment {
     }
 
     private CustomAddress makeAddressFromLocation() {
-        Locale locale = Locale.getDefault();
+
+        CustomAddress address = CustomAddress.getEmptyAddress();
 
         Location loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
         if (loc == null) {
             if (getContext() != null) {
                 Toast.makeText(getContext(), getString(R.string.main_location_unavailable), Toast.LENGTH_SHORT).show();
             }
-            return null;
         }
-        CustomAddress address = new CustomAddress(locale);
+        else {
+            address.setLatitude(loc.getLatitude());
+            address.setLongitude(loc.getLongitude());
+        }
+
         address.setAddressLine(0, getString(R.string.tripplanner_current_location));
-        address.setLatitude(loc.getLatitude());
-        address.setLongitude(loc.getLongitude());
+
         return address;
     }
 

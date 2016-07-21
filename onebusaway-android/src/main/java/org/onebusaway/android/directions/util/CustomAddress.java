@@ -143,4 +143,26 @@ public class CustomAddress extends Address {
                     return new CustomAddress[size];
                 }
             };
+
+    /**
+     * Is this custom address set.
+     *
+     * @return true if this address has a valid latitude and longitude
+     */
+    public boolean isSet() {
+        return getLatitude() != Double.MAX_VALUE && getLongitude() != Double.MAX_VALUE;
+    }
+
+    /**
+     * Create a blank CustomAddress.
+     *
+     * @return CustomAddress with default locale and unset latitude and longitude.
+     */
+    public static CustomAddress getEmptyAddress() {
+        Locale locale = Locale.getDefault();
+        CustomAddress addr = new CustomAddress(locale);
+        addr.setLatitude(Double.MAX_VALUE);
+        addr.setLongitude(Double.MAX_VALUE);
+        return addr;
+    }
 }

@@ -39,6 +39,7 @@
                     android:layout_weight="1"
                     android:text="@string/tripplanner_current_location"
                     android:id="@+id/fromAddressTextArea"
+                    android:hint="@string/trip_plan_location_hint"
                     android:textColor="@color/body_text_1"
                     android:linksClickable="true"
                     android:singleLine="true"

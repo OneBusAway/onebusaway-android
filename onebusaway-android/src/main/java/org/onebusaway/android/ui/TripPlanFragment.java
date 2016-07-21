@@ -230,7 +230,7 @@ public class TripPlanFragment extends Fragment {
     }
 
     private void checkRequestAndSubmit() {
-        if (mBuilder.ready()) {
+        if (mBuilder.ready() && mListener != null) {
             mListener.onTripRequestReady();
         }
     }
@@ -436,7 +436,7 @@ public class TripPlanFragment extends Fragment {
         setAddressText(mFromAddressTextArea, mFromAddress);
         setAddressText(mToAddressTextArea, mToAddress);
 
-        if (mBuilder.ready()) {
+        if (mBuilder.ready() && mListener != null) {
             mListener.onTripRequestReady();
         }
     }

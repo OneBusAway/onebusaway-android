@@ -451,7 +451,7 @@ public class DirectionsGenerator {
         //		set icon
         String mode = getLocalizedMode(TraverseMode.valueOf(leg.mode),
                 applicationContext.getResources());
-        int icon;
+        int modeIcon;
         String route;
         String agencyName = leg.agencyName;
         Place from = leg.from;
@@ -476,7 +476,8 @@ public class DirectionsGenerator {
             action = applicationContext.getResources()
                     .getString(R.string.step_by_step_transit_get_on);
             placeAndHeadsign = from.name;
-            icon = getModeIcon(new TraverseModeSet(leg.mode));
+            TraverseModeSet modeSet = new TraverseModeSet(leg.mode);
+            modeIcon = getModeIcon(modeSet);
             newTime.setTime(new Date(Long.parseLong(leg.startTime)));
             oldTime.setTime(new Date(newTime.getTimeInMillis()));
             oldTime.add(Calendar.SECOND, -leg.departureDelay);
@@ -500,7 +501,7 @@ public class DirectionsGenerator {
                     subDirectionText += " (" + extraStopInformation + ")";
                 }
                 subDirection.setDirectionText(subDirectionText);
-                subDirection.setIcon(icon);
+                subDirection.setIcon(DirectionsGenerator.getStopIcon(modeSet));
 
                 subDirections.add(subDirection);
             }
@@ -526,13 +527,13 @@ public class DirectionsGenerator {
             action = applicationContext.getResources()
                     .getString(R.string.step_by_step_transit_get_off);
             placeAndHeadsign = to.name;
-            icon = -1;
+            modeIcon = -1;
             newTime.setTime(new Date(Long.parseLong(leg.endTime)));
             oldTime.setTime(new Date(newTime.getTimeInMillis()));
             oldTime.add(Calendar.SECOND, -leg.arrivalDelay);
         }
 
-        direction.setIcon(icon);
+        direction.setIcon(modeIcon);
         direction.setPlaceAndHeadsign(applicationContext.getResources()
                 .getString(R.string.step_by_step_transit_connector_stop_name) + " "
                 + placeAndHeadsign);
@@ -558,6 +559,11 @@ public class DirectionsGenerator {
         return direction;
     }
 
+    /**
+     * Gets the mode icon for the given mode
+     *
+     * @return the mode icon for the given mode
+     */
     public static int getModeIcon(TraverseModeSet mode) {
         if (mode.contains(TraverseMode.BUSISH) &&
                         mode.contains(TraverseMode.TRAINISH)) {
@@ -582,6 +588,24 @@ public class DirectionsGenerator {
             Log.d(TAG, "No icon for mode set: " + mode);
             return -1;
         }
+    }
+
+    /**
+     * Get the transit stop icon for the given mode
+     * @param mode
+     * @return the transit stop icon for the given mode
+     */
+    public static int getStopIcon(TraverseModeSet mode) {
+        if (mode.contains(TraverseMode.BUSISH) &&
+                mode.contains(TraverseMode.TRAINISH)) {
+            return R.drawable.ri_flag_triangle;
+        } else if (mode.contains(TraverseMode.BUSISH)) {
+            return R.drawable.ri_flag_triangle;
+        } else if (mode.contains(TraverseMode.TRAINISH)) {
+            return R.drawable.ri_flag_triangle;
+        }
+        // Just use the mode icon
+        return getModeIcon(mode);
     }
 
     public static int getRelativeDirectionIcon(RelativeDirection relDir, Resources resources) {

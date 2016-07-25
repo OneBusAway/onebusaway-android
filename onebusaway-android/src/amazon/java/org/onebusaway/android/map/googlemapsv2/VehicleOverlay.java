@@ -652,7 +652,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
             ObaRoute route = mLastResponse.getRoute(trip.getRouteId());
 
             routeView.setText(UIUtils.getRouteDisplayName(route) + " " +
-                    mContext.getString(R.string.trip_info_separator) + " " + trip.getHeadsign());
+                    mContext.getString(R.string.trip_info_separator) + " " + UIUtils.formatHeadsign(trip.getHeadsign()));
 
             boolean isRealtime = isLocationRealtime(status);
 

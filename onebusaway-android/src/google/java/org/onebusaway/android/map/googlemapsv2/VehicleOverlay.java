@@ -15,21 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.os.Handler;
-import android.support.v4.util.LruCache;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -48,6 +33,21 @@ import org.onebusaway.android.ui.TripDetailsActivity;
 import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.MathUtils;
 import org.onebusaway.android.util.UIUtils;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.os.Handler;
+import android.support.v4.util.LruCache;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -641,7 +641,8 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
             ObaRoute route = mLastResponse.getRoute(trip.getRouteId());
 
             routeView.setText(UIUtils.getRouteDisplayName(route) + " " +
-                    mContext.getString(R.string.trip_info_separator) + " " + trip.getHeadsign());
+                    mContext.getString(R.string.trip_info_separator) + " " + UIUtils
+                    .formatHeadsign(trip.getHeadsign()));
 
             boolean isRealtime = isLocationRealtime(status);
 

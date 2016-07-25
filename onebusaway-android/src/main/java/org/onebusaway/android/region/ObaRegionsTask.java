@@ -192,7 +192,7 @@ public class ObaRegionsTask extends AsyncTask<Void, Integer, ArrayList<ObaRegion
                 doCallback(true);
             } else if (Application.get().getCurrentRegion() != null && closestRegion != null
                     && Application.get().getCurrentRegion().equals(closestRegion)) {
-                //User is closer to a different region than the current region, so change to the closest region
+                // Don't change the region - just refresh with latest Regions API contents
                 Application.get().setCurrentRegion(closestRegion);
                 doCallback(false);
             } else {

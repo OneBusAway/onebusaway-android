@@ -38,7 +38,6 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
@@ -169,10 +168,12 @@ public class PreferencesActivity extends PreferenceActivity
 
             Preference tripPlan = findPreference(
                     getString(R.string.preference_key_trip_plan_notifications));
-            notifications.removePreference(tripPlan);
+            if (notifications != null) {
+                notifications.removePreference(tripPlan);
 
-            if (notifications.getPreferenceCount() == 0) {
-                getPreferenceScreen().removePreference(notifications);
+                if (notifications.getPreferenceCount() == 0) {
+                    getPreferenceScreen().removePreference(notifications);
+                }
             }
         }
     }

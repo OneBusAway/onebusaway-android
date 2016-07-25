@@ -131,6 +131,7 @@
                     android:focusable="false"
                     android:layout_gravity="center_vertical"
                     android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="?android:attr/spinnerItemStyle"
             />
 
             <TextView
@@ -150,7 +151,8 @@
                     android:inputType="none"
                     android:focusable="false"
                     android:layout_gravity="center_vertical"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    style="?android:attr/spinnerItemStyle"/>
 
             <View
                 android:layout_width="0dp"

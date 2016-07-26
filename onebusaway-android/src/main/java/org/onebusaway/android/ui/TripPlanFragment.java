@@ -145,8 +145,7 @@ public class TripPlanFragment extends Fragment {
         mLeavingChoiceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mLeavingChoice.setAdapter(mLeavingChoiceAdapter);
 
-        // set mLeavingChoice onclick adapter in onresume so we do not fire it when setting it.
-
+        // Set mLeavingChoice onclick adapter in onResume() so we do not fire it when setting it
         final TimePickerDialog.OnTimeSetListener timeCallback = new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hour, int minute) {
@@ -225,7 +224,6 @@ public class TripPlanFragment extends Fragment {
         });
 
         // Start: default from address is Current Location, to address is unset
-
         return view;
     }
 
@@ -444,14 +442,9 @@ public class TripPlanFragment extends Fragment {
     private void setAddressText(TextView tv, CustomAddress address) {
         if (address != null && address.getAddressLine(0) != null) {
             tv.setText(address.toString());
-        }
-        else {
+        } else {
             tv.setText(null);
         }
-    }
-
-    private void makeNoLocationToast() {
-        Toast.makeText(getContext(), getString(R.string.tripplanner_error_no_location), Toast.LENGTH_SHORT).show();
     }
 
     private CustomAddress makeAddressFromLocation() {
@@ -463,14 +456,12 @@ public class TripPlanFragment extends Fragment {
             if (getContext() != null) {
                 Toast.makeText(getContext(), getString(R.string.main_location_unavailable), Toast.LENGTH_SHORT).show();
             }
-        }
-        else {
+        } else {
             address.setLatitude(loc.getLatitude());
             address.setLongitude(loc.getLongitude());
         }
 
         address.setAddressLine(0, getString(R.string.tripplanner_current_location));
-
         return address;
     }
 
@@ -483,8 +474,7 @@ public class TripPlanFragment extends Fragment {
 
         CustomAddress address = ProprietaryMapHelpV2.getCustomAddressFromPlacesIntent(Application.get().getApplicationContext(), intent);
 
-        // note that onResume will run after this function. We need to put new objects in the bundle.
-
+        // Note that onResume will run after this function. We need to put new objects in the bundle.
         if (requestCode == USE_FROM_ADDRESS) {
             mFromAddress = address;
             mBuilder.setFrom(mFromAddress);
@@ -496,28 +486,22 @@ public class TripPlanFragment extends Fragment {
         }
 
         checkRequestAndSubmit();
-
     }
 
     private void setUpAutocomplete(AutoCompleteTextView tv, final int use) {
-
         ObaRegion region = Application.get().getCurrentRegion();
 
         // Use Google widget if available
-
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext())
                 == ConnectionResult.SUCCESS) {
-
             tv.setFocusable(false);
             tv.setOnClickListener(new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(use, this, region));
-
             return;
         }
 
         // else, set up autocomplete with Android geocoder
 
         tv.setAdapter(new PlacesAutoCompleteAdapter(getContext(), android.R.layout.simple_list_item_1, region));
-
         tv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -535,7 +519,6 @@ public class TripPlanFragment extends Fragment {
                 checkRequestAndSubmit();
             }
         });
-
     }
 }
 

@@ -121,7 +121,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             setIntent(null);
             bundle.putBoolean(REQUEST_LOADING, false);
             mRequestLoading = false;
-
         }
 
         if (mRequestLoading || bundle.getBoolean(REQUEST_LOADING)) {
@@ -171,7 +170,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 mPanel.setPanelHeight(viewHeight - height);
             }
         });
-
     }
 
     @Override
@@ -181,12 +179,10 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-
         if (mBuilder != null) {
             mBuilder.copyIntoBundle(bundle);
 
-            // We also saved the itineraries and the results state in this bundle.
-
+            // We also saved the itineraries and the results state in this bundle
             Bundle source = mBuilder.getBundle();
 
             ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) source
@@ -206,7 +202,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
             boolean showError = source.getBoolean(SHOW_ERROR_DIALOG);
             bundle.putBoolean(SHOW_ERROR_DIALOG, showError);
-
             bundle.putBoolean(REQUEST_LOADING, mRequestLoading);
         }
 
@@ -214,7 +209,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     @Override
     public void onPause() {
-
         super.onPause();
 
         // Close possible progress dialog.
@@ -231,8 +225,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     public void onBackPressed() {
         if (mPanel != null && mPanel.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED) {
             mPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-        }
-        else {
+        } else {
             super.onBackPressed();
         }
     }
@@ -251,8 +244,9 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         // Remove results fragment if it exists
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.trip_results_fragment_container);
-        if(fragment != null)
+        if (fragment != null) {
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+        }
 
         mTripRequest = mBuilder.setListener(this).execute(this);
 
@@ -280,49 +274,40 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 .add(R.id.trip_results_fragment_container, mResultsFragment).commit();
 
         getSupportFragmentManager().executePendingTransactions();
-
     }
 
     @Override
     public void onTripRequestComplete(List<Itinerary> itineraries) {
-
-        // send intent to ourselves...
+        // Send intent to ourselves...
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries)
                 .putExtra(INTENT_SOURCE, true);
-
         startActivity(intent);
     }
 
     @Override
     public void onTripRequestFailure(int errorCode, String url) {
-
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(PLAN_ERROR_CODE, errorCode)
                 .putExtra(PLAN_ERROR_URL, url)
                 .putExtra(INTENT_SOURCE, true);
-
         startActivity(intent);
     }
 
     private void showFeedbackDialog(int errorCode, final String url) {
-
         String msg = getString(R.string.tripplanner_error_not_defined);
-
         if (errorCode > 0 && errorCode != Message.PLAN_OK.getId()) {
             msg = getErrorMessage(errorCode);
         }
 
         final Bundle bundle = mBuilder.getBundle();
-
         AlertDialog.Builder feedback = new AlertDialog.Builder(this)
                 .setTitle(R.string.tripplanner_error_dialog_title)
                 .setMessage(msg);
-
         feedback.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -330,7 +315,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 clearBundleErrors();
             }
         });
-
         feedback.setNegativeButton(R.string.report_problem_report, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -345,8 +329,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                     ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getString(R.string.analytics_action_problem),
                             getString(R.string.analytics_label_app_feedback_otp));
-                }
-                else {
+                } else {
                     Toast.makeText(TripPlanActivity.this,
                             getString(R.string.tripplanner_no_contact),
                             Toast.LENGTH_SHORT).show();
@@ -362,7 +345,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private void showProgressDialog() {
         mRequestLoading = true;
-
         if (mProgressDialog == null || !mProgressDialog.isShowing()) {
             mProgressDialog = ProgressDialog.show(this, "",
                     getResources().getText(R.string.task_progress_tripplanner_progress), true);
@@ -405,8 +387,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             return (getString(R.string.tripplanner_error_triangle));
         } else if (errorCode == TripRequest.NO_SERVER_SELECTED) {
             return getString(R.string.tripplanner_no_server_selected_error);
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -419,19 +400,17 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     // Handle the sliding panel's interactions with the list view and the map view.
     @Override
     public void onResultViewCreated(View container, final ListView listView, View mapView) {
-
         if (mPanel != null) {
             mPanel.setScrollableViewHelper(new ScrollableViewHelper() {
                 @Override
                 public int getScrollableViewScrollPosition(View scrollableView, boolean isSlidingUp) {
                     if (mResultsFragment.isMapShowing()) {
-                        return 1; // map can scroll infinitely, so return a positive value
+                        return 1; // Map can scroll infinitely, so return a positive value
                     } else {
                         return super.getScrollableViewScrollPosition(listView, isSlidingUp);
                     }
                 }
             });
-
             mPanel.setScrollableView(container);
         }
     }

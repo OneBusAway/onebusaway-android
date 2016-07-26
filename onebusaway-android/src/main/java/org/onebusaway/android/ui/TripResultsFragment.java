@@ -29,7 +29,6 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.opentripplanner.api.model.Itinerary;
 
 import android.content.Intent;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -71,9 +70,10 @@ public class TripResultsFragment extends Fragment {
 
     private Bundle mMapBundle = new Bundle();
 
-    // This listener is a helper for the parent activity to handle the sliding panel,
-    // which interacts with sliding views (ie list view and map view) in subtle ways.
-
+    /**
+     * This listener is a helper for the parent activity to handle the sliding panel,
+     * which interacts with sliding views (i.e., list view and map view) in subtle ways.
+     */
     public interface Listener {
 
         /**
@@ -84,7 +84,6 @@ public class TripResultsFragment extends Fragment {
          * @param mapView the map frame
          */
         void onResultViewCreated(View containerView, ListView listView, View mapView);
-
     }
 
     @Override
@@ -249,7 +248,6 @@ public class TripResultsFragment extends Fragment {
         long start = Long.parseLong(ms);
         String fromString = toDateFmt(start);
         String toString = toDateFmt(start + (long) durationSec);
-
         return fromString + " - " + toString;
     }
 

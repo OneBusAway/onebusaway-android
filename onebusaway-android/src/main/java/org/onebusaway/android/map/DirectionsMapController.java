@@ -31,6 +31,9 @@ import android.util.Log;
 
 import java.util.List;
 
+/**
+ * Used to show trip plan results on the map
+ */
 public class DirectionsMapController implements MapModeController {
 
     private static final String TAG = "DirectionsMapController";
@@ -49,11 +52,9 @@ public class DirectionsMapController implements MapModeController {
 
     @Override
     public void setState(Bundle args) {
-
         if (args != null) {
             mItinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
         }
-
         onResume();
     }
 
@@ -61,12 +62,10 @@ public class DirectionsMapController implements MapModeController {
      * Clears the current state of the controller, so a new route can be loaded
      */
     private void clearCurrentState() {
-
         // Clear the existing route and vehicle overlays
         mFragment.getMapView().removeRouteOverlay();
         mFragment.getMapView().removeVehicleOverlay();
         mFragment.getMapView().removeStopOverlay(false);
-
     }
 
     @Override
@@ -158,7 +157,6 @@ public class DirectionsMapController implements MapModeController {
     }
 
     private static int resolveColor(Leg leg) {
-
         if (leg.routeColor != null) {
             try {
                 return Long.decode("0xFF" + leg.routeColor).intValue();

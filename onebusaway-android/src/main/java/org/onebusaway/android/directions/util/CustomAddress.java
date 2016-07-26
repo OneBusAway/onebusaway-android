@@ -104,7 +104,6 @@ public class CustomAddress extends Address {
                             new Locale(language);
                     CustomAddress a = new CustomAddress(locale);
 
-
                     int N = in.readInt();
                     if (N > 0) {
                         for (int i = 0; i < N; i++) {

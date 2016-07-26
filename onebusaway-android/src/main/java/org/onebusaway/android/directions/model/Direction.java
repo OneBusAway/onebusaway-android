@@ -146,7 +146,6 @@ public class Direction {
     }
 
     public boolean isRealTimeInfo() {
-
         return realTimeInfo;
     }
 

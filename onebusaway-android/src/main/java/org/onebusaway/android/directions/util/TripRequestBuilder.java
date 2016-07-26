@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class TripRequestBuilder {
 
@@ -136,12 +135,11 @@ public class TripRequestBuilder {
         return d != 0 ? d : null;
     }
 
-
     // Built in TraverseModeSet does not work properly so we cannot use request.setMode
     // This is built from examining dropdown on the OTP webapp
     // there are also airplane, bike, bike + ride, park + ride, kiss + ride, etc options
     // transit -> TRANSIT,WALK
-    //  bus only -> BUSISH,WALK
+    // bus only -> BUSISH,WALK
     // rail only -> TRAINISH,WALK
     public TripRequestBuilder setModeSetById(int id) {
         List<TraverseMode> modes;
@@ -162,28 +160,21 @@ public class TripRequestBuilder {
         }
 
         String modeString = TextUtils.join(",", modes);
-
         mBundle.putString(MODE_SET, modeString);
-
         return this;
     }
 
     public int getModeSetId() {
-
         List<TraverseMode> modes = getModes();
-
         if (modes.contains(TraverseMode.BUSISH)) {
             return R.string.transit_mode_bus;
         }
-
         if (modes.contains(TraverseMode.TRAINISH)) {
             return R.string.transit_mode_rail;
         }
-
         if (modes.contains(TraverseMode.TRANSIT)) {
             return R.string.transit_mode_transit;
         }
-
         return -1;
     }
 
@@ -201,7 +192,6 @@ public class TripRequestBuilder {
             TraverseMode mode = TraverseMode.valueOf(tok);
             modes.add(mode);
         }
-
         return modes;
     }
 
@@ -210,8 +200,6 @@ public class TripRequestBuilder {
     }
 
     public TripRequest execute(Activity activity) {
-
-
         String from = getAddressString(getFrom());
         String to = getAddressString(getTo());
 
@@ -220,7 +208,6 @@ public class TripRequestBuilder {
         }
 
         Request request = new Request();
-
         request.setArriveBy(getArriveBy());
         request.setFrom(from);
         request.setTo(to);
@@ -239,7 +226,7 @@ public class TripRequestBuilder {
         String time = getFormattedDate(OTPConstants.FORMAT_OTP_SERVER_TIME_REQUEST, d);
         request.setDateTime(date, time);
 
-        // request mode set does not work properly
+        // Request mode set does not work properly
         String modeString = mBundle.getString(MODE_SET);
         if (modeString != null) {
             request.getParameters().put("mode", modeString);
@@ -256,14 +243,12 @@ public class TripRequestBuilder {
 
         if (activity == null) {
             tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
-        }
-        else {
+        } else {
             WeakReference<Activity> ref = new WeakReference<Activity>(activity);
             tripRequest = new TripRequest(fmtOtpBaseUrl, mListener);
         }
 
         tripRequest.execute(request);
-
         return tripRequest;
     }
 
@@ -304,8 +289,7 @@ public class TripRequestBuilder {
         Long time = mBundle.getLong(DATE_TIME);
         if (time == null || time == 0L) {
             return null;
-        }
-        else {
+        } else {
             return new Date(time);
         }
     }

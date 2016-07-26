@@ -29,8 +29,7 @@ public class PlacesAutoCompleteAdapter extends ArrayAdapter<CustomAddress> imple
     public int getCount() {
         if (mResultList != null){
             return mResultList.size();
-        }
-        else{
+        } else {
             return 0;
         }
     }
@@ -63,8 +62,7 @@ public class PlacesAutoCompleteAdapter extends ArrayAdapter<CustomAddress> imple
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 if (results != null && results.count > 0) {
                     notifyDataSetChanged();
-                }
-                else {
+                } else {
                     notifyDataSetInvalidated();
                 }
             }};

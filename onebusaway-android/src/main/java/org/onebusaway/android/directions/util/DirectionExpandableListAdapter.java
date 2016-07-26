@@ -52,10 +52,10 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
 
     public DirectionExpandableListAdapter(Context context, int directionLayoutResourceId,
                                           int subDirectionLayoutResourceId, Direction[] data) {
-        this.mDirectionLayoutResourceId = directionLayoutResourceId;
-        this.mSubDirectionLayoutResourceId = subDirectionLayoutResourceId;
-        this.mContext = context;
-        this.mData = data;
+        mDirectionLayoutResourceId = directionLayoutResourceId;
+        mSubDirectionLayoutResourceId = subDirectionLayoutResourceId;
+        mContext = context;
+        mData = data;
     }
 
     @Override
@@ -77,11 +77,9 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public int getChildrenCount(int groupPosition) {
         ArrayList<Direction> subDirections = mData[groupPosition].getSubDirections();
-
         if (subDirections != null) {
             return subDirections.size();
         }
-
         return 0;
     }
 
@@ -116,7 +114,6 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
         else {
             holder.imgIcon.setVisibility(View.INVISIBLE);
         }
-
         return row;
     }
 
@@ -138,7 +135,6 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView,
                              ViewGroup parent) {
-
         View row = convertView;
         DirectionHolder holder = null;
 
@@ -201,10 +197,7 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
                 holder.noIconText.setVisibility(View.INVISIBLE);
             }
         }
-
         return row;
-
-//        return textView;
     }
 
     @Override
@@ -218,11 +211,8 @@ public class DirectionExpandableListAdapter extends BaseExpandableListAdapter {
     }
 
     static class DirectionHolder {
-
         ImageView imgIcon;
-
         TextView noIconText;
-
         TextView txtDirection;
     }
 }

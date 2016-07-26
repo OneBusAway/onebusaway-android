@@ -37,16 +37,12 @@ public class ItineraryDescription {
     private Date mEndDate;
 
     public ItineraryDescription(Itinerary itinerary) {
-
         mTripIds = new ArrayList<>();
-
         for (Leg leg : itinerary.legs) {
             TraverseMode traverseMode = TraverseMode.valueOf(leg.mode);
-
             if (traverseMode.isTransit()) {
                 mTripIds.add(leg.tripId);
             }
-
         }
 
         Leg last = itinerary.legs.get(itinerary.legs.size() - 1);
@@ -109,5 +105,4 @@ public class ItineraryDescription {
     public boolean isExpired() {
         return getEndDate().before(new Date());
     }
-
 }

@@ -19,9 +19,7 @@ package org.onebusaway.android.directions.realtime;
 import org.opentripplanner.api.model.Itinerary;
 
 public interface RealtimeService {
-
     void onItinerarySelected(Itinerary itinerary);
 
     void disableListenForTripUpdates();
-
 }

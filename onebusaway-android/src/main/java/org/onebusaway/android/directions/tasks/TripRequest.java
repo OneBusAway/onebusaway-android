@@ -70,16 +70,16 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     // change Server object to baseUrl string.
     public TripRequest(String baseUrl, Callback callback) {
-        this.mBaseUrl = baseUrl;
-        this.mCallback = callback;
+        mBaseUrl = baseUrl;
+        mCallback = callback;
     }
 
     /**
-     * Show the progress dialog for this request.
-     * Called when request starts, or by caller activity (ie in onCreate after a rotation)
+     * Show the progress dialog for this request. Called when request starts, or by caller activity
+     * (i.e., in onCreate() after a rotation)
+     * @param reqs
+     * @return
      */
-
-
     protected Long doInBackground(Request... reqs) {
         long totalSize = 0;
         if (mBaseUrl == null) {
@@ -99,28 +99,22 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
     }
 
     protected void onPostExecute(Long result) {
-
         if (result == null) {
             return;
         }
 
         if (mResponse != null && mResponse.getPlan() != null
                 && mResponse.getPlan().getItinerary().get(0) != null) {
-
             mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary());
-
         } else {
-
             Log.e(TAG, "Error retrieving routing from OTP server: " + mResponse);
             int errorCode = -1;
             if (mResponse != null && mResponse.getError() != null) {
                 errorCode = mResponse.getError().getId();
             }
             mCallback.onTripRequestFailure(errorCode, mRequestUrl);
-
         }
     }
-
 
     protected Response requestPlan(Request requestParams, String prefix, String baseURL) {
         HashMap<String, String> tmp = requestParams.getParameters();
@@ -148,7 +142,6 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
                 updatedString = params.replace(TraverseMode.BICYCLE.toString(),
                         TraverseMode.BICYCLE.toString() + ", " + TraverseMode.WALK.toString());
             }
-
             params = updatedString;
         }
 
@@ -200,5 +193,4 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
             System.setProperty("http.keepAlive", "false");
         }
     }
-
 }

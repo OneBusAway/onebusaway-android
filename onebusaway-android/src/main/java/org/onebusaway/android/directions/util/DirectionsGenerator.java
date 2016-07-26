@@ -92,7 +92,6 @@ public class DirectionsGenerator {
         if (directions == null) {
             directions = new ArrayList<Direction>();
         }
-
         directions.add(dir);
     }
 
@@ -149,7 +148,7 @@ public class DirectionsGenerator {
 
         direction.setIcon(icon);
 
-        //		Main direction
+        // Main direction
         Place fromPlace = leg.from;
         Place toPlace = leg.to;
         String mainDirectionText = action;
@@ -178,7 +177,7 @@ public class DirectionsGenerator {
                 + " ]";
         direction.setDirectionText(mainDirectionText);
 
-        //Sub-direction
+        // Sub-direction
         List<WalkStep> walkSteps = leg.getSteps();
 
         if (walkSteps == null) {
@@ -437,10 +436,8 @@ public class DirectionsGenerator {
 
     private ArrayList<Direction> generateTransitDirections(Leg leg) {
         ArrayList<Direction> directions = new ArrayList<Direction>(2);
-
         directions.add(generateTransitSubdirection(leg, true));
         directions.add(generateTransitSubdirection(leg, false));
-
         return directions;
     }
 
@@ -448,7 +445,7 @@ public class DirectionsGenerator {
         Direction direction = new Direction();
         direction.setRealTimeInfo(leg.realTime);
 
-        //		set icon
+        // Set icon
         String mode = getLocalizedMode(TraverseMode.valueOf(leg.mode),
                 applicationContext.getResources());
         int modeIcon;
@@ -677,18 +674,15 @@ public class DirectionsGenerator {
 
     private String getTransitTitle(Leg leg) {
         String[] possibleTitles = {leg.tripShortName, leg.routeShortName, leg.route, leg.routeId};
-
         for (int i = 0; i < possibleTitles.length; i++) {
             if (!TextUtils.isEmpty(possibleTitles[i])) {
                 return possibleTitles[i];
             }
         }
-
         return null;
     }
 
     public String getItineraryTitle() {
-
         if (legs.size() == 1) {
             TraverseMode mode = TraverseMode.valueOf(legs.get(0).mode);
             if (!mode.isTransit()) {
@@ -700,14 +694,10 @@ public class DirectionsGenerator {
 
         for (Leg leg : legs) {
             TraverseMode traverseMode = TraverseMode.valueOf(leg.mode);
-
             if (traverseMode.isTransit()) {
                 tokens.add(getTransitTitle(leg));
             }
         }
-
         return TextUtils.join(", ", tokens);
-
     }
-
 }

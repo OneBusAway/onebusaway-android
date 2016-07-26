@@ -70,8 +70,8 @@ public class RealtimeServiceImpl implements RealtimeService {
     private static final long DELAY_THRESHOLD_SEC = 120;
 
     public RealtimeServiceImpl(Context context, Activity mActivity, Bundle bundle) {
-        this.mActivity = mActivity;
-        this.mApplicationContext = context;
+        mActivity = mActivity;
+        mApplicationContext = context;
         mAlarmMgr = (AlarmManager) mApplicationContext.getSystemService(Context.ALARM_SERVICE);
 
         mIntentFilter = new IntentFilter(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION);
@@ -80,14 +80,13 @@ public class RealtimeServiceImpl implements RealtimeService {
         mTripUpdateIntent = new Intent(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION);
         mAlarmIntentTripUpdate = PendingIntent.getBroadcast(mApplicationContext, 0, mTripUpdateIntent, 0);
 
-        this.mBundle = bundle;
+        mBundle = bundle;
 
         mRegistered = false;
     }
 
     @Override
     public void onItinerarySelected(Itinerary itinerary) {
-
         disableListenForTripUpdates();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mApplicationContext);
@@ -103,7 +102,6 @@ public class RealtimeServiceImpl implements RealtimeService {
             }
 
             if (realtimeLegsOnItineraries) {
-
                 Log.d(TAG, "Starting realtime updates for itinerary");
 
                 mItineraryDescription = new ItineraryDescription(itinerary);
@@ -112,11 +110,9 @@ public class RealtimeServiceImpl implements RealtimeService {
                 mAlarmMgr.setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
                         OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, mAlarmIntentTripUpdate);
                 mRegistered = true;
-
             } else {
                 Log.d(TAG, "No realtime legs on itinerary");
             }
-
         }
     }
 
@@ -153,13 +149,10 @@ public class RealtimeServiceImpl implements RealtimeService {
 
                         return;
                     }
-
                 }
-
                 Log.d(TAG, "Did not find a matching itinerary in new call.");
                 showNotification(mItineraryDescription, R.string.trip_plan_not_recommended);
                 disableListenForTripUpdates();
-
             }
 
             @Override
@@ -198,7 +191,6 @@ public class RealtimeServiceImpl implements RealtimeService {
     }
 
     private void showNotification(ItineraryDescription description, int message) {
-
         String itineraryChange = getResources().getString(message);
 
         Intent notificationIntentOpenApp = new Intent(mApplicationContext, mActivity.getClass());
@@ -232,23 +224,18 @@ public class RealtimeServiceImpl implements RealtimeService {
         return mApplicationContext.getResources();
     }
 
-
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION)) {
                 checkForItineraryChange();
-
             } else if (intent.getAction().equals(OTPConstants.INTENT_NOTIFICATION_ACTION_OPEN_APP)) {
-
                 // OTP-for-Android opens a new activity with trip ID data. We just open the old activity.
                 Intent activityIntent = new Intent(mApplicationContext, TripPlanActivity.class);
                 activityIntent.setAction(Intent.ACTION_MAIN);
                 activityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 mApplicationContext.startActivity(activityIntent);
-
             }
-
         }
     };
 }

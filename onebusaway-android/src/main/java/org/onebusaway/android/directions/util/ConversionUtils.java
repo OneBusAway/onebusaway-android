@@ -127,7 +127,6 @@ public class ConversionUtils {
                         + applicationContext.getResources().getString(R.string.miles_abbreviation);
             }
         }
-
         return text;
     }
 
@@ -313,7 +312,6 @@ public class ConversionUtils {
                         noDeviceTimezoneNote);
             }
         }
-
     }
 
     public static CharSequence getTimeUpdated(Context applicationContext, int offsetGMT, long oldTime,
@@ -379,10 +377,8 @@ public class ConversionUtils {
         return timeUpdatedString;
     }
 
-
     public static boolean isToday(Calendar cal) {
         Calendar actualTime = Calendar.getInstance();
-
         return (actualTime.get(Calendar.ERA) == cal.get(Calendar.ERA) &&
                 actualTime.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
                 actualTime.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR));
@@ -391,7 +387,6 @@ public class ConversionUtils {
     public static boolean isTomorrow(Calendar cal) {
         Calendar tomorrowTime = Calendar.getInstance();
         tomorrowTime.add(Calendar.DAY_OF_YEAR, 1);
-
         return (tomorrowTime.get(Calendar.ERA) == cal.get(Calendar.ERA) &&
                 tomorrowTime.get(Calendar.YEAR) == cal.get(Calendar.YEAR) &&
                 tomorrowTime.get(Calendar.DAY_OF_YEAR) == cal.get(Calendar.DAY_OF_YEAR));
@@ -419,7 +414,6 @@ public class ConversionUtils {
             }
             modifiedSentence = word + " " + modifiedSentence;
         }
-
         return modifiedSentence;
     }
 
@@ -446,7 +440,6 @@ public class ConversionUtils {
                 routeName += " " + tailAndTruncateSentence(routeLongName, OTPConstants.ROUTE_SHORT_NAME_MAX_SIZE);
             }
         }
-
         return routeName;
     }
 
@@ -467,15 +460,13 @@ public class ConversionUtils {
             if (routeLongName != null) {
                 if (includeShortName && routeShortName != null) {
                     routeName = routeShortName + " " + "(" + routeLongName + ")";
-                }
-                else{
+                } else {
                     routeName += routeLongName;
                 }
             } else if (routeShortName != null) {
                 routeName += routeShortName;
             }
         }
-
         return routeName;
     }
 

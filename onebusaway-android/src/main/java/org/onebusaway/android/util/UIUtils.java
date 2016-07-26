@@ -464,6 +464,9 @@ public final class UIUtils {
      * @param destIntent The destination intent.
      */
     public static final Intent makeShortcut(Context context, String name, Intent destIntent) {
+        // Make sure the shortcut Activity always launches on top (#626)
+        destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
         // Set up the container intent
         Intent intent = new Intent();
         intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);

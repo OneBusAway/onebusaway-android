@@ -161,8 +161,8 @@ public class PreferencesActivity extends PreferenceActivity
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
 
         // Remove preferences for notifications if no trip planning
-        String otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
-        if (TextUtils.isEmpty(otpBaseUrl)) {
+        ObaRegion obaRegion = Application.get().getCurrentRegion();
+        if (obaRegion!= null && TextUtils.isEmpty(obaRegion.getOtpBaseUrl())) {
             PreferenceCategory notifications = (PreferenceCategory)
                     findPreference(getString(R.string.preference_key_notifications));
 

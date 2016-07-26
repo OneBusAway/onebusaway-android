@@ -27,10 +27,12 @@ import org.onebusaway.android.directions.util.CustomAddress;
 import org.onebusaway.android.directions.util.OTPConstants;
 import org.onebusaway.android.directions.util.PlacesAutoCompleteAdapter;
 import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
@@ -70,6 +72,16 @@ import java.util.Locale;
 
 public class TripPlanFragment extends Fragment {
 
+    public TripPlanFragment setPlanErrorUrl(String planErrorUrl) {
+        mPlanErrorUrl = planErrorUrl;
+        return this;
+    }
+
+    public TripPlanFragment setPlanRequestUrl(String planRequestUrl) {
+        mPlanRequestUrl = planRequestUrl;
+        return this;
+    }
+
     /**
      * Allows calling activity to register to know when to send request.
      */
@@ -103,6 +115,10 @@ public class TripPlanFragment extends Fragment {
     private TripRequestBuilder mBuilder;
 
     private Listener mListener;
+
+    private String mPlanErrorUrl;
+
+    private String mPlanRequestUrl;
 
     private void resetDateTimeLabels() {
         String dateText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_DATE_STRING_FORMAT, Locale.getDefault())
@@ -310,13 +326,18 @@ public class TripPlanFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        switch(id) {
+        switch (id) {
             case R.id.action_settings:
                 advancedSettings();
                 return true;
             case R.id.action_reverse:
                 reverseTrip();
                 return true;
+            case R.id.action_report_trip_problem:
+                reportTripPlanProblem();
+                return true;
+            default:
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -324,8 +345,6 @@ public class TripPlanFragment extends Fragment {
 
     /**
      * Set Listener of this fragment.
-     *
-     * @param listener
      */
     public void setListener(Listener listener) {
         mListener = listener;
@@ -376,7 +395,6 @@ public class TripPlanFragment extends Fragment {
             }
         });
 
-
         final AlertDialog dialog = dialogBuilder.create();
 
         dialog.show();
@@ -415,27 +433,45 @@ public class TripPlanFragment extends Fragment {
             maxWalkEditText.setText(String.format("%d", maxWalk.longValue()));
         }
 
-
         if (unitsAreImperial) {
             TextView label = (TextView) dialog.findViewById(R.id.label_minimum_walk_distance);
             label.setText(getString(R.string.feet_abbreviation));
         }
-
     }
 
     private void reverseTrip() {
         mFromAddress = mBuilder.getTo();
         mToAddress = mBuilder.getFrom();
 
-        mBuilder
-                .setFrom(mFromAddress)
-                .setTo(mToAddress);
+        mBuilder.setFrom(mFromAddress).setTo(mToAddress);
 
         setAddressText(mFromAddressTextArea, mFromAddress);
         setAddressText(mToAddressTextArea, mToAddress);
 
         if (mBuilder.ready() && mListener != null) {
             mListener.onTripRequestReady();
+        }
+    }
+
+    private void reportTripPlanProblem() {
+        String email = Application.get().getCurrentRegion().getOtpContactEmail();
+        if (!TextUtils.isEmpty(email)) {
+            Location loc = Application.getLastKnownLocation(getActivity().getApplicationContext(),
+                    null);
+            String locString = null;
+            if (loc != null) {
+                locString = LocationUtils.printLocationDetails(loc);
+            }
+            if (mPlanErrorUrl != null) {
+                UIUtils.sendEmail(getActivity(), email, locString, mPlanErrorUrl, true);
+            } else if (mPlanRequestUrl != null) {
+                UIUtils.sendEmail(getActivity(), email, locString, mPlanRequestUrl, false);
+            } else {
+                UIUtils.sendEmail(getActivity(), email, locString, null, true);
+            }
+            ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    getString(R.string.analytics_action_problem),
+                    getString(R.string.analytics_label_app_feedback_otp));
         }
     }
 
@@ -448,7 +484,6 @@ public class TripPlanFragment extends Fragment {
     }
 
     private CustomAddress makeAddressFromLocation() {
-
         CustomAddress address = CustomAddress.getEmptyAddress();
 
         Location loc = Application.getLastKnownLocation(getContext(), mGoogleApiClient);
@@ -510,8 +545,7 @@ public class TripPlanFragment extends Fragment {
                 if (use == USE_FROM_ADDRESS) {
                     mFromAddress = addr;
                     mBuilder.setFrom(mFromAddress);
-                }
-                else if (use == USE_TO_ADDRESS) {
+                } else if (use == USE_TO_ADDRESS) {
                     mToAddress = addr;
                     mBuilder.setTo(mToAddress);
                 }

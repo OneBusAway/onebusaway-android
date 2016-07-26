@@ -129,7 +129,7 @@ public class ReportTypeListFragment extends ListFragment implements AdapterView.
             String locationString = getActivity().getIntent()
                     .getStringExtra(BaseReportActivity.LOCATION_STRING);
 
-            UIUtils.sendEmail(getActivity(), email, locationString, null);
+            UIUtils.sendEmail(getActivity(), email, locationString);
 
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_problem),

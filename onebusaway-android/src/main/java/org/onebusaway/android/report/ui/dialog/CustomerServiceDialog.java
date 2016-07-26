@@ -124,7 +124,7 @@ public class CustomerServiceDialog extends DialogFragment implements
                         String locationString = getActivity().getIntent().
                                 getStringExtra(BaseReportActivity.LOCATION_STRING);
 
-                        UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString, null);
+                        UIUtils.sendEmail(getActivity(), agency.getEmail(), locationString);
 
                         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                 agency.getName() + "_" + getString(R.string.analytics_action_customer_service),

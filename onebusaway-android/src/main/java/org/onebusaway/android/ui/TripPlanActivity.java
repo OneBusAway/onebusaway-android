@@ -66,6 +66,8 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String PLAN_ERROR_URL = "org.onebusaway.android.PLAN_ERROR_URL";
 
+    private static final String PLAN_REQUEST_URL = "org.onebusaway.android.PLAN_REQUEST_URL";
+
     private static final String PANEL_STATE_EXPANDED = "org.onebusaway.android.PANEL_STATE_EXPANDED";
 
     private static final String SHOW_ERROR_DIALOG = "org.onebusaway.android.SHOW_ERROR_DIALOG";
@@ -158,8 +160,13 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
             showFeedbackDialog(planErrorCode, planErrorUrl);
         }
 
+        if (fragment != null && intent != null) {
+            fragment.setPlanErrorUrl(intent.getStringExtra(PLAN_ERROR_URL));
+            fragment.setPlanRequestUrl(intent.getStringExtra(PLAN_REQUEST_URL));
+        }
+
         // Set the height of the panel after drawing occurs.
-        final ViewGroup layout = (ViewGroup)findViewById(R.id.trip_plan_fragment_container);
+        final ViewGroup layout = (ViewGroup) findViewById(R.id.trip_plan_fragment_container);
         ViewTreeObserver vto = layout.getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -277,13 +284,14 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
     }
 
     @Override
-    public void onTripRequestComplete(List<Itinerary> itineraries) {
+    public void onTripRequestComplete(List<Itinerary> itineraries, String url) {
         // Send intent to ourselves...
         Intent intent = new Intent(this, TripPlanActivity.class)
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries)
-                .putExtra(INTENT_SOURCE, true);
+                .putExtra(INTENT_SOURCE, true)
+                .putExtra(PLAN_REQUEST_URL, url);
         startActivity(intent);
     }
 
@@ -325,7 +333,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                     if (loc != null) {
                         locString = LocationUtils.printLocationDetails(loc);
                     }
-                    UIUtils.sendEmail(TripPlanActivity.this, email, locString, url);
+                    UIUtils.sendEmail(TripPlanActivity.this, email, locString, url, true);
                     ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getString(R.string.analytics_action_problem),
                             getString(R.string.analytics_label_app_feedback_otp));

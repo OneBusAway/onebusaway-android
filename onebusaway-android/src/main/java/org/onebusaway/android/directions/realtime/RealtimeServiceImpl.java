@@ -119,7 +119,7 @@ public class RealtimeServiceImpl implements RealtimeService {
     private void checkForItineraryChange() {
         TripRequest.Callback callback = new TripRequest.Callback() {
             @Override
-            public void onTripRequestComplete(List<Itinerary> itineraries) {
+            public void onTripRequestComplete(List<Itinerary> itineraries, String url) {
                 if (itineraries == null || itineraries.isEmpty()) {
                     onTripRequestFailure(-1, null);
                     return;

@@ -149,6 +149,7 @@
     <string name="ri_append_start">\n\n---------------------\n</string>
     <string name="ri_append_gtfs_stop_id">gtfs_stop_id=%1$s;\n</string>
     <string name="ri_append_agency_name">agency_name=%1$s;\n</string>
+    <string name="ri_append_stop_name">stop_name=%1$s;\n</string>
     <string name="ri_append_trip_id">trip_id=%1$s;\n</string>
     <string name="ri_append_route_id">route_id=%1$s;\n</string>
     <string name="ri_append_route_display_name">route_display_name=%1$s;\n</string>

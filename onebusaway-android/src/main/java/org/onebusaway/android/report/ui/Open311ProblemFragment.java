@@ -544,6 +544,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         if (ServiceUtils.isTransitStopServiceByType(service.getType())) {
             // Append stop service params
             sb.append(getResources().getString(R.string.ri_append_gtfs_stop_id, obaStop.getId()));
+            sb.append(getResources().getString(R.string.ri_append_stop_name, obaStop.getName()));
         } else if (ServiceUtils.isTransitTripServiceByType(service.getType())) {
             if (mArrivalInfo != null) {
                 // Append trip service params
@@ -555,6 +556,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                     sb.append(getResources().getString(R.string.ri_append_agency_name, mAgencyName));
                 }
                 sb.append(getResources().getString(R.string.ri_append_gtfs_stop_id, obaStop.getId()));
+                sb.append(getResources().getString(R.string.ri_append_stop_name, obaStop.getName()));
 
                 sb.append(getResources().getString(R.string.ri_append_route_id, mArrivalInfo.getRouteId()));
                 String routeDisplayName = UIUtils.getRouteDisplayName(mArrivalInfo);

@@ -28,4 +28,8 @@
         android:title="@string/tripplanner_reverse"
         android:orderInCategory="100"
         app:showAsAction="never"/>
+    <item android:id="@+id/action_report_trip_problem"
+        android:title="@string/tripplanner_report_trip_problem"
+        android:orderInCategory="100"
+        app:showAsAction="never"/>
 </menu>

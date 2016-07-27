@@ -497,10 +497,19 @@ public final class UIUtils {
      * Opens email apps based on the given email address
      * @param email address
      * @param location string that shows the current location
+     */
+    public static void sendEmail(Context context, String email, String location) {
+        sendEmail(context, email, location, null, false);
+    }
+
+    /**
+     * Opens email apps based on the given email address
+     * @param email address
+     * @param location string that shows the current location
      * @param tripPlanUrl trip planning URL that failed, if this is a trip problem error report, or null if it's not
      */
     public static void sendEmail(Context context, String email, String location,
-            String tripPlanUrl) {
+            String tripPlanUrl, boolean tripPlanFail) {
         String obaRegionName = RegionUtils.getObaRegionName();
         boolean autoRegion = Application.getPrefs()
                 .getBoolean(context.getString(R.string.preference_key_auto_select_region), true);
@@ -512,7 +521,7 @@ public final class UIUtils {
         }
 
         UIUtils.sendEmail(context, email, location, obaRegionName, regionSelectionMethod,
-                tripPlanUrl);
+                tripPlanUrl, tripPlanFail);
     }
 
     /**
@@ -525,7 +534,7 @@ public final class UIUtils {
      * @param tripPlanUrl trip planning URL that failed, if this is a trip problem error report, or null if it's not
      */
     private static void sendEmail(Context context, String email, String location, String regionName,
-            String regionSelectionMethod, String tripPlanUrl) {
+            String regionSelectionMethod, String tripPlanUrl, boolean tripPlanFail) {
         PackageManager pm = context.getPackageManager();
         PackageInfo appInfoOba;
         PackageInfo appInfoGps;
@@ -561,17 +570,31 @@ public final class UIUtils {
                         location);
             } else {
                 // Trip plan
-                body = context.getString(R.string.bug_report_body_trip_plan,
-                        obaVersion,
-                        Build.MODEL,
-                        Build.VERSION.RELEASE,
-                        Build.VERSION.SDK_INT,
-                        googlePlayServicesAppVersion,
-                        GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
-                        regionName,
-                        regionSelectionMethod,
-                        location,
-                        tripPlanUrl);
+                if (tripPlanFail) {
+                    body = context.getString(R.string.bug_report_body_trip_plan_fail,
+                            obaVersion,
+                            Build.MODEL,
+                            Build.VERSION.RELEASE,
+                            Build.VERSION.SDK_INT,
+                            googlePlayServicesAppVersion,
+                            GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
+                            regionName,
+                            regionSelectionMethod,
+                            location,
+                            tripPlanUrl);
+                } else {
+                    body = context.getString(R.string.bug_report_body_trip_plan,
+                            obaVersion,
+                            Build.MODEL,
+                            Build.VERSION.RELEASE,
+                            Build.VERSION.SDK_INT,
+                            googlePlayServicesAppVersion,
+                            GoogleApiAvailability.GOOGLE_PLAY_SERVICES_VERSION_CODE,
+                            regionName,
+                            regionSelectionMethod,
+                            location,
+                            tripPlanUrl);
+                }
             }
         } else {
             // No location
@@ -584,12 +607,21 @@ public final class UIUtils {
                         Build.VERSION.SDK_INT);
             } else {
                 // Trip plan
-                body = context.getString(R.string.bug_report_body_trip_plan_without_location,
-                        obaVersion,
-                        Build.MODEL,
-                        Build.VERSION.RELEASE,
-                        Build.VERSION.SDK_INT,
-                        tripPlanUrl);
+                if (tripPlanFail) {
+                    body = context.getString(R.string.bug_report_body_trip_plan_without_location_fail,
+                            obaVersion,
+                            Build.MODEL,
+                            Build.VERSION.RELEASE,
+                            Build.VERSION.SDK_INT,
+                            tripPlanUrl);
+                } else {
+                    body = context.getString(R.string.bug_report_body_trip_plan_without_location,
+                            obaVersion,
+                            Build.MODEL,
+                            Build.VERSION.RELEASE,
+                            Build.VERSION.SDK_INT,
+                            tripPlanUrl);
+                }
             }
         }
 
@@ -599,9 +631,17 @@ public final class UIUtils {
         // Show trip planner subject line if we have a trip planning URL
         String subject;
         if (tripPlanUrl == null) {
-            subject = context.getString(R.string.bug_report_subject);
+            if (tripPlanFail) {
+                subject = context.getString(R.string.bug_report_subject_trip_plan);
+            } else {
+                subject = context.getString(R.string.bug_report_subject);
+            }
         } else {
-            subject = context.getString(R.string.bug_report_subject_trip_plan);
+            if (tripPlanFail) {
+                subject = context.getString(R.string.bug_report_subject_trip_plan_fail);
+            } else {
+                subject = context.getString(R.string.bug_report_subject_trip_plan);
+            }
         }
         send.putExtra(Intent.EXTRA_SUBJECT, subject);
         send.putExtra(Intent.EXTRA_TEXT, body);

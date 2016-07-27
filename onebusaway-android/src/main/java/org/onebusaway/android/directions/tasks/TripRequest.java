@@ -46,7 +46,7 @@ import java.util.List;
 public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
     public interface Callback {
-        void onTripRequestComplete(List<Itinerary> itineraries);
+        void onTripRequestComplete(List<Itinerary> itineraries, String url);
         void onTripRequestFailure(int errorCode, String url);
     }
 
@@ -105,7 +105,7 @@ public class TripRequest extends AsyncTask<Request, Integer, Long> {
 
         if (mResponse != null && mResponse.getPlan() != null
                 && mResponse.getPlan().getItinerary().get(0) != null) {
-            mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary());
+            mCallback.onTripRequestComplete(mResponse.getPlan().getItinerary(), mRequestUrl);
         } else {
             Log.e(TAG, "Error retrieving routing from OTP server: " + mResponse);
             int errorCode = -1;

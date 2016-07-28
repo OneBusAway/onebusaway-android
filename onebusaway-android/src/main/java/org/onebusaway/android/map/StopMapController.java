@@ -183,12 +183,11 @@ public class StopMapController implements MapModeController,
     public void setState(Bundle args) {
         if (args != null) {
             Location center = UIUtils.getMapCenter(args);
-            float mapZoom = args.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
-            mCallback.getMapView().setZoom(mapZoom);
 
             // If the STOP_ID was set in the bundle, then we should focus on that stop
             String stopId = args.getString(MapParams.STOP_ID);
             if (stopId != null && center != null) {
+                mCallback.getMapView().setZoom(MapParams.DEFAULT_ZOOM);
                 setMapCenter(center);
                 return;
             }
@@ -197,7 +196,7 @@ public class StopMapController implements MapModeController,
 
             // Try to set map based on real-time location, unless state says no
             if (!dontCenterOnLocation) {
-                boolean setLocation = mCallback.setMyLocation(false, false);
+                boolean setLocation = mCallback.setMyLocation(true, false);
                 if (setLocation) {
                     return;
                 }
@@ -205,6 +204,8 @@ public class StopMapController implements MapModeController,
 
             // If we have a previous map view, center map on that
             if (center != null) {
+                float mapZoom = args.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
+                mCallback.getMapView().setZoom(mapZoom);
                 setMapCenter(center);
                 return;
             }

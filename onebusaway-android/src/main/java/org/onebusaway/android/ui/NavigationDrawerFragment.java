@@ -34,6 +34,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -349,8 +350,9 @@ public class NavigationDrawerFragment extends Fragment {
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
-        if (Application.get().getCurrentRegion() != null &&
-            Application.get().getCurrentRegion().getOtpBaseUrl() != null) {
+        if ((Application.get().getCurrentRegion() != null &&
+                !TextUtils.isEmpty(Application.get().getCurrentRegion().getOtpBaseUrl())) ||
+                !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
             mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
         }
 

@@ -25,12 +25,15 @@ import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.TraverseMode;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -236,7 +239,23 @@ public class TripRequestBuilder {
         request.setShowIntermediateStops(true);
 
         // TripRequest will accept a null value and give a user-friendly error
-        String otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+        String otpBaseUrl;
+        Application app = Application.get();
+        if (!TextUtils.isEmpty(app.getCustomOtpApiUrl())) {
+            otpBaseUrl = app.getCustomOtpApiUrl();
+            Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
+            if (!TextUtils.isEmpty(otpBaseUrl)) {
+                try {
+                    // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+                    URL url = new URL(otpBaseUrl);
+                } catch (MalformedURLException e) {
+                    // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+                    otpBaseUrl = activity.getString(R.string.http_prefix) + otpBaseUrl;
+                }
+            }
+        } else {
+            otpBaseUrl = app.getCurrentRegion().getOtpBaseUrl();
+        }
         String fmtOtpBaseUrl = otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
 
         TripRequest tripRequest;

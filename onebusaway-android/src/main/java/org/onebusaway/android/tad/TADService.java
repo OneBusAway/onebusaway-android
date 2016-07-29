@@ -119,7 +119,7 @@ public class TADService extends Service
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public synchronized void onLocationChanged(Location location) {
         Log.d(TAG, "Location Updated");
         if (mLastLocation == null) {
 
@@ -127,6 +127,7 @@ public class TADService extends Service
                 mNavProvider.locationUpdated(location);
             }
             if (BuildConfig.TAD_GPS_LOGGING) {
+                mNavProvider.locationUpdated(location);
                 writeToLog(location);
             }
 
@@ -187,17 +188,15 @@ public class TADService extends Service
                 satellites = l.getExtras().getInt("satellites", 0);
             }
 
-
-
-            getReadyFlag =mNavProvider.getGetReady();
-            pullTheCordFlag = mNavProvider.getFinished();
-
+           // getReadyFlag =mNavProvider.getGetReady();
+          //  pullTheCordFlag = mNavProvider.getFinished();
 
             // TODO: Add isMockProvider
             String log = String.format("%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
-                    CoordinatesID, getReadyFlag,pullTheCordFlag, nanoTime, l.getTime(),
+                    CoordinatesID, mNavProvider.getGetReady(),mNavProvider.getFinished(), nanoTime, l.getTime(),
                     l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(),
                     l.getBearing(), l.getAccuracy(), satellites, l.getProvider());
+
 
             //Increments the id for each coordinate
             CoordinatesID++;

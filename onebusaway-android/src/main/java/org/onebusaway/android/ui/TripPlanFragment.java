@@ -50,6 +50,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -100,8 +101,10 @@ public class TripPlanFragment extends Fragment {
     private AutoCompleteTextView mToAddressTextArea;
     private ImageButton mFromCurrentLocationImageButton;
     private ImageButton mToCurrentLocationImageButton;
-    private TextView mDate;
-    private TextView mTime;
+    private Spinner mDate;
+    private ArrayAdapter mDateAdapter;
+    private Spinner mTime;
+    private ArrayAdapter mTimeAdapter;
     private Spinner mLeavingChoice;
     ArrayAdapter<CharSequence> mLeavingChoiceAdapter;
 
@@ -126,8 +129,11 @@ public class TripPlanFragment extends Fragment {
         String timeText = new SimpleDateFormat(OTPConstants.TRIP_PLAN_TIME_STRING_FORMAT, Locale.getDefault())
                 .format(mMyCalendar.getTime());
 
-        mDate.setText(dateText);
-        mTime.setText(timeText);
+        mDateAdapter.insert(dateText, 0);
+        mDateAdapter.notifyDataSetChanged();
+
+        mTimeAdapter.insert(timeText, 0);
+        mTimeAdapter.notifyDataSetChanged();
     }
 
     // Create view, initialize state
@@ -152,12 +158,18 @@ public class TripPlanFragment extends Fragment {
         mToAddressTextArea = (AutoCompleteTextView) view.findViewById(R.id.toAddressTextArea);
         mFromCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.fromCurrentLocationImageButton);
         mToCurrentLocationImageButton = (ImageButton) view.findViewById(R.id.toCurrentLocationImageButton);
-        mDate = (TextView) view.findViewById(R.id.date);
-        mTime = (TextView) view.findViewById(R.id.time);
+        mDate = (Spinner) view.findViewById(R.id.date);
+        mDateAdapter = new ArrayAdapter(getActivity(), R.layout.simple_list_item);
+        mDate.setAdapter(mDateAdapter);
+
+        mTime = (Spinner) view.findViewById(R.id.time);
+        mTimeAdapter = new ArrayAdapter(getActivity(), R.layout.simple_list_item);
+        mTime.setAdapter(mTimeAdapter);
+
         mLeavingChoice = (Spinner) view.findViewById(R.id.leavingChoiceSpinner);
 
         mLeavingChoiceAdapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.trip_plan_leaving_arriving_array, android.R.layout.simple_spinner_item);
+                R.array.trip_plan_leaving_arriving_array, R.layout.simple_list_item);
         mLeavingChoiceAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mLeavingChoice.setAdapter(mLeavingChoiceAdapter);
 
@@ -172,13 +184,6 @@ public class TripPlanFragment extends Fragment {
                 checkRequestAndSubmit();
             }
         };
-
-        mTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new TimePickerDialog(v.getContext(), timeCallback, mMyCalendar.get(Calendar.HOUR_OF_DAY), mMyCalendar.get(Calendar.MINUTE), false).show();
-            }
-        });
 
         final DatePickerDialog.OnDateSetListener dateCallback = new DatePickerDialog.OnDateSetListener() {
 
@@ -195,12 +200,28 @@ public class TripPlanFragment extends Fragment {
 
         };
 
-        mDate.setOnClickListener(new View.OnClickListener() {
+        mDate.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                new DatePickerDialog(view.getContext(), dateCallback, mMyCalendar
-                        .get(Calendar.YEAR), mMyCalendar.get(Calendar.MONTH),
-                        mMyCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    new DatePickerDialog(view.getContext(), dateCallback, mMyCalendar
+                            .get(Calendar.YEAR), mMyCalendar.get(Calendar.MONTH),
+                            mMyCalendar.get(Calendar.DAY_OF_MONTH)).show();
+                }
+
+                return true;
+            }
+        });
+
+        mTime.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    new TimePickerDialog(view.getContext(), timeCallback,
+                            mMyCalendar.get(Calendar.HOUR_OF_DAY),
+                            mMyCalendar.get(Calendar.MINUTE), false).show();
+                }
+                return true;
             }
         });
 

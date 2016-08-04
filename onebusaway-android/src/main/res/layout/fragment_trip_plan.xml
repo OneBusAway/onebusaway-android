@@ -14,10 +14,10 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:layout_margin="16dp">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:layout_margin="16dp">
 
     <TableLayout android:layout_width="match_parent"
                  android:layout_height="wrap_content">
@@ -103,72 +103,79 @@
 
     </TableLayout>
 
-        <LinearLayout
-                android:layout_width="match_parent"
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp">
+
+        <Spinner
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingTop="8dp">
+                android:id="@+id/leavingChoiceSpinner"
+                android:layout_gravity="center_vertical"
+                android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-            <Spinner
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/leavingChoiceSpinner"
-                    android:layout_gravity="center_vertical"
-                    android:textAppearance="?android:attr/textAppearanceSmall"/>
-
-            <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-            />
-
-            <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/date"
-                    android:text="June 14"
-                    android:inputType="none"
-                    android:focusable="false"
-                    android:layout_gravity="center_vertical"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-            />
-
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:color="@color/trip_plan_label"
-                    android:text="@string/trip_plan_stop_connector"
-                    android:layout_marginLeft="8dp"
-                    android:layout_gravity="center_vertical"/>
-
-            <EditText
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/time"
-                    android:text="04:01 pm"
-                    android:layout_marginLeft="8dp"
-                    android:inputType="none"
-                    android:focusable="false"
-                    android:layout_gravity="center_vertical"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
-
-            <View
+        <View
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-            />
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
 
-            <ImageButton
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitXY"
-                    android:id="@+id/resetTimeImageButton"
-                    android:src="@drawable/ic_arrival_time"
-                    android:background="#00000000"
-                    android:tint="@color/material_gray"
-                    android:layout_gravity="center_vertical"
-            />
+        <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/date"
+                android:text="June 14"
+                android:inputType="none"
+                android:focusable="false"
+                android:layout_gravity="center_vertical"
+                android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-        </LinearLayout>
+        <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:color="@color/trip_plan_label"
+                android:text="@string/trip_plan_stop_connector"
+                android:layout_gravity="center_vertical"/>
+
+        <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+        <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/time"
+                android:text="04:01 pm"
+                android:inputType="none"
+                android:focusable="false"
+                android:layout_gravity="center_vertical"
+                android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+        <ImageButton
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:scaleType="fitXY"
+                android:id="@+id/resetTimeImageButton"
+                android:src="@drawable/ic_arrival_time"
+                android:background="#00000000"
+                android:tint="@color/material_gray"
+                android:layout_gravity="center_vertical"
+        />
+
+    </LinearLayout>
 
 </LinearLayout>

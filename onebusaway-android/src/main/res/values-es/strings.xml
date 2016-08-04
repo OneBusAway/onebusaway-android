@@ -76,6 +76,8 @@
     </string>
     <string name="custom_api_url_error">URL inválida. Por favor ingresa un servidor de OneBusAway que funcione.
     </string>
+    <string name="custom_otp_api_url_error">URL inválida. Por favor ingresa un servidor de OpenTripPlanner que funcione.
+    </string>
     <string name="direction_n">Norte</string>
     <string name="direction_ne">Noreste</string>
     <string name="direction_e">Este</string>
@@ -482,7 +484,7 @@
     <!--  Bug report -->
     <string name="bug_report_subject">OneBusAway Android: Comentarios</string>
     <string name="bug_report_subject_trip_plan">OneBusAway Android: Comentarios del Planeador de Viajes</string>
-     <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Comentarios de Fallas del Planeador de Viajes</string>
+    <string name="bug_report_subject_trip_plan_fail">OneBusAway Android: Comentarios de Fallas del Planeador de Viajes</string>
     <string name="bug_report_body">¡Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
         Google Play Services Library: %6$d\nRegion/API: %7$s (%8$s)\nLoc: %9$s\n\n
@@ -564,11 +566,16 @@
     <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>
     <string name="preferences_arrival_info_style_options_b">Tarjetas</string>
 
+    <string name="preferences_otp_api_servername_title">Servidor API de OpenTripPlanner</string>
+    <string name="preferences_otp_api_servername_summary">Determina el servidor usado para las llamadas del
+        API de OpenTripPlanner
+    </string>
     <string name="preferences_oba_api_servername_title">Servidor API de OneBusAway</string>
     <string name="preferences_oba_api_servername_summary">Determina el servidor usado para llamadas del
         API de OneBusAway
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
+    <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
     <string name="preferences_save_title">Guardar al almacenamiento</string>
     <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>

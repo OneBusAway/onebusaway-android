@@ -106,7 +106,7 @@ public class RealtimeServiceImpl implements RealtimeService {
 
                 mItineraryDescription = new ItineraryDescription(itinerary);
 
-                mApplicationContext.registerReceiver(broadcastReceiver, mIntentFilter);
+                mApplicationContext.registerReceiver(mBroadcastReceiver, mIntentFilter);
                 mAlarmMgr.setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
                         OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, mAlarmIntentTripUpdate);
                 mRegistered = true;
@@ -185,7 +185,7 @@ public class RealtimeServiceImpl implements RealtimeService {
     public void disableListenForTripUpdates() {
         if (mRegistered) {
             mAlarmMgr.cancel(mAlarmIntentTripUpdate);
-            mApplicationContext.unregisterReceiver(broadcastReceiver);
+            mApplicationContext.unregisterReceiver(mBroadcastReceiver);
         }
         mRegistered = false;
     }
@@ -224,7 +224,7 @@ public class RealtimeServiceImpl implements RealtimeService {
         return mApplicationContext.getResources();
     }
 
-    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+    BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(OTPConstants.INTENT_UPDATE_TRIP_TIME_ACTION)) {

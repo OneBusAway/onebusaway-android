@@ -43,9 +43,9 @@ public class OTPConstants {
 
     public static final int ROUTE_SHORT_NAME_MAX_SIZE = 16;
 
-    public static final String TRIP_PLAN_TIME_STRING_FORMAT = "hh:mm a ▾";
+    public static final String TRIP_PLAN_TIME_STRING_FORMAT = "hh:mm a";
 
-    public static final String TRIP_PLAN_DATE_STRING_FORMAT = "MMMM dd ▾";
+    public static final String TRIP_PLAN_DATE_STRING_FORMAT = "MMMM dd";
 
     public static final String TRIP_RESULTS_TIME_STRING_FORMAT = "MMMM dd '%s' hh:mm a";
 

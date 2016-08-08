@@ -69,8 +69,8 @@ public class RealtimeServiceImpl implements RealtimeService {
 
     private static final long DELAY_THRESHOLD_SEC = 120;
 
-    public RealtimeServiceImpl(Context context, Activity mActivity, Bundle bundle) {
-        mActivity = mActivity;
+    public RealtimeServiceImpl(Context context, Activity activity, Bundle bundle) {
+        mActivity = activity;
         mApplicationContext = context;
         mAlarmMgr = (AlarmManager) mApplicationContext.getSystemService(Context.ALARM_SERVICE);
 

@@ -100,7 +100,8 @@ public class TripResultsFragment extends Fragment {
         mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
         mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration, R.id.option3Interval);
 
-        mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(), getActivity(), getArguments());
+        mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(),
+                getActivity().getClass(), getArguments());
 
         int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
         mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);

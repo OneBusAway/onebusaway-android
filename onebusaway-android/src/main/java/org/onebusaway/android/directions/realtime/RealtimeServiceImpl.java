@@ -53,7 +53,7 @@ public class RealtimeServiceImpl implements RealtimeService {
 
     private AlarmManager mAlarmMgr;
 
-    private Activity mActivity;
+    private Class<? extends Activity> mNotificationTarget;
 
     private IntentFilter mIntentFilter;
 
@@ -69,8 +69,13 @@ public class RealtimeServiceImpl implements RealtimeService {
 
     private static final long DELAY_THRESHOLD_SEC = 120;
 
-    public RealtimeServiceImpl(Context context, Activity activity, Bundle bundle) {
-        mActivity = activity;
+    /**
+     * @param notificationTarget Activity Class that the trip plan change notification should
+     *                           target
+     */
+    public RealtimeServiceImpl(Context context, Class<? extends Activity> notificationTarget,
+            Bundle bundle) {
+        mNotificationTarget = notificationTarget;
         mApplicationContext = context;
         mAlarmMgr = (AlarmManager) mApplicationContext.getSystemService(Context.ALARM_SERVICE);
 
@@ -193,7 +198,7 @@ public class RealtimeServiceImpl implements RealtimeService {
     private void showNotification(ItineraryDescription description, int message) {
         String itineraryChange = getResources().getString(message);
 
-        Intent notificationIntentOpenApp = new Intent(mApplicationContext, mActivity.getClass());
+        Intent notificationIntentOpenApp = new Intent(mApplicationContext, mNotificationTarget);
         notificationIntentOpenApp.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent notificationOpenAppPendingIntent = PendingIntent
                 .getActivity(mApplicationContext,

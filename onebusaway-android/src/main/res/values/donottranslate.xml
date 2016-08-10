@@ -62,6 +62,7 @@
     <string name="analytics_action_configured_region_auto">configured_region_auto</string>
     <string name="analytics_action_button_press">button_press</string>
     <string name="analytics_action_set_region">set_region</string>
+    <string name="analytics_action_trip_plan">trip_plan</string>
     <string name="analytics_action_edit_field">edit_field</string>
     <string name="analytics_action_edit_general">general</string>
     <string name="analytics_action_switch">app_switch</string>
@@ -89,10 +90,11 @@
     </string>
     <string name="analytics_label_hide_arrivals_in_header">Clicked hide arrivals in header
     </string>
+    <string name="analytics_label_trip_plan">Planned a Trip</string>
     <string name="analytics_label_button_press_star">Clicked Starred Stops Link</string>
     <string name="analytics_label_button_press_nearby">Clicked Nearby Item Link</string>
     <string name="analytics_label_button_press_reminders">Clicked My Reminders Link</string>
-    <string name="analytics_label_button_press_tripplan">Clicked Trip Plan Link</string>
+    <string name="analytics_label_button_press_trip_plan">Clicked Trip Plan Link</string>
     <string name="analytics_label_button_press_settings">Clicked Settings Link</string>
     <string name="analytics_label_button_press_tutorial">Clicked Tutorial Link</string>
     <string name="analytics_label_button_press_donate">Clicked Donate Link</string>

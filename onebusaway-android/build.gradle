@@ -324,7 +324,7 @@ dependencies {
     compile 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Google Play Services Maps (only for Google flavor)
     googleCompile 'com.google.android.gms:play-services-maps:9.2.0'
-    // Google Play Services Places library is required by ProprietaryMapHelpV2
+    // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
     googleCompile 'com.google.android.gms:play-services-places:9.2.0'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'

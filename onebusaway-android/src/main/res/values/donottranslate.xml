@@ -173,5 +173,5 @@
     <string name="ri_selected_service_trip">trip</string>
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
-
+    <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
 </resources>

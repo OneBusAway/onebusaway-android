@@ -135,7 +135,8 @@ public final class QueryUtils {
                     ObaContract.Stops.LATITUDE,
                     ObaContract.Stops.LONGITUDE,
                     ObaContract.Stops.UI_NAME,
-                    ObaContract.Stops.FAVORITE
+                    ObaContract.Stops.FAVORITE,
+                    ObaContract.Stops.CODE
             };
             public static final int COL_ID = 0;
             public static final int COL_NAME = 1;
@@ -144,6 +145,7 @@ public final class QueryUtils {
             public static final int COL_LONGITUDE = 4;
             public static final int COL_UI_NAME = 5;
             public static final int COL_FAVORITE = 6;
+            public static final int COL_CODE = 7;
         }
 
         public static SimpleCursorAdapter newAdapter(Context context) {

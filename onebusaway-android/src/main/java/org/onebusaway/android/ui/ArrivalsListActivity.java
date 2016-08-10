@@ -62,10 +62,16 @@ public class ArrivalsListActivity extends AppCompatActivity {
             setStopName(stop.getName());
             setStopDirection(stop.getDirection());
             setStopRoutes(UIUtils.serializeRouteDisplayNames(stop, routes));
+            setStopCode(stop.getStopCode());
         }
 
         public Builder setStopName(String stopName) {
             mIntent.putExtra(ArrivalsListFragment.STOP_NAME, stopName);
+            return this;
+        }
+
+        public Builder setStopCode(String stopCode) {
+            mIntent.putExtra(ArrivalsListFragment.STOP_CODE, stopCode);
             return this;
         }
 

@@ -109,6 +109,8 @@ public class ArrivalsListFragment extends ListFragment
 
     public static final String STOP_LON = ".StopLongitude";
 
+    public static final String STOP_CODE = ".StopCode";
+
     /**
      * If set to true, the fragment is using a header external to this layout, and shouldn't
      * instantiate its own header view
@@ -220,6 +222,7 @@ public class ArrivalsListFragment extends ListFragment
             setStopDirection(stop.getDirection());
             setStopRoutes(UIUtils.serializeRouteDisplayNames(stop, routes));
             setStopLocation(stop.getLocation());
+            setStopCode(stop.getStopCode());
         }
 
         public IntentBuilder setStopName(String stopName) {
@@ -786,6 +789,19 @@ public class ArrivalsListFragment extends ListFragment
     public String getStopId() {
         return mStopId;
     }
+
+    @Override
+    public String getStopCode() {
+        String code;
+        if (mStop != null) {
+            code = mStop.getStopCode();
+        } else {
+            // Check the arguments
+            code = getArguments().getString(STOP_CODE);
+        }
+        return code;
+    }
+
 
     @Override
     public Location getStopLocation() {

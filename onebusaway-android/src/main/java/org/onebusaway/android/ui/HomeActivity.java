@@ -433,7 +433,7 @@ public class HomeActivity extends AppCompatActivity
                 ObaAnalytics
                         .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                                 getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_tripplan));
+                                getString(R.string.analytics_label_button_press_trip_plan));
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);

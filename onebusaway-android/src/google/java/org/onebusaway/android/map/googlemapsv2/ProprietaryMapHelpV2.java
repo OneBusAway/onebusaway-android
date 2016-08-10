@@ -19,6 +19,7 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.directions.util.CustomAddress;
@@ -164,4 +165,13 @@ public class ProprietaryMapHelpV2 {
         }
     }
 
+    /**
+     * Sets the zIndex for the given marker to the given zIndex.  This is in ProprietaryMapHelpV2
+     * because there is no such corresponding Marker.setZIndex() method on Amazon Maps v2.
+     * @param m marker to set the zIndex for
+     * @param zIndex zIndex to set on the given marker (default is 0)
+     */
+    public static void setZIndex(Marker m, float zIndex) {
+        m.setZIndex(zIndex);
+    }
 }

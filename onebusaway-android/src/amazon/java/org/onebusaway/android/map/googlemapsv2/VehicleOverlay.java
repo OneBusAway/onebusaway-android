@@ -120,6 +120,11 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
      */
     private static final double MAX_VEHICLE_ANIMATION_DISTANCE = 400;
 
+    /**
+     * z-index used to show vehicle markers on top of stop markers (default marker z-index is 0)
+     */
+    private static final float VEHICLE_MARKER_Z_INDEX = 1;
+
     public VehicleOverlay(Activity activity, AmazonMap map) {
         mActivity = activity;
         mMap = map;
@@ -434,6 +439,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
                     .title(status.getVehicleId())
                     .icon(getVehicleIcon(isRealtime, status, response))
             );
+            ProprietaryMapHelpV2.setZIndex(m, VEHICLE_MARKER_Z_INDEX);
             mVehicleMarkers.put(status.getActiveTripId(), m);
             mVehicles.put(m, status);
         }

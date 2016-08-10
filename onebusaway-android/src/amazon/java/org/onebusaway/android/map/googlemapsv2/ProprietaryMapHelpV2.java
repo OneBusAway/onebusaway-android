@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.util.AmazonMapsRuntimeUtil;
 import com.amazon.geo.mapsv2.util.ConnectionResult;
 
@@ -67,5 +68,17 @@ public class ProprietaryMapHelpV2 {
         public void onClick(View v) {
            /* unused */
         }
+    }
+
+    /**
+     * This method is a no-op because there is no such corresponding Marker.setZIndex() method on
+     * Amazon Maps v2 as of Aug 8th 2016.  However, this method must exist for the code in
+     * VehicleOverlay to remain the same on both the Amazon and Google build variants.
+     *
+     * @param m      marker to set the zIndex for
+     * @param zIndex zIndex to set on the given marker (default is 0)
+     */
+    public static void setZIndex(Marker m, float zIndex) {
+        // Do nothing - no Marker.setZIndex() method on Amazon Maps v2
     }
 }

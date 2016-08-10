@@ -146,6 +146,8 @@ class ArrivalsListHeader {
 
     private TextView mNameView;
 
+    private TextView mDirectionView;
+
     private EditText mEditNameView;
 
     private ImageButton mStopFavorite;
@@ -315,6 +317,7 @@ class ArrivalsListHeader {
         mNameContainerView = mView.findViewById(R.id.stop_name_and_info_container);
         mEditNameContainerView = mView.findViewById(R.id.edit_name_container);
         mNameView = (TextView) mView.findViewById(R.id.stop_name);
+        mDirectionView = (TextView) mView.findViewById(R.id.stop_direction);
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
@@ -632,11 +635,20 @@ class ArrivalsListHeader {
     private void refreshName() {
         String name = mController.getStopName();
         String userName = mController.getUserStopName();
+        String stopDirection = mController.getStopDirection();
 
         if (!TextUtils.isEmpty(userName)) {
             mNameView.setText(userName);
         } else if (name != null) {
             mNameView.setText(name);
+        }
+
+        if (!TextUtils.isEmpty(stopDirection)) {
+            mDirectionView.setText(mContext.getString(R.string.arrival_list_stop_directions,
+                    stopDirection));
+            mDirectionView.setVisibility(View.VISIBLE);
+        } else {
+            mDirectionView.setVisibility(View.GONE);
         }
     }
 

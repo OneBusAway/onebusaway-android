@@ -5,7 +5,14 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"
 version="1.1"
 creator="gpx-poi.com">
-   <wpt lat="28.0587" lon="-82.4139">
-      <time>2015-12-01T03:01:44Z</time>
-   </wpt>
+   <trk>
+      <name />
+      <cmt />
+      <trkseg>
+        <trkpt lat="28.0587" lon="-82.4139">
+          <ele>0</ele>
+          <time>2015-12-01T03:01:44Z</time>
+        </trkpt>
+      </trkseg>
+   </trk>
 </gpx>

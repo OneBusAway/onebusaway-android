@@ -255,7 +255,6 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.preferences_otp_api_servername_summary));
             }
             Application.get().setUseOldOtpApiUrlVersion(false);
-            mOtpCustomAPIUrlChanged = true;
         }
     }
 
@@ -323,8 +322,8 @@ public class PreferencesActivity extends PreferenceActivity
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
-
             }
+            mOtpCustomAPIUrlChanged = true;
         } else if (preference.equals(mAnalyticsPref) && newValue instanceof Boolean) {
             Boolean isAnalyticsActive = (Boolean) newValue;
             //Report if the analytics turns off, just before shared preference changed

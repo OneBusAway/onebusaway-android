@@ -366,7 +366,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private void createNavDrawerItems() {
-        if (mDrawerItemsListContainer == null) {
+        if (mDrawerItemsListContainer == null || getActivity() == null) {
             return;
         }
 

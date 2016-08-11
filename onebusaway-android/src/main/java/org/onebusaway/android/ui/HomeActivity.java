@@ -1033,7 +1033,9 @@ public class HomeActivity extends AppCompatActivity
      * "Plan A Trip" option until a region is selected.
      */
     private void redrawNavigationDrawerFragment() {
-        mNavigationDrawerFragment.populateNavDrawer();
+        if (mNavigationDrawerFragment != null) {
+            mNavigationDrawerFragment.populateNavDrawer();
+        }
     }
 
     /**

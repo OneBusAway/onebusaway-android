@@ -115,7 +115,7 @@
         - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
         <b>Add description for arrivals \"Sort\" button</b>\n&#8226;\u0020
         <b>Bug fixes</b>
-        - Auto-center on location, recents not remembering last tab, headsign formatting, crashes
+        - Auto-center on location zoom level, crashes
     </string>
     <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
         <b>Fresh new look</b>
@@ -126,7 +126,7 @@
         - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
         <b>Improved feedback process</b>
         - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
-        <b>Trip planning (Tampa Bay-only)</b>
+        <b>Trip planning (Tampa Bay-only)</b>\n&#8226;\u0020
         - Check it out in navigation drawer!
         <b>Bug fixes</b>
         - Auto-center on location zoom level, crashes

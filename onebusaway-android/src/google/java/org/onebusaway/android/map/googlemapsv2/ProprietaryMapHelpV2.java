@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.model.LatLng;
@@ -34,7 +36,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -149,19 +150,25 @@ public class ProprietaryMapHelpV2 {
 
         @Override
         public void onClick(View v) {
-            try {
+            Intent intent = null;
+            PlaceAutocomplete.IntentBuilder builder =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY);
+
+            if (mRegion != null) {
+                // Bias search results to region bounds
                 LatLngBounds bounds = MapHelpV2.getRegionBounds(mRegion);
-
-                Intent intent =
-                        new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
-                                .setBoundsBias(bounds)
-                                .build(mFragment.getActivity());
-
-                mFragment.startActivityForResult(intent, mRequestCode);
-            } catch (Exception e) {
-                Log.e(TAG, "Error getting autocomplete: " + e.toString());
+                builder.setBoundsBias(bounds);
             }
 
+            try {
+                intent = builder.build(mFragment.getActivity());
+            } catch (GooglePlayServicesRepairableException e) {
+                e.printStackTrace();
+            } catch (GooglePlayServicesNotAvailableException e) {
+                e.printStackTrace();
+            }
+
+            mFragment.startActivityForResult(intent, mRequestCode);
         }
     }
 

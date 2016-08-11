@@ -166,6 +166,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
+        changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
 
         // Remove preferences for notifications if no trip planning
         ObaRegion obaRegion = Application.get().getCurrentRegion();

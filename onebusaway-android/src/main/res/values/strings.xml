@@ -128,6 +128,8 @@
         - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
         <b>Trip planning (Tampa Bay-only)</b>
         - Check it out in navigation drawer!
+        <b>Bug fixes</b>
+        - Auto-center on location zoom level, crashes
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>

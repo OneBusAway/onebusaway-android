@@ -23,6 +23,8 @@
     <!-- Preference keys -->
     <string name="preference_key_region">preference_region</string>
     <string name="preference_key_oba_api_url">preferences_oba_api_url</string>
+    <string name="preference_key_otp_api_url">preferences_otp_api_url</string>
+    <string name="preference_key_otp_api_url_version">preferences_otp_api_url_structure</string>
     <string name="preference_key_last_region_update">preference_last_region_update</string>
     <string name="preference_key_auto_select_region">preference_auto_select_region</string>
     <string name="preference_key_experimental_regions">preference_experimental_regions</string>

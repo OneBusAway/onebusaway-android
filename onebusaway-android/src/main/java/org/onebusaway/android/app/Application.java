@@ -281,6 +281,10 @@ public class Application extends android.app.Application {
     }
 
     public synchronized void setCurrentRegion(ObaRegion region) {
+        setCurrentRegion(region, true);
+    }
+
+    public synchronized void setCurrentRegion(ObaRegion region, boolean regionChanged) {
         if (region != null) {
             // First set it in preferences, then set it in OBA.
             ObaApi.getDefaultContext().setRegion(region);
@@ -288,6 +292,10 @@ public class Application extends android.app.Application {
                     .saveLong(mPrefs, getString(R.string.preference_key_region), region.getId());
             //We're using a region, so clear the custom API URL preference
             setCustomApiUrl(null);
+            if (regionChanged && region.getOtpBaseUrl() != null) {
+                setCustomOtpApiUrl(null);
+                setUseOldOtpApiUrlVersion(false);
+            }
         } else {
             //User must have just entered a custom API URL via Preferences, so clear the region info
             ObaApi.getDefaultContext().setRegion(null);
@@ -345,6 +353,48 @@ public class Application extends android.app.Application {
      */
     public void setCustomApiUrl(String url) {
         PreferenceUtils.saveString(getString(R.string.preference_key_oba_api_url), url);
+    }
+
+    /**
+     * Returns the custom OTP URL if the user has set a custom API URL manually via Preferences, or
+     * null
+     * if it has not been set
+     *
+     * @return the custom URL if the user has set a custom API URL manually via Preferences, or null
+     * if it has not been set
+     */
+    public String getCustomOtpApiUrl() {
+        SharedPreferences preferences = getPrefs();
+        return preferences.getString(getString(R.string.preference_key_otp_api_url), null);
+    }
+
+    /**
+     * Sets the custom OTP URL used to reach a OBA REST API server that is not available via the
+     * Regions
+     * REST API
+     *
+     * @param url the custom URL
+     */
+    public void setCustomOtpApiUrl(String url) {
+        PreferenceUtils.saveString(getString(R.string.preference_key_otp_api_url), url);
+    }
+
+    /**
+     * @return true if the OTP url version is old, or false  if it has not been set
+     */
+    public boolean getUseOldOtpApiUrlVersion() {
+        SharedPreferences preferences = getPrefs();
+        return preferences.getBoolean(getString(R.string.preference_key_otp_api_url_version), false);
+    }
+
+    /**
+     * Sets the OTP Api url version
+     *
+     * @param useOldOtpApiUrlVersion indicates that if otp url structure belongs to older version
+     */
+    public void setUseOldOtpApiUrlVersion(boolean useOldOtpApiUrlVersion) {
+        PreferenceUtils.saveBoolean(getString(R.string.preference_key_otp_api_url_version),
+                useOldOtpApiUrlVersion);
     }
 
     private static final String HEXES = "0123456789abcdef";

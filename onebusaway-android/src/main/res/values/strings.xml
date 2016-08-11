@@ -76,6 +76,8 @@
     </string>
     <string name="custom_api_url_error">Invalid URL. Please enter a working OneBusAway server.
     </string>
+    <string name="custom_otp_api_url_error">Invalid URL. Please enter a working OpenTripPlanner server.
+    </string>
     <string name="direction_n">Northbound</string>
     <string name="direction_ne">Northeast bound</string>
     <string name="direction_e">Eastbound</string>
@@ -564,11 +566,16 @@
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
     <string name="preferences_arrival_info_style_options_b">Cards</string>
 
+    <string name="preferences_otp_api_servername_title">OpenTripPlanner API Server</string>
+    <string name="preferences_otp_api_servername_summary">Determines the server used in OpenTripPlanner
+        API calls
+    </string>
     <string name="preferences_oba_api_servername_title">OneBusAway API Server</string>
     <string name="preferences_oba_api_servername_summary">Determines the server used in OneBusAway
         API calls
     </string>
     <string name="preferences_oba_api_servername_hint">example.onebusaway.org</string>
+    <string name="preferences_otp_api_servername_hint">example.opentripplanner.org/otp</string>
     <string name="preferences_save_title">Save to storage</string>
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>

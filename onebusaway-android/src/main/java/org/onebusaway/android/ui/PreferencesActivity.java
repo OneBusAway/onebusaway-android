@@ -66,21 +66,25 @@ public class PreferencesActivity extends PreferenceActivity
 
     public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
-    Preference regionPref;
+    Preference mPreference;
 
-    Preference customApiUrlPref;
+    Preference mCustomApiUrlPref;
 
-    Preference analyticsPref;
+    Preference mCustomOtpApiUrlPref;
 
-    Preference tutorialPref;
+    Preference mAnalyticsPref;
 
-    Preference donatePref;
+    Preference mTutorialPref;
 
-    Preference poweredByObaPref;
+    Preference mDonatePref;
 
-    Preference aboutPref;
+    Preference mPoweredByObaPref;
 
-    boolean autoSelectInitialValue;
+    Preference mAboutPref;
+
+    boolean mAutoSelectInitialValue;
+
+    boolean mOtpCustomAPIUrlChanged = false;
     //Save initial value so we can compare to current value in onDestroy()
 
     ListPreference preferredUnits;
@@ -93,29 +97,32 @@ public class PreferencesActivity extends PreferenceActivity
 
         addPreferencesFromResource(R.xml.preferences);
 
-        regionPref = findPreference(getString(R.string.preference_key_region));
-        regionPref.setOnPreferenceClickListener(this);
+        mPreference = findPreference(getString(R.string.preference_key_region));
+        mPreference.setOnPreferenceClickListener(this);
 
-        customApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
-        customApiUrlPref.setOnPreferenceChangeListener(this);
+        mCustomApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
+        mCustomApiUrlPref.setOnPreferenceChangeListener(this);
 
-        analyticsPref = findPreference(getString(R.string.preferences_key_analytics));
-        analyticsPref.setOnPreferenceChangeListener(this);
+        mCustomOtpApiUrlPref = findPreference(getString(R.string.preference_key_otp_api_url));
+        mCustomOtpApiUrlPref.setOnPreferenceChangeListener(this);
 
-        tutorialPref = findPreference(getString(R.string.preference_key_tutorial));
-        tutorialPref.setOnPreferenceClickListener(this);
+        mAnalyticsPref = findPreference(getString(R.string.preferences_key_analytics));
+        mAnalyticsPref.setOnPreferenceChangeListener(this);
 
-        donatePref = findPreference(getString(R.string.preferences_key_donate));
-        donatePref.setOnPreferenceClickListener(this);
+        mTutorialPref = findPreference(getString(R.string.preference_key_tutorial));
+        mTutorialPref.setOnPreferenceClickListener(this);
 
-        poweredByObaPref = findPreference(getString(R.string.preferences_key_powered_by_oba));
-        poweredByObaPref.setOnPreferenceClickListener(this);
+        mDonatePref = findPreference(getString(R.string.preferences_key_donate));
+        mDonatePref.setOnPreferenceClickListener(this);
 
-        aboutPref = findPreference(getString(R.string.preferences_key_about));
-        aboutPref.setOnPreferenceClickListener(this);
+        mPoweredByObaPref = findPreference(getString(R.string.preferences_key_powered_by_oba));
+        mPoweredByObaPref.setOnPreferenceClickListener(this);
+
+        mAboutPref = findPreference(getString(R.string.preferences_key_about));
+        mAboutPref.setOnPreferenceClickListener(this);
 
         SharedPreferences settings = Application.getPrefs();
-        autoSelectInitialValue = settings
+        mAutoSelectInitialValue = settings
                 .getBoolean(getString(R.string.preference_key_auto_select_region), true);
 
         preferredUnits = (ListPreference) findPreference(
@@ -141,10 +148,10 @@ public class PreferencesActivity extends PreferenceActivity
         PreferenceCategory aboutCategory = (PreferenceCategory)
                 findPreference(getString(R.string.preferences_category_about));
         if (BuildConfig.FLAVOR_brand.equalsIgnoreCase(BuildFlavorUtils.OBA_FLAVOR_BRAND)) {
-            aboutCategory.removePreference(poweredByObaPref);
+            aboutCategory.removePreference(mPoweredByObaPref);
         } else {
             // Its not the OBA brand flavor, then hide the "Donate" preference and show "Powered by OBA"
-            aboutCategory.removePreference(donatePref);
+            aboutCategory.removePreference(mDonatePref);
         }
 
         boolean showCheckRegionDialog = getIntent().getBooleanExtra(SHOW_CHECK_REGION_DIALOG, false);
@@ -162,7 +169,7 @@ public class PreferencesActivity extends PreferenceActivity
 
         // Remove preferences for notifications if no trip planning
         ObaRegion obaRegion = Application.get().getCurrentRegion();
-        if (obaRegion!= null && TextUtils.isEmpty(obaRegion.getOtpBaseUrl())) {
+        if (obaRegion != null && TextUtils.isEmpty(obaRegion.getOtpBaseUrl())) {
             PreferenceCategory notifications = (PreferenceCategory)
                     findPreference(getString(R.string.preference_key_notifications));
 
@@ -259,44 +266,62 @@ public class PreferencesActivity extends PreferenceActivity
         if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_region))
                 || preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_oba_api_url))) {
             if (Application.get().getCurrentRegion() != null) {
-                regionPref.setSummary(Application.get().getCurrentRegion().getName());
-                customApiUrlPref
+                mPreference.setSummary(Application.get().getCurrentRegion().getName());
+                mCustomApiUrlPref
                         .setSummary(getString(R.string.preferences_oba_api_servername_summary));
+                String customOtpApiUrl = Application.get().getCustomOtpApiUrl();
+                if (!TextUtils.isEmpty(customOtpApiUrl)) {
+                    mCustomOtpApiUrlPref.setSummary(customOtpApiUrl);
+                } else {
+                    mCustomOtpApiUrlPref
+                            .setSummary(getString(R.string.preferences_otp_api_servername_summary));
+                }
             } else {
-                regionPref.setSummary(getString(R.string.preferences_region_summary_custom_api));
-                customApiUrlPref.setSummary(Application.get().getCustomApiUrl());
+                mPreference.setSummary(getString(R.string.preferences_region_summary_custom_api));
+                mCustomApiUrlPref.setSummary(Application.get().getCustomApiUrl());
             }
         } else if (preferenceKey
                 .equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             preferredUnits.setSummary(preferredUnits.getValue());
+        } else if (preferenceKey
+                .equalsIgnoreCase(getString(R.string.preference_key_otp_api_url))) {
+            String customOtpApiUrl = Application.get().getCustomOtpApiUrl();
+            if (!TextUtils.isEmpty(customOtpApiUrl)) {
+                mCustomOtpApiUrlPref.setSummary(customOtpApiUrl);
+            } else {
+                mCustomOtpApiUrlPref.setSummary(
+                        getString(R.string.preferences_otp_api_servername_summary));
+            }
+            Application.get().setUseOldOtpApiUrlVersion(false);
+            mOtpCustomAPIUrlChanged = true;
         }
     }
 
     @Override
     public boolean onPreferenceClick(Preference pref) {
         Log.d(TAG, "preference - " + pref.getKey());
-        if (pref.equals(regionPref)) {
+        if (pref.equals(mPreference)) {
             RegionsActivity.start(this);
-        } else if (pref.equals(tutorialPref)) {
+        } else if (pref.equals(mTutorialPref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_tutorial));
             ShowcaseViewUtils.resetAllTutorials(this);
             NavHelp.goHome(this, true);
-        } else if (pref.equals(donatePref)) {
+        } else if (pref.equals(mDonatePref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_donate));
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.donate_url)));
             startActivity(intent);
-        } else if (pref.equals(poweredByObaPref)) {
+        } else if (pref.equals(mPoweredByObaPref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_powered_by_oba));
             Intent intent = new Intent(Intent.ACTION_VIEW,
                     Uri.parse(getString(R.string.powered_by_oba_url)));
             startActivity(intent);
-        } else if (pref.equals(aboutPref)) {
+        } else if (pref.equals(mAboutPref)) {
             ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_about));
@@ -307,7 +332,7 @@ public class PreferencesActivity extends PreferenceActivity
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-        if (preference.equals(customApiUrlPref) && newValue instanceof String) {
+        if (preference.equals(mCustomApiUrlPref) && newValue instanceof String) {
             String apiUrl = (String) newValue;
 
             if (!TextUtils.isEmpty(apiUrl)) {
@@ -325,7 +350,20 @@ public class PreferencesActivity extends PreferenceActivity
                 Log.d(TAG, "User entered blank API URL, re-initializing regions...");
                 NavHelp.goHome(this, false);
             }
-        } else if (preference.equals(analyticsPref) && newValue instanceof Boolean) {
+        }
+        if (preference.equals(mCustomOtpApiUrlPref) && newValue instanceof String) {
+            String apiUrl = (String) newValue;
+
+            if (!TextUtils.isEmpty(apiUrl)) {
+                boolean validUrl = validateUrl(apiUrl);
+                if (!validUrl) {
+                    Toast.makeText(this, getString(R.string.custom_otp_api_url_error),
+                            Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+            }
+        } else if (preference.equals(mAnalyticsPref) && newValue instanceof Boolean) {
             Boolean isAnalyticsActive = (Boolean) newValue;
             //Report if the analytics turns off, just before shared preference changed
             if (!isAnalyticsActive) {
@@ -347,11 +385,15 @@ public class PreferencesActivity extends PreferenceActivity
 
         //If the use has selected to auto-select region, and the previous state of the setting was false, 
         //then run the auto-select by going to HomeFragment
-        if (currentValue && !autoSelectInitialValue) {
+        if ((currentValue && !mAutoSelectInitialValue)) {
             Log.d(TAG,
                     "User re-enabled auto-select regions pref, auto-selecting via Home Activity...");
             NavHelp.goHome(this, false);
+        } else if (mOtpCustomAPIUrlChanged) {
+            // Redraw the navigation drawer when custom otp api url is entered
+            NavHelp.goHome(this, false);
         }
+
         super.onDestroy();
     }
 
@@ -389,6 +431,9 @@ public class PreferencesActivity extends PreferenceActivity
             }
         } else if (key.equals(getString(R.string.preference_key_oba_api_url))) {
             // Change the region preference description to show we're not using a region
+            changePreferenceSummary(key);
+        } else if (key.equals(getString(R.string.preference_key_otp_api_url))) {
+            // Change the otp url preference description
             changePreferenceSummary(key);
         } else if (key.equalsIgnoreCase(getString(R.string.preference_key_preferred_units))) {
             // Change the preferred units description

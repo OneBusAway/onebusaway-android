@@ -32,6 +32,8 @@ public interface ObaRoute extends ObaElement {
     public static final int TYPE_GONDOLA = 6;
     public static final int TYPE_FUNICULAR = 7; // You can't spell "funicular" without "fun"!
 
+    public static final int NUM_TYPES = 8;  // 8 types of transit supported by GTFS
+
     /**
      * Returns the short name of the route (ex. "10", "30").
      *

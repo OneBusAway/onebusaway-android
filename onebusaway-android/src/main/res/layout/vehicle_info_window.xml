@@ -13,49 +13,63 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content">
+        <TextView
+                android:id="@+id/route_and_destination"
+                style="@style/StopInfoDestination"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-    <TextView
-            android:id="@+id/route_and_destination"
-            style="@style/StopInfoDestination"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:text="5 - North to Univerity Area TC"
-            android:ellipsize="end"
-            android:singleLine="true">
-    </TextView>
-    <include
-            android:id="@+id/status"
-            layout="@layout/arrivals_list_tv_template_style_a_status_small"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_below="@+id/route_and_destination"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="2dp"/>
-    <TextView
-            android:id="@+id/last_updated"
-            style="@style/StopInfoTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_below="@+id/status"
-            android:text="Updated 3 min ago">
-    </TextView>
-    <ImageView
-            android:id="@+id/trip_more_info"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_centerVertical="true"
-            android:layout_alignRight="@+id/route_and_destination"
-            android:layout_alignBottom="@+id/last_updated"
-            android:layout_marginBottom="-4dp"
-            android:layout_marginRight="-9dp"
-            android:src="@drawable/ic_navigation_chevron_right"
-            android:maxHeight="24dp"
-            android:maxWidth="24dp"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
-</RelativeLayout>
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="5 - North to Univerity Area TC"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:layout_gravity="center_vertical">
+        </TextView>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp">
+        <include
+                android:id="@+id/status"
+                layout="@layout/arrivals_list_tv_template_style_a_status_small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@+id/route_and_destination"
+                android:layout_gravity="center_vertical"/>
+
+    </LinearLayout>
+
+    <RelativeLayout android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/last_updated"
+                style="@style/StopInfoTime"
+                android:text="Updated 3  min ago"
+                android:layout_gravity="center_vertical"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true">
+        </TextView>
+        <ImageView
+                android:id="@+id/trip_more_info"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_navigation_chevron_right"
+                android:maxHeight="24dp"
+                android:maxWidth="24dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="-9dp"/>
+    </RelativeLayout>
+</LinearLayout>

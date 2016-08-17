@@ -722,10 +722,13 @@ public class HomeActivity extends AppCompatActivity
             whatsNew = mWhatsNewMessageTripPlan;
         }
 
+        TextView textView = (TextView) getLayoutInflater().inflate(R.layout.whats_new_dialog, null);
+        textView.setText(whatsNew);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
         builder.setIcon(R.mipmap.ic_launcher);
-        builder.setMessage(whatsNew);
+        builder.setView(textView);
         builder.setNeutralButton(R.string.main_help_close,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {

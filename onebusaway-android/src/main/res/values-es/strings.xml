@@ -335,7 +335,7 @@
     <string name="my_search_title">Buscar</string>
     <string name="my_no_recent_stops">No tienes paradas recientes.</string>
     <string name="my_no_starred_stops">No tienes paradas favoritas.\n\nPuedes adicionar paradas a favoritos en
-        la pantalla de llegadas de los buses.
+        la pantalla de llegadas de los buses al tocar en la estrella al lado del nombre de la parada.
     </string>
     <string name="my_no_recent_routes">No tienes rutas recientes.</string>
     <!-- <string name="my_no_starred_routes">No tienes rutas favoritas.</string>-->

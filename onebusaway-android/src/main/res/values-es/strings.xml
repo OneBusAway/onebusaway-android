@@ -113,9 +113,8 @@
         - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
         <b>Mejora en Envio de Comentarios</b>
         - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
-        <b>Adición de descripción para el botón de \"Ordernar\" de llegadas</b>\n&#8226;\u0020
         <b>Corrección de errores</b>
-        - Centrar automáticamente sobre la ubicación, los recientes no recordaban la última pestaña, formateo en las direcciones de viajes, bloqueos
+        - Mirá http://bit.ly/oba-android-v2-1-3
     </string>
     <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
         <b>Nueva Interfaz</b>
@@ -126,8 +125,10 @@
         - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
         <b>Mejora en Envio de Comentarios</b>
         - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
-        <b>Planeación de Viajes (Sólo en Tampa Bay)</b>
+        <b>Planeación de Viajes (Sólo en Tampa Bay)</b>\n&#8226;\u0020
         - ¡Compruebalo en el menú de navegación!
+        <b>Corrección de errores</b>
+        - Mirá http://bit.ly/oba-android-v2-1-3
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>

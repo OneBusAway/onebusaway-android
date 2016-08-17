@@ -335,7 +335,7 @@
     <string name="my_search_title">Search</string>
     <string name="my_no_recent_stops">You have no recent stops.</string>
     <string name="my_no_starred_stops">You have no starred stops.\n\nYou can add a star to a stop on
-        the arrivals screen.
+        the arrivals screen by tapping on the star next to the stop name.
     </string>
     <string name="my_no_recent_routes">You have no recent routes.</string>
     <!-- <string name="my_no_starred_routes">You have no starred routes.</string>-->

@@ -20,6 +20,10 @@ OneBusAway for Android automatically keeps track of your most used stops and rou
 
 Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/master/BETA_TESTING.md) for details.
 
+### Testing Your Own OneBusAway/OpenTripPlanner servers
+
+Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and/or [OpenTripPlanner](http://www.opentripplanner.org/) server?  You can test both without even compiling the project using the normal app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot).  See our [Custom Server guide](CUSTOM_SERVERS.md) for details.
+
 ## Build Setup
 
 We use [Gradle build flavors](http://developer.android.com/tools/building/configuring-gradle.html#workBuildVariants) to enable a number of different build variants of OneBusAway Android.

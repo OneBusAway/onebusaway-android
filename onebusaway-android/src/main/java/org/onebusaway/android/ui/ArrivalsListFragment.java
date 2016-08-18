@@ -1166,6 +1166,9 @@ public class ArrivalsListFragment extends ListFragment
      * Toggle the visibility of arrivals in the header
      */
     private void doShowHideHeaderArrivals() {
+        if (mHeader == null) {
+            return;
+        }
         boolean showArrivals = Application.getPrefs()
                 .getBoolean(getString(R.string.preference_key_show_header_arrivals), false);
 
@@ -1533,7 +1536,9 @@ public class ArrivalsListFragment extends ListFragment
                     new ContentQueryMap(c, ObaContract.Trips._ID, true, null);
             // Call back into the adapter and header and say we've finished this.
             mAdapter.setTripsForStop(map);
-            mHeader.setTripsForStop(map);
+            if (mHeader != null) {
+                mHeader.setTripsForStop(map);
+            }
         }
 
         @Override

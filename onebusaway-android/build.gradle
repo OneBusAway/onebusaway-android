@@ -251,6 +251,14 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
         }
+        // Append the version name to the end of aligned APKs
+        android.applicationVariants.all { variant ->
+            variant.outputs.each { output ->
+                def file = output.outputFile
+                output.outputFile = new File(file.parent,
+                        file.name.replace(".apk", "-v" + versionName + ".apk"))
+            }
+        }
     }
 }
 

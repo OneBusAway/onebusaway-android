@@ -1,5 +1,12 @@
 package org.onebusaway.android.tad;
 
+import org.apache.commons.io.FileUtils;
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.LocationHelper;
+import org.onebusaway.android.util.LocationUtils;
+
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
@@ -7,13 +14,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
-
-import org.apache.commons.io.FileUtils;
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.LocationHelper;
-import org.onebusaway.android.util.LocationUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public class TADService extends Service
         // Setup file for logging.
         if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
             mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId + ".txt");
+                    mTripId + "_" + mDestinationStopId + ".csv");
             setupLog();
         }
 

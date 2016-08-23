@@ -246,8 +246,7 @@ public final class ArrivalInfo {
 
         // Check if the user has marked this routeId/headsign/stopId as a favorite
         mIsRouteAndHeadsignFavorite = ObaContract.RouteHeadsignFavorites
-                .isFavorite(context, info.getRouteId(),
-                        info.getHeadsign(), info.getStopId());
+                .isFavorite(info.getRouteId(), info.getHeadsign(), info.getStopId());
     }
 
     /**

@@ -1368,7 +1368,7 @@ public final class ObaContract {
 
                 // If a single stop is unstarred, but isFavorite(...) == true due to starring all
                 // stops, insert exclusion record
-                if (stopIdInternal != ALL_STOPS && isFavorite(context, routeId, headsign, stopId)) {
+                if (stopIdInternal != ALL_STOPS && isFavorite(routeId, headsign, stopId)) {
                     // Insert an exclusion record for this single stop, in case the user is unstarring it
                     // after starring the entire route
                     ContentValues values = new ContentValues();
@@ -1408,11 +1408,11 @@ public final class ObaContract {
          * @return true if this combination of routeId and headsign is a favorite for this stop
          * or all stops (and that stop is not excluded as a favorite), false if it is not
          */
-        public static boolean isFavorite(Context context, String routeId, String headsign,
+        public static boolean isFavorite(String routeId, String headsign,
                 String stopId) {
             final String[] selection = {ROUTE_ID, HEADSIGN, STOP_ID, EXCLUDE};
             final String[] selectionArgs = {routeId, headsign, stopId, Integer.toString(0)};
-            ContentResolver cr = context.getContentResolver();
+            ContentResolver cr = Application.get().getContentResolver();
             final String FILTER_WHERE_ALL_FIELDS = ROUTE_ID + "=? AND " + HEADSIGN + "=? AND "
                     + STOP_ID + "=? AND " + EXCLUDE + "=?";
             Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE_ALL_FIELDS,

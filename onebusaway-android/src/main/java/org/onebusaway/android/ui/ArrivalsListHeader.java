@@ -667,7 +667,7 @@ class ArrivalsListHeader {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
                 final int i1 = etaIndexes.get(0);
                 ObaArrivalInfo info1 = mArrivalInfo.get(i1).getInfo();
-                boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                boolean isFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(
                         info1.getRouteId(),
                         info1.getHeadsign(),
                         info1.getStopId());
@@ -731,7 +731,7 @@ class ArrivalsListHeader {
                 if (etaIndexes.size() >= 2) {
                     final int i2 = etaIndexes.get(1);
                     ObaArrivalInfo info2 = mArrivalInfo.get(i2).getInfo();
-                    boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+                    boolean isFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(
                             info2.getRouteId(),
                             info2.getHeadsign(),
                             info2.getStopId());
@@ -948,7 +948,7 @@ class ArrivalsListHeader {
 
             // Setup tapping on star for first row
             final ObaArrivalInfo info1 = mHeaderArrivalInfo.get(0).getInfo();
-            final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+            final boolean isRouteFavorite = ObaContract.RouteHeadsignFavorites.isFavorite(
                     info1.getRouteId(), info1.getHeadsign(), info1.getStopId());
             mEtaRouteFavorite1.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -1010,7 +1010,7 @@ class ArrivalsListHeader {
 
             // Setup tapping on star for second row
             final ObaArrivalInfo info2 = mHeaderArrivalInfo.get(1).getInfo();
-            final boolean isRouteFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(mContext,
+            final boolean isRouteFavorite2 = ObaContract.RouteHeadsignFavorites.isFavorite(
                     info2.getRouteId(), info2.getHeadsign(), info2.getStopId());
             mEtaRouteFavorite2.setOnClickListener(new View.OnClickListener() {
                 @Override

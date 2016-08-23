@@ -1507,7 +1507,7 @@ public class ArrivalsListFragment extends ListFragment
         if (Application.get().getCurrentRegion() != null) {
             values.put(ObaContract.Stops.REGION_ID, Application.get().getCurrentRegion().getId());
         }
-        ObaContract.Stops.insertOrUpdate(getActivity(), stop.getId(), values, true);
+        ObaContract.Stops.insertOrUpdate(stop.getId(), values, true);
     }
 
     private static final String[] TRIPS_PROJECTION = {

@@ -19,6 +19,7 @@ package org.onebusaway.android.provider;
 
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
@@ -526,11 +527,10 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".stop";
 
-        public static Uri insertOrUpdate(Context context,
-                String id,
+        public static Uri insertOrUpdate(String id,
                 ContentValues values,
                 boolean markAsUsed) {
-            ContentResolver cr = context.getContentResolver();
+            ContentResolver cr = Application.get().getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
             Cursor c = cr.query(uri, new String[]{USE_COUNT}, null, null,
                     null);

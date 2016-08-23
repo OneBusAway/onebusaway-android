@@ -58,6 +58,12 @@ public class RealtimeService extends IntentService {
      * @param bundle Bundle with selected itinerary/parameters
      */
     public static void start(Activity source, Bundle bundle) {
+
+        SharedPreferences prefs = Application.getPrefs();
+        if (!prefs.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true)) {
+            return;
+        }
+
         bundle.putSerializable(OTPConstants.NOTIFICATION_TARGET, source.getClass());
         Intent intent = new Intent(OTPConstants.INTENT_START_CHECKS);
         intent.putExtras(bundle);
@@ -89,28 +95,24 @@ public class RealtimeService extends IntentService {
 
         Log.d(TAG, "Checking whether to start realtime updates.");
 
-        SharedPreferences prefs = Application.getPrefs();
+        boolean realtimeLegsOnItineraries = false;
 
-        if (prefs.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true)) {
-
-            boolean realtimeLegsOnItineraries = true;
-
-            for (Leg leg : itinerary.legs) {
-                if (leg.realTime) {
-                    realtimeLegsOnItineraries = true;
-                }
-            }
-
-            if (realtimeLegsOnItineraries) {
-                Log.d(TAG, "Starting realtime updates for itinerary");
-
-                // init alarm mgr
-                getAlarmManager().setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
-                        OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, getAlarmIntent(params));
-            } else {
-                Log.d(TAG, "No realtime legs on itinerary");
+        for (Leg leg : itinerary.legs) {
+            if (leg.realTime) {
+                realtimeLegsOnItineraries = true;
             }
         }
+
+        if (realtimeLegsOnItineraries) {
+            Log.d(TAG, "Starting realtime updates for itinerary");
+
+            // init alarm mgr
+            getAlarmManager().setInexactRepeating(AlarmManager.RTC, new Date().getTime(),
+                    OTPConstants.DEFAULT_UPDATE_INTERVAL_TRIP_TIME, getAlarmIntent(params));
+        } else {
+            Log.d(TAG, "No realtime legs on itinerary");
+        }
+
     }
 
     // Reschedule the start of checks, if necessary

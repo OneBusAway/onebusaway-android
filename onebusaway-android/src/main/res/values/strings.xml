@@ -313,9 +313,9 @@
     </string>
 
     <!-- Stop Notification -->
-    <string name="stop_notify_dialog_title">Near Stop Notification</string>
+    <string name="stop_notify_dialog_title">Destination Alert</string>
     <string name="stop_notify_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
-    <string name="stop_notify_confirm">Yes!</string>
+    <string name="stop_notify_confirm">Yes</string>
     <string name="stop_notify_cancel">Cancel</string>
     <string name="stop_notify_confirmation">Will notify!</string>
     <string name="stop_notify_title">Stop Reminder</string>

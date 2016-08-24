@@ -13,6 +13,7 @@ OneBusAway for Android provides:
 3. A list of favorite bus stops
 4. Reminders to notify you when your bus is arriving
 5. The ability to search for nearby stops or routes
+6. Trip planning, including real-time updates (requires a regional [OpenTripPlanner](http://www.opentripplanner.org/) server)
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
 

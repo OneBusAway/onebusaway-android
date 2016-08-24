@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Google Analytics tracker for "unrolled" future use - see
+        https://github.com/OneBusAway/onebusaway-android/issues/105#issuecomment-72217306
+        Unrolled trackers currently required a paid Google Analytics account to roll up
+        TODO - Change this to AgencyY "unrolled" GA tracker
+    -->
+    <string name="ga_trackingId">UA-XXXXXXX-XX</string>
+</resources>

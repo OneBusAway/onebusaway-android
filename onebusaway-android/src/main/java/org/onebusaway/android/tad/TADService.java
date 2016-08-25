@@ -2,10 +2,12 @@ package org.onebusaway.android.tad;
 
 import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 
 import android.app.Service;
 import android.content.Intent;
@@ -14,9 +16,12 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  * Created by azizmb9494 on 2/18/16.
@@ -73,8 +78,6 @@ public class TADService extends Service
 
         // Setup file for logging.
         if (mLogFile == null && BuildConfig.TAD_GPS_LOGGING) {
-            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
-                    mTripId + "_" + mDestinationStopId + ".csv");
             setupLog();
         }
 
@@ -157,20 +160,36 @@ public class TADService extends Service
         }
     }
 
+    /**
+     * Creates the log file that GPS data and TAD performance is written to - see TAD.md
+     */
     private void setupLog() {
         try {
+            // Get the counter that's incremented for each test
+            final String TAD_TEST_ID = getString(R.string.preference_key_tad_test_id);
+            int counter = Application.getPrefs().getInt(TAD_TEST_ID, 0);
+            counter++;
+            PreferenceUtils.saveInt(TAD_TEST_ID, counter);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa");
+            String readableDate = sdf.format(Calendar.getInstance().getTime());
+
+            mLogFile = new File(Environment.getExternalStoragePublicDirectory("TADLog"),
+                    counter + "-" + readableDate + ".csv");
             Location dest = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mDestinationStopId);
             Location last = ObaContract.Stops.getLocation(Application.get().getApplicationContext(), mBeforeStopId);
 
-            String hdr = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
+            String header = String.format("%s,%s,%f,%f,%s,%f,%f\n", mTripId, mDestinationStopId,
                     dest.getLatitude(), dest.getLongitude(), mBeforeStopId, last.getLatitude(), last.getLongitude());
 
             if (mLogFile != null) {
-                FileUtils.write(mLogFile, hdr, false);
+                FileUtils.write(mLogFile, header, false);
             } else {
-                Log.e(TAG, "Failed to write to file");
+                Log.e(TAG, "Failed to write to file - null file");
             }
-
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    getString(R.string.stop_notify_test_id, counter), Toast.LENGTH_SHORT);
+            toast.show();
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }

@@ -43,6 +43,7 @@
     </string>
     <string name="preference_key_notifications">preference_key_notifications</string>
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
+    <string name="preference_key_tad_test_id">preference_key_tad_test_id</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

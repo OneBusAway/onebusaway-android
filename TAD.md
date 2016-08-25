@@ -28,7 +28,7 @@ the following information in the same order is going to be presented: The
 trip ID, the destination Stop ID, the latitude of the destination, the longitude
 of the destination, stop ID of the Stop before the final Stop,the latitude of the
 stop before the final stop, and the longitude of the stop before the last stop.
-Starting from the second line, The first column contains the time in nanoseconds
+Starting from the second line, the first column contains the time in nanoseconds
 since the application started, the second column contains the time in UTC, the 
 third column contains the latitude, the fourth column contains the longitude,
 the fifth column contains the altitude, the sixth column contains the speed,

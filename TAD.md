@@ -15,7 +15,7 @@ A Service is created when the user begins a trip, this service listens
 for location updates and passes the locations to its instance of 
 TADServiceNavigationProvider each time. TADServiceProvider is responsible
 for computing the statuses of the trips and issuing notifications/TTS
-meesages. Once the TADServiceNavProvider is completed, the TAD Service
+messages. Once the TADServiceNavProvider is completed, the TAD Service
 will stop itself.
 
 ***GPS Logging***
@@ -43,7 +43,7 @@ file, a new test method can be created. In this method, a TADTrip object
 can be instantiated with the CSV string passed into the constructor and
 the runSimulation method called.
 
-***(Potential) Idea Wishlist***
+***(Potential) Idea Wish list***
 - Favorite Trips: Allow person to bookmark a favorite TAD Trip. This 
 would involve storing a combo of the starting stop, destination stop &
 the trip Id. However, since Trip IDs are not persistent and are subject

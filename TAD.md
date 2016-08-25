@@ -24,7 +24,7 @@ will stop itself.
 ***GPS Logging***
 
 When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the TAD 
-Service will log all co-ordinates it receives during the trip and 30
+Service will log all coordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
 the "TADLog" folder on your external storage root directory. The filename
 format is <TestID>-<Date/time of test>.csv. For example, "1-Thu, Aug 25 2016, 04:20 PM.csv".

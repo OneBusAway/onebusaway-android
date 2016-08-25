@@ -36,6 +36,7 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -325,6 +326,40 @@ public class HomeActivity extends AppCompatActivity
             if (b.getBoolean(ShowcaseViewUtils.TUTORIAL_WELCOME)) {
                 // Show the welcome tutorial
                 ShowcaseViewUtils.showTutorial(ShowcaseViewUtils.TUTORIAL_WELCOME, this, null);
+            }
+        }
+
+        checkTadExpiration();
+    }
+
+    /**
+     * Check to see if this copy of the TAD build variant has expired - enables us to have some
+     * control of the application before it is publicly released
+     *
+     * TODO - remove this before public release
+     */
+    private void checkTadExpiration() {
+        if (BuildConfig.FLAVOR_brand
+                .equalsIgnoreCase(BuildFlavorUtils.TAD_FLAVOR_BRAND)) {
+            // An expiration date after which the TAD build variant stops working - 10/1/2016 at 1pm
+            if (System.currentTimeMillis() > 1475326800000l) {
+                TextView textView = (TextView) getLayoutInflater()
+                        .inflate(R.layout.whats_new_dialog, null);
+                textView.setText(R.string.tad_expiration_message);
+
+                AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle(R.string.tad_expiration_title)
+                        .setView(textView)
+                        .setCancelable(false)
+                        .setNeutralButton(R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        finish();
+                                    }
+                                })
+                        .create();
+                dialog.show();
             }
         }
     }

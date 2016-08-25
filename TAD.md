@@ -1,3 +1,5 @@
+# Travel Assistance Device (TAD) feature - Destination Alerts
+
 **Usage**
 
 1. View the Trip Status of a desired trip.
@@ -11,6 +13,7 @@ to last stop.
 destination stop.
 
 **How It Works**
+
 A Service is created when the user begins a trip, this service listens
 for location updates and passes the locations to its instance of 
 TADServiceNavigationProvider each time. TADServiceProvider is responsible
@@ -19,6 +22,7 @@ messages. Once the TADServiceNavProvider is completed, the TAD Service
 will stop itself.
 
 ***GPS Logging***
+
 When the BuildConfig "TAD_GPS_LOGGING" flag is set to true, the TAD 
 Service will log all co-ordinates it receives during the trip and 30
 seconds after the trip has ended. The log file is a CSV file written to
@@ -37,6 +41,7 @@ the ninth column contains the satellites, the tenth column contains the provider
                                   
 
 ***Testing***
+
 Once a a test trip has been generated, drop the generated CSV file into
 the resources folder for the androidTest build. Then, in the TADTest
 file, a new test method can be created. In this method, a TADTrip object
@@ -44,6 +49,7 @@ can be instantiated with the CSV string passed into the constructor and
 the runSimulation method called.
 
 ***(Potential) Idea Wish list***
+
 - Favorite Trips: Allow person to bookmark a favorite TAD Trip. This 
 would involve storing a combo of the starting stop, destination stop &
 the trip Id. However, since Trip IDs are not persistent and are subject

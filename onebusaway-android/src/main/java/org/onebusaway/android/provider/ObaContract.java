@@ -1320,6 +1320,9 @@ public final class ObaContract {
             if (context == null) {
                 return;
             }
+            if (headsign == null) {
+                headsign = "";
+            }
 
             ContentResolver cr = context.getContentResolver();
             Uri routeUri = Uri.withAppendedPath(ObaContract.Routes.CONTENT_URI, routeId);
@@ -1410,6 +1413,9 @@ public final class ObaContract {
          */
         public static boolean isFavorite(String routeId, String headsign,
                 String stopId) {
+            if (headsign == null) {
+                headsign = "";
+            }
             final String[] selection = {ROUTE_ID, HEADSIGN, STOP_ID, EXCLUDE};
             final String[] selectionArgs = {routeId, headsign, stopId, Integer.toString(0)};
             ContentResolver cr = Application.get().getContentResolver();

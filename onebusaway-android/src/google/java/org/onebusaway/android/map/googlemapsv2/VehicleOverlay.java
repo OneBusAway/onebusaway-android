@@ -203,7 +203,7 @@ public class VehicleOverlay implements GoogleMap.OnInfoWindowClickListener {
      * @param halfWind    an index between 0 and numHalfWinds-1 that can be used to retrieve
      *                    the direction name for that heading (known as "boxing the compass", down to the half-wind
      *                    level).
-     * @param vehicleType type as definied by GTFS spec. Acceptable values contained in OBARoute.TYPE_*
+     * @param vehicleType type as defined by GTFS spec. Acceptable values contained in OBARoute.TYPE_*
      *
      * @return the icon ready to color
      */

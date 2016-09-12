@@ -25,11 +25,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.Window;
 
 
 public class SituationActivity extends AppCompatActivity {
     //private static final String TAG = "SituationActivity";
+
+    public static final String PARENT_ACTIVITY = ".ParentActivity";
 
     public static class Builder {
 
@@ -42,6 +45,7 @@ public class SituationActivity extends AppCompatActivity {
             mIntent = new Intent(context, SituationActivity.class);
             mIntent.putExtra(SituationFragment.TITLE, situation.getSummary());
             mIntent.putExtra(SituationFragment.DESCRIPTION, situation.getDescription());
+            mIntent.putExtra(SituationActivity.PARENT_ACTIVITY, context.getClass().getName());
         }
 
         public Intent getIntent() {
@@ -77,5 +81,23 @@ public class SituationActivity extends AppCompatActivity {
     protected void onStart() {
         ObaAnalytics.reportActivityStart(this);
         super.onStart();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Action bar's Up (Home) button
+            case android.R.id.home:
+                // If user got here via the ArrivalsListActivity or HomeActivity, just close this
+                // activity to go "Up" so we keep the state of those activities
+                String parentActivity = getIntent().getExtras()
+                        .getString(SituationActivity.PARENT_ACTIVITY);
+                if (ArrivalsListActivity.class.getName().equals(parentActivity) ||
+                        HomeActivity.class.getName().equals(parentActivity)) {
+                    finish();
+                    return true;
+                }
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

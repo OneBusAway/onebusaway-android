@@ -457,11 +457,8 @@ public class DirectionsGenerator {
         Calendar oldTime = Calendar.getInstance();
 
         String shortName;
-        if (!TextUtils.isEmpty(leg.tripShortName)) {
-            shortName = leg.tripShortName;
-        } else {
-            shortName = leg.routeShortName;
-        }
+        // As a work-around for #662, we always use routeShortName and not tripShortName
+        shortName = leg.routeShortName;
 
         route = ConversionUtils.getRouteLongNameSafe(leg.routeLongName, shortName, true);
 
@@ -673,7 +670,8 @@ public class DirectionsGenerator {
     /* Added for Trip Plan titles */
 
     private String getTransitTitle(Leg leg) {
-        String[] possibleTitles = {leg.tripShortName, leg.routeShortName, leg.route, leg.routeId};
+        // As a work-around for #662, we don't use leg.tripShortName
+        String[] possibleTitles = {leg.routeShortName, leg.route, leg.routeId};
         for (int i = 0; i < possibleTitles.length; i++) {
             if (!TextUtils.isEmpty(possibleTitles[i])) {
                 return possibleTitles[i];

@@ -2,7 +2,7 @@
 # http://lint.travis-ci.org/OneBusAway/onebusaway-android
 
 language: android
-jdk: oraclejdk7
+jdk: oraclejdk8
 # Turn off caching to avoid any caching problems
 cache: false
 # Don't use the Travis Container-Based Infrastructure - See #476

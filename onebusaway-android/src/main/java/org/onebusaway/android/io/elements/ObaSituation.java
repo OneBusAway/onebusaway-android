@@ -81,6 +81,7 @@ public interface ObaSituation extends ObaElement {
 
         public static final String CONDITION_DIVERSION = "diversion";
         public static final String CONDITION_ALTERED = "altered";
+        public static final String CONDITION_DETOUR = "detour";
 
         /**
          * @return The string describing the consequence condition.

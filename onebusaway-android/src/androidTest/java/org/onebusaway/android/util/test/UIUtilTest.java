@@ -6,6 +6,7 @@ import org.onebusaway.android.io.elements.ObaAgency;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
@@ -26,6 +27,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -776,5 +778,99 @@ public class UIUtilTest extends ObaTestCase {
 
         assertEquals(lat, l.getLatitude());
         assertEquals(lon, l.getLongitude());
+    }
+
+    /**
+     * Tests including all situations (service alerts) from a response in the final list, including
+     * ones specific to routes
+     */
+    public void testGetAllSituations() {
+        Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
+
+        /**
+         * Test route-specific alerts only
+         */
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "MTS_11670").build().call();
+        assertOK(response);
+        List<ObaSituation> situations = response.getSituations();
+        assertNotNull(situations);
+        // No stop-specific alerts, and route-specific situations don't appear in the main situations element - see #700
+        assertEquals(0, situations.size());
+
+        // They do appear, however, in the references list and are referenced by each arrival info
+        // Make sure we build a list of all situations
+        List<ObaSituation> allSituations = UIUtils.getAllSituations(response);
+
+        // Build a set of all IDs returned
+        HashSet<String> situationIds = new HashSet<>();
+        for (ObaSituation situation : allSituations) {
+            situationIds.add(situation.getId());
+        }
+
+        // There are 7 route-specific alerts, and 0 stop-specific alert, so we should have 7 total
+        assertEquals(7, allSituations.size());
+        assertEquals(7, situationIds.size());
+
+        // Make sure all IDs are contained in list
+        assertTrue(situationIds.contains("MTS_38"));
+        assertTrue(situationIds.contains("MTS_37"));
+        assertTrue(situationIds.contains("MTS_28"));
+        assertTrue(situationIds.contains("MTS_34"));
+        assertTrue(situationIds.contains("MTS_11"));
+        assertTrue(situationIds.contains("MTS_33"));
+        assertTrue(situationIds.contains("MTS_3"));
+
+        // Make sure all objects exist in list
+        assertTrue(allSituations.contains(response.getSituation("MTS_38")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_37")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_28")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_34")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_11")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_33")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_3")));
+
+        /**
+         * Test route and stop alerts
+         */
+
+        response = new ObaArrivalInfoRequest.Builder(getContext(), "MTS_13353").build().call();
+        assertOK(response);
+        situations = response.getSituations();
+        assertNotNull(situations);
+        // We should see the one stop alert, but not the route alerts - see #700
+        assertEquals(1, situations.size());
+
+        // They do appear, however, in the references list and are referenced by each arrival info
+        // Make sure we build a list of all situations
+        allSituations = UIUtils.getAllSituations(response);
+
+        // Build a set of all IDs returned
+        situationIds = new HashSet<>();
+        for (ObaSituation situation : allSituations) {
+            situationIds.add(situation.getId());
+        }
+
+        // There are 4 route-specific alerts, and 1 stop-specific alert, so we should have 5 total
+        assertEquals(5, allSituations.size());
+        assertEquals(5, situationIds.size());
+
+        // Make sure all route alert IDs are contained in list
+        assertTrue(situationIds.contains("MTS_32"));
+        assertTrue(situationIds.contains("MTS_34"));
+        assertTrue(situationIds.contains("MTS_14"));
+        assertTrue(situationIds.contains("MTS_13"));
+
+        // Make sure stop alert ID is in list
+        assertTrue(situationIds.contains("MTS_9c943ee8-d566-4cd8-8a89-a2a535ebe4fe"));
+
+        // Make sure all route situation objects exist in list
+        assertTrue(allSituations.contains(response.getSituation("MTS_32")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_34")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_14")));
+        assertTrue(allSituations.contains(response.getSituation("MTS_13")));
+
+        // Make sure the stop situation object exist in list
+        assertTrue(allSituations.contains(response.getSituations().get(0)));
     }
 }

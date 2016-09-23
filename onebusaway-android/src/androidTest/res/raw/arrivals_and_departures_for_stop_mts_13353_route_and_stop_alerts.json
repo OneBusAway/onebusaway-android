@@ -1,0 +1,598 @@
+{
+  "code": 200,
+  "currentTime": 1474571840173,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 5,
+          "departureEnabled": true,
+          "distanceFromStop": -911.0440981325082,
+          "frequency": null,
+          "lastUpdateTime": 1474571813932,
+          "numberOfStopsAway": -1,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474571640000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474571640000,
+          "routeId": "MTS_10",
+          "routeLongName": "Old Town - University/College",
+          "routeShortName": "10",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474571580000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474571580000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_32",
+            "MTS_34",
+            "MTS_14",
+            "MTS_13"
+          ],
+          "status": "default",
+          "stopId": "MTS_13353",
+          "stopSequence": 5,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_11663202",
+          "tripStatus": {
+            "activeTripId": "MTS_11663202",
+            "blockTripSequence": 5,
+            "closestStop": "MTS_10452",
+            "closestStopTimeOffset": 100,
+            "distanceAlongTrip": 3805.251935417924,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.7469482421875,
+              "lon": -117.17715454101562
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474571813932,
+            "nextStop": "MTS_10452",
+            "nextStopTimeOffset": 100,
+            "orientation": 33.87537017643466,
+            "phase": "",
+            "position": {
+              "lat": 32.74837556177168,
+              "lon": -117.17434589125222
+            },
+            "predicted": true,
+            "scheduleDeviation": 60,
+            "scheduledDistanceAlongTrip": 3805.251935417924,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_32",
+              "MTS_34",
+              "MTS_14",
+              "MTS_13"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14463.815930497536,
+            "vehicleId": "MTS_101007"
+          },
+          "vehicleId": "MTS_101007"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 7,
+          "departureEnabled": true,
+          "distanceFromStop": 2894.2030423357646,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 5,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_10",
+          "routeLongName": "Old Town - University/College",
+          "routeShortName": "10",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474572480000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474572480000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_32",
+            "MTS_34",
+            "MTS_14",
+            "MTS_13"
+          ],
+          "status": "default",
+          "stopId": "MTS_13353",
+          "stopSequence": 5,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_11663164",
+          "tripStatus": {
+            "activeTripId": "MTS_11663164",
+            "blockTripSequence": 7,
+            "closestStop": "MTS_94024",
+            "closestStopTimeOffset": 160,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_94024",
+            "nextStopTimeOffset": 160,
+            "orientation": 290.7025473575421,
+            "phase": "",
+            "position": {
+              "lat": 32.7546099589038,
+              "lon": -117.19992398446895
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0.004794949651113711,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_32",
+              "MTS_34",
+              "MTS_14",
+              "MTS_13"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14463.815930497536,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 7,
+          "departureEnabled": true,
+          "distanceFromStop": 6333.598175604595,
+          "frequency": null,
+          "lastUpdateTime": 1474571813947,
+          "numberOfStopsAway": 11,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474573380000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474573380000,
+          "routeId": "MTS_10",
+          "routeLongName": "Old Town - University/College",
+          "routeShortName": "10",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474573380000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474573380000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_32",
+            "MTS_34",
+            "MTS_14",
+            "MTS_13"
+          ],
+          "status": "default",
+          "stopId": "MTS_13353",
+          "stopSequence": 5,
+          "tripHeadsign": "University & College",
+          "tripId": "MTS_11663183",
+          "tripStatus": {
+            "activeTripId": "MTS_11663182",
+            "blockTripSequence": 6,
+            "closestStop": "MTS_13356",
+            "closestStopTimeOffset": 100,
+            "distanceAlongTrip": 11434.318251095712,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.744144439697266,
+              "lon": -117.18073272705078
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474571813947,
+            "nextStop": "MTS_13356",
+            "nextStopTimeOffset": 100,
+            "orientation": 211.97812546562915,
+            "phase": "",
+            "position": {
+              "lat": 32.74636395225734,
+              "lon": -117.17874267816408
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 11434.318251095712,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_32",
+              "MTS_34",
+              "MTS_14",
+              "MTS_13"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14873.708589414888,
+            "vehicleId": "MTS_101003"
+          },
+          "vehicleId": "MTS_101003"
+        }
+      ],
+      "nearbyStopIds": [
+        "MTS_13356"
+      ],
+      "situationIds": [
+        "MTS_9c943ee8-d566-4cd8-8a89-a2a535ebe4fe"
+      ],
+      "stopId": "MTS_13353"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "MTS",
+          "lang": "EN",
+          "name": "MTS",
+          "phone": "619-233-3004",
+          "privateService": false,
+          "timezone": "America/Los_Angeles",
+          "url": "http://www.sdmts.com"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_10",
+          "longName": "Old Town - University/College",
+          "shortName": "10",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=10"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "006600",
+          "description": "",
+          "id": "MTS_83",
+          "longName": "Mission Hills / Hillcrest Circulator",
+          "shortName": "83",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=83"
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [
+            {
+              "from": 1474286400,
+              "to": 1474644600
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_10",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "unknown_effect",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474571813963,
+          "description": {
+            "lang": "en",
+            "value": "Due to sidewalk improvements, the eastbound bus stop on Washington Street at India Street \n(ID#13353) will be temporarily discontinued Monday 9/19 to Friday 9/23 from 8:30am - 3:30pm daily.  Eastbound RT 10 connections can be made at Washington and Hancock Street \nbus stop (ID#13352)."
+          },
+          "id": "MTS_32",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "RT 10 Stop Closed @ Washington and India (ID#13353)"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1474698600,
+              "to": 1474714800
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_7",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_10",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_120",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_215",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474571813963,
+          "description": {
+            "lang": "en",
+            "value": "On Saturday September 24th from 6:30am until 11am Routes 10, 11 and 120 will be on detour due to the Aids Walk event on University Ave between 6th Ave and Park Blvd. Eastbound service stops on University will be closed between 6th Ave. and Park Blvd. Westbound impacts are between Park Blvd and Richmond. \n\nCustomers in Hillcrest needing the eastbound route 10 and northbound Route 11 may connect with service at the temporary bus stop, marked by an A-frame on eastbound Washington at 5th. Route 10 will resume eastbound service at the Route 7 stop on University at Alabama, and Route 11 will resume on Park Blvd at Polk.  \n\nSouthbound Park Blvd will be closed with Route 7 and 215 stops impacted from 6:30am â€˜til 9:30am, with temporary southbound Route 7 service available at the northbound Route 11 stop on Park Blvd, north of University.  Westbound Route 215 will service Route 1/11 stops on Park at Howard and Polk.  Northbound access to Park Blvd will be available at City College (Smart Corner) on 11th at â€˜Câ€™ St for Routes 7 and 215 \n"
+          },
+          "id": "MTS_34",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "\"Aids Walk\" Sat (9/24) Impacting rts 7, 10, 11, 120 & 215"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1470286800,
+              "to": 1499039100
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_10",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "stop_moved",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474293594580,
+          "description": {
+            "lang": "en",
+            "value": "Due to construction the bus stop for the eastbound route 10 on University Avenue at Park Blvd (#13354) will be closed approximately for a year starting on 8/4/16 to 7/2/17 24/hrs. Passengers are advised to catch the eastbound route 10 at the temporary stop marked by an a-frame 150' west of stop. "
+          },
+          "id": "MTS_14",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "E/B 10- University Avenue @ Park Blvd (#13354) "
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1470286800,
+              "to": 1499039100
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_10",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "stop_moved",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474571813963,
+          "description": {
+            "lang": "en",
+            "value": "Due to construction the bus stop for the eastbound route 10 on University Avenue at Park Blvd (#13354) will be closed approximately for a year starting on 8/4/16 to 7/2/17 24/hrs. Passengers are advised to catch the eastbound route 10 at the temporary stop marked by an a-frame 150' west of stop. "
+          },
+          "id": "MTS_13",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "E/B 10- University Avenue @ Park Blvd (#13354) "
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "",
+              "stopId": "MTS_13353",
+              "tripId": ""
+            }
+          ],
+          "consequences": [],
+          "creationTime": 0,
+          "description": {
+            "lang": "en",
+            "value": "Due to construction, this stop is closed. Please use stop 13354 instead"
+          },
+          "id": "MTS_9c943ee8-d566-4cd8-8a89-a2a535ebe4fe",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "unknown",
+          "summary": {
+            "lang": "en",
+            "value": "Stop 13353 closed"
+          },
+          "url": null
+        }
+      ],
+      "stops": [
+        {
+          "code": "13353",
+          "direction": "NE",
+          "id": "MTS_13353",
+          "lat": 32.743032656837,
+          "locationType": 0,
+          "lon": -117.181286786619,
+          "name": "Washington St & India St",
+          "routeIds": [
+            "MTS_10"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10452",
+          "direction": "E",
+          "id": "MTS_10452",
+          "lat": 32.749745407812,
+          "locationType": 0,
+          "lon": -117.170182182745,
+          "name": "Washington St & Falcon St",
+          "routeIds": [
+            "MTS_10",
+            "MTS_83"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "94024",
+          "direction": "S",
+          "id": "MTS_94024",
+          "lat": 32.754598986094,
+          "locationType": 0,
+          "lon": -117.199962299414,
+          "name": "Old Town Transit Center",
+          "routeIds": [
+            "MTS_10"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "13356",
+          "direction": "SW",
+          "id": "MTS_13356",
+          "lat": 32.743484016491,
+          "locationType": 0,
+          "lon": -117.181206998329,
+          "name": "Washington St & India St",
+          "routeIds": [
+            "MTS_10"
+          ],
+          "wheelchairBoarding": "NOT_ACCESSIBLE"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "MTS_101007",
+          "directionId": "0",
+          "id": "MTS_11663202",
+          "routeId": "MTS_10",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_10_2_39",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101002",
+          "directionId": "0",
+          "id": "MTS_11663164",
+          "routeId": "MTS_10",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_10_2_39",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101003",
+          "directionId": "0",
+          "id": "MTS_11663183",
+          "routeId": "MTS_10",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_10_2_39",
+          "timeZone": "",
+          "tripHeadsign": "University & College",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101003",
+          "directionId": "1",
+          "id": "MTS_11663182",
+          "routeId": "MTS_10",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_10_3_38",
+          "timeZone": "",
+          "tripHeadsign": "Old Town",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

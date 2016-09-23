@@ -282,6 +282,9 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         //assertEquals("diversion", consequences[0].getCondition());
     }
 
+    /**
+     * Test stop-specific service alerts
+     */
     public void testStopSituationDart() throws Exception {
         // Test by setting API directly
         Application.get().setCustomApiUrl("dart.onebusaway.org/api");
@@ -319,29 +322,87 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         boolean result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow0);
         assertEquals(false, result);
 
-        long timeWithinWindow0 = 1435005046;
+        long timeWithinWindow0 = 1435005046000L;
         result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow0);
         assertEquals(true, result);
 
-        long timeAfterWindow0 = 1436072373;
+        long timeAfterWindow0 = 1436072373000L;
         result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow0);
         assertEquals(false, result);
 
-        long timeBeforeWindow1 = 1436072373;
+        long timeBeforeWindow1 = 1436072373000L;
         result = UIUtils.isActiveWindowForSituation(situation, timeBeforeWindow1);
         assertEquals(false, result);
 
-        long timeWithinWindow1 = 1436072375;
+        long timeWithinWindow1 = 1436072375000L;
         result = UIUtils.isActiveWindowForSituation(situation, timeWithinWindow1);
         assertEquals(true, result);
 
-        long timeAfterWindow1 = 1436073001;
+        long timeAfterWindow1 = 1436073001000L;
         result = UIUtils.isActiveWindowForSituation(situation, timeAfterWindow1);
         assertEquals(false, result);
     }
 
+    /**
+     * Test route-specific service alerts
+     *
+     * @throws Exception
+     */
+    public void testRouteSituationSdmts() throws Exception {
+        // Test by setting API directly
+        Application.get().setCustomApiUrl("sdmts.onebusway.org/api");
+        ObaArrivalInfoResponse response =
+                new ObaArrivalInfoRequest.Builder(getContext(), "MTS_11670").build().call();
+        assertOK(response);
+        List<ObaSituation> situations = response.getSituations();
+        assertNotNull(situations);
+        // Route-specific situations don't appear in the main situations element - see #700
+        assertEquals(0, situations.size());
 
-    // TODO: get/create situation response
+        // They do appear, however, in the references list and are referenced by each arrival info
+        // Scan through the arrivals and make sure we can pull a ObaSituation for all situationIds
+        ObaArrivalInfo[] info = response.getArrivalInfo();
+        for (ObaArrivalInfo i : info) {
+            for (String situationId : i.getSituationIds()) {
+                assertNotNull(response.getSituation(situationId));
+            }
+        }
+
+        // Test pulling fields for a route-specific situation
+        String[] ids = info[0].getSituationIds();
+        ObaSituation situation = response.getSituation(ids[0]);
+
+        assertEquals("MTS_38", situation.getId());
+        assertEquals("Concrete Pour Impacting N/B RTS 11, 901 & 929", situation.getSummary());
+        assertEquals(
+                "Due to a three day concrete pour, northbound Park Blvd. will be closed from Imperial to 11th Ave. 9/21 - 9/23, from 5am - 4pm. Northbound routes 11, 901 and 929 will detour during construction hours. The northbound bus stop i.d 99010 on 11th at K (Library) will be temporarily discontinued. Connections can be made at 12th & Imperial.",
+                situation.getDescription());
+        assertEquals("CONSTRUCTION", situation.getReason());
+        assertEquals(1474527588415L, situation.getCreationTime());
+        assertEquals("", situation.getSeverity());
+
+        assertEquals("", situation.getAllAffects()[0].getAgencyId());
+        assertEquals("", situation.getAllAffects()[0].getApplicationId());
+        assertEquals("", situation.getAllAffects()[0].getDirectionId());
+        assertEquals("MTS_11", situation.getAllAffects()[0].getRouteId());
+        assertEquals("", situation.getAllAffects()[0].getStopId());
+        assertEquals("", situation.getAllAffects()[0].getTripId());
+
+        ObaSituation.ActiveWindow[] windows = situation.getActiveWindows();
+        assertEquals(1474434000, windows[0].getFrom());
+        assertEquals(1474646400, windows[0].getTo());
+
+        ObaSituation.Consequence[] consequences = situation.getConsequences();
+        assertNotNull(consequences);
+        assertEquals(1, consequences.length);
+        ObaSituation.Consequence c = consequences[0];
+        assertEquals(ObaSituation.Consequence.CONDITION_DETOUR,
+                c.getCondition());
+        ObaSituation.ConditionDetails details = c.getDetails();
+        assertNull(details);
+    }
+
+    // TODO: get/create situation response that includes diversion path
     /*
     public void testTripSituation() throws Exception {
         ObaArrivalInfoResponse response =
@@ -355,7 +416,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         ObaArrivalInfo info = infoList[0];
         String[] situationIds = info.getSituationIds();
         assertNotNull(situationIds);
-        List<ObaSituation> situations = response.getSituations(situationIds);
+        List<ObaSituation> situations = response.getAllSituations(situationIds);
         assertNotNull(situations);
 
         assertEquals("Expected failure / TODO: add situation", 1, situations.size());

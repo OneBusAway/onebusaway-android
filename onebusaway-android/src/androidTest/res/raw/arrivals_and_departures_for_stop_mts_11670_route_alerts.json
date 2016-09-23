@@ -1,0 +1,1409 @@
+{
+  "code": 200,
+  "currentTime": 1474553212655,
+  "data": {
+    "entry": {
+      "arrivalsAndDepartures": [
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": -701.2936223846191,
+          "frequency": null,
+          "lastUpdateTime": 1474553193387,
+          "numberOfStopsAway": -2,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474553100000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474553100000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Skyline Hills",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474552980000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474552980000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_38",
+            "MTS_37",
+            "MTS_28",
+            "MTS_34",
+            "MTS_11",
+            "MTS_33",
+            "MTS_3"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 24,
+          "tripHeadsign": "Skyline Hills",
+          "tripId": "MTS_11663713",
+          "tripStatus": {
+            "activeTripId": "MTS_11663713",
+            "blockTripSequence": 1,
+            "closestStop": "MTS_10865",
+            "closestStopTimeOffset": 8,
+            "distanceAlongTrip": 10856.072550506447,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.752532958984375,
+              "lon": -117.14657592773438
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193387,
+            "nextStop": "MTS_10865",
+            "nextStopTimeOffset": 8,
+            "orientation": 180.5337961657543,
+            "phase": "",
+            "position": {
+              "lat": 32.74841266022227,
+              "lon": -117.14888480280914
+            },
+            "predicted": true,
+            "scheduleDeviation": 120,
+            "scheduledDistanceAlongTrip": 10856.072550506447,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_38",
+              "MTS_37",
+              "MTS_28",
+              "MTS_34",
+              "MTS_11",
+              "MTS_33",
+              "MTS_3"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31782.428107049956,
+            "vehicleId": "MTS_101104"
+          },
+          "vehicleId": "MTS_101104"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 1592.3920528535527,
+          "frequency": null,
+          "lastUpdateTime": 1474553193403,
+          "numberOfStopsAway": 5,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474553520000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474553520000,
+          "routeId": "MTS_1",
+          "routeLongName": "Hillcrest - Grossmont Transit Ctr.",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474553340000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474553340000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_11"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 49,
+          "tripHeadsign": "Hillcrest",
+          "tripId": "MTS_11594876",
+          "tripStatus": {
+            "activeTripId": "MTS_11594876",
+            "blockTripSequence": 1,
+            "closestStop": "MTS_11290",
+            "closestStopTimeOffset": 8,
+            "distanceAlongTrip": 14857.646815553751,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.75536346435547,
+              "lon": -117.12398529052734
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193403,
+            "nextStop": "MTS_11290",
+            "nextStopTimeOffset": 8,
+            "orientation": 180.41484553865087,
+            "phase": "",
+            "position": {
+              "lat": 32.75530892272983,
+              "lon": -117.13251856075769
+            },
+            "predicted": true,
+            "scheduleDeviation": 180,
+            "scheduledDistanceAlongTrip": 14857.646815553751,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_11"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 19740.70039713533,
+            "vehicleId": "MTS_103"
+          },
+          "vehicleId": "MTS_103"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 4186.143983244186,
+          "frequency": null,
+          "lastUpdateTime": 1474553193387,
+          "numberOfStopsAway": 16,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474553880000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474553880000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Skyline Hills",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474553880000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474553880000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_38",
+            "MTS_37",
+            "MTS_28",
+            "MTS_34",
+            "MTS_11",
+            "MTS_33",
+            "MTS_3"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 24,
+          "tripHeadsign": "Skyline Hills",
+          "tripId": "MTS_11663719",
+          "tripStatus": {
+            "activeTripId": "MTS_11663719",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_11335",
+            "closestStopTimeOffset": 8,
+            "distanceAlongTrip": 5968.634944877641,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.76328659057617,
+              "lon": -117.10623931884766
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193387,
+            "nextStop": "MTS_11335",
+            "nextStopTimeOffset": 8,
+            "orientation": 179.58135352920462,
+            "phase": "",
+            "position": {
+              "lat": 32.76329531221573,
+              "lon": -117.11345444323817
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 5968.634944877641,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_38",
+              "MTS_37",
+              "MTS_28",
+              "MTS_34",
+              "MTS_11",
+              "MTS_33",
+              "MTS_3"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31782.428107049956,
+            "vehicleId": "MTS_201104"
+          },
+          "vehicleId": "MTS_201104"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 0,
+          "departureEnabled": true,
+          "distanceFromStop": 7038.546291246637,
+          "frequency": null,
+          "lastUpdateTime": 1474553193372,
+          "numberOfStopsAway": 26,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474554660000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474554660000,
+          "routeId": "MTS_1",
+          "routeLongName": "Hillcrest - Grossmont Transit Ctr.",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474554360000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474554360000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_11"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 36,
+          "tripHeadsign": "Hillcrest",
+          "tripId": "MTS_11594903",
+          "tripStatus": {
+            "activeTripId": "MTS_11594903",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_11399",
+            "closestStopTimeOffset": 8,
+            "distanceAlongTrip": 3956.8659055181383,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.758419036865234,
+              "lon": -117.0756607055664
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193372,
+            "nextStop": "MTS_11399",
+            "nextStopTimeOffset": 8,
+            "orientation": 187.94561796097815,
+            "phase": "",
+            "position": {
+              "lat": 32.75849809047204,
+              "lon": -117.07461543414742
+            },
+            "predicted": true,
+            "scheduleDeviation": 300,
+            "scheduledDistanceAlongTrip": 3956.8659055181383,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_11"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14286.073725492804,
+            "vehicleId": "MTS_108"
+          },
+          "vehicleId": "MTS_108"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 10154.74098384428,
+          "frequency": null,
+          "lastUpdateTime": 0,
+          "numberOfStopsAway": 24,
+          "predicted": false,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 0,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 0,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Skyline Hills",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474554780000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474554780000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_38",
+            "MTS_37",
+            "MTS_28",
+            "MTS_34",
+            "MTS_11",
+            "MTS_33",
+            "MTS_3"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 24,
+          "tripHeadsign": "Skyline Hills",
+          "tripId": "MTS_11663726",
+          "tripStatus": {
+            "activeTripId": "MTS_11663726",
+            "blockTripSequence": 1,
+            "closestStop": "MTS_99017",
+            "closestStopTimeOffset": 188,
+            "distanceAlongTrip": 0,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": null,
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 0,
+            "nextStop": "MTS_99017",
+            "nextStopTimeOffset": 188,
+            "orientation": 359.8289683301749,
+            "phase": "",
+            "position": {
+              "lat": 32.77316999878854,
+              "lon": -117.07065959416008
+            },
+            "predicted": false,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0.037944277548376704,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_38",
+              "MTS_37",
+              "MTS_28",
+              "MTS_34",
+              "MTS_11",
+              "MTS_33",
+              "MTS_3"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31782.428107049956,
+            "vehicleId": ""
+          },
+          "vehicleId": ""
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 2,
+          "departureEnabled": true,
+          "distanceFromStop": 10259.52449098161,
+          "frequency": null,
+          "lastUpdateTime": 1474553193372,
+          "numberOfStopsAway": 34,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474555320000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474555320000,
+          "routeId": "MTS_1",
+          "routeLongName": "Hillcrest - Grossmont Transit Ctr.",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474555320000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474555320000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_11"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 49,
+          "tripHeadsign": "Hillcrest",
+          "tripId": "MTS_11594877",
+          "tripStatus": {
+            "activeTripId": "MTS_11594877",
+            "blockTripSequence": 2,
+            "closestStop": "MTS_11445",
+            "closestStopTimeOffset": -52,
+            "distanceAlongTrip": 6190.514377425701,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.76889419555664,
+              "lon": -117.03984832763672
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193372,
+            "nextStop": "MTS_11438",
+            "nextStopTimeOffset": 68,
+            "orientation": 181.1410959602679,
+            "phase": "",
+            "position": {
+              "lat": 32.768758261502,
+              "lon": -117.04368616686561
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 6190.514377425701,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_11"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 19740.70039713533,
+            "vehicleId": "MTS_102"
+          },
+          "vehicleId": "MTS_102"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 10154.768747801918,
+          "frequency": null,
+          "lastUpdateTime": 1474552916748,
+          "numberOfStopsAway": 24,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474555620000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474555620000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Skyline Hills",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474555620000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474555620000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_38",
+            "MTS_37",
+            "MTS_28",
+            "MTS_34",
+            "MTS_11",
+            "MTS_33",
+            "MTS_3"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 24,
+          "tripHeadsign": "Skyline Hills",
+          "tripId": "MTS_11663730",
+          "tripStatus": {
+            "activeTripId": "MTS_11663730",
+            "blockTripSequence": 1,
+            "closestStop": "MTS_99017",
+            "closestStopTimeOffset": -292,
+            "distanceAlongTrip": 0.010180319910432445,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.77268981933594,
+              "lon": -117.07169342041016
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474552916748,
+            "nextStop": "MTS_99017",
+            "nextStopTimeOffset": 968,
+            "orientation": 359.8289683301749,
+            "phase": "",
+            "position": {
+              "lat": 32.77316999967497,
+              "lon": -117.07065989111454
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0.010180319910432445,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_38",
+              "MTS_37",
+              "MTS_28",
+              "MTS_34",
+              "MTS_11",
+              "MTS_33",
+              "MTS_3"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31782.428107049956,
+            "vehicleId": "MTS_101106"
+          },
+          "vehicleId": "MTS_101106"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 2,
+          "departureEnabled": true,
+          "distanceFromStop": 10995.405792879414,
+          "frequency": null,
+          "lastUpdateTime": 1474552916779,
+          "numberOfStopsAway": 36,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474556280000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474556280000,
+          "routeId": "MTS_1",
+          "routeLongName": "Hillcrest - Grossmont Transit Ctr.",
+          "routeShortName": "1",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474556280000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474556280000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_11"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 36,
+          "tripHeadsign": "Hillcrest",
+          "tripId": "MTS_11594904",
+          "tripStatus": {
+            "activeTripId": "MTS_11594904",
+            "blockTripSequence": 2,
+            "closestStop": "MTS_99016",
+            "closestStopTimeOffset": -292,
+            "distanceAlongTrip": 0.0064038853597594425,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.772220611572266,
+              "lon": -117.04212188720703
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474552916779,
+            "nextStop": "MTS_99016",
+            "nextStopTimeOffset": 668,
+            "orientation": 343.09327892005683,
+            "phase": "",
+            "position": {
+              "lat": 32.77225398042123,
+              "lon": -117.04205793558586
+            },
+            "predicted": true,
+            "scheduleDeviation": 0,
+            "scheduledDistanceAlongTrip": 0.0064038853597594425,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_11"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 14286.073725492804,
+            "vehicleId": "MTS_105"
+          },
+          "vehicleId": "MTS_105"
+        },
+        {
+          "arrivalEnabled": true,
+          "blockTripSequence": 1,
+          "departureEnabled": true,
+          "distanceFromStop": 17394.26453631217,
+          "frequency": null,
+          "lastUpdateTime": 1474553193387,
+          "numberOfStopsAway": 41,
+          "predicted": true,
+          "predictedArrivalInterval": null,
+          "predictedArrivalTime": 1474556460000,
+          "predictedDepartureInterval": null,
+          "predictedDepartureTime": 1474556460000,
+          "routeId": "MTS_11",
+          "routeLongName": "SDSU - Skyline Hills",
+          "routeShortName": "11",
+          "scheduledArrivalInterval": null,
+          "scheduledArrivalTime": 1474556460000,
+          "scheduledDepartureInterval": null,
+          "scheduledDepartureTime": 1474556460000,
+          "serviceDate": 1474527600000,
+          "situationIds": [
+            "MTS_38",
+            "MTS_37",
+            "MTS_28",
+            "MTS_34",
+            "MTS_11",
+            "MTS_33",
+            "MTS_3"
+          ],
+          "status": "default",
+          "stopId": "MTS_11670",
+          "stopSequence": 24,
+          "tripHeadsign": "Skyline Hills",
+          "tripId": "MTS_11663738",
+          "tripStatus": {
+            "activeTripId": "MTS_11663737",
+            "blockTripSequence": 0,
+            "closestStop": "MTS_10160",
+            "closestStopTimeOffset": 8,
+            "distanceAlongTrip": 24026.44880990487,
+            "frequency": null,
+            "lastKnownDistanceAlongTrip": 0,
+            "lastKnownLocation": {
+              "lat": 32.76210403442383,
+              "lon": -117.14624786376953
+            },
+            "lastKnownOrientation": 0,
+            "lastLocationUpdateTime": 0,
+            "lastUpdateTime": 1474553193387,
+            "nextStop": "MTS_10160",
+            "nextStopTimeOffset": 8,
+            "orientation": 0.13324575926593582,
+            "phase": "",
+            "position": {
+              "lat": 32.7628880042526,
+              "lon": -117.13080417138066
+            },
+            "predicted": true,
+            "scheduleDeviation": 240,
+            "scheduledDistanceAlongTrip": 24026.44880990487,
+            "serviceDate": 1474527600000,
+            "situationIds": [
+              "MTS_38",
+              "MTS_37",
+              "MTS_28",
+              "MTS_34",
+              "MTS_11",
+              "MTS_33",
+              "MTS_3"
+            ],
+            "status": "default",
+            "totalDistanceAlongTrip": 31265.93441809521,
+            "vehicleId": "MTS_101107"
+          },
+          "vehicleId": "MTS_101107"
+        }
+      ],
+      "nearbyStopIds": [
+        "MTS_12453"
+      ],
+      "situationIds": [],
+      "stopId": "MTS_11670"
+    },
+    "references": {
+      "agencies": [
+        {
+          "disclaimer": "",
+          "id": "MTS",
+          "lang": "EN",
+          "name": "MTS",
+          "phone": "619-233-3004",
+          "privateService": false,
+          "timezone": "America/Los_Angeles",
+          "url": "http://www.sdmts.com"
+        }
+      ],
+      "routes": [
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_1",
+          "longName": "Hillcrest - Grossmont Transit Ctr.",
+          "shortName": "1",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=1"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_11",
+          "longName": "SDSU - Skyline Hills",
+          "shortName": "11",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=11"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_6",
+          "longName": "North Park - Fashion Valley",
+          "shortName": "6",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=6"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_2",
+          "longName": "Downtown San Diego - 30th & Adams",
+          "shortName": "2",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=2"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_215",
+          "longName": "Mid-City Rapid",
+          "shortName": "215",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=215"
+        },
+        {
+          "agencyId": "MTS",
+          "color": "000099",
+          "description": "",
+          "id": "MTS_14",
+          "longName": "Grantville Trolley  -  Baltimore & Lake Murray",
+          "shortName": "14",
+          "textColor": "FFFFFF",
+          "type": 3,
+          "url": "http://www.sdmts.com/schedules-real-time?fragment=14"
+        }
+      ],
+      "situations": [
+        {
+          "activeWindows": [
+            {
+              "from": 1474434000,
+              "to": 1474646400
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_901",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_929",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474527588415,
+          "description": {
+            "lang": "en",
+            "value": "Due to a three day concrete pour, northbound Park Blvd. will be closed from Imperial to 11th Ave. 9/21 - 9/23, from 5am - 4pm. Northbound routes 11, 901 and 929 will detour during construction hours. The northbound bus stop i.d 99010 on 11th at K (Library) will be temporarily discontinued. Connections can be made at 12th & Imperial."
+          },
+          "id": "MTS_38",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Concrete Pour Impacting N/B RTS 11, 901 & 929"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1474434000,
+              "to": 1474646400
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_901",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_929",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193419,
+          "description": {
+            "lang": "en",
+            "value": "Due to a three day concrete pour, northbound Park Blvd. will be closed from Imperial to 11th Ave. 9/21 - 9/23, from 5am - 4pm. Northbound routes 11, 901 and 929 will detour during construction hours. The northbound bus stop i.d 99010 on 11th at K (Library) will be temporarily discontinued. Connections can be made at 12th & Imperial."
+          },
+          "id": "MTS_37",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Concrete Pour Impacting N/B RTS 11, 901 & 929"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1474305300,
+              "to": 1475187300
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_4",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193419,
+          "description": {
+            "lang": "en",
+            "value": "Beginning Monday Sept. 19th, the San Diego Padres will return for their final home stand at Petco Park until Thursday Sept 29th. MTS bus routes that travel the vicinity of Petco Park will detour 2 hours prior to game time, and continue 1 hour after the completion of each game \nThe following scheduled game times are;\nÂ·\tMonday and Tuesday 9/19-20\nÂ·\tWednesday 9/21 6:10pm\nÂ·\tThursday 9/22 7:10pm\nÂ·\tFriday 9/23 7:40pm \nÂ·\tSaturday 9/24  5:40pm\nÂ·\tSunday 9/25 1:40pm  \nÂ·\tTuesday and Wednesday 9/27-28 at 7:10pm\nÂ·\tThursday 9/29 6:10pm\n\nRoutes 4 and 11 will be detoured on Imperial Ave between 16th and 13th approximately 1 hour before game time.   All buses will continue to service the 12th St Transit Center on game days.  \n\nFor additional trip information please dial 619 233-3004\n"
+          },
+          "id": "MTS_28",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Padres Home Games 9/19-9/29 impacting MTS Bus"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1474698600,
+              "to": 1474714800
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_7",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_10",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_120",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_215",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193419,
+          "description": {
+            "lang": "en",
+            "value": "On Saturday September 24th from 6:30am until 11am Routes 10, 11 and 120 will be on detour due to the Aids Walk event on University Ave between 6th Ave and Park Blvd. Eastbound service stops on University will be closed between 6th Ave. and Park Blvd. Westbound impacts are between Park Blvd and Richmond. \n\nCustomers in Hillcrest needing the eastbound route 10 and northbound Route 11 may connect with service at the temporary bus stop, marked by an A-frame on eastbound Washington at 5th. Route 10 will resume eastbound service at the Route 7 stop on University at Alabama, and Route 11 will resume on Park Blvd at Polk.  \n\nSouthbound Park Blvd will be closed with Route 7 and 215 stops impacted from 6:30am â€˜til 9:30am, with temporary southbound Route 7 service available at the northbound Route 11 stop on Park Blvd, north of University.  Westbound Route 215 will service Route 1/11 stops on Park at Howard and Polk.  Northbound access to Park Blvd will be available at City College (Smart Corner) on 11th at â€˜Câ€™ St for Routes 7 and 215 \n"
+          },
+          "id": "MTS_34",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "\"Aids Walk\" Sat (9/24) Impacting rts 7, 10, 11, 120 & 215"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1462777200,
+              "to": 1494345600
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_1",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "unknown_effect",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193403,
+          "description": {
+            "lang": "en",
+            "value": "Due to construction on Park Blvd. and Polk (12453) the northbound service stop will be discontinued until 5/9/2017. Customers are advised to catch Routes 1 and 11 one block north at Park and Howard (12454)."
+          },
+          "id": "MTS_11",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Rtes. 1 & 11 Stop Closure at Northbound Park & Polk"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1474689600,
+              "to": 1474847100
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_2",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "detour",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193419,
+          "description": {
+            "lang": "en",
+            "value": "This Saturday and Sunday, September 24th and 25th, Routes 11 and 2 will be detoured off of Adams Ave in the Normal Hghts community.  Beginning Saturday from 4am until 12mid, Route 11 will be detoured from Adams Ave in the Normal Hghts community due to this event.  Sunday the 25th both Routes 2 and 11 will detour the entire day. The portion of Adams affected are between W Mountain View and 36th Street in both directions. \n\nCustomers are advised to take northbound Route11 on Adams at Boundary or Adams at Cherokee. Southbound service will be available on Adams at Cherokee or Adams at W. Mountain View. The same will apply for Route 2 Sunday service in Normal Hghts.\n"
+          },
+          "id": "MTS_33",
+          "publicationWindows": [],
+          "reason": "UNKNOWN_CAUSE",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "Adams Ave St Fair, Sat/Sun  (9/24-9/25) affecting rt 2 & 11 "
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        },
+        {
+          "activeWindows": [
+            {
+              "from": 1429243200,
+              "to": 1524872700
+            }
+          ],
+          "allAffects": [
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_11",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_901",
+              "stopId": "",
+              "tripId": ""
+            },
+            {
+              "agencyId": "",
+              "applicationId": "",
+              "directionId": "",
+              "routeId": "MTS_929",
+              "stopId": "",
+              "tripId": ""
+            }
+          ],
+          "consequences": [
+            {
+              "condition": "unknown_effect",
+              "conditionDetails": null
+            }
+          ],
+          "creationTime": 1474553193403,
+          "description": {
+            "lang": "en",
+            "value": "Due to a long term construction project lasting approximately three years (April 2018), the northbound bus stop on Park Blvd. at 10th Ave. (ID# 99006) will be closed. Connections to routes 11, 901 and 929 can be made on 11th Ave. at 'K' St. (Library) or at the 12th / Imperial Trolley Station."
+          },
+          "id": "MTS_3",
+          "publicationWindows": [],
+          "reason": "CONSTRUCTION",
+          "severity": "",
+          "summary": {
+            "lang": "en",
+            "value": "RT 11, 901 and 929 Stop Closed on Park @ 10th (ID# 99006)"
+          },
+          "url": {
+            "lang": "en",
+            "value": "http://www.sdmts.com/Planning/alerts_detours.asp"
+          }
+        }
+      ],
+      "stops": [
+        {
+          "code": "11670",
+          "direction": "S",
+          "id": "MTS_11670",
+          "lat": 32.752569322629,
+          "locationType": 0,
+          "lon": -117.146500296078,
+          "name": "Park Bl & Polk Av",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10865",
+          "direction": "W",
+          "id": "MTS_10865",
+          "lat": 32.748497581138,
+          "locationType": 0,
+          "lon": -117.149308001001,
+          "name": "University Av & Normal St",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11290",
+          "direction": "W",
+          "id": "MTS_11290",
+          "lat": 32.755479644282,
+          "locationType": 0,
+          "lon": -117.132826318106,
+          "name": "El Cajon Bl & Utah St",
+          "routeIds": [
+            "MTS_1",
+            "MTS_6"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11335",
+          "direction": "W",
+          "id": "MTS_11335",
+          "lat": 32.763402123936,
+          "locationType": 0,
+          "lon": -117.114399506053,
+          "name": "Adams Av & Cherokee Av",
+          "routeIds": [
+            "MTS_2",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11399",
+          "direction": "W",
+          "id": "MTS_11399",
+          "lat": 32.758542627157,
+          "locationType": 0,
+          "lon": -117.075074341953,
+          "name": "El Cajon Bl & 56th St",
+          "routeIds": [
+            "MTS_1"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "99017",
+          "direction": "E",
+          "id": "MTS_99017",
+          "lat": 32.77313910168,
+          "locationType": 0,
+          "lon": -117.070659660056,
+          "name": "SDSU Transit Center",
+          "routeIds": [
+            "MTS_11",
+            "MTS_215"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11445",
+          "direction": "W",
+          "id": "MTS_11445",
+          "lat": 32.768944837715,
+          "locationType": 0,
+          "lon": -117.040779273302,
+          "name": "El Cajon Bl & 73rd St",
+          "routeIds": [
+            "MTS_1"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "11438",
+          "direction": "W",
+          "id": "MTS_11438",
+          "lat": 32.768843895996,
+          "locationType": 0,
+          "lon": -117.047496146019,
+          "name": "El Cajon Bl & 70th St",
+          "routeIds": [
+            "MTS_1",
+            "MTS_14"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "99016",
+          "direction": "E",
+          "id": "MTS_99016",
+          "lat": 32.772215483753,
+          "locationType": 0,
+          "lon": -117.042074163269,
+          "name": "70th St Trolley Station",
+          "routeIds": [
+            "MTS_1"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "10160",
+          "direction": "E",
+          "id": "MTS_10160",
+          "lat": 32.762827429406,
+          "locationType": 0,
+          "lon": -117.130375654743,
+          "name": "Adams Av & 30th St",
+          "routeIds": [
+            "MTS_2",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        },
+        {
+          "code": "12453",
+          "direction": "N",
+          "id": "MTS_12453",
+          "lat": 32.752052632692,
+          "locationType": 0,
+          "lon": -117.146117740751,
+          "name": "Park Bl & Polk Av",
+          "routeIds": [
+            "MTS_1",
+            "MTS_11"
+          ],
+          "wheelchairBoarding": "ACCESSIBLE"
+        }
+      ],
+      "trips": [
+        {
+          "blockId": "MTS_101104",
+          "directionId": "1",
+          "id": "MTS_11663713",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_1_244",
+          "timeZone": "",
+          "tripHeadsign": "Skyline Hills",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_103",
+          "directionId": "1",
+          "id": "MTS_11594876",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_63161",
+          "shapeId": "MTS_1_3_133",
+          "timeZone": "",
+          "tripHeadsign": "Hillcrest",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_201104",
+          "directionId": "1",
+          "id": "MTS_11663719",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_1_244",
+          "timeZone": "",
+          "tripHeadsign": "Skyline Hills",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_108",
+          "directionId": "1",
+          "id": "MTS_11594903",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_63161",
+          "shapeId": "MTS_1_3_134",
+          "timeZone": "",
+          "tripHeadsign": "Hillcrest",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101105",
+          "directionId": "1",
+          "id": "MTS_11663726",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_1_244",
+          "timeZone": "",
+          "tripHeadsign": "Skyline Hills",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_102",
+          "directionId": "1",
+          "id": "MTS_11594877",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_63161",
+          "shapeId": "MTS_1_3_133",
+          "timeZone": "",
+          "tripHeadsign": "Hillcrest",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101106",
+          "directionId": "1",
+          "id": "MTS_11663730",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_1_244",
+          "timeZone": "",
+          "tripHeadsign": "Skyline Hills",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_105",
+          "directionId": "1",
+          "id": "MTS_11594904",
+          "routeId": "MTS_1",
+          "routeShortName": "",
+          "serviceId": "MTS_63161",
+          "shapeId": "MTS_1_3_134",
+          "timeZone": "",
+          "tripHeadsign": "Hillcrest",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101107",
+          "directionId": "1",
+          "id": "MTS_11663738",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_1_244",
+          "timeZone": "",
+          "tripHeadsign": "Skyline Hills",
+          "tripShortName": ""
+        },
+        {
+          "blockId": "MTS_101107",
+          "directionId": "0",
+          "id": "MTS_11663737",
+          "routeId": "MTS_11",
+          "routeShortName": "",
+          "serviceId": "MTS_63209",
+          "shapeId": "MTS_11_0_225",
+          "timeZone": "",
+          "tripHeadsign": "SDSU",
+          "tripShortName": ""
+        }
+      ]
+    }
+  },
+  "text": "OK",
+  "version": 2
+}

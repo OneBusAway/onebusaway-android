@@ -27,6 +27,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.HomeActivity;
@@ -87,6 +88,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -1327,11 +1329,50 @@ public final class UIUtils {
     }
 
     /**
+     * Returns a list of all situations (service alerts) that are specific to the stop, routes, and
+     * agency
+     * for the provided arrivals-and-departures-for-stop response.  For route-specific alerts, this
+     * involves looping through the routes and checking the references element to see if there are
+     * any route-specific alerts, and adding them to the list to be shown above the list of
+     * arrivals
+     * for a stop.  See #700.
+     *
+     * @param response response from arrivals-and-departures-for-stop API
+     * @return a list of all situations (service alerts) that are specific to the stop, routes, and
+     * agency
+     * for the provided arrivals-and-departures-for-stop response.  See #700.
+     */
+    public static List<ObaSituation> getAllSituations(final ObaArrivalInfoResponse response) {
+        List<ObaSituation> allSituations = new ArrayList<>();
+        // Add agency-wide and stop-specific alerts
+        allSituations.addAll(response.getSituations());
+
+        // Add all existing Ids to a HashSet for O(1) retrieval (vs. list)
+        HashSet<String> allIds = new HashSet<>();
+        for (ObaSituation s : allSituations) {
+            allIds.add(s.getId());
+        }
+
+        // Scan through the routes, and if a route-specific situation hasn't been added yet, add it
+        ObaArrivalInfo[] info = response.getArrivalInfo();
+        for (ObaArrivalInfo i : info) {
+            for (String situationId : i.getSituationIds()) {
+                if (!allIds.contains(situationId)) {
+                    allIds.add(situationId);
+                    allSituations.add(response.getSituation(situationId));
+                }
+            }
+        }
+        return allSituations;
+    }
+
+    /**
      * Returns true if the provided currentTime falls within the situation's (i.e., alert's) active
      * windows or if the situation does not provide an active window, and false if the currentTime
      * falls outside of the situation's active windows
      *
-     * @param currentTime the time to compare to the situation's windows
+     * @param currentTime the time to compare to the situation's windows, in milliseconds between
+     *                    the current time and midnight, January 1, 1970 UTC
      * @return true if the provided currentTime falls within the situation's (i.e., alert's) active
      * windows or if the situation does not provide an active window, and false if the currentTime
      * falls outside of the situation's active windows
@@ -1341,11 +1382,13 @@ public final class UIUtils {
             // We assume a situation is active if it doesn't contain any active window information
             return true;
         }
+        // Active window times are in seconds since epoch
+        long currentTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime);
         boolean isActiveWindowForSituation = false;
         for (ObaSituation.ActiveWindow activeWindow : situation.getActiveWindows()) {
             long from = activeWindow.getFrom();
             long to = activeWindow.getTo();
-            if (from <= currentTime && currentTime <= to) {
+            if (from <= currentTimeSeconds && currentTimeSeconds <= to) {
                 isActiveWindowForSituation = true;
                 break;
             }

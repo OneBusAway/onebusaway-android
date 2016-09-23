@@ -363,7 +363,7 @@ public class ArrivalsListFragment extends ListFragment
         if (loader != null) {
             ObaArrivalInfoResponse lastGood = loader.getLastGoodResponse();
             if (lastGood != null) {
-                setResponseData(lastGood.getArrivalInfo(), lastGood.getSituations(),
+                setResponseData(lastGood.getArrivalInfo(), UIUtils.getAllSituations(lastGood),
                         lastGood.getRefs());
             }
         }
@@ -435,7 +435,7 @@ public class ArrivalsListFragment extends ListFragment
                 addToDB(mStop);
             }
             info = result.getArrivalInfo();
-            situations = result.getSituations();
+            situations = UIUtils.getAllSituations(result);
             refs = result.getRefs();
 
         } else {
@@ -1647,7 +1647,9 @@ public class ArrivalsListFragment extends ListFragment
         mSituationAlerts = new ArrayList<SituationAlert>();
 
         for (ObaSituation situation : situations) {
-            if (UIUtils.isActiveWindowForSituation(situation, System.currentTimeMillis())) {
+            boolean isActive = UIUtils
+                    .isActiveWindowForSituation(situation, System.currentTimeMillis());
+            if (isActive) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
             }

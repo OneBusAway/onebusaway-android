@@ -349,11 +349,23 @@ public class BaseMapFragment extends SupportMapFragment
                 MapParams.MODE_ROUTE.equals(mController.getMode());
     }
 
-    public void setupStopOverlay() {
-        if (mStopOverlay == null) {
-            mStopOverlay = new StopOverlay(getActivity(), mMap);
-            mStopOverlay.setOnFocusChangeListener(this);
+    /**
+     * Initialize the Stop Overlay
+     *
+     * @return true if the overlay was successfully initialized, false if it was not
+     */
+    public boolean setupStopOverlay() {
+        if (mStopOverlay != null) {
+            // Overlay was previously initialized and can be used
+            return true;
         }
+        if (mMap == null) {
+            // We need a map reference to initialize the overlay
+            return false;
+        }
+        mStopOverlay = new StopOverlay(getActivity(), mMap);
+        mStopOverlay.setOnFocusChangeListener(this);
+        return true;
     }
 
     public void setupVehicleOverlay() {
@@ -483,10 +495,8 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void showStops(List<ObaStop> stops, ObaReferences refs) {
-        // Make sure that the stop overlay has been initialized
-        setupStopOverlay();
-
-        if (stops != null) {
+        // Make sure that the stop overlay has been successfully initialized
+        if (setupStopOverlay() && stops != null) {
             mStopOverlay.populateStops(stops, refs);
         }
     }
@@ -927,10 +937,10 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void setFocusStop(ObaStop stop, List<ObaRoute> routes) {
-        // Make sure that the stop overlay has been initialized
-        setupStopOverlay();
-
-        mStopOverlay.setFocus(stop, routes);
+        // Make sure that the stop overlay has been successfully initialized before setting focus
+        if (setupStopOverlay()) {
+            mStopOverlay.setFocus(stop, routes);
+        }
     }
 
     @Override

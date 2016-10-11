@@ -76,6 +76,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -95,8 +96,9 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
 
 public class HomeActivity extends AppCompatActivity
-        implements BaseMapFragment.OnFocusChangedListener, ArrivalsListFragment.Listener,
-        NavigationDrawerCallbacks, ObaRegionsTask.Callback {
+        implements BaseMapFragment.OnFocusChangedListener,
+        BaseMapFragment.OnProgressBarChangedListener,
+        ArrivalsListFragment.Listener, NavigationDrawerCallbacks, ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
 
@@ -200,6 +202,10 @@ public class HomeActivity extends AppCompatActivity
     ObaStop mFocusedStop = null;
 
     ImageView mExpandCollapse = null;
+
+    ProgressBar mMapProgressBar = null;
+
+    boolean mLastMapProgressBarState = true;
 
     /**
      * Starts the MapActivity with a particular stop focused with the center of
@@ -484,10 +490,17 @@ public class HomeActivity extends AppCompatActivity
                         .commit();
             }
         }
+
         // Register listener for map focus callbacks
         mMapFragment.setOnFocusChangeListener(this);
+        mMapFragment.setOnProgressBarChangedListener(this);
+
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
+
         showMyLocationButton();
+        if (mLastMapProgressBarState) {
+            showMapProgressBar();
+        }
         mShowArrivalsMenu = true;
         if (mFocusedStopId != null && mSlidingPanel != null) {
             // if we've focused on a stop, then show the panel that was previously hidden
@@ -502,6 +515,7 @@ public class HomeActivity extends AppCompatActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
+        hideMapProgressBar();
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
@@ -533,6 +547,7 @@ public class HomeActivity extends AppCompatActivity
          * Hide everything that shouldn't be shown
          */
         hideMyLocationButton();
+        hideMapProgressBar();
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
@@ -886,6 +901,16 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onProgressBarChanged(boolean showProgressBar) {
+        mLastMapProgressBarState = showProgressBar;
+        if (showProgressBar) {
+            showMapProgressBar();
+        } else {
+            hideMapProgressBar();
+        }
+    }
+
     /**
      * Called by the ArrivalsListFragment when the ListView is created
      *
@@ -1218,8 +1243,10 @@ public class HomeActivity extends AppCompatActivity
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
         if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
             showMyLocationButton();
+            showMapProgressBar();
         } else {
             hideMyLocationButton();
+            hideMapProgressBar();
         }
     }
 
@@ -1305,6 +1332,24 @@ public class HomeActivity extends AppCompatActivity
         }
         if (mFabMyLocation.getVisibility() != View.GONE) {
             mFabMyLocation.setVisibility(View.GONE);
+        }
+    }
+
+    private void showMapProgressBar() {
+        if (mMapProgressBar == null) {
+            return;
+        }
+        if (mMapProgressBar.getVisibility() != View.VISIBLE) {
+            mMapProgressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideMapProgressBar() {
+        if (mMapProgressBar == null) {
+            return;
+        }
+        if (mMapProgressBar.getVisibility() != View.GONE) {
+            mMapProgressBar.setVisibility(View.GONE);
         }
     }
 
@@ -1516,6 +1561,7 @@ public class HomeActivity extends AppCompatActivity
                 }
             }
         }
+        mMapProgressBar = (ProgressBar) findViewById(R.id.progress_horizontal);
     }
 
     /**

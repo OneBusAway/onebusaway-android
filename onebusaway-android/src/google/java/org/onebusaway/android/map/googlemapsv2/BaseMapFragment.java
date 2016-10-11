@@ -152,6 +152,9 @@ public class BaseMapFragment extends SupportMapFragment
     // Listen to map tap events
     OnFocusChangedListener mOnFocusChangedListener;
 
+    // Listen to map loading/progress bar events
+    OnProgressBarChangedListener mOnProgressBarChangedListener;
+
     LocationHelper mLocationHelper;
 
     Bundle mLastSavedInstanceState;
@@ -169,6 +172,23 @@ public class BaseMapFragment extends SupportMapFragment
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
+    }
+
+    public interface OnProgressBarChangedListener {
+
+        /**
+         * Called when the map is loading information.  If showProgressBar is true, then the map is
+         * loading information and the progress bar should be shown, but if it's false, then the
+         * map
+         * is finished loading information and the progress bar should be hidden.
+         *
+         * @param showProgressBar true if the map is loading information and the progress bar
+         *                        should
+         *                        be shown, false if the map is finished loading information and
+         *                        the
+         *                        progress bar should be hidden.
+         */
+        void onProgressBarChanged(boolean showProgressBar);
     }
 
     public static BaseMapFragment newInstance() {
@@ -490,7 +510,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void showProgress(boolean show) {
-//        setSupportProgressBarIndeterminateVisibility(show);
+        if (mOnProgressBarChangedListener != null) {
+            mOnProgressBarChangedListener.onProgressBarChanged(show);
+        }
     }
 
     @Override
@@ -541,6 +563,11 @@ public class BaseMapFragment extends SupportMapFragment
 
     public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {
         mOnFocusChangedListener = onFocusChangedListener;
+    }
+
+    public void setOnProgressBarChangedListener(
+            OnProgressBarChangedListener onProgressBarChangedListener) {
+        mOnProgressBarChangedListener = onProgressBarChangedListener;
     }
 
     //

@@ -189,10 +189,14 @@ public class BaseMapFragment extends SupportMapFragment
 
         /**
          * Called when the map is loading information.  If showProgressBar is true, then the map is
-         * loading information and the progress bar should be shown, but if it's false, then the map
+         * loading information and the progress bar should be shown, but if it's false, then the
+         * map
          * is finished loading information and the progress bar should be hidden.
-         * @param showProgressBar true if the map is loading information and the progress bar should
-         *                        be shown, false if the map is finished loading information and the
+         *
+         * @param showProgressBar true if the map is loading information and the progress bar
+         *                        should
+         *                        be shown, false if the map is finished loading information and
+         *                        the
          *                        progress bar should be hidden.
          */
         void onProgressBarChanged(boolean showProgressBar);
@@ -572,7 +576,8 @@ public class BaseMapFragment extends SupportMapFragment
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
-    public void setOnProgressBarChangedListener(OnProgressBarChangedListener onProgressBarChangedListener) {
+    public void setOnProgressBarChangedListener(
+            OnProgressBarChangedListener onProgressBarChangedListener) {
         mOnProgressBarChangedListener = onProgressBarChangedListener;
     }
 

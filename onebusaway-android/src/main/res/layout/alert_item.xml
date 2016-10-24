@@ -18,5 +18,6 @@
           style="@style/AlertListItem"
           android:gravity="center_vertical"
           android:layout_width="fill_parent"
-          android:layout_height="wrap_content">
+          android:layout_height="wrap_content"
+          android:drawablePadding="8dp">
 </TextView>

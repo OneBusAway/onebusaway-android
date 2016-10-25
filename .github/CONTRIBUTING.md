@@ -4,7 +4,7 @@ This guide details how to use issues and pull requests (for new code) to improve
 
 ## Individual Contributor License Agreement (ICLA)
 
-To ensure that the app source code remains fully open-source under a common license, we require that contributors sign [an electronic ICLA](https://docs.google.com/forms/d/12jV-ByyN186MuPotMvxJtNKtSaGGTnEHm8rXomM2bm4/viewform) before contributions can be merged.
+To ensure that the app source code remains fully open-source under a common license, we require that contributors sign an electronic ICLA before contributions can be merged.  When you submit a pull request, you'll be prompted by the [CLA Assistant](https://cla-assistant.io/) to sign the ICLA.
 
 ## Code of Conduct
 

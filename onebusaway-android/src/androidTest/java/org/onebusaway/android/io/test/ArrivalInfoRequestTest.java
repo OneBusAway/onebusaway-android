@@ -250,6 +250,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals("", situation.getAllAffects()[0].getRouteId());
         assertEquals("", situation.getAllAffects()[0].getStopId());
         assertEquals("", situation.getAllAffects()[0].getTripId());
+        assertNull(situation.getUrl());
 
         // Check active windows
         ObaSituation.ActiveWindow[] windows = situation.getActiveWindows();
@@ -309,6 +310,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertEquals("", situation.getAllAffects()[0].getRouteId());
         assertEquals("", situation.getAllAffects()[0].getStopId());
         assertEquals("", situation.getAllAffects()[0].getTripId());
+        assertNull(situation.getUrl());
 
         // Check active windows
         ObaSituation.ActiveWindow[] windows = situation.getActiveWindows();
@@ -400,6 +402,7 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
                 c.getCondition());
         ObaSituation.ConditionDetails details = c.getDetails();
         assertNull(details);
+        assertEquals("http://www.sdmts.com/Planning/alerts_detours.asp", situation.getUrl());
     }
 
     // TODO: get/create situation response that includes diversion path

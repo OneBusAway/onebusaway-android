@@ -152,4 +152,10 @@ public interface ObaSituation extends ObaElement {
      * @return An array of active windows of this situation
      */
     public ActiveWindow[] getActiveWindows();
+
+
+    /**
+     * @return A URL to a human-readable website with more details on the alert
+     */
+    public String getUrl();
 }

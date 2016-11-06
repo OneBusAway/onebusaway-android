@@ -45,6 +45,7 @@ public class SituationActivity extends AppCompatActivity {
             mIntent = new Intent(context, SituationActivity.class);
             mIntent.putExtra(SituationFragment.TITLE, situation.getSummary());
             mIntent.putExtra(SituationFragment.DESCRIPTION, situation.getDescription());
+            mIntent.putExtra(SituationFragment.URL, situation.getUrl());
             mIntent.putExtra(SituationActivity.PARENT_ACTIVITY, context.getClass().getName());
         }
 

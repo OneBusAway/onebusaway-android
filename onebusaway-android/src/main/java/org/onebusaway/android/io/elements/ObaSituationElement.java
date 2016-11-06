@@ -181,6 +181,8 @@ public final class ObaSituationElement implements ObaSituation {
 
     private final ActiveWindowElement[] activeWindows;
 
+    private final Text url;
+
     ObaSituationElement() {
         id = "";
         summary = null;
@@ -193,6 +195,7 @@ public final class ObaSituationElement implements ObaSituation {
         consequences = ConsequenceElement.EMPTY_ARRAY;
         activeWindows = ActiveWindowElement.EMPTY_ARRAY;
         severity = "";
+        url = null;
     }
 
     @Override
@@ -242,4 +245,9 @@ public final class ObaSituationElement implements ObaSituation {
 
     @Override
     public ActiveWindow[] getActiveWindows() { return activeWindows; }
+
+    @Override
+    public String getUrl() {
+        return (url != null) ? url.getValue() : null;
+    }
 }

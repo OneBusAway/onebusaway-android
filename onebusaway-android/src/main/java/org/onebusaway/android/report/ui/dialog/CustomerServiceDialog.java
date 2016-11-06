@@ -116,7 +116,7 @@ public class CustomerServiceDialog extends DialogFragment implements
                     getColor(R.color.navdrawer_icon_tint_selected));
 
             if (TextUtils.isEmpty(agency.getEmail())) {
-                //emailButton.setVisibility(View.INVISIBLE);
+                emailButton.setVisibility(View.INVISIBLE);
             } else {
                 emailButton.setOnClickListener(new View.OnClickListener() {
                     @Override

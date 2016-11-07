@@ -13,14 +13,16 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/situation_container"
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:background="@color/listview_background">
 
     <LinearLayout
+            android:id="@+id/situation_header"
             style="@style/HeaderItem"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -35,7 +37,7 @@
                 android:layout_marginRight="10dp"/>
     </LinearLayout>
     <ScrollView android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="fill_parent"
                 android:background="@color/listview_background">
         <LinearLayout
                 xmlns:android="http://schemas.android.com/apk/res/android"
@@ -70,17 +72,19 @@
         </LinearLayout>
     </ScrollView>
     <LinearLayout
+            android:id="@+id/situation_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
             android:gravity="right"
-            android:background="@color/listview_background">
+            android:background="@color/theme_primary">
         <Button
                 android:id="@+id/alert_dismiss"
                 android:text="@string/dismiss"
                 style="?attr/borderlessButtonStyle"
-                android:textColor="@color/theme_primary"
+                android:textColor="@color/header_text_color"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"/>
     </LinearLayout>
-</LinearLayout>
+</RelativeLayout>

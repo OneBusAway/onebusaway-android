@@ -71,18 +71,22 @@
                     android:textColorLink="@color/theme_accent"/>
         </LinearLayout>
     </ScrollView>
+    <View android:layout_width="match_parent"
+          android:layout_height="1dp"
+          android:layout_above="@+id/situation_footer"
+          android:gravity="start|center_vertical"
+          android:background="#e5e5e5"/>
     <LinearLayout
             android:id="@+id/situation_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:gravity="right"
-            android:background="@color/theme_primary">
+            android:background="@color/listview_background">
         <Button
                 android:id="@+id/alert_dismiss"
                 android:text="@string/dismiss"
                 style="?attr/borderlessButtonStyle"
-                android:textColor="@color/header_text_color"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"/>

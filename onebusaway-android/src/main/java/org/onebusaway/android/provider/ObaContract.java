@@ -1005,10 +1005,6 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".service_alert";
 
-        public static final Uri buildUri(String situationId) {
-            return CONTENT_URI.buildUpon().appendPath(situationId).build();
-        }
-
         /**
          * @param markAsRead true if this alert should be marked as read with the timestamp of
          *                   System.currentTimeMillis(),
@@ -1019,12 +1015,17 @@ public final class ObaContract {
          *                   dismissed by the user, or null if the dismissed value shouldn't be
          *                   changed
          */
-        public static Uri insertOrUpdate(Context context,
-                String id,
+        public static Uri insertOrUpdate(String id,
                 ContentValues values,
                 boolean markAsRead,
                 Boolean dismissed) {
-            ContentResolver cr = context.getContentResolver();
+            if (id == null) {
+                return null;
+            }
+            if (values == null) {
+                values = new ContentValues();
+            }
+            ContentResolver cr = Application.get().getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
             Cursor c = cr.query(uri, new String[]{}, null, null, null);
             Uri result;
@@ -1074,11 +1075,11 @@ public final class ObaContract {
          * @return true if this service alert (situation) has been previously dismissed by the user,
          * false it if has not
          */
-        private static boolean isDismissed(Context context, String situationId) {
+        public static boolean isDismissed(String situationId) {
             final String[] selection = {_ID, DISMISSED};
             final String[] selectionArgs = {situationId, Integer.toString(1)};
             final String WHERE = _ID + "=? AND " + DISMISSED + "=?";
-            ContentResolver cr = context.getContentResolver();
+            ContentResolver cr = Application.get().getContentResolver();
             Cursor c = cr.query(CONTENT_URI, selection, WHERE, selectionArgs, null);
             boolean dismissed;
             if (c != null && c.getCount() > 0) {

@@ -43,6 +43,7 @@ public class SituationActivity extends AppCompatActivity {
         public Builder(Context context, ObaSituation situation) {
             mContext = context;
             mIntent = new Intent(context, SituationActivity.class);
+            mIntent.putExtra(SituationFragment.ID, situation.getId());
             mIntent.putExtra(SituationFragment.TITLE, situation.getSummary());
             mIntent.putExtra(SituationFragment.DESCRIPTION, situation.getDescription());
             mIntent.putExtra(SituationFragment.URL, situation.getUrl());

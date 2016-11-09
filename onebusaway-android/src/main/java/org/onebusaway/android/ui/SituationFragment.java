@@ -18,8 +18,11 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,9 +35,12 @@ import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class SituationFragment extends Fragment {
+
+    public static final String ID = ".ID";
 
     public static final String TITLE = ".Title";
 
@@ -46,6 +52,7 @@ public class SituationFragment extends Fragment {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Bundle args = new Bundle();
+        args.putString(ID, situation.getId());
         args.putString(TITLE, situation.getSummary());
         // We don't use the stop name map here...we want the actual stop name.
         args.putString(DESCRIPTION, situation.getDescription());
@@ -78,6 +85,8 @@ public class SituationFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
+        String id = args.getString(ID);
+
         TextView title = (TextView) view.findViewById(R.id.alert_title);
         title.setText(args.getString(TITLE));
 
@@ -85,6 +94,7 @@ public class SituationFragment extends Fragment {
         desc.setText(args.getString(DESCRIPTION));
 
         TextView urlView = (TextView) view.findViewById(R.id.alert_url);
+
         // Remove any previous clickable spans just to be safe
         UIUtils.removeAllClickableSpans(urlView);
 
@@ -101,6 +111,24 @@ public class SituationFragment extends Fragment {
         } else {
             urlView.setVisibility(View.GONE);
         }
+
+        Button btn = (Button) view.findViewById(R.id.alert_dismiss);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Update the database to indicate that this alert has been dismissed
+                ObaContract.ServiceAlerts.insertOrUpdate(ID, new ContentValues(), false, true);
+
+                // Close the activity
+                Activity a = getActivity();
+                if (a != null) {
+                    a.finish();
+                }
+            }
+        });
+
+        // Update the database to indicate that this alert has been read
+        ObaContract.ServiceAlerts.insertOrUpdate(ID, new ContentValues(), true, null);
     }
 
     @Override

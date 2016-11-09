@@ -1646,10 +1646,19 @@ public class ArrivalsListFragment extends ListFragment
 
         mSituationAlerts = new ArrayList<SituationAlert>();
 
+        ContentValues values = new ContentValues();
+
         for (ObaSituation situation : situations) {
+            values.clear();
+
+            // Make sure this situation is added to the database
+            ObaContract.ServiceAlerts.insertOrUpdate(situation.getId(), values, false, null);
+
             boolean isActive = UIUtils
                     .isActiveWindowForSituation(situation, System.currentTimeMillis());
-            if (isActive) {
+            boolean isDismissed = ObaContract.ServiceAlerts.isDismissed(situation.getId());
+
+            if (isActive && !isDismissed) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
             }

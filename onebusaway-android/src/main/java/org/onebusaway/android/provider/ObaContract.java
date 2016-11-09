@@ -298,6 +298,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String MARKED_READ_TIME = "marked_read_time";
+
+        /**
+         * Whether or not the alert has been dismissed (i.e., hidden) by the user.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String DISMISSED = "dismissed";
     }
 
     protected interface RegionsColumns {
@@ -1001,10 +1009,21 @@ public final class ObaContract {
             return CONTENT_URI.buildUpon().appendPath(situationId).build();
         }
 
+        /**
+         * @param markAsRead true if this alert should be marked as read with the timestamp of
+         *                   System.currentTimeMillis(),
+         *                   false if the alert should not be marked as read with the timestamp of
+         *                   System.currentTimeMillis()
+         * @param dismissed  true if this alert should be marked as dismissed by the user, false if
+         *                   it should be marked as not
+         *                   dismissed by the user, or null if the dismissed value shouldn't be
+         *                   changed
+         */
         public static Uri insertOrUpdate(Context context,
                 String id,
                 ContentValues values,
-                boolean markAsRead) {
+                boolean markAsRead,
+                Boolean dismissed) {
             ContentResolver cr = context.getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
             Cursor c = cr.query(uri, new String[]{}, null, null, null);
@@ -1015,12 +1034,27 @@ public final class ObaContract {
                     c.moveToFirst();
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
+                if (dismissed != null) {
+                    c.moveToFirst();
+                    if (dismissed) {
+                        values.put(DISMISSED, 1);
+                    } else {
+                        values.put(DISMISSED, 0);
+                    }
+                }
                 cr.update(uri, values, null, null);
                 result = uri;
             } else {
                 // Insert
                 if (markAsRead) {
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
+                }
+                if (dismissed != null) {
+                    if (dismissed) {
+                        values.put(DISMISSED, 1);
+                    } else {
+                        values.put(DISMISSED, 0);
+                    }
                 }
                 values.put(_ID, id);
                 result = cr.insert(CONTENT_URI, values);
@@ -1029,6 +1063,33 @@ public final class ObaContract {
                 c.close();
             }
             return result;
+        }
+
+        /**
+         * Returns true if this service alert (situation) has been previously dismissed by the
+         * user,
+         * false it if has not
+         *
+         * @param situationId The ID of the situation (service alert)
+         * @return true if this service alert (situation) has been previously dismissed by the user,
+         * false it if has not
+         */
+        private static boolean isDismissed(Context context, String situationId) {
+            final String[] selection = {_ID, DISMISSED};
+            final String[] selectionArgs = {situationId, Integer.toString(1)};
+            final String WHERE = _ID + "=? AND " + DISMISSED + "=?";
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, selection, WHERE, selectionArgs, null);
+            boolean dismissed;
+            if (c != null && c.getCount() > 0) {
+                dismissed = true;
+            } else {
+                dismissed = false;
+            }
+            if (c != null) {
+                c.close();
+            }
+            return dismissed;
         }
     }
 

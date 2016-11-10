@@ -1043,7 +1043,9 @@ public final class ObaContract {
                         values.put(DISMISSED, 0);
                     }
                 }
-                cr.update(uri, values, null, null);
+                if (values.size() != 0) {
+                    cr.update(uri, values, null, null);
+                }
                 result = uri;
             } else {
                 // Insert

@@ -820,7 +820,7 @@ public class ObaProvider extends ContentProvider {
                 qb.setProjectionMap(sServiceAlertsProjectionMap);
                 qb.appendWhere(ObaContract.ServiceAlerts._ID);
                 qb.appendWhere("=");
-                qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+                qb.appendWhereEscapeString(uri.getLastPathSegment());
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
 

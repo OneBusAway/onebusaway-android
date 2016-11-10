@@ -85,7 +85,7 @@ public class SituationFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Set the stop name.
         Bundle args = getArguments();
-        String id = args.getString(ID);
+        final String id = args.getString(ID);
 
         TextView title = (TextView) view.findViewById(R.id.alert_title);
         title.setText(args.getString(TITLE));
@@ -117,7 +117,7 @@ public class SituationFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 // Update the database to indicate that this alert has been dismissed
-                ObaContract.ServiceAlerts.insertOrUpdate(ID, new ContentValues(), false, true);
+                ObaContract.ServiceAlerts.insertOrUpdate(id, new ContentValues(), false, true);
 
                 // Close the activity
                 Activity a = getActivity();

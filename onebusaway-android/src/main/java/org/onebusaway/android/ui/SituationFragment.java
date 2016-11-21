@@ -26,6 +26,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -119,10 +120,32 @@ public class SituationFragment extends Fragment {
                 // Update the database to indicate that this alert has been dismissed
                 ObaContract.ServiceAlerts.insertOrUpdate(id, new ContentValues(), false, true);
 
-                // Close the activity
-                Activity a = getActivity();
-                if (a != null) {
-                    a.finish();
+                // Show the UNDO snackbar
+                View parentView = getView();
+                if (parentView != null) {
+                    Snackbar.make(parentView, R.string.alert_dismiss_snackbar_text,
+                            Snackbar.LENGTH_LONG)
+                            .setAction(R.string.alert_dismiss_snackbar_action,
+                                    new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            ObaContract.ServiceAlerts
+                                                    .insertOrUpdate(id, new ContentValues(), false,
+                                                            false);
+                                        }
+                                    })
+                            .setCallback(new Snackbar.Callback() {
+                                @Override
+                                public void onDismissed(Snackbar snackbar, int event) {
+                                    if (event != DISMISS_EVENT_ACTION) {
+                                        // Close the activity if the user didn't click "Undo"
+                                        Activity a = getActivity();
+                                        if (a != null) {
+                                            a.finish();
+                                        }
+                                    }
+                                }
+                            }).show();
                 }
             }
         });

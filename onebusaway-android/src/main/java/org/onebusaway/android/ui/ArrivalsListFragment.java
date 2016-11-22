@@ -1588,8 +1588,8 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            SituationFragment.showDialog(getActivity(), mSituation,
-                    new SituationFragment.Listener() {
+            SituationDialog.showDialog(getActivity(), mSituation,
+                    new SituationDialog.Listener() {
                         @Override
                         public void onDismiss(boolean isAlertHidden) {
                             if (isAlertHidden) {

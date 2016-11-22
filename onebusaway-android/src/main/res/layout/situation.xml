@@ -39,7 +39,7 @@
     <ScrollView
             android:id="@+id/alert_scrollview"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:layout_below="@+id/situation_header"
             android:background="@color/listview_background">
         <LinearLayout
@@ -74,25 +74,4 @@
                     android:textColorLink="@color/theme_accent"/>
         </LinearLayout>
     </ScrollView>
-    <LinearLayout
-            android:id="@+id/situation_footer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:gravity="right"
-            android:background="@color/listview_background">
-        <Button
-                android:id="@+id/alert_close"
-                android:text="@string/close"
-                style="?attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        <Button
-                android:id="@+id/alert_hide"
-                android:text="@string/hide"
-                style="?attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"/>
-    </LinearLayout>
 </RelativeLayout>

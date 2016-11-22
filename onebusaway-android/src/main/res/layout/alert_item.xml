@@ -24,13 +24,38 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:drawablePadding="8dp"/>
-    <Button
-            android:id="@+id/show_dismissed_alerts"
-            style="?attr/borderlessButtonStyle"
-            android:text="@string/alert_show_dismissed_alerts"
-            android:textColor="@color/alert_text_color_info"
-            android:layout_width="wrap_content"
+    <LinearLayout
+            android:id="@+id/filter_alert_group"
+            style="@style/Header3Text"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:visibility="visible"/>
+            android:layout_alignParentBottom="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@color/theme_primary_dark"
+            android:visibility="gone">
+
+        <TextView
+                android:id="@+id/filter_alert_text"
+                style="@style/Header3Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical|right"/>
+
+        <TextView
+                android:id="@+id/show_all_alerts"
+                android:text="@string/alert_filter_showall"
+                style="@style/Header3Text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginLeft="2dp"
+                android:gravity="center_vertical"
+                android:bufferType="spannable"
+                android:linksClickable="true"
+                android:textColorLink="@color/theme_accent"/>
+    </LinearLayout>
 </LinearLayout>

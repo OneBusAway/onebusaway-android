@@ -17,8 +17,8 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/situation_container"
         android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="@color/listview_background">
 
     <LinearLayout
@@ -47,18 +47,18 @@
                 android:orientation="vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content">
-        <TextView
-                android:id="@+id/alert_description"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:textSize="18sp"
-                android:padding="4dp"
-                android:textIsSelectable="true"
-                android:autoLink="all"
-                android:linksClickable="true">
-        </TextView>
+            <TextView
+                    android:id="@+id/alert_description"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:textSize="14sp"
+                    android:padding="4dp"
+                    android:textIsSelectable="true"
+                    android:autoLink="all"
+                    android:linksClickable="true">
+            </TextView>
             <TextView
                     android:id="@+id/alert_url"
                     android:text="@string/situation_more_details"
@@ -67,18 +67,13 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
                     android:layout_marginBottom="10dp"
-                    android:textSize="18sp"
+                    android:textSize="14sp"
                     android:padding="4dp"
                     android:bufferType="spannable"
                     android:linksClickable="true"
                     android:textColorLink="@color/theme_accent"/>
         </LinearLayout>
     </ScrollView>
-    <View android:layout_width="match_parent"
-          android:layout_height="1dp"
-          android:layout_above="@+id/situation_footer"
-          android:gravity="start|center_vertical"
-          android:background="#e5e5e5"/>
     <LinearLayout
             android:id="@+id/situation_footer"
             android:layout_width="match_parent"
@@ -87,8 +82,14 @@
             android:gravity="right"
             android:background="@color/listview_background">
         <Button
-                android:id="@+id/alert_dismiss"
-                android:text="@string/dismiss"
+                android:id="@+id/alert_close"
+                android:text="@string/close"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        <Button
+                android:id="@+id/alert_hide"
+                android:text="@string/hide"
                 style="?attr/borderlessButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

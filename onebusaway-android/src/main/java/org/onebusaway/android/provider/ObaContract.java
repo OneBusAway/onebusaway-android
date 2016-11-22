@@ -300,12 +300,12 @@ public final class ObaContract {
         public static final String MARKED_READ_TIME = "marked_read_time";
 
         /**
-         * Whether or not the alert has been dismissed (i.e., hidden) by the user.
+         * Whether or not the alert has been hidden by the user.
          * <P>
          * Type: BOOLEAN
          * </P>
          */
-        public static final String DISMISSED = "dismissed";
+        public static final String HIDDEN = "hidden";
     }
 
     protected interface RegionsColumns {
@@ -1010,15 +1010,15 @@ public final class ObaContract {
          *                   System.currentTimeMillis(),
          *                   false if the alert should not be marked as read with the timestamp of
          *                   System.currentTimeMillis()
-         * @param dismissed  true if this alert should be marked as dismissed by the user, false if
+         * @param hidden  true if this alert should be marked as hidden by the user, false if
          *                   it should be marked as not
-         *                   dismissed by the user, or null if the dismissed value shouldn't be
+         *                   hidden by the user, or null if the hidden value shouldn't be
          *                   changed
          */
         public static Uri insertOrUpdate(String id,
                 ContentValues values,
                 boolean markAsRead,
-                Boolean dismissed) {
+                Boolean hidden) {
             if (id == null) {
                 return null;
             }
@@ -1035,12 +1035,12 @@ public final class ObaContract {
                     c.moveToFirst();
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
-                if (dismissed != null) {
+                if (hidden != null) {
                     c.moveToFirst();
-                    if (dismissed) {
-                        values.put(DISMISSED, 1);
+                    if (hidden) {
+                        values.put(HIDDEN, 1);
                     } else {
-                        values.put(DISMISSED, 0);
+                        values.put(HIDDEN, 0);
                     }
                 }
                 if (values.size() != 0) {
@@ -1052,11 +1052,11 @@ public final class ObaContract {
                 if (markAsRead) {
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
-                if (dismissed != null) {
-                    if (dismissed) {
-                        values.put(DISMISSED, 1);
+                if (hidden != null) {
+                    if (hidden) {
+                        values.put(HIDDEN, 1);
                     } else {
-                        values.put(DISMISSED, 0);
+                        values.put(HIDDEN, 0);
                     }
                 }
                 values.put(_ID, id);
@@ -1069,41 +1069,40 @@ public final class ObaContract {
         }
 
         /**
-         * Returns true if this service alert (situation) has been previously dismissed by the
-         * user,
-         * false it if has not
+         * Returns true if this service alert (situation) has been previously hidden by the
+         * user, false it if has not
          *
          * @param situationId The ID of the situation (service alert)
-         * @return true if this service alert (situation) has been previously dismissed by the user,
+         * @return true if this service alert (situation) has been previously hidden by the user,
          * false it if has not
          */
-        public static boolean isDismissed(String situationId) {
-            final String[] selection = {_ID, DISMISSED};
+        public static boolean isHidden(String situationId) {
+            final String[] selection = {_ID, HIDDEN};
             final String[] selectionArgs = {situationId, Integer.toString(1)};
-            final String WHERE = _ID + "=? AND " + DISMISSED + "=?";
+            final String WHERE = _ID + "=? AND " + HIDDEN + "=?";
             ContentResolver cr = Application.get().getContentResolver();
             Cursor c = cr.query(CONTENT_URI, selection, WHERE, selectionArgs, null);
-            boolean dismissed;
+            boolean hidden;
             if (c != null && c.getCount() > 0) {
-                dismissed = true;
+                hidden = true;
             } else {
-                dismissed = false;
+                hidden = false;
             }
             if (c != null) {
                 c.close();
             }
-            return dismissed;
+            return hidden;
         }
 
         /**
-         * Marks all alerts as not dismissed, and therefore visible
+         * Marks all alerts as not hidden, and therefore visible
          *
          * @return the number of rows updated
          */
         public static int showAllAlerts() {
             ContentResolver cr = Application.get().getContentResolver();
             ContentValues values = new ContentValues();
-            values.put(DISMISSED, 0);
+            values.put(HIDDEN, 0);
             return cr.update(CONTENT_URI, values, null, null);
         }
     }

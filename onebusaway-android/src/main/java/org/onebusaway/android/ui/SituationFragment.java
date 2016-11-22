@@ -21,25 +21,28 @@ import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.UIUtils;
 
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class SituationFragment extends Fragment {
+/**
+ * Displays service alerts (i.e., situations) is a dialog
+ */
+public class SituationFragment extends DialogFragment {
+
+    public static final String TAG = "SituationFragment";
 
     public static final String ID = ".ID";
 
@@ -49,9 +52,28 @@ public class SituationFragment extends Fragment {
 
     public static final String URL = ".Url";
 
-    static void show(AppCompatActivity activity, ObaSituation situation) {
-        FragmentManager fm = activity.getSupportFragmentManager();
+    interface Listener {
 
+        /**
+         * Called when this dialog is dismissed
+         *
+         * @param isAlertHidden true if the service alert was hidden by the user, false if it was
+         *                      not
+         */
+        void onDismiss(boolean isAlertHidden);
+
+        /**
+         * Called when the user taps the "Undo" snackbar for hiding an alert
+         */
+        void onUndo();
+    }
+
+    private Listener mListener;
+
+    /**
+     * Helper method to show this dialog fragment
+     */
+    static void showDialog(FragmentActivity activity, ObaSituation situation, Listener listener) {
         Bundle args = new Bundle();
         args.putString(ID, situation.getId());
         args.putString(TITLE, situation.getSummary());
@@ -60,30 +82,25 @@ public class SituationFragment extends Fragment {
         if (!TextUtils.isEmpty(situation.getUrl())) {
             args.putString(URL, situation.getUrl());
         }
-
-        // Create the list fragment and add it as our sole content.
-        SituationFragment content = new SituationFragment();
-        content.setArguments(args);
-
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(android.R.id.content, content);
-        ft.addToBackStack(null);
-        ft.commit();
+        SituationFragment fragment = new SituationFragment();
+        fragment.setArguments(args);
+        fragment.setListener(listener);
+        fragment.show(activity.getSupportFragmentManager(), TAG);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater,
-            ViewGroup root, Bundle savedInstanceState) {
-        if (root == null) {
-            // Currently in a layout without a container, so no
-            // reason to create our view.
-            return null;
-        }
-        return inflater.inflate(R.layout.situation, null);
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+
+        View v = inflater.inflate(R.layout.situation, null);
+        init(v);
+        builder.setView(v);
+
+        return builder.create();
     }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    private void init(View view) {
         // Set the stop name.
         Bundle args = getArguments();
         final String id = args.getString(ID);
@@ -113,45 +130,52 @@ public class SituationFragment extends Fragment {
             urlView.setVisibility(View.GONE);
         }
 
-        Button btn = (Button) view.findViewById(R.id.alert_dismiss);
-        btn.setOnClickListener(new View.OnClickListener() {
+        Button hide = (Button) view.findViewById(R.id.alert_hide);
+        hide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Update the database to indicate that this alert has been dismissed
+                // Update the database to indicate that this alert has been hidden
                 ObaContract.ServiceAlerts.insertOrUpdate(id, new ContentValues(), false, true);
 
                 // Show the UNDO snackbar
-                View parentView = getView();
-                if (parentView != null) {
-                    Snackbar.make(parentView, R.string.alert_dismiss_snackbar_text,
-                            Snackbar.LENGTH_SHORT)
-                            .setAction(R.string.alert_dismiss_snackbar_action,
-                                    new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View v) {
-                                            ObaContract.ServiceAlerts
-                                                    .insertOrUpdate(id, new ContentValues(), false,
-                                                            false);
-                                        }
-                                    })
-                            .setCallback(new Snackbar.Callback() {
-                                @Override
-                                public void onDismissed(Snackbar snackbar, int event) {
-                                    if (event != DISMISS_EVENT_ACTION) {
-                                        // Close the activity if the user didn't click "Undo"
-                                        Activity a = getActivity();
-                                        if (a != null) {
-                                            a.finish();
+                Snackbar.make(getActivity().findViewById(R.id.fragment_arrivals_list),
+                        R.string.alert_hidden_snackbar_text, Snackbar.LENGTH_SHORT)
+                        .setAction(R.string.alert_hidden_snackbar_action,
+                                new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        ObaContract.ServiceAlerts
+                                                .insertOrUpdate(id, new ContentValues(), false,
+                                                        false);
+                                        if (mListener != null) {
+                                            mListener.onUndo();
                                         }
                                     }
-                                }
-                            }).show();
+                                }).show();
+                dismiss();
+                if (mListener != null) {
+                    mListener.onDismiss(true);
+                }
+            }
+        });
+
+        Button close = (Button) view.findViewById(R.id.alert_close);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+                if (mListener != null) {
+                    mListener.onDismiss(false);
                 }
             }
         });
 
         // Update the database to indicate that this alert has been read
         ObaContract.ServiceAlerts.insertOrUpdate(ID, new ContentValues(), true, null);
+    }
+
+    public void setListener(Listener listener) {
+        mListener = listener;
     }
 
     @Override

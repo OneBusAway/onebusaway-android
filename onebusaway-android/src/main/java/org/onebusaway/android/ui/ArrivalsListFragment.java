@@ -1588,7 +1588,22 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            SituationActivity.start(getActivity(), mSituation);
+            SituationFragment.showDialog(getActivity(), mSituation,
+                    new SituationFragment.Listener() {
+                        @Override
+                        public void onDismiss(boolean isAlertHidden) {
+                            if (isAlertHidden) {
+                                // User hid a service alert, so we need to refresh the list
+                                refresh();
+                            }
+                        }
+
+                        @Override
+                        public void onUndo() {
+                            // User hit undo, so we need to refresh the list
+                            refresh();
+                        }
+                    });
             reportAnalytics(mSituation);
         }
 
@@ -1637,7 +1652,7 @@ public class ArrivalsListFragment extends ListFragment
                 mAlertList.remove(alert);
             }
         }
-        mAlertList.setDismissedAlerts(false);
+        mAlertList.setAlertHidden(false);
         mSituationAlerts = null;
 
         if (situations.isEmpty()) {
@@ -1645,9 +1660,11 @@ public class ArrivalsListFragment extends ListFragment
             return;
         }
 
-        mSituationAlerts = new ArrayList<SituationAlert>();
+        mSituationAlerts = new ArrayList<>();
 
         ContentValues values = new ContentValues();
+
+        int hiddenCount = 0;
 
         for (ObaSituation situation : situations) {
             values.clear();
@@ -1657,16 +1674,18 @@ public class ArrivalsListFragment extends ListFragment
 
             boolean isActive = UIUtils
                     .isActiveWindowForSituation(situation, System.currentTimeMillis());
-            boolean isDismissed = ObaContract.ServiceAlerts.isDismissed(situation.getId());
+            boolean isHidden = ObaContract.ServiceAlerts.isHidden(situation.getId());
 
-            if (isActive && !isDismissed) {
+            if (isActive && !isHidden) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
             }
-            if (isDismissed) {
-                mAlertList.setDismissedAlerts(true);
+            if (isHidden) {
+                mAlertList.setAlertHidden(true);
+                hiddenCount++;
             }
         }
+        mAlertList.setHiddenAlertCount(hiddenCount);
         mAlertList.addAll(mSituationAlerts);
     }
 }

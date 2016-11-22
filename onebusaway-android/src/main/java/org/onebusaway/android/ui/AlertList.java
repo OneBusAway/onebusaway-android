@@ -18,6 +18,7 @@ package org.onebusaway.android.ui;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -25,8 +26,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.text.style.ClickableSpan;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -39,7 +40,7 @@ class AlertList {
         public static final int TYPE_ERROR = 1;
         public static final int TYPE_WARNING = 2;
         public static final int TYPE_INFO = 3;
-        public static final int TYPE_SHOW_DISMISSED_ALERT = 4;
+        public static final int TYPE_SHOW_HIDDEN_ALERTS = 4;
 
         // Adds an affordance to show that it's clickable
         // and you can see more..
@@ -65,17 +66,24 @@ class AlertList {
             super(context, R.layout.alert_item);
         }
 
+        /**
+         * Initialize the views - if the alert is a service alert that should be shown, populate
+         * that text.  If its a response error (i.e., couldn't update from server), show that.
+         * If it's an alert showing that some alerts are filtered, show that.
+         */
         @Override
         protected void initView(View view, final Alert alert) {
-            TextView text = (TextView) view.findViewById(android.R.id.text1);
-            Button button = (Button) view.findViewById(R.id.show_dismissed_alerts);
+            TextView alertView = (TextView) view.findViewById(android.R.id.text1);
+            View filterGroupView = view.findViewById(R.id.filter_alert_group);
+            TextView filterTextView = (TextView) view.findViewById(R.id.filter_alert_text);
+            TextView showAllView = (TextView) view.findViewById(R.id.show_all_alerts);
 
-            text.setText(alert.getString());
+            alertView.setText(alert.getString());
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
             int type = alert.getType();
             Resources r = Application.get().getResources();
 
-            int bg;
+            int bg = R.color.alert_text_background_info;
             int arrowColor = R.color.alert_text_color_info;
             int alertColor = R.color.alert_icon_info;
             int resourceIdAlert = 0;
@@ -86,32 +94,32 @@ class AlertList {
                     arrowColor = R.color.alert_text_color_error;
                     resourceIdAlert = R.drawable.ic_alert_warning;
                     alertColor = R.color.alert_icon_error;
-                    text.setVisibility(View.VISIBLE);
-                    button.setVisibility(View.GONE);
+                    alertView.setVisibility(View.VISIBLE);
+                    filterGroupView.setVisibility(View.GONE);
                     break;
                 case Alert.TYPE_WARNING:
                     bg = R.color.alert_text_background_warning;
                     arrowColor = R.color.alert_text_color_warning;
                     resourceIdAlert = R.drawable.ic_alert_warning;
                     alertColor = R.color.alert_icon_warning;
-                    text.setVisibility(View.VISIBLE);
-                    button.setVisibility(View.GONE);
+                    alertView.setVisibility(View.VISIBLE);
+                    filterGroupView.setVisibility(View.GONE);
                     break;
-                case Alert.TYPE_SHOW_DISMISSED_ALERT:
-                    bg = R.color.material_gray;
-                    text.setVisibility(View.GONE);
-                    button.setVisibility(View.VISIBLE);
+                case Alert.TYPE_SHOW_HIDDEN_ALERTS:
+                    alertView.setVisibility(View.GONE);
+                    filterGroupView.setVisibility(View.VISIBLE);
+                    filterTextView.setText(alert.getString());
                     break;
                 case Alert.TYPE_INFO:
                 default:
                     bg = R.color.alert_text_background_info;
                     arrowColor = R.color.alert_text_color_info;
-                    text.setVisibility(View.VISIBLE);
-                    button.setVisibility(View.GONE);
+                    alertView.setVisibility(View.VISIBLE);
+                    filterGroupView.setVisibility(View.GONE);
                     break;
             }
             // Set text color to same as arrow color
-            text.setTextColor(r.getColor(arrowColor));
+            alertView.setTextColor(r.getColor(arrowColor));
 
             Drawable dWarning;
             Drawable wdWarning = null;
@@ -138,7 +146,7 @@ class AlertList {
                 DrawableCompat.setTint(wdArrow, r.getColor(arrowColor));
             }
 
-            text.setCompoundDrawablesWithIntrinsicBounds(wdWarning, null, wdArrow, null);
+            alertView.setCompoundDrawablesWithIntrinsicBounds(wdWarning, null, wdArrow, null);
 
             // Set the background color
             view.setBackgroundResource(bg);
@@ -152,13 +160,23 @@ class AlertList {
                 }
             };
             view.setOnClickListener(listener);
-            button.setOnClickListener(listener);
+
+            // Remove any previous clickable spans - we're recycling views between fragments for efficiency
+            UIUtils.removeAllClickableSpans(showAllView);
+            ClickableSpan showAllClick = new ClickableSpan() {
+                public void onClick(View v) {
+                    alert.onClick();
+                }
+            };
+            UIUtils.setClickableSpan(showAllView, showAllClick);
         }
     }
 
     private Adapter mAdapter;
 
-    private boolean mIsDismissedAlerts;
+    private boolean mIsAlertHidden;
+
+    private int mHiddenAlertCount;
 
     //
     // Cached views
@@ -212,25 +230,43 @@ class AlertList {
     }
 
     /**
-     * Returns true if some alerts have previously been hidden (dismissed) that would otherwise
-     * appear in this list, false if all alerts are visible (not dismissed)
+     * Returns true if some alerts have previously been hidden that would otherwise
+     * appear in this list, false if all alerts are visible
      *
-     * @return true if some alerts have previously been hidden (dismissed) that would otherwise
-     * appear in this list, false if all alerts are visible (not dismissed)
+     * @return true if some alerts have previously been hidden that would otherwise
+     * appear in this list, false if all alerts are visible
      */
-    public boolean isDismissedAlerts() {
-        return mIsDismissedAlerts;
+    public boolean isAlertHidden() {
+        return mIsAlertHidden;
     }
 
     /**
-     * Set to true if there are some alerts that have been previoiusly hidden (dimissed) that would
-     * otherwise appear in this list, , false if all alerts are visible (not dismissed)
+     * Set to true if there are some alerts that have been previously hidden that would
+     * otherwise appear in this list, , false if all alerts are visible
      *
-     * @param dismissedAlerts true if there are some alerts that have been previoiusly hidden (
-     *                        dimissed) that would otherwise appear in this list, , false if all
-     *                        alerts are visible (not dismissed)
+     * @param alertHidden true if there are some alerts that have been previously hidden that would
+     *                    otherwise appear in this list, false if all alerts are visible
      */
-    public void setDismissedAlerts(boolean dismissedAlerts) {
-        mIsDismissedAlerts = dismissedAlerts;
+    public void setAlertHidden(boolean alertHidden) {
+        mIsAlertHidden = alertHidden;
+    }
+
+    /**
+     * Returns the number of active alerts hidden that would otherwise appear in this list
+     *
+     * @return the number of active alerts hidden that would otherwise appear in this list
+     */
+    public int getHiddenAlertCount() {
+        return mHiddenAlertCount;
+    }
+
+    /**
+     * Sets the number of active alerts hidden that would otherwise appear in this list
+     *
+     * @param hiddenAlertCount the number of active alerts hidden that would otherwise appear in
+     *                         this list
+     */
+    public void setHiddenAlertCount(int hiddenAlertCount) {
+        mHiddenAlertCount = hiddenAlertCount;
     }
 }

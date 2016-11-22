@@ -185,7 +185,7 @@ class ArrivalsListHeader {
 
     boolean mHasError = false;
 
-    boolean mIsDismissedAlerts = false;
+    boolean mIsAlertHidden = false;
 
     // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
@@ -635,7 +635,7 @@ class ArrivalsListHeader {
         refreshStopFavorite();
         refreshFilter();
         refreshError();
-        refreshDismissedAlerts();
+        refreshHiddenAlerts();
         refreshArrivalInfoVisibilityAndListeners();
         refreshHeaderSize();
     }
@@ -1271,27 +1271,27 @@ class ArrivalsListHeader {
         }
     }
 
-    private ShowDismissedAlert mShowDismissedAlert = null;
+    private ShowHiddenAlert mShowHiddenAlert = null;
 
-    private static class ShowDismissedAlert implements AlertList.Alert {
+    private static class ShowHiddenAlert implements AlertList.Alert {
 
         private final CharSequence mString;
 
         private final Controller mController;
 
-        ShowDismissedAlert(CharSequence seq, Controller controller) {
+        ShowHiddenAlert(CharSequence seq, Controller controller) {
             mString = seq;
             mController = controller;
         }
 
         @Override
         public String getId() {
-            return "STATIC: SHOW DISMISSED ALERT";
+            return "STATIC: SHOW HIDDEN ALERT";
         }
 
         @Override
         public int getType() {
-            return TYPE_SHOW_DISMISSED_ALERT;
+            return TYPE_SHOW_HIDDEN_ALERTS;
         }
 
         @Override
@@ -1306,8 +1306,7 @@ class ArrivalsListHeader {
 
         @Override
         public void onClick() {
-            int count = ObaContract.ServiceAlerts.showAllAlerts();
-            Log.d(TAG, "Updated " + count + " service alerts");
+            ObaContract.ServiceAlerts.showAllAlerts();
             mController.refresh();
         }
 
@@ -1327,7 +1326,7 @@ class ArrivalsListHeader {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            ShowDismissedAlert other = (ShowDismissedAlert) obj;
+            ShowHiddenAlert other = (ShowHiddenAlert) obj;
             if (!getId().equals(other.getId())) {
                 return false;
             }
@@ -1335,18 +1334,20 @@ class ArrivalsListHeader {
         }
     }
 
-    private void refreshDismissedAlerts() {
+    private void refreshHiddenAlerts() {
         AlertList alerts = mController.getAlertList();
-        mIsDismissedAlerts = alerts.isDismissedAlerts();
+        mIsAlertHidden = alerts.isAlertHidden();
 
-        if (mShowDismissedAlert != null) {
-            alerts.remove(mShowDismissedAlert);
+        if (mShowHiddenAlert != null) {
+            alerts.remove(mShowHiddenAlert);
         }
 
-        if (mIsDismissedAlerts) {
-            CharSequence cs = mContext.getString(R.string.alert_show_dismissed_alerts);
-            mShowDismissedAlert = new ShowDismissedAlert(cs, mController);
-            alerts.insert(mShowDismissedAlert, alerts.getCount());
+        if (mIsAlertHidden) {
+            CharSequence cs = mContext.getResources()
+                    .getQuantityString(R.plurals.alert_filter_text, alerts.getHiddenAlertCount(),
+                            alerts.getHiddenAlertCount());
+            mShowHiddenAlert = new ShowHiddenAlert(cs, mController);
+            alerts.insert(mShowHiddenAlert, alerts.getCount());
         }
     }
 

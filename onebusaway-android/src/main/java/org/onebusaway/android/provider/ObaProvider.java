@@ -239,7 +239,7 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 24) {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.ServiceAlerts.PATH +
-                                " ADD COLUMN " + ObaContract.ServiceAlerts.DISMISSED + " INTEGER");
+                                " ADD COLUMN " + ObaContract.ServiceAlerts.HIDDEN + " INTEGER");
             }
         }
 
@@ -462,8 +462,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.ServiceAlerts._ID, ObaContract.ServiceAlerts._ID);
         sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.MARKED_READ_TIME,
                 ObaContract.ServiceAlerts.MARKED_READ_TIME);
-        sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.DISMISSED,
-                ObaContract.ServiceAlerts.DISMISSED);
+        sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.HIDDEN,
+                ObaContract.ServiceAlerts.HIDDEN);
 
         sRegionsProjectionMap = new HashMap<String, String>();
         sRegionsProjectionMap.put(ObaContract.Regions._ID, ObaContract.Regions._ID);

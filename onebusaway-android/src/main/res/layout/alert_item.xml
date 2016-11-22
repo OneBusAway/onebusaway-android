@@ -13,11 +13,24 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-          android:id="@android:id/text1"
-          style="@style/AlertListItem"
-          android:gravity="center_vertical"
-          android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          android:drawablePadding="8dp">
-</TextView>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+    <TextView
+            android:id="@android:id/text1"
+            style="@style/AlertListItem"
+            android:gravity="center_vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="8dp"/>
+    <Button
+            android:id="@+id/show_dismissed_alerts"
+            style="?attr/borderlessButtonStyle"
+            android:text="@string/alert_show_dismissed_alerts"
+            android:textColor="@color/alert_text_color_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:visibility="visible"/>
+</LinearLayout>

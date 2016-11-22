@@ -124,7 +124,7 @@ public class SituationFragment extends Fragment {
                 View parentView = getView();
                 if (parentView != null) {
                     Snackbar.make(parentView, R.string.alert_dismiss_snackbar_text,
-                            Snackbar.LENGTH_LONG)
+                            Snackbar.LENGTH_SHORT)
                             .setAction(R.string.alert_dismiss_snackbar_action,
                                     new View.OnClickListener() {
                                         @Override

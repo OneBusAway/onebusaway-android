@@ -1094,6 +1094,18 @@ public final class ObaContract {
             }
             return dismissed;
         }
+
+        /**
+         * Marks all alerts as not dismissed, and therefore visible
+         *
+         * @return the number of rows updated
+         */
+        public static int showAllAlerts() {
+            ContentResolver cr = Application.get().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(DISMISSED, 0);
+            return cr.update(CONTENT_URI, values, null, null);
+        }
     }
 
     public static class Regions implements BaseColumns, RegionsColumns {

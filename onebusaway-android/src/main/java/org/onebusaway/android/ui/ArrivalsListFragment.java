@@ -1423,7 +1423,7 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Full refresh of data from the OBA server
      */
-    private void refresh() {
+    public void refresh() {
         if (isAdded()) {
             showProgress(true);
             // Get last response length now, since its overwritten within
@@ -1637,6 +1637,7 @@ public class ArrivalsListFragment extends ListFragment
                 mAlertList.remove(alert);
             }
         }
+        mAlertList.setDismissedAlerts(false);
         mSituationAlerts = null;
 
         if (situations.isEmpty()) {
@@ -1661,6 +1662,9 @@ public class ArrivalsListFragment extends ListFragment
             if (isActive && !isDismissed) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
+            }
+            if (isDismissed) {
+                mAlertList.setDismissedAlerts(true);
             }
         }
         mAlertList.addAll(mSituationAlerts);

@@ -26,6 +26,7 @@ import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -38,6 +39,7 @@ class AlertList {
         public static final int TYPE_ERROR = 1;
         public static final int TYPE_WARNING = 2;
         public static final int TYPE_INFO = 3;
+        public static final int TYPE_SHOW_DISMISSED_ALERT = 4;
 
         // Adds an affordance to show that it's clickable
         // and you can see more..
@@ -66,13 +68,15 @@ class AlertList {
         @Override
         protected void initView(View view, final Alert alert) {
             TextView text = (TextView) view.findViewById(android.R.id.text1);
+            Button button = (Button) view.findViewById(R.id.show_dismissed_alerts);
+
             text.setText(alert.getString());
             boolean clickable = (alert.getFlags() & Alert.FLAG_HASMORE) == Alert.FLAG_HASMORE;
             int type = alert.getType();
             Resources r = Application.get().getResources();
 
             int bg;
-            int arrowColor;
+            int arrowColor = R.color.alert_text_color_info;
             int alertColor = R.color.alert_icon_info;
             int resourceIdAlert = 0;
 
@@ -82,17 +86,28 @@ class AlertList {
                     arrowColor = R.color.alert_text_color_error;
                     resourceIdAlert = R.drawable.ic_alert_warning;
                     alertColor = R.color.alert_icon_error;
+                    text.setVisibility(View.VISIBLE);
+                    button.setVisibility(View.GONE);
                     break;
                 case Alert.TYPE_WARNING:
                     bg = R.color.alert_text_background_warning;
                     arrowColor = R.color.alert_text_color_warning;
                     resourceIdAlert = R.drawable.ic_alert_warning;
                     alertColor = R.color.alert_icon_warning;
+                    text.setVisibility(View.VISIBLE);
+                    button.setVisibility(View.GONE);
+                    break;
+                case Alert.TYPE_SHOW_DISMISSED_ALERT:
+                    bg = R.color.material_gray;
+                    text.setVisibility(View.GONE);
+                    button.setVisibility(View.VISIBLE);
                     break;
                 case Alert.TYPE_INFO:
                 default:
                     bg = R.color.alert_text_background_info;
                     arrowColor = R.color.alert_text_color_info;
+                    text.setVisibility(View.VISIBLE);
+                    button.setVisibility(View.GONE);
                     break;
             }
             // Set text color to same as arrow color
@@ -130,16 +145,20 @@ class AlertList {
 
             // Even if we don't think it's clickable, we still need to
             // reset the onclick listener because we could be reusing this view.
-            view.setOnClickListener(new View.OnClickListener() {
+            View.OnClickListener listener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     alert.onClick();
                 }
-            });
+            };
+            view.setOnClickListener(listener);
+            button.setOnClickListener(listener);
         }
     }
 
     private Adapter mAdapter;
+
+    private boolean mIsDismissedAlerts;
 
     //
     // Cached views
@@ -190,5 +209,28 @@ class AlertList {
 
     Alert getItem(int position) {
         return mAdapter.getItem(position);
+    }
+
+    /**
+     * Returns true if some alerts have previously been hidden (dismissed) that would otherwise
+     * appear in this list, false if all alerts are visible (not dismissed)
+     *
+     * @return true if some alerts have previously been hidden (dismissed) that would otherwise
+     * appear in this list, false if all alerts are visible (not dismissed)
+     */
+    public boolean isDismissedAlerts() {
+        return mIsDismissedAlerts;
+    }
+
+    /**
+     * Set to true if there are some alerts that have been previoiusly hidden (dimissed) that would
+     * otherwise appear in this list, , false if all alerts are visible (not dismissed)
+     *
+     * @param dismissedAlerts true if there are some alerts that have been previoiusly hidden (
+     *                        dimissed) that would otherwise appear in this list, , false if all
+     *                        alerts are visible (not dismissed)
+     */
+    public void setDismissedAlerts(boolean dismissedAlerts) {
+        mIsDismissedAlerts = dismissedAlerts;
     }
 }

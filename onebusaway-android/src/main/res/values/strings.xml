@@ -367,9 +367,9 @@
     </string>
     <string name="situation_more_details">More details</string>
     <string name="dismiss">Dismiss</string>
-    <string name="alert_dismiss_snackbar_text">1 alert hidden</string>
+    <string name="alert_dismiss_snackbar_text">Dismissed alert</string>
     <string name="alert_dismiss_snackbar_action">UNDO</string>
-
+    <string name="alert_show_dismissed_alerts">Show dismissed alerts</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search

@@ -121,6 +121,11 @@ class ArrivalsListHeader {
          * call to the server)
          */
         void refreshLocal();
+
+        /**
+         * Triggers a full refresh of arrivals from the OBA server
+         */
+        void refresh();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -179,6 +184,8 @@ class ArrivalsListHeader {
     boolean mHasWarning = false;
 
     boolean mHasError = false;
+
+    boolean mIsDismissedAlerts = false;
 
     // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
@@ -628,6 +635,7 @@ class ArrivalsListHeader {
         refreshStopFavorite();
         refreshFilter();
         refreshError();
+        refreshDismissedAlerts();
         refreshArrivalInfoVisibilityAndListeners();
         refreshHeaderSize();
     }
@@ -1260,6 +1268,85 @@ class ArrivalsListHeader {
             //UIHelp.hideViewWithAnimation(mAlertView, mShortAnimationDuration);
             mAlertView.setVisibility(View.GONE);
             mAlertView.setContentDescription("");
+        }
+    }
+
+    private ShowDismissedAlert mShowDismissedAlert = null;
+
+    private static class ShowDismissedAlert implements AlertList.Alert {
+
+        private final CharSequence mString;
+
+        private final Controller mController;
+
+        ShowDismissedAlert(CharSequence seq, Controller controller) {
+            mString = seq;
+            mController = controller;
+        }
+
+        @Override
+        public String getId() {
+            return "STATIC: SHOW DISMISSED ALERT";
+        }
+
+        @Override
+        public int getType() {
+            return TYPE_SHOW_DISMISSED_ALERT;
+        }
+
+        @Override
+        public int getFlags() {
+            return FLAG_HASMORE;
+        }
+
+        @Override
+        public CharSequence getString() {
+            return mString;
+        }
+
+        @Override
+        public void onClick() {
+            int count = ObaContract.ServiceAlerts.showAllAlerts();
+            Log.d(TAG, "Updated " + count + " service alerts");
+            mController.refresh();
+        }
+
+        @Override
+        public int hashCode() {
+            return getId().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ShowDismissedAlert other = (ShowDismissedAlert) obj;
+            if (!getId().equals(other.getId())) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    private void refreshDismissedAlerts() {
+        AlertList alerts = mController.getAlertList();
+        mIsDismissedAlerts = alerts.isDismissedAlerts();
+
+        if (mShowDismissedAlert != null) {
+            alerts.remove(mShowDismissedAlert);
+        }
+
+        if (mIsDismissedAlerts) {
+            CharSequence cs = mContext.getString(R.string.alert_show_dismissed_alerts);
+            mShowDismissedAlert = new ShowDismissedAlert(cs, mController);
+            alerts.insert(mShowDismissedAlert, alerts.getCount());
         }
     }
 

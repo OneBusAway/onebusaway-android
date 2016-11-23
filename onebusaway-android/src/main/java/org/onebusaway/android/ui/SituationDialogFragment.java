@@ -170,8 +170,6 @@ public class SituationDialogFragment extends DialogFragment {
         ObaContract.ServiceAlerts
                 .insertOrUpdate(args.getString(ID), new ContentValues(), true, null);
 
-        ObaAnalytics.reportFragmentStart(this);
-
         return dialog;
     }
 

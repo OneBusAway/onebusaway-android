@@ -366,6 +366,19 @@
         reveal more info.
     </string>
     <string name="situation_more_details">More details</string>
+    <string name="hide">Hide</string>
+    <string name="close">Close</string>
+    <string name="alert_hidden_snackbar_text">Alert is now hidden</string>
+    <string name="alert_hidden_snackbar_action">UNDO</string>
+    <plurals name="alert_filter_text">
+        <item quantity="one">%1$d active alert is hidden</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%1$d</xliff:g>
+            active alerts are hidden
+        </item>
+    </plurals>
+    <string name="alert_filter_showall">(show all)</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Find a stop by entering its stop number in the search

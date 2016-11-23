@@ -462,7 +462,9 @@ public class ArrivalsListFragment extends ListFragment
         if (isResumed()) {
             setListShown(true);
         } else {
-            setListShownNoAnimation(true);
+            if (isAdded()) {
+                setListShownNoAnimation(true);
+            }
         }
 
         // Clear any pending refreshes
@@ -540,9 +542,16 @@ public class ArrivalsListFragment extends ListFragment
         }
 
         if (info != null) {
+            ArrivalsListLoader loader = getArrivalsLoader();
+            int minutesAfter;
+            if (loader != null) {
+                minutesAfter = loader.getMinutesAfter();
+            } else {
+                minutesAfter = ArrivalsListLoader.DEFAULT_MINUTES_AFTER;
+            }
             // Reset the empty text just in case there is no data.
-            setEmptyText(UIUtils.getNoArrivalsMessage(getActivity(),
-                    getArrivalsLoader().getMinutesAfter(), false, false));
+            setEmptyText(UIUtils.getNoArrivalsMessage(Application.get().getApplicationContext(),
+                    minutesAfter, false, false));
             mAdapter.setData(info, mRoutesFilter, System.currentTimeMillis());
         }
 
@@ -1423,7 +1432,7 @@ public class ArrivalsListFragment extends ListFragment
     /**
      * Full refresh of data from the OBA server
      */
-    private void refresh() {
+    public void refresh() {
         if (isAdded()) {
             showProgress(true);
             // Get last response length now, since its overwritten within
@@ -1588,7 +1597,26 @@ public class ArrivalsListFragment extends ListFragment
 
         @Override
         public void onClick() {
-            SituationActivity.start(getActivity(), mSituation);
+            SituationDialogFragment dialog = SituationDialogFragment.newInstance(mSituation);
+            dialog.setListener(new SituationDialogFragment.Listener() {
+                @Override
+                public void onDismiss(boolean isAlertHidden) {
+                    if (isAlertHidden) {
+                        // User hid a service alert, so we need to refresh the list
+                        // TODO - refreshLocal() should support refreshing local situations
+                        refresh();
+                    }
+                }
+
+                @Override
+                public void onUndo() {
+                    // User hit undo, so we need to refresh the list
+                    // TODO - refreshLocal() should support refreshing local situations
+                    refresh();
+                }
+            });
+            dialog.show(getFragmentManager(), SituationDialogFragment.TAG);
+
             reportAnalytics(mSituation);
         }
 
@@ -1637,6 +1665,7 @@ public class ArrivalsListFragment extends ListFragment
                 mAlertList.remove(alert);
             }
         }
+        mAlertList.setAlertHidden(false);
         mSituationAlerts = null;
 
         if (situations.isEmpty()) {
@@ -1644,16 +1673,32 @@ public class ArrivalsListFragment extends ListFragment
             return;
         }
 
-        mSituationAlerts = new ArrayList<SituationAlert>();
+        mSituationAlerts = new ArrayList<>();
+
+        ContentValues values = new ContentValues();
+
+        int hiddenCount = 0;
 
         for (ObaSituation situation : situations) {
+            values.clear();
+
+            // Make sure this situation is added to the database
+            ObaContract.ServiceAlerts.insertOrUpdate(situation.getId(), values, false, null);
+
             boolean isActive = UIUtils
                     .isActiveWindowForSituation(situation, System.currentTimeMillis());
-            if (isActive) {
+            boolean isHidden = ObaContract.ServiceAlerts.isHidden(situation.getId());
+
+            if (isActive && !isHidden) {
                 SituationAlert alert = new SituationAlert(situation);
                 mSituationAlerts.add(alert);
             }
+            if (isHidden) {
+                mAlertList.setAlertHidden(true);
+                hiddenCount++;
+            }
         }
+        mAlertList.setHiddenAlertCount(hiddenCount);
         mAlertList.addAll(mSituationAlerts);
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+<!-- Copyright (C) 2012-2016 Paul Watts (paulcwatts@gmail.com), Sean Barbeau (sjbarbeau@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/situation_container"
         android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/listview_background">
 
     <LinearLayout
+            android:id="@+id/situation_header"
             style="@style/HeaderItem"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
+            android:gravity="center_horizontal"
+            android:layout_alignParentTop="true">
         <TextView
                 android:id="@+id/alert_title"
                 style="@style/HeaderText"
@@ -33,26 +36,29 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"/>
     </LinearLayout>
-    <ScrollView android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:background="@color/listview_background">
+    <ScrollView
+            android:id="@+id/alert_scrollview"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/situation_header"
+            android:background="@color/listview_background">
         <LinearLayout
                 xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="vertical"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content">
-        <TextView
-                android:id="@+id/alert_description"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:textSize="18sp"
-                android:padding="4dp"
-                android:textIsSelectable="true"
-                android:autoLink="all"
-                android:linksClickable="true">
-        </TextView>
+            <TextView
+                    android:id="@+id/alert_description"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:textSize="14sp"
+                    android:padding="4dp"
+                    android:textIsSelectable="true"
+                    android:autoLink="all"
+                    android:linksClickable="true">
+            </TextView>
             <TextView
                     android:id="@+id/alert_url"
                     android:text="@string/situation_more_details"
@@ -61,11 +67,11 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
                     android:layout_marginBottom="10dp"
-                    android:textSize="18sp"
+                    android:textSize="14sp"
                     android:padding="4dp"
                     android:bufferType="spannable"
                     android:linksClickable="true"
                     android:textColorLink="@color/theme_accent"/>
         </LinearLayout>
     </ScrollView>
-</LinearLayout>
+</RelativeLayout>

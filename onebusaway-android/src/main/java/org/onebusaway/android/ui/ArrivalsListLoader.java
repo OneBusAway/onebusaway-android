@@ -35,7 +35,9 @@ public class ArrivalsListLoader extends AsyncTaskLoader<ObaArrivalInfoResponse> 
     private long mLastGoodResponseTime = 0;
 
     // Shows vehicles arriving or departing in the next "mMinutesAfter" minutes
-    private int mMinutesAfter = 65;
+    private int mMinutesAfter = DEFAULT_MINUTES_AFTER;
+
+    public static final int DEFAULT_MINUTES_AFTER = 65;
 
     private static final int MINUTES_INCREMENT = 60; // minutes
 

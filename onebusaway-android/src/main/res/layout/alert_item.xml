@@ -13,11 +13,49 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-          android:id="@android:id/text1"
-          style="@style/AlertListItem"
-          android:gravity="center_vertical"
-          android:layout_width="fill_parent"
-          android:layout_height="wrap_content"
-          android:drawablePadding="8dp">
-</TextView>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical">
+    <TextView
+            android:id="@android:id/text1"
+            style="@style/AlertListItem"
+            android:gravity="center_vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:drawablePadding="8dp"/>
+    <LinearLayout
+            android:id="@+id/filter_alert_group"
+            style="@style/Header3Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@color/theme_primary_dark"
+            android:visibility="gone">
+
+        <TextView
+                android:id="@+id/filter_alert_text"
+                style="@style/Header3Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical|right"/>
+
+        <TextView
+                android:id="@+id/show_all_alerts"
+                android:text="@string/alert_filter_showall"
+                style="@style/Header3Text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginLeft="2dp"
+                android:gravity="center_vertical"
+                android:bufferType="spannable"
+                android:linksClickable="true"
+                android:textColorLink="@color/theme_accent"/>
+    </LinearLayout>
+</LinearLayout>

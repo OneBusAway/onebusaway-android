@@ -298,6 +298,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String MARKED_READ_TIME = "marked_read_time";
+
+        /**
+         * Whether or not the alert has been hidden by the user.
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String HIDDEN = "hidden";
     }
 
     protected interface RegionsColumns {
@@ -997,15 +1005,27 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".service_alert";
 
-        public static final Uri buildUri(String situationId) {
-            return CONTENT_URI.buildUpon().appendPath(situationId).build();
-        }
-
-        public static Uri insertOrUpdate(Context context,
-                String id,
+        /**
+         * @param markAsRead true if this alert should be marked as read with the timestamp of
+         *                   System.currentTimeMillis(),
+         *                   false if the alert should not be marked as read with the timestamp of
+         *                   System.currentTimeMillis()
+         * @param hidden  true if this alert should be marked as hidden by the user, false if
+         *                   it should be marked as not
+         *                   hidden by the user, or null if the hidden value shouldn't be
+         *                   changed
+         */
+        public static Uri insertOrUpdate(String id,
                 ContentValues values,
-                boolean markAsRead) {
-            ContentResolver cr = context.getContentResolver();
+                boolean markAsRead,
+                Boolean hidden) {
+            if (id == null) {
+                return null;
+            }
+            if (values == null) {
+                values = new ContentValues();
+            }
+            ContentResolver cr = Application.get().getContentResolver();
             final Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
             Cursor c = cr.query(uri, new String[]{}, null, null, null);
             Uri result;
@@ -1015,12 +1035,29 @@ public final class ObaContract {
                     c.moveToFirst();
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
                 }
-                cr.update(uri, values, null, null);
+                if (hidden != null) {
+                    c.moveToFirst();
+                    if (hidden) {
+                        values.put(HIDDEN, 1);
+                    } else {
+                        values.put(HIDDEN, 0);
+                    }
+                }
+                if (values.size() != 0) {
+                    cr.update(uri, values, null, null);
+                }
                 result = uri;
             } else {
                 // Insert
                 if (markAsRead) {
                     values.put(MARKED_READ_TIME, System.currentTimeMillis());
+                }
+                if (hidden != null) {
+                    if (hidden) {
+                        values.put(HIDDEN, 1);
+                    } else {
+                        values.put(HIDDEN, 0);
+                    }
                 }
                 values.put(_ID, id);
                 result = cr.insert(CONTENT_URI, values);
@@ -1029,6 +1066,44 @@ public final class ObaContract {
                 c.close();
             }
             return result;
+        }
+
+        /**
+         * Returns true if this service alert (situation) has been previously hidden by the
+         * user, false it if has not
+         *
+         * @param situationId The ID of the situation (service alert)
+         * @return true if this service alert (situation) has been previously hidden by the user,
+         * false it if has not
+         */
+        public static boolean isHidden(String situationId) {
+            final String[] selection = {_ID, HIDDEN};
+            final String[] selectionArgs = {situationId, Integer.toString(1)};
+            final String WHERE = _ID + "=? AND " + HIDDEN + "=?";
+            ContentResolver cr = Application.get().getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, selection, WHERE, selectionArgs, null);
+            boolean hidden;
+            if (c != null && c.getCount() > 0) {
+                hidden = true;
+            } else {
+                hidden = false;
+            }
+            if (c != null) {
+                c.close();
+            }
+            return hidden;
+        }
+
+        /**
+         * Marks all alerts as not hidden, and therefore visible
+         *
+         * @return the number of rows updated
+         */
+        public static int showAllAlerts() {
+            ContentResolver cr = Application.get().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(HIDDEN, 0);
+            return cr.update(CONTENT_URI, values, null, null);
         }
     }
 

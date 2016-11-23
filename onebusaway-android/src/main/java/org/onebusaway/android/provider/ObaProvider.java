@@ -46,7 +46,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 24;
+        private static final int DATABASE_VERSION = 25;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -234,6 +234,12 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.OTP_CONTACT_EMAIL + " VARCHAR");
+                ++oldVersion;
+            }
+            if (oldVersion == 24) {
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.ServiceAlerts.PATH +
+                                " ADD COLUMN " + ObaContract.ServiceAlerts.HIDDEN + " INTEGER");
             }
         }
 
@@ -456,6 +462,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.ServiceAlerts._ID, ObaContract.ServiceAlerts._ID);
         sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.MARKED_READ_TIME,
                 ObaContract.ServiceAlerts.MARKED_READ_TIME);
+        sServiceAlertsProjectionMap.put(ObaContract.ServiceAlerts.HIDDEN,
+                ObaContract.ServiceAlerts.HIDDEN);
 
         sRegionsProjectionMap = new HashMap<String, String>();
         sRegionsProjectionMap.put(ObaContract.Regions._ID, ObaContract.Regions._ID);
@@ -812,7 +820,7 @@ public class ObaProvider extends ContentProvider {
                 qb.setProjectionMap(sServiceAlertsProjectionMap);
                 qb.appendWhere(ObaContract.ServiceAlerts._ID);
                 qb.appendWhere("=");
-                qb.appendWhere(String.valueOf(ContentUris.parseId(uri)));
+                qb.appendWhereEscapeString(uri.getLastPathSegment());
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
 

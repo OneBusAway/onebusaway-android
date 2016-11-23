@@ -121,6 +121,11 @@ class ArrivalsListHeader {
          * call to the server)
          */
         void refreshLocal();
+
+        /**
+         * Triggers a full refresh of arrivals from the OBA server
+         */
+        void refresh();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -179,6 +184,8 @@ class ArrivalsListHeader {
     boolean mHasWarning = false;
 
     boolean mHasError = false;
+
+    boolean mIsAlertHidden = false;
 
     // All arrival info returned by the adapter
     private ArrayList<ArrivalInfo> mArrivalInfo;
@@ -628,6 +635,7 @@ class ArrivalsListHeader {
         refreshStopFavorite();
         refreshFilter();
         refreshError();
+        refreshHiddenAlerts();
         refreshArrivalInfoVisibilityAndListeners();
         refreshHeaderSize();
     }
@@ -1260,6 +1268,86 @@ class ArrivalsListHeader {
             //UIHelp.hideViewWithAnimation(mAlertView, mShortAnimationDuration);
             mAlertView.setVisibility(View.GONE);
             mAlertView.setContentDescription("");
+        }
+    }
+
+    private ShowHiddenAlert mShowHiddenAlert = null;
+
+    private static class ShowHiddenAlert implements AlertList.Alert {
+
+        private final CharSequence mString;
+
+        private final Controller mController;
+
+        ShowHiddenAlert(CharSequence seq, Controller controller) {
+            mString = seq;
+            mController = controller;
+        }
+
+        @Override
+        public String getId() {
+            return "STATIC: SHOW HIDDEN ALERT";
+        }
+
+        @Override
+        public int getType() {
+            return TYPE_SHOW_HIDDEN_ALERTS;
+        }
+
+        @Override
+        public int getFlags() {
+            return FLAG_HASMORE;
+        }
+
+        @Override
+        public CharSequence getString() {
+            return mString;
+        }
+
+        @Override
+        public void onClick() {
+            ObaContract.ServiceAlerts.showAllAlerts();
+            mController.refresh();
+        }
+
+        @Override
+        public int hashCode() {
+            return getId().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ShowHiddenAlert other = (ShowHiddenAlert) obj;
+            if (!getId().equals(other.getId())) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    private void refreshHiddenAlerts() {
+        AlertList alerts = mController.getAlertList();
+        mIsAlertHidden = alerts.isAlertHidden();
+
+        if (mShowHiddenAlert != null) {
+            alerts.remove(mShowHiddenAlert);
+        }
+
+        if (mIsAlertHidden) {
+            CharSequence cs = mContext.getResources()
+                    .getQuantityString(R.plurals.alert_filter_text, alerts.getHiddenAlertCount(),
+                            alerts.getHiddenAlertCount());
+            mShowHiddenAlert = new ShowHiddenAlert(cs, mController);
+            alerts.insert(mShowHiddenAlert, alerts.getCount());
         }
     }
 

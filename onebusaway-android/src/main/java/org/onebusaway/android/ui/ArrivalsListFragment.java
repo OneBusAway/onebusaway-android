@@ -1603,6 +1603,7 @@ public class ArrivalsListFragment extends ListFragment
                 public void onDismiss(boolean isAlertHidden) {
                     if (isAlertHidden) {
                         // User hid a service alert, so we need to refresh the list
+                        // TODO - refreshLocal() should support refreshing local situations
                         refresh();
                     }
                 }
@@ -1610,6 +1611,7 @@ public class ArrivalsListFragment extends ListFragment
                 @Override
                 public void onUndo() {
                     // User hit undo, so we need to refresh the list
+                    // TODO - refreshLocal() should support refreshing local situations
                     refresh();
                 }
             });

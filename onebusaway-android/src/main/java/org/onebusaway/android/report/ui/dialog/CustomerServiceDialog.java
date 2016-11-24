@@ -118,6 +118,7 @@ public class CustomerServiceDialog extends DialogFragment implements
             if (TextUtils.isEmpty(agency.getEmail())) {
                 emailButton.setVisibility(View.INVISIBLE);
             } else {
+                emailButton.setVisibility(View.VISIBLE);
                 emailButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -141,6 +142,7 @@ public class CustomerServiceDialog extends DialogFragment implements
             if (TextUtils.isEmpty(agency.getUrl())) {
                 webButton.setVisibility(View.INVISIBLE);
             } else {
+                webButton.setVisibility(View.VISIBLE);
                 webButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -155,6 +157,7 @@ public class CustomerServiceDialog extends DialogFragment implements
             if (TextUtils.isEmpty(agency.getPhone())) {
                 phoneButton.setVisibility(View.INVISIBLE);
             } else {
+                phoneButton.setVisibility(View.VISIBLE);
                 phoneButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {

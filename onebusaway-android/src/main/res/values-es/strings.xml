@@ -105,30 +105,12 @@
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Nueva Interfaz</b>
-        - ¡Material design ha llegado!\n&#8226;\u0020
-        <b>Buses en vivo desde el mapa</b>
-        - ¡En los tiempos de llegada selecciona \"Mostrar la ruta sobre el mapa\"!\n&#8226;\u0020
-        <b>Estado del viaje en vivo</b>
-        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
-        <b>Mejora en Envio de Comentarios</b>
-        - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
+        <b>Ocultar alertas</b>
+        - Toca sobre una alerta y luego en \"Ocultar\" para removerlo de la vista\n&#8226;\u0020
+        <b>Barra de progreso por encima del mapa</b>
+        - Cuando se esta moeviendo las paradas esta sigue cargando\n&#8226;\u0020
         <b>Corrección de errores</b>
-        - Mirá http://bit.ly/oba-android-releases
-    </string>
-    <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
-        <b>Nueva Interfaz</b>
-        - ¡Material design ha llegado!\n&#8226;\u0020
-        <b>Buses en vivo desde el mapa</b>
-        - ¡En los tiempos de llegada selecciona \"Mostrar la ruta sobre el mapa\"!\n&#8226;\u0020
-        <b>Estado del viaje en vivo</b>
-        - ¡En los tiempos de llegada selecciona \"Mostrar el estado del viaje\"!\n&#8226;\u0020
-        <b>Mejora en Envio de Comentarios</b>
-        - Toque \"Enviar Comentarios\" en el la bandeja de navegación\n&#8226;\u0020
-        <b>Planeación de Viajes (Sólo en Tampa Bay)</b>
-        - ¡Compruebalo en el menú de navegación!\n&#8226;\u0020
-        <b>Corrección de errores</b>
-        - Mirá http://bit.ly/oba-android-releases
+        - See http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
@@ -365,6 +347,20 @@
     <string name="alert_content_description_error">Advertencia Severa del Servicio - toque para deslizar 
         hacia arriba el panel y ver más información.
     </string>
+    <string name="situation_more_details">Mas detalles</string>
+    <string name="hide">Ocultar</string>
+    <string name="close">Cerrar</string>
+    <string name="alert_hidden_snackbar_text">La alerta esta ahora oculta</string>
+    <string name="alert_hidden_snackbar_action">DESHACER</string>
+    <plurals name="alert_filter_text">
+        <item quantity="one">%1$d alerta activa está oculta</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%1$d</xliff:g>
+            alertas activas están ocultas
+        </item>
+    </plurals>
+    <string name="alert_filter_showall">(mostrar todas)</string>
 
     <!-- Find -->
     <string name="find_hint_nofavoritestops">Encuentra una parada al ingresar su número en el cuadro de
@@ -626,10 +622,11 @@
     <string name="preference_region_dialog_message"> Tu región está configurada en %1$s.
     ¡Si esto esta mal, por favor toca en \'Tú región\' para cambiarlo!</string>
     <string name="preference_region_dialog_title">Por favor, compruebe su región</string>
-    <string name="report_dialog_stop_header">Por favor, seleccione una parada.</string>
+    <string name="report_dialog_stop_header">Por favor, toque sobre una parada en el mapa.</string>
     <string name="report_dialog_trip"> Por favor seleccione un tiempo de llegada.</string>
 
     <!-- report issue screen-->
+    <string name="ri_others">Otros</string>
     <string name="ri_desc_hint">Descripción de Problema</string>
     <string name="ri_button_camera">Cámara</string>
     <string name="ri_button_image">AÑADIR IMAGEN</string>

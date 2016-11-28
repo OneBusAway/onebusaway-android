@@ -26,6 +26,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
@@ -324,7 +325,7 @@ public class TripDetailsListFragment extends ListFragment {
                         DateUtils.FORMAT_NO_MIDNIGHT
         );
 
-        statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
+        statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
         if (statusColor != R.color.stop_info_ontime) {
             // Show early/late/scheduled color
             d.setColor(getResources().getColor(statusColor));
@@ -580,7 +581,7 @@ public class TripDetailsListFragment extends ListFragment {
                 deviation = mStatus.getScheduleDeviation();
                 long deviationMin = TimeUnit.SECONDS.toMinutes(mStatus.getScheduleDeviation());
                 if (mStatus.isPredicted()) {
-                    statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
+                    statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
                 } else {
                     statusColor = R.color.stop_info_scheduled_time;
                 }

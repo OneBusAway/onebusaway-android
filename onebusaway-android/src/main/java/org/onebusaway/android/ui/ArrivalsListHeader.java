@@ -22,6 +22,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.annotation.TargetApi;
@@ -670,7 +671,7 @@ class ArrivalsListHeader {
 
         if (mArrivalInfo != null && !mInNameEdit) {
             // Get the indexes for arrival times that should be featured in the header
-            ArrayList<Integer> etaIndexes = ArrivalInfo.findPreferredArrivalIndexes(mArrivalInfo);
+            ArrayList<Integer> etaIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(mArrivalInfo);
             if (etaIndexes != null) {
                 // We have a non-negative ETA for at least one bus - fill the first arrival row
                 final int i1 = etaIndexes.get(0);

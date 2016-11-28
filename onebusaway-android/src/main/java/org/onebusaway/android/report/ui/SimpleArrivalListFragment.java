@@ -27,6 +27,7 @@ import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.ui.ArrivalsListLoader;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
@@ -177,7 +178,7 @@ public class SimpleArrivalListFragment extends Fragment
                 findViewById(R.id.simple_arrival_content);
         contentLayout.removeAllViews();
 
-        ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfo.convertObaArrivalInfo(getActivity(),
+        ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(),
                 info, new ArrayList<String>(), currentTime, false);
 
         for (ArrivalInfo stopInfo : arrivalInfos) {

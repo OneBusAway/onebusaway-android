@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2016 Paul Watts (paulcwatts@gmail.com),
- * University of South Florida (sjbarbeau@gmail.com)
+ * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,6 @@ package org.onebusaway.android.tripservice;
 import org.onebusaway.android.R;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalsListActivity;
-import org.onebusaway.android.util.UIUtils;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -39,8 +37,6 @@ import android.support.v4.app.NotificationCompat;
 public final class NotifierTask implements Runnable {
     //private static final String TAG = "NotifierTask";
 
-    private static final long ONE_MINUTE = 60 * 1000;
-
     private static final String[] ALERT_PROJECTION = {
             ObaContract.TripAlerts._ID,
             ObaContract.TripAlerts.TRIP_ID,
@@ -49,8 +45,6 @@ public final class NotifierTask implements Runnable {
     };
 
     private static final int COL_ID = 0;
-
-    private static final int COL_TRIP_ID = 1;
 
     private static final int COL_STOP_ID = 2;
 
@@ -64,17 +58,17 @@ public final class NotifierTask implements Runnable {
 
     private final Uri mUri;
 
-    private long mTimeDiff;
+    private String mNotifyText;
 
     public NotifierTask(Context context,
-            TaskContext taskContext,
-            Uri uri,
-            long timeDiff) {
+                        TaskContext taskContext,
+                        Uri uri,
+                        String notifyText) {
         mContext = context;
         mTaskContext = taskContext;
         mCR = mContext.getContentResolver();
         mUri = uri;
-        mTimeDiff = timeDiff;
+        mNotifyText = notifyText;
     }
 
     @Override
@@ -97,15 +91,11 @@ public final class NotifierTask implements Runnable {
 
     private void notify(Cursor c) {
         final int id = c.getInt(COL_ID);
-        final String tripId = c.getString(COL_TRIP_ID);
         final String stopId = c.getString(COL_STOP_ID);
         final int state = c.getInt(COL_STATE);
         if (state == ObaContract.TripAlerts.STATE_CANCELLED) {
             return;
         }
-        final Uri tripUri = ObaContract.Trips.buildUri(tripId, stopId);
-        final String routeId = UIUtils.stringForQuery(mContext,
-                tripUri, ObaContract.Trips.ROUTE_ID);
 
         // Updating info on existing notifications is deprecated (see #290), so instead we
         // just create a new Notification each time. The notification manager handles preventing
@@ -120,7 +110,7 @@ public final class NotifierTask implements Runnable {
                 new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification notification = createNotification(routeId, mTimeDiff,
+        Notification notification = createNotification(mNotifyText,
                 pendingContentIntent, pendingDeleteIntent);
 
         mTaskContext.setNotification(id, notification);
@@ -141,43 +131,24 @@ public final class NotifierTask implements Runnable {
      * Create a notification and populate it with our latest data.  This method replaces
      * an implementation using Notification.setLatestEventInfo((), which was deprecated (see #290).
      *
-     * @param routeId route identifer
-     * @param timeDiff
      * @param contentIntent intent to fire on click
-     * @param deleteIntent intent to remove/delete
-     * @return
+     * @param deleteIntent  intent to remove/delete
      */
-    private Notification createNotification(String routeId,
-            long timeDiff,
-            PendingIntent contentIntent,
-            PendingIntent deleteIntent) {
+    private Notification createNotification(String notifyText,
+                                            PendingIntent contentIntent,
+                                            PendingIntent deleteIntent) {
         final String title = mContext.getString(R.string.app_name);
         return new NotificationCompat.Builder(mContext)
                 .setSmallIcon(R.drawable.ic_stat_notification)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setOnlyAlertOnce(true)
-                        //.setLights(0xFF00FF00, 1000, 1000)
-                        //.setVibrate(VIBRATE_PATTERN)
+                //.setLights(0xFF00FF00, 1000, 1000)
+                //.setVibrate(VIBRATE_PATTERN)
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(deleteIntent)
                 .setContentTitle(title)
-                .setContentText(getNotifyText(routeId, timeDiff))
+                .setContentText(notifyText)
                 .build();
 
-    }
-
-    private String getNotifyText(String routeId, long timeDiff) {
-        final String routeName = TripService.getRouteShortName(mContext, routeId);
-
-        if (timeDiff <= 0) {
-            return mContext.getString(R.string.trip_stat_gone, routeName);
-        } else if (timeDiff < ONE_MINUTE) {
-            return mContext.getString(R.string.trip_stat_lessthanone, routeName);
-        } else if (timeDiff < ONE_MINUTE * 2) {
-            return mContext.getString(R.string.trip_stat_one, routeName);
-        } else {
-            return mContext.getString(R.string.trip_stat, routeName,
-                    (int) (timeDiff / ONE_MINUTE));
-        }
     }
 }

@@ -26,6 +26,7 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.Context;
@@ -564,7 +565,7 @@ public class TripDetailsListFragment extends ListFragment {
             ObaRoute route = mRefs.getRoute(trip.getRouteId());
 
             TextView stopName = (TextView) convertView.findViewById(R.id.stop_name);
-            stopName.setText(stop.getName());
+            stopName.setText(MyTextUtils.toTitleCase(stop.getName()));
 
             TextView time = (TextView) convertView.findViewById(R.id.time);
             ViewGroup realtime = (ViewGroup) convertView.findViewById(

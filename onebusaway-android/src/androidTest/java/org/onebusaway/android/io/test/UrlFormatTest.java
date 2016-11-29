@@ -314,4 +314,24 @@ public class UrlFormatTest extends ObaTestCase {
             }
         }
     }
+
+    public void testIdWithForwardSlash() {
+        ObaRegion region = MockRegion.getTampa(getContext());
+
+        // Test by setting API directly
+        Application.get().setCustomApiUrl(region.getObaBaseUrl());
+
+        ObaArrivalInfoRequest.Builder builder =
+                new ObaArrivalInfoRequest.Builder(getContext(),
+                        "1_Forge Park / 495");
+        ObaArrivalInfoRequest request = builder.build();
+        UriAssert.assertUriMatch(
+                "http://api.tampa.onebusaway.org/api/api/where/arrivals-and-departures-for-stop/1_Forge%20Park%20%2F%20495.json",
+                new HashMap<String, String>() {{
+                    put("key", "*");
+                    put("version", "2");
+                }},
+                request
+        );
+    }
 }

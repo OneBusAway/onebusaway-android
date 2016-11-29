@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.io.elements;
 
+import org.onebusaway.android.util.IOUtils;
 import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
@@ -72,7 +73,7 @@ public final class ObaStopElement implements ObaStop {
     }
 
     public String getId() {
-        return id;
+        return IOUtils.encodeId(id);
     }
 
     public String getStopCode() {

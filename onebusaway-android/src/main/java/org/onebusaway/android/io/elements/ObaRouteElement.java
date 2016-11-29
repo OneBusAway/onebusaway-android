@@ -16,6 +16,8 @@
  */
 package org.onebusaway.android.io.elements;
 
+import org.onebusaway.android.util.IOUtils;
+
 import android.graphics.Color;
 import android.text.TextUtils;
 
@@ -80,7 +82,7 @@ public final class ObaRouteElement implements ObaRoute {
 
     @Override
     public String getId() {
-        return id;
+        return IOUtils.encodeId(id);
     }
 
     @Override

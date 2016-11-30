@@ -49,8 +49,8 @@ public class RegionsLoaderTest extends ObaLoaderTestCase {
                 -82.652145,
                 0.47208000000000183,
                 0.3967700000000036);
-        assertEquals("http://otp-fl.camsys-apps.com:8080/otp/", tampa.getOtpBaseUrl());
-
+        assertEquals("http://otp-hart.camsys-apps.com:8080/otp/", tampa.getOtpBaseUrl());
+        assertEquals("otp-tampa@onebusaway.org", tampa.getOtpContactEmail());
     }
 
     private void _assertPugetSound(ObaRegion ps) {

@@ -5,22 +5,18 @@
   "data": {
     "list": [
       {
-        "siriBaseUrl": "http://tampa.onebusaway.org/onebusaway-api-webapp/siri/", 
-        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9", 
-        "supportsSiriRealtimeApis": true,
+        "siriBaseUrl": "http://tampa.onebusaway.org/onebusaway-api-webapp/siri/",
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.11-SNAPSHOT|1|1|11|SNAPSHOT|6950d86123a7a9e5f12065bcbec0c516f35d86d9",
+        "supportsSiriRealtimeApis": true, 
         "open311Servers": [
           {
             "juridisctionId": null,
             "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
-            "baseUrl": "http://test.seeclickfix.com/open311/v2/"
-          },
-          {
-            "juridisctionId": null,
-            "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
-            "baseUrl": "http://www.publicstuff.com/api/open311/"
+            "baseUrl": "https://seeclickfix.com/open311/v2/"
           }
-        ], 
-        "language": "en_US",
+        ],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "http://mobile.twitter.com/OBA_tampa", 
         "supportsObaRealtimeApis": true, 
@@ -38,9 +34,9 @@
             "lonSpan": 0.3967700000000036
           }
         ],
-        "otpBaseUrl": "http://otp-fl.camsys-apps.com:8080/otp/",
-        "otpContactEmail": "opentripplanner@camsys.com",
-        "contactEmail": "onebusaway@gohart.org", 
+        "otpBaseUrl": "http://otp-hart.camsys-apps.com:8080/otp/", 
+        "contactEmail": "onebusaway@gohart.org",
+        "otpContactEmail": "otp-tampa@onebusaway.org", 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
@@ -50,11 +46,12 @@
         "regionName": "Tampa Bay"
       }, 
       {
-        "siriBaseUrl": "http://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/", 
-        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
-        "supportsSiriRealtimeApis": true,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": "http://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/",
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52",
+        "supportsSiriRealtimeApis": true, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "http://mobile.twitter.com/oba_pugetsound", 
         "supportsObaRealtimeApis": true, 
@@ -114,9 +111,9 @@
             "lonSpan": 0.784555996061
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "onebusaway@soundtransit.org", 
+        "otpBaseUrl": null, 
+        "contactEmail": "onebusaway@soundtransit.org",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "https://www.facebook.com/pages/OneBusAway/216091804930", 
@@ -126,11 +123,12 @@
         "regionName": "Puget Sound"
       }, 
       {
-        "siriBaseUrl": "http://bustime.mta.info/api/", 
-        "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": true,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": "http://bustime.mta.info/api/",
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "",
+        "supportsSiriRealtimeApis": true, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "http://mobile.twitter.com/nyctbusstop", 
         "supportsObaRealtimeApis": false, 
@@ -148,9 +146,9 @@
             "lonSpan": 0.23146799999999246
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "MTABusTime@mtahq.org", 
+        "otpBaseUrl": null, 
+        "contactEmail": "MTABusTime@mtahq.org",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "https://www.facebook.com/pages/MTA-New-York-City-Transit/232635164606", 
@@ -160,11 +158,12 @@
         "regionName": "MTA New York"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.14-SNAPSHOT|1|1|14|SNAPSHOT|440e5cb692a1ed195de7f0686d69f5ceecbe9a41",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "http://mobile.twitter.com/OBA_atlanta", 
         "supportsObaRealtimeApis": true, 
@@ -213,8 +212,8 @@
           }
         ],
         "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "onebusaway@ce.gatech.edu", 
+        "contactEmail": "onebusaway@atlantaregional.com",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "https://www.facebook.com/pages/ObaAtlanta/136662306506627", 
@@ -224,11 +223,12 @@
         "regionName": "Atlanta"
       }, 
       {
-        "siriBaseUrl": "http://buseta.wmata.com/onebusaway-api-webapp/siri/", 
-        "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": true,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": "http://buseta.wmata.com/onebusaway-api-webapp/siri/",
+        "supportsEmbeddedSocial": false, 
+        "obaVersionInfo": "",
+        "supportsSiriRealtimeApis": true, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "https://mobile.twitter.com/Metrobusinfo", 
         "supportsObaRealtimeApis": true, 
@@ -240,9 +240,9 @@
             "lonSpan": 0.7805199999999957
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "feedback@wmata.com", 
+        "otpBaseUrl": null, 
+        "contactEmail": "feedback@wmata.com",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
@@ -252,11 +252,12 @@
         "regionName": "Washington, D.C."
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_CA",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.7|1|1|7||c8ee3d4906dd55ecafdd124f31f39c0f54a37b52",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_CA", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "https://mobile.twitter.com/YRTViva", 
         "supportsObaRealtimeApis": true, 
@@ -268,9 +269,9 @@
             "lonSpan": 0.49329600000000084
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "transitinfo@york.ca", 
+        "otpBaseUrl": null, 
+        "contactEmail": "transitinfo@york.ca",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "https://www.facebook.com/198178906967045", 
@@ -280,11 +281,12 @@
         "regionName": "York"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false, 
+        "obaVersionInfo": "1.1.7|1|1|7|d3bbb9109a652359845bdee516dc2cbd1ba35e49",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "https://mobile.twitter.com/CalParking", 
         "supportsObaRealtimeApis": true, 
@@ -296,11 +298,11 @@
             "lonSpan": 0.10181500000000199
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "bear-transit@v-a.io", 
-        "stopInfoUrl": null, 
-        "active": true, 
+        "otpBaseUrl": null, 
+        "contactEmail": "bear-transit@v-a.io",
+        "otpContactEmail": null, 
+        "stopInfoUrl": null,
+        "active": false, 
         "facebookUrl": "https://www.facebook.com/pages/Bear-Transit/109669175726418", 
         "obaBaseUrl": "http://bt.v-a.io/onebusaway/", 
         "id": 6, 
@@ -308,11 +310,12 @@
         "regionName": "Bear Transit (beta)"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false, 
+        "obaVersionInfo": "",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -330,11 +333,10 @@
             "lonSpan": 1.1692720000000065
           }
         ],
-        "otpBaseUrl": "http://developer.onebusaway.org/ma-otp/otp",
-        "otpContactEmail": "opentripplanner@camsys.com",
-        "open311Servers": [],
+        "otpBaseUrl": null,
         "contactEmail": "sbrown@camsys.com",
-        "stopInfoUrl": null,
+        "otpContactEmail": null,
+        "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
         "obaBaseUrl": "http://developer.onebusaway.org/mbta-api/", 
@@ -343,11 +345,12 @@
         "regionName": "Boston (beta)"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "fi_FI",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": false, 
+        "obaVersionInfo": "1.1.13|1|1|13||ef9f836500eafee955381b17799b3105b525e93b",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "fi_FI", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -359,9 +362,9 @@
             "lonSpan": 0.2674852336517013
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "obasupport@octo3.fi", 
+        "otpBaseUrl": null, 
+        "contactEmail": "obasupport@octo3.fi",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
@@ -371,11 +374,12 @@
         "regionName": "Lappeenranta (beta)"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -387,9 +391,9 @@
             "lonSpan": 0.2974530000000044
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "info@rvtd.org", 
+        "otpBaseUrl": null, 
+        "contactEmail": "info@rvtd.org",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
@@ -399,11 +403,12 @@
         "regionName": "Rogue Valley, Oregon"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.12-SNAPSHOT|1|1|12|SNAPSHOT|", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.12-SNAPSHOT|1|1|12|SNAPSHOT|",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
@@ -415,9 +420,9 @@
             "lonSpan": 0.4220969999999937
           }
         ],
-        "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "jespejo@sanjoaquinrtd.com", 
+        "otpBaseUrl": null, 
+        "contactEmail": "jespejo@sanjoaquinrtd.com",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
@@ -427,32 +432,45 @@
         "regionName": "San Joaquin RTD (beta)"
       }, 
       {
-        "siriBaseUrl": null, 
-        "obaVersionInfo": "1.1.14|1|1|14|73aea0d ", 
-        "supportsSiriRealtimeApis": false,
-        "open311Servers": [], 
-        "language": "en_US",
+        "siriBaseUrl": null,
+        "supportsEmbeddedSocial": true, 
+        "obaVersionInfo": "1.1.14|1|1|14|73aea0d ",
+        "supportsSiriRealtimeApis": false, 
+        "open311Servers": [],
+        "language": "en_US", 
         "supportsObaDiscoveryApis": true, 
         "twitterUrl": "", 
         "supportsObaRealtimeApis": true, 
         "bounds": [
           {
-            "lat": 32.9002948657295, 
-            "latSpan": 0.7131838699909991, 
+            "lat": 32.731591,
+            "latSpan": 0.0011640000000028294,
+            "lon": -117.1896335,
+            "lonSpan": 0.027426999999988766
+          },
+          {
+            "lat": 33.0727675231135,
+            "latSpan": 0.7105120739810005,
+            "lon": -117.2316382462345,
+            "lonSpan": 0.7237252935990028
+          },
+          {
+            "lat": 32.8998529712665,
+            "latSpan": 0.7140676589169956, 
             "lon": -116.73142875280399, 
             "lonSpan": 1.093941754416008
           }
         ],
         "otpBaseUrl": null,
-        "otpContactEmail": null,
-        "contactEmail": "helpdesk@sdmts.com",
+        "contactEmail": "customerfeedback@sdmts.com",
+        "otpContactEmail": null, 
         "stopInfoUrl": null, 
         "active": true, 
         "facebookUrl": "", 
         "obaBaseUrl": "http://realtime.sdmts.com/api/", 
         "id": 11, 
-        "experimental": false, 
-        "regionName": "San Diego MTS"
+        "experimental": false,
+        "regionName": "San Diego"
       }
     ]
   }

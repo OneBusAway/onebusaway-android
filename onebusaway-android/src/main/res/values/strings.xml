@@ -640,7 +640,7 @@
     <string name="preference_region_dialog_message"> Your region is currently set to %1$s.
     If we got this wrong, please tap on \'Your Region\' to change it!</string>
     <string name="preference_region_dialog_title">Please check region</string>
-    <string name="report_dialog_out_of_region_message"> Please select a stop.</string>
+    <string name="report_dialog_stop_header">Please select a stop.</string>
     <string name="report_dialog_trip"> Please select an arrival time.</string>
 
     <!-- report issue screen-->

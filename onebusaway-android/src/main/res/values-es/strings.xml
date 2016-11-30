@@ -626,7 +626,7 @@
     <string name="preference_region_dialog_message"> Tu región está configurada en %1$s.
     ¡Si esto esta mal, por favor toca en \'Tú región\' para cambiarlo!</string>
     <string name="preference_region_dialog_title">Por favor, compruebe su región</string>
-    <string name="report_dialog_out_of_region_message"> Por favor, seleccione una parada.</string>
+    <string name="report_dialog_stop_header">Por favor, seleccione una parada.</string>
     <string name="report_dialog_trip"> Por favor seleccione un tiempo de llegada.</string>
 
     <!-- report issue screen-->

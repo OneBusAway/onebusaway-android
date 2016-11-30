@@ -771,7 +771,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             if (mIssueLocationHelper.getObaStop() == null) {
                 hideServicesSpinner();
                 // Show information to the user if there is no error on location
-                addInfoText(getString(R.string.report_dialog_out_of_region_message));
+                addInfoText(getString(R.string.report_dialog_stop_header));
             }
         }
 
@@ -1014,7 +1014,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                 }
             }
         } else {
-            addInfoText(getString(R.string.report_dialog_out_of_region_message));
+            addInfoText(getString(R.string.report_dialog_stop_header));
             mTransitServiceIssueTypeWithoutStop = issueType;
 
             mIssueLocationHelper.clearMarkers();

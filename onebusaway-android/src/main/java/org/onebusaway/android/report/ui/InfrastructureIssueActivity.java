@@ -94,6 +94,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private static final String SHOW_INFO = ".showInfo";
 
+    private static final String HEURISTIC_MATCH = ".isHeuristicMatch";
+
     private static final String ARRIVAL_LIST = ".arrivalList";
 
     private static final String TRIP_INFO = ".tripInfo";
@@ -349,6 +351,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         }
 
         outState.putBoolean(ARRIVAL_LIST, mShowArrivalListFragment);
+        outState.putBoolean(HEURISTIC_MATCH, mIsHeuristicMatch);
         outState.putString(AGENCY_NAME, mAgencyName);
         outState.putString(SELECTED_SERVICE_TYPE, mTransitServiceIssueTypeWithoutStop);
         outState.putString(ACTION_BAR_TITLE, getTitle().toString());
@@ -364,6 +367,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             mRestoredServiceName = savedInstanceState.getString(RESTORED_SERVICE);
             mAgencyName = savedInstanceState.getString(AGENCY_NAME);
             mTransitServiceIssueTypeWithoutStop = savedInstanceState.getString(SELECTED_SERVICE_TYPE);
+            mIsHeuristicMatch = savedInstanceState.getBoolean(HEURISTIC_MATCH);
 
             String bundleStopId = savedInstanceState.getString(MapParams.STOP_ID);
             String stopName = savedInstanceState.getString(MapParams.STOP_NAME);

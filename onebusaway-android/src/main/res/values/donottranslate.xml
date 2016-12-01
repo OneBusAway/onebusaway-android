@@ -45,7 +45,9 @@
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
 
     <!-- Regions API URL -->
-    <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
+    <string name="regions_api_url">
+        https://github.com/OneBusAway/onebusaway-multiregion-support/raw/testSeeClickFix/staging/regions-v3.json
+    </string>
 
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>

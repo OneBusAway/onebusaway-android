@@ -20,7 +20,7 @@ import org.onebusaway.android.report.ui.util.ServiceUtils;
 import android.test.AndroidTestCase;
 
 /**
- * Tests to evaluate region utilities
+ * Tests to evaluate issue reporting utilities
  */
 public class ReportUtilTest extends AndroidTestCase {
 

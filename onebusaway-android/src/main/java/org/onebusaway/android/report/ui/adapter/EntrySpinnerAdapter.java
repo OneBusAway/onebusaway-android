@@ -74,6 +74,7 @@ public class EntrySpinnerAdapter implements SpinnerAdapter{
         final SpinnerItem i = mSpinnerItems.get(position);
         if (i != null) {
             if(i.isSection()){
+                // Section Header
                 SectionItem si = (SectionItem)i;
                 v = vi.inflate(R.layout.list_item_section, null);
 

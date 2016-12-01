@@ -189,12 +189,12 @@
 
     <string-array name="report_stop_transit_category_keywords">
         <item>transit</item>
-        <item>bus</item>
+        <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
         <item>stop</item>
+        <item>route/trip is missing</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">
-        <item>trip</item>
         <item>arrival</item>
         <item>schedule</item>
     </string-array>

@@ -146,6 +146,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     private String mDefaultIssueType;
 
     /**
+     * True if the transit services were matched heuristically, and false if they were not
+     */
+    private boolean mIsHeuristicMatch;
+
+    /**
      * Restore this issue on rotation
      */
     private String mRestoredServiceName;
@@ -775,8 +780,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             }
         }
 
-        // Set transit services
-        createTransitServices(serviceList);
+        // Mark the services that are transit-related
+        mIsHeuristicMatch = ServiceUtils.markTransitServices(getApplicationContext(), serviceList);
 
         /**
          * Map the group names with service list
@@ -784,7 +789,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         Map<String, List<Service>> serviceListMap = new TreeMap<>();
 
         for (Service s : serviceList) {
-            String groupName = s.getGroup() == null ? "Others" : s.getGroup();
+            String groupName = s.getGroup() == null ? getString(R.string.ri_others) : s.getGroup();
             List<Service> mappedList = serviceListMap.get(groupName);
             if (mappedList != null) {
                 mappedList.add(s);
@@ -805,8 +810,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         hintServiceSpinnerItem.setHint(true);
         spinnerItems.add(hintServiceSpinnerItem);
 
+        // Create Transit categories first
         if (serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT) != null) {
-            // Create Transit categories first
             spinnerItems.add(new SectionItem(ReportConstants.ISSUE_GROUP_TRANSIT));
 
             for (Service s : serviceListMap.get(ReportConstants.ISSUE_GROUP_TRANSIT)) {
@@ -876,7 +881,9 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                 boolean transitServiceFound = false;
 
                 if (getString(R.string.ri_selected_service_stop).equals(mDefaultIssueType) &&
-                        ServiceUtils.isTransitStopServiceByType(service.getType())) {
+                        ServiceUtils.isTransitStopServiceByType(service.getType())
+                        && !mIsHeuristicMatch) {
+                    // We have an explicit (not heuristic-based) match for stop problem
                     transitServiceFound = true;
                 } else if (getString(R.string.ri_selected_service_trip).equals(mDefaultIssueType) &&
                         ServiceUtils.isTransitTripServiceByType(service.getType())) {
@@ -924,69 +931,6 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private void showServicesSpinner() {
         mServicesSpinnerFrameLayout.setVisibility(View.VISIBLE);
-    }
-
-    private void createTransitServices(List<Service> serviceList) {
-
-        boolean stopProblemFound = false;
-        boolean tripProblemFound = false;
-
-        // Search transit services by keywords
-        for (Service s : serviceList) {
-            if (ServiceUtils.isTransitStopServiceByKey(s.getKeywords()) && !stopProblemFound) {
-                s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
-                stopProblemFound = true;
-            } else if (ServiceUtils.isTransitTripServiceByKey(s.getKeywords()) && !tripProblemFound) {
-                s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
-                tripProblemFound = true;
-            }
-        }
-
-        // Search transit services by groups
-        if (!stopProblemFound || !tripProblemFound) {
-            for (Service s : serviceList) {
-                if (ServiceUtils.isTransitStopServiceByKey(s.getGroup()) && !stopProblemFound) {
-                    s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                    s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
-                    stopProblemFound = true;
-                } else if (ServiceUtils.isTransitTripServiceByKey(s.getGroup()) && !tripProblemFound) {
-                    s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                    s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
-                    tripProblemFound = true;
-                }
-            }
-        }
-
-        // Search transit services by name
-        if (!stopProblemFound || !tripProblemFound) {
-            for (Service s : serviceList) {
-                if (ServiceUtils.isTransitStopServiceByKey(s.getService_name()) && !stopProblemFound) {
-                    s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                    s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP);
-                    stopProblemFound = true;
-                } else if (ServiceUtils.isTransitTripServiceByKey(s.getService_name()) && !tripProblemFound) {
-                    s.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-                    s.setType(ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP);
-                    tripProblemFound = true;
-                }
-            }
-        }
-
-        if (!stopProblemFound) {
-            Service s1 = new Service(getString(R.string.ri_service_stop),
-                    ReportConstants.STATIC_TRANSIT_SERVICE_STOP);
-            s1.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-            serviceList.add(s1);
-        }
-
-        if (!tripProblemFound) {
-            Service s2 = new Service(getString(R.string.ri_service_trip),
-                    ReportConstants.STATIC_TRANSIT_SERVICE_TRIP);
-            s2.setGroup(ReportConstants.ISSUE_GROUP_TRANSIT);
-            serviceList.add(s2);
-        }
     }
 
     /**

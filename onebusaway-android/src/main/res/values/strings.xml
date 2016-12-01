@@ -644,6 +644,7 @@
     <string name="report_dialog_trip"> Please select an arrival time.</string>
 
     <!-- report issue screen-->
+    <string name="ri_others">Others</string>
     <string name="ri_desc_hint">Issue description</string>
     <string name="ri_button_camera">Camera</string>
     <string name="ri_button_image">ADD IMAGE</string>

@@ -907,6 +907,12 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             }
         }
 
+        if (getString(R.string.ri_selected_service_stop).equals(mDefaultIssueType)
+                && mIsHeuristicMatch && mIssueLocationHelper.getObaStop() == null) {
+            // If heuristic-based match and no bus stop selected remove markers
+            mIssueLocationHelper.clearMarkers();
+        }
+
         // Set mDefaultIssueType = null to prevent auto selections
         mDefaultIssueType = null;
 

@@ -24,6 +24,10 @@ import android.test.AndroidTestCase;
  */
 public class ReportUtilTest extends AndroidTestCase {
 
+    /**
+     * Test our heuristic text matching that's used to identify pure transit Open311 deployments
+     * that do not support the Open311 group or keyword elements for explicit matching.
+     */
     public void testServiceKeywordMatching() {
         String[] stopServiceNamesMatch = {
                 "Incorrect/Missing Stop ID",

@@ -13,7 +13,7 @@
           {
             "juridisctionId": null,
             "apiKey": "937033cad3054ec58a1a8156dcdd6ad8a416af2f",
-            "baseUrl": "https://seeclickfix.com/open311/v2/"
+            "baseUrl": "https://test.seeclickfix.com/open311/v2/"
           }
         ],
         "language": "en_US", 

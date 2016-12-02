@@ -33,7 +33,8 @@ public class ServiceUtils {
      *
      * @param context
      * @param serviceList the list of Open311 services to potentially be marked as transit-related
-     * @return true if the transit services were matched via heuristics, false if they were not
+     * @return true if the services were determined to be via all transit-related via heuristics,
+     * false if heuristics matching wasn't used
      */
     public static boolean markTransitServices(Context context, List<Service> serviceList) {
         boolean stopProblemFound = false;

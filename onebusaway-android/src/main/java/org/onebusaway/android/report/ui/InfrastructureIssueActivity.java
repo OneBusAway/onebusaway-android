@@ -150,7 +150,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     /**
      * True if the transit services were matched heuristically, and false if they were not
      */
-    private boolean mIsHeuristicMatch;
+    private boolean mIsAllTransitHeuristicMatch;
 
     /**
      * Restore this issue on rotation
@@ -351,7 +351,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         }
 
         outState.putBoolean(ARRIVAL_LIST, mShowArrivalListFragment);
-        outState.putBoolean(HEURISTIC_MATCH, mIsHeuristicMatch);
+        outState.putBoolean(HEURISTIC_MATCH, mIsAllTransitHeuristicMatch);
         outState.putString(AGENCY_NAME, mAgencyName);
         outState.putString(SELECTED_SERVICE_TYPE, mTransitServiceIssueTypeWithoutStop);
         outState.putString(ACTION_BAR_TITLE, getTitle().toString());
@@ -367,7 +367,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             mRestoredServiceName = savedInstanceState.getString(RESTORED_SERVICE);
             mAgencyName = savedInstanceState.getString(AGENCY_NAME);
             mTransitServiceIssueTypeWithoutStop = savedInstanceState.getString(SELECTED_SERVICE_TYPE);
-            mIsHeuristicMatch = savedInstanceState.getBoolean(HEURISTIC_MATCH);
+            mIsAllTransitHeuristicMatch = savedInstanceState.getBoolean(HEURISTIC_MATCH);
 
             String bundleStopId = savedInstanceState.getString(MapParams.STOP_ID);
             String stopName = savedInstanceState.getString(MapParams.STOP_NAME);
@@ -785,7 +785,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         }
 
         // Mark the services that are transit-related
-        mIsHeuristicMatch = ServiceUtils.markTransitServices(getApplicationContext(), serviceList);
+        mIsAllTransitHeuristicMatch = ServiceUtils
+                .markTransitServices(getApplicationContext(), serviceList);
 
         /**
          * Map the group names with service list
@@ -886,7 +887,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
                 if (getString(R.string.ri_selected_service_stop).equals(mDefaultIssueType) &&
                         ServiceUtils.isTransitStopServiceByType(service.getType())
-                        && !mIsHeuristicMatch) {
+                        && !mIsAllTransitHeuristicMatch) {
                     // We have an explicit (not heuristic-based) match for stop problem
                     transitServiceFound = true;
                 } else if (getString(R.string.ri_selected_service_trip).equals(mDefaultIssueType) &&
@@ -907,9 +908,9 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             }
         }
 
+        // If is a stop problem type, an all transit heuristic-based match, and no bus stop selected remove markers
         if (getString(R.string.ri_selected_service_stop).equals(mDefaultIssueType)
-                && mIsHeuristicMatch && mIssueLocationHelper.getObaStop() == null) {
-            // If heuristic-based match and no bus stop selected remove markers
+                && mIsAllTransitHeuristicMatch && mIssueLocationHelper.getObaStop() == null) {
             mIssueLocationHelper.clearMarkers();
         }
 

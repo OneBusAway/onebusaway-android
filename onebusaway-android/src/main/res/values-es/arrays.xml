@@ -189,14 +189,14 @@
 
     <string-array name="report_stop_transit_category_keywords">
         <item>tránsito</item>
-        <item>bus</item>
+        <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
         <item>parada</item>
+        <item>falta la ruta/viaje</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">
         <item>viaje</item>
         <item>llegada</item>
-        <item>planificada</item>
     </string-array>
 
     <string-array name="report_stop_id_field_keywords">

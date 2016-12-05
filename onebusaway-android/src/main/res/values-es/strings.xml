@@ -1032,7 +1032,7 @@
 
     <!-- Trip plan advanced settings -->
     <string name="trip_plan_advanced_settings">Preferencias adicionales de Viaje</string>
-    <string name="minimize_transfers">Reducir el minimo de transferencias</string>
+    <string name="minimize_transfers">Reducir el mínimo de transferencias</string>
     <string name="maximum_walk_distance">Distancia máxima a pie: </string>
     <string name="wheelchair_accessible">Evitar las escaleras</string>
 

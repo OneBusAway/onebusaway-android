@@ -29,9 +29,14 @@ public class ReportConstants {
     //Map default values
     public static final String DEFAULT_SERVICE = "default";
     public static final String DYNAMIC_SERVICE = "dynamic";
+
+    // Number of transit-related services at which we assume all services are transit-related
+    public static final int NUM_TRANSIT_SERVICES_THRESHOLD = 4;
+
     // Static Transit service indicates that the service is default OBA stop or trip problem
     public static final String STATIC_TRANSIT_SERVICE_STOP = "stop";
     public static final String STATIC_TRANSIT_SERVICE_TRIP = "trip";
+
     // Dynamic Transit service indicates that the service is coming from open311 endpoint
     public static final String DYNAMIC_TRANSIT_SERVICE_STOP = "dynamic_stop";
     public static final String DYNAMIC_TRANSIT_SERVICE_TRIP = "dynamic_trip";

@@ -640,10 +640,11 @@
     <string name="preference_region_dialog_message"> Your region is currently set to %1$s.
     If we got this wrong, please tap on \'Your Region\' to change it!</string>
     <string name="preference_region_dialog_title">Please check region</string>
-    <string name="report_dialog_stop_header">Please select a stop.</string>
+    <string name="report_dialog_stop_header">Please tap on stop on map</string>
     <string name="report_dialog_trip"> Please select an arrival time.</string>
 
     <!-- report issue screen-->
+    <string name="ri_others">Others</string>
     <string name="ri_desc_hint">Issue description</string>
     <string name="ri_button_camera">Camera</string>
     <string name="ri_button_image">ADD IMAGE</string>

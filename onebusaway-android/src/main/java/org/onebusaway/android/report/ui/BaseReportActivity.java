@@ -29,6 +29,8 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -44,6 +46,8 @@ public class BaseReportActivity extends AppCompatActivity {
     public static final String LOCATION_STRING = "locationString";
 
     protected RelativeLayout mInfoHeader;
+
+    protected FrameLayout mInLineInstructions;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -110,12 +114,23 @@ public class BaseReportActivity extends AppCompatActivity {
     }
 
     protected void addInfoText(String text) {
+        // Instructions in header of report
         if (mInfoHeader == null){
             mInfoHeader = (RelativeLayout) findViewById(R.id.ri_info_header);
         }
         ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).setText(text);
         if (mInfoHeader.getVisibility() != View.VISIBLE) {
             mInfoHeader.setVisibility(View.VISIBLE);
+        }
+        // Instructions in body of report
+        if (mInLineInstructions == null) {
+            mInLineInstructions = (FrameLayout) findViewById(R.id.in_line_instructions_container);
+        }
+        ((ImageView) findViewById(R.id.in_line_instructions_image)).setColorFilter(
+                getResources().getColor(R.color.material_gray));
+        ((TextView) mInLineInstructions.findViewById(R.id.in_line_instructions_text)).setText(text);
+        if (mInLineInstructions.getVisibility() != View.VISIBLE) {
+            mInLineInstructions.setVisibility(View.VISIBLE);
         }
     }
 
@@ -132,5 +147,11 @@ public class BaseReportActivity extends AppCompatActivity {
         }
         ((TextView) mInfoHeader.findViewById(R.id.ri_info_text)).setText("");
         mInfoHeader.setVisibility(View.GONE);
+
+        if (mInLineInstructions == null) {
+            mInLineInstructions = (FrameLayout) findViewById(R.id.in_line_instructions_container);
+        }
+        ((TextView) mInLineInstructions.findViewById(R.id.in_line_instructions_text)).setText("");
+        mInLineInstructions.setVisibility(View.GONE);
     }
 }

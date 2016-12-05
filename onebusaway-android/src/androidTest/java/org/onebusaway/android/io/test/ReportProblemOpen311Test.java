@@ -38,7 +38,13 @@ import edu.usf.cutr.open311client.models.ServiceListRequest;
 import edu.usf.cutr.open311client.models.ServiceListResponse;
 
 /**
- * Tests to evaluate interactions with Open311 system for regions that use Open311
+ * Tests to evaluate interactions with Open311 system for regions that use Open311.
+ *
+ * NOTE: These tests make actual HTTP requests to live Open311 servers (SeeClickFix), because we
+ * make some assumptions required for text heuristic matching to identify transit-related services.
+ * If there are changes in the live server (e.g., new services added than aren't transit-related
+ * but include some of the text we're using to identify transit services), these could break our
+ * assumptions, and we want to know about that.
  */
 public class ReportProblemOpen311Test extends AndroidTestCase {
 

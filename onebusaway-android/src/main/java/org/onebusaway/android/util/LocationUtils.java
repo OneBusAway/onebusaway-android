@@ -128,7 +128,7 @@ public class LocationUtils {
      * @param lon The longitude.
      * @return A Location representing this latitude/longitude.
      */
-    public static final Location makeLocation(double lat, double lon) {
+    public static Location makeLocation(double lat, double lon) {
         Location l = new Location("");
         l.setLatitude(lat);
         l.setLongitude(lon);

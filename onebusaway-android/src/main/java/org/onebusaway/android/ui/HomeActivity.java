@@ -216,7 +216,7 @@ public class HomeActivity extends AppCompatActivity
      * @param lat     The latitude of the map center.
      * @param lon     The longitude of the map center.
      */
-    public static final void start(Context context,
+    public static void start(Context context,
                                    String focusId,
                                    double lat,
                                    double lon) {
@@ -230,7 +230,7 @@ public class HomeActivity extends AppCompatActivity
      * @param context The context of the activity.
      * @param stop    The stop to focus on.
      */
-    public static final void start(Context context, ObaStop stop) {
+    public static void start(Context context, ObaStop stop) {
         context.startActivity(makeIntent(context, stop));
     }
 
@@ -241,7 +241,7 @@ public class HomeActivity extends AppCompatActivity
      * @param context The context of the activity.
      * @param routeId The route to show.
      */
-    public static final void start(Context context, String routeId) {
+    public static void start(Context context, String routeId) {
         context.startActivity(makeIntent(context, routeId));
     }
 
@@ -254,7 +254,7 @@ public class HomeActivity extends AppCompatActivity
      * @param lat     The latitude of the map center.
      * @param lon     The longitude of the map center.
      */
-    public static final Intent makeIntent(Context context,
+    public static Intent makeIntent(Context context,
                                           String focusId,
                                           double lat,
                                           double lon) {
@@ -272,7 +272,7 @@ public class HomeActivity extends AppCompatActivity
      * @param context The context of the activity.
      * @param stop    The stop to focus on.
      */
-    public static final Intent makeIntent(Context context, ObaStop stop) {
+    public static Intent makeIntent(Context context, ObaStop stop) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, stop.getId());
         myIntent.putExtra(MapParams.STOP_NAME, stop.getName());
@@ -290,7 +290,7 @@ public class HomeActivity extends AppCompatActivity
      * @param context The context of the activity.
      * @param routeId The route to show.
      */
-    public static final Intent makeIntent(Context context, String routeId) {
+    public static Intent makeIntent(Context context, String routeId) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.MODE, MapParams.MODE_ROUTE);
         myIntent.putExtra(MapParams.ZOOM_TO_ROUTE, true);

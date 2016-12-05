@@ -62,7 +62,7 @@ public final class ObaApi {
         <T> T createFromError(Class<T> cls, int code, String error);
     }
 
-    public static final <T> SerializationHandler getSerializer(Class<T> cls) {
+    public static <T> SerializationHandler getSerializer(Class<T> cls) {
         return JacksonSerializer.getInstance();
     }
 }

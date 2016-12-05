@@ -807,7 +807,7 @@ public final class ObaContract {
 
         public static final int DAY_ALL = DAY_WEEKDAY | DAY_SUN | DAY_SAT;
 
-        public static final Uri buildUri(String tripId, String stopId) {
+        public static Uri buildUri(String tripId, String stopId) {
             return CONTENT_URI.buildUpon().appendPath(tripId)
                     .appendPath(stopId).build();
         }
@@ -935,7 +935,7 @@ public final class ObaContract {
 
         public static final int STATE_CANCELLED = 3;
 
-        public static final Uri buildUri(int id) {
+        public static Uri buildUri(int id) {
             return CONTENT_URI.buildUpon().appendPath(String.valueOf(id))
                     .build();
         }
@@ -1131,7 +1131,7 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".region";
 
-        public static final Uri buildUri(int id) {
+        public static Uri buildUri(int id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
@@ -1237,7 +1237,7 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".region_bounds";
 
-        public static final Uri buildUri(int id) {
+        public static Uri buildUri(int id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
@@ -1300,7 +1300,7 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".open311_servers";
 
-        public static final Uri buildUri(int id) {
+        public static Uri buildUri(int id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 

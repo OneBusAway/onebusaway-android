@@ -51,7 +51,7 @@ public final class ArrivalInfo {
      *                                             not
      * @return ArrayList of arrival info to be used with the adapter
      */
-    public static final ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
+    public static ArrayList<ArrivalInfo> convertObaArrivalInfo(Context context,
             ObaArrivalInfo[] arrivalInfo,
             ArrayList<String> filter, long ms,
             boolean includeArrivalDepartureInStatusLabel) {

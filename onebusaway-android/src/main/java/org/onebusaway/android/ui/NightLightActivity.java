@@ -71,7 +71,7 @@ public class NightLightActivity extends AppCompatActivity {
     /**
      * Starts the activity
      */
-    public static final void start(Context context) {
+    public static void start(Context context) {
         Intent i = new Intent(context, NightLightActivity.class);
         context.startActivity(i);
     }

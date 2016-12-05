@@ -155,7 +155,7 @@ public final class UIUtils {
         }
     }
 
-    public static final int getStopDirectionText(String direction) {
+    public static int getStopDirectionText(String direction) {
         if (direction.equals("N")) {
             return R.string.direction_n;
         } else if (direction.equals("NW")) {
@@ -177,7 +177,7 @@ public final class UIUtils {
         }
     }
 
-    public static final String getRouteDisplayName(String routeShortName, String routeLongName) {
+    public static String getRouteDisplayName(String routeShortName, String routeLongName) {
         if (!TextUtils.isEmpty(routeShortName)) {
             return routeShortName;
         }
@@ -188,15 +188,15 @@ public final class UIUtils {
         return "";
     }
 
-    public static final String getRouteDisplayName(ObaRoute route) {
+    public static String getRouteDisplayName(ObaRoute route) {
         return getRouteDisplayName(route.getShortName(), route.getLongName());
     }
 
-    public static final String getRouteDisplayName(ObaArrivalInfo arrivalInfo) {
+    public static String getRouteDisplayName(ObaArrivalInfo arrivalInfo) {
         return getRouteDisplayName(arrivalInfo.getShortName(), arrivalInfo.getRouteLongName());
     }
 
-    public static final String getRouteDescription(ObaRoute route) {
+    public static String getRouteDescription(ObaRoute route) {
         String shortName = route.getShortName();
         String longName = route.getLongName();
 
@@ -232,7 +232,7 @@ public final class UIUtils {
 
     // Shows or hides the view, depending on whether or not the direction is
     // available.
-    public static final void setStopDirection(View v, String direction, boolean show) {
+    public static void setStopDirection(View v, String direction, boolean show) {
         final TextView text = (TextView) v;
         final int directionText = UIUtils.getStopDirectionText(direction);
         if ((directionText != R.string.direction_none) || show) {
@@ -244,7 +244,7 @@ public final class UIUtils {
     }
 
     // Common code to set a route list item view
-    public static final void setRouteView(View view, ObaRoute route) {
+    public static void setRouteView(View view, ObaRoute route) {
         TextView shortNameText = (TextView) view.findViewById(R.id.short_name);
         TextView longNameText = (TextView) view.findViewById(R.id.long_name);
 
@@ -468,7 +468,7 @@ public final class UIUtils {
      * @param name       The name of the shortcut.
      * @param destIntent The destination intent.
      */
-    public static final Intent makeShortcut(Context context, String name, Intent destIntent) {
+    public static Intent makeShortcut(Context context, String name, Intent destIntent) {
         // Make sure the shortcut Activity always launches on top (#626)
         destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -659,7 +659,7 @@ public final class UIUtils {
         }
     }
 
-    public static final String getRouteErrorString(Context context, int code) {
+    public static String getRouteErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
                 return context.getString(R.string.airplane_mode_error);
@@ -687,7 +687,7 @@ public final class UIUtils {
         }
     }
 
-    public static final String getStopErrorString(Context context, int code) {
+    public static String getStopErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
                 return context.getString(R.string.airplane_mode_error);
@@ -724,7 +724,7 @@ public final class UIUtils {
      * @return the resource ID for a user-friendly error message based on device state (if a network
      * connection is available or airplane mode is on) or an OBA REST API response code
      */
-    public static final int getMapErrorString(Context context, int code) {
+    public static int getMapErrorString(Context context, int code) {
         if (!isConnected(context)) {
             if (isAirplaneMode(context)) {
                 return R.string.airplane_mode_error;

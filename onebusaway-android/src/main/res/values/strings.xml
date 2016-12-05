@@ -105,28 +105,10 @@
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Fresh new look</b>
-        - Yay material design!\n&#8226;\u0020
-        <b>Live buses on the map</b>
-        - Tap on arrival times and choose \"Show route on map\"\n&#8226;\u0020
-        <b>Live trip status</b>
-        - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
-        <b>Improved feedback process</b>
-        - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
-        <b>Bug fixes</b>
-        - See http://bit.ly/oba-android-releases
-    </string>
-    <string name="main_help_whatsnew_trip_plan">&#8226;\u0020
-        <b>Fresh new look</b>
-        - Yay material design!\n&#8226;\u0020
-        <b>Live buses on the map</b>
-        - Tap on arrival times and choose \"Show route on map\"\n&#8226;\u0020
-        <b>Live trip status</b>
-        - Tap on arrival times and choose \"Show trip status\"\n&#8226;\u0020
-        <b>Improved feedback process</b>
-        - Tap \"Send feedback\" in the navigation drawer\n&#8226;\u0020
-        <b>Trip planning (Tampa Bay-only)</b>
-        - Check it out in navigation drawer!\n&#8226;\u0020
+        <b>Hide alerts</b>
+        - Tap on alert and then \"Hide\" to remove it from view\n&#8226;\u0020
+        <b>Progress bar above map</b>
+        - When this is moving stops are still loading\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>

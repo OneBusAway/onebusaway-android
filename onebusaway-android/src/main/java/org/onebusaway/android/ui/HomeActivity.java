@@ -298,10 +298,6 @@ public class HomeActivity extends AppCompatActivity
         return myIntent;
     }
 
-    private int mWhatsNewMessage = R.string.main_help_whatsnew;
-
-    private int mWhatsNewMessageTripPlan = R.string.main_help_whatsnew_trip_plan;
-
     SlidingPanelController mSlidingPanelController;
 
     @Override
@@ -725,20 +721,8 @@ public class HomeActivity extends AppCompatActivity
 
     @SuppressWarnings("deprecation")
     private Dialog createWhatsNewDialog() {
-        Integer whatsNew = null;
-        if (Application.get().getCurrentRegion() != null) {
-            if (Application.get().getCurrentRegion().getOtpBaseUrl() == null) {
-                // Show normal message - region doesn't have OTP URL
-                whatsNew = mWhatsNewMessage;
-            }
-        }
-        // Either region hasn't been selected yet, or it has an OTP URL - show trip plan message
-        if (whatsNew == null) {
-            whatsNew = mWhatsNewMessageTripPlan;
-        }
-
         TextView textView = (TextView) getLayoutInflater().inflate(R.layout.whats_new_dialog, null);
-        textView.setText(whatsNew);
+        textView.setText(R.string.main_help_whatsnew);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.main_help_whatsnew_title);
@@ -846,7 +830,6 @@ public class HomeActivity extends AppCompatActivity
         final int newVer = appInfo.versionCode;
 
         if (oldVer < newVer) {
-            mWhatsNewMessage = R.string.main_help_whatsnew;
             showDialog(WHATSNEW_DIALOG);
 
             // Updates will remove the alarms. This should put them back.

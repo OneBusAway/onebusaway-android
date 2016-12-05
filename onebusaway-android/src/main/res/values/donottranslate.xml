@@ -161,7 +161,7 @@
     <string name="ri_append_vehicle_id">vehicle_id=%1$s;\n</string>
     <string name="ri_append_vehicle_location">vehicle_location=%1$s;\n</string>
     <string name="ri_append_service_date">service_date=%1$s;\n</string>
-    <string name="ri_append_predicted">predicted=%1$s;\n</string>
+    <string name="ri_append_predicted">predicted=%1$b;\n</string>
     <string name="ri_append_arrival_time">stop_arrival_time=%1$s;\n</string>
     <string name="ri_append_departure_time">stop_departure_time=%1$s;\n</string>
     <string name="ri_append_schedule_deviation">schedule_deviation=%1$s min;\n</string>

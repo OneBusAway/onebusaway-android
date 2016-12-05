@@ -278,8 +278,6 @@ public class JacksonConfig {
                 public void run() {
                     writeToCache(object);
                 }
-
-                ;
             }.start();
         } else {
             Log.w(TAG,
@@ -306,8 +304,6 @@ public class JacksonConfig {
                     readFromCache(OBJECT_MAPPER);
                     readFromCache(OBJECT_READER);
                 }
-
-                ;
             }.start();
         } else {
             Log.w(TAG,

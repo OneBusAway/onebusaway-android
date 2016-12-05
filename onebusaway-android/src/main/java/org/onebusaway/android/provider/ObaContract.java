@@ -838,8 +838,10 @@ public final class ObaContract {
          * @return A DB compatible days bitmask
          */
         public static int arrayToDays(boolean[] days) {
+            if (days.length != 7) {
+                throw new IllegalArgumentException("days.length must be 7");
+            }
             int result = 0;
-            assert (days.length == 7);
             for (int i = 0; i < days.length; ++i) {
                 final int bit = days[i] ? 1 : 0;
                 result |= bit << i;

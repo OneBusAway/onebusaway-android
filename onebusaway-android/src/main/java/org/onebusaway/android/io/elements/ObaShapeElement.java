@@ -78,7 +78,9 @@ public final class ObaShapeElement implements ObaShape {
      * @return A list of points from the encoded string.
      */
     public static List<Location> decodeLine(String encoded, int numPoints) {
-        assert (numPoints >= 0);
+        if (numPoints < 0) {
+            throw new IllegalArgumentException("numPoints must be >= 0");
+        }
         ArrayList<Location> array = new ArrayList<Location>(numPoints);
 
         final int len = encoded.length();
@@ -132,7 +134,9 @@ public final class ObaShapeElement implements ObaShape {
      * @return A list of levels from the encoded string.
      */
     public static List<Integer> decodeLevels(String encoded, int numPoints) {
-        assert (numPoints >= 0);
+        if (numPoints < 0) {
+            throw new IllegalArgumentException("numPoints must be >= 0");
+        }
         ArrayList<Integer> array = new ArrayList<Integer>(numPoints);
 
         final int len = encoded.length();

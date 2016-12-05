@@ -95,7 +95,9 @@ public class RouteMapController implements MapModeController {
 
     @Override
     public void setState(Bundle args) {
-        assert (args != null);
+        if (args == null) {
+            throw new IllegalArgumentException("args cannot be null");
+        }
         String routeId = args.getString(MapParams.ROUTE_ID);
 
         // If the previous map zoom isn't the default, then zoom to that level as a start

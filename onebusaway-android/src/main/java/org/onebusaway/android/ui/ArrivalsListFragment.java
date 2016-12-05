@@ -1355,7 +1355,9 @@ public class ArrivalsListFragment extends ListFragment
         ObaArrivalInfoResponse response =
                 getArrivalsLoader().getLastGoodResponse();
         final List<ObaRoute> routes = response.getRoutes(mStop.getRouteIds());
-        assert (routes.size() == len);
+        if (routes.size() != len) {
+            throw new IllegalArgumentException("checks.length must be equal to routes.size()");
+        }
 
         for (int i = 0; i < len; ++i) {
             final ObaRoute route = routes.get(i);

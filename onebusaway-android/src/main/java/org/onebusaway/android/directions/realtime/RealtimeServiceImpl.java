@@ -164,7 +164,6 @@ public class RealtimeServiceImpl implements RealtimeService {
             public void onTripRequestFailure(int result, String url) {
                 Log.e(TAG, "Failure checking itineraries. Result=" + result + ", url=" + url);
                 disableListenForTripUpdates();
-                return;
             }
         };
 

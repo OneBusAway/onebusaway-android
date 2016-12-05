@@ -230,13 +230,8 @@ public class PreferenceUtils {
         if (preferredUnits.equalsIgnoreCase(AUTOMATIC)) {
             // If the country is set to USA, assume imperial, otherwise metric
             // TODO - Method of guessing metric/imperial can definitely be improved
-            if (Locale.getDefault().getISO3Country().equalsIgnoreCase(Locale.US.getISO3Country())) {
-                // Assume imperial
-                return false;
-            } else {
-                // Assume metric
-                return true;
-            }
+            return !Locale.getDefault().getISO3Country()
+                    .equalsIgnoreCase(Locale.US.getISO3Country());
         } else {
             return preferredUnits.equalsIgnoreCase(METRIC);
         }

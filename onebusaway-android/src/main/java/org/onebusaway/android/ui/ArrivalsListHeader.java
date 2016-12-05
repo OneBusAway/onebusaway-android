@@ -910,11 +910,7 @@ class ArrivalsListHeader {
     private boolean isFilteringRoutes() {
         ArrayList<String> routesFilter = mController.getRoutesFilter();
         final int num = (routesFilter != null) ? routesFilter.size() : 0;
-        if (num > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return num > 0;
     }
 
     /**
@@ -1327,10 +1323,7 @@ class ArrivalsListHeader {
                 return false;
             }
             ShowHiddenAlert other = (ShowHiddenAlert) obj;
-            if (!getId().equals(other.getId())) {
-                return false;
-            }
-            return true;
+            return getId().equals(other.getId());
         }
     }
 

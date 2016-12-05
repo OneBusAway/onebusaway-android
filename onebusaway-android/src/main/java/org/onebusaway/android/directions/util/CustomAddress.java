@@ -124,11 +124,11 @@ public class CustomAddress extends Address {
                     a.setPostalCode(in.readString());
                     a.setCountryCode(in.readString());
                     a.setCountryName(in.readString());
-                    boolean mHasLatitude = in.readInt() == 0 ? false : true;
+                    boolean mHasLatitude = in.readInt() != 0;
                     if (mHasLatitude) {
                         a.setLatitude(in.readDouble());
                     }
-                    boolean mHasLongitude = in.readInt() == 0 ? false : true;
+                    boolean mHasLongitude = in.readInt() != 0;
                     if (mHasLongitude) {
                         a.setLongitude(in.readDouble());
                     }

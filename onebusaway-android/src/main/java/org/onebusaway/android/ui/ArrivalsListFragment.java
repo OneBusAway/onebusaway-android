@@ -1271,7 +1271,7 @@ public class ArrivalsListFragment extends ListFragment
             mExternalHeader = bundle.getBoolean(EXTERNAL_HEADER);
         }
 
-        if (mHeader == null && mExternalHeader == false) {
+        if (mHeader == null && !mExternalHeader) {
             // We should use the header contained in this fragment's layout, if none was provided
             // by the Activity via setHeader()
             mHeader = new ArrivalsListHeader(getActivity(), this, getFragmentManager());

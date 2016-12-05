@@ -643,7 +643,7 @@ public class TripInfoActivity extends AppCompatActivity {
         // Find the first day
         int rangeStart = 0;
         while (rangeStart < 7) {
-            for (; rangeStart < 7 && array[rangeStart] != true; ++rangeStart) {
+            for (; rangeStart < 7 && !array[rangeStart]; ++rangeStart) {
             }
 
             if (rangeStart == 7) {
@@ -651,7 +651,7 @@ public class TripInfoActivity extends AppCompatActivity {
             }
 
             int rangeEnd = rangeStart + 1;
-            for (; rangeEnd < 7 && array[rangeEnd] == true; ++rangeEnd) {
+            for (; rangeEnd < 7 && array[rangeEnd]; ++rangeEnd) {
             }
 
             if (buf.length() != 0) {

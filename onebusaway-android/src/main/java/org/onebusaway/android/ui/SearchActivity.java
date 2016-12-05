@@ -47,11 +47,6 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onNewIntent(Intent intent) {
         handleIntent(intent);
     }

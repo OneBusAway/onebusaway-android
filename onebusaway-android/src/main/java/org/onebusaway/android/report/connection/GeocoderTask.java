@@ -49,11 +49,6 @@ public class GeocoderTask extends AsyncTask<Void, Integer, String> {
     }
 
     @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
     protected String doInBackground(Void... voids) {
         String address = "";
         try {

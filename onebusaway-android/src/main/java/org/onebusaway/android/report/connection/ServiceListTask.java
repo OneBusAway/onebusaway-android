@@ -58,11 +58,6 @@ public class ServiceListTask extends AsyncTask<Void, Integer, ServiceListRespons
     }
 
     @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
     protected ServiceListResponse doInBackground(Void... params) {
         for (int i = 0; i < open311List.size(); i++) {
             this.mOpen311 = open311List.get(i);

@@ -52,11 +52,6 @@ public class ServiceDescriptionTask extends AsyncTask<Void, Integer, ServiceDesc
     }
 
     @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
     protected ServiceDescription doInBackground(Void... params) {
         return mOpen311.getServiceDescription(mServiceDescriptionRequest);
     }

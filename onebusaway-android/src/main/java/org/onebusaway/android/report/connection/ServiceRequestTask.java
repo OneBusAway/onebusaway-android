@@ -50,11 +50,6 @@ public class ServiceRequestTask extends AsyncTask<Void, Integer, ServiceRequestR
     }
 
     @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
     protected ServiceRequestResponse doInBackground(Void... params) {
         return open311.postServiceRequest(serviceRequest);
     }

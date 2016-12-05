@@ -20,8 +20,6 @@ import org.onebusaway.android.R;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -55,11 +53,6 @@ public class BaseReportActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && data.getBooleanExtra(CLOSE_REQUEST, false)){
             finish();
         }
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
     }
 
     @SuppressLint("CommitTransaction")

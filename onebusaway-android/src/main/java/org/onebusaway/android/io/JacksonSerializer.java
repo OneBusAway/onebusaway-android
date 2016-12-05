@@ -66,7 +66,7 @@ public class JacksonSerializer implements ObaApi.SerializationHandler {
     }
 
     private static JsonParser getJsonParser(Reader reader)
-            throws IOException, JsonProcessingException {
+            throws IOException {
         TreeTraversingParser parser = new TreeTraversingParser(mMapper.readTree(reader));
         parser.setCodec(mMapper);
         return parser;

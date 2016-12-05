@@ -293,11 +293,6 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
     /**
      * Initialize UI components
      */

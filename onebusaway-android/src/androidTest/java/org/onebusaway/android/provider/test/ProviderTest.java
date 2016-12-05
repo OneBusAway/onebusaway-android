@@ -30,14 +30,6 @@ public class ProviderTest extends ProviderTestCase2<ObaProvider> {
         super(ObaProvider.class, ObaContract.AUTHORITY);
     }
 
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
     public void testStops() {
         ContentResolver cr = getMockContentResolver();
         //

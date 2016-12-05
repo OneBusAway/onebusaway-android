@@ -237,11 +237,6 @@ public class TripInfoActivity extends AppCompatActivity {
             super.onStart();
         }
 
-        @Override
-        public void onStop() {
-            super.onStop();
-        }
-
         private boolean initFromBundle(Bundle bundle) {
             final Uri data = bundle.getParcelable(FragmentUtils.URI);
             if (data == null) {

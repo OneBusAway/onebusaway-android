@@ -198,11 +198,6 @@ public class PreferencesActivity extends PreferenceActivity
         setupActionBar();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
     private void showCheckRegionDialog() {
         ObaRegion obaRegion = Application.get().getCurrentRegion();
         if (obaRegion == null) {

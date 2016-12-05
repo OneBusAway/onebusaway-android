@@ -405,7 +405,7 @@ public class ArrivalsListFragment extends ListFragment
 
         if (Build.VERSION.SDK_INT >= 14) {
             AccessibilityManager am = (AccessibilityManager) getActivity().getSystemService(
-                    getActivity().ACCESSIBILITY_SERVICE);
+                    Context.ACCESSIBILITY_SERVICE);
 
             Boolean isTalkBackEnabled = am.isTouchExplorationEnabled();
             if (isTalkBackEnabled)

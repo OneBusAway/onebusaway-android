@@ -17,7 +17,6 @@
 package org.onebusaway.android.directions.util;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -246,7 +245,8 @@ public class JacksonConfig {
             SimpleModule module = new SimpleModule();
             module.addDeserializer(AlertHeaderText.class, new JsonDeserializer<AlertHeaderText>() {
                 @Override
-                public AlertHeaderText deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+                public AlertHeaderText deserialize(JsonParser p, DeserializationContext ctxt)
+                        throws IOException {
                     Log.d(TAG, "Ignoring AlertHeaderText object.");
                     return null;
                 }

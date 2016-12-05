@@ -11,8 +11,7 @@
             android:id="@+id/ti_imageView"
             android:layout_margin="16dp"
             android:layout_gravity="center"
-            android:layout_weight="1"
-            />
+            android:layout_weight="1"/>
 
     <TextView
             android:layout_width="fill_parent"
@@ -21,6 +20,5 @@
             android:id="@+id/ti_textView"
             android:layout_below="@+id/ti_imageView"
             android:gravity="center"
-            android:layout_weight="9"
-            />
+            android:layout_weight="9"/>
 </LinearLayout>

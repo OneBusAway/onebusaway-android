@@ -633,6 +633,8 @@
     <string name="ri_button_gallery">Gallery</string>
     <string name="ri_address_not_found">Address not found. Please check your address.</string>
     <string name="ri_service_description_problem">Service description could not be found.</string>
+    <string name="ri_open_camera_problem">Camera couldn\'t be opened.</string>
+    <string name="ri_resize_image_problem">Image couldn\'t be resized - using full size.</string>
     <string name="ri_service_default">Choose a Problem</string>
     <string name="ri_service_stop">Stop Problem</string>
     <string name="ri_service_trip">Arrival Time Problem</string>
@@ -642,7 +644,7 @@
     <string name="ri_user_phone_hint">Phone number</string>
     <string name="ri_no_trip">No arrival times, please check back later.</string>
     <string name="ri_anonymous_checkbox">Keep it anonymous</string>
-    <string name="ri_submitting_message">Submitting your report</string>
+    <string name="ri_submitting_message">Submitting your report…</string>
     <string name="ri_unsuccessful_submit">An error occurred during submission, please try again later.</string>
 
     <!-- report issue types screen-->

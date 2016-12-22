@@ -1022,7 +1022,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
         LinearLayout linear = (LinearLayout) findViewById(R.id.ri_report_stop_problem);
         TextView tv = ((TextView) layout.findViewById(R.id.riii_textView));
-        tv.setText(MyTextUtils.toSentenceCase(text));
+        tv.setText(UIUtils.formatHeadsign(text));
         tv.setTypeface(null, Typeface.NORMAL);
 
         linear.addView(layout, 0);

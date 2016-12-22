@@ -50,7 +50,7 @@ public class BaseReportActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && data.getBooleanExtra(CLOSE_REQUEST, false)){
+        if (resultCode == RESULT_OK && data != null && data.getBooleanExtra(CLOSE_REQUEST, false)) {
             finish();
         }
     }

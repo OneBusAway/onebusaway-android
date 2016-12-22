@@ -33,13 +33,11 @@ import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
@@ -81,7 +79,6 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -107,7 +104,9 @@ import edu.usf.cutr.open311client.utils.Open311Validator;
 public class Open311ProblemFragment extends BaseReportFragment implements
         ServiceDescriptionTask.Callback, ServiceRequestTask.Callback {
 
-    private ImageView mIssueImage;
+    private ImageView mIssueImageView;
+
+    private String mImagePath;
 
     private Open311 mOpen311;
 
@@ -159,9 +158,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private static final String ATTRIBUTES = ".attributes";
 
-    private static final String IMAGE = ".image";
+    private static final String IMAGE_PATH = ".image";
 
     private static final String IMAGE_URI = ".imageUri";
+
+    private static final String IMAGE_THUMBNAIL = ".imageThumbnail";
 
     private static final String TRIP_INFO = ".tripInfo";
 
@@ -229,10 +230,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             outState.putParcelableArrayList(ATTRIBUTES, (ArrayList<? extends Parcelable>) attributeValues);
         }
 
-        if (mCapturedImageURI != null) {
-            Bitmap bitmap = ((BitmapDrawable) mIssueImage.getDrawable()).getBitmap();
-            outState.putParcelable(IMAGE, bitmap);
+        if (mImagePath != null) {
             outState.putParcelable(IMAGE_URI, mCapturedImageURI);
+            outState.putString(IMAGE_PATH, mImagePath);
+            Bitmap bitmap = ((BitmapDrawable) mIssueImageView.getDrawable()).getBitmap();
+            outState.putParcelable(IMAGE_THUMBNAIL, bitmap);
         }
 
         if (mArrivalInfo != null) {
@@ -251,6 +253,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         super.onViewStateRestored(savedInstanceState);
         if (savedInstanceState != null) {
             mCapturedImageURI = savedInstanceState.getParcelable(IMAGE_URI);
+            mImagePath = savedInstanceState.getString(IMAGE_PATH);
 
             mArrivalInfo = (ObaArrivalInfo) savedInstanceState.getSerializable(TRIP_INFO);
             mAgencyName = savedInstanceState.getString(AGENCY_NAME);
@@ -297,9 +300,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
      * Initialize UI components
      */
     private void setupViews(Bundle bundle) {
-        mIssueImage = (ImageView) findViewById(R.id.ri_imageView);
-        if (bundle != null && bundle.getParcelable(IMAGE) != null) {
-            mIssueImage.setImageBitmap((Bitmap) bundle.getParcelable(IMAGE));
+        mIssueImageView = (ImageView) findViewById(R.id.ri_imageView);
+        if (bundle != null && bundle.getParcelable(IMAGE_THUMBNAIL) != null) {
+            mIssueImageView.setImageBitmap((Bitmap) bundle.getParcelable(IMAGE_THUMBNAIL));
         }
 
         mInfoLayout = (LinearLayout) findViewById(R.id.ri_info_layout);
@@ -435,6 +438,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
         if (requestCode == ReportConstants.GALLERY_INTENT && resultCode == Activity.RESULT_OK &&
                 data != null) {
+            // Get the gallery image info
             mCapturedImageURI = data.getData();
             String[] filePathColumn = {MediaStore.Images.Media.DATA};
             Cursor cursor = getActivity().getContentResolver().query(mCapturedImageURI,
@@ -442,14 +446,23 @@ public class Open311ProblemFragment extends BaseReportFragment implements
             if (cursor == null) return;
             cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            String picturePath = cursor.getString(columnIndex);
+            mImagePath = cursor.getString(columnIndex);
             cursor.close();
-            mIssueImage.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-        } else if (requestCode == ReportConstants.CAPTURE_PICTURE_INTENT &&
-                resultCode == Activity.RESULT_OK && data != null) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            mIssueImage.setImageBitmap(imageBitmap);
+        }
+
+        // Whether image was from gallery or captured via camera, we need to downscale it for ImageView
+        if ((requestCode == ReportConstants.GALLERY_INTENT
+                || requestCode == ReportConstants.CAPTURE_PICTURE_INTENT)
+                && resultCode == Activity.RESULT_OK) {
+            // Load thumbnail to avoid OutOfMemory issue on Galaxy S5 - see #730
+            Bitmap thumbnail = null;
+            try {
+                thumbnail = UIUtils.decodeSampledBitmapFromFile(mImagePath,
+                        mIssueImageView.getWidth(), mIssueImageView.getHeight());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mIssueImageView.setImageBitmap(thumbnail);
         }
     }
 
@@ -485,12 +498,8 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 setPhone(open311User.getPhone()).setAddress_string(getCurrentAddress()).
                 setDevice_id(tm.getDeviceId());
 
-        if (mCapturedImageURI != null) {
-            try {
-                builder.setMedia(createImageFile());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (mImagePath != null) {
+            attachImage(builder);
         }
 
         ServiceRequest serviceRequest = builder.createServiceRequest();
@@ -508,7 +517,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 serviceRequest.setDescription(description);
             }
 
-            //Start progress
+            // Start progress
             showProgressDialog(true);
 
             mRequestTask = new ServiceRequestTask(mOpen311, serviceRequest, this);
@@ -519,6 +528,54 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         } else {
             createToastMessage(Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode));
         }
+    }
+
+    /**
+     * Attaches the captured image saved in this fragment to the provided builder
+     *
+     * @param builder the builder to attach the image to
+     */
+    private void attachImage(ServiceRequest.Builder builder) {
+        // Downsample the image file to avoid uploading huge images
+        File smallImageFile = null;
+        try {
+            smallImageFile = UIUtils.createImageFile(getContext(), "-small");
+        } catch (IOException ex) {
+            // Error occurred while creating the File
+            createToastMessage(getString(R.string.ri_resize_image_problem));
+            Log.e(TAG, "Couldn't resize image - " + ex);
+        }
+
+        // Continue only if the File was successfully created
+        if (smallImageFile != null) {
+            // Max SeeClickFix resolution image is "800x600 image center cropped"
+            final int WIDTH = 800, HEIGHT = 800;
+            Bitmap smallImage;
+            FileOutputStream out = null;
+            try {
+                smallImage = UIUtils.decodeSampledBitmapFromFile(mImagePath, WIDTH, HEIGHT);
+                out = new FileOutputStream(smallImageFile);
+                smallImage.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+                // Just use the full size image
+                smallImageFile = new File(mImagePath);
+            } finally {
+                if (out != null) {
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            // Just use the full size image
+            smallImageFile = new File(mImagePath);
+        }
+
+        builder.setMedia(smallImageFile);
     }
 
     /**
@@ -727,32 +784,32 @@ public class Open311ProblemFragment extends BaseReportFragment implements
     }
 
     /**
-     * Creates a byte array which contains the image data
-     *
-     * @return image in bytes
+     * From https://developer.android.com/training/camera/photobasics.html#TaskPath
      */
-    private File createImageFile() throws IOException {
-        //Convert bitmap to file
-        Bitmap bitmap = ((BitmapDrawable) mIssueImage.getDrawable()).getBitmap();
-        File filesDir = getActivity().getFilesDir();
-        File imageFile = new File(filesDir, "upload.jpg");
-
-        OutputStream os;
-        os = new FileOutputStream(imageFile);
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-        os.flush();
-        os.close();
-        return imageFile;
-    }
-
     private void openCamera() {
-        String fileName = "temp.jpg";
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.TITLE, fileName);
-        mCapturedImageURI = getActivity().getContentResolver().insert(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, ReportConstants.CAPTURE_PICTURE_INTENT);
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = UIUtils.createImageFile(getContext(), null);
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                createToastMessage(getString(R.string.ri_open_camera_problem));
+                Log.e(TAG, "Couldn't open camera - " + ex);
+            }
+
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                // Save a file: path for use with ACTION_VIEW intents
+                mImagePath = photoFile.getAbsolutePath();
+                mCapturedImageURI = Uri.fromFile(photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
+                startActivityForResult(takePictureIntent, ReportConstants.CAPTURE_PICTURE_INTENT);
+            }
+        }
     }
 
     private void openGallery() {

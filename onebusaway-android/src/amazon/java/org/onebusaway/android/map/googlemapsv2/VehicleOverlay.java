@@ -61,10 +61,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -113,7 +115,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
     private static final int DEFAULT_VEHICLE_TYPE = ObaRoute.TYPE_BUS; // fall back on bus
 
     // Vehicle type (if available) -> icon set
-    private static Map<Integer, Bitmap[]> vehicle_type_icons = new HashMap<>(ObaRoute.NUM_TYPES);
+    private static LruCache<String, Bitmap> mVehicleUncoloredIcons;
 
     private static LruCache<String, Bitmap> mVehicleColoredIconCache;
     // Colored versions of vehicle_icons
@@ -186,14 +188,6 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
      * Cache the core black template Bitmaps used for vehicle icons
      */
     private static final void loadIcons() {
-        if (vehicle_type_icons.isEmpty()) {
-            vehicle_type_icons.put(ObaRoute.TYPE_BUS, createBusIcons());
-            vehicle_type_icons.put(ObaRoute.TYPE_FERRY, createFerryIcons());
-            vehicle_type_icons.put(ObaRoute.TYPE_TRAM, createTramIcons());
-            vehicle_type_icons.put(ObaRoute.TYPE_SUBWAY, createSubwayIcons());
-            vehicle_type_icons.put(ObaRoute.TYPE_RAIL, createRailIcons());
-        }
-
         /**
          * Cache for colored versions of the vehicle icons.  Total possible number of entries is
          * 9 directions * 4 color types (early, ontime, delayed, scheduled) = 36.  In a test,
@@ -203,6 +197,11 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
          * max cache size at 15.
          */
         final int MAX_CACHE_SIZE = 15;
+
+        if (mVehicleUncoloredIcons == null) {
+            mVehicleUncoloredIcons = new LruCache<>(MAX_CACHE_SIZE);
+        }
+
         if (mVehicleColoredIconCache == null) {
             mVehicleColoredIconCache = new LruCache<>(MAX_CACHE_SIZE);
         }
@@ -219,222 +218,248 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
      * @return the icon ready to color
      */
     private static Bitmap getIcon(int halfWind, int vehicleType) {
-        Bitmap[] b = vehicle_type_icons.get(vehicleType);
-
-        if (b == null) {  // didn't find the type, fall back
-            b = vehicle_type_icons.get(DEFAULT_VEHICLE_TYPE);
+        if (!supportedVehicleType(vehicleType)) {
+            vehicleType = DEFAULT_VEHICLE_TYPE;
         }
 
-        return b[halfWind];
-    }
+        String cacheKey = String.format("%d %d", halfWind, vehicleType);
 
-    /**
-     * Creates the set of bus icons with a variety of direction arrows and without a direction arrow
-     * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
-     *
-     * @return vehicle icon bitmaps mapping with the arrow pointing 8 directions, and with
-     * no arrow for NO_DIRECTION
-     */
-    private static Bitmap[] createBusIcons() throws NullPointerException {
-        Resources r = Application.get().getResources();
-        Bitmap[] b = new Bitmap[NUM_DIRECTIONS];
+        Bitmap b = mVehicleUncoloredIcons.get(cacheKey);
 
-        b[NORTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_inside);
+        if (b == null) {  // cache miss
+            switch (vehicleType) {
+                case ObaRoute.TYPE_BUS:
+                    b = createBusIcon(halfWind);
+                    break;
+                case ObaRoute.TYPE_FERRY:
+                    b = createFerryIcon(halfWind);
+                    break;
+                case ObaRoute.TYPE_TRAM:
+                    b = createTramIcon(halfWind);
+                    break;
+                case ObaRoute.TYPE_SUBWAY:
+                    b = createSubwayIcon(halfWind);
+                    break;
+                case ObaRoute.TYPE_RAIL:
+                    b = createRailIcon(halfWind);
+                    break;
+                // default: not needed, since supported vehicles are checked prior
+            }
+        }
 
-        b[NORTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_east_inside);
-
-        b[EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_east_inside);
-
-        b[SOUTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_east_inside);
-
-        b[SOUTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_inside);
-
-        b[SOUTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_west_inside);
-
-        b[WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_west_inside);
-
-        b[NORTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_west_inside);
-
-        b[NO_DIRECTION] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_none_inside);
+        mVehicleUncoloredIcons.put(cacheKey, b);
 
         return b;
     }
 
-    /**
-     * Creates the set of tram icons with a variety of direction arrows and without a direction
-     * arrow
-     * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
-     *
-     * @return vehicle icon bitmaps mapping with the arrow pointing 8 directions, and with
-     * no arrow for NO_DIRECTION
-     */
-    private static Bitmap[] createTramIcons() throws NullPointerException {
-        Resources r = Application.get().getResources();
-        Bitmap[] b = new Bitmap[NUM_DIRECTIONS];
+    private static boolean supportedVehicleType(int vehicleType) {
+        return vehicleType == ObaRoute.TYPE_BUS ||
+                vehicleType == ObaRoute.TYPE_FERRY ||
+                vehicleType == ObaRoute.TYPE_TRAM ||
+                vehicleType == ObaRoute.TYPE_SUBWAY ||
+                vehicleType == ObaRoute.TYPE_RAIL;
 
-         b[NORTH] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_inside);
-
-         b[NORTH_EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_east_inside);
-
-         b[EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_east_inside);
-
-         b[SOUTH_EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_east_inside);
-
-         b[SOUTH] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_inside);
-
-         b[SOUTH_WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_west_inside);
-
-         b[WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_west_inside);
-
-         b[NORTH_WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_west_inside);
-
-         b[NO_DIRECTION] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_none_inside);
-
-        return b;
     }
 
     /**
-     * Creates the set of rail icons with a variety of direction arrows and without a direction
-     * arrow
+     * Create the bus icon with the given direction arrows or without a direction arrow
      * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
      *
-     * @return vehicle icon bitmaps mapping with the arrow pointing 8 directions, and with
+     * @return vehicle icon bitmap with the arrow pointing the appropriate direction, or with
      * no arrow for NO_DIRECTION
      */
-    private static Bitmap[] createRailIcons() throws NullPointerException {
+    private static Bitmap createBusIcon(int halfWind) {
         Resources r = Application.get().getResources();
-        Bitmap[] b = new Bitmap[NUM_DIRECTIONS];
+        switch (halfWind) {
+            case NORTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_inside);
+            case NORTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_east_inside);
+            case EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_east_inside);
+            case SOUTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_east_inside);
+            case SOUTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_inside);
+            case SOUTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_south_west_inside);
+            case WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_west_inside);
+            case NORTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_north_west_inside);
+            default:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_bus_smaller_none_inside);
 
-         b[NORTH] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_inside);
-
-         b[NORTH_EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_east_inside);
-
-         b[EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_east_inside);
-
-         b[SOUTH_EAST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_east_inside);
-
-         b[SOUTH] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_inside);
-
-         b[SOUTH_WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_west_inside);
-
-         b[WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_west_inside);
-
-         b[NORTH_WEST] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_west_inside);
-
-         b[NO_DIRECTION] = BitmapFactory
-                 .decodeResource(r, R.drawable.ic_marker_with_train_smaller_none_inside);
-
-        return b;
+        }
     }
 
     /**
-     * Creates the set of ferry icons with a variety of direction arrows and without a direction
-     * arrow
+     * Create the tram icon with the given direction arrows or without a direction arrow
      * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
      *
-     * @return vehicle icon bitmaps mapping with the arrow pointing 8 directions, and with
+     * @return vehicle icon bitmap with the arrow pointing the appropriate direction, or with
      * no arrow for NO_DIRECTION
      */
-    private static Bitmap[] createFerryIcons() throws NullPointerException {
+    private static Bitmap createTramIcon(int halfWind) {
         Resources r = Application.get().getResources();
-        Bitmap[] b = new Bitmap[NUM_DIRECTIONS];
-
-        b[NORTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_inside);
-
-        b[NORTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_east_inside);
-
-        b[EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_east_inside);
-
-        b[SOUTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_east_inside);
-
-        b[SOUTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_inside);
-
-        b[SOUTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_west_inside);
-
-        b[WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_west_inside);
-
-        b[NORTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_west_inside);
-
-        b[NO_DIRECTION] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_none_inside);
-
-        return b;
+        switch (halfWind) {
+            case NORTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_inside);
+            case NORTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_east_inside);
+            case EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_east_inside);
+            case SOUTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_east_inside);
+            case SOUTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_inside);
+            case SOUTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_south_west_inside);
+            case WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_west_inside);
+            case NORTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_north_west_inside);
+            default:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_tram_smaller_none_inside);
+        }
     }
 
     /**
-     * Creates the set of subway icons with a variety of direction arrows and without a direction
-     * arrow
+     * Create the rail icon with the given direction arrows or without a direction arrow
      * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
      *
-     * @return vehicle icon bitmaps mapping with the arrow pointing 8 directions, and with
+     * @return vehicle icon bitmap with the arrow pointing the appropriate direction, or with
      * no arrow for NO_DIRECTION
      */
-    private static Bitmap[] createSubwayIcons() throws NullPointerException {
+    private static Bitmap createRailIcon(int halfWind) {
         Resources r = Application.get().getResources();
-        Bitmap[] b = new Bitmap[NUM_DIRECTIONS];
+        switch (halfWind) {
+            case NORTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_inside);
+            case NORTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_east_inside);
+            case EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_east_inside);
+            case SOUTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_east_inside);
+            case SOUTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_inside);
+            case SOUTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_south_west_inside);
+            case WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_west_inside);
+            case NORTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_north_west_inside);
+            default:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_train_smaller_none_inside);
+        }
+    }
 
-        b[NORTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_inside);
+    /**
+     * Create the ferry icon with the given direction arrows or without a direction arrow
+     * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
+     *
+     * @return vehicle icon bitmap with the arrow pointing the appropriate direction, or with
+     * no arrow for NO_DIRECTION
+     */
+    private static Bitmap createFerryIcon(int halfWind) {
+        Resources r = Application.get().getResources();
+        switch (halfWind) {
+            case NORTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_inside);
+            case NORTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_east_inside);
+            case EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_east_inside);
+            case SOUTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_east_inside);
+            case SOUTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_inside);
+            case SOUTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_south_west_inside);
+            case WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_west_inside);
+            case NORTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_north_west_inside);
+            default:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_boat_smaller_none_inside);
+        }
+    }
 
-        b[NORTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_east_inside);
-
-        b[EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_east_inside);
-
-        b[SOUTH_EAST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_east_inside);
-
-        b[SOUTH] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_inside);
-
-        b[SOUTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_west_inside);
-
-        b[WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_west_inside);
-
-        b[NORTH_WEST] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_west_inside);
-
-        b[NO_DIRECTION] = BitmapFactory
-                .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_none_inside);
-
-        return b;
+    /**
+     * Create the subway icon with the given direction arrows or without a direction arrow
+     * for direction of NO_DIRECTION.  Color is black so they can be tinted later.
+     *
+     * @return vehicle icon bitmap with the arrow pointing the appropriate direction, or with
+     * no arrow for NO_DIRECTION
+     */
+    private static Bitmap createSubwayIcon(int halfWind) {
+        Resources r = Application.get().getResources();
+        switch (halfWind) {
+            case NORTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_inside);
+            case NORTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_east_inside);
+            case EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_east_inside);
+            case SOUTH_EAST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_east_inside);
+            case SOUTH:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_inside);
+            case SOUTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_south_west_inside);
+            case WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_west_inside);
+            case NORTH_WEST:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_north_west_inside);
+            default:
+                return BitmapFactory
+                        .decodeResource(r, R.drawable.ic_marker_with_subway_smaller_none_inside);
+        }
     }
 
     /**
@@ -473,8 +498,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
      * @return a String key for this direction and color vehicle bitmap icon
      */
     private String createBitmapCacheKey(int vehicleType, int halfWind, int colorResource) {
-        // To avoid duplicate cache entries, check if vehicle type exists, use fallback otherwise
-        if (!vehicle_type_icons.containsKey(vehicleType)) {
+        if (!supportedVehicleType(vehicleType)) {
             vehicleType = DEFAULT_VEHICLE_TYPE;
         }
 
@@ -619,6 +643,11 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
             Log.d(TAG, "Vehicle LRU cache size=" + mVehicleColoredIconCache.size() + ", hits="
                     + mVehicleColoredIconCache.hitCount() + ", misses=" + mVehicleColoredIconCache
                     .missCount());
+
+            Log.d(TAG, String.format("Raw uncolored vehicle LRU cache size=%d, hits=%d, misses=%d",
+                    mVehicleUncoloredIcons.size(),
+                    mVehicleUncoloredIcons.hitCount(),
+                    mVehicleUncoloredIcons.missCount()));
         }
 
         /**

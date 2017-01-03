@@ -633,6 +633,8 @@
     <string name="ri_button_gallery">Galería</string>
     <string name="ri_address_not_found">Dirección no encontrada. Por favor, compruebe su dirección.</string>
     <string name="ri_service_description_problem">La descripción del servicio no pudo ser encontrada.</string>
+    <string name="ri_open_camera_problem">La Cámara no puede ser abierta.</string>
+    <string name="ri_resize_image_problem">La Imagen no puede ser redimensionada - usando tamaño completo.</string>
     <string name="ri_service_default">Elija un Problema</string>
     <string name="ri_service_stop">Problema de Parada</string>
     <string name="ri_service_trip">Problema de Tiempo de Llegada</string>
@@ -642,7 +644,7 @@
     <string name="ri_user_phone_hint">Número de Teléfono</string>
     <string name="ri_no_trip">No hay tiempos de llegada, por favor, regrese mas tarde.</string>
     <string name="ri_anonymous_checkbox">Mantenerlo anónimo</string>
-    <string name="ri_submitting_message">Enviar tu reporte</string>
+    <string name="ri_submitting_message">Enviando tu reporte...</string>
     <string name="ri_unsuccessful_submit">Ocurrio un error durante el envío, por favor, intenta más tarde.</string>
 
     <!-- report issue types screen-->

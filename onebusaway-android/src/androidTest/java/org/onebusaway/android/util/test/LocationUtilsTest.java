@@ -21,7 +21,8 @@ public class LocationUtilsTest extends AndroidTestCase {
 
     public static final String TAG = "LocationUtilTest";
 
-    public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 5;  // Within last 5 minutes
+    public static final long FRESH_LOCATION_THRESHOLD_MS = 1000 * 60 * 30;
+            // Within last 30 minutes - see #737
 
     /**
      * GoogleApiClient being used for Location Services

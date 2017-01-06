@@ -39,6 +39,11 @@
                 android:summary="@string/preferences_show_tutorial_screens_summary"
                 android:defaultValue="true"/>
         <CheckBoxPreference
+            android:key="@string/preference_key_left_hand_mode"
+            android:title="@string/preferences_left_hand_mode_title"
+            android:summary="@string/preferences_left_hand_mode_summary"
+            android:defaultValue="false" />
+        <CheckBoxPreference
                 android:key="@string/preference_key_show_header_arrivals"
                 android:title="@string/preferences_show_header_arrivals_title"
                 android:summary="@string/preferences_show_header_arrivals_summary"

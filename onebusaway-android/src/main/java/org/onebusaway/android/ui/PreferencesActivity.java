@@ -16,17 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -53,6 +42,17 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -67,6 +67,8 @@ public class PreferencesActivity extends PreferenceActivity
     public static final String SHOW_CHECK_REGION_DIALOG = ".checkRegionDialog";
 
     Preference mPreference;
+
+    Preference mLeftHandMode;
 
     Preference mCustomApiUrlPref;
 
@@ -99,6 +101,9 @@ public class PreferencesActivity extends PreferenceActivity
 
         mPreference = findPreference(getString(R.string.preference_key_region));
         mPreference.setOnPreferenceClickListener(this);
+
+        mLeftHandMode = findPreference(getString(R.string.preference_key_left_hand_mode));
+        mLeftHandMode.setOnPreferenceChangeListener(this);
 
         mCustomApiUrlPref = findPreference(getString(R.string.preference_key_oba_api_url));
         mCustomApiUrlPref.setOnPreferenceChangeListener(this);
@@ -328,6 +333,15 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.analytics_label_analytic_preference)
                                 + (isAnalyticsActive ? "YES" : "NO"));
                 GoogleAnalytics.getInstance(getBaseContext()).dispatchLocalHits();
+            }
+        } else if (preference.equals(mLeftHandMode) && newValue instanceof Boolean) {
+            Boolean isLeftHandEnabled = (Boolean) newValue;
+            //Report if left handed mode is turned on, just before shared preference changed
+            if (isLeftHandEnabled) {
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                        getString(R.string.analytics_action_edit_general),
+                        getString(R.string.analytics_label_left_hand_preference)
+                                + (isLeftHandEnabled ? "YES" : "NO"));
             }
         }
         return true;

@@ -560,6 +560,10 @@
         how to use features
     </string>
 
+    <string name="preferences_left_hand_mode_title">Left hand mode</string>
+    <string name="preferences_left_hand_mode_summary">Flips placement of some buttons to the left side of the screen
+    </string>
+
     <string name="preferences_arrival_info_style_options_a">OneBusAway classic</string>
     <string name="preferences_arrival_info_style_options_b">Cards</string>
 

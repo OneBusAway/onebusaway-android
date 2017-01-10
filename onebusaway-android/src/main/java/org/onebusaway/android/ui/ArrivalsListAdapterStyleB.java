@@ -17,12 +17,6 @@
 package org.onebusaway.android.ui;
 
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-import org.onebusaway.util.comparators.AlphanumComparator;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
@@ -36,6 +30,13 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.util.comparators.AlphanumComparator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +71,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
             long currentTime) {
         if (arrivals != null) {
             ArrayList<ArrivalInfo> list =
-                    ArrivalInfo.convertObaArrivalInfo(getContext(),
+                    ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                             arrivals, routesFilter, currentTime, true);
 
             // Sort list by route and headsign, in that order

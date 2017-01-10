@@ -16,13 +16,6 @@
 
 package org.onebusaway.android.directions.util;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.ui.ArrivalInfo;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-import org.opentripplanner.routing.core.TraverseMode;
-
 import android.content.Context;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
@@ -30,6 +23,13 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
 import android.util.Log;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+import org.opentripplanner.routing.core.TraverseMode;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -360,7 +360,7 @@ public class ConversionUtils {
         timezone = noDeviceTimezoneNote;
 
         int color = applicationContext.getResources().getColor(
-                ArrivalInfo.computeColorFromDeviation(
+                ArrivalInfoUtils.computeColorFromDeviation(
                         calNewTime.getTimeInMillis() - calOldTime.getTimeInMillis()));
 
         newTimeString = new SpannableString(timeFormat.format(calNewTime.getTime()) + " ");

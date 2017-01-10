@@ -1,5 +1,12 @@
 package org.onebusaway.android.util.test;
 
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.util.Pair;
+import android.text.TextUtils;
+import android.widget.TextView;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -16,14 +23,8 @@ import org.onebusaway.android.mock.MockObaStop;
 import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
+import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.util.Pair;
-import android.text.TextUtils;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -135,7 +136,7 @@ public class UIUtilTest extends ObaTestCase {
 
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                 arrivals, null, response.getCurrentTime(), true);
 
         ObaRoute route = response.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
@@ -184,7 +185,7 @@ public class UIUtilTest extends ObaTestCase {
 
         arrivals = response2.getArrivalInfo();
         assertNotNull(arrivals);
-        arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                 arrivals, null, response2.getCurrentTime(), true);
 
         route = response2.getRoute(arrivalInfo.get(0).getInfo().getRouteId());
@@ -443,17 +444,17 @@ public class UIUtilTest extends ObaTestCase {
         // Get the response
         ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                 arrivals, null, response.getCurrentTime(), true);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
         validateUatcArrivalInfo(arrivalInfo);
 
         // First non-negative arrival should be "0", in index 5
-        int firstNonNegativeArrivalIndex = ArrivalInfo.findFirstNonNegativeArrival(arrivalInfo);
+        int firstNonNegativeArrivalIndex = ArrivalInfoUtils.findFirstNonNegativeArrival(arrivalInfo);
         assertEquals(5, firstNonNegativeArrivalIndex);
 
-        ArrayList<Integer> preferredArrivalIndexes = ArrivalInfo
+        ArrayList<Integer> preferredArrivalIndexes = ArrivalInfoUtils
                 .findPreferredArrivalIndexes(arrivalInfo);
 
         // Indexes 11 and 13 should hold the favorites
@@ -473,9 +474,9 @@ public class UIUtilTest extends ObaTestCase {
                 false);
 
         // Process the response again (resetting the included favorite info)
-        arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(),
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(),
                 arrivals, null, response.getCurrentTime(), true);
-        preferredArrivalIndexes = ArrivalInfo.findPreferredArrivalIndexes(arrivalInfo);
+        preferredArrivalIndexes = ArrivalInfoUtils.findPreferredArrivalIndexes(arrivalInfo);
 
         // Now the first two non-negative arrival times should be returned - indexes 5 and 6
         assertEquals(5, preferredArrivalIndexes.get(0).intValue());
@@ -511,7 +512,7 @@ public class UIUtilTest extends ObaTestCase {
          * Labels *with* arrive/depart included, and time labels
          */
         boolean includeArriveDepartLabels = true;
-        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfo.convertObaArrivalInfo(
+        ArrayList<ArrivalInfo> arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(
                 getContext(),
                 arrivals, null, response.getCurrentTime(), includeArriveDepartLabels);
 
@@ -615,7 +616,7 @@ public class UIUtilTest extends ObaTestCase {
          * Status labels *without* arrive/depart included
          */
         includeArriveDepartLabels = false;
-        arrivalInfo = ArrivalInfo.convertObaArrivalInfo(getContext(), arrivals, null,
+        arrivalInfo = ArrivalInfoUtils.convertObaArrivalInfo(getContext(), arrivals, null,
                 response.getCurrentTime(), includeArriveDepartLabels);
 
         // Now confirm that we have the correct number of elements, and values for ETAs for the test
@@ -654,6 +655,75 @@ public class UIUtilTest extends ObaTestCase {
         assertEquals("On time", arrivalInfo.get(29).getStatusText());
         assertEquals("9 min delay", arrivalInfo.get(30).getStatusText());
         assertEquals("On time", arrivalInfo.get(31).getStatusText());
+
+        /**
+         * Test notification texts
+         */
+
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(0).getInfo())
+                + " has arrived.", arrivalInfo.get(0).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(1).getInfo())
+                + " has departed.", arrivalInfo.get(1).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(2).getInfo())
+                + " has departed.", arrivalInfo.get(2).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(3).getInfo())
+                + " has arrived.", arrivalInfo.get(3).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(4).getInfo())
+                + " has departed.", arrivalInfo.get(4).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(5).getInfo())
+                + " is departing now!", arrivalInfo.get(5).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(6).getInfo())
+                + " is arriving now!", arrivalInfo.get(6).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(7).getInfo())
+                + " is arriving in 3 min!", arrivalInfo.get(7).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(8).getInfo())
+                + " is departing in 5 min!", arrivalInfo.get(8).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(9).getInfo())
+                + " is departing in 5 min!", arrivalInfo.get(9).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(10).getInfo())
+                + " is arriving in 6 min!", arrivalInfo.get(10).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(11).getInfo())
+                + " is arriving in 7 min!", arrivalInfo.get(11).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(12).getInfo())
+                + " is arriving in 10 min!", arrivalInfo.get(12).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(13).getInfo())
+                + " is departing in 14 min!", arrivalInfo.get(13).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(14).getInfo())
+                + " is arriving in 17 min!", arrivalInfo.get(14).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(15).getInfo())
+                + " is arriving in 20 min!", arrivalInfo.get(15).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(16).getInfo())
+                + " is departing in 20 min!", arrivalInfo.get(16).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(17).getInfo())
+                + " is arriving in 23 min!", arrivalInfo.get(17).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(18).getInfo())
+                + " is departing in 25 min!", arrivalInfo.get(18).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(19).getInfo())
+                + " is arriving in 26 min!", arrivalInfo.get(19).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(20).getInfo())
+                + " is departing in 27 min!", arrivalInfo.get(20).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(21).getInfo())
+                + " is arriving in 28 min!", arrivalInfo.get(21).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(22).getInfo())
+                + " is arriving in 30 min!", arrivalInfo.get(22).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(23).getInfo())
+                + " is departing in 30 min!", arrivalInfo.get(23).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(24).getInfo())
+                + " is arriving in 32 min!", arrivalInfo.get(24).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(25).getInfo())
+                + " is arriving in 32 min!", arrivalInfo.get(25).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(26).getInfo())
+                + " is arriving in 34 min!", arrivalInfo.get(26).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(27).getInfo())
+                + " is arriving in 34 min!", arrivalInfo.get(27).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(28).getInfo())
+                + " is departing in 35 min!", arrivalInfo.get(28).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(29).getInfo())
+                + " is departing in 35 min!", arrivalInfo.get(29).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(30).getInfo())
+                + " is arriving in 35 min!", arrivalInfo.get(30).getNotifyText());
+        assertEquals("Route " + UIUtils.getRouteDisplayName(arrivalInfo.get(31).getInfo())
+                + " is departing in 35 min!", arrivalInfo.get(31).getNotifyText());
     }
 
     public void testMaybeShrinkRouteName() {

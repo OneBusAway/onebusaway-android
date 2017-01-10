@@ -17,19 +17,6 @@
 
 package org.onebusaway.android.report.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalInfo;
-import org.onebusaway.android.ui.ArrivalsListLoader;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -48,6 +35,20 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalInfo;
+import org.onebusaway.android.ui.ArrivalsListLoader;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 
@@ -177,7 +178,7 @@ public class SimpleArrivalListFragment extends Fragment
                 findViewById(R.id.simple_arrival_content);
         contentLayout.removeAllViews();
 
-        ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfo.convertObaArrivalInfo(getActivity(),
+        ArrayList<ArrivalInfo> arrivalInfos = ArrivalInfoUtils.convertObaArrivalInfo(getActivity(),
                 info, new ArrayList<String>(), currentTime, false);
 
         for (ArrivalInfo stopInfo : arrivalInfos) {

@@ -26,25 +26,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.amazon.geo.mapsv2.AmazonMap;
-import com.amazon.geo.mapsv2.model.BitmapDescriptor;
-import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
-import com.amazon.geo.mapsv2.model.Marker;
-import com.amazon.geo.mapsv2.model.MarkerOptions;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripDetails;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
-import org.onebusaway.android.ui.ArrivalInfo;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.ui.TripDetailsListFragment;
-import org.onebusaway.android.util.MathUtils;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
@@ -61,12 +42,29 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.Arrays;
+import com.amazon.geo.mapsv2.AmazonMap;
+import com.amazon.geo.mapsv2.model.BitmapDescriptor;
+import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
+import com.amazon.geo.mapsv2.model.Marker;
+import com.amazon.geo.mapsv2.model.MarkerOptions;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripDetails;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.ui.TripDetailsListFragment;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.MathUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -769,7 +767,7 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
 
             if (isRealtime) {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-                colorResource = ArrivalInfo.computeColorFromDeviation(deviationMin);
+                colorResource = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
             } else {
                 colorResource = R.color.stop_info_scheduled_time;
             }
@@ -897,9 +895,9 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
 
             if (isRealtime) {
                 long deviationMin = TimeUnit.SECONDS.toMinutes(status.getScheduleDeviation());
-                String statusString = ArrivalInfo.computeArrivalLabelFromDelay(r, deviationMin);
+                String statusString = ArrivalInfoUtils.computeArrivalLabelFromDelay(r, deviationMin);
                 statusView.setText(statusString);
-                statusColor = ArrivalInfo.computeColorFromDeviation(deviationMin);
+                statusColor = ArrivalInfoUtils.computeColorFromDeviation(deviationMin);
                 d.setColor(r.getColor(statusColor));
                 statusView.setPadding(pSides, pTopBottom, pSides, pTopBottom);
             } else {

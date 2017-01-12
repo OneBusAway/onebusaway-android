@@ -414,10 +414,12 @@
     <string name="trip_list_context_showroute">Mostrar la ruta</string>
 
     <!--  Trip notifications -->
-    <string name="trip_stat_gone">La ruta %s ha partido.</string>
-    <string name="trip_stat_lessthanone">¡La ruta %s está a menos de 1 minuto!</string>
-    <string name="trip_stat_one">¡La ruta %s está a 1 minuto!</string>
-    <string name="trip_stat">¡La ruta %1$s está a %2$d minutos!</string>
+    <string name="trip_stat_gone_arrived">La ruta %s ha llegado.</string>
+    <string name="trip_stat_gone_departed">La ruta %s ha salido.</string>
+    <string name="trip_stat_lessthanone_arriving">¡La ruta %s está llegando ahora!</string>
+    <string name="trip_stat_lessthanone_departing">¡La ruta %s está saliendo ahora!</string>
+    <string name="trip_stat_arriving">¡La ruta %1$s está llegando en %2$d min!</string>
+    <string name="trip_stat_departing">¡La ruta %1$s está saliendo en %2$d min!</string>
 
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
@@ -558,6 +560,10 @@
     <string name="preferences_show_tutorial_screens_title">Mostrar las pantallas del tutorial</string>
     <string name="preferences_show_tutorial_screens_summary">Desplegar las ventanas emergentes informacionales explicando
         como usar las funciones
+    </string>
+
+    <string name="preferences_left_hand_mode_title">Modo de mano izquierda</string>
+    <string name="preferences_left_hand_mode_summary">Invierte la ubicación de algunos botones en el lado izquierdo de la pantalla
     </string>
 
     <string name="preferences_arrival_info_style_options_a">OneBusAway clásica</string>

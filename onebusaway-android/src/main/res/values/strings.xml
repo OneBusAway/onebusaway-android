@@ -105,7 +105,7 @@
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Left-hand setting</b>
+        <b>Left hand setting</b>
         - No more left hand cramps!\n&#8226;\u0020
         <b>Bug fixes and performance improvements</b>
         - See http://bit.ly/oba-android-releases

@@ -19,7 +19,6 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.model.Direction;
 import org.onebusaway.android.directions.realtime.RealtimeService;
-import org.onebusaway.android.directions.realtime.RealtimeServiceImpl;
 import org.onebusaway.android.directions.util.ConversionUtils;
 import org.onebusaway.android.directions.util.DirectionExpandableListAdapter;
 import org.onebusaway.android.directions.util.DirectionsGenerator;
@@ -64,8 +63,6 @@ public class TripResultsFragment extends Fragment {
 
     private RoutingOptionPicker[] mOptions = new RoutingOptionPicker[3];
 
-    private RealtimeService mRealtimeService;
-
     private Listener mListener;
 
     private Bundle mMapBundle = new Bundle();
@@ -99,9 +96,6 @@ public class TripResultsFragment extends Fragment {
         mOptions[0] = new RoutingOptionPicker(view, R.id.option1LinearLayout, R.id.option1Title, R.id.option1Duration, R.id.option1Interval);
         mOptions[1] = new RoutingOptionPicker(view, R.id.option2LinearLayout, R.id.option2Title, R.id.option2Duration, R.id.option2Interval);
         mOptions[2] = new RoutingOptionPicker(view, R.id.option3LinearLayout, R.id.option3Title, R.id.option3Duration, R.id.option3Interval);
-
-        mRealtimeService = new RealtimeServiceImpl(getActivity().getApplicationContext(),
-                getActivity().getClass(), getArguments());
 
         int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY); // defaults to 0
         mShowingMap = getArguments().getBoolean(OTPConstants.SHOW_MAP);
@@ -144,7 +138,6 @@ public class TripResultsFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mRealtimeService.disableListenForTripUpdates();
     }
 
     @Override
@@ -329,7 +322,8 @@ public class TripResultsFragment extends Fragment {
 
             if(Application.getPrefs()
                     .getBoolean(getString(R.string.preference_key_trip_plan_notifications), true)) {
-                mRealtimeService.onItinerarySelected(itinerary);
+
+                RealtimeService.start(getActivity(), getArguments());
             }
         }
 

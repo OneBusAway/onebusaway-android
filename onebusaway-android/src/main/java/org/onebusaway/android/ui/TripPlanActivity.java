@@ -73,9 +73,6 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
     private static final String REQUEST_LOADING = "org.onebusaway.android.REQUEST_LOADING";
 
-    // flag to indicate intent sent by this class
-    private static final String INTENT_SOURCE = "org.onebusaway.android.INTENT_SOURCE";
-
     TripResultsFragment mResultsFragment;
 
     private ProgressDialog mProgressDialog;
@@ -103,25 +100,37 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
 
         // see if there is data from intent
         Intent intent = getIntent();
-        if (intent != null && intent.getExtras() != null
-                && intent.getBooleanExtra(INTENT_SOURCE, false)) {
 
-            ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>) intent.getExtras().getSerializable(OTPConstants.ITINERARIES);
+        if (intent != null && intent.getExtras() != null) {
 
-            if (itineraries != null) {
-                bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
-                newItineraries = true;
+            OTPConstants.Source source = (OTPConstants.Source) intent
+                    .getSerializableExtra(OTPConstants.INTENT_SOURCE);
+            if (source != null) {
+
+                // Copy planning params - necessary if this intent came from a notification.
+                if (source == OTPConstants.Source.NOTIFICATION) {
+                    new TripRequestBuilder(intent.getExtras()).copyIntoBundle(bundle);
+                }
+
+                ArrayList<Itinerary> itineraries = (ArrayList<Itinerary>)
+                        intent.getExtras().getSerializable(OTPConstants.ITINERARIES);
+
+                if (itineraries != null) {
+                    bundle.putSerializable(OTPConstants.ITINERARIES, itineraries);
+                    newItineraries = true;
+                }
+
+                if (intent.getIntExtra(PLAN_ERROR_CODE, -1) != -1) {
+                    bundle.putSerializable(SHOW_ERROR_DIALOG, true);
+                    bundle.putInt(PLAN_ERROR_CODE, intent.getIntExtra(PLAN_ERROR_CODE, 0));
+                    bundle.putString(PLAN_ERROR_URL, intent.getStringExtra(PLAN_ERROR_URL));
+                }
+
+                setIntent(null);
+                bundle.putBoolean(REQUEST_LOADING, false);
+                mRequestLoading = false;
+
             }
-
-            if (intent.getIntExtra(PLAN_ERROR_CODE, -1) != -1) {
-                bundle.putSerializable(SHOW_ERROR_DIALOG, true);
-                bundle.putInt(PLAN_ERROR_CODE, intent.getIntExtra(PLAN_ERROR_CODE, 0));
-                bundle.putString(PLAN_ERROR_URL, intent.getStringExtra(PLAN_ERROR_URL));
-            }
-
-            setIntent(null);
-            bundle.putBoolean(REQUEST_LOADING, false);
-            mRequestLoading = false;
         }
 
         if (mRequestLoading || bundle.getBoolean(REQUEST_LOADING)) {
@@ -284,7 +293,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 .setAction(Intent.ACTION_MAIN)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(OTPConstants.ITINERARIES, (ArrayList<Itinerary>) itineraries)
-                .putExtra(INTENT_SOURCE, true)
+                .putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.ACTIVITY)
                 .putExtra(PLAN_REQUEST_URL, url);
         startActivity(intent);
     }
@@ -296,7 +305,7 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(PLAN_ERROR_CODE, errorCode)
                 .putExtra(PLAN_ERROR_URL, url)
-                .putExtra(INTENT_SOURCE, true);
+                .putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.ACTIVITY);
         startActivity(intent);
     }
 

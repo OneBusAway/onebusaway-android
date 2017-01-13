@@ -16,20 +16,26 @@
 
 package org.onebusaway.android.directions.util;
 
+import org.onebusaway.android.BuildConfig;
+
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class OTPConstants {
 
-    public static final String INTENT_UPDATE_TRIP_TIME_ACTION
-            = "org.onebusaway.android.UPDATE_TRIP_TIME";
+    public static final String INTENT_CHECK_TRIP_TIME
+            = BuildConfig.APPLICATION_ID + ".directions.action.CHECK";
 
-    public static final String INTENT_NOTIFICATION_ACTION_OPEN_APP
-            = "org.onebusaway.android.NOTIFICATION_OPEN_APP";
+    public static final String INTENT_START_CHECKS
+            = BuildConfig.APPLICATION_ID + ".directions.action.START_CHECKS";
 
     public static final String PREFERENCE_KEY_LIVE_UPDATES = "live_updates";
 
     public static final long DEFAULT_UPDATE_INTERVAL_TRIP_TIME = TimeUnit.SECONDS.toMillis(60);
+
+    public static final long REALTIME_SERVICE_QUERY_WINDOW = TimeUnit.HOURS.toMillis(1);
+
+    public static final long REALTIME_SERVICE_DELAY_THRESHOLD = TimeUnit.MINUTES.toSeconds(2);
 
     public static final String FORMAT_OTP_SERVER_DATE_RESPONSE = "yyyy-MM-dd\'T\'HH:mm:ssZZ";
 
@@ -57,9 +63,18 @@ public class OTPConstants {
 
     public static final String SHOW_MAP = "org.onebusaway.android.SHOW_MAP";
 
+    public static final String NOTIFICATION_TARGET = "org.onebusaway.android.NOTIFICATION_TARGET";
+
     public static final String FORMAT_OTP_SERVER_DATE_REQUEST = "MM-dd-yyyy";
 
     public static final String FORMAT_OTP_SERVER_TIME_REQUEST = "hh:mma";
 
     public static final Locale OTP_LOCALE = Locale.US;
+
+    // flag to indicate intent sent by or on behalf of TripPlanActivity
+    public static final String INTENT_SOURCE = "org.onebusaway.android.INTENT_SOURCE";
+
+    public enum Source {ACTIVITY, NOTIFICATION}
+
+    ;
 }

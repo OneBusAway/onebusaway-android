@@ -219,6 +219,10 @@
             </intent-filter>
         </service>
 
+        <service
+                android:name=".directions.realtime.RealtimeService">
+        </service>
+
         <receiver android:name=".tripservice.AlarmReceiver">
             <intent-filter>
                 <!-- Should match constants for actions defined in TripService -->
@@ -238,6 +242,14 @@
                 <!-- Should match constants for actions defined in TripService -->
                 <action android:name="com.joulespersecond.seattlebusbot.action.SCHEDULE"/>
                 <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".directions.realtime.RealtimeWakefulReceiver">
+            <intent-filter>
+                <!-- Should match constants for actions defined in OTPConstants -->
+                <action android:name="${applicationId}.directions.action.START_CHECKS"/>
+                <action android:name="${applicationId}.directions.action.CHECK"/>
             </intent-filter>
         </receiver>
 

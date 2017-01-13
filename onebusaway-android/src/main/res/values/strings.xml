@@ -105,11 +105,9 @@
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <!-- Try to only show trip planning in What's New for regions that support it -->
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Hide alerts</b>
-        - Tap on alert and then \"Hide\" to remove it from view\n&#8226;\u0020
-        <b>Progress bar above map</b>
-        - When this is moving stops are still loading\n&#8226;\u0020
-        <b>Bug fixes</b>
+        <b>Left-hand setting</b>
+        - No more left hand cramps!\n&#8226;\u0020
+        <b>Bug fixes and performance improvements</b>
         - See http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Close</string>

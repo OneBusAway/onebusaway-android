@@ -110,7 +110,7 @@ public class ReportTripProblemFragment extends ReportProblemFragmentBase {
         // Set the stop name.
         Bundle args = getArguments();
         final TextView tripHeadsign = (TextView) view.findViewById(R.id.report_problem_headsign);
-        tripHeadsign.setText(UIUtils.formatHeadsign(args.getString(TRIP_HEADSIGN)));
+        tripHeadsign.setText(UIUtils.formatDisplayText(args.getString(TRIP_HEADSIGN)));
 
         // TODO: Switch this based on the trip mode
         final int tripArray = R.array.report_trip_problem_code_bus;

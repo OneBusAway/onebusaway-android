@@ -182,7 +182,7 @@ public final class MyRemindersFragment extends ListFragment
                 } else if (columnIndex == COL_HEADSIGN) {
                     String headSign = cursor.getString(columnIndex);
                     TextView text = (TextView) view;
-                    text.setText(UIUtils.formatHeadsign(headSign));
+                    text.setText(UIUtils.formatDisplayText(headSign));
                     return true;
                 } else if (columnIndex == COL_DEPARTURE) {
                     TextView text = (TextView) view;

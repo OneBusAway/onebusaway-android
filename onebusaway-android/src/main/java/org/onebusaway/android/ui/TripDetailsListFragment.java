@@ -16,6 +16,19 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
+import org.onebusaway.android.io.elements.ObaTripSchedule;
+import org.onebusaway.android.io.elements.ObaTripStatus;
+import org.onebusaway.android.io.request.ObaTripDetailsRequest;
+import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
@@ -38,20 +51,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.elements.ObaTrip;
-import org.onebusaway.android.io.elements.ObaTripSchedule;
-import org.onebusaway.android.io.elements.ObaTripStatus;
-import org.onebusaway.android.io.request.ObaTripDetailsRequest;
-import org.onebusaway.android.io.request.ObaTripDetailsResponse;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.MyTextUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -566,7 +565,7 @@ public class TripDetailsListFragment extends ListFragment {
             ObaRoute route = mRefs.getRoute(trip.getRouteId());
 
             TextView stopName = (TextView) convertView.findViewById(R.id.stop_name);
-            stopName.setText(MyTextUtils.toTitleCase(stop.getName()));
+            stopName.setText(UIUtils.formatDisplayText(stop.getName()));
 
             TextView time = (TextView) convertView.findViewById(R.id.time);
             ViewGroup realtime = (ViewGroup) convertView.findViewById(

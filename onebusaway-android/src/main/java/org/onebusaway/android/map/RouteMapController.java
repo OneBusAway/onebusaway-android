@@ -329,8 +329,8 @@ public class RouteMapController implements MapModeController {
          * @param agencyName agency name to show in the header
          */
         void show(ObaRoute route, String agencyName) {
-            mRouteShortName.setText(UIUtils.getRouteDisplayName(route));
-            mRouteLongName.setText(UIUtils.getRouteDescription(route));
+            mRouteShortName.setText(UIUtils.formatDisplayText(UIUtils.getRouteDisplayName(route)));
+            mRouteLongName.setText(UIUtils.formatDisplayText(UIUtils.getRouteDescription(route)));
             mAgencyName.setText(agencyName);
             show();
         }

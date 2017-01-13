@@ -214,27 +214,28 @@ public final class UIUtils {
         if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
             longName = route.getDescription();
         }
-        return MyTextUtils.toTitleCase(longName);
+        return UIUtils.formatDisplayText(longName);
     }
 
     /**
-     * Returns a formatted trip headsign for displaying in the UI, or null if the headsign is null.
-     * If the headsign IS ALL CAPS, it will be converted to title case (Is All Caps), otherwise the
-     * returned string will match the input.
+     * Returns a formatted displayText for displaying in the UI for stops, routes, and headsigns, or
+     * null if the displayText is null.  If the displayText IS ALL CAPS and more than one word, it
+     * will be converted to title case (Is All Caps), otherwise the returned string will match the
+     * input.
      *
-     * @param headsign headsign to be formatted
-     * @return a formatted trip headsign for displaying in the UI, or null if the headsign is null.
-     * If the headsign IS ALL CAPS, it will be converted to title case (Is All Caps), otherwise the
-     * returned string will match the input.
+     * @param displayText displayText to be formatted
+     * @return formatted text for stop, route, and heasigns for displaying in the UI, or null if the
+     * displayText is null.  If the displayText IS ALL CAPS and more than one word, it will be
+     * converted to title case (Is All Caps), otherwise the returned string will match the input.
      */
-    public static String formatHeadsign(String headsign) {
-        if (headsign == null) {
+    public static String formatDisplayText(String displayText) {
+        if (displayText == null) {
             return null;
         }
-        if (MyTextUtils.isAllCaps(headsign)) {
-            return MyTextUtils.toTitleCase(headsign);
+        if (MyTextUtils.isAllCaps(displayText) && displayText.contains(" ")) {
+            return MyTextUtils.toTitleCase(displayText);
         } else {
-            return headsign;
+            return displayText;
         }
     }
 
@@ -257,13 +258,13 @@ public final class UIUtils {
         TextView longNameText = (TextView) view.findViewById(R.id.long_name);
 
         String shortName = route.getShortName();
-        String longName = MyTextUtils.toTitleCase(route.getLongName());
+        String longName = UIUtils.formatDisplayText(route.getLongName());
 
         if (TextUtils.isEmpty(shortName)) {
             shortName = longName;
         }
         if (TextUtils.isEmpty(longName) || shortName.equals(longName)) {
-            longName = MyTextUtils.toTitleCase(route.getDescription());
+            longName = UIUtils.formatDisplayText(route.getDescription());
         }
 
         shortNameText.setText(shortName);
@@ -313,10 +314,10 @@ public final class UIUtils {
                 final String userName = values.getAsString(ObaContract.Stops.USER_NAME);
 
                 nameView.setText(TextUtils.isEmpty(userName) ?
-                        MyTextUtils.toTitleCase(stopName) : userName);
+                        UIUtils.formatDisplayText(stopName) : userName);
                 icon = favorite && showIcon ? R.drawable.ic_toggle_star : 0;
             } else {
-                nameView.setText(MyTextUtils.toTitleCase(stopName));
+                nameView.setText(UIUtils.formatDisplayText(stopName));
             }
             nameView.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
         }

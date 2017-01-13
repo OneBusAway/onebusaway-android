@@ -20,7 +20,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
@@ -323,13 +322,14 @@ public class TripInfoActivity extends AppCompatActivity {
             // Static (header values)
             //
             final TextView stopName = (TextView) view.findViewById(R.id.stop_name);
-            stopName.setText(MyTextUtils.toTitleCase(mStopName));
+            stopName.setText(UIUtils.formatDisplayText(mStopName));
 
             final TextView routeName = (TextView) view.findViewById(R.id.route_name);
-            routeName.setText(getString(R.string.trip_info_route, mRouteName));
+            routeName.setText(
+                    UIUtils.formatDisplayText(getString(R.string.trip_info_route, mRouteName)));
 
             final TextView headsign = (TextView) view.findViewById(R.id.headsign);
-            headsign.setText(UIUtils.formatHeadsign(mHeadsign));
+            headsign.setText(UIUtils.formatDisplayText(mHeadsign));
 
             final TextView departText = (TextView) view.findViewById(R.id.departure_time);
             departText.setText(getDepartureTime(getActivity(), mDepartTime));

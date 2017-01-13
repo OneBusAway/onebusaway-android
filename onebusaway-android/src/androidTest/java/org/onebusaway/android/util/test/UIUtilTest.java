@@ -1,12 +1,5 @@
 package org.onebusaway.android.util.test;
 
-import android.graphics.Color;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.util.Pair;
-import android.text.TextUtils;
-import android.widget.TextView;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaAgency;
@@ -25,6 +18,13 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
+
+import android.graphics.Color;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.v4.util.Pair;
+import android.text.TextUtils;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,13 +104,27 @@ public class UIUtilTest extends ObaTestCase {
     }
 
     /**
-     * Tests formatting trip headsigns
+     * Tests formatting of stop names, trip headsigns, and route names
      */
-    public void testFormatHeadsign() {
+    public void testFormatDisplayText() {
+        // Stop names
+        assertEquals("SDSU Transit Center", UIUtils.formatDisplayText("SDSU Transit Center"));
+        assertEquals("VA Hospital", UIUtils.formatDisplayText("VA Hospital"));
+        assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
+        assertEquals("UTC Transit Center", UIUtils.formatDisplayText("UTC Transit Center"));
+
+        // Trip headsigns
         assertEquals("North to University Area TC",
-                UIUtils.formatHeadsign("North to University Area TC"));
+                UIUtils.formatDisplayText("North to University Area TC"));
         assertEquals("North To University Area Tc",
-                UIUtils.formatHeadsign("NORTH TO UNIVERSITY AREA TC"));
+                UIUtils.formatDisplayText("NORTH TO UNIVERSITY AREA TC"));
+        assertEquals("SDSU", UIUtils.formatDisplayText("SDSU"));
+
+        // Route names
+        assertEquals("Downtown San Diego - UTC via Old Town",
+                UIUtils.formatDisplayText("Downtown San Diego - UTC via Old Town"));
+        assertEquals("UTC/VA Med CTR Express",
+                UIUtils.formatDisplayText("UTC/VA Med CTR Express"));
     }
 
     /**

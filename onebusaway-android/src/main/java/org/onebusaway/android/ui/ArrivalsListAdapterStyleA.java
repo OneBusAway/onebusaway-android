@@ -15,6 +15,12 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -24,12 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.ArrayList;
 
@@ -85,7 +85,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         route.setText(shortName);
         UIUtils.maybeShrinkRouteName(getContext(), route, shortName);
 
-        destination.setText(UIUtils.formatHeadsign(arrivalInfo.getHeadsign()));
+        destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
         status.setText(stopInfo.getStatusText());
 
         long eta = stopInfo.getEta();

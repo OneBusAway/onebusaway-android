@@ -33,7 +33,6 @@ import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
@@ -217,7 +216,7 @@ public class SearchResultsFragment extends ListFragment
 
     private void clickStop(final ObaStop stop) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(MyTextUtils.toTitleCase(stop.getName()));
+        builder.setTitle(UIUtils.formatDisplayText(stop.getName()));
 
         builder.setItems(R.array.search_stop_options, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -271,7 +270,7 @@ public class SearchResultsFragment extends ListFragment
 
         private void initStop(View view, ObaStop stop) {
             TextView nameView = (TextView) view.findViewById(R.id.stop_name);
-            nameView.setText(MyTextUtils.toTitleCase(stop.getName()));
+            nameView.setText(UIUtils.formatDisplayText(stop.getName()));
 
             UIUtils.setStopDirection(view.findViewById(R.id.direction),
                     stop.getDirection(),

@@ -28,7 +28,6 @@ import org.onebusaway.android.io.request.ObaStopsForRouteRequest;
 import org.onebusaway.android.io.request.ObaStopsForRouteResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.MyTextUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.content.ContentValues;
@@ -386,7 +385,7 @@ public class RouteInfoListFragment extends ListFragment {
                         final HashMap<String, String> groupMap = new HashMap<String, String>(1);
                         final ObaStopGroup group = groups[i];
                         // We can initialize the stop grouping values.
-                        groupMap.put("name", MyTextUtils.toTitleCase(group.getName()));
+                        groupMap.put("name", UIUtils.formatDisplayText(group.getName()));
                         // Add this to the groupings map
 
                         // Create the sub list (the list of stops in the group)
@@ -402,7 +401,7 @@ public class RouteInfoListFragment extends ListFragment {
                             final ObaStop stop = stopMap.get(stopId);
                             HashMap<String, String> groupStopMap = new HashMap<String, String>(2);
                             if (stop != null) {
-                                groupStopMap.put("name", MyTextUtils.toTitleCase(stop.getName()));
+                                groupStopMap.put("name", UIUtils.formatDisplayText(stop.getName()));
                                 String dir = cxt.getString(UIUtils.getStopDirectionText(stop
                                         .getDirection()));
                                 groupStopMap.put("direction", dir);
@@ -463,8 +462,8 @@ public class RouteInfoListFragment extends ListFragment {
                 longName = routeInfo.getDescription();
             }
 
-            shortNameText.setText(shortName);
-            longNameText.setText(longName);
+            shortNameText.setText(UIUtils.formatDisplayText(shortName));
+            longNameText.setText(UIUtils.formatDisplayText(longName));
             agencyText.setText(mRouteInfo.getAgency().getName());
 
             if (addToDb) {

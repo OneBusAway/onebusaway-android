@@ -78,7 +78,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         final TextView text = (TextView) info.targetView.findViewById(R.id.stop_name);
-        menu.setHeaderTitle(text.getText());
+        menu.setHeaderTitle(UIUtils.formatDisplayText(text.getText().toString()));
         if (isShortcutMode()) {
             menu.add(0, CONTEXT_MENU_DEFAULT, 0, R.string.my_context_create_shortcut);
         } else {

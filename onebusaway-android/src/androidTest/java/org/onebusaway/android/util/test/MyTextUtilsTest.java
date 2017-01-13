@@ -28,6 +28,14 @@ public class MyTextUtilsTest extends AndroidTestCase {
         assertEquals("Seattle", MyTextUtils.toTitleCase("Seattle"));
     }
 
+    public void testSentenceCase() {
+        assertEquals("Testing sentence case", MyTextUtils.toSentenceCase("Testing sentence case"));
+        assertEquals("Testing sentence case again",
+                MyTextUtils.toSentenceCase("TESTING SENTENCE CASE AGAIN"));
+        assertEquals("Another test", MyTextUtils.toSentenceCase("Another Test"));
+        assertEquals("Another test", MyTextUtils.toSentenceCase("Another TEST"));
+    }
+
     public void testIsAllCaps() {
         assertTrue(MyTextUtils.isAllCaps("THIS IS ALL CAPS"));
         assertFalse(MyTextUtils.isAllCaps("THIS IS not ALL CAPS"));

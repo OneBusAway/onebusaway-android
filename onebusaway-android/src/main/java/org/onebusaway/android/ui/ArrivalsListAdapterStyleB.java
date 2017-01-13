@@ -17,6 +17,13 @@
 package org.onebusaway.android.ui;
 
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.util.comparators.AlphanumComparator;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
@@ -30,13 +37,6 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.ArrivalInfoUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.onebusaway.util.comparators.AlphanumComparator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -195,7 +195,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         });
 
         routeName.setText(arrivalInfo.getShortName());
-        destination.setText(UIUtils.formatHeadsign(arrivalInfo.getHeadsign()));
+        destination.setText(UIUtils.formatDisplayText(arrivalInfo.getHeadsign()));
 
         // Loop through the arrival times and create the TableRows that contains the data
         for (int i = 0; i < combinedArrivalInfoStyleB.getArrivalInfoList().size(); i++) {

@@ -13,7 +13,8 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.onebusaway.android">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.onebusaway.android">
 
     <permission
             android:name="${applicationId}.permission.TRIP_SERVICE"
@@ -35,6 +36,7 @@
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
 
     <application
+            tools:replace="android:allowBackup"
             android:allowBackup="false"
             android:name="org.onebusaway.android.app.Application"
             android:icon="@mipmap/ic_launcher"
@@ -244,6 +246,12 @@
                 <action android:name="com.joulespersecond.seattlebusbot.action.POLL"/>
             </intent-filter>
         </receiver>
+        <!-- Receiver for restricted profiles -->
+        <receiver android:name=".util.GetRestrictionsReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.GET_RESTRICTION_ENTRIES" />
+            </intent-filter>
+        </receiver>
 
         <receiver android:name=".directions.realtime.RealtimeWakefulReceiver">
             <intent-filter>
@@ -270,6 +278,11 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.PreferencesActivity"/>
         </activity>
+        <provider
+            android:name="org.onebusaway.android.provider.EmbeddedSocialSearchProvider"
+            android:authorities="com.joulespersecond.seattlebusbot.embeddedsocial_searchprovider"
+            android:syncable="true"
+            android:exported="false"/>
     </application>
 
     <uses-feature

@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.io.elements;
 
-
 import java.util.Arrays;
 
 public class ObaRegionElement implements ObaRegion {
@@ -158,6 +157,10 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsSiriRealtimeApis;
 
+    private final boolean supportsEmbeddedSocial;
+
+    private boolean embeddedSocialEnabled;
+
     private final String twitterUrl;
 
     private final boolean experimental;
@@ -181,6 +184,8 @@ public class ObaRegionElement implements ObaRegion {
         supportsObaDiscoveryApis = false;
         supportsObaRealtimeApis = false;
         supportsSiriRealtimeApis = false;
+        supportsEmbeddedSocial = false;
+        embeddedSocialEnabled = true;
         twitterUrl = "";
         experimental = true;
         stopInfoUrl = "";
@@ -200,6 +205,7 @@ public class ObaRegionElement implements ObaRegion {
                             boolean supportsObaDiscoveryApis,
                             boolean supportsObaRealtimeApis,
                             boolean supportsSiriRealtimeApis,
+                            boolean supportsEmbeddedSocial,
                             String twitterUrl,
                             boolean experimental,
                             String stopInfoUrl,
@@ -217,6 +223,8 @@ public class ObaRegionElement implements ObaRegion {
         this.supportsObaDiscoveryApis = supportsObaDiscoveryApis;
         this.supportsObaRealtimeApis = supportsObaRealtimeApis;
         this.supportsSiriRealtimeApis = supportsSiriRealtimeApis;
+        this.supportsEmbeddedSocial = supportsEmbeddedSocial;
+        embeddedSocialEnabled = true;
         this.twitterUrl = twitterUrl;
         this.experimental = experimental;
         this.stopInfoUrl = stopInfoUrl;
@@ -282,6 +290,17 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public boolean getSupportsSiriRealtimeApis() {
         return supportsSiriRealtimeApis;
+    }
+
+    @Override
+    public boolean getSupportsEmbeddedSocial() {
+        // true if the region supports social and the account restrictions allow social
+        return supportsEmbeddedSocial && embeddedSocialEnabled;
+    }
+
+    @Override
+    public void setEmbeddedSocialEnabled(boolean enabled) {
+        this.embeddedSocialEnabled = enabled;
     }
 
     @Override
@@ -354,6 +373,7 @@ public class ObaRegionElement implements ObaRegion {
                 ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis +
                 ", supportsObaRealtimeApis=" + supportsObaRealtimeApis +
                 ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis +
+                ", supportsEmbeddedSocial=" + supportsEmbeddedSocial +
                 ", twitterUrl='" + twitterUrl + '\'' +
                 ", experimental=" + experimental +
                 ", stopInfoUrl='" + stopInfoUrl + '\'' +

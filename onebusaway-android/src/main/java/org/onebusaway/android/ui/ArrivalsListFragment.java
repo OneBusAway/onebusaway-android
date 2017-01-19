@@ -16,12 +16,17 @@
  */
 package org.onebusaway.android.ui;
 
+import com.microsoft.embeddedsocial.autorest.models.PublisherType;
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.server.exception.NotFoundException;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -32,6 +37,7 @@ import org.onebusaway.android.report.ui.InfrastructureIssueActivity;
 import org.onebusaway.android.util.ArrayAdapterWithIcon;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -56,6 +62,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -97,6 +105,8 @@ public class ArrivalsListFragment extends ListFragment
     public static final String STOP_CODE = ".StopCode";
 
     public static final String STOP_DIRECTION = ".StopDir";
+
+    public static final String DISCUSSION = ".Discussion";
 
     /**
      * Comma-delimited set of routes that serve this stop
@@ -317,6 +327,7 @@ public class ArrivalsListFragment extends ListFragment
         setListShown(false);
 
         mRoutesFilter = ObaContract.StopRouteFilters.get(getActivity(), mStopId);
+
         mTripsForStopCallback = new TripsForStopCallback();
 
         //LoaderManager.enableDebugLogging(true);
@@ -330,6 +341,17 @@ public class ArrivalsListFragment extends ListFragment
                 UIUtils.getNoArrivalsMessage(getActivity(), getArrivalsLoader().getMinutesAfter(),
                         false, false)
         );
+
+        if (mHeader != null) {
+            mHeader.refresh();
+            if (getStopId() != null) {
+                Bundle extras = getActivity().getIntent().getExtras();
+                if (extras != null && extras.containsKey(DISCUSSION)) {
+                    String discussionTitle = extras.getString(DISCUSSION);
+                    openDiscussion(discussionTitle);
+                }
+            }
+        }
     }
 
     @Override
@@ -473,7 +495,7 @@ public class ArrivalsListFragment extends ListFragment
         // Post an update
         mRefreshHandler.postDelayed(mRefresh, RefreshPeriod);
 
-        // If the user just tried to load more arrivals, determine if we 
+        // If the user just tried to load more arrivals, determine if we
         // should show a Toast in the case where no additional arrivals were loaded
         if (mLoadedMoreArrivals) {
             if (info == null || info.length == 0 || mLastResponseLength != info.length) {
@@ -582,6 +604,11 @@ public class ArrivalsListFragment extends ListFragment
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
+        if (!isAdded()) {
+            // not attached to an activity (possibly due to screen rotation)
+            return;
+        }
+
         String title = mFavorite ?
                 getString(R.string.stop_info_option_removestar) :
                 getString(R.string.stop_info_option_addstar);
@@ -710,6 +737,8 @@ public class ArrivalsListFragment extends ListFragment
         List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        final boolean isSocialEnabled = currentRegion != null && currentRegion.getSupportsEmbeddedSocial();
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -758,12 +787,32 @@ public class ArrivalsListFragment extends ListFragment
 
                     InfrastructureIssueActivity.startWithService(getActivity(), intent,
                             getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(), agencyName);
+                } else if (isSocialEnabled && (!hasUrl && which == 6) || (hasUrl && which == 7)) {
+                    openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
                 }
             }
         });
         AlertDialog dialog = builder.create();
         dialog.setOwnerActivity(getActivity());
         dialog.show();
+    }
+
+    public void openRouteDiscussion(String routeId) {
+        long regionId = Application.get().getCurrentRegion().getId();
+        String discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(regionId, routeId);
+        ArrivalsListActivity.start(getContext(), getStopId(), discussionTitle);
+    }
+
+    public void openDiscussion(String discussionTitle) {
+        HashMap<Integer, Integer> errorStrings = new HashMap<>();
+        errorStrings.put(NotFoundException.STATUS_CODE, discussionTitle.contains("route") ?
+                R.string.es_missing_route_conversation : R.string.es_missing_stop_conversation);
+
+        Fragment discussionFragment = EmbeddedSocial.getCommentFeedFragmentByName(discussionTitle,
+                PublisherType.APP, errorStrings);
+        final FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.add(R.id.listContainer, discussionFragment);
+        transaction.commit();
     }
 
     private void setCallbackToDialogFragment(RouteFavoriteDialogFragment routeDialog) {

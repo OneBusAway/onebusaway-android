@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui;
 
+import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
+
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -29,14 +31,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.Window;
 
 import java.util.HashMap;
 
 
-public class ArrivalsListActivity extends AppCompatActivity {
+public class ArrivalsListActivity extends BaseActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static class Builder {
@@ -46,9 +47,16 @@ public class ArrivalsListActivity extends AppCompatActivity {
         private Intent mIntent;
 
         public Builder(Context context, String stopId) {
+            this(context, stopId, null);
+        }
+
+        public Builder(Context context, String stopId, String discussionTitle) {
             mContext = context;
             mIntent = new Intent(context, ArrivalsListActivity.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
+            if (discussionTitle != null) {
+                mIntent.putExtra(ArrivalsListFragment.DISCUSSION, discussionTitle);
+            }
         }
 
         /**
@@ -105,7 +113,11 @@ public class ArrivalsListActivity extends AppCompatActivity {
     // Two of the most common methods of starting this activity.
     //
     public static void start(Context context, String stopId) {
-        new Builder(context, stopId).start();
+        start(context, stopId, null);
+    }
+
+    public static void start(Context context, String stopId, String discussionTitle) {
+        new Builder(context, stopId, discussionTitle).start();
     }
 
     /**

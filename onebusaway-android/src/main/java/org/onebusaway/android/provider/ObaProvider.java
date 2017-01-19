@@ -46,7 +46,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 25;
+        private static final int DATABASE_VERSION = 26;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -152,7 +152,7 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.Regions.CONTACT_EMAIL + " VARCHAR NOT NULL, " +
                                 ObaContract.Regions.SUPPORTS_OBA_DISCOVERY + " INTEGER NOT NULL, " +
                                 ObaContract.Regions.SUPPORTS_OBA_REALTIME + " INTEGER NOT NULL, " +
-                                ObaContract.Regions.SUPPORTS_SIRI_REALTIME + " INTEGER NOT NULL " +
+                                ObaContract.Regions.SUPPORTS_SIRI_REALTIME + " INTEGER NOT NULL" +
                                 ");");
                 db.execSQL(
                         "CREATE TABLE " +
@@ -240,6 +240,12 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.ServiceAlerts.PATH +
                                 " ADD COLUMN " + ObaContract.ServiceAlerts.HIDDEN + " INTEGER");
+                ++oldVersion;
+            }
+            if (oldVersion == 25) {
+                db.execSQL(
+                        "ALTER TABLE " + ObaContract.Regions.PATH +
+                                " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
             }
         }
 
@@ -481,6 +487,8 @@ public class ObaProvider extends ContentProvider {
                 ObaContract.Regions.SUPPORTS_OBA_REALTIME);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
                 ObaContract.Regions.SUPPORTS_SIRI_REALTIME);
+        sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
+                ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL);
         sRegionsProjectionMap.put(ObaContract.Regions.TWITTER_URL, ObaContract.Regions.TWITTER_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.EXPERIMENTAL, ObaContract.Regions.EXPERIMENTAL);

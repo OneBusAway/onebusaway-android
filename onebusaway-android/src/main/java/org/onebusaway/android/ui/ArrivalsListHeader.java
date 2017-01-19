@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.annotation.TargetApi;
@@ -157,6 +158,8 @@ class ArrivalsListHeader {
     private EditText mEditNameView;
 
     private ImageButton mStopFavorite;
+
+    private ImageButton mStopDiscussion;
 
     private View mFilterGroup;
 
@@ -329,6 +332,13 @@ class ArrivalsListHeader {
         mEditNameView = (EditText) mView.findViewById(R.id.edit_name);
         mStopFavorite = (ImageButton) mView.findViewById(R.id.stop_favorite);
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        mStopDiscussion = (ImageButton) mView.findViewById(R.id.stop_discussion);
+        mStopDiscussion.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && !currentRegion.getSupportsEmbeddedSocial()) {
+            mStopDiscussion.setVisibility(View.GONE);
+        }
+
         mFilterGroup = mView.findViewById(R.id.filter_group);
 
         mShowAllView = (TextView) mView.findViewById(R.id.show_all);
@@ -428,6 +438,16 @@ class ArrivalsListHeader {
             public void onClick(View v) {
                 mController.setFavoriteStop(!mController.isFavoriteStop());
                 refreshStopFavorite();
+            }
+        });
+
+        mStopDiscussion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String stopId = mController.getStopId();
+                long regionId = obaRegion.getId();
+                String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, stopId);
+                ArrivalsListActivity.start(mContext, stopId, discussionTitle);
             }
         });
 
@@ -1352,6 +1372,7 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.GONE);
         mFilterGroup.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.GONE);
+        mStopDiscussion.setVisibility(View.GONE);
         mEtaContainer1.setVisibility(View.GONE);
         mEtaSeparator.setVisibility(View.GONE);
         mEtaContainer2.setVisibility(View.GONE);
@@ -1389,6 +1410,7 @@ class ArrivalsListHeader {
         mNameContainerView.setVisibility(View.VISIBLE);
         mEditNameContainerView.setVisibility(View.GONE);
         mStopFavorite.setVisibility(View.VISIBLE);
+        mStopDiscussion.setVisibility(View.VISIBLE);
         mExpandCollapse.setVisibility(cachedExpandCollapseViewVisibility);
         mNoArrivals.setVisibility(View.VISIBLE);
         if (mHasError || mHasWarning) {

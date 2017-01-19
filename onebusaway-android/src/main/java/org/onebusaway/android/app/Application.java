@@ -21,12 +21,19 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.report.ui.util.SocialReportHandler;
+import org.onebusaway.android.ui.social.SocialAppProfile;
+import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
+import org.onebusaway.android.ui.social.SocialTabColorizer;
+import org.onebusaway.android.ui.social.SocialToolbarColorizer;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -40,6 +47,7 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
+import android.support.multidex.MultiDex;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -90,6 +98,12 @@ public class Application extends android.app.Application {
     HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
 
@@ -99,6 +113,8 @@ public class Application extends android.app.Application {
         initOba();
         initObaRegion();
         initOpen311(getCurrentRegion());
+
+        setUpSocial();
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
@@ -556,5 +572,14 @@ public class Application extends android.app.Application {
         ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
                 getString(R.string.analytics_action_edit_general), getString(R.string.analytics_label_region_auto)
                         + (autoRegion ? "YES" : "NO"));
+    }
+
+    private void setUpSocial() {
+        EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.APP_KEY);
+        EmbeddedSocial.setToolbarColors(new SocialToolbarColorizer());
+        EmbeddedSocial.setTabColors(new SocialTabColorizer());
+        EmbeddedSocial.setReportHandler(new SocialReportHandler());
+        EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
+        EmbeddedSocial.setAppProfile(new SocialAppProfile());
     }
 }

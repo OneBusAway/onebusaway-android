@@ -1,0 +1,28 @@
+{
+  "application" : {
+    "serverUrl" : "https://dev-sharad.embeddedsocial.microsoft.com/",
+    "appKey" : "AppKey",
+    "numberOfCommentsToShow" : 20,
+    "numberOfRepliesToShow" : 20
+  },
+  "socialNetworks" : {
+    "facebook" : {
+      "loginEnabled" : "true",
+      "clientId" : "552285811539105"
+    },
+    "google" : {
+      "loginEnabled" : "true",
+      "clientId" : "228220385321-fphmaq4bq709oijknqej1sacdrus431c.apps.googleusercontent.com"
+    },
+    "microsoft" : {
+      "loginEnabled" : "true",
+      "clientId" : "000000004413B70D"
+    },
+    "twitter" : {
+      "loginEnabled" : "false"
+    }
+  },
+  "theme" : {
+    "accentColor" : "FF4CAF50"
+  }
+}

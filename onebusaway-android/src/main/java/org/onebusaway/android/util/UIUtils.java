@@ -116,7 +116,6 @@ public final class UIUtils {
         if (!(activity instanceof HomeActivity)) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
-
     }
 
     /**
@@ -1188,6 +1187,12 @@ public final class UIUtils {
         }
 
         list.add(c.getString(R.string.bus_options_menu_report_trip_problem));
+
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
+            list.add(c.getString(R.string.join_discussion));
+        }
+
         return list;
     }
 
@@ -1215,6 +1220,10 @@ public final class UIUtils {
             list.add(R.drawable.ic_notification_event_note);
         }
         list.add(R.drawable.ic_alert_warning);
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
+            list.add(R.drawable.es_ic_bar_notification);
+        }
         return list;
     }
 

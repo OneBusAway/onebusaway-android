@@ -30,12 +30,12 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.UserManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,6 +57,9 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.sdk.ui.EmbeddedSocialActivity;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -86,16 +89,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPTIONS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEARCH;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static org.onebusaway.android.util.GetRestrictionsReceiver.EMBEDDED_SOCIAL_KEY;
 
-public class HomeActivity extends AppCompatActivity
+public class HomeActivity extends EmbeddedSocialActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks, ObaRegionsTask.Callback {
@@ -135,6 +147,8 @@ public class HomeActivity extends AppCompatActivity
     private static final long REGION_UPDATE_THRESHOLD = 1000 * 60 * 60 * 24 * 7;
 
     private static final String TAG = "HomeActivity";
+
+    public static final String IS_STUB = "IsStub";
 
     Context mContext;
 
@@ -305,6 +319,7 @@ public class HomeActivity extends AppCompatActivity
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
         mContext = this;
 
         setupNavigationDrawer();
@@ -362,12 +377,19 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
+        checkSocialEnabled();
         checkLeftHandMode();
         mFabMyLocation.requestLayout();
     }
 
     @Override
     protected void onPause() {
+        if (isStub()) {
+            // This activity is a stub, only created to usher in a social activity
+            // Finish the current activity rather than show a blank home page
+            finish();
+        }
+
         ShowcaseViewUtils.hideShowcaseView();
         super.onPause();
     }
@@ -440,6 +462,30 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_action_button_press),
                                 getString(R.string.analytics_label_button_press_trip_plan));
                 break;
+            case NAVDRAWER_ITEM_SIGN_IN:
+                EmbeddedSocial.launchSignInActivity(this);
+                break;
+            case NAVDRAWER_ITEM_PROFILE:
+                EmbeddedSocial.launchProfileActivity(this);
+                break;
+            case NAVDRAWER_ITEM_MY_FEED:
+                EmbeddedSocial.launchYourFeedActivity(this);
+                break;
+            case NAVDRAWER_ITEM_SEARCH:
+                EmbeddedSocial.launchSearchActivity(this);
+                break;
+            case NAVDRAWER_ITEM_POPULAR:
+                EmbeddedSocial.launchPopularActivity(this);
+                break;
+            case NAVDRAWER_ITEM_PINS:
+                EmbeddedSocial.launchPinsActivity(this);
+                break;
+            case NAVDRAWER_ITEM_ACTIVITY_FEED:
+                EmbeddedSocial.launchActivityFeedActivity(this);
+                break;
+            case NAVDRAWER_ITEM_OPTIONS:
+                EmbeddedSocial.launchOptionsActivity(this);
+                break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
                 startActivity(preferences);
@@ -449,6 +495,10 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_label_button_press_settings));
                 break;
             case NAVDRAWER_ITEM_HELP:
+                if (isStub()) {
+                    showMapFragment();
+                    mCurrentNavDrawerPosition = item;
+                }
                 showDialog(HELP_DIALOG);
                 ObaAnalytics
                         .reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -463,6 +513,10 @@ public class HomeActivity extends AppCompatActivity
                 break;
         }
         invalidateOptionsMenu();
+    }
+
+    private boolean isStub() {
+        return getIntent().getBooleanExtra(IS_STUB, false);
     }
 
     private void showMapFragment() {
@@ -686,7 +740,9 @@ public class HomeActivity extends AppCompatActivity
                         switch (which) {
                             case 0:
                                 ShowcaseViewUtils.resetAllTutorials(HomeActivity.this);
+                                mNavigationDrawerFragment.setSavedPosition(NAVDRAWER_ITEM_NEARBY);
                                 NavHelp.goHome(HomeActivity.this, true);
+
                                 break;
                             case 1:
                                 showDialog(LEGEND_DIALOG);
@@ -1234,6 +1290,22 @@ public class HomeActivity extends AppCompatActivity
         } else {
             hideMyLocationButton();
             hideMapProgressBar();
+        }
+    }
+
+    // Check user profile restrictions on social features
+    private void checkSocialEnabled() {
+        if (Build.VERSION.SDK_INT > 18) {
+            Bundle restrictionsBundle = ((UserManager)getSystemService(Context.USER_SERVICE))
+                    .getApplicationRestrictions(getPackageName());
+            if (restrictionsBundle == null) {
+                restrictionsBundle = new Bundle();
+            }
+
+            ObaRegion currentRegion = Application.get().getCurrentRegion();
+            if (currentRegion != null && restrictionsBundle.containsKey(EMBEDDED_SOCIAL_KEY)) {
+                currentRegion.setEmbeddedSocialEnabled(restrictionsBundle.getBoolean(EMBEDDED_SOCIAL_KEY));
+            }
         }
     }
 

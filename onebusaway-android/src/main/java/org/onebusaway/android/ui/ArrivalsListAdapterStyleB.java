@@ -18,7 +18,9 @@ package org.onebusaway.android.ui;
 
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -141,6 +143,9 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         Resources r = view.getResources();
 
+        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
+        discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
+
         ImageButton starBtn = (ImageButton) view.findViewById(R.id.route_star);
         starBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
@@ -149,6 +154,18 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
+
+        discussBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
+            }
+        });
+
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && !currentRegion.getSupportsEmbeddedSocial()) {
+            discussBtn.setVisibility(View.GONE);
+        }
 
         starBtn.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :

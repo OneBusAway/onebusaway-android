@@ -46,3 +46,31 @@
 
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**
+
+-keep class com.microsoft.socialplus.** { *; }
+# for java 8 lambdas
+-dontwarn java.lang.invoke**
+
+# annotations
+-dontwarn javax.annotation.**
+
+-dontwarn sun.misc.Unsafe
+
+# for joda DateTime
+-dontwarn org.joda.convert.**
+-dontwarn org.joda.time.**
+-keep class org.joda.time.** { *; }
+-keep interface org.joda.time.** { *;}
+
+# for picasso
+-dontwarn com.squareup.okhttp.**
+
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+-dontwarn retrofit2.**
+
+-dontwarn uk.co.senab.photoview.**
+
+-keep interface java.lang.Method { *; }
+-keep class org.codehaus.mojo.** { *; }

@@ -399,6 +399,7 @@ public class RegionUtils {
                     ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
                     ObaContract.Regions.SUPPORTS_OBA_REALTIME,
                     ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
+                    ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
                     ObaContract.Regions.TWITTER_URL,
                     ObaContract.Regions.EXPERIMENTAL,
                     ObaContract.Regions.STOP_INFO_URL,
@@ -444,11 +445,12 @@ public class RegionUtils {
                         c.getInt(6) > 0,            // Supports Oba Discovery
                         c.getInt(7) > 0,            // Supports Oba Realtime
                         c.getInt(8) > 0,            // Supports Siri Realtime
-                        c.getString(9),              // Twitter URL
-                        c.getInt(10) > 0,            // Experimental
-                        c.getString(11),             // StopInfoUrl
-                        c.getString(12),             // OTP Base URL
-                        c.getString(13)              // OTP Contact Email
+                        c.getInt(9) > 0,            // Supports Embedded Social
+                        c.getString(10),              // Twitter URL
+                        c.getInt(11) > 0,            // Experimental
+                        c.getString(12),             // StopInfoUrl
+                        c.getString(13),             // OTP Base URL
+                        c.getString(14)              // OTP Contact Email
                 ));
 
             } while (c.moveToNext());
@@ -627,6 +629,7 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS,
                 BuildConfig.FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS,
+                BuildConfig.FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL,
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
                 BuildConfig.FIXED_REGION_STOP_INFO_URL,
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
@@ -693,6 +696,8 @@ public class RegionUtils {
                 region.getSupportsObaRealtimeApis() ? 1 : 0);
         values.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
                 region.getSupportsSiriRealtimeApis() ? 1 : 0);
+        values.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
+                region.getSupportsEmbeddedSocial() ? 1 : 0);
         values.put(ObaContract.Regions.TWITTER_URL, region.getTwitterUrl());
         values.put(ObaContract.Regions.EXPERIMENTAL, region.getExperimental());
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());

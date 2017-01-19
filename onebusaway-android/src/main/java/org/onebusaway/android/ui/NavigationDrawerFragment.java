@@ -18,17 +18,23 @@
  */
 package org.onebusaway.android.ui;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -40,8 +46,10 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -60,6 +68,11 @@ public class NavigationDrawerFragment extends Fragment {
      */
     private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
 
+    /**
+     * Remember the visibility of the extra social items.
+     */
+    private static final String IS_OVERFLOW_SHOWN = "is_overflow_shown";
+
     // symbols for navdrawer items (indices must correspond to array below). This is
     // not a list of items that are necessarily *present* in the Nav Drawer; rather,
     // it's a list of all possible items.
@@ -69,13 +82,29 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 2;
 
-    protected static final int NAVDRAWER_ITEM_SETTINGS = 3;
+    protected static final int NAVDRAWER_ITEM_PROFILE = 3;
 
-    protected static final int NAVDRAWER_ITEM_HELP = 4;
+    protected static final int NAVDRAWER_ITEM_MY_FEED = 4;
 
-    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
+    protected static final int NAVDRAWER_ITEM_SEARCH = 5;
 
-    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
+    protected static final int NAVDRAWER_ITEM_POPULAR = 6;
+
+    protected static final int NAVDRAWER_ITEM_PINS = 7;
+
+    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 8;
+
+    protected static final int NAVDRAWER_ITEM_OPTIONS = 9;
+
+    protected static final int NAVDRAWER_ITEM_SIGN_IN = 10;
+
+    protected static final int NAVDRAWER_ITEM_SETTINGS = 11;
+
+    protected static final int NAVDRAWER_ITEM_HELP = 12;
+
+    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 13;
+
+    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 14;
 
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
@@ -83,14 +112,27 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
 
+    private static final int OVERFLOW_INDEX = 6;
+
     // Currently selected navigation drawer item (must be value of one of the constants above)
-    private int mCurrentSelectedPosition = 0;
+    private int mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
+
+    // Previously selected navigation drawer item
+    private int mPreviousSelectedPosition = NAVDRAWER_ITEM_INVALID;
 
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
             R.string.navdrawer_item_nearby,
             R.string.navdrawer_item_starred_stops,
             R.string.navdrawer_item_my_reminders,
+            R.string.navdrawer_item_profile,
+            R.string.navdrawer_item_your_feed,
+            R.string.navdrawer_item_search,
+            R.string.navdrawer_item_popular,
+            R.string.navdrawer_item_pin,
+            R.string.navdrawer_item_activity_feed,
+            R.string.navdrawer_item_options,
+            R.string.navdrawer_item_sign_in,
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
@@ -102,6 +144,14 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_maps_place,  // Nearby
             R.drawable.ic_drawer_star, // Starred Stops
             R.drawable.ic_drawer_alarm, // My reminders
+            R.drawable.ic_username, // My profile
+            R.drawable.ic_drawer_your_feed, // My feed of discussions
+            R.drawable.ic_drawer_search, // Popular discussions
+            R.drawable.ic_drawer_popular, // Popular discussions
+            R.drawable.ic_drawer_pin, // Pinned discussions
+            R.drawable.ic_drawer_activity_feed, // Social activity feed
+            R.drawable.ic_drawer_options, // Popular discussions
+            R.drawable.ic_username,
             0, // Settings
             0, // Help
             0, // Send feedback
@@ -131,13 +181,22 @@ public class NavigationDrawerFragment extends Fragment {
 
     private View mFragmentContainerView;
 
+    private RelativeLayout socialOverflowButtonWrapper;
+
+    private ImageButton socialOverflowButton;
+
+    private LinearLayout socialOverflowContainer;
+
+    private boolean isSignedIn;
+
     public NavigationDrawerFragment() {
     }
+
+    static boolean firstStart = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -151,8 +210,15 @@ public class NavigationDrawerFragment extends Fragment {
             Log.d(TAG, "Using position from preferences = " + mCurrentSelectedPosition);
         }
 
-        // Select either the default item (0) or the last selected item.
-        selectItem(mCurrentSelectedPosition);
+        if (firstStart) {
+            // force app start to open the map view
+            firstStart = false;
+            setSelectedNavDrawerItem(NAVDRAWER_ITEM_INVALID);
+            selectItem(NAVDRAWER_ITEM_NEARBY);
+        } else {
+            // Select either the default item (0) or the last selected item.
+            selectItem(mCurrentSelectedPosition);
+        }
     }
 
     @Override
@@ -256,7 +322,7 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public void selectItem(int position) {
         setSelectedNavDrawerItem(position);
-        if (mDrawerLayout != null) {
+        if (mDrawerLayout != null && mFragmentContainerView != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
@@ -265,20 +331,32 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     /**
+     * Set the selected position as a preference
+     */
+    public void setSavedPosition(int position) {
+        SharedPreferences sp = PreferenceManager
+                .getDefaultSharedPreferences(getActivity());
+        sp.edit().putInt(STATE_SELECTED_POSITION, position).apply();
+    }
+
+    /**
      * Sets up the given navdrawer item's appearance to the selected state. Note: this could
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
     private void setSelectedNavDrawerItem(int itemId) {
-        if (!isNewActivityItem(itemId)) {
-            // We only change the selected item if it doesn't launch a new activity
+        if (!isNewActivityItem(itemId) || isSocialActivityItem(mPreviousSelectedPosition)) {
+            mPreviousSelectedPosition = mCurrentSelectedPosition;
+            // We only change the selected item if it doesn't launch a new OBA activity
             mCurrentSelectedPosition = itemId;
 
-            // Save the selected position as a preference
-            SharedPreferences sp = PreferenceManager
-                    .getDefaultSharedPreferences(getActivity());
-            sp.edit().putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition).apply();
+            setSavedPosition(mCurrentSelectedPosition);
         }
-        if (mNavDrawerItemViews != null) {
+
+        if (mNavDrawerItemViews != null &&
+                !isSocialActivityItem(mPreviousSelectedPosition) && !isSocialActivityItem(itemId)) {
+            // reformat the nav drawer items only if the same instance is reused
+            // transitioning to or from a new social activity creates a new nav drawer instance
+            // which is properly formatted on creation
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
                     int thisItemId = mNavDrawerItems.get(i);
@@ -289,12 +367,37 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(final Context context) {
         super.onAttach(context);
         try {
             mCallbacks = (NavigationDrawerCallbacks) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+            if (context instanceof BaseActivity) {
+                // Embedded Social activity
+                mCallbacks = new NavigationDrawerCallbacks() {
+                    @Override
+                    public void onNavigationDrawerItemSelected(int position) {
+                        // don't start a new activity if the current item is pressed again
+                        if (position != mPreviousSelectedPosition) {
+                            // revert the local copy of mCurrentSelectedPosition
+                            // in case the user hits the back button
+                            mCurrentSelectedPosition = mPreviousSelectedPosition;
+                            Intent intent = new Intent(context, HomeActivity.class);
+
+                            // Notify the new instance that it is a stub used to launch a new activity
+                            if (isNewActivityItem(position) || isSocialActivityItem(position)) {
+                                intent.putExtra(HomeActivity.IS_STUB, true);
+                            }
+
+                            // the value of mCurrentSelectedPosition saved in SharedPreferences will
+                            // be used when HomeActivity creates a new instance of NavigationDrawerFragment
+                            context.startActivity(intent);
+                        }
+                    }
+                };
+            } else {
+                throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+            }
         }
     }
 
@@ -312,15 +415,24 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        isSignedIn = EmbeddedSocial.isSignedIn();
+        populateNavDrawer();
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Forward the new configuration the drawer toggle component.
-        mDrawerToggle.onConfigurationChanged(newConfig);
+        if (mDrawerToggle != null) {
+            mDrawerToggle.onConfigurationChanged(newConfig);
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (mDrawerToggle.onOptionsItemSelected(item)) {
+        if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
 
@@ -344,16 +456,37 @@ public class NavigationDrawerFragment extends Fragment {
 
     /** Populates the navigation drawer with the appropriate items. */
     public void populateNavDrawer() {
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
         mNavDrawerItems.clear();
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
-        if ((Application.get().getCurrentRegion() != null &&
-                !TextUtils.isEmpty(Application.get().getCurrentRegion().getOtpBaseUrl())) ||
-                !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
-            mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+        if (currentRegion != null) {
+            if (!TextUtils.isEmpty(currentRegion.getOtpBaseUrl())||
+                    !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl())) {
+                mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
+            }
+
+            if (currentRegion.getSupportsEmbeddedSocial()) {
+                // Social items
+                mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
+                if (isSignedIn) {
+                    // user is signed in to Embedded Social
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_MY_FEED);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_SEARCH);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_OPTIONS);
+                } else {
+                    // user is not signed in
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_SIGN_IN);
+                }
+            }
         }
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
@@ -375,14 +508,82 @@ public class NavigationDrawerFragment extends Fragment {
 
         LinearLayout containerLayout = (LinearLayout) mDrawerItemsListContainer.
                 findViewById(R.id.navdrawer_items_list);
-
         containerLayout.removeAllViews();
 
-        for (int itemId : mNavDrawerItems) {
-            mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
-            containerLayout.addView(mNavDrawerItemViews[i]);
-            ++i;
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial() && isSignedIn) {
+            // user is signed in to Embedded Social
+            createSocialOverflow(containerLayout);
+            for (int itemId : mNavDrawerItems) {
+                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+                if (isSocialOverflow(itemId)) {
+                    // add to the overflow section
+                    socialOverflowContainer.addView(mNavDrawerItemViews[i]);
+                } else {
+                    containerLayout.addView(mNavDrawerItemViews[i]);
+                }
+                ++i;
+            }
+
+            // add the overflow menu
+            containerLayout.addView(socialOverflowButtonWrapper, OVERFLOW_INDEX);
+            containerLayout.addView(socialOverflowContainer, OVERFLOW_INDEX + 1);
+        } else {
+            // user is not signed in
+            for (int itemId : mNavDrawerItems) {
+                mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
+                containerLayout.addView(mNavDrawerItemViews[i]);
+                ++i;
+            }
         }
+    }
+
+    private void createSocialOverflow(ViewGroup parent) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        socialOverflowButtonWrapper =
+                (RelativeLayout) getActivity().getLayoutInflater().inflate(R.layout.navdrawer_overflow_button, parent, false);
+        socialOverflowButton = (ImageButton) socialOverflowButtonWrapper.findViewById(R.id.es_navigationOverflowButton);
+        setSocialOverflowButtonListener();
+        socialOverflowContainer = new LinearLayout(getContext());
+        socialOverflowContainer.setOrientation(LinearLayout.VERTICAL);
+        socialOverflowContainer.setVisibility(View.GONE);
+
+
+        boolean overflowIsShown = sp.getBoolean(IS_OVERFLOW_SHOWN, false);
+        if (overflowIsShown) {
+            openOverflow();
+        } else {
+            closeOverflow();
+        }
+    }
+
+    private void setSocialOverflowButtonListener() {
+        socialOverflowButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                boolean isShown = socialOverflowContainer.isShown();
+                if (isShown) {
+                    closeOverflow();
+                } else {
+                    openOverflow();
+                }
+                sp.edit().putBoolean(IS_OVERFLOW_SHOWN, !isShown).commit();
+            }
+        });
+    }
+
+    private void openOverflow() {
+        socialOverflowButton.setImageDrawable(
+                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_less_black, null));
+        socialOverflowContainer.setVisibility(View.VISIBLE);
+    }
+
+    private void closeOverflow() {
+        socialOverflowButton.setImageDrawable(
+                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_more_black, null));
+        socialOverflowContainer.setVisibility(View.GONE);
     }
 
     private View makeNavDrawerItem(final int itemId, ViewGroup container) {
@@ -391,7 +592,7 @@ public class NavigationDrawerFragment extends Fragment {
         if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
             layoutToInflate = R.layout.navdrawer_separator;
         } else if (itemId == NAVDRAWER_ITEM_SEPARATOR_SPECIAL) {
-            layoutToInflate = R.layout.navdrawer_separator;
+            layoutToInflate = R.layout.navdrawer_separator_special;
         } else {
             layoutToInflate = R.layout.navdrawer_item;
         }
@@ -482,5 +683,24 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP;
+    }
+
+    private boolean isSocialActivityItem(int itemId) {
+        return itemId == NAVDRAWER_ITEM_PROFILE ||
+                itemId == NAVDRAWER_ITEM_MY_FEED ||
+                itemId == NAVDRAWER_ITEM_SEARCH ||
+                itemId == NAVDRAWER_ITEM_POPULAR ||
+                itemId == NAVDRAWER_ITEM_PINS ||
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
+                itemId == NAVDRAWER_ITEM_OPTIONS ||
+                itemId == NAVDRAWER_ITEM_SIGN_IN;
+    }
+
+    private boolean isSocialOverflow(int itemId) {
+        return itemId == NAVDRAWER_ITEM_PROFILE ||
+                itemId == NAVDRAWER_ITEM_POPULAR ||
+                itemId == NAVDRAWER_ITEM_PINS ||
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
+                itemId == NAVDRAWER_ITEM_OPTIONS;
     }
 }

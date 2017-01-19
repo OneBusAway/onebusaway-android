@@ -44,6 +44,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         values.put(Regions.SUPPORTS_OBA_DISCOVERY, true);
         values.put(Regions.SUPPORTS_OBA_REALTIME, false);
         values.put(Regions.SUPPORTS_SIRI_REALTIME, false);
+        values.put(Regions.SUPPORTS_EMBEDDED_SOCIAL, false);
 
         Uri uri1 = cr.insert(Regions.CONTENT_URI, values);
 
@@ -51,7 +52,8 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
                 ObaContract.Regions._ID,
                 ObaContract.Regions.NAME,
                 ObaContract.Regions.SUPPORTS_OBA_DISCOVERY,
-                ObaContract.Regions.SUPPORTS_SIRI_REALTIME
+                ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
+                ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL
         };
 
         // Query
@@ -93,6 +95,7 @@ public class RegionsTest extends ProviderTestCase2<ObaProvider> {
         values.put(Regions.SUPPORTS_OBA_DISCOVERY, true);
         values.put(Regions.SUPPORTS_OBA_REALTIME, false);
         values.put(Regions.SUPPORTS_SIRI_REALTIME, false);
+        values.put(Regions.SUPPORTS_EMBEDDED_SOCIAL, false);
 
         Uri uri1 = cr.insert(Regions.CONTENT_URI, values);
         long regionId = ContentUris.parseId(uri1);

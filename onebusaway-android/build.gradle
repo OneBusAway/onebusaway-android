@@ -25,6 +25,7 @@ buildscript {
 }
 apply plugin: 'com.android.application'
 
+def APP_KEY = '"' + AppKey + '"' ?: '"AppKey"'
 repositories {
     jcenter()
     maven {
@@ -39,6 +40,11 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
+
+    maven {
+        // for testlib
+        url  "http://dl.bintray.com/acrowntest/test"
+    }
 }
 
 android {
@@ -46,12 +52,18 @@ android {
     buildToolsVersion "25.0.2"
 
     defaultConfig {
-        minSdkVersion 9
+        minSdkVersion 15
         targetSdkVersion 21
         versionCode 72
         versionName "2.1.5"
-    }
 
+        // multi dex enabled
+        multiDexEnabled true
+        testInstrumentationRunner "com.android.test.runner.MultiDexTestRunner"
+    }
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
     /**
      * brand - how the name, look, and feel of each OneBusAway-based app is presented
      * platform - Google or Amazon (for Maps API v2 dependencies)
@@ -91,6 +103,7 @@ android {
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
+            buildConfigField "String", "APP_KEY", APP_KEY
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -104,6 +117,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
@@ -142,6 +156,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
             buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
@@ -172,6 +187,7 @@ android {
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
             buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_EMBEDDEDSOCIAL", "false"
             buildConfigField "String", "FIXED_REGION_TWITTER_URL",
                     "\"http://mobile.twitter.com/OBA_tampa\""
             buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
@@ -207,7 +223,9 @@ android {
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
     packagingOptions {
         exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
     }
 
     lintOptions {
@@ -336,4 +354,13 @@ dependencies {
     googleCompile 'com.google.android.gms:play-services-places:9.4.0'
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
+
+    compile('com.acrowntest.test:sdk:0.0.11:release@aar') {
+        transitive = true;
+    }
+
+    androidTestCompile('com.android.support:multidex-instrumentation:1.0.1') {
+        exclude group: 'com.android.support', module: 'multidex'
+    }
+
 }

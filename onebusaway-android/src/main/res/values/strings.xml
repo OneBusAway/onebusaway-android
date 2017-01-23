@@ -62,7 +62,7 @@
         current region is
         %1$s. Change in \"Preferences->Your region\").
     </string>
-    <string name="internal_error">Oops, something went wrong. Try again and it might work.</string>
+    <string name="internal_error">Oops, something went wrong. Please check your Internet connection and try again.</string>
     <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that
         request.
     </string>

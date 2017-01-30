@@ -46,10 +46,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -181,9 +179,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     private View mFragmentContainerView;
 
-    private RelativeLayout socialOverflowButtonWrapper;
-
-    private ImageButton socialOverflowButton;
+    private LinearLayout socialOverflowButton;
 
     private LinearLayout socialOverflowContainer;
 
@@ -526,7 +522,7 @@ public class NavigationDrawerFragment extends Fragment {
             }
 
             // add the overflow menu
-            containerLayout.addView(socialOverflowButtonWrapper, OVERFLOW_INDEX);
+            containerLayout.addView(socialOverflowButton, OVERFLOW_INDEX);
             containerLayout.addView(socialOverflowContainer, OVERFLOW_INDEX + 1);
         } else {
             // user is not signed in
@@ -541,9 +537,8 @@ public class NavigationDrawerFragment extends Fragment {
     private void createSocialOverflow(ViewGroup parent) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        socialOverflowButtonWrapper =
-                (RelativeLayout) getActivity().getLayoutInflater().inflate(R.layout.navdrawer_overflow_button, parent, false);
-        socialOverflowButton = (ImageButton) socialOverflowButtonWrapper.findViewById(R.id.es_navigationOverflowButton);
+        socialOverflowButton = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.navdrawer_overflow_button, parent, false);
+
         setSocialOverflowButtonListener();
         socialOverflowContainer = new LinearLayout(getContext());
         socialOverflowContainer.setOrientation(LinearLayout.VERTICAL);
@@ -575,14 +570,16 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private void openOverflow() {
-        socialOverflowButton.setImageDrawable(
-                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_less_black, null));
+        ImageView image = (ImageView)socialOverflowButton.findViewById(R.id.es_navigationOverflowButtonImage);
+        image.setImageDrawable(
+                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_less, null));
         socialOverflowContainer.setVisibility(View.VISIBLE);
     }
 
     private void closeOverflow() {
-        socialOverflowButton.setImageDrawable(
-                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_more_black, null));
+        ImageView image = (ImageView)socialOverflowButton.findViewById(R.id.es_navigationOverflowButtonImage);
+        image.setImageDrawable(
+                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_more, null));
         socialOverflowContainer.setVisibility(View.GONE);
     }
 

@@ -14,17 +14,17 @@
   limitations under the License.
   -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/es_navigationOverflowButtonContainer"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-    <ImageButton
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/es_navigationOverflowButton"
             android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/navdrawer_background"
-            android:paddingRight="20dp"
-            android:layout_alignParentRight="true"/>
-</RelativeLayout>
+            android:paddingLeft="@dimen/keyline_1"
+            android:paddingRight="@dimen/keyline_1">
+        <ImageView
+                android:id="@+id/es_navigationOverflowButtonImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/navdrawer_background"
+                android:layout_gravity="end"/>
+</LinearLayout>

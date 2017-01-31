@@ -33,7 +33,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.GravityCompat;
@@ -196,7 +195,7 @@ public class NavigationDrawerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sp = Application.getPrefs();
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
@@ -331,8 +330,7 @@ public class NavigationDrawerFragment extends Fragment {
      * Set the selected position as a preference
      */
     public void setSavedPosition(int position) {
-        SharedPreferences sp = PreferenceManager
-                .getDefaultSharedPreferences(getActivity());
+        SharedPreferences sp = Application.getPrefs();
         sp.edit().putInt(STATE_SELECTED_POSITION, position).apply();
     }
 
@@ -535,7 +533,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private void createSocialOverflow(ViewGroup parent) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sp = Application.getPrefs();
 
         socialOverflowButton = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.navdrawer_overflow_button, parent, false);
 
@@ -557,7 +555,7 @@ public class NavigationDrawerFragment extends Fragment {
         socialOverflowButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                SharedPreferences sp = Application.getPrefs();
                 boolean isShown = socialOverflowContainer.isShown();
                 if (isShown) {
                     closeOverflow();

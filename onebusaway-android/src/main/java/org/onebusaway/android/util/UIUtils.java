@@ -1189,7 +1189,7 @@ public final class UIUtils {
         list.add(c.getString(R.string.bus_options_menu_report_trip_problem));
 
         ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
+        if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(c)) {
             list.add(c.getString(R.string.join_discussion));
         }
 
@@ -1205,7 +1205,7 @@ public final class UIUtils {
      *               not
      * @return the array of icons that should be shown for a given trip
      */
-    public static List<Integer> buildTripOptionsIcons(boolean isRouteFavorite, boolean hasUrl) {
+    public static List<Integer> buildTripOptionsIcons(Context context, boolean isRouteFavorite, boolean hasUrl) {
         ArrayList<Integer> list = new ArrayList<>();
         if (!isRouteFavorite) {
             list.add(R.drawable.focus_star_on);
@@ -1221,7 +1221,7 @@ public final class UIUtils {
         }
         list.add(R.drawable.ic_alert_warning);
         ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
+        if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(context)) {
             list.add(R.drawable.es_ic_bar_notification);
         }
         return list;

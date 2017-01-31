@@ -375,14 +375,6 @@ public final class ObaContract {
         public static final String SUPPORTS_SIRI_REALTIME = "supports_siri_realtime";
 
         /**
-         * Whether or not the server supports Embedded Social
-         * <P>
-         * Type: BOOLEAN
-         * </P>
-         */
-        public static final String SUPPORTS_EMBEDDED_SOCIAL = "supports_embedded_social";
-
-        /**
          * The Twitter URL for the region.
          * <P>
          * Type: TEXT
@@ -421,6 +413,15 @@ public final class ObaContract {
          * </P>
          */
         public static final String OTP_CONTACT_EMAIL = "otp_contact_email";
+
+
+        /**
+         * Whether or not the server supports Embedded Social
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_EMBEDDED_SOCIAL = "supports_embedded_social";
     }
 
     protected interface RegionBoundsColumns {
@@ -1183,12 +1184,12 @@ public final class ObaContract {
                     SUPPORTS_OBA_DISCOVERY,
                     SUPPORTS_OBA_REALTIME,
                     SUPPORTS_SIRI_REALTIME,
-                    SUPPORTS_EMBEDDED_SOCIAL,
                     TWITTER_URL,
                     EXPERIMENTAL,
                     STOP_INFO_URL,
                     OTP_BASE_URL,
-                    OTP_CONTACT_EMAIL
+                    OTP_CONTACT_EMAIL,
+                    SUPPORTS_EMBEDDED_SOCIAL
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1210,12 +1211,12 @@ public final class ObaContract {
                             c.getInt(6) > 0,            // Supports Oba Discovery
                             c.getInt(7) > 0,            // Supports Oba Realtime
                             c.getInt(8) > 0,            // Supports Siri Realtime
-                            c.getInt(9) > 0,            // Supports Embedded Social
-                            c.getString(10),              // Twitter URL
-                            c.getInt(11) > 0,               // Experimental
-                            c.getString(12),              // StopInfoUrl
-                            c.getString(13),              // OtpBaseUrl
-                            c.getString(14)               // OtpContactEmail
+                            c.getString(9),              // Twitter URL
+                            c.getInt(10) > 0,               // Experimental
+                            c.getString(11),              // StopInfoUrl
+                            c.getString(12),              // OtpBaseUrl
+                            c.getString(13),               // OtpContactEmail
+                            c.getInt(14) > 0            // Supports Embedded Social
                     );
                 } finally {
                     c.close();

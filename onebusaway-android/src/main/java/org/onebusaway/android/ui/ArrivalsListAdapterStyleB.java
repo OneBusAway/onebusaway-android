@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
@@ -163,7 +164,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         });
 
         ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && !currentRegion.getSupportsEmbeddedSocial()) {
+        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled(context)) {
             discussBtn.setVisibility(View.GONE);
         }
 

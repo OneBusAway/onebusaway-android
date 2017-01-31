@@ -15,10 +15,19 @@
  */
 package org.onebusaway.android.util;
 
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
+
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.UserManager;
 import android.util.Base64;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.onebusaway.android.util.GetRestrictionsReceiver.EMBEDDED_SOCIAL_KEY;
 
 public class EmbeddedSocialUtils {
     public static final String ROUTE_DISCUSSION = "route_%d_%s";
@@ -48,5 +57,39 @@ public class EmbeddedSocialUtils {
         matcher.appendTail(safeDiscussionTitle);
 
         return safeDiscussionTitle.toString();
+    }
+
+    /**
+     * Returns true if social features are restricted
+     */
+    private static boolean isSocialRestricted(Context context) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            // min sdk version for user restrictions
+            Bundle restrictionsBundle = ((UserManager)context.getSystemService(Context.USER_SERVICE))
+                    .getApplicationRestrictions(context.getPackageName());
+            if (restrictionsBundle == null) {
+                restrictionsBundle = new Bundle();
+            }
+
+            if (restrictionsBundle.containsKey(EMBEDDED_SOCIAL_KEY)) {
+                return !restrictionsBundle.getBoolean(EMBEDDED_SOCIAL_KEY);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if social features are enabled
+     */
+    public static boolean isSocialEnabled(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            // ensure build version meets min sdk level for Embedded Social
+            ObaRegion currentRegion = Application.get().getCurrentRegion();
+            if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
+                return !isSocialRestricted(context);
+            }
+        }
+        return false;
     }
 }

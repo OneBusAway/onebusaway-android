@@ -734,11 +734,11 @@ public class ArrivalsListFragment extends ListFragment
 
         List<String> items = UIUtils
                 .buildTripOptions(getActivity(), isRouteFavorite, hasUrl, isReminderVisible);
-        List<Integer> icons = UIUtils.buildTripOptionsIcons(isRouteFavorite, hasUrl);
+        List<Integer> icons = UIUtils.buildTripOptionsIcons(getContext(), isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
         ObaRegion currentRegion = Application.get().getCurrentRegion();
-        final boolean isSocialEnabled = currentRegion != null && currentRegion.getSupportsEmbeddedSocial();
+        final boolean isSocialEnabled = currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(getContext());
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {

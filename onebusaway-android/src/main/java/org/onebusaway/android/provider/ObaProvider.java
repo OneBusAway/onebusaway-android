@@ -152,7 +152,7 @@ public class ObaProvider extends ContentProvider {
                                 ObaContract.Regions.CONTACT_EMAIL + " VARCHAR NOT NULL, " +
                                 ObaContract.Regions.SUPPORTS_OBA_DISCOVERY + " INTEGER NOT NULL, " +
                                 ObaContract.Regions.SUPPORTS_OBA_REALTIME + " INTEGER NOT NULL, " +
-                                ObaContract.Regions.SUPPORTS_SIRI_REALTIME + " INTEGER NOT NULL" +
+                                ObaContract.Regions.SUPPORTS_SIRI_REALTIME + " INTEGER NOT NULL " +
                                 ");");
                 db.execSQL(
                         "CREATE TABLE " +

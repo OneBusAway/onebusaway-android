@@ -108,11 +108,6 @@ public interface ObaRegion {
     public boolean getSupportsEmbeddedSocial();
 
     /**
-     * @param enabled true if social features are enabled for this user
-     */
-    public void setEmbeddedSocialEnabled(boolean enabled);
-
-    /**
      * @return The Twitter URL for the region
      */
     public String getTwitterUrl();

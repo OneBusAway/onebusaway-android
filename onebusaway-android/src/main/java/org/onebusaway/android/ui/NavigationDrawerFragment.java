@@ -24,6 +24,7 @@ import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
@@ -465,7 +466,7 @@ public class NavigationDrawerFragment extends Fragment {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
             }
 
-            if (currentRegion.getSupportsEmbeddedSocial()) {
+            if (EmbeddedSocialUtils.isSocialEnabled(getContext())) {
                 // Social items
                 mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
                 if (isSignedIn) {
@@ -506,8 +507,7 @@ public class NavigationDrawerFragment extends Fragment {
                 findViewById(R.id.navdrawer_items_list);
         containerLayout.removeAllViews();
 
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial() && isSignedIn) {
+        if (EmbeddedSocialUtils.isSocialEnabled(getContext()) && isSignedIn) {
             // user is signed in to Embedded Social
             createSocialOverflow(containerLayout);
             for (int itemId : mNavDrawerItems) {

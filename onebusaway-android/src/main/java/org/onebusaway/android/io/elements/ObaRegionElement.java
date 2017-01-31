@@ -157,10 +157,6 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsSiriRealtimeApis;
 
-    private final boolean supportsEmbeddedSocial;
-
-    private boolean embeddedSocialEnabled;
-
     private final String twitterUrl;
 
     private final boolean experimental;
@@ -170,6 +166,8 @@ public class ObaRegionElement implements ObaRegion {
     private final String otpBaseUrl;
 
     private final String otpContactEmail;
+
+    private final boolean supportsEmbeddedSocial;
 
     ObaRegionElement() {
         id = 0;
@@ -184,13 +182,12 @@ public class ObaRegionElement implements ObaRegion {
         supportsObaDiscoveryApis = false;
         supportsObaRealtimeApis = false;
         supportsSiriRealtimeApis = false;
-        supportsEmbeddedSocial = false;
-        embeddedSocialEnabled = true;
         twitterUrl = "";
         experimental = true;
         stopInfoUrl = "";
         otpBaseUrl = "";
         otpContactEmail = "";
+        supportsEmbeddedSocial = false;
     }
 
     public ObaRegionElement(long id,
@@ -205,12 +202,12 @@ public class ObaRegionElement implements ObaRegion {
                             boolean supportsObaDiscoveryApis,
                             boolean supportsObaRealtimeApis,
                             boolean supportsSiriRealtimeApis,
-                            boolean supportsEmbeddedSocial,
                             String twitterUrl,
                             boolean experimental,
                             String stopInfoUrl,
                             String otpBaseUrl,
-                            String otpContactEmail) {
+                            String otpContactEmail,
+                            boolean supportsEmbeddedSocial) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -223,13 +220,12 @@ public class ObaRegionElement implements ObaRegion {
         this.supportsObaDiscoveryApis = supportsObaDiscoveryApis;
         this.supportsObaRealtimeApis = supportsObaRealtimeApis;
         this.supportsSiriRealtimeApis = supportsSiriRealtimeApis;
-        this.supportsEmbeddedSocial = supportsEmbeddedSocial;
-        embeddedSocialEnabled = true;
         this.twitterUrl = twitterUrl;
         this.experimental = experimental;
         this.stopInfoUrl = stopInfoUrl;
         this.otpBaseUrl = otpBaseUrl;
         this.otpContactEmail = otpContactEmail;
+        this.supportsEmbeddedSocial = supportsEmbeddedSocial;
     }
 
     @Override
@@ -293,17 +289,6 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
-    public boolean getSupportsEmbeddedSocial() {
-        // true if the region supports social and the account restrictions allow social
-        return supportsEmbeddedSocial && embeddedSocialEnabled;
-    }
-
-    @Override
-    public void setEmbeddedSocialEnabled(boolean enabled) {
-        this.embeddedSocialEnabled = enabled;
-    }
-
-    @Override
     public String getTwitterUrl() {
         return twitterUrl;
     }
@@ -326,6 +311,11 @@ public class ObaRegionElement implements ObaRegion {
     @Override
     public String getOtpContactEmail() {
         return otpContactEmail;
+    }
+
+    @Override
+    public boolean getSupportsEmbeddedSocial() {
+        return supportsEmbeddedSocial;
     }
 
     @Override
@@ -373,12 +363,12 @@ public class ObaRegionElement implements ObaRegion {
                 ", supportsObaDiscoveryApis=" + supportsObaDiscoveryApis +
                 ", supportsObaRealtimeApis=" + supportsObaRealtimeApis +
                 ", supportsSiriRealtimeApis=" + supportsSiriRealtimeApis +
-                ", supportsEmbeddedSocial=" + supportsEmbeddedSocial +
                 ", twitterUrl='" + twitterUrl + '\'' +
                 ", experimental=" + experimental +
                 ", stopInfoUrl='" + stopInfoUrl + '\'' +
                 ", otpBaseUrl='" + otpBaseUrl + '\'' +
                 ", otpContactEmail='" + otpContactEmail + '\'' +
+                ", supportsEmbeddedSocial=" + supportsEmbeddedSocial +
                 '}';
     }
 }

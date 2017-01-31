@@ -76,6 +76,7 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -377,7 +378,6 @@ public class HomeActivity extends EmbeddedSocialActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
-        checkSocialEnabled();
         checkLeftHandMode();
         mFabMyLocation.requestLayout();
     }
@@ -1290,22 +1290,6 @@ public class HomeActivity extends EmbeddedSocialActivity
         } else {
             hideMyLocationButton();
             hideMapProgressBar();
-        }
-    }
-
-    // Check user profile restrictions on social features
-    private void checkSocialEnabled() {
-        if (Build.VERSION.SDK_INT > 18) {
-            Bundle restrictionsBundle = ((UserManager)getSystemService(Context.USER_SERVICE))
-                    .getApplicationRestrictions(getPackageName());
-            if (restrictionsBundle == null) {
-                restrictionsBundle = new Bundle();
-            }
-
-            ObaRegion currentRegion = Application.get().getCurrentRegion();
-            if (currentRegion != null && restrictionsBundle.containsKey(EMBEDDED_SOCIAL_KEY)) {
-                currentRegion.setEmbeddedSocialEnabled(restrictionsBundle.getBoolean(EMBEDDED_SOCIAL_KEY));
-            }
         }
     }
 

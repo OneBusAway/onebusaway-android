@@ -25,7 +25,7 @@ buildscript {
 }
 apply plugin: 'com.android.application'
 
-def APP_KEY = '"' + AppKey + '"' ?: '"AppKey"'
+def EMBEDDED_SOCIAL_API_KEY = '"' + EmbeddedSocialApiKey + '"' ?: '"EmbeddedSocialApiKey"'
 repositories {
     jcenter()
     maven {
@@ -103,7 +103,7 @@ android {
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "APP_KEY", APP_KEY
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -143,6 +143,7 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -173,6 +174,7 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",

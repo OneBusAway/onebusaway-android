@@ -575,7 +575,7 @@ public class Application extends android.app.Application {
     }
 
     private void setUpSocial() {
-        EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.APP_KEY);
+        EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
         EmbeddedSocial.setToolbarColors(new SocialToolbarColorizer());
         EmbeddedSocial.setTabColors(new SocialTabColorizer());
         EmbeddedSocial.setReportHandler(new SocialReportHandler());

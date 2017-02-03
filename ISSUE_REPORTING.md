@@ -12,7 +12,7 @@ If a "Bus Stop ID" field is provided by the agency, we automatically populate th
 
 For screenshots and more information, see [this presentation](http://www.slideshare.net/sjbarbeau/onebusaway-new-issue-reporting-flow-in-onebusaway-android).
 
-### Issue metadata
+## Issue metadata
 
 We capture the below information directly from the OneBusAway server and include it in at the bottom of all issue reports to make it easier to quickly diagnose a problem.
 

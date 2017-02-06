@@ -1,11 +1,11 @@
 # Issue Reporting
 
-In OneBusAway Android, we support issue reporting via the Open311 protocol to any server that is Open311 compliant.  The following sections provide more information about this, including the data agencies can expect to see in issue reports.
+In OneBusAway Android, we support issue reporting via the [Open311](http://www.open311.org/) protocol to any server that is Open311-compliant.  The following sections provide more information about this, including the data agencies can expect to see in issue reports.
 
 ## User experience
 
 From within the OneBusAway app, users can report problems for:
-* Bus stops, and any other issue categories (i.e., "services" in the Open311 spec language) defined by the agency
+* Bus stops, and any other issue categories (i.e., ["services"](http://wiki.open311.org/GeoReport_v2/#service-discovery) in the Open311 spec language) defined by the agency
 * Predicted arrival/departure times
 
 If a "Bus Stop ID" field is provided by the agency, we automatically populate that with the ID of the stop that the user chose.

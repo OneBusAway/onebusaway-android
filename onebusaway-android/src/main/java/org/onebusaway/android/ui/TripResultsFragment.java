@@ -267,8 +267,6 @@ public class TripResultsFragment extends Fragment {
             this.linearLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    updateInfo();
-                    updateMap();
                     RoutingOptionPicker.this.select();
                 }
             });
@@ -280,10 +278,10 @@ public class TripResultsFragment extends Fragment {
             }
             linearLayout.setBackgroundResource(R.drawable.trip_option_selected_item);
 
+            getArguments().putInt(OTPConstants.SELECTED_ITINERARY, rank);
+
             updateInfo();
             updateMap();
-
-            getArguments().putInt(OTPConstants.SELECTED_ITINERARY, rank);
         }
 
 

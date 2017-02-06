@@ -49,6 +49,11 @@ public class ItineraryDescription {
         mEndDate = ConversionUtils.parseOtpDate(last.endTime);
     }
 
+    public ItineraryDescription(List<String> tripIds, Date endDate) {
+        mTripIds = tripIds;
+        mEndDate = endDate;
+    }
+
     /**
      * Check if this itinerary matches the itinerary of another ItineraryDescription
      *
@@ -104,5 +109,12 @@ public class ItineraryDescription {
      */
     public boolean isExpired() {
         return getEndDate().before(new Date());
+    }
+
+    /**
+     * return list of trip IDs
+     */
+    public List<String> getTripIds() {
+        return mTripIds;
     }
 }

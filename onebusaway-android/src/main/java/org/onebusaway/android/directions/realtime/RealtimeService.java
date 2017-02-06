@@ -38,6 +38,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -45,6 +46,9 @@ import java.util.List;
 public class RealtimeService extends IntentService {
 
     private static final String TAG = "RealtimeService";
+
+    private static final String ITINERARY_DESC = ".ItineraryDesc";
+    private static final String ITINERARY_END_DATE = ".ItineraryEndDate";
 
     public RealtimeService() {
         super("RealtimeService");
@@ -73,17 +77,14 @@ public class RealtimeService extends IntentService {
     public void onHandleIntent(Intent intent) {
         Bundle bundle = intent.getExtras();
 
-        Itinerary itinerary = getItinerary(bundle);
-        Class<? extends Activity> activity = (Class<? extends Activity>)
-                bundle.getSerializable(OTPConstants.NOTIFICATION_TARGET);
-
         if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
             disableListenForTripUpdates();
             if (!possibleReschedule(bundle)) {
+                Itinerary itinerary = getItinerary(bundle);
                 startRealtimeUpdates(bundle, itinerary);
             }
         } else if (intent.getAction().equals(OTPConstants.INTENT_CHECK_TRIP_TIME)) {
-            checkForItineraryChange(bundle, itinerary, activity);
+            checkForItineraryChange(bundle);
         }
 
         RealtimeWakefulReceiver.completeWakefulIntent(intent);
@@ -136,12 +137,20 @@ public class RealtimeService extends IntentService {
         return reschedule;
     }
 
-    private void checkForItineraryChange(final Bundle params, Itinerary itinerary,
-            final Class<? extends Activity> source) {
+    private void checkForItineraryChange(final Bundle bundle) {
+        TripRequestBuilder builder = TripRequestBuilder.initFromBundleSimple(bundle);
+        ItineraryDescription desc = getItineraryDescription(bundle);
+        Class target = getNotificationTarget(bundle);
+        if (target == null) {
+            disableListenForTripUpdates();
+            return;
+        }
+        checkForItineraryChange(target, builder, desc);
+    }
+
+    private void checkForItineraryChange(final Class<? extends Activity> source, final TripRequestBuilder builder, final ItineraryDescription itineraryDescription) {
 
         Log.d(TAG, "Check for change");
-
-        final ItineraryDescription itineraryDescription = new ItineraryDescription(itinerary);
 
         TripRequest.Callback callback = new TripRequest.Callback() {
             @Override
@@ -166,7 +175,7 @@ public class RealtimeService extends IntentService {
                             showNotification(itineraryDescription,
                                     (delay > 0) ? R.string.trip_plan_delay
                                             : R.string.trip_plan_early,
-                                    source, params, itineraries);
+                                    source, builder.getBundle(), itineraries);
                             disableListenForTripUpdates();
                             return;
                         }
@@ -180,7 +189,7 @@ public class RealtimeService extends IntentService {
                 }
                 Log.d(TAG, "Did not find a matching itinerary in new call.");
                 showNotification(itineraryDescription, R.string.trip_plan_not_recommended, source,
-                        params, itineraries);
+                        builder.getBundle(), itineraries);
                 disableListenForTripUpdates();
             }
 
@@ -191,9 +200,7 @@ public class RealtimeService extends IntentService {
             }
         };
 
-        // Create trip request from the original. Do not update the departure time.
-        TripRequestBuilder builder = new TripRequestBuilder(params)
-                .setListener(callback);
+        builder.setListener(callback);
 
         try {
             builder.execute();
@@ -262,7 +269,8 @@ public class RealtimeService extends IntentService {
     private PendingIntent getAlarmIntent(Bundle bundle) {
         Intent intent = new Intent(OTPConstants.INTENT_CHECK_TRIP_TIME);
         if (bundle != null) {
-            intent.putExtras(bundle);
+            Bundle extras = getSimplifiedBundle(bundle);
+            intent.putExtras(extras);
         }
         PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
@@ -274,6 +282,42 @@ public class RealtimeService extends IntentService {
                 .getSerializable(OTPConstants.ITINERARIES);
         int i = bundle.getInt(OTPConstants.SELECTED_ITINERARY);
         return itineraries.get(i);
+    }
+
+    private ItineraryDescription getItineraryDescription(Bundle bundle) {
+        String ids[] = bundle.getStringArray(ITINERARY_DESC);
+        long date = bundle.getLong(ITINERARY_END_DATE);
+        return new ItineraryDescription(Arrays.asList(ids), new Date(date));
+    }
+
+    private Class getNotificationTarget(Bundle bundle) {
+        String name = bundle.getString(OTPConstants.NOTIFICATION_TARGET);
+        try {
+            return Class.forName(name);
+        } catch(ClassNotFoundException e) {
+            Log.e(TAG, "unable to find class for name " + name);
+        }
+        return null;
+    }
+
+    private Bundle getSimplifiedBundle(Bundle params) {
+        Itinerary itinerary = getItinerary(params);
+        ItineraryDescription desc = new ItineraryDescription(itinerary);
+
+        Bundle extras = new Bundle();
+        new TripRequestBuilder(params).copyIntoBundleSimple(extras);
+
+        List<String> idList = desc.getTripIds();
+        String[] ids = idList.toArray(new String[idList.size()]);
+        extras.putStringArray(ITINERARY_DESC, ids);
+        extras.putLong(ITINERARY_END_DATE, desc.getEndDate().getTime());
+
+        Class<? extends Activity> source = (Class<? extends Activity>)
+                params.getSerializable(OTPConstants.NOTIFICATION_TARGET);
+
+        extras.putString(OTPConstants.NOTIFICATION_TARGET, source.getName());
+
+        return extras;
     }
 
 }

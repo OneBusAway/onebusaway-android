@@ -48,7 +48,13 @@ public class TripRequestBuilder {
 
     private static final String ARRIVE_BY = ".ARRIVE_BY";
     private static final String FROM_ADDRESS = ".FROM_ADDRESS";
+    private static final String FROM_LAT = ".FROM_LAT";
+    private static final String FROM_LON = ".FROM_LON";
+    private static final String FROM_NAME = ".FROM_NAME";
     private static final String TO_ADDRESS = ".TO_ADDRESS";
+    private static final String TO_LAT = ".TO_LAT";
+    private static final String TO_LON = ".TO_LON";
+    private static final String TO_NAME = ".TO_NAME";
     private static final String OPTIMIZE_TRANSFERS = ".OPTIMIZE_TRANSFERS";
     private static final String WHEELCHAIR_ACCESSIBLE = ".WHEELCHAIR_ACCESSIBLE";
     private static final String MAX_WALK_DISTANCE = ".MAX_WALK_DISTANCE";
@@ -333,6 +339,63 @@ public class TripRequestBuilder {
         if (getDateTime() != null) {
             target.putLong(DATE_TIME, getDateTime().getTime());
         }
+    }
+
+    /**
+     * Copy all the data from this builder's bundle into another bundle, but only use simple data types
+     * @param target bundle
+     */
+    public void copyIntoBundleSimple(Bundle target) {
+        target.putBoolean(ARRIVE_BY, getArriveBy());
+        CustomAddress from = getFrom(), to = getTo();
+        target.putDouble(FROM_LAT, from.getLatitude());
+        target.putDouble(FROM_LON, from.getLongitude());
+        target.putString(FROM_NAME, from.toString());
+        target.putDouble(TO_LAT, to.getLatitude());
+        target.putDouble(TO_LON, to.getLongitude());
+        target.putString(TO_NAME, to.toString());
+        target.putString(OPTIMIZE_TRANSFERS, getOptimizeType().toString());
+        target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible());
+        if (getMaxWalkDistance() != null) {
+            target.putDouble(MAX_WALK_DISTANCE, getMaxWalkDistance());
+        }
+        target.putString(MODE_SET, getModeString());
+        if (getDateTime() != null) {
+            target.putLong(DATE_TIME, getDateTime().getTime());
+        }
+    }
+
+    /**
+     * Initialize from a BaseBundle
+     */
+    public static TripRequestBuilder initFromBundleSimple(Bundle bundle) {
+        Bundle target = new Bundle();
+        target.putBoolean(ARRIVE_BY, bundle.getBoolean(ARRIVE_BY));
+
+        CustomAddress from = new CustomAddress();
+        from.setLatitude(bundle.getDouble(FROM_LAT));
+        from.setLongitude(bundle.getDouble(FROM_LON));
+        from.setAddressLine(0, bundle.getString(FROM_NAME));
+        CustomAddress to = new CustomAddress();
+        to.setLatitude(bundle.getDouble(TO_LAT));
+        to.setLongitude(bundle.getDouble(TO_LON));
+        to.setAddressLine(0, bundle.getString(TO_NAME));
+
+        target.putParcelable(FROM_ADDRESS, from);
+        target.putParcelable(TO_ADDRESS, to);
+
+        String optName = bundle.getString(OPTIMIZE_TRANSFERS);
+        if (optName != null) {
+            target.putSerializable(OPTIMIZE_TRANSFERS, OptimizeType.valueOf(optName));
+        }
+
+        target.putBoolean(WHEELCHAIR_ACCESSIBLE, bundle.getBoolean(WHEELCHAIR_ACCESSIBLE));
+        target.putDouble(MAX_WALK_DISTANCE, bundle.getDouble(MAX_WALK_DISTANCE));
+
+        target.putString(MODE_SET, bundle.getString(MODE_SET));
+        target.putLong(DATE_TIME, bundle.getLong(DATE_TIME));
+
+        return new TripRequestBuilder(target);
     }
 
     /**

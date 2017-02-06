@@ -8,7 +8,7 @@ This is the official Android / Fire Phone app for OneBusAway!
 
 OneBusAway for Android provides:
 
-1. Real-time arrival information for public transit
+1. Real-time arrival/departure information for public transit
 2. A browse-able map of nearby stops
 3. A list of favorite bus stops
 4. Reminders to notify you when your bus is arriving

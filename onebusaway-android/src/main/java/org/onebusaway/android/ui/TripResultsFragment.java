@@ -228,8 +228,9 @@ public class TripResultsFragment extends Fragment {
     }
 
     public void displayNewResults() {
+        int rank = getArguments().getInt(OTPConstants.SELECTED_ITINERARY);
         showMap(mShowingMap);
-        initInfoAndMap(0);
+        initInfoAndMap(rank);
     }
 
     private String toDateFmt(long ms) {

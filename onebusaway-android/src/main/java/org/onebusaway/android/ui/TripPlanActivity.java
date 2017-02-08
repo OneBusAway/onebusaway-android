@@ -326,29 +326,38 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
                 clearBundleErrors();
             }
         });
-        feedback.setNegativeButton(R.string.report_problem_report, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String email = Application.get().getCurrentRegion().getOtpContactEmail();
-                if (!TextUtils.isEmpty(email)) {
-                    Location loc = Application.getLastKnownLocation(getApplicationContext(), null);
-                    String locString = null;
-                    if (loc != null) {
-                        locString = LocationUtils.printLocationDetails(loc);
-                    }
-                    UIUtils.sendEmail(TripPlanActivity.this, email, locString, url, true);
-                    ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_problem),
-                            getString(R.string.analytics_label_app_feedback_otp));
-                } else {
-                    Toast.makeText(TripPlanActivity.this,
-                            getString(R.string.tripplanner_no_contact),
-                            Toast.LENGTH_SHORT).show();
-                }
-                bundle.putBoolean(SHOW_ERROR_DIALOG, false);
-                clearBundleErrors();
-            }
-        });
+        if (errorCode != Message.SYSTEM_ERROR.getId() && errorCode != Message.REQUEST_TIMEOUT
+                .getId()) {
+            // Only add the report button if we get a server response (see #747)
+            feedback.setNegativeButton(R.string.report_problem_report,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String email = Application.get().getCurrentRegion()
+                                    .getOtpContactEmail();
+                            if (!TextUtils.isEmpty(email)) {
+                                Location loc = Application
+                                        .getLastKnownLocation(getApplicationContext(), null);
+                                String locString = null;
+                                if (loc != null) {
+                                    locString = LocationUtils.printLocationDetails(loc);
+                                }
+                                UIUtils.sendEmail(TripPlanActivity.this, email, locString, url,
+                                        true);
+                                ObaAnalytics.reportEventWithCategory(
+                                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                        getString(R.string.analytics_action_problem),
+                                        getString(R.string.analytics_label_app_feedback_otp));
+                            } else {
+                                Toast.makeText(TripPlanActivity.this,
+                                        getString(R.string.tripplanner_no_contact),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                            bundle.putBoolean(SHOW_ERROR_DIALOG, false);
+                            clearBundleErrors();
+                        }
+                    });
+        }
 
         mFeedbackDialog = feedback.create();
         mFeedbackDialog.show();

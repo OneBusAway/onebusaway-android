@@ -826,8 +826,11 @@
     <string name="tripplanner_error_dialog_title">Planning not possible</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
-    <string name="tripplanner_error_request_timeout">Region is not responding, please try again later</string>
-    <string name="tripplanner_error_system">Region is offline, please try again later</string>
+    <string name="tripplanner_error_request_timeout">Please check your Internet connection and try
+        again.
+    </string>
+    <string name="tripplanner_error_system">Please check your Internet connection and try again.
+    </string>
     <string name="tripplanner_error_outside_bounds">Origin or destination is outside transportation network coverage</string>
     <string name="tripplanner_error_path_not_found">Couldn\'t find a matching route between origin and destination</string>
     <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>

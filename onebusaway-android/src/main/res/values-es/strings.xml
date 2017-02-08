@@ -62,7 +62,7 @@
         región actual es
         %1$s. Cámbialo en \"Preferencias-> Tú región\").
     </string>
-    <string name="internal_error">Uy, algo salió mal. Intenta de nuevo y puede que funcione.</string>
+    <string name="internal_error">Uy, algo salió mal. Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
     <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manejar esta
         solicitud.
     </string>

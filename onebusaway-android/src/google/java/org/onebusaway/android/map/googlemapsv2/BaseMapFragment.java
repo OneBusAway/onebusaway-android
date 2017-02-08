@@ -457,11 +457,15 @@ public class BaseMapFragment extends SupportMapFragment
      * be used to remove the marker via removeMarker()
      *
      * @param location Location at which the marker should be added
-     * @return the ID associated with the marker that was just added
+     * @param hue The hue (color) of the marker. Value must be greater or equal to 0 and less than 360, or null if the default color should be used.
+     * @return the ID associated with the marker that was just added, or -1 if the addition failed
      */
     @Override
-    public int addMarker(Location location) {
-        return mSimpleMarkerOverlay.addMarker(location);
+    public int addMarker(Location location, Float hue) {
+        if (mSimpleMarkerOverlay == null) {
+            return -1;
+        }
+        return mSimpleMarkerOverlay.addMarker(location, hue);
     }
 
     /**
@@ -472,6 +476,9 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void removeMarker(int markerId) {
+        if (mSimpleMarkerOverlay == null) {
+            return;
+        }
         mSimpleMarkerOverlay.removeMarker(markerId);
     }
 

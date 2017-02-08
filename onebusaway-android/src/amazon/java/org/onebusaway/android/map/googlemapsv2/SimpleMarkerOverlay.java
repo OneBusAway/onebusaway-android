@@ -27,6 +27,7 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.amazon.geo.mapsv2.AmazonMap;
+import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
 import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.model.MarkerOptions;
 
@@ -62,10 +63,15 @@ public class SimpleMarkerOverlay {
      * be used to remove the marker via removeMarker().
      *
      * @param l Location at which the marker should be added
+     * @param hue The hue (color) of the marker. Value must be greater or equal to 0 and less than 360, or null if the default color should be used.
      * @return the ID associated with the marker that was just added
      */
-    public synchronized int addMarker(Location l) {
-        Marker m = mMap.addMarker(new MarkerOptions().position(MapHelpV2.makeLatLng(l)));
+    public synchronized int addMarker(Location l, Float hue) {
+        MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(l));
+        if (hue != null) {
+            options.icon(BitmapDescriptorFactory.defaultMarker(hue));
+        }
+        Marker m = mMap.addMarker(options);
         mMarkers.put(mMarkerId, m);
         int temp = mMarkerId;
         mMarkerId++;
@@ -81,7 +87,9 @@ public class SimpleMarkerOverlay {
      */
     public void removeMarker(int markerId) {
         Marker m = mMarkers.get(markerId);
-        m.remove();
+        if (m != null) {
+            m.remove();
+        }
         mMarkers.remove(markerId);
     }
 }

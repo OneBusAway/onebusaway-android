@@ -29,6 +29,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,8 +47,11 @@ public class DirectionsMapController implements MapModeController {
 
     private Location mCenter;
 
+    private List<Integer> mMarkerIds;
+
     public DirectionsMapController(Callback callback) {
         mFragment = callback;
+        mMarkerIds = new ArrayList<>();
     }
 
     @Override
@@ -66,6 +70,11 @@ public class DirectionsMapController implements MapModeController {
         mFragment.getMapView().removeRouteOverlay();
         mFragment.getMapView().removeVehicleOverlay();
         mFragment.getMapView().removeStopOverlay(false);
+        // Clear start/end markers
+        for (int i : mMarkerIds) {
+            mFragment.getMapView().removeMarker(i);
+        }
+        mMarkerIds.clear();
     }
 
     @Override
@@ -105,7 +114,10 @@ public class DirectionsMapController implements MapModeController {
         // zoom to origin.
 
         Leg firstLeg = mItinerary.legs.get(0);
-        mCenter = LocationUtils.makeLocation(firstLeg.from.getLat(), firstLeg.from.getLon());
+        Leg lastLeg = mItinerary.legs.get(mItinerary.legs.size() - 1);
+        Location start = LocationUtils.makeLocation(firstLeg.from.getLat(), firstLeg.from.getLon());
+        Location end = LocationUtils.makeLocation(lastLeg.to.getLat(), lastLeg.to.getLon());
+        mCenter = start;
 
         for (Leg leg : mItinerary.legs) {
             LegShape shape = new LegShape(leg.legGeometry);
@@ -116,6 +128,16 @@ public class DirectionsMapController implements MapModeController {
                 mFragment.getMapView().setRouteOverlay(color, new LegShape[]{shape}, false);
             }
         }
+
+        // Colors from https://developers.google.com/android/reference/com/google/android/gms/maps/model/BitmapDescriptorFactory.html
+        // but we can't use the constants directly because we can't import Google Maps classes here
+        float HUE_GREEN = 120.0f;
+        float HUE_RED = 0.0f;
+
+        // Add beginning marker
+        mMarkerIds.add(mFragment.getMapView().addMarker(start, HUE_GREEN));
+        // Add end marker
+        mMarkerIds.add(mFragment.getMapView().addMarker(end, HUE_RED));
 
         zoom();
     }

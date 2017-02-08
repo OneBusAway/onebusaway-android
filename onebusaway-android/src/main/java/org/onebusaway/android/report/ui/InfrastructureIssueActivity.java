@@ -564,7 +564,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * @param location position for marker
      */
     private void updateMarkerPosition(Location location) {
-        int markerId = mMapFragment.addMarker(location);
+        int markerId = mMapFragment.addMarker(location, null);
         mIssueLocationHelper.handleMarkerUpdate(markerId);
     }
 

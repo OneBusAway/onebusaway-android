@@ -826,8 +826,8 @@
     <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Lo sentimos, algo salió mal. Por favor, inténtalo de nuevo.</string>
-    <string name="tripplanner_error_request_timeout">La región no esta respondiendo, por favor inténtalo de nuevo más tarde</string>
-    <string name="tripplanner_error_system">La región esta fuera de íinea, por favor inténtalo de nuevo más tarder</string>
+    <string name="tripplanner_error_request_timeout">Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
+    <string name="tripplanner_error_system">Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
     <string name="tripplanner_error_outside_bounds">El origen o el destino están por fuera de la red de cobertura de transporte</string>
     <string name="tripplanner_error_path_not_found">No fue posible encontrar una ruta entre el origen y el destino</string>
     <string name="tripplanner_error_no_transit_times">No se tienen información  de horarios de tránsito en las fechas seleccionadas</string>

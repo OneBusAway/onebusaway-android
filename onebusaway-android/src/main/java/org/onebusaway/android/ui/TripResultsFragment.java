@@ -34,6 +34,8 @@ import android.os.Bundle;
 import android.support.annotation.DrawableRes;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -188,8 +190,6 @@ public class TripResultsFragment extends Fragment {
     }
 
     private void initMap(int trip) {
-        mMapFragment = new BaseMapFragment();
-
         Itinerary itinerary = getItineraries().get(trip);
         mMapBundle.putString(MapParams.MODE, MapParams.MODE_DIRECTIONS);
         mMapBundle.putSerializable(MapParams.ITINERARY, itinerary);
@@ -197,8 +197,20 @@ public class TripResultsFragment extends Fragment {
         Intent intent = new Intent().putExtras(mMapBundle);
         getActivity().setIntent(intent);
 
-        getChildFragmentManager().beginTransaction()
-                .add(R.id.mapFragment, mMapFragment).commit();
+        FragmentManager fm = getChildFragmentManager();
+        if (mMapFragment == null) {
+            // First check to see if an instance of BaseMapFragment already exists
+            mMapFragment = (BaseMapFragment) fm.findFragmentByTag(BaseMapFragment.TAG);
+
+            if (mMapFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new BaseMapFragment");
+                mMapFragment = BaseMapFragment.newInstance();
+                fm.beginTransaction()
+                        .add(R.id.mapFragment, mMapFragment, BaseMapFragment.TAG)
+                        .commit();
+            }
+        }
     }
 
     private void showMap(boolean show) {

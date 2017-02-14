@@ -1028,7 +1028,7 @@
     <string name="map_markers_warning_live_updates_early_arrival">adelantado</string>
     <string name="map_markers_warning_live_updates_late_arrival">atrasado</string>
 
-    <string name="trip_plan_not_recommended">No se recomienda su viaje para esta ruta.</string>
+    <string name="trip_plan_notification_new_plan_text">No se recomienda su viaje para esta ruta.</string>
     <string name="trip_plan_delay">Tú viaje esta atrasado.</string>
     <string name="trip_plan_early">Tú viaje esta adelantado.</string>
 

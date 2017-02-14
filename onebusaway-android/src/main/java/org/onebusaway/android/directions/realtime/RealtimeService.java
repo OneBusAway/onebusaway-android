@@ -15,15 +15,6 @@
  */
 package org.onebusaway.android.directions.realtime;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
-
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -36,6 +27,15 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.model.ItineraryDescription;
+import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -168,27 +168,30 @@ public class RealtimeService extends IntentService {
                     if (itineraryDescription.itineraryMatches(other)) {
 
                         long delay = itineraryDescription.getDelay(other);
-                        Log.d(TAG, "Delay on itinerary: " + delay);
+                        Log.d(TAG, "Schedule deviation on itinerary: " + delay);
 
                         if (Math.abs(delay) > OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD) {
-                            Log.d(TAG, "Notify due to large delay.");
+                            Log.d(TAG, "Notify due to large early/late schedule deviation.");
                             showNotification(itineraryDescription,
                                     (delay > 0) ? R.string.trip_plan_delay
                                             : R.string.trip_plan_early,
+                                    R.string.trip_plan_notification_new_plan_text,
                                     source, builder.getBundle(), itineraries);
                             disableListenForTripUpdates();
                             return;
                         }
 
                         // Otherwise, we are still good.
-                        Log.d(TAG, "Itinerary exists and is not delayed.");
+                        Log.d(TAG, "Itinerary exists and no large schedule deviation.");
                         checkDisableDueToTimeout(itineraryDescription);
 
                         return;
                     }
                 }
-                Log.d(TAG, "Did not find a matching itinerary in new call.");
-                showNotification(itineraryDescription, R.string.trip_plan_not_recommended, source,
+                Log.d(TAG, "Did not find a matching itinerary in new call - notify user that something has changed.");
+                showNotification(itineraryDescription,
+                        R.string.trip_plan_notification_new_plan_title,
+                        R.string.trip_plan_notification_new_plan_text, source,
                         builder.getBundle(), itineraries);
                 disableListenForTripUpdates();
             }
@@ -210,11 +213,12 @@ public class RealtimeService extends IntentService {
         }
     }
 
-    private void showNotification(ItineraryDescription description, int message,
-            Class<? extends Activity> notificationTarget,
-            Bundle params, List<Itinerary> itineraries) {
+    private void showNotification(ItineraryDescription description, int title, int message,
+                                  Class<? extends Activity> notificationTarget,
+                                  Bundle params, List<Itinerary> itineraries) {
 
-        String itineraryChange = getResources().getString(message);
+        String titleText = getResources().getString(title);
+        String messageText = getResources().getString(message);
 
         Intent openIntent = new Intent(getApplicationContext(), notificationTarget);
         openIntent.putExtras(params);
@@ -230,10 +234,9 @@ public class RealtimeService extends IntentService {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(getApplicationContext())
                         .setSmallIcon(R.drawable.ic_stat_notification)
-                        .setContentTitle(
-                                getResources().getString(R.string.title_activity_trip_plan))
-                        .setStyle(new NotificationCompat.BigTextStyle().bigText(itineraryChange))
-                        .setContentText(itineraryChange)
+                        .setContentTitle(titleText)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(messageText))
+                        .setContentText(messageText)
                         .setPriority(NotificationCompat.PRIORITY_MAX)
                         .setContentIntent(openPendingIntent);
 

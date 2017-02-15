@@ -80,29 +80,25 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_MY_REMINDERS = 2;
 
-    protected static final int NAVDRAWER_ITEM_PROFILE = 3;
+    protected static final int NAVDRAWER_ITEM_SETTINGS = 3;
 
-    protected static final int NAVDRAWER_ITEM_MY_FEED = 4;
+    protected static final int NAVDRAWER_ITEM_HELP = 4;
 
-    protected static final int NAVDRAWER_ITEM_SEARCH = 5;
+    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 5;
 
-    protected static final int NAVDRAWER_ITEM_POPULAR = 6;
+    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
 
-    protected static final int NAVDRAWER_ITEM_PINS = 7;
+    protected static final int NAVDRAWER_ITEM_POPULAR = 7;
 
-    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 8;
+    protected static final int NAVDRAWER_ITEM_PINS = 8;
 
-    protected static final int NAVDRAWER_ITEM_OPTIONS = 9;
+    protected static final int NAVDRAWER_ITEM_ACTIVITY_FEED = 9;
 
-    protected static final int NAVDRAWER_ITEM_SIGN_IN = 10;
+    protected static final int NAVDRAWER_ITEM_PROFILE = 10;
 
-    protected static final int NAVDRAWER_ITEM_SETTINGS = 11;
+    protected static final int NAVDRAWER_ITEM_OPTIONS = 11;
 
-    protected static final int NAVDRAWER_ITEM_HELP = 12;
-
-    protected static final int NAVDRAWER_ITEM_SEND_FEEDBACK = 13;
-
-    protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 14;
+    protected static final int NAVDRAWER_ITEM_SIGN_IN = 12;
 
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
@@ -123,18 +119,16 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_nearby,
             R.string.navdrawer_item_starred_stops,
             R.string.navdrawer_item_my_reminders,
-            R.string.navdrawer_item_profile,
-            R.string.navdrawer_item_your_feed,
-            R.string.navdrawer_item_search,
-            R.string.navdrawer_item_popular,
-            R.string.navdrawer_item_pin,
-            R.string.navdrawer_item_activity_feed,
-            R.string.navdrawer_item_options,
-            R.string.navdrawer_item_sign_in,
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
-            R.string.navdrawer_item_plan_trip
+            R.string.navdrawer_item_plan_trip,
+            R.string.navdrawer_item_popular,
+            R.string.navdrawer_item_pin,
+            R.string.navdrawer_item_activity_feed,
+            R.string.navdrawer_item_profile,
+            R.string.navdrawer_item_options,
+            R.string.navdrawer_item_sign_in
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -142,18 +136,16 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_maps_place,  // Nearby
             R.drawable.ic_drawer_star, // Starred Stops
             R.drawable.ic_drawer_alarm, // My reminders
-            R.drawable.ic_username, // My profile
-            R.drawable.ic_drawer_your_feed, // My feed of discussions
-            R.drawable.ic_drawer_search, // Popular discussions
-            R.drawable.ic_drawer_popular, // Popular discussions
-            R.drawable.ic_drawer_pin, // Pinned discussions
-            R.drawable.ic_drawer_activity_feed, // Social activity feed
-            R.drawable.ic_drawer_options, // Popular discussions
-            R.drawable.ic_username,
             0, // Settings
             0, // Help
             0, // Send feedback
-            R.drawable.ic_maps_directions // Plan a trip
+            R.drawable.ic_maps_directions, // Plan a trip
+            R.drawable.ic_drawer_popular, // Popular discussions
+            R.drawable.ic_drawer_pin, // Pinned discussions
+            R.drawable.ic_drawer_activity_feed, // Social activity feed
+            R.drawable.ic_username, // My profile
+            R.drawable.ic_drawer_options, // Options
+            R.drawable.ic_username // Sign in
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -469,12 +461,10 @@ public class NavigationDrawerFragment extends Fragment {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
                 if (isSignedIn) {
                     // user is signed in to Embedded Social
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_MY_FEED);
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_SEARCH);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
+                    mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_OPTIONS);
                 } else {
                     // user is not signed in
@@ -682,8 +672,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     private boolean isSocialActivityItem(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_MY_FEED ||
-                itemId == NAVDRAWER_ITEM_SEARCH ||
                 itemId == NAVDRAWER_ITEM_POPULAR ||
                 itemId == NAVDRAWER_ITEM_PINS ||
                 itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
@@ -693,8 +681,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     private boolean isSocialOverflow(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_POPULAR ||
-                itemId == NAVDRAWER_ITEM_PINS ||
                 itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
                 itemId == NAVDRAWER_ITEM_OPTIONS;
     }

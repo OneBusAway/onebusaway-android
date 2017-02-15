@@ -826,8 +826,11 @@
     <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Lo sentimos, algo salió mal. Por favor, inténtalo de nuevo.</string>
-    <string name="tripplanner_error_request_timeout">Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
-    <string name="tripplanner_error_system">Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
+    <string name="tripplanner_error_request_timeout">Por favor verifica tu conexión a Internet e intentalo
+        de nuevo.
+    </string>
+    <string name="tripplanner_error_system">Por favor verifica tu conexión a Internet e intentalo de nuevo.
+    </string>
     <string name="tripplanner_error_outside_bounds">El origen o el destino están por fuera de la red de cobertura de transporte</string>
     <string name="tripplanner_error_path_not_found">No fue posible encontrar una ruta entre el origen y el destino</string>
     <string name="tripplanner_error_no_transit_times">No se tienen información  de horarios de tránsito en las fechas seleccionadas</string>
@@ -1028,7 +1031,8 @@
     <string name="map_markers_warning_live_updates_early_arrival">adelantado</string>
     <string name="map_markers_warning_live_updates_late_arrival">atrasado</string>
 
-    <string name="trip_plan_notification_new_plan_text">No se recomienda su viaje para esta ruta.</string>
+    <string name="trip_plan_notification_new_plan_title">Encontramos un mejor plan de viaje</string>
+    <string name="trip_plan_notification_new_plan_text">Toca para ver los nuevos resultados de tu último origen/destino.</string>
     <string name="trip_plan_delay">Tú viaje esta atrasado.</string>
     <string name="trip_plan_early">Tú viaje esta adelantado.</string>
 

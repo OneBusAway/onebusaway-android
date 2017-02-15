@@ -92,7 +92,6 @@ import java.util.List;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPTIONS;
@@ -100,13 +99,11 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PROFILE;
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEARCH;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SEND_FEEDBACK;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SETTINGS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
-import static org.onebusaway.android.util.GetRestrictionsReceiver.EMBEDDED_SOCIAL_KEY;
 
 public class HomeActivity extends EmbeddedSocialActivity
         implements BaseMapFragment.OnFocusChangedListener,
@@ -467,12 +464,6 @@ public class HomeActivity extends EmbeddedSocialActivity
                 break;
             case NAVDRAWER_ITEM_PROFILE:
                 EmbeddedSocial.launchProfileActivity(this);
-                break;
-            case NAVDRAWER_ITEM_MY_FEED:
-                EmbeddedSocial.launchYourFeedActivity(this);
-                break;
-            case NAVDRAWER_ITEM_SEARCH:
-                EmbeddedSocial.launchSearchActivity(this);
                 break;
             case NAVDRAWER_ITEM_POPULAR:
                 EmbeddedSocial.launchPopularActivity(this);

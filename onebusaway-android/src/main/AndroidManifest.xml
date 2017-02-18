@@ -283,11 +283,6 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="org.onebusaway.android.ui.PreferencesActivity"/>
         </activity>
-        <provider
-            android:name="org.onebusaway.android.provider.EmbeddedSocialSearchProvider"
-            android:authorities="com.joulespersecond.seattlebusbot.embeddedsocial_searchprovider"
-            android:syncable="true"
-            android:exported="false"/>
     </application>
 
     <uses-feature

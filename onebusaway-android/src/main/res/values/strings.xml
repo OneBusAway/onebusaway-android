@@ -1058,8 +1058,6 @@
     <string name="transit_mode_rail">Rail only</string>
 
     <!-- Social -->
-    <string name="es_google_auth_callback">org.onebusaway.android</string>
-    <string name="es_google_auth_redirect">org.onebusaway.android:/oauth2redirect</string>
     <string name="embedded_social_restriction">Enable social features</string>
     <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
     <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>

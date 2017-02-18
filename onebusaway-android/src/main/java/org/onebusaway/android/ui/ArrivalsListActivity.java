@@ -17,6 +17,7 @@ package org.onebusaway.android.ui;
 
 import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -136,13 +137,14 @@ public class ArrivalsListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         UIUtils.setupActionBar(this);
 
+
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(android.R.id.content) == null) {
+        if (fm.findFragmentById(R.id.es_content) == null) {
             ArrivalsListFragment list = new ArrivalsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
-            fm.beginTransaction().add(android.R.id.content, list).commit();
+            fm.beginTransaction().add( R.id.es_content, list).commit();
         }
     }
 

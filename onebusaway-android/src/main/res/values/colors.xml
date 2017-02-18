@@ -96,5 +96,6 @@
     <color name="trip_option_selected">@android:color/white</color>
     <color name="trip_option_icon_tint">#888</color>
 
-
+    <!-- Social -->
+    <color name="es_button_base_gray">#ff999999</color>
 </resources>

@@ -1222,7 +1222,7 @@ public final class UIUtils {
         list.add(R.drawable.ic_alert_warning);
         ObaRegion currentRegion = Application.get().getCurrentRegion();
         if (currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(context)) {
-            list.add(R.drawable.es_ic_bar_notification);
+            list.add(R.drawable.es_ic_comment);
         }
         return list;
     }

@@ -144,29 +144,17 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         Resources r = view.getResources();
 
-        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
-        discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
-
         ImageButton starBtn = (ImageButton) view.findViewById(R.id.route_star);
         starBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
         ImageButton mapImageBtn = (ImageButton) view.findViewById(R.id.mapImageBtn);
         mapImageBtn.setColorFilter(r.getColor(R.color.theme_primary));
 
+        ImageButton discussBtn = (ImageButton) view.findViewById(R.id.route_discussion);
+        discussBtn.setColorFilter(r.getColor(R.color.theme_primary));
+
         ImageButton routeMoreInfo = (ImageButton) view.findViewById(R.id.route_more_info);
         routeMoreInfo.setColorFilter(r.getColor(R.color.switch_thumb_normal_material_dark));
-
-        discussBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
-            }
-        });
-
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled(context)) {
-            discussBtn.setVisibility(View.GONE);
-        }
 
         starBtn.setImageResource(stopInfo.isRouteAndHeadsignFavorite() ?
                 R.drawable.focus_star_on :
@@ -203,6 +191,19 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 mFragment.showRouteOnMap(stopInfo);
             }
         });
+
+        // Setup discussion
+        discussBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
+            }
+        });
+
+        ObaRegion currentRegion = Application.get().getCurrentRegion();
+        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled(context)) {
+            discussBtn.setVisibility(View.GONE);
+        }
 
         // Setup more
         routeMoreInfo.setOnClickListener(new View.OnClickListener() {

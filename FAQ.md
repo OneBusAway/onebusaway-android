@@ -18,4 +18,8 @@ Please be sure to tap on the star next to the stop name, not the route name (see
 
 ###Why does OneBusAway Android need photo and other permissions?
 
-You can read all about the various permissions required by OneBusAway Android on the [Permissions explained](PERMISSIONS.md) page.
+See the [Permissions explained](PERMISSIONS.md) page.
+
+###How do I set up the OneBusAway Android app to work with my own OneBusAway or OpenTripPlanner server?
+
+See the [Testing with custom OneBusAway and OpenTripPlanner servers](CUSTOM_SERVERS.md) page.

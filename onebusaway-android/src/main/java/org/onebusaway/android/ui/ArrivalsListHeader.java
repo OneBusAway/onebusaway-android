@@ -445,9 +445,11 @@ class ArrivalsListHeader {
             @Override
             public void onClick(View v) {
                 String stopId = mController.getStopId();
+                String stopName = mController.getStopName();
+                String stopDirection = mController.getStopDirection();
                 long regionId = obaRegion.getId();
                 String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, stopId);
-                ArrivalsListActivity.start(mContext, stopId, discussionTitle);
+                ArrivalsListActivity.start(mContext, stopId, stopName, stopDirection, discussionTitle);
             }
         });
 

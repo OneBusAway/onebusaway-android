@@ -37,7 +37,6 @@ import android.view.Window;
 
 import java.util.HashMap;
 
-
 public class ArrivalsListActivity extends BaseActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
@@ -114,11 +113,15 @@ public class ArrivalsListActivity extends BaseActivity {
     // Two of the most common methods of starting this activity.
     //
     public static void start(Context context, String stopId) {
-        start(context, stopId, null);
+        new Builder(context, stopId).start();
     }
 
-    public static void start(Context context, String stopId, String discussionTitle) {
-        new Builder(context, stopId, discussionTitle).start();
+    public static void start(Context context, String stopId, String stopName, String stopDirection,
+                             String discussionTitle) {
+        new Builder(context, stopId, discussionTitle)
+                .setStopName(stopName)
+                .setStopDirection(stopDirection)
+                .start();
     }
 
     /**

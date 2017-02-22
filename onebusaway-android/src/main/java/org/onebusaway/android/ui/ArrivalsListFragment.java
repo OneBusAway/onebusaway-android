@@ -800,7 +800,7 @@ public class ArrivalsListFragment extends ListFragment
     public void openRouteDiscussion(String routeId) {
         long regionId = Application.get().getCurrentRegion().getId();
         String discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(regionId, routeId);
-        ArrivalsListActivity.start(getContext(), getStopId(), discussionTitle);
+        ArrivalsListActivity.start(getContext(), getStopId(), getStopName(), getStopDirection(), discussionTitle);
     }
 
     public void openDiscussion(String discussionTitle) {

@@ -509,9 +509,15 @@ public class NavigationDrawerFragment extends Fragment {
                 ++i;
             }
 
+            int overflowIndex = OVERFLOW_INDEX;
+            if (mNavDrawerItems.contains(NAVDRAWER_ITEM_PLAN_TRIP)) {
+                // move the overflow menu down if the plan trip option is displayed
+                overflowIndex += 1;
+            }
+
             // add the overflow menu
-            containerLayout.addView(socialOverflowButton, OVERFLOW_INDEX);
-            containerLayout.addView(socialOverflowContainer, OVERFLOW_INDEX + 1);
+            containerLayout.addView(socialOverflowButton, overflowIndex);
+            containerLayout.addView(socialOverflowContainer, overflowIndex + 1);
         } else {
             // user is not signed in
             for (int itemId : mNavDrawerItems) {

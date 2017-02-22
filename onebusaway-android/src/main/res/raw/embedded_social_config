@@ -1,6 +1,6 @@
 {
   "application" : {
-    "serverUrl" : "https://dev-sharad.embeddedsocial.microsoft.com/",
+    "serverUrl" : "https://api.embeddedsocial.microsoft.com/",
     "appKey" : "AppKey",
     "numberOfCommentsToShow" : 20,
     "numberOfRepliesToShow" : 20

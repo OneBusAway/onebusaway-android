@@ -9,3 +9,9 @@
 ###The blue dot on the map for my location isn't accurate - it's a few blocks away from my real position
 
 Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.
+
+###I'm tapping on the star next to the route but I don't see anything in the Starred Stops list
+
+Please be sure to tap on the star next to the stop name, not the route name.  Right now tapping on the star next to the route name (or via the menu after tapping on the arrival time) stars the route, and pins it to the top of the sliding panel.  This allows you to quickly tap on stops on the map and see the arrival time for routes you care about.  I plan to add a separate “Starred routes” list, although I don’t have a specific timeline for this yet.  You can follow progress at https://github.com/OneBusAway/onebusaway-android/issues/354.
+
+![image](https://cloud.githubusercontent.com/assets/928045/23220577/73101752-f8f0-11e6-828a-38da63996e01.png)

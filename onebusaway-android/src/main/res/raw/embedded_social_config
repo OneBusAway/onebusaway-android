@@ -7,16 +7,16 @@
   },
   "socialNetworks" : {
     "facebook" : {
-      "loginEnabled" : "true",
-      "clientId" : "552285811539105"
+      "loginEnabled" : "false",
+      "clientId" : " "
     },
     "google" : {
       "loginEnabled" : "true",
-      "clientId" : "228220385321-fphmaq4bq709oijknqej1sacdrus431c.apps.googleusercontent.com"
+      "clientId" : "1083736323923-rc9l9v9he2njpl9urkg81anr35jv99uj.apps.googleusercontent.com"
     },
     "microsoft" : {
-      "loginEnabled" : "true",
-      "clientId" : "000000004413B70D"
+      "loginEnabled" : "false",
+      "clientId" : " "
     },
     "twitter" : {
       "loginEnabled" : "false"

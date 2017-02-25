@@ -175,7 +175,7 @@ public class ArrivalsListActivity extends BaseActivity {
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
             FragmentTransaction ft = fm.beginTransaction();
-            ft.replace(android.R.id.content, list);
+            ft.replace(R.id.es_content, list);
             // This is a bit of a hack, but if there's a backstack
             // it means people navigated away from this activity while
             // in a report problem fragment.

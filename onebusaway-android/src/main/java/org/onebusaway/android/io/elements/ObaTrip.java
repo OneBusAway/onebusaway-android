@@ -61,4 +61,9 @@ public interface ObaTrip extends ObaElement {
      * @return The route ID for the trip.
      */
     public String getRouteId();
+
+    /**
+     * @return The block ID for the trip
+     */
+    public String getBlockId();
 }

@@ -102,6 +102,8 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private static final String AGENCY_NAME = ".agencyName";
 
+    private static final String BLOCK_ID = ".blockId";
+
     private static final String ACTION_BAR_TITLE = ".actionBarTitle";
 
     private static final String TUTORIAL_COUNTER = "tutorial_counter";
@@ -161,6 +163,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * Selected arrival information for trip problem reporting
      */
     private ObaArrivalInfo mArrivalInfo;
+
+    /**
+     * Block ID for the trip in mArrivalInfo
+     */
+    private String mBlockId;
 
     /**
      * Agency name for trip problem reporting
@@ -227,14 +234,17 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
      * @param activity       The parent activity.
      * @param intent         The Intent containing focusId, lat, lon of the map
      * @param obaArrivalInfo Arrival info for trip problems
+     * @param agencyName     Name of the agency that operates the service
+     * @param blockId        Block ID for the trip in obaArrivalInfo
      */
     public static void startWithService(Activity activity, Intent intent, String serviceKeyword
-            , ObaArrivalInfo obaArrivalInfo, String agencyName) {
+            , ObaArrivalInfo obaArrivalInfo, String agencyName, String blockId) {
         intent = makeIntent(activity, intent);
         // Put trip issue specific data
         intent.putExtra(SELECTED_SERVICE, serviceKeyword);
         intent.putExtra(TRIP_INFO, obaArrivalInfo);
         intent.putExtra(AGENCY_NAME, agencyName);
+        intent.putExtra(BLOCK_ID, blockId);
 
         activity.startActivityForResult(intent, REQUEST_CODE);
     }
@@ -303,6 +313,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             }
             mArrivalInfo = (ObaArrivalInfo) getIntent().getSerializableExtra(TRIP_INFO);
             mAgencyName = getIntent().getStringExtra(AGENCY_NAME);
+            mBlockId = getIntent().getStringExtra(BLOCK_ID);
             mDefaultIssueType = getIntent().getStringExtra(SELECTED_SERVICE);
         }
     }
@@ -353,6 +364,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
         outState.putBoolean(ARRIVAL_LIST, mShowArrivalListFragment);
         outState.putBoolean(HEURISTIC_MATCH, mIsAllTransitHeuristicMatch);
         outState.putString(AGENCY_NAME, mAgencyName);
+        outState.putString(BLOCK_ID, mBlockId);
         outState.putString(SELECTED_SERVICE_TYPE, mTransitServiceIssueTypeWithoutStop);
         outState.putString(ACTION_BAR_TITLE, getTitle().toString());
     }
@@ -366,6 +378,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             mShowArrivalListFragment = savedInstanceState.getBoolean(ARRIVAL_LIST, false);
             mRestoredServiceName = savedInstanceState.getString(RESTORED_SERVICE);
             mAgencyName = savedInstanceState.getString(AGENCY_NAME);
+            mBlockId = savedInstanceState.getString(BLOCK_ID);
             mTransitServiceIssueTypeWithoutStop = savedInstanceState.getString(SELECTED_SERVICE_TYPE);
             mIsAllTransitHeuristicMatch = savedInstanceState.getBoolean(HEURISTIC_MATCH);
 
@@ -1034,10 +1047,13 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
     }
 
     @Override
-    public void onArrivalItemClicked(ObaArrivalInfo obaArrivalInfo, String agencyName) {
+    public void onArrivalItemClicked(ObaArrivalInfo obaArrivalInfo, String agencyName,
+            String blockId) {
         mShowArrivalListFragment = false;
 
         mAgencyName = agencyName;
+
+        mBlockId = blockId;
 
         removeFragmentByTag(SimpleArrivalListFragment.TAG);
 
@@ -1071,7 +1087,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
     private void showOpen311ProblemFragment(Service service, ObaArrivalInfo obaArrivalInfo) {
         Open311ProblemFragment.show(this, R.id.ri_report_stop_problem, mOpen311, service,
-                obaArrivalInfo, mAgencyName);
+                obaArrivalInfo, mAgencyName, mBlockId);
     }
 
     public void removeOpen311ProblemFragment() {

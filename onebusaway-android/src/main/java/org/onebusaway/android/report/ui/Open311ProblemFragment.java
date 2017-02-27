@@ -114,6 +114,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private String mAgencyName;
 
+    // Block ID for the mArrivalInfo
+    private String mBlockId;
+
     // Arrival information for trip problem
     private ObaArrivalInfo mArrivalInfo;
 
@@ -170,9 +173,11 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     private static final String AGENCY_NAME = ".agencyName";
 
+    private static final String BLOCK_ID = ".blockId";
+
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service, ObaArrivalInfo obaArrivalInfo,
-                            String agencyName) {
+            String agencyName, String blockId) {
         FragmentManager fm = activity.getSupportFragmentManager();
 
         Open311ProblemFragment fragment = new Open311ProblemFragment();
@@ -180,6 +185,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         fragment.setService(service);
         fragment.setArrivalInfo(obaArrivalInfo);
         fragment.setAgencyName(agencyName);
+        fragment.setBlockId(blockId);
 
         try {
             FragmentTransaction ft = fm.beginTransaction();
@@ -193,7 +199,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public static void show(AppCompatActivity activity, Integer containerViewId,
                             Open311 open311, Service service) {
-        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null);
+        Open311ProblemFragment.show(activity, containerViewId, open311, service, null, null, null);
     }
 
     @Override
@@ -246,6 +252,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
         }
         outState.putBoolean(SHOW_PROGRESS_DIALOG, mIsProgressDialogShowing);
         outState.putString(AGENCY_NAME, mAgencyName);
+        outState.putString(BLOCK_ID, mBlockId);
     }
 
     @Override
@@ -257,6 +264,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
             mArrivalInfo = (ObaArrivalInfo) savedInstanceState.getSerializable(TRIP_INFO);
             mAgencyName = savedInstanceState.getString(AGENCY_NAME);
+            mBlockId = savedInstanceState.getString(BLOCK_ID);
 
             List<AttributeValue> values = savedInstanceState.getParcelableArrayList(ATTRIBUTES);
             mAttributeValueHashMap.clear();
@@ -615,6 +623,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 if (!TextUtils.isEmpty(routeDisplayName)) {
                     sb.append(getResources().getString(R.string.ri_append_route_display_name,
                             routeDisplayName));
+                }
+                if (mBlockId != null) {
+                    sb.append(getResources().getString(R.string.ri_append_block_id, mBlockId));
                 }
 
                 sb.append(getResources().getString(R.string.ri_append_trip_id, mArrivalInfo.getTripId()));
@@ -1205,5 +1216,9 @@ public class Open311ProblemFragment extends BaseReportFragment implements
 
     public void setAgencyName(String agencyName) {
         this.mAgencyName = agencyName;
+    }
+
+    public void setBlockId(String blockId) {
+        mBlockId = blockId;
     }
 }

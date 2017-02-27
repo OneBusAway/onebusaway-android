@@ -37,6 +37,8 @@ public final class ObaTripElement implements ObaTrip {
 
     private final String routeId;
 
+    private final String blockId;
+
     private ObaTripElement() {
         id = "";
         tripShortName = "";
@@ -46,6 +48,7 @@ public final class ObaTripElement implements ObaTrip {
         tripHeadsign = "";
         timeZone = "";
         routeId = "";
+        blockId = "";
     }
 
     @Override
@@ -86,5 +89,10 @@ public final class ObaTripElement implements ObaTrip {
     @Override
     public String getRouteId() {
         return routeId;
+    }
+
+    @Override
+    public String getBlockId() {
+        return blockId;
     }
 }

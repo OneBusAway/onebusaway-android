@@ -25,6 +25,7 @@ import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
@@ -747,17 +748,21 @@ public class ArrivalsListFragment extends ListFragment
                     // Find agency name
                     String routeId = arrivalInfo.getInfo().getRouteId();
                     String agencyName = null;
+                    String blockId = null;
 
                     if (mObaReferences != null) {
                         String agencyId = mObaReferences.getRoute(routeId).getAgencyId();
                         agencyName = mObaReferences.getAgency(agencyId).getName();
+                        ObaTrip trip = mObaReferences.getTrip(arrivalInfo.getInfo().getTripId());
+                        blockId = trip.getBlockId();
                     }
 
                     Intent intent = makeIntent(getActivity(), mStop.getId(), mStop.getName(),
                             mStop.getStopCode(), mStop.getLatitude(), mStop.getLongitude());
 
                     InfrastructureIssueActivity.startWithService(getActivity(), intent,
-                            getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(), agencyName);
+                            getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(),
+                            agencyName, blockId);
                 }
             }
         });

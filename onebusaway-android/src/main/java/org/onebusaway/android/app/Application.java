@@ -497,6 +497,8 @@ public class Application extends android.app.Application {
         if (BuildConfig.DEBUG) {
             Open311Manager.getSettings().setDebugMode(true);
             Open311Manager.getSettings().setDryRun(true);
+            Log.w(TAG,
+                    "Open311 issue reporting is in debug/dry run mode - no issues will be submitted.");
         }
 
         // Clear all open311 endpoints

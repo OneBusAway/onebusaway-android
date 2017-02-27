@@ -34,6 +34,7 @@ gtfs_stop_id=Hillsborough Area Regional Transit_5542;   // The ID of the stop fr
 stop_name=Busch Blvd @ Twin Lakes Blvd;                 // The name of the stop, from GTFS data
 route_id=Hillsborough Area Regional Transit_39;         // The ID of the route from OneBusAway - consists of the GTFS agency_id (or agency_name if agency_id isn't provided), followed by an underscore (_), followed by the GTFS route_id
 route_display_name=39;                                  // The name of the route that was shown to the rider - this is the GTFS route_short name if it exists, and if not the GTFS route route_long_name
+block_id=Hillsborough Area Regional Transit_300387;     // The ID of the block for the trip_id for this arrival time from OneBusaway - - consists of the GTFS agency_id (or agency_name if agency_id isn't provided), followed by an underscore (_), followed by the GTFS block_id
 trip_id=Hillsborough Area Regional Transit_238563;      // The ID of the trip for this arrival time from OneBusaway - - consists of the GTFS agency_id (or agency_name if agency_id isn't provided), followed by an underscore (_), followed by the GTFS trip_id
 trip_headsign=East to Yukon Transfer Center;            // The headsign shown to the rider for this trip, from GTFS data
 predicted=true;                                         // True if real-time information existed for this prediction, False if the schedule time was shown to the rider

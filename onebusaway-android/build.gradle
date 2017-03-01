@@ -54,8 +54,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 21
-        versionCode 72
-        versionName "2.1.5"
+        versionCode 80
+        versionName "2.2.0"
 
         // multi dex enabled
         multiDexEnabled true

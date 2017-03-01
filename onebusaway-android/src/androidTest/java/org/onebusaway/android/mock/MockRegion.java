@@ -76,12 +76,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -110,12 +110,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 "http://stopinfo.pugetsound.onebusaway.org",
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -144,12 +144,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -178,12 +178,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -212,12 +212,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -246,12 +246,12 @@ public class MockRegion {
                 true,
                 true,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -278,12 +278,12 @@ public class MockRegion {
                 false,
                 false,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -310,11 +310,11 @@ public class MockRegion {
                 false,
                 false,
                 false,
-                false,
                 null,
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 }

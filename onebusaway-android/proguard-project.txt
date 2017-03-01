@@ -47,7 +47,7 @@
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**
 
--keep class com.microsoft.socialplus.** { *; }
+-keep class com.microsoft.embeddedsocial.** { *; }
 # for java 8 lambdas
 -dontwarn java.lang.invoke**
 

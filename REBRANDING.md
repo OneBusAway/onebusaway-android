@@ -28,7 +28,7 @@ Here's where you can download the apps for each of these brands on Google Play:
 
 And here are screenshots for these 3 brands:
 
-<img src="https://cloud.githubusercontent.com/assets/928045/6858864/d8a8e3b6-d3e8-11e4-95c5-9dd8ebcbcf9c.png" width="496" height="281" align=center />
+<img src="https://cloud.githubusercontent.com/assets/928045/23876835/a6ceb718-0815-11e7-866a-5daef01d0a08.png" width="496" height="281" align=center />
 
 Each of the 3 brands are deployed as an independent app on Google Play (using the **google** platform flavor) and the Amazon App Store (using the **amazon** platform flavor).
 

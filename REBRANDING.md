@@ -20,7 +20,13 @@ We have two Gradle "platform" flavor dimensions:
 * **agencyX** = A sample rebranded version of OneBusAway for a fictitious "Agency X"
 * **agencyY** = A sample rebranded version of OneBusAway for a fictitious "Agency Y"
 
-Here are screenshots for these 3 brands:
+Here's where you can download the apps for each of these brands on Google Play:
+
+* [OneBusAway](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
+* [Agency X](https://play.google.com/store/apps/details?id=org.agencyx.android)
+* [Agency Y](https://play.google.com/store/apps/details?id=org.agencyy.android)
+
+And here are screenshots for these 3 brands:
 
 <img src="https://cloud.githubusercontent.com/assets/928045/6858864/d8a8e3b6-d3e8-11e4-95c5-9dd8ebcbcf9c.png" width="496" height="281" align=center />
 

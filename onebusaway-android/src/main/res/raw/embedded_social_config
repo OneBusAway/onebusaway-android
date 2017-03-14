@@ -3,7 +3,9 @@
     "serverUrl" : "https://api.embeddedsocial.microsoft.com/",
     "appKey" : "AppKey",
     "numberOfCommentsToShow" : 20,
-    "numberOfRepliesToShow" : 20
+    "numberOfRepliesToShow" : 20,
+    "searchEnabled" : "false",
+    "showGalleryView" : "false"
   },
   "socialNetworks" : {
     "facebook" : {

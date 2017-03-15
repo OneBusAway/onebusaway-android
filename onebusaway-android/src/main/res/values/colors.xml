@@ -98,4 +98,5 @@
 
     <!-- Social -->
     <color name="es_button_base_gray">#ff999999</color>
+    <color name="es_progressbar">@color/theme_primary</color>
 </resources>

@@ -581,6 +581,5 @@ public class Application extends android.app.Application {
         EmbeddedSocial.setReportHandler(new SocialReportHandler());
         EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
         EmbeddedSocial.setAppProfile(new SocialAppProfile());
-        EmbeddedSocial.setProgressBarColor(R.color.theme_primary);
     }
 }

@@ -359,7 +359,7 @@ dependencies {
 
     compile 'com.android.support:multidex:1.0.1'
 
-    compile('com.acrowntest.test:sdk:0.0.17:release@aar') {
+    compile('com.acrowntest.test:sdk:0.0.18:release@aar') {
         transitive = true;
     }
 

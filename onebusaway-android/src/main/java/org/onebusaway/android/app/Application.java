@@ -32,8 +32,6 @@ import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.report.ui.util.SocialReportHandler;
 import org.onebusaway.android.ui.social.SocialAppProfile;
 import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
-import org.onebusaway.android.ui.social.SocialTabColorizer;
-import org.onebusaway.android.ui.social.SocialToolbarColorizer;
 import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -576,8 +574,6 @@ public class Application extends android.app.Application {
 
     private void setUpSocial() {
         EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
-        EmbeddedSocial.setToolbarColors(new SocialToolbarColorizer());
-        EmbeddedSocial.setTabColors(new SocialTabColorizer());
         EmbeddedSocial.setReportHandler(new SocialReportHandler());
         EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
         EmbeddedSocial.setAppProfile(new SocialAppProfile());

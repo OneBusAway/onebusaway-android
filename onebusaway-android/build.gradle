@@ -54,16 +54,18 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 21
-        versionCode 81
-        versionName "2.2.0"
+        versionCode 75
+        versionName "2.1.8"
 
         // multi dex enabled
         multiDexEnabled true
         testInstrumentationRunner "com.android.test.runner.MultiDexTestRunner"
     }
+
     dexOptions {
         javaMaxHeapSize "4g"
     }
+
     /**
      * brand - how the name, look, and feel of each OneBusAway-based app is presented
      * platform - Google or Amazon (for Maps API v2 dependencies)

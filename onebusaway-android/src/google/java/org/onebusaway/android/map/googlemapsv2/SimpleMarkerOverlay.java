@@ -78,7 +78,7 @@ public class SimpleMarkerOverlay {
         Marker m = mMarkers.get(markerId);
         if (m != null) {
             m.remove();
+            mMarkers.remove(markerId);
         }
-        mMarkers.remove(markerId);
     }
 }

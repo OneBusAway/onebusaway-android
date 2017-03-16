@@ -79,6 +79,11 @@ public final class ObaTripResponse extends ObaResponseWithRefs implements
         return data.entry.getRouteId();
     }
 
+    @Override
+    public String getBlockId() {
+        return data.entry.getBlockId();
+    }
+
     /**
      * @return The route for the trip.
      */

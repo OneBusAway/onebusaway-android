@@ -23,6 +23,7 @@ import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.mock.MockRegion;
@@ -151,6 +152,8 @@ public class ArrivalInfoRequestTest extends ObaTestCase {
         assertTrue(routes.size() > 0);
         ObaAgency agency = response.getAgency(routes.get(0).getAgencyId());
         assertEquals("Hillsborough Area Regional Transit", agency.getId());
+        ObaTrip trip = response.getTrip("Hillsborough Area Regional Transit_909841");
+        assertEquals("Hillsborough Area Regional Transit_266684", trip.getBlockId());
 
         final ObaArrivalInfo[] arrivals = response.getArrivalInfo();
         assertNotNull(arrivals);

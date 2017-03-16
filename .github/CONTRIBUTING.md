@@ -2,6 +2,10 @@
 
 This guide details how to use issues and pull requests (for new code) to improve OneBusAway for Android.
 
+## Getting Started
+
+Want to help, but don't know where to start?  Check out the issues we've tagged with the ["your first PR" label](https://github.com/OneBusAway/onebusaway-android/labels/your%20first%20PR).  These issues are a good place to get familiar with the OneBusAway code.  If you have questions, please comment on the issue, especially if you start working on a solution so that others don't duplicate your work.
+
 ## Individual Contributor License Agreement (ICLA)
 
 To ensure that the app source code remains fully open-source under a common license, we require that contributors sign an electronic ICLA before contributions can be merged.  When you submit a pull request, you'll be prompted by the [CLA Assistant](https://cla-assistant.io/) to sign the ICLA.

@@ -22,6 +22,7 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaTrip;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
@@ -57,7 +58,7 @@ public class SimpleArrivalListFragment extends Fragment
 
     public interface Callback {
 
-        void onArrivalItemClicked(ObaArrivalInfo obaArrivalInfo, String agencyName);
+        void onArrivalItemClicked(ObaArrivalInfo obaArrivalInfo, String agencyName, String blockId);
     }
 
     private ObaStop mObaStop;
@@ -254,7 +255,8 @@ public class SimpleArrivalListFragment extends Fragment
                 @Override
                 public void onClick(View view) {
                     String agencyName = findAgencyNameByRouteId(refs, arrivalInfo.getRouteId());
-                    mCallback.onArrivalItemClicked(arrivalInfo, agencyName);
+                    String blockId = findBlockIdByTripId(refs, arrivalInfo.getTripId());
+                    mCallback.onArrivalItemClicked(arrivalInfo, agencyName, blockId);
                 }
             });
         }
@@ -263,6 +265,11 @@ public class SimpleArrivalListFragment extends Fragment
     private String findAgencyNameByRouteId(ObaReferences refs, String routeId) {
         String agencyId = refs.getRoute(routeId).getAgencyId();
         return refs.getAgency(agencyId).getId();
+    }
+
+    private String findBlockIdByTripId(ObaReferences refs, String tripId) {
+        ObaTrip trip = refs.getTrip(tripId);
+        return trip.getBlockId();
     }
 
     @Override

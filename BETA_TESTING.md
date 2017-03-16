@@ -29,6 +29,8 @@ You only have to complete the above steps once. Unless you opt-out (using the sa
 
 Please note that you need to use the same Google account for all three steps above, or you won't get access to the alpha.
 
+Also note that in Google Play, you'll still see the "OneBusAway (Beta)" label, and the message that you're a beta tester, even if you're an alpha tester.  You can safely ignore this if you've followed the above steps.
+
 Note that as an alpha tester you'll automatically get beta and production releases too.
 
 ## How to provide feedback

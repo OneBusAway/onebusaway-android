@@ -23,3 +23,7 @@ See the [Permissions explained](PERMISSIONS.md) page.
 ###How do I set up the OneBusAway Android app to work with my own OneBusAway or OpenTripPlanner server?
 
 See the [Testing with custom OneBusAway and OpenTripPlanner servers](CUSTOM_SERVERS.md) page.
+
+###I'd like to contribute to the app - how can I help?
+
+OneBusAway is an open-source project maintained primarily by volunteers, so we’d certainly welcome any help you’re willing to provide!  There are a number of open issues that are tagged as [“Your first PR”](https://github.com/OneBusAway/onebusaway-android/issues?q=is%3Aissue+is%3Aopen+label%3A%22your+first+PR%22) that should be a great place for you to start.

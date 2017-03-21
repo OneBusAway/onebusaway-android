@@ -148,15 +148,15 @@
     <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
 
     <!-- Analytics for social -->
-    <string name="analytics_label_button_press_social_sign_in">Clicked Embedded Social Sign In Link</string>
-    <string name="analytics_label_button_press_social_profile">Clicked Embedded Social Profile Link</string>
-    <string name="analytics_label_button_press_social_popular">Clicked Embedded Social Popular Feed Link</string>
-    <string name="analytics_label_button_press_social_pins">Clicked Embedded Social Pins Link</string>
-    <string name="analytics_label_button_press_social_activity_feed">Clicked Embedded Social Activity Feed Link</string>
-    <string name="analytics_label_button_press_social_settings">Clicked Embedded Social Settings Link</string>
-    <string name="analytics_label_button_press_social_stop_header">Clicked Embedded Social Stop Arrivals Header</string>
-    <string name="analytics_label_button_press_social_route_options">Clicked Embedded Social Route Options</string>
-    <string name="analytics_label_button_press_social_style_b_card">Clicked Embedded Social Route Style B Card</string>
+    <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>
+    <string name="analytics_label_button_press_social_profile">Clicked Social Profile</string>
+    <string name="analytics_label_button_press_social_popular">Clicked Social Popular Feed</string>
+    <string name="analytics_label_button_press_social_pins">Clicked Social Pins</string>
+    <string name="analytics_label_button_press_social_activity_feed">Clicked Social Activity Feed</string>
+    <string name="analytics_label_button_press_social_settings">Clicked Social Settings</string>
+    <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
+    <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
+    <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>

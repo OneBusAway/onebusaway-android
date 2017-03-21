@@ -200,7 +200,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 ObaAnalytics.reportEventWithCategory(
                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         context.getString(R.string.analytics_action_button_press),
-                        context.getString(R.string.analytics_label_button_press_social_style_b_card));
+                        context.getString(R.string.analytics_label_button_press_social_route_style_b));
                 mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
             }
         });

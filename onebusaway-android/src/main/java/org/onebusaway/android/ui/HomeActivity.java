@@ -460,21 +460,45 @@ public class HomeActivity extends EmbeddedSocialActivity
                                 getString(R.string.analytics_label_button_press_trip_plan));
                 break;
             case NAVDRAWER_ITEM_SIGN_IN:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_sign_in));
                 EmbeddedSocial.launchSignInActivity(this);
                 break;
             case NAVDRAWER_ITEM_PROFILE:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_profile));
                 EmbeddedSocial.launchProfileActivity(this);
                 break;
             case NAVDRAWER_ITEM_POPULAR:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_popular));
                 EmbeddedSocial.launchPopularActivity(this);
                 break;
             case NAVDRAWER_ITEM_PINS:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_pins));
                 EmbeddedSocial.launchPinsActivity(this);
                 break;
             case NAVDRAWER_ITEM_ACTIVITY_FEED:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_activity_feed));
                 EmbeddedSocial.launchActivityFeedActivity(this);
                 break;
             case NAVDRAWER_ITEM_OPTIONS:
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_settings));
                 EmbeddedSocial.launchOptionsActivity(this);
                 break;
             case NAVDRAWER_ITEM_SETTINGS:

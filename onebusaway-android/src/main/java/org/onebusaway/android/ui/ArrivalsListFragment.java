@@ -793,6 +793,11 @@ public class ArrivalsListFragment extends ListFragment
                             getString(R.string.ri_selected_service_trip), arrivalInfo.getInfo(),
                             agencyName, blockId);
                 } else if (isSocialEnabled && (!hasUrl && which == 6) || (hasUrl && which == 7)) {
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getActivity().getString(R.string.analytics_action_button_press),
+                            getActivity().getString(
+                                    R.string.analytics_label_button_press_social_route_options));
                     openRouteDiscussion(arrivalInfo.getInfo().getRouteId());
                 }
             }

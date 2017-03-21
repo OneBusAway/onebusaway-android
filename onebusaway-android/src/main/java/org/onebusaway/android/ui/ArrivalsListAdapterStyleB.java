@@ -19,6 +19,7 @@ package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.provider.ObaContract;
@@ -196,6 +197,10 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         discussBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        context.getString(R.string.analytics_action_button_press),
+                        context.getString(R.string.analytics_label_button_press_social_style_b_card));
                 mFragment.openRouteDiscussion(arrivalInfo.getRouteId());
             }
         });

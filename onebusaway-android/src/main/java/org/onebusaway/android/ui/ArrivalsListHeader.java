@@ -444,6 +444,9 @@ class ArrivalsListHeader {
         mStopDiscussion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        mContext.getString(R.string.analytics_action_button_press),
+                        mContext.getString(R.string.analytics_label_button_press_social_stop_header));
                 String stopId = mController.getStopId();
                 String stopName = mController.getStopName();
                 String stopDirection = mController.getStopDirection();

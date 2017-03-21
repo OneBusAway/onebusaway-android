@@ -1,7 +1,5 @@
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.GoogleApiAvailability;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 
@@ -58,19 +56,6 @@ public class AboutActivity extends AppCompatActivity {
 
         // Majority of content from string resource
         builder.append(getString(R.string.about_text));
-        String googleOssLicense = null;
-
-        // License info for Google Play Services, if available
-        try {
-            GoogleApiAvailability gaa = GoogleApiAvailability.getInstance();
-            googleOssLicense = gaa.getOpenSourceSoftwareLicenseInfo(this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (googleOssLicense != null) {
-            builder.append(googleOssLicense);
-        }
-
         builder.append("\n\n");
 
         tv.setText(builder.toString());

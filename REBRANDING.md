@@ -47,7 +47,7 @@ Here are the high-level steps to add a new brand, for a new brand name `newBrand
 1. Add a new brand build flavor dimension to the `productFlavors { }` block in `build.gradle`
 2. Create a new folder `src/newBrandName/res` with the appropriate resource files (or copy from one of the samples - `src/agencyX` or `src/agencyY`)
 3. Edit resource files in `src/newBrandName/res` subfolders with your brand information (app name, etc.)
-4. Add your own launcher icons for the `res/mipmap-*` folders - see the online tool at http://romannurik.github.io/AndroidAssetStudio/icons-launcher.html to generate the icons from an image
+4. Add your own launcher icons for the `res/mipmap-*` folders - see the online tool at http://romannurik.github.io/AndroidAssetStudio/icons-launcher.html or [Image Asset Studio](https://developer.android.com/studio/write/image-asset-studio.html) to generate the icons from an image
 
 For Step 1, you new entry in `build.gradle` will look something like:
 

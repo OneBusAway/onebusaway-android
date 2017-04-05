@@ -1216,6 +1216,9 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onClick(View arg0) {
                 if (mMapFragment != null) {
+                    // Reset the preference to ask user to enable location
+                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), false);
+
                     mMapFragment.setMyLocation(true, true);
                     ObaAnalytics.reportEventWithCategory(
                             ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),

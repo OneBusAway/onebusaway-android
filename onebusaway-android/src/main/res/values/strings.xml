@@ -131,6 +131,7 @@
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
         now?
     </string>
+    <string name="main_never_ask_again">Never ask again</string>
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>

@@ -66,6 +66,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -78,6 +79,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -629,7 +632,11 @@ public class BaseMapFragment extends SupportMapFragment
     public boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation) {
         if (!LocationUtils.isLocationEnabled(getActivity()) && mRunning && UIUtils.canManageDialog(
                 getActivity())) {
-            showDialog(MapDialogFragment.NOLOCATION_DIALOG);
+            // If the user hasn't opted out of "Enable location" dialog, show it to them
+            SharedPreferences prefs = Application.getPrefs();
+            if (!prefs.getBoolean(getString(R.string.preference_key_never_show_location_dialog), false)) {
+                showDialog(MapDialogFragment.NOLOCATION_DIALOG);
+            }
             return false;
         }
 
@@ -1114,6 +1121,17 @@ public class BaseMapFragment extends SupportMapFragment
 
         @SuppressWarnings("deprecation")
         private Dialog createNoLocationDialog() {
+            View view = getActivity().getLayoutInflater().inflate(R.layout.no_location_dialog, null);
+            CheckBox neverShowDialog = (CheckBox) view.findViewById(R.id.location_never_ask_again);
+
+            neverShowDialog.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    // Save the preference
+                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_location_dialog), isChecked);
+                }
+            });
+
             Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
             DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
 
@@ -1121,8 +1139,8 @@ public class BaseMapFragment extends SupportMapFragment
                     .setTitle(R.string.main_nolocation_title)
                     .setIcon(icon)
                     .setCancelable(false)
-                    .setMessage(R.string.main_nolocation)
-                    .setPositiveButton(android.R.string.yes,
+                    .setView(view)
+                    .setPositiveButton(R.string.rt_yes,
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
@@ -1132,7 +1150,7 @@ public class BaseMapFragment extends SupportMapFragment
                                 }
                             }
                     )
-                    .setNegativeButton(android.R.string.no,
+                    .setNegativeButton(R.string.rt_no,
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {

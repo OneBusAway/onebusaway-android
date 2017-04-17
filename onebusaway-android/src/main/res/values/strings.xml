@@ -114,9 +114,11 @@
     <string name="main_help_title">Help</string>
     <string name="main_help_whatsnew_title">What\'s New?</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Social discussions</b>
-        - Chat with other OneBusAway users about stops and routes!\n&#8226;\u0020
-        <b>Bug fixes and performance improvements</b>
+        <b>Trip planning (Puget Sound)</b>
+        - Check it out in the navigation drawer!\n&#8226;\u0020
+        <b>Banishable \"No location\" prompt</b>
+        - Now you can get rid of it for good!\n&#8226;\u0020
+        <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Close</string>
@@ -131,6 +133,7 @@
     <string name="main_nolocation">OneBusAway would like your location, do you want to enable it
         now?
     </string>
+    <string name="main_never_ask_again">Never ask again</string>
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>

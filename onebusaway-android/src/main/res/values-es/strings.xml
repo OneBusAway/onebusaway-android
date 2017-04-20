@@ -106,6 +106,8 @@
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Planeación de Viajes (Puget Sound)</b>
         - ¡Compruebalo en el menú de navegación!\n&#8226;\u0020
+        <b>Removido aviso de \"No hay ubicación\"</b>
+        - ¡Ahora puedes deshacerte de él para siempre!\n&#8226;\u0020
         <b>Arregló de errores</b>
         - http://bit.ly/oba-android-releases
     </string>
@@ -121,6 +123,7 @@
     <string name="main_nolocation">A OneBusAway le gustaría saber tú ubicación, ¿Quieres activarla
         ahora?
     </string>
+    <string name="main_never_ask_again">No volver a preguntar</string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
     <string name="main_location_unavailable">No se puede obtener tú ubicación.</string>
     <string name="main_outofrange_title">Fuera de alcance</string>

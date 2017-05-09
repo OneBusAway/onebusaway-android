@@ -47,6 +47,9 @@
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**
 
+# Keep Open311 library (needed for unit tests)
+-keep class edu.usf.cutr.open311client.** { *; }
+
 -keep class com.microsoft.embeddedsocial.** { *; }
 # for java 8 lambdas
 -dontwarn java.lang.invoke**

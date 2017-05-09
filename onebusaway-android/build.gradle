@@ -58,10 +58,6 @@ android {
         targetSdkVersion 21
         versionCode 83
         versionName "2.2.2"
-
-        // multi dex enabled
-        multiDexEnabled true
-        testInstrumentationRunner "com.android.test.runner.MultiDexTestRunner"
     }
 
     dexOptions {
@@ -269,6 +265,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled true
+            useProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
+        }
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
@@ -386,14 +387,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
 
-    compile 'com.android.support:multidex:1.0.1'
-
     compile('com.acrowntest.test:sdk:0.0.20:release@aar') {
         transitive = true;
     }
-
-    androidTestCompile('com.android.support:multidex-instrumentation:1.0.1') {
-        exclude group: 'com.android.support', module: 'multidex'
-    }
-
 }

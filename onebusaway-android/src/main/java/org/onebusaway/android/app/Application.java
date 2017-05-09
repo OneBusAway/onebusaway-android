@@ -45,7 +45,6 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
-import android.support.multidex.MultiDex;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -94,12 +93,6 @@ public class Application extends android.app.Application {
     }
 
     HashMap<TrackerName, Tracker> mTrackers = new HashMap<TrackerName, Tracker>();
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
-    }
 
     @Override
     public void onCreate() {

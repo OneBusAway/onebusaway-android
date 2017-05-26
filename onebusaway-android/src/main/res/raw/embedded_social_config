@@ -10,8 +10,8 @@
   },
   "socialNetworks" : {
     "facebook" : {
-      "loginEnabled" : "false",
-      "clientId" : " "
+      "loginEnabled" : "true",
+      "clientId" : "112374949346978"
     },
     "google" : {
       "loginEnabled" : "true",

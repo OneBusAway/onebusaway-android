@@ -20,6 +20,10 @@ Please be sure to tap on the star next to the stop name, not the route name (see
 
 See the [Permissions explained](PERMISSIONS.md) page.
 
+### I can see bus stops on the map, but the map itself is gray with no street names.  What's going on?
+
+OneBusAway Android uses the Maps API v2 in Google Play Services for map rendering, and the map data may have gotten corrupted.  You can try restarting your device, and if that doesn't resolve the problem you can clear the cache of Google Play Services using [these instructions](http://stackoverflow.com/a/17622163/937715).
+
 ### How do I set up the OneBusAway Android app to work with my own OneBusAway or OpenTripPlanner server?
 
 See the [Testing with custom OneBusAway and OpenTripPlanner servers](CUSTOM_SERVERS.md) page.

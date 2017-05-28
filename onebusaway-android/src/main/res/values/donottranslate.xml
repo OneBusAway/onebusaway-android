@@ -150,6 +150,7 @@
 
     <!-- General strings -->
     <string name="http_prefix">http://</string>
+    <string name="https_prefix">https://</string>
 
     <!-- Problem reporting additions -->
     <string name="ri_append_start">\n\n---------------------\n</string>

@@ -303,9 +303,11 @@ public class PreferencesActivity extends PreferenceActivity
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
+                String formattedUrl = formattedUrl(apiUrl);
                 //User entered a custom API Url, so set the region info to null
                 Application.get().setCurrentRegion(null);
-                Log.d(TAG, "User entered new API URL, set region to null.");
+                Application.get().setCustomApiUrl(formattedUrl);
+                Log.d(TAG, "User entered new API URL, set region to null: " + formattedUrl);
             } else {
                 //User cleared the API URL preference value, so re-initialize regions
                 Log.d(TAG, "User entered blank API URL, re-initializing regions...");
@@ -322,6 +324,9 @@ public class PreferencesActivity extends PreferenceActivity
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
+                String formattedUrl = formattedUrl(apiUrl);
+                Application.get().setCustomOtpApiUrl(formattedUrl);
+                Log.d(TAG, "User entered new OTP API URL: " + formattedUrl);
             }
             mOtpCustomAPIUrlChanged = true;
         } else if (preference.equals(mAnalyticsPref) && newValue instanceof Boolean) {
@@ -458,6 +463,20 @@ public class PreferencesActivity extends PreferenceActivity
             apiUrl = getString(R.string.http_prefix) + apiUrl;
         }
         return Patterns.WEB_URL.matcher(apiUrl).matches();
+    }
+
+    /**
+     * Returns properly formatted apiUrl, with HTTPS prefix if a protocol is not provided.
+     * @param apiUrl the URL to format.
+     * @return URL String with Protocol Prefix (http, https, etc).
+     */
+    private String formattedUrl(String apiUrl) {
+        try {
+            URL url = new URL(apiUrl);
+            return apiUrl;
+        } catch (MalformedURLException e) {
+            return getString(R.string.https_prefix) + apiUrl;
+        }
     }
 
     /**

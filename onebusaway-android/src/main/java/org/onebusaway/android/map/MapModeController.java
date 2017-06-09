@@ -21,6 +21,7 @@ import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaShape;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaTripsForRouteResponse;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import android.app.Activity;
 import android.location.Location;
@@ -65,6 +66,8 @@ public interface MapModeController {
         ObaMapView getMapView();
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
+
+        void showBikeStations(List<BikeRentalStation> bikeStations);
 
         boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation);
 

@@ -25,6 +25,8 @@ import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
+import org.onebusaway.android.map.bike.BikeLoaderCallbacks;
+import org.onebusaway.android.map.bike.BikeStationLoader;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -158,6 +160,12 @@ public class StopMapController implements MapModeController,
      */
     GoogleApiClient mGoogleApiClient;
 
+    // Bike Station loader
+    private static final int BIKE_STATIONS_LOADER = 8736;
+    private BikeLoaderCallbacks bikeLoaderCallbacks;
+    private BikeStationLoader bikeLoader;
+
+
     public StopMapController(Callback callback) {
         mCallback = callback;
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
@@ -174,6 +182,12 @@ public class StopMapController implements MapModeController,
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
+
+        bikeLoaderCallbacks = new BikeLoaderCallbacks(mCallback);
+        bikeLoader = bikeLoaderCallbacks.onCreateLoader(BIKE_STATIONS_LOADER, null);
+        bikeLoader.registerListener(0, bikeLoaderCallbacks);
+        bikeLoader.startLoading();
+
     }
 
     /**
@@ -385,6 +399,9 @@ public class StopMapController implements MapModeController,
                         if (loader != null) {
                             StopsRequest req = new StopsRequest(mCallback.getMapView());
                             loader.update(req);
+                        }
+                        if (bikeLoader != null) {
+                            bikeLoader.update();
                         }
                     }
                 });

@@ -71,6 +71,7 @@ import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -132,6 +133,8 @@ public class BaseMapFragment extends SupportMapFragment
     private StopOverlay mStopOverlay;
 
     private VehicleOverlay mVehicleOverlay;
+
+    private BikeStationOverlay mBikeStationOverlay;
 
     // We only display the out of range dialog once
     private boolean mWarnOutOfRange = true;
@@ -398,6 +401,11 @@ public class BaseMapFragment extends SupportMapFragment
             mVehicleOverlay.setController(this);
         }
     }
+    public void setupBikeStationOverlay() {
+        if (mBikeStationOverlay == null) {
+            mBikeStationOverlay = new BikeStationOverlay(mMap);
+        }
+    }
 
     protected void showDialog(int id) {
         MapDialogFragment.newInstance(id, this).show(getFragmentManager(), MapDialogFragment.TAG);
@@ -532,6 +540,14 @@ public class BaseMapFragment extends SupportMapFragment
             mStopOverlay.populateStops(stops, refs);
         }
     }
+
+    @Override
+    public void showBikeStations(List<BikeRentalStation> bikeStations) {
+        setupBikeStationOverlay();
+        mBikeStationOverlay.addBikeStations(bikeStations);
+    }
+
+
 
     @Override
     public void notifyOutOfRange() {

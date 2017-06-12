@@ -26,9 +26,10 @@ public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<B
     }
 
     @Override
-    public BikeStationLoader onCreateLoader(int id,
-                                            Bundle args) {
-        return new BikeStationLoader(mapFragment.getActivity());
+    public BikeStationLoader onCreateLoader(int id, Bundle args) {
+        return new BikeStationLoader(mapFragment.getActivity(),
+                mapFragment.getSouthWest(),
+                mapFragment.getNorthEast());
     }
 
     @Override

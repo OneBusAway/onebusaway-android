@@ -3,6 +3,8 @@ package org.onebusaway.android.map.bike;
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
@@ -17,13 +19,28 @@ import java.net.URL;
 import java.util.List;
 
 /**
+ * Class responsible for loading the list of bike stations and floating bikes from OpenTripPlanner.
+ * OpenTripPlanner accept parameters lowerLeft and upperRight.
+ * Google Maps work with southwest and northeast. loweLeft is equivalent to southeast and upperRight is equivalent to northeast.
+ * <p>
+ * This class external interface accept the parameters as found in Google Maps. Internally it maps it to OTP parameters.
+ *
  * Created by carvalhorr on 6/5/17.
  */
 
 public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> {
 
-    public BikeStationLoader(Context context) {
+    private LatLng lowerLeft, upperRight;
+
+    /**
+     *
+     * @param context
+     * @param southWest southwest corner on the map in lat long
+     * @param northEast northeast corner on the map in lat long
+     */
+    public BikeStationLoader(Context context, LatLng southWest, LatLng northEast) {
         super(context);
+        updateCoordinates(southWest, northEast);
     }
 
     @Override
@@ -36,7 +53,15 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
             if (otpBaseUrl == null || otpBaseUrl == "") {
                 otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
             }
-            URL otpBikeStationsUrl = new URL( otpBaseUrl + "routers/default/bike_rental/");
+
+            URL otpBikeStationsUrl = new URL(otpBaseUrl + "routers/default/bike_rental?lowerLeft="
+                    + lowerLeft.latitude
+                    + ","
+                    + lowerLeft.longitude
+                    + "&upperRight="
+                    + upperRight.latitude
+                    + ","
+                    + upperRight.longitude);
 
             HttpURLConnection connection = (HttpURLConnection) otpBikeStationsUrl.openConnection();
             connection.setRequestProperty("Accept", "application/json");
@@ -70,8 +95,14 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
         forceLoad();
     }
 
-    public void update() {
+    public void update(LatLng southWest, LatLng northEast) {
+        updateCoordinates(southWest, northEast);
         onContentChanged();
+    }
+
+    private void updateCoordinates(LatLng southWest, LatLng northEast) {
+        this.lowerLeft = southWest;
+        this.upperRight = northEast;
     }
 
 }

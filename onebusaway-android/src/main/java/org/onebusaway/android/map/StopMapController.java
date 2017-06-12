@@ -401,7 +401,8 @@ public class StopMapController implements MapModeController,
                             loader.update(req);
                         }
                         if (bikeLoader != null) {
-                            bikeLoader.update();
+                            bikeLoader.update(mCallback.getSouthWest(),
+                                    mCallback.getNorthEast());
                         }
                     }
                 });

@@ -717,6 +717,16 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
+    @Override
+    public LatLng getSouthWest() {
+        return mMap.getProjection().getVisibleRegion().latLngBounds.southwest;
+    }
+
+    @Override
+    public LatLng getNorthEast() {
+        return mMap.getProjection().getVisibleRegion().latLngBounds.northeast;
+    }
+
     /**
      * Shows error messages related to stops, routes, and vehicles on the map, based on the
      * response

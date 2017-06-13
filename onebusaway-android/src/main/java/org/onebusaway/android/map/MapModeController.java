@@ -71,6 +71,8 @@ public interface MapModeController {
 
         void showBikeStations(List<BikeRentalStation> bikeStations);
 
+        void clearBikeStations();
+
         boolean setMyLocation(boolean useDefaultZoom, boolean animateToLocation);
 
         void notifyOutOfRange();

@@ -30,6 +30,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
@@ -86,6 +87,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_BIKE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
@@ -401,6 +403,7 @@ public class HomeActivity extends AppCompatActivity
 
     private void goToNavDrawerItem(int item) {
         // Update the main content by replacing fragments
+        boolean isBikeDisplayed = Application.getPrefs().getBoolean(NavigationDrawerFragment.STATE_BIKE_SELECTED, false);
         switch (item) {
             case NAVDRAWER_ITEM_STARRED_STOPS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_STARRED_STOPS) {
@@ -412,14 +415,18 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_label_button_press_star));
                 }
                 break;
-            case NAVDRAWER_ITEM_NEARBY:
-                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
-                    showMapFragment();
-                    mCurrentNavDrawerPosition = item;
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_button_press),
-                            getString(R.string.analytics_label_button_press_nearby));
+            case NAVDRAWER_ITEM_BIKE:
+            case NAVDRAWER_ITEM_NEARBY: {
+                    if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY || isBikeDisplayed) {
+                        showMapFragment();
+                        mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
+                        ObaAnalytics.reportEventWithCategory(
+                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                getString(R.string.analytics_action_button_press),
+                                getString(R.string.analytics_label_button_press_nearby));
+
+                    }
+                    mMapFragment.showBikes(isBikeDisplayed);
                 }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:

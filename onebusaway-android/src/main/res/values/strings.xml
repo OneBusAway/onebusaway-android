@@ -26,6 +26,7 @@
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
+    <string name="navdrawer_item_bike">Bike</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>

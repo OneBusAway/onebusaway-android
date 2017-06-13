@@ -182,12 +182,22 @@ public class StopMapController implements MapModeController,
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
+    }
 
-        bikeLoaderCallbacks = new BikeLoaderCallbacks(mCallback);
-        bikeLoader = bikeLoaderCallbacks.onCreateLoader(BIKE_STATIONS_LOADER, null);
-        bikeLoader.registerListener(0, bikeLoaderCallbacks);
-        bikeLoader.startLoading();
-
+    public void showBikes(boolean showBikes) {
+        if (showBikes) {
+            bikeLoaderCallbacks = new BikeLoaderCallbacks(mCallback);
+            bikeLoader = bikeLoaderCallbacks.onCreateLoader(BIKE_STATIONS_LOADER, null);
+            bikeLoader.registerListener(0, bikeLoaderCallbacks);
+            bikeLoader.startLoading();
+        } else {
+            if (bikeLoader != null) {
+                mCallback.clearBikeStations();
+                bikeLoader.stopLoading();
+                bikeLoader = null;
+                bikeLoaderCallbacks = null;
+            }
+        }
     }
 
     /**

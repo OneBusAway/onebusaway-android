@@ -48,6 +48,8 @@ public class MapParams {
 
     public static final String MAP_PADDING_BOTTOM = ".MapPaddingBottom";
 
+    public static final String SHOW_BIKE = ".ShowBike";
+
     public static final String MODE_ROUTE = "RouteMode";
 
     public static final String MODE_STOP = "StopMode";

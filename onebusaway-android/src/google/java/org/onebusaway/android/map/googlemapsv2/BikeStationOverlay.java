@@ -55,6 +55,8 @@ public class BikeStationOverlay implements GoogleMap.OnMarkerClickListener, Goog
             options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         }
         Marker m = mMap.addMarker(options);
+        mBikeStationMarkers.put(station.id, m);
+        mStations.put(m, station);
     }
 
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
@@ -65,6 +67,14 @@ public class BikeStationOverlay implements GoogleMap.OnMarkerClickListener, Goog
         for (BikeRentalStation bikeStation: bikeStations) {
             addMarker(bikeStation);
         }
+    }
+
+    public void clearBikeStations() {
+        for (Marker marker: mStations.keySet()) {
+            marker.remove();
+        }
+        mBikeStationMarkers.clear();
+        mStations.clear();
     }
 
     @Override

@@ -31,19 +31,18 @@ import java.util.List;
  *
  * @author carvalhorr
  */
-public class BikeStationOverlay implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
+public class BikeStationOverlay implements MarkerListeners {
 
     private GoogleMap mMap;
 
     private static final int FUZZY_MAX_MARKER_COUNT = 200;
 
-    private HashMap<String, Marker> mBikeStationMarkers;
-
     private HashMap<Marker, BikeRentalStation> mStations;
+
+    private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
     public BikeStationOverlay(GoogleMap map) {
         mMap = map;
-        mBikeStationMarkers = new HashMap<>();
         mStations = new HashMap<>();
     }
 
@@ -55,13 +54,18 @@ public class BikeStationOverlay implements GoogleMap.OnMarkerClickListener, Goog
             options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         }
         Marker m = mMap.addMarker(options);
-        mBikeStationMarkers.put(station.id, m);
+
+        m.setTag(station);
         mStations.put(m, station);
     }
 
+    public void setOnFocusChangeListener(BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
+        mOnFocusChangedListener = onFocusChangedListener;
+    }
+
+
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        if (mBikeStationMarkers.size() >= FUZZY_MAX_MARKER_COUNT) {
-            mBikeStationMarkers.clear();
+        if (mStations.size() >= FUZZY_MAX_MARKER_COUNT) {
             mStations.clear();
         }
         for (BikeRentalStation bikeStation: bikeStations) {
@@ -73,17 +77,24 @@ public class BikeStationOverlay implements GoogleMap.OnMarkerClickListener, Goog
         for (Marker marker: mStations.keySet()) {
             marker.remove();
         }
-        mBikeStationMarkers.clear();
         mStations.clear();
     }
 
     @Override
-    public void onMapClick(LatLng latLng) {
+    public boolean markerClicked(Marker marker) {
 
+        if (marker.getTag() != null) {
+            if (mOnFocusChangedListener != null) {
+                BikeRentalStation bikeRentalStation = (BikeRentalStation) marker.getTag();
+                mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
-        return false;
+    public void removeMarkerClicked(LatLng latLng) {
+
     }
 }

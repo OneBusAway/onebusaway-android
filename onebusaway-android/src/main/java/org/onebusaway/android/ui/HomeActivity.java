@@ -80,6 +80,7 @@ import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -892,6 +893,11 @@ public class HomeActivity extends AppCompatActivity
             }
             mShowArrivalsMenu = false;
         }
+    }
+
+    @Override
+    public void onFocusChanged(BikeRentalStation bikeRentalStation) {
+        Log.d(TAG, "Bike Station Clicked on map");
     }
 
     @Override

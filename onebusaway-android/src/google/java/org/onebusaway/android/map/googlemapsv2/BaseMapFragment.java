@@ -41,6 +41,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -48,6 +49,7 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.VisibleRegion;
@@ -182,6 +184,7 @@ public class BaseMapFragment extends SupportMapFragment
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
+        void onFocusChanged(BikeRentalStation bikeRentalStation);
     }
 
     public interface OnProgressBarChangedListener {
@@ -238,6 +241,11 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onMapReady(com.google.android.gms.maps.GoogleMap map) {
         mMap = map;
+
+        MapClickListeners mapClickListeners = new MapClickListeners();
+
+        mMap.setOnMarkerClickListener(mapClickListeners);
+        mMap.setOnMapClickListener(mapClickListeners);
 
         SharedPreferences sp = Application.getPrefs();
         isBikeDisplayed = sp.getBoolean(NavigationDrawerFragment.STATE_BIKE_SELECTED, false);
@@ -412,6 +420,7 @@ public class BaseMapFragment extends SupportMapFragment
     public void setupBikeStationOverlay() {
         if (mBikeStationOverlay == null) {
             mBikeStationOverlay = new BikeStationOverlay(mMap);
+            mBikeStationOverlay.setOnFocusChangeListener(mOnFocusChangedListener);
         }
     }
 
@@ -1195,6 +1204,32 @@ public class BaseMapFragment extends SupportMapFragment
                             }
                     );
             return builder.create();
+        }
+    }
+
+    private class MapClickListeners implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
+
+        @Override
+        public void onMapClick(LatLng latLng) {
+            if (mStopOverlay != null) {
+                mStopOverlay.removeMarkerClicked(latLng);
+            }
+
+        }
+
+        @Override
+        public boolean onMarkerClick(Marker marker) {
+            if (mStopOverlay != null) {
+                if (mStopOverlay.markerClicked(marker)) {
+                    return true;
+                }
+            }
+            if (mBikeStationOverlay != null) {
+                if (mBikeStationOverlay.markerClicked(marker)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

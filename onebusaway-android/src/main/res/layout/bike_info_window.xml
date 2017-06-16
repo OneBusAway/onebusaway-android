@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/material_background">
+
+
+    <TextView
+        android:id="@+id/bikeStationName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/alert_text_background_info"
+        android:padding="4dp"
+        android:textAppearance="@style/TextAppearance.Design.Tab"
+        android:textColor="@color/alert_text_color_info" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bikes"
+                android:textAppearance="@style/TextAppearance.Design.Tab"
+                android:textColor="@color/cardview_dark_background"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/numberBikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Spaces"
+                android:textAppearance="@style/TextAppearance.Design.Tab"
+                android:textColor="@color/cardview_dark_background"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/numberRacks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</LinearLayout>

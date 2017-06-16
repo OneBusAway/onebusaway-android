@@ -49,6 +49,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -201,6 +202,11 @@ public class HomeActivity extends AppCompatActivity
      * mFocusedStop
      */
     String mFocusedStopId = null;
+
+    /**
+     * Bike rental station ID that has the focus currently.
+     */
+    String mBikeRentalStationId = null;
 
     ObaStop mFocusedStop = null;
 
@@ -394,6 +400,9 @@ public class HomeActivity extends AppCompatActivity
                 outState.putString(MapParams.STOP_CODE, mFocusedStop.getStopCode());
                 outState.putString(MapParams.STOP_NAME, mFocusedStop.getName());
             }
+        }
+        if (mBikeRentalStationId != null) {
+            outState.putString(MapParams.BIKE_STATION_ID, mBikeRentalStationId);
         }
     }
 
@@ -872,6 +881,7 @@ public class HomeActivity extends AppCompatActivity
         mFocusedStop = stop;
 
         if (stop != null) {
+            mBikeRentalStationId = null;
             mFocusedStopId = stop.getId();
             // A stop on the map was just tapped, show it in the sliding panel
             updateArrivalListFragment(stop.getId(), stop.getName(), stop.getStopCode(), stop,
@@ -882,22 +892,44 @@ public class HomeActivity extends AppCompatActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_map_icon));
         } else {
-            // No stop is in focus (e.g., user tapped on the map), so hide the panel
-            // and clear the currently focused stopId
-            mFocusedStopId = null;
-            moveMyLocationButton();
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-            if (mArrivalsListFragment != null) {
-                FragmentManager fm = getSupportFragmentManager();
-                fm.beginTransaction().remove(mArrivalsListFragment).commit();
-            }
-            mShowArrivalsMenu = false;
+            hideBusStopFragment();
         }
     }
 
+    private void hideBusStopFragment() {
+        // No stop is in focus (e.g., user tapped on the map), so hide the panel
+        // and clear the currently focused stopId
+        mFocusedStopId = null;
+        moveMyLocationButton();
+        mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        if (mArrivalsListFragment != null) {
+            FragmentManager fm = getSupportFragmentManager();
+            fm.beginTransaction().remove(mArrivalsListFragment).commit();
+        }
+        mShowArrivalsMenu = false;
+    }
+
+    /**
+     * Called from the BaseMapFragment when a BikeRentalStation is clicked.
+     *
+     * @param bikeRentalStation the bike rental station that was clicked.
+     */
     @Override
     public void onFocusChanged(BikeRentalStation bikeRentalStation) {
         Log.d(TAG, "Bike Station Clicked on map");
+
+        // Check to see if we're already focused on this same bike rental station - if so, we shouldn't do anything
+        if (mBikeRentalStationId != null && bikeRentalStation != null &&
+                mBikeRentalStationId.equalsIgnoreCase(bikeRentalStation.id)) {
+            return;
+        }
+
+        if (bikeRentalStation == null) {
+            mBikeRentalStationId = null;
+        } else {
+            mBikeRentalStationId = bikeRentalStation.id;
+            //hideBusStopFragment();
+        }
     }
 
     @Override
@@ -1112,10 +1144,19 @@ public class HomeActivity extends AppCompatActivity
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
+        showSlidingPanel();
+        moveMyLocationButton();
+    }
+
+    private void showSlidingPanel() {
         if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
-        moveMyLocationButton();
+
+    }
+
+    private void showBikeRentalStationFragment(BikeRentalStation bikeRentalStation) {
+
     }
 
     private void goToSendFeedBack() {

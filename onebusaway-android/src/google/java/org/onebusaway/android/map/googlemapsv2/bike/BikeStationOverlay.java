@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.map.googlemapsv2;
+package org.onebusaway.android.map.googlemapsv2.bike;
+
+import android.app.Activity;
+import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -21,6 +24,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
+import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.HashMap;
@@ -41,17 +48,18 @@ public class BikeStationOverlay implements MarkerListeners {
 
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
-    public BikeStationOverlay(GoogleMap map) {
+    public BikeStationOverlay(Activity a, GoogleMap map) {
         mMap = map;
         mStations = new HashMap<>();
+        mMap.setInfoWindowAdapter(new BikeInfoWindow(a));
     }
 
     private synchronized void addMarker(BikeRentalStation station) {
         MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
         if (mMap.getCameraPosition().zoom > 13) {
-            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_big));
         } else {
-            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.bike_circle_icon));
         }
         Marker m = mMap.addMarker(options);
 
@@ -65,9 +73,10 @@ public class BikeStationOverlay implements MarkerListeners {
 
 
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        if (mStations.size() >= FUZZY_MAX_MARKER_COUNT) {
-            mStations.clear();
-        }
+        /*if (mStations.size() >= FUZZY_MAX_MARKER_COUNT) {
+            clearBikeStations();
+        }*/
+        clearBikeStations();
         for (BikeRentalStation bikeStation: bikeStations) {
             addMarker(bikeStation);
         }
@@ -86,6 +95,7 @@ public class BikeStationOverlay implements MarkerListeners {
         if (marker.getTag() != null) {
             if (mOnFocusChangedListener != null) {
                 BikeRentalStation bikeRentalStation = (BikeRentalStation) marker.getTag();
+                marker.showInfoWindow();
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
             return true;
@@ -95,6 +105,7 @@ public class BikeStationOverlay implements MarkerListeners {
 
     @Override
     public void removeMarkerClicked(LatLng latLng) {
-
+        Log.d("", "remove selected bike station");
+        mOnFocusChangedListener.onFocusChanged(null);
     }
 }

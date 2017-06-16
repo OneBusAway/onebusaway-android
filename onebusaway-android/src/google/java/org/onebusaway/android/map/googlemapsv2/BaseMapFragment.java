@@ -26,7 +26,6 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
@@ -69,6 +68,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
+import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.NavigationDrawerFragment;
 import org.onebusaway.android.util.LocationHelper;
@@ -418,8 +418,9 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
     public void setupBikeStationOverlay() {
-        if (mBikeStationOverlay == null) {
-            mBikeStationOverlay = new BikeStationOverlay(mMap);
+        Activity activity = getActivity();
+        if (mBikeStationOverlay == null && activity != null) {
+            mBikeStationOverlay = new BikeStationOverlay(activity, mMap);
             mBikeStationOverlay.setOnFocusChangeListener(mOnFocusChangedListener);
         }
     }
@@ -1215,6 +1216,10 @@ public class BaseMapFragment extends SupportMapFragment
                 mStopOverlay.removeMarkerClicked(latLng);
             }
 
+            if (mBikeStationOverlay != null) {
+                mBikeStationOverlay.removeMarkerClicked(latLng);
+            }
+
         }
 
         @Override
@@ -1222,6 +1227,8 @@ public class BaseMapFragment extends SupportMapFragment
             if (mStopOverlay != null) {
                 if (mStopOverlay.markerClicked(marker)) {
                     return true;
+                } else {
+                    mStopOverlay.removeMarkerClicked(marker.getPosition());
                 }
             }
             if (mBikeStationOverlay != null) {

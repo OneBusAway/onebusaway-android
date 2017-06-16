@@ -26,6 +26,8 @@ public class MapParams {
 
     public static final String STOP_CODE = ".StopCode";
 
+    public static final String BIKE_STATION_ID = ".BikeStationId";
+
     public static final String ROUTE_ID = ".RouteId";
 
     public static final String DO_N0T_CENTER_ON_LOCATION = ".DoNotCenterOnLocation";

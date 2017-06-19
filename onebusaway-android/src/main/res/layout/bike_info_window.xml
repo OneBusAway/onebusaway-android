@@ -31,7 +31,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Bikes"
+                android:text="@string/bike_info_window_bikes_title"
                 android:textAppearance="@style/TextAppearance.Design.Tab"
                 android:textColor="@color/cardview_dark_background"
                 android:textSize="12sp" />
@@ -54,7 +54,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Spaces"
+                android:text="@string/bike_info_window_spaces_title"
                 android:textAppearance="@style/TextAppearance.Design.Tab"
                 android:textColor="@color/cardview_dark_background"
                 android:textSize="12sp" />

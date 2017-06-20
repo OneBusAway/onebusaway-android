@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.design.internal.NavigationMenu;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -89,7 +90,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_BIKE;
+import io.github.yavski.fabspeeddial.FabSpeedDial;
+import io.github.yavski.fabspeeddial.SimpleMenuListenerAdapter;
+
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
@@ -129,6 +132,8 @@ public class HomeActivity extends AppCompatActivity
 
     private static final String CHECK_REGION_VER = "checkRegionVer";
 
+    public static final String STATE_BIKE_SELECTED = "layer_bike_selected";
+
     private static final int HELP_DIALOG = 1;
 
     private static final int WHATSNEW_DIALOG = 2;
@@ -155,6 +160,8 @@ public class HomeActivity extends AppCompatActivity
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
 
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
+
+    private boolean isBikeSelected = false;
 
     Animation mMyLocationAnimation;
 
@@ -326,6 +333,16 @@ public class HomeActivity extends AppCompatActivity
 
         setupGooglePlayServices();
 
+        setupLayersSpeedDial();
+
+        // TODO: move thois somewhere else
+        if (savedInstanceState != null) {
+            isBikeSelected = savedInstanceState.getBoolean(STATE_BIKE_SELECTED);
+        } else {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            isBikeSelected = sp.getBoolean(STATE_BIKE_SELECTED, false);
+        }
+
         UIUtils.setupActionBar(this);
 
         checkRegionStatus();
@@ -413,7 +430,6 @@ public class HomeActivity extends AppCompatActivity
 
     private void goToNavDrawerItem(int item) {
         // Update the main content by replacing fragments
-        boolean isBikeDisplayed = Application.getPrefs().getBoolean(NavigationDrawerFragment.STATE_BIKE_SELECTED, false);
         switch (item) {
             case NAVDRAWER_ITEM_STARRED_STOPS:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_STARRED_STOPS) {
@@ -425,18 +441,14 @@ public class HomeActivity extends AppCompatActivity
                             getString(R.string.analytics_label_button_press_star));
                 }
                 break;
-            case NAVDRAWER_ITEM_BIKE:
-            case NAVDRAWER_ITEM_NEARBY: {
-                    if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY || isBikeDisplayed) {
-                        showMapFragment();
-                        mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
-                        ObaAnalytics.reportEventWithCategory(
-                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                                getString(R.string.analytics_action_button_press),
-                                getString(R.string.analytics_label_button_press_nearby));
-
-                    }
-                    mMapFragment.showBikes(isBikeDisplayed);
+            case NAVDRAWER_ITEM_NEARBY:
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
+                    showMapFragment();
+                    mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_nearby));
                 }
                 break;
             case NAVDRAWER_ITEM_MY_REMINDERS:
@@ -481,6 +493,25 @@ public class HomeActivity extends AppCompatActivity
         }
         invalidateOptionsMenu();
     }
+
+
+    private void handleNearbySelection() {
+    }
+
+    private void toggleBikeshare() {
+        boolean isBikeDisplayed = Application.getPrefs().getBoolean(STATE_BIKE_SELECTED, false);
+        isBikeDisplayed = !isBikeDisplayed;
+        setBikeSelected(isBikeDisplayed);
+        mMapFragment.showBikes(isBikeDisplayed);
+    }
+
+    private void setBikeSelected(boolean bikeSelected) {
+        SharedPreferences sp = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        sp.edit().putBoolean(STATE_BIKE_SELECTED, bikeSelected).apply();
+    }
+
+
 
     private void showMapFragment() {
         FragmentManager fm = getSupportFragmentManager();
@@ -1447,6 +1478,24 @@ public class HomeActivity extends AppCompatActivity
             mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(this);
             mGoogleApiClient.connect();
         }
+    }
+
+    private void setupLayersSpeedDial() {
+        FabSpeedDial fabSpeedDial = (FabSpeedDial) findViewById(R.id.layersSpeedDial);
+        fabSpeedDial.setMenuListener(new SimpleMenuListenerAdapter() {
+
+            @Override
+            public boolean onMenuItemSelected(MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.action_bikeshare: {
+                        toggleBikeshare();
+                        break;
+                    }
+                }
+                return true;
+            }
+
+        });
     }
 
     private void setupSlidingPanel() {

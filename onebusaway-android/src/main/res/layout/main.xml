@@ -58,12 +58,28 @@
                         android:layout_alignParentBottom="true"
                         android:layout_alignParentRight="true"
                         android:layout_marginRight="@dimen/fab_margin"
-                    android:layout_marginLeft="@dimen/fab_margin"
+                        android:layout_marginLeft="@dimen/fab_margin"
                         android:layout_marginBottom="@dimen/fab_margin"
                         android:src="@drawable/ic_maps_my_location"
                         android:contentDescription="@string/map_option_mylocation"
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
+
+                <io.github.yavski.fabspeeddial.FabSpeedDial
+                    android:id="@+id/layersSpeedDial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="64dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentRight="true"
+                    app:fabDrawable="@drawable/ic_layers_black_24dp"
+                    app:fabGravity="bottom_end"
+                    app:fabMenu="@menu/map_layers_speed_dial_options"
+                    app:miniFabBackgroundTint="@android:color/white"
+                    app:miniFabDrawableTint="?attr/colorPrimaryDark"
+                    app:miniFabTitleTextColor="?attr/colorPrimaryDark" />
+
                 <!-- ROUTE MODE HEADER -->
                 <include android:id="@+id/route_info"
                          layout="@layout/route_info_head"

@@ -37,6 +37,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
@@ -81,6 +82,7 @@ import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.NavigationDrawerFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
@@ -259,7 +261,7 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMapClickListener(mapClickListeners);
 
         SharedPreferences sp = Application.getPrefs();
-        isBikeDisplayed = sp.getBoolean(NavigationDrawerFragment.STATE_BIKE_SELECTED, false);
+        isBikeDisplayed = sp.getBoolean(HomeActivity.STATE_BIKE_SELECTED, false);
 
         initMap(mLastSavedInstanceState);
     }
@@ -314,6 +316,9 @@ public class BaseMapFragment extends SupportMapFragment
             mode = MapParams.MODE_STOP;
         }
         setMapMode(mode, args);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        boolean isBikeSelected = sp.getBoolean(HomeActivity.STATE_BIKE_SELECTED, false);
+        showBikes(isBikeSelected);
     }
 
     @Override

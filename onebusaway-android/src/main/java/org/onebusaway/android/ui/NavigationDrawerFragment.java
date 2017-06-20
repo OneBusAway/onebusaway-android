@@ -60,8 +60,6 @@ public class NavigationDrawerFragment extends Fragment {
      */
     private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
 
-    public static final String STATE_BIKE_SELECTED = "navigation_drawer_bike_selected";
-
     // symbols for navdrawer items (indices must correspond to array below). This is
     // not a list of items that are necessarily *present* in the Nav Drawer; rather,
     // it's a list of all possible items.
@@ -79,8 +77,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PLAN_TRIP = 6;
 
-    protected static final int NAVDRAWER_ITEM_BIKE = 7;
-
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -90,8 +86,6 @@ public class NavigationDrawerFragment extends Fragment {
     // Currently selected navigation drawer item (must be value of one of the constants above)
     private int mCurrentSelectedPosition = 0;
 
-    private boolean isBikeSelected = false;
-
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
             R.string.navdrawer_item_nearby,
@@ -100,7 +94,7 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_settings,
             R.string.navdrawer_item_help,
             R.string.navdrawer_item_send_feedback,
-            R.string.navdrawer_item_plan_trip, R.string.navdrawer_item_bike
+            R.string.navdrawer_item_plan_trip
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -111,8 +105,7 @@ public class NavigationDrawerFragment extends Fragment {
             0, // Settings
             0, // Help
             0, // Send feedback
-            R.drawable.ic_maps_directions, // Plan a trip
-            R.drawable.ic_drawer_bike // Bikeshare (add icon later)
+            R.drawable.ic_maps_directions // Plan a trip
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -151,12 +144,10 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (savedInstanceState != null) {
             mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
-            isBikeSelected = savedInstanceState.getBoolean(STATE_BIKE_SELECTED);
             Log.d(TAG, "Using position from savedInstanceState = " + mCurrentSelectedPosition);
         } else {
             // Try to get the saved position from preferences
             mCurrentSelectedPosition = sp.getInt(STATE_SELECTED_POSITION, NAVDRAWER_ITEM_NEARBY);
-            isBikeSelected = sp.getBoolean(STATE_BIKE_SELECTED, false);
             Log.d(TAG, "Using position from preferences = " + mCurrentSelectedPosition);
         }
 
@@ -281,25 +272,19 @@ public class NavigationDrawerFragment extends Fragment {
         int currentId = itemId;
         if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
-            if (isBikeOverlay(itemId)) {
-                isBikeSelected = !isBikeSelected;
-                mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
-            } else {
-                mCurrentSelectedPosition = itemId;
-            }
+            mCurrentSelectedPosition = itemId;
             currentId = mCurrentSelectedPosition;
             // Save the selected position as a preference
             SharedPreferences sp = PreferenceManager
                     .getDefaultSharedPreferences(getActivity());
             sp.edit().putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition).apply();
-            sp.edit().putBoolean(STATE_BIKE_SELECTED, isBikeSelected).apply();
         }
         if (mNavDrawerItemViews != null) {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
                     int thisItemId = mNavDrawerItems.get(i);
                     formatNavDrawerItem(mNavDrawerItemViews[i], thisItemId,
-                            (currentId == thisItemId) || (currentId == NAVDRAWER_ITEM_NEARBY && isBikeOverlay(thisItemId) && isBikeSelected));
+                            (currentId == thisItemId) || currentId == NAVDRAWER_ITEM_NEARBY);
                 }
             }
         }
@@ -326,7 +311,6 @@ public class NavigationDrawerFragment extends Fragment {
         super.onSaveInstanceState(outState);
         Log.d(TAG, "Saving position = " + mCurrentSelectedPosition);
         outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
-        outState.putBoolean(STATE_BIKE_SELECTED, isBikeSelected);
     }
 
     @Override
@@ -367,7 +351,6 @@ public class NavigationDrawerFragment extends Fragment {
         mNavDrawerItems.clear();
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_NEARBY);
-        mNavDrawerItems.add(NAVDRAWER_ITEM_BIKE);
         mNavDrawerItems.add(NAVDRAWER_ITEM_STARRED_STOPS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_MY_REMINDERS);
 
@@ -407,7 +390,7 @@ public class NavigationDrawerFragment extends Fragment {
     }
 
     private View makeNavDrawerItem(final int itemId, ViewGroup container) {
-        boolean selected = mCurrentSelectedPosition == itemId || (isBikeOverlay(itemId) && isBikeSelected);
+        boolean selected = mCurrentSelectedPosition == itemId;
         int layoutToInflate;
         if (itemId == NAVDRAWER_ITEM_SEPARATOR) {
             layoutToInflate = R.layout.navdrawer_separator;
@@ -505,7 +488,4 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP;
     }
 
-    private boolean isBikeOverlay(int itemId) {
-        return itemId == NAVDRAWER_ITEM_BIKE;
-    }
 }

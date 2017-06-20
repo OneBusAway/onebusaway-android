@@ -351,6 +351,8 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     // Bottom sliding panel
     compile 'com.sothree.slidinguppanel:library:3.3.0'
+    // For floating action button speed dial
+    compile 'io.github.yavski:fab-speed-dial:1.0.6'
     // For sorting alphanumeric route names
     compile 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library

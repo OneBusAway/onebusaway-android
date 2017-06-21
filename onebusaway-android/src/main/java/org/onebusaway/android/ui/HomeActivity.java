@@ -32,7 +32,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.internal.NavigationMenu;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -50,7 +49,6 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -156,6 +154,8 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderSubView;
 
     private FloatingActionButton mFabMyLocation;
+
+    private FabSpeedDial mLayersFab;
 
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
 
@@ -931,7 +931,7 @@ public class HomeActivity extends AppCompatActivity
         // No stop is in focus (e.g., user tapped on the map), so hide the panel
         // and clear the currently focused stopId
         mFocusedStopId = null;
-        moveMyLocationButton();
+        moveFabsLocation();
         mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
         if (mArrivalsListFragment != null) {
             FragmentManager fm = getSupportFragmentManager();
@@ -1015,7 +1015,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         // Header might have changed height, so make sure my location button is set above the header
-        moveMyLocationButton();
+        moveFabsLocation();
 
         // Show arrival info related tutorials
         showArrivalInfoTutorials(response);
@@ -1176,7 +1176,7 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
         showSlidingPanel();
-        moveMyLocationButton();
+        moveFabsLocation();
     }
 
     private void showSlidingPanel() {
@@ -1347,14 +1347,29 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    synchronized private void moveMyLocationButton() {
-        if (mFabMyLocation == null) {
+    /**
+     * Moves a Floating Action Button as response to sliding panel height changes.
+     *
+     * Currently there are two FAB that can be moved, the My location button and the Layers button.
+     */
+    synchronized private void moveFabsLocation() {
+        int[] coords1 = {0,0};
+        int[] coords2 = {0,0};
+        mFabMyLocation.getLocationOnScreen(coords1);
+        mLayersFab.getLocationOnScreen(coords2);
+
+        moveFabLocation(mFabMyLocation, MY_LOC_DEFAULT_BOTTOM_MARGIN);
+        moveFabLocation(mLayersFab, (coords1[1] - coords2[1] - MY_LOC_DEFAULT_BOTTOM_MARGIN));
+    }
+    private void moveFabLocation(final View fab, final int initialMargin) {
+        if (fab == null) {
             return;
         }
         if (mMyLocationAnimation != null &&
                 (mMyLocationAnimation.hasStarted() && !mMyLocationAnimation.hasEnded())) {
             // We're already animating - do nothing
-            return;
+
+            //return;
         }
 
         if (mMyLocationAnimation != null) {
@@ -1366,10 +1381,10 @@ public class HomeActivity extends AppCompatActivity
         h.postDelayed(new Runnable() {
             @Override
             public void run() {
-                final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
+                final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) fab
                         .getLayoutParams();
 
-                int tempMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN;
+                int tempMargin = initialMargin;
 
                 if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
                     tempMargin += mSlidingPanel.getPanelHeight();
@@ -1401,7 +1416,7 @@ public class HomeActivity extends AppCompatActivity
                             bottom = currentMargin - (int) (Math.abs(currentMargin - goalMargin)
                                     * interpolatedTime);
                         }
-                        UIUtils.setMargins(mFabMyLocation,
+                        UIUtils.setMargins(fab,
                                 p.leftMargin,
                                 p.topMargin,
                                 p.rightMargin,
@@ -1409,7 +1424,7 @@ public class HomeActivity extends AppCompatActivity
                     }
                 };
                 mMyLocationAnimation.setDuration(MY_LOC_BTN_ANIM_DURATION);
-                mFabMyLocation.startAnimation(mMyLocationAnimation);
+                fab.startAnimation(mMyLocationAnimation);
             }
         }, 100);
     }
@@ -1481,8 +1496,8 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        FabSpeedDial fabSpeedDial = (FabSpeedDial) findViewById(R.id.layersSpeedDial);
-        fabSpeedDial.setMenuListener(new SimpleMenuListenerAdapter() {
+        mLayersFab = (FabSpeedDial) findViewById(R.id.layersSpeedDial);
+        mLayersFab.setMenuListener(new SimpleMenuListenerAdapter() {
 
             @Override
             public boolean onMenuItemSelected(MenuItem menuItem) {
@@ -1564,7 +1579,7 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
                     mArrivalsListHeader.refresh();
                 }
-                moveMyLocationButton();
+                moveFabsLocation();
 
                 // Accessibility
                 if (mExpandCollapse != null) {

@@ -26,16 +26,17 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
 
     @Override
     public View getInfoWindow(Marker marker) {
+        return null;
+    }
+
+    @Override
+    public View getInfoContents(Marker marker) {
         BikeRentalStation station = (BikeRentalStation) marker.getTag();
         setBikeStationName(station.name);
         setNumberBikesAvailable(station.bikesAvailable);
         setNumberSpacesAvailable(station.spacesAvailable);
         return bikeInfoWindowView;
-    }
 
-    @Override
-    public View getInfoContents(Marker marker) {
-        return null;
     }
 
     private void setBikeStationName(String name) {

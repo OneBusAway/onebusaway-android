@@ -60,10 +60,6 @@ android {
         versionName "2.2.2"
     }
 
-    dexOptions {
-        javaMaxHeapSize "4g"
-    }
-
     /**
      * brand - how the name, look, and feel of each OneBusAway-based app is presented
      * platform - Google or Amazon (for Maps API v2 dependencies)

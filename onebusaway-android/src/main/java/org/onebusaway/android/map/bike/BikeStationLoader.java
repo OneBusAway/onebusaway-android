@@ -1,9 +1,8 @@
 package org.onebusaway.android.map.bike;
 
 import android.content.Context;
+import android.location.Location;
 import android.support.v4.content.AsyncTaskLoader;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
@@ -30,7 +29,7 @@ import java.util.List;
 
 public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> {
 
-    private LatLng lowerLeft, upperRight;
+    private Location lowerLeft, upperRight;
 
     /**
      *
@@ -38,7 +37,7 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
      * @param southWest southwest corner on the map in lat long
      * @param northEast northeast corner on the map in lat long
      */
-    public BikeStationLoader(Context context, LatLng southWest, LatLng northEast) {
+    public BikeStationLoader(Context context, Location southWest, Location northEast) {
         super(context);
         updateCoordinates(southWest, northEast);
     }
@@ -55,13 +54,13 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
             }
 
             URL otpBikeStationsUrl = new URL(otpBaseUrl + "routers/default/bike_rental?lowerLeft="
-                    + lowerLeft.latitude
+                    + lowerLeft.getLatitude()
                     + ","
-                    + lowerLeft.longitude
+                    + lowerLeft.getLongitude()
                     + "&upperRight="
-                    + upperRight.latitude
+                    + upperRight.getLatitude()
                     + ","
-                    + upperRight.longitude);
+                    + upperRight.getLongitude());
 
             HttpURLConnection connection = (HttpURLConnection) otpBikeStationsUrl.openConnection();
             connection.setRequestProperty("Accept", "application/json");
@@ -95,12 +94,12 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
         forceLoad();
     }
 
-    public void update(LatLng southWest, LatLng northEast) {
+    public void update(Location southWest, Location northEast) {
         updateCoordinates(southWest, northEast);
         onContentChanged();
     }
 
-    private void updateCoordinates(LatLng southWest, LatLng northEast) {
+    private void updateCoordinates(Location southWest, Location northEast) {
         this.lowerLeft = southWest;
         this.upperRight = northEast;
     }

@@ -28,8 +28,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import java.util.HashSet;
 import java.util.List;
 
@@ -80,9 +78,9 @@ public interface MapModeController {
         // Zooms to the region bounds, if a region has been set
         void zoomToRegion();
 
-        LatLng getSouthWest();
+        Location getSouthWest();
 
-        LatLng getNorthEast();
+        Location getNorthEast();
     }
 
     /**

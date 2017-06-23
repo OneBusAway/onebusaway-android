@@ -31,7 +31,7 @@ repositories {
     jcenter()
     maven {
         // OBA Releases - for comparator to sort alphanumeric routes
-        url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
+        url "http://nexus.onebusaway.org/service/local/repositories/releases"
     }
     maven {
         // for Amazon Maps

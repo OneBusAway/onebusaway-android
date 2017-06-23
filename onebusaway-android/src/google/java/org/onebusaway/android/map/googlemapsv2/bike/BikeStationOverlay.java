@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -33,18 +34,25 @@ public class BikeStationOverlay implements MarkerListeners {
 
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
+    private BitmapDescriptor mSmallBikeStationIcon;
+
+    private BitmapDescriptor mBigBikeStationIcon;
+
     public BikeStationOverlay(Activity a, GoogleMap map) {
         mMap = map;
         mStations = new HashMap<>();
         mMap.setInfoWindowAdapter(new BikeInfoWindow(a));
+
+        mSmallBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_small);
+        mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_big);
     }
 
     private synchronized void addMarker(BikeRentalStation station) {
         MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
         if (mMap.getCameraPosition().zoom > 13) {
-            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_big));
+            options.icon(mBigBikeStationIcon);
         } else {
-            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.bike_circle_icon));
+            options.icon(mSmallBikeStationIcon);
         }
         Marker m = mMap.addMarker(options);
 

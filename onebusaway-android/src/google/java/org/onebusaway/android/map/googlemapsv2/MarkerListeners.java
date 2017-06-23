@@ -1,6 +1,8 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import android.location.Location;
+
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
 /**
@@ -10,5 +12,5 @@ import com.google.android.gms.maps.model.Marker;
 
 public interface MarkerListeners {
     boolean  markerClicked(Marker marker);
-    void removeMarkerClicked(Location latLng);
+    void removeMarkerClicked(LatLng latLng);
 }

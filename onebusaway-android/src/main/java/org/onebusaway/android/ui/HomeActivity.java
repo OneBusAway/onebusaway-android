@@ -161,6 +161,10 @@ public class HomeActivity extends AppCompatActivity
 
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
+    private boolean isBikeSelected = false;
+
+    Animation mMyLocationAnimation;
+
     /**
      * GoogleApiClient being used for Location Services
      */
@@ -229,9 +233,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static void start(Context context,
-                             String focusId,
-                             double lat,
-                             double lon) {
+                                   String focusId,
+                                   double lat,
+                                   double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -267,9 +271,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static Intent makeIntent(Context context,
-                                    String focusId,
-                                    double lat,
-                                    double lon) {
+                                          String focusId,
+                                          double lat,
+                                          double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -330,6 +334,14 @@ public class HomeActivity extends AppCompatActivity
         setupGooglePlayServices();
 
         setupLayersSpeedDial();
+
+        // TODO: move thois somewhere else
+        if (savedInstanceState != null) {
+            isBikeSelected = savedInstanceState.getBoolean(STATE_BIKE_SELECTED);
+        } else {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            isBikeSelected = sp.getBoolean(STATE_BIKE_SELECTED, false);
+        }
 
         UIUtils.setupActionBar(this);
 
@@ -498,6 +510,7 @@ public class HomeActivity extends AppCompatActivity
                 .getDefaultSharedPreferences(this);
         sp.edit().putBoolean(STATE_BIKE_SELECTED, bikeSelected).apply();
     }
+
 
 
     private void showMapFragment() {
@@ -1001,6 +1014,9 @@ public class HomeActivity extends AppCompatActivity
             }
         }
 
+        // Header might have changed height, so make sure my location button is set above the header
+        moveFabsLocation();
+
         // Show arrival info related tutorials
         showArrivalInfoTutorials(response);
     }
@@ -1128,7 +1144,7 @@ public class HomeActivity extends AppCompatActivity
      *                 null if we don't have this yet.
      */
     private void updateArrivalListFragment(@NonNull String stopId, @NonNull String stopName,
-                                           @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
+            @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -1160,6 +1176,7 @@ public class HomeActivity extends AppCompatActivity
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
         showSlidingPanel();
+        moveFabsLocation();
     }
 
     private void showSlidingPanel() {
@@ -1331,35 +1348,32 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
-     * Moves all Floating Action Buttons as response to sliding panel height changes.
-     * <p>
+     * Moves a Floating Action Button as response to sliding panel height changes.
+     *
      * Currently there are two FAB that can be moved, the My location button and the Layers button.
      */
     synchronized private void moveFabsLocation() {
-
-        // get current coordinates for both FABs to compute the position of the "layers" FAB relative to the "my location" FAB.
-        int[] myLocationFabCoordinates = {0, 0};
-        int[] layersFabCoordinates = {0, 0};
-        mFabMyLocation.getLocationOnScreen(myLocationFabCoordinates);
-        mLayersFab.getLocationOnScreen(layersFabCoordinates);
+        int[] coords1 = {0,0};
+        int[] coords2 = {0,0};
+        mFabMyLocation.getLocationOnScreen(coords1);
+        mLayersFab.getLocationOnScreen(coords2);
 
         moveFabLocation(mFabMyLocation, MY_LOC_DEFAULT_BOTTOM_MARGIN);
-        moveFabLocation(mLayersFab, (myLocationFabCoordinates[1] - layersFabCoordinates[1] - MY_LOC_DEFAULT_BOTTOM_MARGIN));
+        moveFabLocation(mLayersFab, (coords1[1] - coords2[1] - MY_LOC_DEFAULT_BOTTOM_MARGIN));
     }
-
-    /**
-     * Move a Floating Action Button to a new location. Despite this method being created to move
-     * the FABs, it takes a View as parameter for the FAB because there are two different FABs used:
-     * - the Android Floating Action Button
-     * - the FabSpeedDial (an implementation of FAB with speed dial menu)
-     *
-     * @param fab The Fab view
-     * @param initialMargin margin from the bottom of the screen or from the top of the slider
-     *                      when it is open
-     */
     private void moveFabLocation(final View fab, final int initialMargin) {
         if (fab == null) {
             return;
+        }
+        if (mMyLocationAnimation != null &&
+                (mMyLocationAnimation.hasStarted() && !mMyLocationAnimation.hasEnded())) {
+            // We're already animating - do nothing
+
+            //return;
+        }
+
+        if (mMyLocationAnimation != null) {
+            mMyLocationAnimation.reset();
         }
 
         // Post this to a handler to allow the header to settle before animating the button
@@ -1391,7 +1405,7 @@ public class HomeActivity extends AppCompatActivity
                 final int currentMargin = p.bottomMargin;
 
                 // TODO - this doesn't seem to be animating?? Why not?  Or is it just my device...
-                Animation fabMovingAnimation = new Animation() {
+                mMyLocationAnimation = new Animation() {
                     @Override
                     protected void applyTransformation(float interpolatedTime, Transformation t) {
                         int bottom;
@@ -1409,8 +1423,8 @@ public class HomeActivity extends AppCompatActivity
                                 bottom);
                     }
                 };
-                fabMovingAnimation.setDuration(MY_LOC_BTN_ANIM_DURATION);
-                fab.startAnimation(fabMovingAnimation);
+                mMyLocationAnimation.setDuration(MY_LOC_BTN_ANIM_DURATION);
+                fab.startAnimation(mMyLocationAnimation);
             }
         }, 100);
     }
@@ -1517,7 +1531,7 @@ public class HomeActivity extends AppCompatActivity
                     return;
                 }
 
-                switch (newState) {
+                switch(newState) {
                     case EXPANDED:
                         onPanelExpanded(panel);
                         break;
@@ -1565,6 +1579,7 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
                     mArrivalsListHeader.refresh();
                 }
+                moveFabsLocation();
 
                 // Accessibility
                 if (mExpandCollapse != null) {
@@ -1626,7 +1641,6 @@ public class HomeActivity extends AppCompatActivity
                         mArrivalsListHeaderView.getLayoutParams().height = heightInPixels;
                         mArrivalsListHeaderSubView.getLayoutParams().height = heightInPixels;
                     }
-                    moveFabsLocation();
                 }
             }
 

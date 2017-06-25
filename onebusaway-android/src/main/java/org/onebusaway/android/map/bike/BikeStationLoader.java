@@ -46,8 +46,6 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
     public List<BikeRentalStation> loadInBackground() {
         BikeRentalStationList list = null;
         try {
-            System.out.println("Custom OTP: " + Application.get().getCustomOtpApiUrl());
-            System.out.println("Base OTP: " + Application.get().getCurrentRegion().getOtpBaseUrl().toString());
             String otpBaseUrl = Application.get().getCustomOtpApiUrl();
             if (otpBaseUrl == null || otpBaseUrl == "") {
                 otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();

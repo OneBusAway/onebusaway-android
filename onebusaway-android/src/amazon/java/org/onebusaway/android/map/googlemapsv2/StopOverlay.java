@@ -157,9 +157,9 @@ public class StopOverlay implements MarkerListeners {
     }
 
     @Override
-    public void removeMarkerClicked(LatLng latLng) {
+    public void removeMarkerClicked(LatLng location) {
         Log.d(TAG, "Map clicked");
-        removeFocus(latLng);
+        removeFocus(location);
     }
 
 
@@ -663,13 +663,14 @@ public class StopOverlay implements MarkerListeners {
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
         }
-        // Set map clicked location, if it exists
-        Location location = null;
-        if (latLng != null) {
-            location = MapHelpV2.makeLocation(latLng);
-        }
-        // Notify focus changed every time the map is clicked away from a stop marker
-        mOnFocusChangedListener.onFocusChanged(null, null, location);
+
+         // Set map clicked location, if it exists
+         Location location = null;
+         if (latLng != null) {
+             location = MapHelpV2.makeLocation(latLng);
+         }
+         // Notify focus changed every time the map is clicked away from a stop marker
+         mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {

@@ -579,7 +579,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void clearBikeStations() {
-        mBikeStationOverlay.clearBikeStations();
+        if (mBikeStationOverlay != null) {
+            mBikeStationOverlay.clearBikeStations();
+        }
     }
 
 

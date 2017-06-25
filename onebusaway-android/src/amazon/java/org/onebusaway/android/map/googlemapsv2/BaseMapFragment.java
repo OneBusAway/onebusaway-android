@@ -590,7 +590,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void clearBikeStations() {
-        mBikeStationOverlay.clearBikeStations();
+        if (mBikeStationOverlay != null) {
+            mBikeStationOverlay.clearBikeStations();
+        }
     }
 
 
@@ -752,13 +754,19 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
-    public LatLng getSouthWest() {
-        return mMap.getProjection().getVisibleRegion().latLngBounds.southwest;
+    public Location getSouthWest() {
+        Location southWest = new Location("");
+        southWest.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.latitude);
+        southWest.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.longitude);
+        return southWest;
     }
 
     @Override
-    public LatLng getNorthEast() {
-        return mMap.getProjection().getVisibleRegion().latLngBounds.northeast;
+    public Location getNorthEast() {
+        Location northEast = new Location("");
+        northEast.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.latitude);
+        northEast.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.longitude);
+        return northEast;
     }
 
     /**

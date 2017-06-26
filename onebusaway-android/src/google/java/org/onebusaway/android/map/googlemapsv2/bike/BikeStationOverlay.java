@@ -1,6 +1,10 @@
 package org.onebusaway.android.map.googlemapsv2.bike;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -11,6 +15,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
@@ -43,7 +48,7 @@ public class BikeStationOverlay implements MarkerListeners {
         mStations = new HashMap<>();
         mMap.setInfoWindowAdapter(new BikeInfoWindow(a));
 
-        mSmallBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_small);
+        mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
         mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_big);
     }
 
@@ -100,5 +105,19 @@ public class BikeStationOverlay implements MarkerListeners {
     public void removeMarkerClicked(LatLng latLng) {
         Log.d("", "remove selected bike station");
         mOnFocusChangedListener.onFocusChanged(null);
+    }
+
+    private Bitmap createBitmapFromShape() {
+        int px = Application.get().getResources().getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
+
+        Bitmap bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
+
+        Canvas c = new Canvas(bitmap);
+        Drawable shape = ContextCompat.getDrawable(Application.get(), R.drawable.bike_marker_small);
+        shape.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        shape.draw(c);
+
+        return bitmap;
     }
 }

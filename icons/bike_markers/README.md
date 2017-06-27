@@ -4,7 +4,7 @@ The images contained in this folder were used to generate the icons used for bik
 ## bike_marker_small.svg
 This image is displayed for all types of bikeshare (floating bikes and bike stations) when the map
 zoom is under level 13.
- 
+
 It is converted into XML and loaded as BMP for use. To convert to XML use the Android Studio 
 Vector Asset generator.
   

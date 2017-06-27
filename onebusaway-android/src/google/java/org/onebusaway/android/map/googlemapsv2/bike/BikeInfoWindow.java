@@ -20,8 +20,11 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
 
     private View bikeInfoWindowView;
 
-    public BikeInfoWindow(Context content) {
+    private BikeStationsInfo bikeStationsInfo;
+
+    public BikeInfoWindow(Context content, BikeStationsInfo bikeStationsInfo) {
         bikeInfoWindowView = LayoutInflater.from(content).inflate(R.layout.bike_info_window, null);
+        this.bikeStationsInfo = bikeStationsInfo;
     }
 
     @Override
@@ -31,7 +34,7 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
 
     @Override
     public View getInfoContents(Marker marker) {
-        BikeRentalStation station = (BikeRentalStation) marker.getTag();
+        BikeRentalStation station = bikeStationsInfo.getBikeStationOnMarker(marker);
         setBikeStationName(station.name);
         setNumberBikesAvailable(station.bikesAvailable);
         setNumberSpacesAvailable(station.spacesAvailable);
@@ -52,6 +55,10 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
     private void setNumberSpacesAvailable(int numberSpaces) {
         TextView spacesAvailable = (TextView) bikeInfoWindowView.findViewById(R.id.numberRacks);
         spacesAvailable.setText(String.valueOf(numberSpaces));
+    }
+
+    public interface BikeStationsInfo {
+        BikeRentalStation getBikeStationOnMarker(Marker marker);
     }
 
 }

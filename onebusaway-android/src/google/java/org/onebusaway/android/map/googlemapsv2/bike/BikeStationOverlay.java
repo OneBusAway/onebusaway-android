@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author carvalhorr
  */
-public class BikeStationOverlay implements MarkerListeners {
+public class BikeStationOverlay implements MarkerListeners, BikeInfoWindow.BikeStationsInfo {
 
     private GoogleMap mMap;
 
@@ -40,28 +40,31 @@ public class BikeStationOverlay implements MarkerListeners {
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
     private BitmapDescriptor mSmallBikeStationIcon;
-
     private BitmapDescriptor mBigBikeStationIcon;
+    private BitmapDescriptor mBigFloatingBikeIcon;
 
-    public BikeStationOverlay(Activity a, GoogleMap map) {
+    public BikeStationOverlay(Activity activity, GoogleMap map) {
         mMap = map;
         mStations = new HashMap<>();
-        mMap.setInfoWindowAdapter(new BikeInfoWindow(a));
+        mMap.setInfoWindowAdapter(new BikeInfoWindow(activity, this));
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
-        mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_marker_big);
+        mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_station_marker_big);
+        mBigFloatingBikeIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_floating_marker_big);
     }
 
     private synchronized void addMarker(BikeRentalStation station) {
         MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
         if (mMap.getCameraPosition().zoom > 13) {
-            options.icon(mBigBikeStationIcon);
+            if (station.isFloatingBike) {
+                options.icon(mBigFloatingBikeIcon);
+            } else {
+                options.icon(mBigBikeStationIcon);
+            }
         } else {
             options.icon(mSmallBikeStationIcon);
         }
         Marker m = mMap.addMarker(options);
-
-        m.setTag(station);
         mStations.put(m, station);
     }
 
@@ -75,13 +78,13 @@ public class BikeStationOverlay implements MarkerListeners {
             clearBikeStations();
         }*/
         clearBikeStations();
-        for (BikeRentalStation bikeStation: bikeStations) {
+        for (BikeRentalStation bikeStation : bikeStations) {
             addMarker(bikeStation);
         }
     }
 
     public void clearBikeStations() {
-        for (Marker marker: mStations.keySet()) {
+        for (Marker marker : mStations.keySet()) {
             marker.remove();
         }
         mStations.clear();
@@ -90,9 +93,9 @@ public class BikeStationOverlay implements MarkerListeners {
     @Override
     public boolean markerClicked(Marker marker) {
 
-        if (marker.getTag() != null) {
+        if (mStations.containsKey(marker)) {
             if (mOnFocusChangedListener != null) {
-                BikeRentalStation bikeRentalStation = (BikeRentalStation) marker.getTag();
+                BikeRentalStation bikeRentalStation = mStations.get(marker);
                 marker.showInfoWindow();
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
@@ -120,4 +123,10 @@ public class BikeStationOverlay implements MarkerListeners {
 
         return bitmap;
     }
+
+    @Override
+    public BikeRentalStation getBikeStationOnMarker(Marker marker) {
+        return mStations.get(marker);
+    }
+
 }

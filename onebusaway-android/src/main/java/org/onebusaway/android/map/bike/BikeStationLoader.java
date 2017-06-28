@@ -1,3 +1,18 @@
+/*
+* Copyright (C) Sean J. Barbeau (sjbarbeau@gmail.com)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.onebusaway.android.map.bike;
 
 import android.content.Context;
@@ -22,9 +37,9 @@ import java.util.List;
  * OpenTripPlanner accept parameters lowerLeft and upperRight.
  * Google Maps work with southwest and northeast. loweLeft is equivalent to southeast and upperRight is equivalent to northeast.
  * <p>
- * This class external interface accept the parameters as found in Google Maps. Internally it maps it to OTP parameters.
+ * This class external interface accept the parameters as found in Google Maps
+ * (southWest and northEast). Internally it maps to OTP parameters (lowerLeft and upperRight).
  *
- * Created by carvalhorr on 6/5/17.
  */
 
 public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> {
@@ -83,7 +98,6 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
 
     @Override
     public void deliverResult(List<BikeRentalStation> data) {
-        //mResponse = data;
         super.deliverResult(data);
     }
 
@@ -92,11 +106,27 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
         forceLoad();
     }
 
+    /**
+     * Update the bounding box to be used to load the bike stations.  This method is usually called
+     * as a result of a map changing its location and/or zoom.
+     *
+     * Calls to this method forces the data to be reloaded.
+     *
+     * @param southWest south west corner of the bounding box
+     * @param northEast north east corder of the bounding box
+     */
     public void update(Location southWest, Location northEast) {
         updateCoordinates(southWest, northEast);
         onContentChanged();
     }
 
+    /**
+     * Updates the bounding box, converting the names from southWest/northEast to
+     * lowerLeft/upperRight
+     *
+     * @param southWest
+     * @param northEast
+     */
     private void updateCoordinates(Location southWest, Location northEast) {
         this.lowerLeft = southWest;
         this.upperRight = northEast;

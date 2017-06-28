@@ -65,7 +65,7 @@
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
 
-                <io.github.yavski.fabspeeddial.FabSpeedDial
+                <uk.co.markormesher.android_fab.FloatingActionButton
                     android:id="@+id/layersSpeedDial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -73,12 +73,7 @@
                     android:layout_marginBottom="64dp"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentRight="true"
-                    app:fabDrawable="@drawable/ic_layers_black_24dp"
-                    app:fabGravity="bottom_end"
-                    app:fabMenu="@menu/map_layers_speed_dial_options"
-                    app:miniFabBackgroundTint="@android:color/white"
-                    app:miniFabDrawableTint="?attr/colorPrimaryDark"
-                    app:miniFabTitleTextColor="?attr/colorPrimaryDark" />
+                    android:drawable="@drawable/ic_layers_white_24dp" />
 
                 <!-- ROUTE MODE HEADER -->
                 <include android:id="@+id/route_info"

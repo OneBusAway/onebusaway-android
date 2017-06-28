@@ -83,7 +83,7 @@ import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.ui.NavigationDrawerFragment;
+import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -117,7 +117,7 @@ public class BaseMapFragment extends SupportMapFragment
         LocationSource, LocationHelper.Listener,
         com.amazon.geo.mapsv2.AmazonMap.OnCameraChangeListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
-        VehicleOverlay.Controller {
+        VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
 
     public static final String TAG = "BaseMapFragment";
 
@@ -183,6 +183,30 @@ public class BaseMapFragment extends SupportMapFragment
     LocationHelper mLocationHelper;
 
     Bundle mLastSavedInstanceState;
+
+    @Override
+    public void onActivateLayer(LayerInfo layer) {
+        switch (layer.getLayerlabel()) {
+            case "Bikeshare": {
+                if (mController instanceof StopMapController) {
+                    ((StopMapController) mController).showBikes(true);
+                }
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onDeactivateLayer(LayerInfo layer) {
+        switch (layer.getLayerlabel()) {
+            case "Bikeshare": {
+                if (mController instanceof StopMapController) {
+                    ((StopMapController) mController).showBikes(false);
+                }
+                break;
+            }
+        }
+    }
 
     public interface OnFocusChangedListener {
 
@@ -261,7 +285,7 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMapClickListener(mapClickListeners);
 
         SharedPreferences sp = Application.getPrefs();
-        isBikeDisplayed = sp.getBoolean(HomeActivity.STATE_BIKE_SELECTED, false);
+        isBikeDisplayed = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
 
         initMap(mLastSavedInstanceState);
     }
@@ -317,7 +341,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
         setMapMode(mode, args);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        boolean isBikeSelected = sp.getBoolean(HomeActivity.STATE_BIKE_SELECTED, false);
+        boolean isBikeSelected = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
         showBikes(isBikeSelected);
     }
 

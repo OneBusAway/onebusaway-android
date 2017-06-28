@@ -3,6 +3,7 @@ package org.onebusaway.android.map.googlemapsv2.bike;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -17,6 +18,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
@@ -29,7 +31,10 @@ import java.util.List;
  *
  * @author carvalhorr
  */
-public class BikeStationOverlay implements MarkerListeners, BikeInfoWindow.BikeStationsInfo {
+public class BikeStationOverlay
+        implements MarkerListeners, BikeInfoWindow.BikeStationsInfo {
+
+    public static final String STATE_BIKE_SELECTED = "layer_bike_selected";
 
     private GoogleMap mMap;
 
@@ -42,6 +47,35 @@ public class BikeStationOverlay implements MarkerListeners, BikeInfoWindow.BikeS
     private BitmapDescriptor mSmallBikeStationIcon;
     private BitmapDescriptor mBigBikeStationIcon;
     private BitmapDescriptor mBigFloatingBikeIcon;
+
+    public static final LayerInfo getLayerInfo() {
+        return new LayerInfo() {
+            @Override
+            public String getLayerlabel() {
+                return "Bikeshare";
+            }
+
+            @Override
+            public int getUnselectedDrawableId() {
+                return R.drawable.ic_directions_bike_white_24dp;
+            }
+
+            @Override
+            public int getSelectedDrawableId() {
+                return R.drawable.ic_directions_bike_white_24dp;
+            }
+
+            @Override
+            public int getLayerColor() {
+                return Color.parseColor("#3a4677");
+            }
+
+            @Override
+            public String getSharedPreferenceKey() {
+                return STATE_BIKE_SELECTED;
+            }
+        };
+    }
 
     public BikeStationOverlay(Activity activity, GoogleMap map) {
         mMap = map;
@@ -128,5 +162,4 @@ public class BikeStationOverlay implements MarkerListeners, BikeInfoWindow.BikeS
     public BikeRentalStation getBikeStationOnMarker(Marker marker) {
         return mStations.get(marker);
     }
-
 }

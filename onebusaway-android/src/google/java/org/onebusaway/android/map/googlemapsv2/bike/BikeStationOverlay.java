@@ -61,6 +61,10 @@ public class BikeStationOverlay
     private BitmapDescriptor mBigBikeStationIcon;
     private BitmapDescriptor mBigFloatingBikeIcon;
 
+    /**
+     * Information necessary to create Speed Dial menu on the Layers FAB.
+     * @return
+     */
     public static final LayerInfo getLayerInfo() {
         return new LayerInfo() {
             @Override
@@ -70,12 +74,12 @@ public class BikeStationOverlay
 
             @Override
             public int getUnselectedDrawableId() {
-                return R.drawable.ic_directions_bike_white_24dp;
+                return R.drawable.ic_directions_bike_white;
             }
 
             @Override
             public int getSelectedDrawableId() {
-                return R.drawable.ic_directions_bike_white_24dp;
+                return R.drawable.ic_directions_bike_white_selected;
             }
 
             @Override
@@ -153,7 +157,6 @@ public class BikeStationOverlay
 
     @Override
     public void removeMarkerClicked(LatLng latLng) {
-        Log.d("", "remove selected bike station");
         mOnFocusChangedListener.onFocusChanged(null);
     }
 

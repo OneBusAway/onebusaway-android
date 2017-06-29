@@ -26,7 +26,6 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.AlertDialog;
@@ -71,7 +70,6 @@ import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
@@ -127,8 +125,6 @@ public class BaseMapFragment extends SupportMapFragment
     private int mMapPaddingRight = 0;
 
     private int mMapPaddingBottom = 0;
-
-    private boolean isBikeDisplayed = false;
 
     // Use fully-qualified class name to avoid import statement, because it interferes with scripted
     // copying of Maps API v2 classes between Google/Amazon build flavors (see #254)
@@ -273,9 +269,6 @@ public class BaseMapFragment extends SupportMapFragment
         mMap.setOnMarkerClickListener(mapClickListeners);
         mMap.setOnMapClickListener(mapClickListeners);
 
-        SharedPreferences sp = Application.getPrefs();
-        isBikeDisplayed = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
-
         initMap(mLastSavedInstanceState);
     }
 
@@ -329,9 +322,6 @@ public class BaseMapFragment extends SupportMapFragment
             mode = MapParams.MODE_STOP;
         }
         setMapMode(mode, args);
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        boolean isBikeSelected = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
-        showBikes(isBikeSelected);
     }
 
     @Override
@@ -497,7 +487,6 @@ public class BaseMapFragment extends SupportMapFragment
             mController = new RouteMapController(this);
         } else if (MapParams.MODE_STOP.equals(mode)) {
             mController = new StopMapController(this);
-            showBikes(isBikeDisplayed);
         } else if (MapParams.MODE_DIRECTIONS.equals(mode)) {
             mController = new DirectionsMapController(this);
         }
@@ -607,7 +596,6 @@ public class BaseMapFragment extends SupportMapFragment
             mBikeStationOverlay.clearBikeStations();
         }
     }
-
 
     @Override
     public void notifyOutOfRange() {

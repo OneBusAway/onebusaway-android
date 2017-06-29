@@ -28,12 +28,14 @@ import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.bike.BikeLoaderCallbacks;
 import org.onebusaway.android.map.bike.BikeStationLoader;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -182,6 +184,10 @@ public class StopMapController implements MapModeController,
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
+
+        SharedPreferences sp = Application.get().getPrefs();
+        boolean isBikeSelected = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
+        showBikes(isBikeSelected);
     }
 
     public void showBikes(boolean showBikes) {

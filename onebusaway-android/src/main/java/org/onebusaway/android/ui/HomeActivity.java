@@ -71,6 +71,7 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
@@ -150,8 +151,6 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderSubView;
 
     private FloatingActionButton mFabMyLocation;
-
-    //private FabSpeedDial mLayersFab;
 
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
 
@@ -1463,13 +1462,57 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        uk.co.markormesher.android_fab.FloatingActionButton fab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
+        final uk.co.markormesher.android_fab.FloatingActionButton fab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
         fab.setIcon(R.drawable.ic_layers_white_24dp);
         // make the cover transparent as it is not covering the entire screen
         fab.setContentCoverColour(0x00000000);
         fab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_primary));
-        fab.setMenuAdapter(new LayersSpeedDialAdapter(this, mMapFragment));
+
+        LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
+        // Add the BaseMapFragment listener to activate the layer on the map
+        adapter.addLayerActicationListener(mMapFragment);
+
+        // Add another listener to rebuild the menu options after selection. This other listener
+        // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
+        // reference to it only in the main activity.
+        adapter.addLayerActicationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
+            @Override
+            public void onActivateLayer(LayerInfo layer) {
+                Handler h = new Handler(getMainLooper());
+                h.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        fab.rebuildSpeedDialMenu();
+                    }
+                }, 100);
+            }
+
+            @Override
+            public void onDeactivateLayer(LayerInfo layer) {
+                Handler h = new Handler(getMainLooper());
+                h.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        fab.rebuildSpeedDialMenu();
+                    }
+                }, 100);
+            }
+        });
+        fab.setMenuAdapter(adapter);
+        fab.setOnSpeedDialOpenListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+            @Override
+            public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                fab.setIcon(R.drawable.ic_add_white_24dp);
+            }
+        });
+        fab.setOnSpeedDialCloseListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+            @Override
+            public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                fab.setIcon(R.drawable.ic_layers_white_24dp);
+            }
+        });
     }
+
 
     private void setupSlidingPanel() {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);

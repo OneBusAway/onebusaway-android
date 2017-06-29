@@ -24,6 +24,9 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.co.markormesher.android_fab.SpeedDialMenuAdapter;
 
 /**
@@ -45,15 +48,20 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private LayerInfo[] layers;
 
     /**
-     * Listener to be called when a layer option is activated/deativated
+     * Listener to be called when a layer option is activated/deativated. It supports multiple.
+     * Currently there is one listener added to actually add/remove the layer on the map and another
+     * one to update the speed dial menu state.
      */
-    private LayerActivationListener layerActivationListener;
+    private List<LayerActivationListener> layerActivationListeners = new ArrayList<>();
 
-    public LayersSpeedDialAdapter(Context context, LayerActivationListener listener) {
-        layerActivationListener = listener;
+    public LayersSpeedDialAdapter(Context context) {
         this.context = context;
         setupLayers();
         setupActivated();
+    }
+
+    public void addLayerActicationListener(LayerActivationListener listener) {
+        layerActivationListeners.add(listener);
     }
 
     private void setupLayers() {
@@ -97,9 +105,13 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     protected boolean onMenuItemClick(int position) {
         if (position < activated.length) {
             if (activated[position]) {
-                layerActivationListener.onDeactivateLayer(layers[position]);
+                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
+                    layerActivationListener.onDeactivateLayer(layers[position]);
+                }
             } else {
-                layerActivationListener.onActivateLayer(layers[position]);
+                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
+                    layerActivationListener.onActivateLayer(layers[position]);
+                }
             }
             activated[position] = !activated[position];
             persistSelection(position);
@@ -122,6 +134,11 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     @Override
     protected int getBackgroundColour(int position) {
         return layers[position].getLayerColor();
+    }
+
+    @Override
+    protected boolean rotateFab() {
+        return true;
     }
 
     /**

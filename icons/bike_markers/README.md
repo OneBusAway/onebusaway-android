@@ -1,5 +1,6 @@
 # Bikeshare icons
-The images contained in this folder were used to generate the icons used for bike markers.
+The images contained in this folder were used to generate the icons used for bike markers and speed 
+dial menu to select bike layer.
 
 ## bike_marker_small.svg
 This image is displayed for all types of bikeshare (floating bikes and bike stations) when the map
@@ -26,4 +27,8 @@ Parameters used:
 
 ## bike_station_marker_big.svg
 This image is used for bike stations when the map is on zoom level bigger than 13. It is also used 
-as PNG. Follow the instructions on the previos section to create the PNGs.
+as PNG. Follow the instructions on the previous section to create the PNGs.
+
+## bike_speed_dial_selected.svg
+Image displayed on the layers speed dial menu when the bike layer is active. The counterpart to this 
+is the default material bike icon. Follow the instruction on the previous section to create the PNGs.

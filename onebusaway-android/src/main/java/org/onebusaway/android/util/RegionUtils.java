@@ -403,7 +403,8 @@ public class RegionUtils {
                     ObaContract.Regions.EXPERIMENTAL,
                     ObaContract.Regions.STOP_INFO_URL,
                     ObaContract.Regions.OTP_BASE_URL,
-                    ObaContract.Regions.OTP_CONTACT_EMAIL
+                    ObaContract.Regions.OTP_CONTACT_EMAIL,
+                    ObaContract.Regions.SUPPORTS_OTP_BIKESHARE
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -448,7 +449,8 @@ public class RegionUtils {
                         c.getInt(10) > 0,            // Experimental
                         c.getString(11),             // StopInfoUrl
                         c.getString(12),             // OTP Base URL
-                        c.getString(13)              // OTP Contact Email
+                        c.getString(13),              // OTP Contact Email
+                        c.getInt(14) > 0            // Supports Otp Bikeshare
                 ));
 
             } while (c.moveToNext());
@@ -630,7 +632,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
                 BuildConfig.FIXED_REGION_STOP_INFO_URL,
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
-                BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL);
+                BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
+                BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE);
         return region;
     }
 

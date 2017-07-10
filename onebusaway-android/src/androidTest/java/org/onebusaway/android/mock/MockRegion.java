@@ -80,7 +80,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -113,7 +114,8 @@ public class MockRegion {
                 false,
                 "http://stopinfo.pugetsound.onebusaway.org",
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -146,7 +148,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -179,7 +182,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -212,7 +216,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -245,7 +250,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -276,7 +282,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -307,6 +314,7 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 }

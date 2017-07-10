@@ -413,6 +413,14 @@ public final class ObaContract {
          * </P>
          */
         public static final String OTP_CONTACT_EMAIL = "otp_contact_email";
+
+        /**
+         * Whether or not the region supports bikeshare information through integration with OTP
+         * <P>
+         * Type: BOOLEAN
+         * </P>
+         */
+        public static final String SUPPORTS_OTP_BIKESHARE = "supports_otp_bikeshare";
     }
 
     protected interface RegionBoundsColumns {
@@ -1179,7 +1187,8 @@ public final class ObaContract {
                     EXPERIMENTAL,
                     STOP_INFO_URL,
                     OTP_BASE_URL,
-                    OTP_CONTACT_EMAIL
+                    OTP_CONTACT_EMAIL,
+                    SUPPORTS_OTP_BIKESHARE
             };
 
             Cursor c = cr.query(buildUri((int) id), PROJECTION, null, null, null);
@@ -1205,7 +1214,8 @@ public final class ObaContract {
                             c.getInt(10) > 0,               // Experimental
                             c.getString(11),              // StopInfoUrl
                             c.getString(12),              // OtpBaseUrl
-                            c.getString(13)               // OtpContactEmail
+                            c.getString(13),               // OtpContactEmail
+                            c.getInt(14) > 0            // Supports OTP Bikeshare
                     );
                 } finally {
                     c.close();

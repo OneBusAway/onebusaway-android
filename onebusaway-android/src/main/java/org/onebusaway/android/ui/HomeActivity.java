@@ -152,7 +152,11 @@ public class HomeActivity extends AppCompatActivity
 
     private FloatingActionButton mFabMyLocation;
 
+    uk.co.markormesher.android_fab.FloatingActionButton mLayersFab;
+
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
+
+    private static int LAYERS_FAB_DEFAULT_BOTTOM_MARGIN;
 
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
@@ -1314,19 +1318,15 @@ public class HomeActivity extends AppCompatActivity
     }
 
     /**
-     * Moves a Floating Action Button as response to sliding panel height changes.
+     * Moves both Floating Action Buttons as response to sliding panel height changes.
      *
      * Currently there are two FAB that can be moved, the My location button and the Layers button.
      */
     synchronized private void moveFabsLocation() {
-        int[] coords1 = {0,0};
-        int[] coords2 = {0,0};
-        mFabMyLocation.getLocationOnScreen(coords1);
-        //mLayersFab.getLocationOnScreen(coords2);
-
         moveFabLocation(mFabMyLocation, MY_LOC_DEFAULT_BOTTOM_MARGIN);
-        //moveFabLocation(mLayersFab, (coords1[1] - coords2[1] - MY_LOC_DEFAULT_BOTTOM_MARGIN));
+        moveFabLocation(mLayersFab, LAYERS_FAB_DEFAULT_BOTTOM_MARGIN);
     }
+
     private void moveFabLocation(final View fab, final int initialMargin) {
         if (fab == null) {
             return;
@@ -1462,55 +1462,70 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        final uk.co.markormesher.android_fab.FloatingActionButton fab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
-        fab.setIcon(R.drawable.ic_layers_white_24dp);
-        // make the cover transparent as it is not covering the entire screen
-        fab.setContentCoverColour(0x00000000);
-        fab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_primary));
+        mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
 
-        LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
-        // Add the BaseMapFragment listener to activate the layer on the map
-        adapter.addLayerActicationListener(mMapFragment);
+        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
+                .getLayoutParams();
 
-        // Add another listener to rebuild the menu options after selection. This other listener
-        // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
-        // reference to it only in the main activity.
-        adapter.addLayerActicationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
-            @Override
-            public void onActivateLayer(LayerInfo layer) {
-                Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        fab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
-            }
+        LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
-            @Override
-            public void onDeactivateLayer(LayerInfo layer) {
-                Handler h = new Handler(getMainLooper());
-                h.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        fab.rebuildSpeedDialMenu();
-                    }
-                }, 100);
-            }
-        });
-        fab.setMenuAdapter(adapter);
-        fab.setOnSpeedDialOpenListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
-            @Override
-            public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                fab.setIcon(R.drawable.ic_add_white_24dp);
-            }
-        });
-        fab.setOnSpeedDialCloseListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
-            @Override
-            public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                fab.setIcon(R.drawable.ic_layers_white_24dp);
-            }
-        });
+
+        if (Application.get().getCurrentRegion() != null
+                && Application.get().getCurrentRegion().getSupportsOtpBikeshare()) {
+
+            mLayersFab.setVisibility(View.VISIBLE);
+
+            mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+            // make the cover transparent as it is not covering the entire screen
+            mLayersFab.setContentCoverColour(0x00000000);
+            mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_primary));
+
+            LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
+            // Add the BaseMapFragment listener to activate the layer on the map
+            adapter.addLayerActicationListener(mMapFragment);
+
+            // Add another listener to rebuild the menu options after selection. This other listener
+            // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
+            // reference to it only in the main activity.
+            adapter.addLayerActicationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
+                @Override
+                public void onActivateLayer(LayerInfo layer) {
+                    Handler h = new Handler(getMainLooper());
+                    h.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mLayersFab.rebuildSpeedDialMenu();
+                        }
+                    }, 100);
+                }
+
+                @Override
+                public void onDeactivateLayer(LayerInfo layer) {
+                    Handler h = new Handler(getMainLooper());
+                    h.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mLayersFab.rebuildSpeedDialMenu();
+                        }
+                    }, 100);
+                }
+            });
+            mLayersFab.setMenuAdapter(adapter);
+            mLayersFab.setOnSpeedDialOpenListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+                @Override
+                public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                    mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                }
+            });
+            mLayersFab.setOnSpeedDialCloseListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+                @Override
+                public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                    mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                }
+            });
+        } else {
+            mLayersFab.setVisibility(View.INVISIBLE);
+        }
     }
 
 

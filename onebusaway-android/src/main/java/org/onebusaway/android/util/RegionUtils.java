@@ -701,6 +701,8 @@ public class RegionUtils {
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
         values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
         values.put(ObaContract.Regions.OTP_CONTACT_EMAIL, region.getOtpContactEmail());
+        values.put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
+                region.getSupportsOtpBikeshare() ? 1 : 0);
         return values;
     }
 

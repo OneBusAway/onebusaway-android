@@ -67,7 +67,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private void setupLayers() {
         BaseMapFragment f;
         layers = new LayerInfo[1];
-        layers[0] = BikeStationOverlay.getLayerInfo();
+        layers[0] = BikeStationOverlay.layerInfo;
     }
 
     private void setupActivated() {

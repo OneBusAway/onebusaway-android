@@ -65,8 +65,7 @@ public class BikeStationOverlay
      * Information necessary to create Speed Dial menu on the Layers FAB.
      * @return
      */
-    public static final LayerInfo getLayerInfo() {
-        return new LayerInfo() {
+    public static final LayerInfo layerInfo = new LayerInfo() {
             @Override
             public String getLayerlabel() {
                 return "Bikeshare";
@@ -92,7 +91,6 @@ public class BikeStationOverlay
                 return STATE_BIKE_SELECTED;
             }
         };
-    }
 
     public BikeStationOverlay(Activity activity, GoogleMap map) {
         mMap = map;

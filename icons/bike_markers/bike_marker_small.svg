@@ -18,7 +18,7 @@
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    inkscape:version="0.92+devel unknown"
-   sodipodi:docname="bike_ball.svg">
+   sodipodi:docname="bike_marker_small.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -48,7 +48,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -59,7 +59,7 @@
      transform="translate(0,-87)">
     <g
        id="g4830"
-       transform="translate(-1.215582,3.0505353)">
+       transform="matrix(0.8,0,0,0.8,20.032939,40.835023)">
       <circle
          r="67.294525"
          cy="188.92244"

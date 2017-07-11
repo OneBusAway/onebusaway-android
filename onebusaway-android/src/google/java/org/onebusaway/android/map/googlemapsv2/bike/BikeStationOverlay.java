@@ -51,8 +51,6 @@ public class BikeStationOverlay
 
     private GoogleMap mMap;
 
-    private static final int FUZZY_MAX_MARKER_COUNT = 200;
-
     private HashMap<Marker, BikeRentalStation> mStations;
 
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
@@ -103,18 +101,20 @@ public class BikeStationOverlay
     }
 
     private synchronized void addMarker(BikeRentalStation station) {
-        MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
-        if (mMap.getCameraPosition().zoom > 13) {
-            if (station.isFloatingBike) {
-                options.icon(mBigFloatingBikeIcon);
+        if (mMap.getCameraPosition().zoom > 12) {
+            MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
+            if (mMap.getCameraPosition().zoom > 15) {
+                if (station.isFloatingBike) {
+                    options.icon(mBigFloatingBikeIcon);
+                } else {
+                    options.icon(mBigBikeStationIcon);
+                }
             } else {
-                options.icon(mBigBikeStationIcon);
+                options.icon(mSmallBikeStationIcon);
             }
-        } else {
-            options.icon(mSmallBikeStationIcon);
+            Marker m = mMap.addMarker(options);
+            mStations.put(m, station);
         }
-        Marker m = mMap.addMarker(options);
-        mStations.put(m, station);
     }
 
     public void setOnFocusChangeListener(BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
@@ -123,9 +123,6 @@ public class BikeStationOverlay
 
 
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        /*if (mStations.size() >= FUZZY_MAX_MARKER_COUNT) {
-            clearBikeStations();
-        }*/
         clearBikeStations();
         for (BikeRentalStation bikeStation : bikeStations) {
             addMarker(bikeStation);

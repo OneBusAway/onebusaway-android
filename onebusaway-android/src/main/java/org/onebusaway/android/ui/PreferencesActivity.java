@@ -84,6 +84,8 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference mAboutPref;
 
+    Preference mBikeshareLayer;
+
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
@@ -103,6 +105,8 @@ public class PreferencesActivity extends PreferenceActivity
 
         mPreference = findPreference(getString(R.string.preference_key_region));
         mPreference.setOnPreferenceClickListener(this);
+
+        mBikeshareLayer = findPreference(getString(R.string.preference_key_layer_bikeshare));
 
         mLeftHandMode = findPreference(getString(R.string.preference_key_left_hand_mode));
         mLeftHandMode.setOnPreferenceChangeListener(this);
@@ -174,6 +178,12 @@ public class PreferencesActivity extends PreferenceActivity
         changePreferenceSummary(getString(R.string.preference_key_region));
         changePreferenceSummary(getString(R.string.preference_key_preferred_units));
         changePreferenceSummary(getString(R.string.preference_key_otp_api_url));
+
+        boolean supportsOtpBikeshare = Application.get().getCurrentRegion() != null
+                && Application.get().getCurrentRegion().getSupportsOtpBikeshare();
+        mBikeshareLayer.setEnabled(supportsOtpBikeshare);
+        changePreferenceSummary(getString(R.string.preference_key_layer_bikeshare));
+
 
         // Remove preferences for notifications if no trip planning
         ObaRegion obaRegion = Application.get().getCurrentRegion();
@@ -257,6 +267,14 @@ public class PreferencesActivity extends PreferenceActivity
                         getString(R.string.preferences_otp_api_servername_summary));
             }
             Application.get().setUseOldOtpApiUrlVersion(false);
+        } else if (preferenceKey.equalsIgnoreCase(getString(R.string.preference_key_layer_bikeshare))) {
+            boolean supportsOtpBikeshare = Application.get().getCurrentRegion() != null
+                    && Application.get().getCurrentRegion().getSupportsOtpBikeshare();
+            if (supportsOtpBikeshare) {
+                mBikeshareLayer.setSummary(getString(R.string.preferences_map_layers_bikeshare_summary));
+            } else {
+                mBikeshareLayer.setSummary(getString(R.string.preferences_map_layers_bikeshare_summary_unsupported));
+            }
         }
     }
 

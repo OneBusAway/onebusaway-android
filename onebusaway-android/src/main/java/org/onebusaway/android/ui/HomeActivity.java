@@ -102,7 +102,7 @@ public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
         ArrivalsListFragment.Listener, NavigationDrawerCallbacks,
-        ObaRegionsTask.Callback{
+        ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
 
@@ -1462,6 +1462,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
+
         mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
 
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
@@ -1470,7 +1471,8 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (Application.get().getCurrentRegion() != null
+        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare), false)
+                && Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare()) {
 
             mLayersFab.setVisibility(View.VISIBLE);

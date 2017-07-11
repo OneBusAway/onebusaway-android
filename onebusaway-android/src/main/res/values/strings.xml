@@ -1056,5 +1056,8 @@
     <!-- Bikeshare info window -->
     <string name="bike_info_window_bikes_title">Bikes</string>
     <string name="bike_info_window_spaces_title">Spaces</string>
+    <string name="preferences_additional_layers_title">Additional layers</string>
+    <string name="preferences_additional_layers_bikeshare_title">Bikeshare</string>
+    <string name="preferences_additional_layers_bikeshare_summary">Show the option to activate the bikeshare information when available</string>
 
 </resources>

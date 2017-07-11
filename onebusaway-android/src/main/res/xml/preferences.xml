@@ -27,11 +27,11 @@
                 android:summary="@string/preferences_auto_select_region_summary"
                 android:defaultValue="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/preferences_additional_layers_title">
+    <PreferenceCategory android:title="@string/preferences_map_layers_title">
         <CheckBoxPreference
             android:key="@string/preference_key_layer_bikeshare"
-            android:title="@string/preferences_additional_layers_bikeshare_title"
-            android:summary="@string/preferences_additional_layers_bikeshare_summary"
+            android:title="@string/preferences_map_layers_bikeshare_title"
+            android:summary="@string/preferences_map_layers_bikeshare_summary"
             android:defaultValue="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/preferences_category_display">

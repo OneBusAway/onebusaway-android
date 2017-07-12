@@ -275,6 +275,12 @@ public class PreferencesActivity extends PreferenceActivity
             } else {
                 mBikeshareLayer.setSummary(getString(R.string.preferences_map_layers_bikeshare_summary_unsupported));
             }
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.APP_SETTINGS.toString(),
+                    getString(R.string.analytics_action_layer_bikeshare),
+                    getString(supportsOtpBikeshare?R.string.analytics_label_bikeshare_activated:
+                            R.string.analytics_label_bikeshare_deactivated));
+
         }
     }
 

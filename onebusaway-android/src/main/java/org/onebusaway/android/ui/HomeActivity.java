@@ -1471,7 +1471,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare), false)
+        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare), true)
                 && Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare()) {
 

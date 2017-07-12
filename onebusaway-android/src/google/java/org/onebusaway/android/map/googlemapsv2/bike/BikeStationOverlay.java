@@ -16,12 +16,12 @@
 package org.onebusaway.android.map.googlemapsv2.bike;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
@@ -58,6 +59,8 @@ public class BikeStationOverlay
     private BitmapDescriptor mSmallBikeStationIcon;
     private BitmapDescriptor mBigBikeStationIcon;
     private BitmapDescriptor mBigFloatingBikeIcon;
+
+    private Context context;
 
     /**
      * Information necessary to create Speed Dial menu on the Layers FAB.
@@ -91,6 +94,7 @@ public class BikeStationOverlay
         };
 
     public BikeStationOverlay(Activity activity, GoogleMap map) {
+        context = activity;
         mMap = map;
         mStations = new HashMap<>();
         mMap.setInfoWindowAdapter(new BikeInfoWindow(activity, this));
@@ -145,6 +149,12 @@ public class BikeStationOverlay
                 marker.showInfoWindow();
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
+
+            ObaAnalytics.reportEventWithCategory(
+                    ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                    context.getString(R.string.analytics_action_button_press),
+                    context.getString(R.string.analytics_label_bikeshare_deactivated));
+
             return true;
         }
         return false;

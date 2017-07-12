@@ -66,6 +66,7 @@ import com.amazon.geo.mapsv2.model.VisibleRegion;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRegion;
@@ -186,6 +187,10 @@ public class BaseMapFragment extends SupportMapFragment
             case "Bikeshare": {
                 if (mController instanceof StopMapController) {
                     ((StopMapController) mController).showBikes(true);
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_layer_bikeshare),
+                            getString(R.string.analytics_label_bikeshare_activated));
                 }
                 break;
             }
@@ -198,6 +203,10 @@ public class BaseMapFragment extends SupportMapFragment
             case "Bikeshare": {
                 if (mController instanceof StopMapController) {
                     ((StopMapController) mController).showBikes(false);
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_layer_bikeshare),
+                            getString(R.string.analytics_label_bikeshare_deactivated));
                 }
                 break;
             }

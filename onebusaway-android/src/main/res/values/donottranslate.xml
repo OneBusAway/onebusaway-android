@@ -154,8 +154,8 @@
     <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
     <string name="analytics_label_bikeshare_activated">Bikeshare layer activated</string>
     <string name="analytics_label_bikeshare_deactivated">Bikeshare layer deactivated</string>
-    <string name="analytics_label_bikeshare_clicked">Pressed BikeStation Marker</string>
-
+    <string name="analytics_label_bike_station_marker_clicked">Pressed bike station marker</string>
+    <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 

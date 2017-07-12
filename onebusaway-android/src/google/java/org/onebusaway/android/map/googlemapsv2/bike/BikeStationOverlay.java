@@ -150,10 +150,14 @@ public class BikeStationOverlay
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
 
+            BikeRentalStation bikeStation = mStations.get(marker);
+
             ObaAnalytics.reportEventWithCategory(
                     ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     context.getString(R.string.analytics_action_button_press),
-                    context.getString(R.string.analytics_label_bikeshare_deactivated));
+                    context.getString(bikeStation.isFloatingBike?
+                            R.string.analytics_label_bike_station_marker_clicked:
+                            R.string.analytics_label_floating_bike_marker_clicked));
 
             return true;
         }

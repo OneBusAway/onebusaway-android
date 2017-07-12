@@ -45,6 +45,8 @@
     <string name="preference_key_left_hand_mode">preference_key_left_hand_mode</string>
     <string name="preference_key_never_show_location_dialog">never_show_location_dialog</string>
     <string name="preference_key_layer_bikeshare">preference_layer_bikeshare</string>
+    <string name="preference_key_map_layers">preference_category_map_layers</string>
+
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

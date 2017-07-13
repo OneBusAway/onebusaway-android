@@ -21,6 +21,8 @@ import android.support.v4.content.AsyncTaskLoader;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.request.bike.OtpBikeStationRequest;
+import org.onebusaway.android.io.request.bike.OtpBikeStationResponse;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationList;
 
@@ -59,40 +61,8 @@ public class BikeStationLoader extends AsyncTaskLoader<List<BikeRentalStation>> 
 
     @Override
     public List<BikeRentalStation> loadInBackground() {
-        BikeRentalStationList list = null;
-        try {
-            String otpBaseUrl = Application.get().getCustomOtpApiUrl();
-            if (otpBaseUrl == null || otpBaseUrl == "") {
-                otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
-            }
-
-            URL otpBikeStationsUrl = new URL(otpBaseUrl + "routers/default/bike_rental?lowerLeft="
-                    + lowerLeft.getLatitude()
-                    + ","
-                    + lowerLeft.getLongitude()
-                    + "&upperRight="
-                    + upperRight.getLatitude()
-                    + ","
-                    + upperRight.getLongitude());
-
-            HttpURLConnection connection = (HttpURLConnection) otpBikeStationsUrl.openConnection();
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setRequestMethod("GET");
-
-            connection.getResponseCode();
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream()));
-            ObaApi.SerializationHandler handler = ObaApi.getSerializer(BikeRentalStationList.class);
-            list = handler.deserialize(in, BikeRentalStationList.class);
-            in.close();
-            connection.disconnect();
-        } catch (MalformedURLException e) {
-            //TODO Check the right return type here
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        OtpBikeStationResponse list
+                = OtpBikeStationRequest.newRequest(getContext(), lowerLeft, upperRight).call();
         return list.stations;
     }
 

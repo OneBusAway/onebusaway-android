@@ -63,8 +63,15 @@ public class RequestBase {
 
         protected Context mContext;
 
+        protected boolean isOtp = false;
+
         protected BuilderBase(Context context, String path) {
             this(context, null, path);
+        }
+
+        protected BuilderBase(Context context, String path, boolean isOtp) {
+            this(context, path);
+            this.isOtp = isOtp;
         }
 
         protected BuilderBase(Context context, ObaContext obaContext, String path) {
@@ -72,6 +79,11 @@ public class RequestBase {
             mObaContext = obaContext;
             mBuilder = new Uri.Builder();
             mBuilder.path(path);
+        }
+
+        protected BuilderBase(Context context, ObaContext obaContext, String path, boolean isOtp) {
+            this(context, obaContext, path);
+            this.isOtp = isOtp;
         }
 
         protected static String getPathWithId(String pathElement, String id) {
@@ -84,10 +96,14 @@ public class RequestBase {
 
         protected Uri buildUri() {
             ObaContext context = (mObaContext != null) ? mObaContext : ObaApi.getDefaultContext();
-            context.setBaseUrl(mContext, mBuilder);
-            context.setAppInfo(mBuilder);
-            mBuilder.appendQueryParameter("version", "2");
-            mBuilder.appendQueryParameter("key", context.getApiKey());
+            if (isOtp) {
+                context.setBaseOtpUrl(mContext, mBuilder);
+            } else {
+                context.setBaseUrl(mContext, mBuilder);
+                context.setAppInfo(mBuilder);
+                mBuilder.appendQueryParameter("version", "2");
+                mBuilder.appendQueryParameter("key", context.getApiKey());
+            }
             return mBuilder.build();
         }
 

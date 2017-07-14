@@ -63,7 +63,7 @@ public class RequestBase {
 
         protected Context mContext;
 
-        protected boolean isOtp = false;
+        protected boolean mIsOtp = false;
 
         protected BuilderBase(Context context, String path) {
             this(context, null, path);
@@ -71,7 +71,7 @@ public class RequestBase {
 
         protected BuilderBase(Context context, String path, boolean isOtp) {
             this(context, path);
-            this.isOtp = isOtp;
+            this.mIsOtp = isOtp;
         }
 
         protected BuilderBase(Context context, ObaContext obaContext, String path) {
@@ -83,7 +83,7 @@ public class RequestBase {
 
         protected BuilderBase(Context context, ObaContext obaContext, String path, boolean isOtp) {
             this(context, obaContext, path);
-            this.isOtp = isOtp;
+            this.mIsOtp = isOtp;
         }
 
         protected static String getPathWithId(String pathElement, String id) {
@@ -96,7 +96,7 @@ public class RequestBase {
 
         protected Uri buildUri() {
             ObaContext context = (mObaContext != null) ? mObaContext : ObaApi.getDefaultContext();
-            if (isOtp) {
+            if (mIsOtp) {
                 context.setBaseOtpUrl(mContext, mBuilder);
             } else {
                 context.setBaseUrl(mContext, mBuilder);

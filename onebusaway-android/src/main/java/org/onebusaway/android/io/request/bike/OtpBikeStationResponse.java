@@ -15,9 +15,13 @@
 */
 package org.onebusaway.android.io.request.bike;
 
+import org.onebusaway.android.io.request.ObaResponse;
 import org.opentripplanner.routing.bike_rental.BikeRentalStationList;
 
 /**
+ * Response returned from bike_rental endpoint in OTP. The response is already defined in the
+ * OTP pojos. This class was created here only to follow the convention of the other request/responses.
+ *
  * Created by carvalhorr on 7/13/17.
  */
 public class OtpBikeStationResponse extends BikeRentalStationList {

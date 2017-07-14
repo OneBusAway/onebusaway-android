@@ -46,6 +46,7 @@ public class ObaTestCase extends AndroidTestCase {
          * subclasses so multiple regions / APIs can be tested.
          */
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        //Application.get().setCurrentRegion(MockRegion.getTampa(getContext()), false);
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.mock.ObaMock;
 
 import android.test.AndroidTestCase;
@@ -45,6 +46,7 @@ public class ObaTestCase extends AndroidTestCase {
          * subclasses so multiple regions / APIs can be tested.
          */
         Application.get().setCustomApiUrl("api.pugetsound.onebusaway.org");
+        //Application.get().setCurrentRegion(MockRegion.getTampa(getContext()), false);
     }
 
     @Override

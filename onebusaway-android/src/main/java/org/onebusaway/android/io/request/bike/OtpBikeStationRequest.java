@@ -38,7 +38,8 @@ public class OtpBikeStationRequest extends RequestBase implements Callable<OtpBi
     public static class Builder extends RequestBase.BuilderBase {
 
         public Builder(Context context, Location lowerLeft, Location upperRight) {
-            super(context, getUrl(lowerLeft, upperRight), true);
+            super(context, getUrl(lowerLeft, upperRight));
+            setIsOtp(true);
         }
 
         public OtpBikeStationRequest build() {

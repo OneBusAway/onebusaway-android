@@ -69,21 +69,11 @@ public class RequestBase {
             this(context, null, path);
         }
 
-        protected BuilderBase(Context context, String path, boolean isOtp) {
-            this(context, path);
-            this.mIsOtp = isOtp;
-        }
-
         protected BuilderBase(Context context, ObaContext obaContext, String path) {
             mContext = context;
             mObaContext = obaContext;
             mBuilder = new Uri.Builder();
             mBuilder.path(path);
-        }
-
-        protected BuilderBase(Context context, ObaContext obaContext, String path, boolean isOtp) {
-            this(context, obaContext, path);
-            this.mIsOtp = isOtp;
         }
 
         protected static String getPathWithId(String pathElement, String id) {
@@ -112,6 +102,10 @@ public class RequestBase {
                 mObaContext = ObaApi.getDefaultContext().clone();
             }
             return mObaContext;
+        }
+
+        protected void setIsOtp(Boolean isOtp) {
+            this.mIsOtp = isOtp;
         }
     }
 

@@ -93,6 +93,7 @@ public class ObaContext {
         String serverName = Application.get().getCustomApiUrl();
 
         if (!TextUtils.isEmpty(serverName) || mRegion != null) {
+            Log.d(TAG, "Using custom OBA API URL set by user '" + serverName + "'.");
             setUrl(context, builder, serverName);
         } else {
             String fallBack = "api.pugetsound.onebusaway.org";
@@ -104,17 +105,29 @@ public class ObaContext {
     }
 
     public void setBaseOtpUrl(Context context, Uri.Builder builder) {
+        // Use the custom OTP url if vailable
         String otpBaseUrl = Application.get().getCustomOtpApiUrl();
-        if (otpBaseUrl == null || otpBaseUrl == "") {
+        if (TextUtils.isEmpty(otpBaseUrl)) {
+            // Otherwise use the current region OTP url
             otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+            Log.d(TAG, "Using default region OTP API URL set by user '" + otpBaseUrl + "'.");
+        } else {
+            Log.d(TAG, "Using custom region OTP API URL set by user '" + otpBaseUrl + "'.");
         }
         setUrl(context, builder, otpBaseUrl);
     }
 
+    /**
+     * Set a URL to the Uri.Builder. This method was created to avoid repeating the same logic for
+     * 'setBasetOtpUrl' and 'setBaseUrl' methods.
+     *
+     * @param context used to get android resources
+     * @param builder the Uri.Builder to set the url
+     * @param serverName the url to be used.
+     */
     private void setUrl(Context context, Uri.Builder builder, String serverName) {
         Uri baseUrl = null;
         if (!TextUtils.isEmpty(serverName)) {
-            Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
 
             try {
                 // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)

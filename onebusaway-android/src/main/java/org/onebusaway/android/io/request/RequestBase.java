@@ -105,7 +105,7 @@ public class RequestBase {
         }
 
         protected void setIsOtp(Boolean isOtp) {
-            this.mIsOtp = isOtp;
+            mIsOtp = isOtp;
         }
     }
 

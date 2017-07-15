@@ -19,6 +19,13 @@
     android:orientation="vertical">
 
     <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Design.Tab"
+        android:text="Bike station"/>
+
+
+    <TextView
         android:id="@+id/bikeStationName"
         style="@style/StopInfoDestination"
         android:layout_width="wrap_content"

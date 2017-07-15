@@ -33,12 +33,14 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
  */
 public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
 
-    private View bikeInfoWindowView;
+    private View bikeStationInfoWindowView;
+    private View floatingBikeInfoWindowView;
 
     private BikeStationsInfo bikeStationsInfo;
 
     public BikeInfoWindow(Context content, BikeStationsInfo bikeStationsInfo) {
-        bikeInfoWindowView = LayoutInflater.from(content).inflate(R.layout.bike_info_window, null);
+        bikeStationInfoWindowView = LayoutInflater.from(content).inflate(R.layout.bike_station_info_window, null);
+        floatingBikeInfoWindowView = LayoutInflater.from(content).inflate(R.layout.floating_bike_info_window, null);
         this.bikeStationsInfo = bikeStationsInfo;
     }
 
@@ -49,20 +51,27 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
 
     @Override
     public View getInfoContents(Marker marker) {
+        View returnView = null;
         BikeRentalStation station = bikeStationsInfo.getBikeStationOnMarker(marker);
-        setBikeStationName(station.name);
-        setNumberBikesAvailable(station.bikesAvailable);
-        setNumberSpacesAvailable(station.spacesAvailable);
-        return bikeInfoWindowView;
+        if (station.isFloatingBike) {
+            setBikeName(floatingBikeInfoWindowView, station.name);
+            returnView = floatingBikeInfoWindowView;
+        } else {
+            setBikeName(bikeStationInfoWindowView, station.name);
+            setNumberBikesAvailable(station.bikesAvailable);
+            setNumberSpacesAvailable(station.spacesAvailable);
+            returnView = bikeStationInfoWindowView;
+        }
+        return returnView;
 
     }
 
     /**
-     * Set the bike station name in the corresponding view.
-     * @param name Name of the bike station
+     * Set the bike name in the corresponding view.
+     * @param name Name of the bike station/floating ike
      */
-    private void setBikeStationName(String name) {
-        TextView stationName = (TextView) bikeInfoWindowView.findViewById(R.id.bikeStationName);
+    private void setBikeName(View parentView, String name) {
+        TextView stationName = (TextView) parentView.findViewById(R.id.bikeStationName);
         stationName.setText(name);
     }
 
@@ -71,7 +80,7 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
      * @param numberBikes number of bikes available
      */
     private void setNumberBikesAvailable(int numberBikes) {
-        TextView bikesAvailable = (TextView) bikeInfoWindowView.findViewById(R.id.numberBikes);
+        TextView bikesAvailable = (TextView) bikeStationInfoWindowView.findViewById(R.id.numberBikes);
         bikesAvailable.setText(String.valueOf(numberBikes));
     }
 
@@ -80,7 +89,7 @@ public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
      * @param numberSpaces number of spaces available
      */
     private void setNumberSpacesAvailable(int numberSpaces) {
-        TextView spacesAvailable = (TextView) bikeInfoWindowView.findViewById(R.id.numberRacks);
+        TextView spacesAvailable = (TextView) bikeStationInfoWindowView.findViewById(R.id.numberRacks);
         spacesAvailable.setText(String.valueOf(numberSpaces));
     }
 

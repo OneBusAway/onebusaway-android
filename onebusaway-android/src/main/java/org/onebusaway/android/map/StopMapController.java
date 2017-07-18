@@ -187,7 +187,8 @@ public class StopMapController implements MapModeController,
         mLoader.startLoading();
 
         SharedPreferences sp = Application.get().getPrefs();
-        boolean isBikeSelected = sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
+        boolean isBikeSelected = sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_activated), true)
+                && sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
         showBikes(isBikeSelected);
     }
 

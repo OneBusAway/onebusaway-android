@@ -39,6 +39,7 @@ import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class BikeStationOverlay
 
     private GoogleMap mMap;
 
-    private HashMap<Marker, BikeRentalStation> mStations;
+    private BikeStationData mBikeStationData;
 
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
@@ -89,7 +90,7 @@ public class BikeStationOverlay
     public BikeStationOverlay(Activity activity, GoogleMap map) {
         context = activity;
         mMap = map;
-        mStations = new HashMap<>();
+        mBikeStationData = new BikeStationData();
         mMap.setInfoWindowAdapter(new BikeInfoWindow(activity, this));
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
@@ -97,62 +98,68 @@ public class BikeStationOverlay
         mBigFloatingBikeIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_floating_marker_big);
     }
 
-    private synchronized void addMarker(BikeRentalStation station) {
-        if (mMap.getCameraPosition().zoom > 12) {
-            MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
-            if (mMap.getCameraPosition().zoom > 15) {
-                if (station.isFloatingBike) {
-                    options.icon(mBigFloatingBikeIcon);
-                } else {
-                    options.icon(mBigBikeStationIcon);
-                }
-            } else {
-                options.icon(mSmallBikeStationIcon);
-            }
-            Marker m = mMap.addMarker(options);
-            mStations.put(m, station);
-        }
-    }
-
     public void setOnFocusChangeListener(BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
 
+    /**
+     * Add the bike stations to the map keeping the currently selected marker.
+     * @param bikeStations list of bikeStations to display on the map
+     */
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        clearBikeStations();
-        for (BikeRentalStation bikeStation : bikeStations) {
-            addMarker(bikeStation);
+        // bike station associatged if the selected marker (if any)
+        BikeRentalStation station = getBikeStationForSelectedMarker();
+        mBikeStationData.addBikeStations(bikeStations);
+        // show the info window again if a marker was previously selected
+        if (station != null) {
+            Marker selectedMarker = mBikeStationData.addMarker(station);
+            if (selectedMarker != null) {
+                selectedMarker.showInfoWindow();
+                mBikeStationData.selectMaker(selectedMarker);
+            }
+        }
+    }
+
+    /**
+     *
+     * @return the bike station associated with the selected bike marker if a marker is selected
+     */
+    private BikeRentalStation getBikeStationForSelectedMarker() {
+        Marker selectedMarker = mBikeStationData.getSelectedMarker();
+        if (selectedMarker != null) {
+            return mBikeStationData.getBikeStationOnMarker(selectedMarker);
+        } else {
+            return null;
         }
     }
 
     public void clearBikeStations() {
-        for (Marker marker : mStations.keySet()) {
-            marker.remove();
-        }
-        mStations.clear();
+        mBikeStationData.clearBikeStationMarkers();
     }
 
     @Override
     public boolean markerClicked(Marker marker) {
 
-        if (mStations.containsKey(marker)) {
+        if (mBikeStationData.containsMaker(marker)) {
+            BikeRentalStation bikeRentalStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (mOnFocusChangedListener != null) {
-                BikeRentalStation bikeRentalStation = mStations.get(marker);
                 marker.showInfoWindow();
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
 
-            BikeRentalStation bikeStation = mStations.get(marker);
+            mBikeStationData.selectMaker(marker);
 
             ObaAnalytics.reportEventWithCategory(
                     ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     context.getString(R.string.analytics_action_button_press),
-                    context.getString(bikeStation.isFloatingBike?
+                    context.getString(bikeRentalStation.isFloatingBike?
                             R.string.analytics_label_bike_station_marker_clicked:
                             R.string.analytics_label_floating_bike_marker_clicked));
 
             return true;
+        } else {
+            mBikeStationData.removeMarkerSelection();
         }
         return false;
     }
@@ -178,6 +185,115 @@ public class BikeStationOverlay
 
     @Override
     public BikeRentalStation getBikeStationOnMarker(Marker marker) {
-        return mStations.get(marker);
+        return mBikeStationData.getBikeStationOnMarker(marker);
+    }
+
+    class BikeStationData {
+
+        /*
+        Store the current map zoom level to detect zoom level band changes. The bands are used to
+        show bike markers in different formats. Currently there are three bands:
+        . <= 12
+        . 12 to 15
+        . > 15
+         */
+        private float mCurrentMapZoomLevel = 0;
+
+        // Limit of bike markers to keep on memory to avoid markers to flick on screen
+        private static final int FUZZY_MAX_MARKER_COUNT = 200;
+
+        // Store the selected marker in order to continue displaying the info window when markers
+        // are added/ removed from map
+        private Marker mSelectedMarker = null;
+
+        // Keep track of markers displayed on map and associated BikeRentalStation
+        private HashMap<Marker, BikeRentalStation> mMarkers;
+
+        // Keep track of existing bike stations displayed on the map. This is used to verify if a
+        // bike station is already on the map
+        private List<String> mBikeStationKeys;
+
+        public BikeStationData() {
+            mMarkers = new HashMap<>();
+            mBikeStationKeys = new ArrayList<>();
+        }
+
+        public synchronized void addBikeStations(List<BikeRentalStation> bikeStations) {
+            // clear cache of markers if maximum number has been reached
+            if (mMarkers.size() > FUZZY_MAX_MARKER_COUNT) {
+                clearBikeStationMarkers();
+            }
+            // also clear cache of markers if zoom level changed bands because the markers need to
+            // be drawn in a different way or omitted.
+            if (hasZoomLevelChangedBands()) {
+                clearBikeStationMarkers();
+            }
+            //Add markers for the bike stations that are not already visible on the map
+            for (BikeRentalStation bikeStation : bikeStations) {
+                if (!mBikeStationKeys.contains(bikeStation.id)) {
+                    addMarker(bikeStation);
+                }
+            }
+            // Store the new zoom level in order to detect when the zoom level bands change
+            mCurrentMapZoomLevel = mMap.getCameraPosition().zoom;
+        }
+
+        // detect map zoom level changes between bands <= 12 | 12 - 15 | > 15
+        private boolean hasZoomLevelChangedBands() {
+            return (mCurrentMapZoomLevel <= 12 && mMap.getCameraPosition().zoom > 12) ||
+                    (mCurrentMapZoomLevel > 15 && mMap.getCameraPosition().zoom <= 15) ||
+                    (mCurrentMapZoomLevel > 12 && mCurrentMapZoomLevel <= 15 &&
+                            (mMap.getCameraPosition().zoom <= 12 || mMap.getCameraPosition().zoom > 15));
+        }
+
+        private synchronized Marker addMarker(BikeRentalStation station) {
+            if (mMap.getCameraPosition().zoom > 12) {
+                MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
+                if (mMap.getCameraPosition().zoom > 15) {
+                    if (station.isFloatingBike) {
+                        options.icon(mBigFloatingBikeIcon);
+                    } else {
+                        options.icon(mBigBikeStationIcon);
+                    }
+                } else {
+                    options.icon(mSmallBikeStationIcon);
+                }
+                Marker m = mMap.addMarker(options);
+                mMarkers.put(m, station);
+                mBikeStationKeys.add(station.id);
+                return m;
+            } else {
+                return null;
+            }
+        }
+
+
+        private synchronized void clearBikeStationMarkers() {
+            for (Marker marker : mMarkers.keySet()) {
+                marker.remove();
+            }
+            mMarkers.clear();
+            mBikeStationKeys.clear();
+        }
+
+        public BikeRentalStation getBikeStationOnMarker(Marker marker) {
+            return mMarkers.get(marker);
+        }
+
+        public boolean containsMaker(Marker marker) {
+            return mMarkers.containsKey(marker);
+        }
+
+        public void selectMaker(Marker marker) {
+            mSelectedMarker = marker;
+        }
+
+        public void removeMarkerSelection() {
+            mSelectedMarker = null;
+        }
+
+        public Marker getSelectedMarker() {
+            return mSelectedMarker;
+        }
     }
 }

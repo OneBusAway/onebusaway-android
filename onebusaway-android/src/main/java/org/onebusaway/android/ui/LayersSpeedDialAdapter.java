@@ -61,7 +61,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         setupActivated();
     }
 
-    public void addLayerActicationListener(LayerActivationListener listener) {
+    public void addLayerActivationListener(LayerActivationListener listener) {
         layerActivationListeners.add(listener);
     }
 
@@ -152,4 +152,5 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     public interface LayerActivationListener {
         void onActivateLayer(LayerInfo layer);
         void onDeactivateLayer(LayerInfo layer);
-    }}
+    }
+}

@@ -1484,12 +1484,12 @@ public class HomeActivity extends AppCompatActivity
 
             LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
             // Add the BaseMapFragment listener to activate the layer on the map
-            adapter.addLayerActicationListener(mMapFragment);
+            adapter.addLayerActivationListener(mMapFragment);
 
             // Add another listener to rebuild the menu options after selection. This other listener
             // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
             // reference to it only in the main activity.
-            adapter.addLayerActicationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
+            adapter.addLayerActivationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
                 @Override
                 public void onActivateLayer(LayerInfo layer) {
                     Handler h = new Handler(getMainLooper());

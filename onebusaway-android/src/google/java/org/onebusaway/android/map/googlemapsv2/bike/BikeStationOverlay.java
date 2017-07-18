@@ -69,7 +69,7 @@ public class BikeStationOverlay
     public static final LayerInfo layerInfo = new LayerInfo() {
             @Override
             public String getLayerlabel() {
-                return "Bikeshare";
+                return Application.get().getString(R.string.layers_speedial_bikeshare_label);
             }
 
             @Override

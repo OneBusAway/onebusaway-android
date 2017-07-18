@@ -167,6 +167,7 @@ public class BikeStationOverlay
     @Override
     public void removeMarkerClicked(LatLng latLng) {
         mOnFocusChangedListener.onFocusChanged(null);
+        mBikeStationData.removeMarkerSelection();
     }
 
     private Bitmap createBitmapFromShape() {

@@ -96,5 +96,8 @@
     <color name="trip_option_selected">@android:color/white</color>
     <color name="trip_option_icon_tint">#888</color>
 
+    <!-- Layers -->
+    <color name="layer_disabled">#FF777777</color>
+
 
 </resources>

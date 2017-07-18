@@ -31,15 +31,10 @@ public interface LayerInfo {
     String getLayerlabel();
 
     /**
-     * @return Icon drawable to display when the item is not activated.
-     */
-    int getUnselectedDrawableId();
-
-    /**
      *
-     * @return Icon drawable to display when the item is activated.
+     * @return Icon drawable to display in the speed dial option.
      */
-    int getSelectedDrawableId();
+    int getIconDrawableId();
 
     /**
      * Color of the speed dial option background and label text.

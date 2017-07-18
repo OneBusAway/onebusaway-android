@@ -73,13 +73,8 @@ public class BikeStationOverlay
             }
 
             @Override
-            public int getUnselectedDrawableId() {
+            public int getIconDrawableId() {
                 return R.drawable.ic_directions_bike_white;
-            }
-
-            @Override
-            public int getSelectedDrawableId() {
-                return R.drawable.ic_directions_bike_white_selected;
             }
 
             @Override

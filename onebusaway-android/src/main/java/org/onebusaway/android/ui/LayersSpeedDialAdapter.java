@@ -20,6 +20,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.widget.TextView;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
@@ -83,19 +84,19 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         return 1;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected MenuItem getViews(Context context, int position) {
 
         LayerInfo layer = layers[position];
         MenuItem menuItem = new MenuItem();
 
-        menuItem.iconDrawableId = activated[position] ? layer.getSelectedDrawableId() : layer.getUnselectedDrawableId();
-        ;
+        menuItem.iconDrawableId = layer.getIconDrawableId();
 
         // Adding a view so the color of the text match the color of the speed dial disc
         TextView label = new TextView(context);
         label.setText(layer.getLayerlabel());
-        label.setTextColor(layer.getLayerColor());
+        label.setTextColor(activated[position] ? layer.getLayerColor() : context.getResources().getColor(R.color.layer_disabled));
         menuItem.labelView = label;
 
         return menuItem;
@@ -131,9 +132,13 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         sp.edit().putBoolean(layers[position].getSharedPreferenceKey(), activated[position]).apply();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected int getBackgroundColour(int position) {
-        return layers[position].getLayerColor();
+        int activatedColor = layers[position].getLayerColor();
+        int deactivatedColor = context.getResources().getColor(R.color.layer_disabled);
+        return activated[position] ?
+                activatedColor : deactivatedColor;
     }
 
     @Override

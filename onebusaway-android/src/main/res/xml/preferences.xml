@@ -31,7 +31,7 @@
         android:key="@string/preference_key_map_layers"
         android:title="@string/preferences_map_layers_title">
         <CheckBoxPreference
-            android:key="@string/preference_key_layer_bikeshare"
+            android:key="@string/preference_key_layer_bikeshare_activated"
             android:title="@string/preferences_map_layers_bikeshare_title"
             android:summary="@string/preferences_map_layers_bikeshare_summary"
             android:defaultValue="true"/>

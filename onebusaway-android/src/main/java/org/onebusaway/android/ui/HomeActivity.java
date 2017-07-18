@@ -1471,7 +1471,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare), true)
+        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare_activated), true)
                 && Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare()) {
 
@@ -1523,6 +1523,12 @@ public class HomeActivity extends AppCompatActivity
                 @Override
                 public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
                     mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                }
+            });
+            mLayersFab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "layers fab clicked");
                 }
             });
         } else {

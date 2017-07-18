@@ -20,6 +20,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -186,7 +187,7 @@ public class StopMapController implements MapModeController,
         mLoader.startLoading();
 
         SharedPreferences sp = Application.get().getPrefs();
-        boolean isBikeSelected = sp.getBoolean(BikeStationOverlay.STATE_BIKE_SELECTED, false);
+        boolean isBikeSelected = sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
         showBikes(isBikeSelected);
     }
 

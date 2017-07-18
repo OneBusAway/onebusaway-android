@@ -48,8 +48,6 @@ import java.util.List;
 public class BikeStationOverlay
         implements MarkerListeners, BikeInfoWindow.BikeStationsInfo {
 
-    public static final String STATE_BIKE_SELECTED = "layer_bike_selected";
-
     private GoogleMap mMap;
 
     private HashMap<Marker, BikeRentalStation> mStations;
@@ -84,7 +82,7 @@ public class BikeStationOverlay
 
             @Override
             public String getSharedPreferenceKey() {
-                return STATE_BIKE_SELECTED;
+                return Application.get().getString(R.string.preference_key_layer_bikeshare_visible);
             }
         };
 

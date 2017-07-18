@@ -453,7 +453,7 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_edit_general),
                     getString(R.string.analytics_label_show_departed_bus_preference)
                             + (showDepartedBuses ? "YES" : "NO"));
-        } else if (key.equals(getString(R.string.preference_key_layer_bikeshare))) {
+        } else if (key.equals(getString(R.string.preference_key_layer_bikeshare_activated))) {
             displayLayerBikeshareChanged = !displayLayerBikeshareChanged;
         }
     }

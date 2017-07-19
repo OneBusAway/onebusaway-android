@@ -15,8 +15,11 @@
  */
 package org.onebusaway.android.ui;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.widget.TextView;
 
@@ -96,7 +99,19 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         // Adding a view so the color of the text match the color of the speed dial disc
         TextView label = new TextView(context);
         label.setText(layer.getLayerlabel());
-        label.setTextColor(activated[position] ? layer.getLayerColor() : context.getResources().getColor(R.color.layer_disabled));
+        label.setTextColor(Color.WHITE);
+        int labelDrawableId = 0;
+        if (activated[position]) {
+            labelDrawableId = layer.getLabelBackgroundDrawableId();
+        } else {
+            labelDrawableId = R.drawable.speed_dial_disabled_item_label;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            label.setBackground(context.getResources().getDrawable(labelDrawableId));
+        } else {
+            label.setBackgroundDrawable(context.getResources().getDrawable(labelDrawableId));
+        }
+
         menuItem.labelView = label;
 
         return menuItem;

@@ -31,6 +31,12 @@ public interface LayerInfo {
     String getLayerlabel();
 
     /**
+     * @return drawable id for label to be used as background. It should be the same background
+     * color as the layer color.
+     */
+    int getLabelBackgroundDrawableId();
+
+    /**
      *
      * @return Icon drawable to display in the speed dial option.
      */

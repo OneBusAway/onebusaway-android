@@ -19,8 +19,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -73,13 +73,24 @@ public class BikeStationOverlay
             }
 
             @Override
+            public int getLabelBackgroundDrawableId() {
+                return R.drawable.speed_dial_bikeshare_item_label;
+            }
+
+            @Override
             public int getIconDrawableId() {
                 return R.drawable.ic_directions_bike_white;
             }
 
+
             @Override
             public int getLayerColor() {
-                return Color.parseColor("#3a4677");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    return Application.get().getColor(R.color.layer_bikeshare_color);
+                } else {
+                    //noinspection deprecation
+                    return Application.get().getResources().getColor(R.color.layer_bikeshare_color);
+                }
             }
 
             @Override

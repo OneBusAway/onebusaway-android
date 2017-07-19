@@ -1480,7 +1480,7 @@ public class HomeActivity extends AppCompatActivity
             mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
             // make the cover transparent as it is not covering the entire screen
             mLayersFab.setContentCoverColour(0x00000000);
-            mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_primary));
+            mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
             LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
             // Add the BaseMapFragment listener to activate the layer on the map
@@ -1523,12 +1523,6 @@ public class HomeActivity extends AppCompatActivity
                 @Override
                 public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
                     mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-                }
-            });
-            mLayersFab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Log.d(TAG, "layers fab clicked");
                 }
             });
         } else {

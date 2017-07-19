@@ -42,6 +42,7 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Class to hold bike stations and control their display on the map.
@@ -108,14 +109,21 @@ public class BikeStationOverlay
      * @param bikeStations list of bikeStations to display on the map
      */
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        // bike station associatged if the selected marker (if any)
-        BikeRentalStation station = getBikeStationForSelectedMarker();
+        // bike station associated with the selected marker (if any)
+        BikeRentalStation selectedBikeStation = getBikeStationForSelectedMarker();
         mBikeStationData.addBikeStations(bikeStations);
         // show the info window again if a marker was previously selected
-        if (station != null) {
-            Marker selectedMarker = mBikeStationData.addMarker(station);
+        if (selectedBikeStation != null) {
+            // Add the selected marker to the map. Since the method to add the markers has already
+            // been called, there is already a marker in the position. But addMarker will replace
+            // it with a new one and it its info window needs to be displayed and also added as
+            // selected in the bikeStationData.
+            Marker selectedMarker = mBikeStationData.addMarker(selectedBikeStation);
+            mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation);
             if (selectedMarker != null) {
-                selectedMarker.showInfoWindow();
+                if (selectedMarker.isVisible()) {
+                    selectedMarker.showInfoWindow();
+                }
                 mBikeStationData.selectMaker(selectedMarker);
             }
         }
@@ -224,15 +232,17 @@ public class BikeStationOverlay
             if (mMarkers.size() > FUZZY_MAX_MARKER_COUNT) {
                 clearBikeStationMarkers();
             }
-            // also clear cache of markers if zoom level changed bands because the markers need to
-            // be drawn in a different way or omitted.
             if (hasZoomLevelChangedBands()) {
-                clearBikeStationMarkers();
+                // Update existing markers according to new zoom band and bike station type
+                for(Map.Entry<Marker, BikeRentalStation> entry: mMarkers.entrySet()) {
+                    updateMarkerView(entry.getKey(), entry.getValue());
+                }
             }
             //Add markers for the bike stations that are not already visible on the map
             for (BikeRentalStation bikeStation : bikeStations) {
                 if (!mBikeStationKeys.contains(bikeStation.id)) {
-                    addMarker(bikeStation);
+                    Marker marker = addMarker(bikeStation);
+                    updateMarkerView(marker, bikeStation);
                 }
             }
             // Store the new zoom level in order to detect when the zoom level bands change
@@ -247,28 +257,44 @@ public class BikeStationOverlay
                             (mMap.getCameraPosition().zoom <= 12 || mMap.getCameraPosition().zoom > 15));
         }
 
-        private synchronized Marker addMarker(BikeRentalStation station) {
+        /**
+         * Add a marker on the map for a bike staton. The default marker is added. The method
+         * updateMarkerView needs to be called to update it's appearance.
+         * @param bikeStation bike station to be added to the map
+         * @return
+         */
+        private synchronized Marker addMarker(BikeRentalStation bikeStation) {
+            MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(bikeStation.y, bikeStation.x));
+            Marker m = mMap.addMarker(options);
+            mMarkers.put(m, bikeStation);
+            mBikeStationKeys.add(bikeStation.id);
+            return m;
+        }
+
+        /**
+         * Change marker appearance according to the zoom level and type of bike station is represents
+         * @param marker
+         */
+        private synchronized void updateMarkerView(Marker marker, BikeRentalStation station) {
             if (mMap.getCameraPosition().zoom > 12) {
-                MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(station.y, station.x));
+                marker.setVisible(true);
                 if (mMap.getCameraPosition().zoom > 15) {
                     if (station.isFloatingBike) {
-                        options.icon(mBigFloatingBikeIcon);
+                        marker.setIcon(mBigFloatingBikeIcon);
                     } else {
-                        options.icon(mBigBikeStationIcon);
+                        marker.setIcon(mBigBikeStationIcon);
                     }
                 } else {
-                    options.icon(mSmallBikeStationIcon);
+                    marker.setIcon(mSmallBikeStationIcon);
                 }
-                Marker m = mMap.addMarker(options);
-                mMarkers.put(m, station);
-                mBikeStationKeys.add(station.id);
-                return m;
             } else {
-                return null;
+                marker.setVisible(false);
             }
         }
 
-
+        /**
+         * Remove all bike markers from map and clear the list of markers in memory.
+         */
         private synchronized void clearBikeStationMarkers() {
             for (Marker marker : mMarkers.keySet()) {
                 marker.remove();

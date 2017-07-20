@@ -146,7 +146,9 @@ public class BaseMapFragment extends SupportMapFragment
 
     private boolean mRunning = false;
 
-    private MapModeController mController;
+    private List<MapModeController> mControllers;
+
+    private String mMapMode = "";
 
     private ArrayList<Polyline> mLineOverlay = new ArrayList<Polyline>();
 
@@ -174,12 +176,15 @@ public class BaseMapFragment extends SupportMapFragment
     public void onActivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
             case "Bikeshare": {
-                if (mController instanceof StopMapController) {
-                    ((StopMapController) mController).showBikes(true);
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_layer_bikeshare),
-                            getString(R.string.analytics_label_bikeshare_activated));
+                for (MapModeController controller : mControllers) {
+                    if (controller instanceof StopMapController) {
+                        ((StopMapController) controller).showBikes(true);
+
+                        ObaAnalytics.reportEventWithCategory(
+                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                getString(R.string.analytics_action_layer_bikeshare),
+                                getString(R.string.analytics_label_bikeshare_activated));
+                    }
                 }
                 break;
             }
@@ -190,12 +195,15 @@ public class BaseMapFragment extends SupportMapFragment
     public void onDeactivateLayer(LayerInfo layer) {
         switch (layer.getLayerlabel()) {
             case "Bikeshare": {
-                if (mController instanceof StopMapController) {
-                    ((StopMapController) mController).showBikes(false);
-                    ObaAnalytics.reportEventWithCategory(
-                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                            getString(R.string.analytics_action_layer_bikeshare),
-                            getString(R.string.analytics_label_bikeshare_deactivated));
+                for (MapModeController controller : mControllers) {
+                    if (controller instanceof StopMapController) {
+                        ((StopMapController) controller).showBikes(false);
+
+                        ObaAnalytics.reportEventWithCategory(
+                                ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                                getString(R.string.analytics_action_layer_bikeshare),
+                                getString(R.string.analytics_label_bikeshare_deactivated));
+                    }
                 }
                 break;
             }
@@ -215,6 +223,7 @@ public class BaseMapFragment extends SupportMapFragment
          * @param location the user touch location on the map
          */
         void onFocusChanged(ObaStop stop, HashMap<String, ObaRoute> routes, Location location);
+
         void onFocusChanged(BikeRentalStation bikeRentalStation);
     }
 
@@ -335,8 +344,10 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onDestroy() {
-        if (mController != null) {
-            mController.destroy();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.destroy();
+            }
         }
         super.onDestroy();
     }
@@ -346,8 +357,10 @@ public class BaseMapFragment extends SupportMapFragment
         if (mLocationHelper != null) {
             mLocationHelper.onPause();
         }
-        if (mController != null) {
-            mController.onPause();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onPause();
+            }
         }
 
         Location center = getMapCenterAsLocation();
@@ -367,8 +380,10 @@ public class BaseMapFragment extends SupportMapFragment
      */
     @Override
     public void onHiddenChanged(boolean hidden) {
-        if (mController != null) {
-            mController.onHidden(hidden);
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onHidden(hidden);
+            }
         }
         super.onHiddenChanged(hidden);
     }
@@ -380,8 +395,10 @@ public class BaseMapFragment extends SupportMapFragment
         }
         mRunning = true;
 
-        if (mController != null) {
-            mController.onResume();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onResume();
+            }
         }
 
         super.onResume();
@@ -389,8 +406,10 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (mController != null) {
-            mController.onSaveInstanceState(outState);
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onSaveInstanceState(outState);
+            }
         }
         outState.putString(MapParams.MODE, getMapMode());
         outState.putString(MapParams.STOP_ID, mFocusStopId);
@@ -408,15 +427,16 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void onViewStateRestored(Bundle savedInstanceState) {
-        if (mController != null) {
-            mController.onViewStateRestored(savedInstanceState);
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onViewStateRestored(savedInstanceState);
+            }
         }
         super.onViewStateRestored(savedInstanceState);
     }
 
     public boolean isRouteDisplayed() {
-        return (mController != null) &&
-                MapParams.MODE_ROUTE.equals(mController.getMode());
+        return MapParams.MODE_ROUTE.equals(mMapMode);
     }
 
     /**
@@ -445,6 +465,7 @@ public class BaseMapFragment extends SupportMapFragment
             mVehicleOverlay.setController(this);
         }
     }
+
     public void setupBikeStationOverlay() {
         Activity activity = getActivity();
         if (mBikeStationOverlay == null && activity != null) {
@@ -473,8 +494,8 @@ public class BaseMapFragment extends SupportMapFragment
     //
     @Override
     public String getMapMode() {
-        if (mController != null) {
-            return mController.getMode();
+        if (!"".equals(mMapMode)) {
+            return mMapMode;
         }
         return null;
     }
@@ -483,30 +504,34 @@ public class BaseMapFragment extends SupportMapFragment
     public void setMapMode(String mode, Bundle args) {
         String oldMode = getMapMode();
         if (oldMode != null && oldMode.equals(mode)) {
-            mController.setState(args);
+            for (MapModeController controller : mControllers) {
+                controller.setState(args);
+            }
             return;
         }
-        if (mController != null) {
-            mController.destroy();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.destroy();
+            }
+            mControllers.clear();
+        } else {
+            mControllers = new ArrayList<>();
         }
         if (mStopOverlay != null) {
             mStopOverlay.clear(false);
         }
         if (MapParams.MODE_ROUTE.equals(mode)) {
-            mController = new RouteMapController(this);
+            mControllers.add(new RouteMapController(this));
         } else if (MapParams.MODE_STOP.equals(mode)) {
-            mController = new StopMapController(this);
+            mControllers.add(new StopMapController(this));
         } else if (MapParams.MODE_DIRECTIONS.equals(mode)) {
-            mController = new DirectionsMapController(this);
+            mControllers.add(new DirectionsMapController(this));
         }
-        mController.setState(args);
-        mController.onResume();
-    }
-
-    public void showBikes(boolean showBikes) {
-        if (mController instanceof StopMapController) {
-            ((StopMapController) mController).showBikes(showBikes);
+        for (MapModeController controller : mControllers) {
+            controller.setState(args);
+            controller.onResume();
         }
+        mMapMode = mode;
     }
 
     @Override
@@ -520,7 +545,7 @@ public class BaseMapFragment extends SupportMapFragment
      * be used to remove the marker via removeMarker()
      *
      * @param location Location at which the marker should be added
-     * @param hue The hue (color) of the marker. Value must be greater or equal to 0 and less than 360, or null if the default color should be used.
+     * @param hue      The hue (color) of the marker. Value must be greater or equal to 0 and less than 360, or null if the default color should be used.
      * @return the ID associated with the marker that was just added, or -1 if the addition failed
      */
     @Override
@@ -743,8 +768,10 @@ public class BaseMapFragment extends SupportMapFragment
             }
         }
 
-        if (mController != null) {
-            mController.onLocation();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.onLocation();
+            }
         }
     }
 
@@ -1076,8 +1103,10 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
         Log.d(TAG, "onCameraChange");
-        if (mController != null) {
-            mController.notifyMapChanged();
+        if (mControllers != null) {
+            for (MapModeController controller : mControllers) {
+                controller.notifyMapChanged();
+            }
         }
     }
 
@@ -1234,7 +1263,9 @@ public class BaseMapFragment extends SupportMapFragment
                                 public void onClick(DialogInterface dialog, int which) {
                                     // Ok, I suppose we can just try looking from where we
                                     // are.
-                                    mMapFragment.mController.onLocation();
+                                    for (MapModeController controller : mMapFragment.mControllers) {
+                                        controller.onLocation();
+                                    }
                                 }
                             }
                     );
@@ -1242,6 +1273,10 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
+    /**
+     * Class responsible for listening to the clicks on the map or markers and propagating these
+     * clicks to the overlays visible on the map.
+     */
     private class MapClickListeners implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
 
         @Override

@@ -48,7 +48,7 @@ import java.util.Map;
  * Class to hold bike stations and control their display on the map.
  */
 public class BikeStationOverlay
-        implements MarkerListeners, BikeInfoWindow.BikeStationsInfo {
+        implements MarkerListeners, BikeInfoWindowAdapter.BikeStationsInfo {
 
     private GoogleMap mMap;
 
@@ -61,6 +61,8 @@ public class BikeStationOverlay
     private BitmapDescriptor mBigFloatingBikeIcon;
 
     private Context context;
+
+    private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
     /**
      * Information necessary to create Speed Dial menu on the Layers FAB.
@@ -103,7 +105,8 @@ public class BikeStationOverlay
         context = activity;
         mMap = map;
         mBikeStationData = new BikeStationData();
-        mMap.setInfoWindowAdapter(new BikeInfoWindow(activity, this));
+        mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(activity, this);
+        mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
         mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_station_marker_big);
@@ -161,6 +164,9 @@ public class BikeStationOverlay
     public boolean markerClicked(Marker marker) {
 
         if (mBikeStationData.containsMaker(marker)) {
+            // Set the info window adapter before showing the info window as it may have changed by
+            // another overlay.
+            mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
             BikeRentalStation bikeRentalStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (mOnFocusChangedListener != null) {
                 marker.showInfoWindow();

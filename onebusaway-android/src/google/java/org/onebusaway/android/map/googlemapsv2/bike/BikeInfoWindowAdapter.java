@@ -31,14 +31,14 @@ import org.opentripplanner.routing.bike_rental.BikeRentalStation;
  *
  * Created by carvalhorr on 6/16/17.
  */
-public class BikeInfoWindow implements GoogleMap.InfoWindowAdapter {
+public class BikeInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
     private View bikeStationInfoWindowView;
     private View floatingBikeInfoWindowView;
 
     private BikeStationsInfo bikeStationsInfo;
 
-    public BikeInfoWindow(Context content, BikeStationsInfo bikeStationsInfo) {
+    public BikeInfoWindowAdapter(Context content, BikeStationsInfo bikeStationsInfo) {
         bikeStationInfoWindowView = LayoutInflater.from(content).inflate(R.layout.bike_station_info_window, null);
         floatingBikeInfoWindowView = LayoutInflater.from(content).inflate(R.layout.floating_bike_info_window, null);
         this.bikeStationsInfo = bikeStationsInfo;

@@ -141,16 +141,13 @@ final class StopsResponse {
     }
 }
 
-public class StopMapController implements MapModeController,
+public class StopMapController extends BaseMapController implements
         LoaderManager.LoaderCallbacks<StopsResponse>,
-        Loader.OnLoadCompleteListener<StopsResponse>,
-        MapWatcher.Listener {
+        Loader.OnLoadCompleteListener<StopsResponse> {
 
     private static final String TAG = "StopMapController";
 
     private static final int STOPS_LOADER = 5678;
-
-    private final Callback mCallback;
 
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
@@ -163,103 +160,15 @@ public class StopMapController implements MapModeController,
      */
     GoogleApiClient mGoogleApiClient;
 
-    // Bike Station loader
-    private static final int BIKE_STATIONS_LOADER = 8736;
-    private BikeLoaderCallbacks bikeLoaderCallbacks;
-    private BikeStationLoader bikeLoader;
-
-
     public StopMapController(Callback callback) {
-        mCallback = callback;
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+        super(callback);
+    }
 
-        // Init Google Play Services as early as possible in the Fragment lifecycle to give it time
-        if (api.isGooglePlayServicesAvailable(mCallback.getActivity())
-                == ConnectionResult.SUCCESS) {
-            Context context = mCallback.getActivity();
-            mGoogleApiClient = LocationUtils.getGoogleApiClientWithCallbacks(context);
-            mGoogleApiClient.connect();
-        }
-
-        //mCallback.getLoaderManager().initLoader(STOPS_LOADER, null, this);
+    @Override
+    protected void createLoader() {
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
-
-        SharedPreferences sp = Application.get().getPrefs();
-        boolean isBikeSelected = sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_activated), true)
-                && sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
-        showBikes(isBikeSelected);
-    }
-
-    public void showBikes(boolean showBikes) {
-        if (showBikes) {
-            bikeLoaderCallbacks = new BikeLoaderCallbacks(mCallback);
-            bikeLoader = bikeLoaderCallbacks.onCreateLoader(BIKE_STATIONS_LOADER, null);
-            bikeLoader.registerListener(0, bikeLoaderCallbacks);
-            bikeLoader.startLoading();
-        } else {
-            if (bikeLoader != null) {
-                mCallback.clearBikeStations();
-                bikeLoader.stopLoading();
-                bikeLoader = null;
-                bikeLoaderCallbacks = null;
-            }
-        }
-    }
-
-    /**
-     * Sets the initial state of where the map is focused, and it's zoom level
-     */
-    @Override
-    public void setState(Bundle args) {
-        if (args != null) {
-            Location center = UIUtils.getMapCenter(args);
-
-            // If the STOP_ID was set in the bundle, then we should focus on that stop
-            String stopId = args.getString(MapParams.STOP_ID);
-            if (stopId != null && center != null) {
-                mCallback.getMapView().setZoom(MapParams.DEFAULT_ZOOM);
-                setMapCenter(center);
-                return;
-            }
-
-            boolean dontCenterOnLocation = args.getBoolean(MapParams.DO_N0T_CENTER_ON_LOCATION);
-
-            // Try to set map based on real-time location, unless state says no
-            if (!dontCenterOnLocation) {
-                boolean setLocation = mCallback.setMyLocation(true, false);
-                if (setLocation) {
-                    return;
-                }
-            }
-
-            // If we have a previous map view, center map on that
-            if (center != null) {
-                float mapZoom = args.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
-                mCallback.getMapView().setZoom(mapZoom);
-                setMapCenter(center);
-                return;
-            }
-        } else {
-            // We don't have any state info - just center on last known location
-            boolean setLocation = mCallback.setMyLocation(false, false);
-            if (setLocation) {
-                return;
-            }
-        }
-        // If all else fails, just center on the region
-        mCallback.zoomToRegion();
-    }
-
-    /**
-     * Sets the map center and loads stops for the new map view
-     *
-     * @param center new coordinates for the map to center on
-     */
-    private void setMapCenter(Location center) {
-        mCallback.getMapView().setMapCenter(center, false, false);
-        onLocation();
     }
 
     @Override
@@ -268,59 +177,8 @@ public class StopMapController implements MapModeController,
     }
 
     @Override
-    public void destroy() {
-        //mCallback.getLoaderManager().destroyLoader(STOPS_LOADER);
-        getLoader().reset();
-        watchMap(false);
-    }
-
-    @Override
-    public void onPause() {
-        watchMap(false);
-
-        // Tear down GoogleApiClient
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
-    }
-
-    /**
-     * This is called when fm.beginTransaction().hide() or fm.beginTransaction().show() is called
-     *
-     * @param hidden True if the fragment is now hidden, false if it is not visible.
-     */
-    @Override
     public void onHidden(boolean hidden) {
         // No op for this controller
-    }
-
-    @Override
-    public void onResume() {
-        watchMap(true);
-
-        // Make sure GoogleApiClient is connected, if available
-        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-    }
-
-    @Override
-    public void onViewStateRestored(Bundle savedInstanceState) {
-        // We don't need to handle the view state here. This is already been handled in HomeActivity
-        // when the bus stop is selected on the map
-    }
-
-    @Override
-    public void onLocation() {
-        refresh();
-    }
-
-    @Override
-    public void onNoLocation() {
     }
 
     @Override
@@ -331,9 +189,25 @@ public class StopMapController implements MapModeController,
         return loader;
     }
 
+    protected StopsLoader getLoader() {
+        //Loader<ObaStopsForLocationResponse> l =
+        //        mCallback.getLoaderManager().getLoader(STOPS_LOADER);
+        //return (StopsLoader)l;
+        return (StopsLoader) mLoader;
+    }
+
+    @Override
+    protected void updateData() {
+        StopsLoader loader = getLoader();
+        if (loader != null) {
+            StopsRequest req = new StopsRequest(mCallback.getMapView());
+            loader.update(req);
+        }
+
+    }
     @Override
     public void onLoadFinished(Loader<StopsResponse> loader,
-            StopsResponse _response) {
+                               StopsResponse _response) {
         mCallback.showProgress(false);
         final ObaStopsForLocationResponse response = _response.getResponse();
 
@@ -390,43 +264,10 @@ public class StopMapController implements MapModeController,
     // Remove when adding back LoaderManager help.
     @Override
     public void onLoadComplete(Loader<StopsResponse> loader,
-            StopsResponse response) {
+                               StopsResponse response) {
         onLoadFinished(loader, response);
     }
 
-    //
-    // Loading
-    //
-    private StopsLoader getLoader() {
-        //Loader<ObaStopsForLocationResponse> l =
-        //        mCallback.getLoaderManager().getLoader(STOPS_LOADER);
-        //return (StopsLoader)l;
-        return (StopsLoader) mLoader;
-    }
-
-    private void refresh() {
-        // First we need to check to see if the current request we have can handle this.
-        // Otherwise, we need to restart the loader with the new request.
-        if (mCallback != null) {
-            Activity a = mCallback.getActivity();
-            if (a != null) {
-                a.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        StopsLoader loader = getLoader();
-                        if (loader != null) {
-                            StopsRequest req = new StopsRequest(mCallback.getMapView());
-                            loader.update(req);
-                        }
-                        if (bikeLoader != null) {
-                            bikeLoader.update(mCallback.getSouthWest(),
-                                    mCallback.getNorthEast());
-                        }
-                    }
-                });
-            }
-        }
-    }
 
     //
     // Loader
@@ -491,49 +332,4 @@ public class StopMapController implements MapModeController,
         }
     }
 
-    //
-    // Map watcher
-    //
-    private void watchMap(boolean watch) {
-        // Only instantiate our own map watcher if the mapView isn't capable of watching itself
-        if (watch && !mCallback.getMapView().canWatchMapChanges()) {
-            if (mMapWatcher == null) {
-                mMapWatcher = new MapWatcher(mCallback.getMapView(), this);
-            }
-            mMapWatcher.start();
-        } else {
-            if (mMapWatcher != null) {
-                mMapWatcher.stop();
-            }
-            mMapWatcher = null;
-        }
-    }
-
-    @Override
-    public void onMapZoomChanging() {
-        //Log.d(TAG, "Map zoom changing");
-    }
-
-    @Override
-    public void onMapZoomChanged() {
-        //Log.d(TAG, "Map zoom changed");
-        refresh();
-    }
-
-    @Override
-    public void onMapCenterChanging() {
-        //Log.d(TAG, "Map center changing");
-    }
-
-    @Override
-    public void onMapCenterChanged() {
-        // Log.d(TAG, "Map center changed.");
-        refresh();
-    }
-
-    @Override
-    public void notifyMapChanged() {
-        Log.d(TAG, "Map changed (called by MapView)");
-        refresh();
-    }
 }

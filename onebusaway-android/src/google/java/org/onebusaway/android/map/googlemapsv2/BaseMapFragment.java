@@ -69,6 +69,7 @@ import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.RouteMapController;
 import org.onebusaway.android.map.StopMapController;
+import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
@@ -177,8 +178,8 @@ public class BaseMapFragment extends SupportMapFragment
         switch (layer.getLayerlabel()) {
             case "Bikeshare": {
                 for (MapModeController controller : mControllers) {
-                    if (controller instanceof StopMapController) {
-                        ((StopMapController) controller).showBikes(true);
+                    if (controller instanceof BikeshareMapController) {
+                        ((BikeshareMapController) controller).showBikes(true);
 
                         ObaAnalytics.reportEventWithCategory(
                                 ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -196,8 +197,8 @@ public class BaseMapFragment extends SupportMapFragment
         switch (layer.getLayerlabel()) {
             case "Bikeshare": {
                 for (MapModeController controller : mControllers) {
-                    if (controller instanceof StopMapController) {
-                        ((StopMapController) controller).showBikes(false);
+                    if (controller instanceof BikeshareMapController) {
+                        ((BikeshareMapController) controller).showBikes(false);
 
                         ObaAnalytics.reportEventWithCategory(
                                 ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
@@ -522,8 +523,10 @@ public class BaseMapFragment extends SupportMapFragment
         }
         if (MapParams.MODE_ROUTE.equals(mode)) {
             mControllers.add(new RouteMapController(this));
+            mControllers.add(new BikeshareMapController(this));
         } else if (MapParams.MODE_STOP.equals(mode)) {
             mControllers.add(new StopMapController(this));
+            mControllers.add(new BikeshareMapController(this));
         } else if (MapParams.MODE_DIRECTIONS.equals(mode)) {
             mControllers.add(new DirectionsMapController(this));
         }

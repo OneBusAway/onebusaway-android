@@ -1063,5 +1063,7 @@
     <string name="preferences_map_layers_bikeshare_summary">Show bike and station markers</string>
     <string name="preferences_map_layers_bikeshare_summary_unsupported">Bikeshare not supported in the selected region</string>
     <string name="layers_speedial_bikeshare_label">Bikeshare</string>
+    <string name="layer_activated">Layer %1$s activated.</string>
+    <string name="layer_deactivated">Layer %1$s deactivated.</string>
 
 </resources>

@@ -1498,7 +1498,6 @@ public class HomeActivity extends AppCompatActivity
                             mLayersFab.rebuildSpeedDialMenu();
                         }
                     }, 100);
-                    showLayerActivationMessage(getString(R.string.layer_activated, layer.getLayerlabel()));
                 }
 
                 @Override
@@ -1510,7 +1509,6 @@ public class HomeActivity extends AppCompatActivity
                             mLayersFab.rebuildSpeedDialMenu();
                         }
                     }, 100);
-                    showLayerActivationMessage(getString(R.string.layer_deactivated, layer.getLayerlabel()));
                 }
             });
             mLayersFab.setMenuAdapter(adapter);
@@ -1730,9 +1728,5 @@ public class HomeActivity extends AppCompatActivity
 
     public ArrivalsListFragment getArrivalsListFragment() {
         return mArrivalsListFragment;
-    }
-
-    private void showLayerActivationMessage(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 }

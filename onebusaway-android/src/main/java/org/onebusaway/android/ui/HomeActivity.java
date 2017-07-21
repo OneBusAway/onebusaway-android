@@ -76,6 +76,7 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LayersUtil;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -1471,9 +1472,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (Application.getPrefs().getBoolean(getString(R.string.preference_key_layer_bikeshare_activated), true)
-                && Application.get().getCurrentRegion() != null
-                && Application.get().getCurrentRegion().getSupportsOtpBikeshare()) {
+        if (LayersUtil.isBikeshareLayerActive()) {
 
             mLayersFab.setVisibility(View.VISIBLE);
 
@@ -1528,7 +1527,7 @@ public class HomeActivity extends AppCompatActivity
                 }
             });
         } else {
-            mLayersFab.setVisibility(View.INVISIBLE);
+            mLayersFab.setVisibility(View.GONE);
         }
     }
 

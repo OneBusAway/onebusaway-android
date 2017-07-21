@@ -106,8 +106,10 @@ public class PreferencesActivity extends PreferenceActivity
         mPreference = findPreference(getString(R.string.preference_key_region));
         mPreference.setOnPreferenceClickListener(this);
 
-        boolean supportsOtpBikeshare = Application.get().getCurrentRegion() != null
-                && Application.get().getCurrentRegion().getSupportsOtpBikeshare();
+        boolean supportsOtpBikeshare =
+                (Application.get().getCurrentRegion() != null
+                    && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
+                || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl());
         if (!supportsOtpBikeshare) {
             mLayersCategory = (PreferenceCategory) findPreference(getString(R.string.preference_key_map_layers));
             getPreferenceScreen().removePreference(mLayersCategory);

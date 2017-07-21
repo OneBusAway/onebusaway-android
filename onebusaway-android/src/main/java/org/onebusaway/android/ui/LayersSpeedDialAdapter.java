@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -27,6 +26,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
+import org.onebusaway.android.util.LayersUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +42,9 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private final Context context;
 
     /**
-     * Hold information of which layers are activated
+     * Hold information of which layers are activatedLayers
      */
-    private Boolean[] activated;
+    private Boolean[] activatedLayers;
 
     /**
      * Hold information of all available layers
@@ -52,7 +52,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private LayerInfo[] layers;
 
     /**
-     * Listener to be called when a layer option is activated/deativated. It supports multiple.
+     * Listener to be called when a layer option is activatedLayers/deativated. It supports multiple.
      * Currently there is one listener added to actually add/remove the layer on the map and another
      * one to update the speed dial menu state.
      */
@@ -71,15 +71,15 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private void setupLayers() {
         BaseMapFragment f;
         layers = new LayerInfo[1];
-        layers[0] = BikeStationOverlay.layerInfo;
+        layers[0] = LayersUtil.bikeshareLayerInfo;
     }
 
     private void setupActivated() {
-        activated = new Boolean[1];
+        activatedLayers = new Boolean[1];
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        boolean isBikeSelected = sp.getBoolean(layers[0].getSharedPreferenceKey(), false);
-        activated[0] = isBikeSelected;
+        boolean isBikeLayerActivated = sp.getBoolean(layers[0].getSharedPreferenceKey(), false);
+        activatedLayers[0] = isBikeLayerActivated;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         label.setText(layer.getLayerlabel());
         label.setTextColor(Color.WHITE);
         int labelDrawableId = 0;
-        if (activated[position]) {
+        if (activatedLayers[position]) {
             labelDrawableId = layer.getLabelBackgroundDrawableId();
         } else {
             labelDrawableId = R.drawable.speed_dial_disabled_item_label;
@@ -119,8 +119,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
     @Override
     protected boolean onMenuItemClick(int position) {
-        if (position < activated.length) {
-            if (activated[position]) {
+        if (position < activatedLayers.length) {
+            if (activatedLayers[position]) {
                 for(LayerActivationListener layerActivationListener: layerActivationListeners) {
                     layerActivationListener.onDeactivateLayer(layers[position]);
                 }
@@ -129,7 +129,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
                     layerActivationListener.onActivateLayer(layers[position]);
                 }
             }
-            activated[position] = !activated[position];
+            activatedLayers[position] = !activatedLayers[position];
             persistSelection(position);
             return true;
         } else {
@@ -144,7 +144,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private void persistSelection(int position) {
         SharedPreferences sp = PreferenceManager
                 .getDefaultSharedPreferences(context);
-        sp.edit().putBoolean(layers[position].getSharedPreferenceKey(), activated[position]).apply();
+        sp.edit().putBoolean(layers[position].getSharedPreferenceKey(), activatedLayers[position]).apply();
     }
 
     @SuppressWarnings("deprecation")
@@ -152,7 +152,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     protected int getBackgroundColour(int position) {
         int activatedColor = layers[position].getLayerColor();
         int deactivatedColor = context.getResources().getColor(R.color.layer_disabled);
-        return activated[position] ?
+        return activatedLayers[position] ?
                 activatedColor : deactivatedColor;
     }
 

@@ -64,43 +64,6 @@ public class BikeStationOverlay
 
     private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
-    /**
-     * Information necessary to create Speed Dial menu on the Layers FAB.
-     * @return
-     */
-    public static final LayerInfo layerInfo = new LayerInfo() {
-            @Override
-            public String getLayerlabel() {
-                return Application.get().getString(R.string.layers_speedial_bikeshare_label);
-            }
-
-            @Override
-            public int getLabelBackgroundDrawableId() {
-                return R.drawable.speed_dial_bikeshare_item_label;
-            }
-
-            @Override
-            public int getIconDrawableId() {
-                return R.drawable.ic_directions_bike_white;
-            }
-
-
-            @Override
-            public int getLayerColor() {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    return Application.get().getColor(R.color.layer_bikeshare_color);
-                } else {
-                    //noinspection deprecation
-                    return Application.get().getResources().getColor(R.color.layer_bikeshare_color);
-                }
-            }
-
-            @Override
-            public String getSharedPreferenceKey() {
-                return Application.get().getString(R.string.preference_key_layer_bikeshare_visible);
-            }
-        };
-
     public BikeStationOverlay(Activity activity, GoogleMap map) {
         context = activity;
         mMap = map;

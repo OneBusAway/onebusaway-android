@@ -34,6 +34,7 @@ import org.onebusaway.android.map.bike.BikeLoaderCallbacks;
 import org.onebusaway.android.map.bike.BikeStationLoader;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
+import org.onebusaway.android.util.LayersUtil;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -105,7 +106,7 @@ public class BikeshareMapController extends BaseMapController {
     @Override
     protected void updateData() {
         SharedPreferences sp = Application.get().getPrefs();
-        boolean isBikeSelected = sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_activated), true)
+        boolean isBikeSelected = LayersUtil.isBikeshareLayerActive()
                 && sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
         showBikes(isBikeSelected);
     }

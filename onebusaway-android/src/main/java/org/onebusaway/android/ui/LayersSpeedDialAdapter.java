@@ -25,8 +25,7 @@ import android.widget.TextView;
 import org.onebusaway.android.R;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
-import org.onebusaway.android.util.LayersUtil;
+import org.onebusaway.android.util.LayerUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +70,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     private void setupLayers() {
         BaseMapFragment f;
         layers = new LayerInfo[1];
-        layers[0] = LayersUtil.bikeshareLayerInfo;
+        layers[0] = LayerUtils.bikeshareLayerInfo;
     }
 
     private void setupActivated() {

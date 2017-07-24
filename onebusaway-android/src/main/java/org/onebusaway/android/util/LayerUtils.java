@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017 Rodrigo Carvalho (carvalhorr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.onebusaway.android.util;
 
 import android.os.Build;
@@ -9,15 +24,18 @@ import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 
 /**
+ * Utility methods related to creating layers. Currently only methods related to the bikeshare layer
+ * are present as this is the only layer at the moment.
+ *
  * Created by carvalhorr on 7/21/17.
  */
 
-public class LayersUtil {
+public class LayerUtils {
 
 
     /**
      * Information necessary to create Speed Dial menu on the Layers FAB.
-     * @return
+     * @return LayerInfo instance for bikeshare layer
      */
     public static final LayerInfo bikeshareLayerInfo = new LayerInfo() {
         @Override
@@ -52,23 +70,19 @@ public class LayersUtil {
         }
     };
 
-
-    private static boolean isLayerActive(String layerName) {
+    /**
+     * Method to check whether bikeshare layer is active or not.
+     *
+     * @return true if the bikeshare layer is an option that can be toggled on/off
+     */
+    public static boolean isBikeshareLayerActive() {
         // Bike layer is active if it is activated in the preferences and either the current region
         // supports it or a custom otp url is set. The custom otp url is used to make the testing
         // process easier
-        if (bikeshareLayerInfo.getLayerlabel().equals(layerName)) {
-            return Application.getPrefs().getBoolean(
-                    Application.get().getString(R.string.preference_key_layer_bikeshare_activated), true)
-                    && ((Application.get().getCurrentRegion() != null
-                        && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
-                    || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
-        } else {
-            return false;
-        }
-    }
-
-    public static boolean isBikeshareLayerActive() {
-        return isLayerActive(bikeshareLayerInfo.getLayerlabel());
+        return Application.getPrefs().getBoolean(
+                Application.get().getString(R.string.preference_key_layer_bikeshare_activated), true)
+                && ((Application.get().getCurrentRegion() != null
+                && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
+                || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
     }
 }

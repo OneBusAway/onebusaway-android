@@ -76,7 +76,7 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LayersUtil;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -1472,7 +1472,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (LayersUtil.isBikeshareLayerActive()) {
+        if (LayerUtils.isBikeshareLayerActive()) {
 
             mLayersFab.setVisibility(View.VISIBLE);
 

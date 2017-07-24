@@ -16,42 +16,15 @@
  */
 package org.onebusaway.android.map.bike;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
-import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.BaseMapController;
-import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.MapWatcher;
-import org.onebusaway.android.map.bike.BikeLoaderCallbacks;
-import org.onebusaway.android.map.bike.BikeStationLoader;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
-import org.onebusaway.android.util.LayersUtil;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.util.LayerUtils;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.text.TextUtils;
-import android.util.Log;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class BikeshareMapController extends BaseMapController {
 
@@ -106,7 +79,7 @@ public class BikeshareMapController extends BaseMapController {
     @Override
     protected void updateData() {
         SharedPreferences sp = Application.get().getPrefs();
-        boolean isBikeSelected = LayersUtil.isBikeshareLayerActive()
+        boolean isBikeSelected = LayerUtils.isBikeshareLayerActive()
                 && sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
         showBikes(isBikeSelected);
     }

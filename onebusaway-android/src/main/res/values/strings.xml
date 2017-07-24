@@ -1052,6 +1052,7 @@
     <string name="transit_mode_transit">Transit</string>
     <string name="transit_mode_bus">Bus only</string>
     <string name="transit_mode_rail">Rail only</string>
+    <string name="transit_mode_bikeshare">Bikeshare only</string>
 
     <!-- Bikeshare info window -->
     <string name="bike_info_window_bikes_title">Bikes</string>

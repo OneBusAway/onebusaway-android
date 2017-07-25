@@ -22,6 +22,7 @@ import android.support.v4.content.Loader;
 import org.onebusaway.android.map.MapModeController.Callback;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,6 +36,8 @@ public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<B
 
     private static final String TAG = "BikeLoaderCallback";
     private Callback mapFragment;
+
+    private List<String> bikeStationIds;
 
     public BikeLoaderCallbacks(Callback mapFragment) {
         this.mapFragment = mapFragment;
@@ -51,7 +54,20 @@ public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<B
     public void onLoadFinished(Loader<List<BikeRentalStation>> loader,
                                List<BikeRentalStation> response) {
         if (response != null) {
-            mapFragment.showBikeStations(response);
+
+            if (bikeStationIds != null) {
+                if (bikeStationIds.size() > 0) {
+                    List<BikeRentalStation> selectedBikeStations = new ArrayList<>();
+                    for (BikeRentalStation station : response) {
+                        if (bikeStationIds.contains(station.id)) {
+                            selectedBikeStations.add(station);
+                        }
+                    }
+                    mapFragment.showBikeStations(selectedBikeStations);
+                }
+            } else {
+                mapFragment.showBikeStations(response);
+            }
         }
     }
 
@@ -65,5 +81,16 @@ public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<B
     public void onLoadComplete(Loader<List<BikeRentalStation>> loader,
                                List<BikeRentalStation> response) {
         onLoadFinished(loader, response);
+    }
+
+    /**
+     * Set a list of bike stations ids to display. All other bike stations will be igonered if this
+     * list is set. This is used when showing directions that include bike rental, so that only
+     * the stations that are part of the direction are displayed.
+     *
+     * @param ids list of bike stations id to display
+     */
+    public void setBikeStationFilter(List<String> ids) {
+        this.bikeStationIds = ids;
     }
 }

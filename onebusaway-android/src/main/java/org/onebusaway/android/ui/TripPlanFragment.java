@@ -30,7 +30,7 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
-import org.onebusaway.android.util.LayersUtil;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -436,7 +436,7 @@ public class TripPlanFragment extends Fragment {
 
         ArrayList<String> travelByOptions = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.transit_mode_array)));
 
-        if (!LayersUtil.isBikeshareLayerActive()) {
+        if (!LayerUtils.isBikeshareLayerActive()) {
             travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
         }
 

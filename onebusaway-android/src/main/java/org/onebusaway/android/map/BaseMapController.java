@@ -53,7 +53,7 @@ public abstract class BaseMapController implements MapModeController,
 
     private static final String TAG = "BaseMapController";
 
-    protected final Callback mCallback;
+    protected Callback mCallback;
 
     private MapWatcher mMapWatcher;
 
@@ -61,6 +61,10 @@ public abstract class BaseMapController implements MapModeController,
      * GoogleApiClient being used for Location Services
      */
     private GoogleApiClient mGoogleApiClient;
+
+    public BaseMapController() {
+
+    }
 
     public BaseMapController(Callback callback) {
         mCallback = callback;

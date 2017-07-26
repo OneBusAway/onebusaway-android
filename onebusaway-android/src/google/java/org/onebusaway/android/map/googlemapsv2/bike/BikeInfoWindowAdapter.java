@@ -51,19 +51,22 @@ public class BikeInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
     @Override
     public View getInfoContents(Marker marker) {
-        View returnView = null;
         BikeRentalStation station = bikeStationsInfo.getBikeStationOnMarker(marker);
-        if (station.isFloatingBike) {
-            setBikeName(floatingBikeInfoWindowView, station.name);
-            returnView = floatingBikeInfoWindowView;
+        if (station != null) {
+            View returnView = null;
+            if (station.isFloatingBike) {
+                setBikeName(floatingBikeInfoWindowView, station.name);
+                returnView = floatingBikeInfoWindowView;
+            } else {
+                setBikeName(bikeStationInfoWindowView, station.name);
+                setNumberBikesAvailable(station.bikesAvailable);
+                setNumberSpacesAvailable(station.spacesAvailable);
+                returnView = bikeStationInfoWindowView;
+            }
+            return returnView;
         } else {
-            setBikeName(bikeStationInfoWindowView, station.name);
-            setNumberBikesAvailable(station.bikesAvailable);
-            setNumberSpacesAvailable(station.spacesAvailable);
-            returnView = bikeStationInfoWindowView;
+            return null;
         }
-        return returnView;
-
     }
 
     /**

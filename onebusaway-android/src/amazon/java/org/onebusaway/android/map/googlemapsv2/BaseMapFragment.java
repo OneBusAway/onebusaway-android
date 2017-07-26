@@ -533,6 +533,7 @@ public class BaseMapFragment extends SupportMapFragment
             mStopOverlay.clear(false);
         }
         BikeshareMapController bikeshareMapController = new BikeshareMapController(this);
+        setupBikeStationOverlay();
         if (MapParams.MODE_ROUTE.equals(mode)) {
             RouteMapController controller = new RouteMapController(this);
             mControllers.add(controller);

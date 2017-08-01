@@ -156,6 +156,7 @@ public final class PollerTask implements Runnable {
      * Checks arrivals from given ObaArrivalInfoResponse
      *
      * @param response arrival information
+     * @param tripId trip id 
      * @return ArrivalInfo, or return null if the arrival can't be found.
      */
     private ArrivalInfo checkArrivals(ObaArrivalInfoResponse response, String tripId) {

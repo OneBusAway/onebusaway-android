@@ -85,4 +85,12 @@ public class LayerUtils {
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
                 || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
     }
+
+    /**
+    * @return true if the bikeshare layer is active and visible
+     */
+    public static boolean isBikeshareLayerVisible() {
+        return isBikeshareLayerActive() && Application.getPrefs().getBoolean(
+                Application.get().getString(R.string.preference_key_layer_bikeshare_visible), true);
+    }
 }

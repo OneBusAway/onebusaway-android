@@ -37,6 +37,7 @@ import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
+import org.onebusaway.android.util.LayerUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ public class BikeStationOverlay
             // it with a new one and it its info window needs to be displayed and also added as
             // selected in the bikeStationData.
             Marker selectedMarker = mBikeStationData.addMarker(selectedBikeStation);
-            mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation);
+            mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation, LayerUtils.isBikeshareLayerVisible());
             if (selectedMarker != null) {
                 if (selectedMarker.isVisible()) {
                     selectedMarker.showInfoWindow();
@@ -216,17 +217,18 @@ public class BikeStationOverlay
             if (mMarkers.size() > FUZZY_MAX_MARKER_COUNT) {
                 clearBikeStationMarkers();
             }
+            boolean showBikeMarkers = LayerUtils.isBikeshareLayerVisible();
             if (hasZoomLevelChangedBands()) {
                 // Update existing markers according to new zoom band and bike station type
                 for (Map.Entry<Marker, BikeRentalStation> entry : mMarkers.entrySet()) {
-                    updateMarkerView(entry.getKey(), entry.getValue());
+                    updateMarkerView(entry.getKey(), entry.getValue(), showBikeMarkers);
                 }
             }
             //Add markers for the bike stations that are not already visible on the map
             for (BikeRentalStation bikeStation : bikeStations) {
                 if (!mBikeStationKeys.contains(bikeStation.id)) {
                     Marker marker = addMarker(bikeStation);
-                    updateMarkerView(marker, bikeStation);
+                    updateMarkerView(marker, bikeStation, showBikeMarkers);
                 }
             }
             // Store the new zoom level in order to detect when the zoom level bands change
@@ -259,10 +261,15 @@ public class BikeStationOverlay
         /**
          * Change marker appearance according to the zoom level and type of bike station is represents
          *
-         * @param marker
+         * @param marker the marker to update its display
+         * @param station the bike station/floating bike associated with the marker
+         * @param showBikeMarker used to control if the marker should be displayed or not. Included
+         *                       to control bike markers display when the layer is deactivated
+         *                       while the bike data was loading (it was deactivated between the
+         *                       request has been sent to the server and the results have arrived)
          */
-        private synchronized void updateMarkerView(Marker marker, BikeRentalStation station) {
-            if (mMap.getCameraPosition().zoom > 12) {
+        private synchronized void updateMarkerView(Marker marker, BikeRentalStation station, boolean showBikeMarker) {
+            if (mMap.getCameraPosition().zoom > 12 && showBikeMarker) {
                 marker.setVisible(true);
                 if (mMap.getCameraPosition().zoom > 15) {
                     if (station.isFloatingBike) {

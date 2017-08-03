@@ -5,34 +5,115 @@ language: android
 jdk: oraclejdk8
 # Turn off caching to avoid any caching problems
 cache: false
-# Don't use the Travis Container-Based Infrastructure - See #476
-sudo: true
-env:
-  global:
-    - ANDROID_API_LEVEL=27
-    - ANDROID_BUILD_TOOLS_VERSION=27.0.3
-    - ADB_INSTALL_TIMEOUT=20 # minutes (2 minutes by default - see #247)
+sudo: required # false for Container-Based Infrastructure, required for Sudo-enabled Infrastructure
+
+before_cache:
+  - rm -f ${TRAVIS_BUILD_DIR}/gradle/caches/modules-2/modules-2.lock # Avoid to repack it due locks
+  - rm -f ${TRAVIS_BUILD_DIR}/gradle/caches/3.3/classAnalysis/classAnalysis.lock
+  - rm -f ${TRAVIS_BUILD_DIR}/gradle/caches/3.3/jarSnapshots/jarSnapshots.lock
+
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/gradle/caches/
+    - ${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/
 
 android:
-  components:
-    - platform-tools
-    - tools
-    - build-tools-$ANDROID_BUILD_TOOLS_VERSION
-    - android-$ANDROID_API_LEVEL
-    # Google Play Services
-    - extra-google-google_play_services
-    # Support library
-    - extra-android-support
-    # Latest artifacts in local repository
-    - extra-google-m2repository
-    - extra-android-m2repository
+  components: # Cookbooks version: https://github.com/travis-ci/travis-cookbooks/tree/9c6cd11
+    - tools # Update preinstalled tools from revision 24.0.2 to 24.4.1
+    - build-tools-27.0.3 # Match build-tools version used in build.gradle
+    - platform-tools # Update platform-tools to revision 25.0.3+
+    - tools # Update tools from revision 24.4.1 to 25.2.5
+
+env:
+  global:
+    - API=27 # Android API level 25 by default
+    - TAG=google_apis # Google APIs by default, alternatively use default
+    - ABI=armeabi-v7a # ARM ABI v7a by default
+    - QEMU_AUDIO_DRV=none # Disable emulator audio to avoid warning
+    - GRADLE_USER_HOME="${TRAVIS_BUILD_DIR}/gradle" # Change location for Gradle Wrapper and cache
+    - ANDROID_HOME=/usr/local/android-sdk-24.0.2 # Depends on the cookbooks version used in the VM
+    - TOOLS=${ANDROID_HOME}/tools # PATH order matters, exists more than one emulator script
+    - PATH=${ANDROID_HOME}:${ANDROID_HOME}/emulator:${TOOLS}:${TOOLS}/bin:${ANDROID_HOME}/platform-tools:${PATH}
+    - ADB_INSTALL_TIMEOUT=20 # minutes (2 minutes by default)
+
+matrix:
+  include: # More Emulator API levels to build in parallel
+    - env: API=24
+    - env: API=23
+    - env: API=22
+    - env: API=21
+  allow_failures:
+    - env: API=23
+    - env: API=22
+  fast_finish: false
 
 before_install:
   - yes | sdkmanager "platforms;android-27"
+  - export EMULATOR="system-images;android-${API};${TAG};${ABI}" # Used to install/create emulator
+  - echo 'count=0' > /home/travis/.android/repositories.cfg # Avoid warning
+
+install:
+  # List and delete unnecessary components to free space
+  - sdkmanager --list || true
+  - sdkmanager --uninstall "system-images;android-15;default;armeabi-v7a"
+  - sdkmanager --uninstall "system-images;android-16;default;armeabi-v7a"
+  - sdkmanager --uninstall "system-images;android-17;default;armeabi-v7a"
+  - sdkmanager --uninstall "system-images;android-18;default;armeabi-v7a"
+  - sdkmanager --uninstall "system-images;android-19;default;armeabi-v7a"
+  - sdkmanager --uninstall "system-images;android-21;default;armeabi-v7a"
+  - sdkmanager --uninstall "extras;google;google_play_services"
+  - sdkmanager --uninstall "extras;android;support"
+  - sdkmanager --uninstall "platforms;android-10"
+  - sdkmanager --uninstall "platforms;android-15"
+  - sdkmanager --uninstall "platforms;android-16"
+  - sdkmanager --uninstall "platforms;android-17"
+  - sdkmanager --uninstall "platforms;android-18"
+  - sdkmanager --uninstall "platforms;android-19"
+  - sdkmanager --uninstall "platforms;android-20"
+  - sdkmanager --uninstall "platforms;android-21"
+  - sdkmanager --uninstall "build-tools;21.1.2"
+  # Update sdk tools to latest version and install/update components
+  - echo yes | sdkmanager "tools"
+  - echo yes | sdkmanager "platforms;android-25" # Latest platform required by SDK tools
+  - echo yes | sdkmanager "platforms;android-${API}" # Android platform required by emulator
+  - echo yes | sdkmanager "extras;android;m2repository"
+  - echo yes | sdkmanager "extras;google;m2repository"
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2"
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+  - echo yes | sdkmanager "$EMULATOR" # Install emulator system image
+  # Create and start emulator
+  - echo no | avdmanager create avd -n acib -k "$EMULATOR" -f --abi "$ABI" --tag "$TAG"
+  - emulator -avd acib -engine classic -no-window -camera-back none -camera-front none -selinux permissive -verbose -qemu -m 512 &
+  # Start adbd, wait for device connected and show android serial to avoid heavy tasks in parallel
+  - adb wait-for-device get-serialno
+  # Show version and download Gradle Wrapper if it's not already cached
+  - ./gradlew --version
+  # Clean project and download missing dependencies and components
+  - ./gradlew clean
+  # Check components status
+  - sdkmanager --list || true
+  # Run all checks
+  - ./gradlew check -PdisablePreDex
+
+before_script:
+  # Wait for emulator fully-booted and disable animations
+  - android-wait-for-emulator
+  - adb shell settings put global window_animation_scale 0 &
+  - adb shell settings put global transition_animation_scale 0 &
+  - adb shell settings put global animator_duration_scale 0 &
+  - sleep 30
+  - adb shell input keyevent 82 &
+  - sleep 15
 
 # Only run tests on the main two OneBusAway brand flavors
 script:
-  - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug -PdisablePreDex
+  - ./gradlew connectedObaGoogleDebugAndroidTest connectedObaAmazonDebugAndroidTest -PdisablePreDex
+
+after_script:
+  # Show tests and lint results
+  - cat ${TRAVIS_BUILD_DIR}/*/build/outputs/androidTest-results/connected/*
+  - cat ${TRAVIS_BUILD_DIR}/library/build/reports/lint-results.xml
+  - cat ${TRAVIS_BUILD_DIR}/demo/build/reports/lint-results.xml
 
 notifications:
   webhooks:

@@ -521,15 +521,22 @@ public class BaseMapFragment extends SupportMapFragment
         if (mStopOverlay != null) {
             mStopOverlay.clear(false);
         }
+        BikeshareMapController bikeshareMapController = new BikeshareMapController(this);
+        setupBikeStationOverlay();
         if (MapParams.MODE_ROUTE.equals(mode)) {
-            mControllers.add(new RouteMapController(this));
-            mControllers.add(new BikeshareMapController(this));
+            RouteMapController controller = new RouteMapController(this);
+            mControllers.add(controller);
+            bikeshareMapController.setMode(controller.getMode());
         } else if (MapParams.MODE_STOP.equals(mode)) {
-            mControllers.add(new StopMapController(this));
-            mControllers.add(new BikeshareMapController(this));
+            StopMapController controller = new StopMapController(this);
+            mControllers.add(controller);
+            bikeshareMapController.setMode(controller.getMode());
         } else if (MapParams.MODE_DIRECTIONS.equals(mode)) {
-            mControllers.add(new DirectionsMapController(this));
+            DirectionsMapController controller = new DirectionsMapController(this);
+            mControllers.add(controller);
+            bikeshareMapController.setMode(controller.getMode());
         }
+        mControllers.add(bikeshareMapController);
         for (MapModeController controller : mControllers) {
             controller.setState(args);
             controller.onResume();

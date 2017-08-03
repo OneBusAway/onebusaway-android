@@ -150,21 +150,24 @@ public class TripRequestBuilder {
     // bus only -> BUSISH,WALK
     // rail only -> TRAINISH,WALK
     public TripRequestBuilder setModeSetById(int id) {
-        List<TraverseMode> modes;
+        List<String> modes;
 
         switch (id) {
             case R.string.transit_mode_transit:
-                modes = Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+                modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
                 break;
             case R.string.transit_mode_bus:
-                modes = Arrays.asList(TraverseMode.BUSISH, TraverseMode.WALK);
+                modes = Arrays.asList(TraverseMode.BUSISH.toString(), TraverseMode.WALK.toString());
                 break;
             case R.string.transit_mode_rail:
-                modes = Arrays.asList(TraverseMode.TRAINISH, TraverseMode.WALK);
+                modes = Arrays.asList(TraverseMode.TRAINISH.toString(), TraverseMode.WALK.toString());
+                break;
+            case R.string.transit_mode_bikeshare:
+                modes = Arrays.asList("BICYCLE_RENT");
                 break;
             default:
                 Log.e(TAG, "Invalid mode set ID");
-                modes = Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+                modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
         }
 
         String modeString = TextUtils.join(",", modes);
@@ -173,33 +176,31 @@ public class TripRequestBuilder {
     }
 
     public int getModeSetId() {
-        List<TraverseMode> modes = getModes();
-        if (modes.contains(TraverseMode.BUSISH)) {
+        List<String> modes = getModes();
+        if (modes.contains(TraverseMode.BUSISH.toString())) {
             return R.string.transit_mode_bus;
         }
-        if (modes.contains(TraverseMode.TRAINISH)) {
+        if (modes.contains(TraverseMode.TRAINISH.toString())) {
             return R.string.transit_mode_rail;
         }
-        if (modes.contains(TraverseMode.TRANSIT)) {
+        if (modes.contains(("BICYCLE_RENT"))) {
+            return  R.string.transit_mode_bikeshare;
+        }
+        if (modes.contains(TraverseMode.TRANSIT.toString())) {
             return R.string.transit_mode_transit;
         }
         return -1;
     }
 
-    private List<TraverseMode> getModes() {
-        List<TraverseMode> modes = new ArrayList<>();
+    private List<String> getModes() {
+        List<String> modes = new ArrayList<>();
 
         String modeString = mBundle.getString(MODE_SET);
 
         if (modeString == null) {
-            return Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+            return Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
         }
 
-        String[] tokens = modeString.split(",");
-        for (String tok : tokens) {
-            TraverseMode mode = TraverseMode.valueOf(tok);
-            modes.add(mode);
-        }
         return modes;
     }
 
@@ -239,6 +240,7 @@ public class TripRequestBuilder {
         if (modeString != null) {
             request.getParameters().put("mode", modeString);
         }
+        //request.getParameters().put("mode", "BICYCLE_RENT");
 
         // Our default. This could be configurable.
         request.setShowIntermediateStops(true);

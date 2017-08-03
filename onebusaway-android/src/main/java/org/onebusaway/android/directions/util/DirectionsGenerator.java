@@ -694,6 +694,10 @@ public class DirectionsGenerator {
             TraverseMode traverseMode = TraverseMode.valueOf(leg.mode);
             if (traverseMode.isTransit()) {
                 tokens.add(getTransitTitle(leg));
+            } else {
+                if (traverseMode.equals(TraverseMode.BICYCLE)) {
+                    tokens.add(applicationContext.getString(R.string.transit_directions_bikeshare_label));
+                }
             }
         }
         return TextUtils.join(", ", tokens);

@@ -209,6 +209,7 @@
         <item>@string/transit_mode_transit</item>
         <item>@string/transit_mode_bus</item>
         <item>@string/transit_mode_rail</item>
+        <item>@string/transit_mode_bikeshare</item>
     </string-array>
 
     <string-array name="trip_plan_leaving_arriving_array">

@@ -83,9 +83,12 @@ public class BikeStationOverlay
 
     /**
      * Add the bike stations to the map keeping the currently selected marker.
+     *
      * @param bikeStations list of bikeStations to display on the map
      */
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
+        mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(context, this);
+
         // bike station associated with the selected marker (if any)
         BikeRentalStation selectedBikeStation = getBikeStationForSelectedMarker();
         mBikeStationData.addBikeStations(bikeStations);
@@ -107,7 +110,6 @@ public class BikeStationOverlay
     }
 
     /**
-     *
      * @return the bike station associated with the selected bike marker if a marker is selected
      */
     private BikeRentalStation getBikeStationForSelectedMarker() {
@@ -131,8 +133,8 @@ public class BikeStationOverlay
             // another overlay.
             mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
             BikeRentalStation bikeRentalStation = mBikeStationData.getBikeStationOnMarker(marker);
+            marker.showInfoWindow();
             if (mOnFocusChangedListener != null) {
-                marker.showInfoWindow();
                 mOnFocusChangedListener.onFocusChanged(bikeRentalStation);
             }
 
@@ -141,8 +143,8 @@ public class BikeStationOverlay
             ObaAnalytics.reportEventWithCategory(
                     ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                     context.getString(R.string.analytics_action_button_press),
-                    context.getString(bikeRentalStation.isFloatingBike?
-                            R.string.analytics_label_bike_station_marker_clicked:
+                    context.getString(bikeRentalStation.isFloatingBike ?
+                            R.string.analytics_label_bike_station_marker_clicked :
                             R.string.analytics_label_floating_bike_marker_clicked));
 
             return true;
@@ -154,7 +156,9 @@ public class BikeStationOverlay
 
     @Override
     public void removeMarkerClicked(LatLng latLng) {
-        mOnFocusChangedListener.onFocusChanged(null);
+        if (mOnFocusChangedListener != null) {
+            mOnFocusChangedListener.onFocusChanged(null);
+        }
         mBikeStationData.removeMarkerSelection();
     }
 
@@ -214,7 +218,7 @@ public class BikeStationOverlay
             }
             if (hasZoomLevelChangedBands()) {
                 // Update existing markers according to new zoom band and bike station type
-                for(Map.Entry<Marker, BikeRentalStation> entry: mMarkers.entrySet()) {
+                for (Map.Entry<Marker, BikeRentalStation> entry : mMarkers.entrySet()) {
                     updateMarkerView(entry.getKey(), entry.getValue());
                 }
             }
@@ -240,6 +244,7 @@ public class BikeStationOverlay
         /**
          * Add a marker on the map for a bike staton. The default marker is added. The method
          * updateMarkerView needs to be called to update it's appearance.
+         *
          * @param bikeStation bike station to be added to the map
          * @return
          */
@@ -253,6 +258,7 @@ public class BikeStationOverlay
 
         /**
          * Change marker appearance according to the zoom level and type of bike station is represents
+         *
          * @param marker
          */
         private synchronized void updateMarkerView(Marker marker, BikeRentalStation station) {

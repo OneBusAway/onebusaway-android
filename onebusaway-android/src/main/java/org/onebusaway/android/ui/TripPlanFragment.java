@@ -30,6 +30,7 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -66,8 +67,11 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -430,8 +434,14 @@ public class TripPlanFragment extends Fragment {
 
         wheelchairCheckbox.setChecked(mBuilder.getWheelchairAccessible());
 
-        ArrayAdapter adapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.transit_mode_array, android.R.layout.simple_spinner_item);
+        ArrayList<String> travelByOptions = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.transit_mode_array)));
+
+        if (!LayerUtils.isBikeshareLayerActive()) {
+            travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
+        }
+
+        ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, travelByOptions);
+
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTravelBy.setAdapter(adapter);

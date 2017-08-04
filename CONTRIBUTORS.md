@@ -11,3 +11,4 @@ We'd like to thank the following developers who have contributed to OneBusAway A
 * Mike Karabushin
 * Aziz Batihk
 * Charles Bond
+* Bridgette Eichelberger (bridgette@outlook.com)

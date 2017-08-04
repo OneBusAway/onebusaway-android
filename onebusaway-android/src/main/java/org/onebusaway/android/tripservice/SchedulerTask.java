@@ -143,9 +143,9 @@ public final class SchedulerTask implements Runnable {
     }
 
     private boolean scheduleAlert(Uri uri,
-            String tripId,
-            String stopId,
-            long triggerTime) {
+                                  String tripId,
+                                  String stopId,
+                                  long triggerTime) {
 
         Time tmp = new Time();
         tmp.set(triggerTime);

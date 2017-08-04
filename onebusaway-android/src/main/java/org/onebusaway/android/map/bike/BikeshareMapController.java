@@ -123,29 +123,34 @@ public class BikeshareMapController extends BaseMapController {
 
     @Override
     public void setState(Bundle args) {
-        // Avoid the layers controller to center the map.
-        args.putBoolean(MapParams.DO_N0T_CENTER_ON_LOCATION, true);
-
         // If the controller is being called when the map is displaying directions, get the bike
         // stations that are part of the directions to display only them.
         Itinerary itinerary = (Itinerary) args.getSerializable(MapParams.ITINERARY);
         if (itinerary != null) {
-            getBikeStationIdsFromItinerary(itinerary);
+            selectedBikeStationIds = getBikeStationIdsFromItinerary(itinerary);
         }
-        super.setState(args);
+
+        // Do not call super in this controller because the map zoom and positioning is already
+        // handled by the other controller. The bike controller is used together with another controller.
+
+        // TODO The zoom and center positioning should probably be separated from the controller
+        //   because it needs to be handled only once per map, not per controller
+        // (super.setState() handles the zoom and map centering)
+
     }
 
-    private void getBikeStationIdsFromItinerary(Itinerary itinerary) {
-        selectedBikeStationIds = new ArrayList<>();
+    private List<String> getBikeStationIdsFromItinerary(Itinerary itinerary) {
+        List<String> bikeStationIds = new ArrayList<>();
         for (Leg leg : itinerary.legs) {
             if (TraverseMode.BICYCLE.toString().equals(leg.mode)) {
                 if (VertexType.BIKESHARE.equals(leg.from.vertexType)) {
-                    selectedBikeStationIds.add(leg.from.bikeShareId);
+                    bikeStationIds.add(leg.from.bikeShareId);
                 }
                 if (VertexType.BIKESHARE.equals(leg.to.vertexType)) {
-                    selectedBikeStationIds.add(leg.to.bikeShareId);
+                    bikeStationIds.add(leg.to.bikeShareId);
                 }
             }
         }
+        return bikeStationIds;
     }
 }

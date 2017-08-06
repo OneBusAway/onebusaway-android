@@ -76,12 +76,10 @@ public class LayerUtils {
      * @return true if the bikeshare layer is an option that can be toggled on/off
      */
     public static boolean isBikeshareLayerActive() {
-        // Bike layer is active if it is activated in the preferences and either the current region
+        // Bike layer is active if either the current region
         // supports it or a custom otp url is set. The custom otp url is used to make the testing
         // process easier
-        return Application.getPrefs().getBoolean(
-                Application.get().getString(R.string.preference_key_layer_bikeshare_activated), true)
-                && ((Application.get().getCurrentRegion() != null
+        return ((Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
                 || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
     }

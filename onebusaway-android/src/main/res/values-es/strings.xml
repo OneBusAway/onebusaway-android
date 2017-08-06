@@ -1058,10 +1058,6 @@
 
     <!-- Bikeshare preference option -->
     <string name="bike_info_window_spaces_title">Lugares</string>
-    <string name="preferences_map_layers_title">Capas de mapa</string>
-    <string name="preferences_map_layers_bikeshare_title">Bicicleta Compartida</string>
-    <string name="preferences_map_layers_bikeshare_summary">Mostrar marcadores de bicicleta y estaciones</string>
-    <string name="preferences_map_layers_bikeshare_summary_unsupported">Bicicletas Compartidas no esta soportado en la región seleccionada</string>
     <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
 
 </resources>

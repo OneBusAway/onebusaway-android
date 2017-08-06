@@ -84,16 +84,12 @@ public class PreferencesActivity extends PreferenceActivity
 
     Preference mAboutPref;
 
-    PreferenceCategory mLayersCategory;
-
     boolean mAutoSelectInitialValue;
 
     boolean mOtpCustomAPIUrlChanged = false;
     //Save initial value so we can compare to current value in onDestroy()
 
     ListPreference preferredUnits;
-
-    private boolean displayLayerBikeshareChanged = false;
 
     @SuppressWarnings("deprecation")
     public void onCreate(Bundle savedInstanceState) {
@@ -105,15 +101,6 @@ public class PreferencesActivity extends PreferenceActivity
 
         mPreference = findPreference(getString(R.string.preference_key_region));
         mPreference.setOnPreferenceClickListener(this);
-
-        boolean supportsOtpBikeshare =
-                (Application.get().getCurrentRegion() != null
-                    && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
-                || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl());
-        if (!supportsOtpBikeshare) {
-            mLayersCategory = (PreferenceCategory) findPreference(getString(R.string.preference_key_map_layers));
-            getPreferenceScreen().removePreference(mLayersCategory);
-        }
 
         mLeftHandMode = findPreference(getString(R.string.preference_key_left_hand_mode));
         mLeftHandMode.setOnPreferenceChangeListener(this);
@@ -375,8 +362,6 @@ public class PreferencesActivity extends PreferenceActivity
         } else if (mOtpCustomAPIUrlChanged) {
             // Redraw the navigation drawer when custom otp api url is entered
             NavHelp.goHome(this, false);
-        } else if (displayLayerBikeshareChanged) {
-            NavHelp.goHome(this, false);
         }
 
         super.onDestroy();
@@ -455,8 +440,6 @@ public class PreferencesActivity extends PreferenceActivity
                     getString(R.string.analytics_action_edit_general),
                     getString(R.string.analytics_label_show_departed_bus_preference)
                             + (showDepartedBuses ? "YES" : "NO"));
-        } else if (key.equals(getString(R.string.preference_key_layer_bikeshare_activated))) {
-            displayLayerBikeshareChanged = !displayLayerBikeshareChanged;
         }
     }
 

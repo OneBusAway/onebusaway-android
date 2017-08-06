@@ -193,15 +193,13 @@ public class TripRequestBuilder {
     }
 
     private List<String> getModes() {
-        List<String> modes = new ArrayList<>();
-
         String modeString = mBundle.getString(MODE_SET);
 
-        if (modeString == null) {
+        if (TextUtils.isEmpty(modeString)) {
             return Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
         }
 
-        return modes;
+        return Arrays.asList(TextUtils.split(modeString, ","));
     }
 
     private String getModeString() {

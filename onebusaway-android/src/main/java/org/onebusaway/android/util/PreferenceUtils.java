@@ -206,6 +206,14 @@ public class PreferenceUtils {
         return Application.getPrefs().getFloat(key, defaultValue);
     }
 
+    public static int getInt(String key, int defaultValue) {
+        return Application.getPrefs().getInt(key, defaultValue);
+    }
+
+    public static boolean getBoolean(String key, boolean defaultValue) {
+        return Application.getPrefs().getBoolean(key, defaultValue);
+    }
+
     /**
      * Returns true if preferred units are metric, false if Imperial. If set to Automatic,
      * assume Imperial if the default locale is the US, metric otherwise.

@@ -71,7 +71,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 
@@ -154,6 +153,7 @@ public class TripPlanFragment extends Fragment {
 
         Bundle bundle = getArguments();
         mBuilder = new TripRequestBuilder(bundle);
+        loadAndSetAdditionalTripPreferences();
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan, container, false);
         setHasOptionsMenu(true);
@@ -266,6 +266,19 @@ public class TripPlanFragment extends Fragment {
 
         // Start: default from address is Current Location, to address is unset
         return view;
+    }
+
+    private void loadAndSetAdditionalTripPreferences() {
+        int modeId = PreferenceUtils.getInt(getString(R.string.preference_key_trip_plan_travel_by), 0);
+        double maxWalkDistance = PreferenceUtils.getDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), 0);
+        boolean optimizeTransfers = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), false);
+        boolean wheelchair  = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), false);
+
+        mBuilder.setOptimizeTransfers(optimizeTransfers)
+                .setModeSetById(modeId)
+                .setWheelchairAccessible(wheelchair)
+                .setMaxWalkDistance(maxWalkDistance);
+
     }
 
     private void checkRequestAndSubmit() {
@@ -415,6 +428,13 @@ public class TripPlanFragment extends Fragment {
                         .setModeSetById(modeId)
                         .setWheelchairAccessible(wheelchair)
                         .setMaxWalkDistance(maxWalkDistance);
+
+                // Save the additional trip preferences in SharePreferences so it is remembered
+                // after app is closed
+                PreferenceUtils.saveInt(getString(R.string.preference_key_trip_plan_travel_by), modeId);
+                PreferenceUtils.saveDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), maxWalkDistance);
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), optimizeTransfers);
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), wheelchair);
 
                 checkRequestAndSubmit();
             }

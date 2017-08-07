@@ -21,8 +21,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Design.Tab"
-        android:text="Bike station"/>
+        android:text="@string/bike_station_title"/>
 
 
     <TextView
@@ -31,7 +30,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:textAppearance="@style/TextAppearance.Design.Tab"
         android:ellipsize="end">
     </TextView>
 

@@ -17,11 +17,14 @@ package org.onebusaway.android.map.googlemapsv2.bike;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -49,7 +52,9 @@ import java.util.Map;
  * Class to hold bike stations and control their display on the map.
  */
 public class BikeStationOverlay
-        implements MarkerListeners, BikeInfoWindowAdapter.BikeStationsInfo {
+        implements MarkerListeners,
+        BikeInfoWindowAdapter.BikeStationsInfo,
+        GoogleMap.OnInfoWindowClickListener {
 
     private GoogleMap mMap;
 
@@ -71,6 +76,7 @@ public class BikeStationOverlay
         mBikeStationData = new BikeStationData();
         mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(activity, this);
         mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
+        mMap.setOnInfoWindowClickListener(this);
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
         mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_station_marker_big);
@@ -182,6 +188,25 @@ public class BikeStationOverlay
         return mBikeStationData.getBikeStationOnMarker(marker);
     }
 
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        // Proof of concept for deep-linking integration hard-coded for Tampa region (id = 0)
+        if (Application.get().getCurrentRegion() != null && Application.get().getCurrentRegion().getId() == 0) {
+            BikeRentalStation bikeStation = mBikeStationData.getBikeStationOnMarker(marker);
+            if (bikeStation != null) {
+                String url;
+                if (bikeStation.isFloatingBike) {
+                    url = context.getString(R.string.deep_link_floating_bike_url) + bikeStation.id;
+                } else {
+                    url = context.getString(R.string.deep_link_bike_station_url) + bikeStation.id;
+                }
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                context.startActivity(i);
+            }
+        }
+    }
+
     class BikeStationData {
 
         /*
@@ -261,8 +286,8 @@ public class BikeStationOverlay
         /**
          * Change marker appearance according to the zoom level and type of bike station is represents
          *
-         * @param marker the marker to update its display
-         * @param station the bike station/floating bike associated with the marker
+         * @param marker         the marker to update its display
+         * @param station        the bike station/floating bike associated with the marker
          * @param showBikeMarker used to control if the marker should be displayed or not. Included
          *                       to control bike markers display when the layer is deactivated
          *                       while the bike data was loading (it was deactivated between the

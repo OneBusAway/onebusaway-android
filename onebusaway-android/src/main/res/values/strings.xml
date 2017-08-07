@@ -1061,5 +1061,7 @@
     <!-- Bikeshare preference option -->
     <string name="bike_info_window_spaces_title">Spaces</string>
     <string name="layers_speedial_bikeshare_label">Bikeshare</string>
+    <string name="bike_station_title">Rent a bike</string>
+    <string name="floating_bike_title">Reserve this bike</string>
 
 </resources>

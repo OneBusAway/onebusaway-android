@@ -531,18 +531,20 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
     @Override
     public void onInfoWindowClick(Marker marker) {
         if (mMarkerData != null) {
-            // Stop any callbacks to refresh the vehicle marker popup balloons
-            mCustomInfoWindowAdapter.cancelUpdates();
-
             // Show trip details screen for the vehicle associated with this marker
             ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
             if (status != null) {
-                if (mController != null && mController.getFocusedStopId() != null) {
-                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                            mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
-                } else {
-                    TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                            TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                // Stop any callbacks to refresh the vehicle marker popup balloons
+                mCustomInfoWindowAdapter.cancelUpdates();
+
+                if (status != null) {
+                    if (mController != null && mController.getFocusedStopId() != null) {
+                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                                mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    } else {
+                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                                TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    }
                 }
             }
         }

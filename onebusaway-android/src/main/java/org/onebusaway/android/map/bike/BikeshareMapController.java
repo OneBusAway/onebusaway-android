@@ -104,7 +104,6 @@ public class BikeshareMapController extends BaseMapController {
 
     @Override
     protected void updateData() {
-        SharedPreferences sp = Application.get().getPrefs();
         boolean isBikeActivated = LayerUtils.isBikeshareLayerActive();
         if (isBikeActivated) {
             if (mapMode != null) {
@@ -113,8 +112,7 @@ public class BikeshareMapController extends BaseMapController {
                                 selectedBikeStationIds.size() > 0)) {
                     showBikes(true);
                 } else {
-                    boolean isBikeSelected =
-                        sp.getBoolean(mCallback.getActivity().getString(R.string.preference_key_layer_bikeshare_visible), false);
+                    boolean isBikeSelected = LayerUtils.isBikeshareLayerVisible();
                     showBikes(isBikeSelected);
                 }
             }

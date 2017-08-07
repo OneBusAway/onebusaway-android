@@ -75,9 +75,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
     private void setupActivated() {
         activatedLayers = new Boolean[1];
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        boolean isBikeLayerActivated = sp.getBoolean(layers[0].getSharedPreferenceKey(), false);
+        boolean isBikeLayerActivated = LayerUtils.isBikeshareLayerVisible();
         activatedLayers[0] = isBikeLayerActivated;
     }
 

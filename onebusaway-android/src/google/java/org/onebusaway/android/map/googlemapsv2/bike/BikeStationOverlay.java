@@ -199,6 +199,14 @@ public class BikeStationOverlay
                 } else {
                     url = context.getString(R.string.sobi_deep_link_bike_station_url) + bikeStation.id;
                 }
+
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        context.getString(R.string.analytics_action_button_press),
+                        context.getString(bikeStation.isFloatingBike ?
+                                R.string.analytics_label_bike_station_baloon_clicked :
+                                R.string.analytics_label_floating_bike_baloon_clicked));
+
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));
                 context.startActivity(i);

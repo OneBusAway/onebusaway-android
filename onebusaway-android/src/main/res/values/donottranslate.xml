@@ -158,6 +158,8 @@
     <string name="analytics_label_bikeshare_deactivated">Bikeshare layer deactivated</string>
     <string name="analytics_label_bike_station_marker_clicked">Pressed bike station marker</string>
     <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
+    <string name="analytics_label_bike_station_baloon_clicked">Pressed bike station baloon</string>
+    <string name="analytics_label_floating_bike_baloon_clicked">Pressed floating bike baloon</string>
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 

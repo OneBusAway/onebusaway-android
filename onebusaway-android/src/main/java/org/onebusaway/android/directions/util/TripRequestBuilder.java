@@ -238,7 +238,6 @@ public class TripRequestBuilder {
         if (modeString != null) {
             request.getParameters().put("mode", modeString);
         }
-        //request.getParameters().put("mode", "BICYCLE_RENT");
 
         // Our default. This could be configurable.
         request.setShowIntermediateStops(true);

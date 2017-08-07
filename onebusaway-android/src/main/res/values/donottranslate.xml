@@ -189,7 +189,7 @@
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
     <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
-    <string name="deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
-    <string name="deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
+    <string name="sobi_deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
+    <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
 
 </resources>

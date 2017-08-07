@@ -22,9 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.support.v4.content.ContextCompat;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -37,10 +35,10 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2;
 import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
+import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
@@ -191,14 +189,15 @@ public class BikeStationOverlay
     @Override
     public void onInfoWindowClick(Marker marker) {
         // Proof of concept for deep-linking integration hard-coded for Tampa region (id = 0)
-        if (Application.get().getCurrentRegion() != null && Application.get().getCurrentRegion().getId() == 0) {
+        if (Application.get().getCurrentRegion() != null
+                && Application.get().getCurrentRegion().getId() == RegionUtils.TAMPA_REGION_ID) {
             BikeRentalStation bikeStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (bikeStation != null) {
                 String url;
                 if (bikeStation.isFloatingBike) {
-                    url = context.getString(R.string.deep_link_floating_bike_url) + bikeStation.id;
+                    url = context.getString(R.string.sobi_deep_link_floating_bike_url) + bikeStation.id;
                 } else {
-                    url = context.getString(R.string.deep_link_bike_station_url) + bikeStation.id;
+                    url = context.getString(R.string.sobi_deep_link_bike_station_url) + bikeStation.id;
                 }
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));

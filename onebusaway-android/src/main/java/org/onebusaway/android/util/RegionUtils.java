@@ -49,6 +49,12 @@ public class RegionUtils {
 
     private static final String TAG = "RegionUtils";
 
+    public static final int TAMPA_REGION_ID = 0;
+
+    public static final int PUGET_SOUND_REGION_ID = 1;
+
+    public static final int ATLANTA_REGION_ID = 3;
+
     public static final double METERS_TO_MILES = 0.000621371;
 
     private static final int DISTANCE_LIMITER = 100;  // miles

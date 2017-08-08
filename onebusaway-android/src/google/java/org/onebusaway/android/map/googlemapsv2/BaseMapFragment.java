@@ -1299,6 +1299,10 @@ public class BaseMapFragment extends SupportMapFragment
                 mBikeStationOverlay.removeMarkerClicked(latLng);
             }
 
+            if (mVehicleOverlay != null) {
+                mVehicleOverlay.removeMarkerClicked(latLng);
+            }
+
         }
 
         @Override
@@ -1313,6 +1317,15 @@ public class BaseMapFragment extends SupportMapFragment
             if (mBikeStationOverlay != null) {
                 if (mBikeStationOverlay.markerClicked(marker)) {
                     return true;
+                } else {
+                    mBikeStationOverlay.removeMarkerClicked(marker.getPosition());
+                }
+            }
+            if (mVehicleOverlay != null) {
+                if (mVehicleOverlay.markerClicked(marker)) {
+                    return true;
+                } else {
+                    mVehicleOverlay.removeMarkerClicked(marker.getPosition());
                 }
             }
             return false;

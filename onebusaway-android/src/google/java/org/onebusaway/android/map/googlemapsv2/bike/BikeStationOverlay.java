@@ -73,12 +73,16 @@ public class BikeStationOverlay
         mMap = map;
         mBikeStationData = new BikeStationData();
         mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(activity, this);
-        mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
-        mMap.setOnInfoWindowClickListener(this);
+        setupInfoWindow();
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
         mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_station_marker_big);
         mBigFloatingBikeIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_floating_marker_big);
+    }
+
+    private void setupInfoWindow() {
+        mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
+        mMap.setOnInfoWindowClickListener(this);
     }
 
     public void setOnFocusChangeListener(BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
@@ -136,7 +140,7 @@ public class BikeStationOverlay
         if (mBikeStationData.containsMaker(marker)) {
             // Set the info window adapter before showing the info window as it may have changed by
             // another overlay.
-            mMap.setInfoWindowAdapter(mBikeInfoWindowAdapter);
+            setupInfoWindow();
             BikeRentalStation bikeRentalStation = mBikeStationData.getBikeStationOnMarker(marker);
             marker.showInfoWindow();
             if (mOnFocusChangedListener != null) {
@@ -204,8 +208,8 @@ public class BikeStationOverlay
                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         context.getString(R.string.analytics_action_button_press),
                         context.getString(bikeStation.isFloatingBike ?
-                                R.string.analytics_label_bike_station_baloon_clicked :
-                                R.string.analytics_label_floating_bike_baloon_clicked));
+                                R.string.analytics_label_bike_station_balloon_clicked :
+                                R.string.analytics_label_floating_bike_balloon_clicked));
 
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));

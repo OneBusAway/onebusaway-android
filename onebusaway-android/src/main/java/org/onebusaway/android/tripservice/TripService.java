@@ -16,6 +16,10 @@
  */
 package org.onebusaway.android.tripservice;
 
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -29,10 +33,6 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +83,8 @@ public class TripService extends Service {
             BuildConfig.APPLICATION_ID + ".action.CANCEL";
 
     private static final String NOTIFY_TEXT = ".notifyText";
+
+    private static final String NOTIFY_TITLE = ".notifyTitle";
 
     private ExecutorService mThreadPool;
 
@@ -181,9 +183,10 @@ public class TripService extends Service {
 
         } else if (ACTION_NOTIFY.equals(action)) {
             // Create the notification
+            String notifyTitle = intent.getStringExtra(NOTIFY_TITLE);
             String notifyText = intent.getStringExtra(NOTIFY_TEXT);
 
-            mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyText));
+            mThreadPool.submit(new NotifierTask(this, taskContext, uri, notifyTitle, notifyText));
             return START_REDELIVER_INTENT;
 
         } else if (ACTION_CANCEL.equals(action)) {
@@ -205,9 +208,9 @@ public class TripService extends Service {
     private final IBinder mBinder = new Binder() {
         @Override
         protected boolean onTransact(int code,
-                Parcel data,
-                Parcel reply,
-                int flags) throws RemoteException {
+                                     Parcel data,
+                                     Parcel reply,
+                                     int flags) throws RemoteException {
             return super.onTransact(code, data, reply, flags);
         }
     };
@@ -233,17 +236,18 @@ public class TripService extends Service {
         alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
     }
 
-    public static void notifyTrip(Context context, Uri alertUri, String notifyText) {
+    public static void notifyTrip(Context context, Uri alertUri, String notifyTitle, String notifyText) {
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(ACTION_NOTIFY);
         intent.setData(alertUri);
         intent.putExtra(NOTIFY_TEXT, notifyText);
+        intent.putExtra(NOTIFY_TITLE, notifyTitle);
         context.startService(intent);
     }
 
     public static String getRouteShortName(Context context, String id) {
         return UIUtils.stringForQuery(context, Uri.withAppendedPath(
-                        ObaContract.Routes.CONTENT_URI, id),
+                ObaContract.Routes.CONTENT_URI, id),
                 ObaContract.Routes.SHORTNAME
         );
     }

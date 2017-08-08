@@ -16,12 +16,6 @@
  */
 package org.onebusaway.android.tripservice;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.request.ObaArrivalInfoRequest;
@@ -29,6 +23,12 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalInfo;
 import org.onebusaway.android.util.UIUtils;
+
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 
 /**
  * A task (thread) that is responsible for polling the server to determine if a Notification to
@@ -137,9 +137,14 @@ public final class PollerTask implements Runnable {
                 // Bus is within the reminder interval (or it possibly has left!)
                 // Send off a notification.
                 //Log.d(TAG, "Notify for trip: " + alertUri);
-                TripService.notifyTrip(mContext, mUri, arrivalInfo.getNotifyText());
+                TripService.notifyTrip(mContext, mUri, getReminderName(tripId, stopId), arrivalInfo.getNotifyText());
             }
         }
+    }
+
+    private String getReminderName(String tripId, String stopId) {
+        final Uri uri = ObaContract.Trips.buildUri(tripId, stopId);
+        return UIUtils.stringForQuery(mContext, uri, ObaContract.Trips.NAME);
     }
 
     private long getReminderMin(String tripId, String stopId) {
@@ -151,7 +156,7 @@ public final class PollerTask implements Runnable {
      * Checks arrivals from given ObaArrivalInfoResponse
      *
      * @param response arrival information
-     * @param tripId
+     * @param tripId trip id 
      * @return ArrivalInfo, or return null if the arrival can't be found.
      */
     private ArrivalInfo checkArrivals(ObaArrivalInfoResponse response, String tripId) {

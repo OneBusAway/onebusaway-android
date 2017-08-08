@@ -269,11 +269,10 @@ public class NavigationDrawerFragment extends Fragment {
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
     private void setSelectedNavDrawerItem(int itemId) {
-        int currentId = itemId;
         if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
-            currentId = mCurrentSelectedPosition;
+
             // Save the selected position as a preference
             SharedPreferences sp = PreferenceManager
                     .getDefaultSharedPreferences(getActivity());
@@ -283,8 +282,7 @@ public class NavigationDrawerFragment extends Fragment {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
                     int thisItemId = mNavDrawerItems.get(i);
-                    formatNavDrawerItem(mNavDrawerItemViews[i], thisItemId,
-                            (currentId == thisItemId) || currentId == NAVDRAWER_ITEM_NEARBY);
+                    formatNavDrawerItem(mNavDrawerItemViews[i], thisItemId, itemId == thisItemId);
                 }
             }
         }
@@ -344,9 +342,7 @@ public class NavigationDrawerFragment extends Fragment {
         void onNavigationDrawerItemSelected(int position);
     }
 
-    /**
-     * Populates the navigation drawer with the appropriate items.
-     */
+    /** Populates the navigation drawer with the appropriate items. */
     public void populateNavDrawer() {
         mNavDrawerItems.clear();
 
@@ -487,5 +483,4 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP;
     }
-
 }

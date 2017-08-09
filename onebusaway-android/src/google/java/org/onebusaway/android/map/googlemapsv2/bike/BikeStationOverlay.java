@@ -199,6 +199,8 @@ public class BikeStationOverlay
             if (bikeStation != null) {
                 String url;
 
+                // SoBi deep link ID doesn't match GBFS bike and hub ID, so we need to remove the
+                // leading "hub_"/"bike_" to call pass the correct ID
                 String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "").replace("\"", "");
 
                 if (bikeStation.isFloatingBike) {

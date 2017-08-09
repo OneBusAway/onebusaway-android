@@ -198,10 +198,13 @@ public class BikeStationOverlay
             BikeRentalStation bikeStation = mBikeStationData.getBikeStationOnMarker(marker);
             if (bikeStation != null) {
                 String url;
+
+                String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "").replace("\"", "");
+
                 if (bikeStation.isFloatingBike) {
-                    url = context.getString(R.string.sobi_deep_link_floating_bike_url) + bikeStation.id;
+                    url = context.getString(R.string.sobi_deep_link_floating_bike_url) + bikeStationId;
                 } else {
-                    url = context.getString(R.string.sobi_deep_link_bike_station_url) + bikeStation.id;
+                    url = context.getString(R.string.sobi_deep_link_bike_station_url) + bikeStationId;
                 }
 
                 ObaAnalytics.reportEventWithCategory(

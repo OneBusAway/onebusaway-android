@@ -84,7 +84,6 @@ import org.onebusaway.android.map.bike.BikeshareMapController;
 import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.ui.LayersSpeedDialAdapter;
-import org.onebusaway.android.ui.NavHelp;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -411,6 +410,7 @@ public class BaseMapFragment extends SupportMapFragment
         if (mControllers != null) {
             for (MapModeController controller : mControllers) {
                 controller.onResume();
+                controller.notifyMapChanged();
             }
         }
 
@@ -687,7 +687,6 @@ public class BaseMapFragment extends SupportMapFragment
                 (l == null ||
                         (mapCenter != null && mapCenter.getLatitude() == 0.0 &&
                                 mapCenter.getLongitude() == 0.0))) {
-            NavHelp.goHome(getActivity(), false);
             zoomToRegion();
         }
     }

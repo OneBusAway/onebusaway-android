@@ -399,6 +399,7 @@ public class BaseMapFragment extends SupportMapFragment
         if (mControllers != null) {
             for (MapModeController controller : mControllers) {
                 controller.onResume();
+                controller.notifyMapChanged();
             }
         }
 

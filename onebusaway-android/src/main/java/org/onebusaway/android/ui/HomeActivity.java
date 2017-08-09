@@ -379,6 +379,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         checkLeftHandMode();
+        setupLayersSpeedDial();
         mFabMyLocation.requestLayout();
     }
 
@@ -1263,6 +1264,7 @@ public class HomeActivity extends AppCompatActivity
                     Toast.LENGTH_LONG
             ).show();
         }
+        setupLayersSpeedDial();
     }
 
     private void setupMyLocationButton() {

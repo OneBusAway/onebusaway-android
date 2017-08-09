@@ -199,6 +199,7 @@ public class BikeStationOverlay
             if (bikeStation != null) {
                 String url;
 
+                // Trim SoBi IDs - See https://github.com/OneBusAway/onebusaway-android/issues/402#issuecomment-321369719
                 String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "").replace("\"", "");
 
                 if (bikeStation.isFloatingBike) {

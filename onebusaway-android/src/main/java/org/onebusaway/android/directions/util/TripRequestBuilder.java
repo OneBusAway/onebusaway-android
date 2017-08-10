@@ -19,6 +19,7 @@ package org.onebusaway.android.directions.util;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.routing.core.OptimizeType;
@@ -154,7 +155,13 @@ public class TripRequestBuilder {
 
         switch (id) {
             case R.string.transit_mode_transit:
-                modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                if (LayerUtils.isBikeshareLayerActive()) {
+                    modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
+                            TraverseMode.WALK.toString(),
+                            Application.get().getString(R.string.traverse_mode_bicycle_rent));
+                } else {
+                    modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                }
                 break;
             case R.string.transit_mode_bus:
                 modes = Arrays.asList(TraverseMode.BUSISH.toString(), TraverseMode.WALK.toString());
@@ -163,7 +170,7 @@ public class TripRequestBuilder {
                 modes = Arrays.asList(TraverseMode.TRAINISH.toString(), TraverseMode.WALK.toString());
                 break;
             case R.string.transit_mode_bikeshare:
-                modes = Arrays.asList("BICYCLE_RENT");
+                modes = Arrays.asList(Application.get().getString(R.string.traverse_mode_bicycle_rent));
                 break;
             default:
                 Log.e(TAG, "Invalid mode set ID");

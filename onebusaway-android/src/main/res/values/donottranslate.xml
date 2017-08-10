@@ -194,4 +194,6 @@
     <string name="sobi_deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
     <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
 
+    <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>
+
 </resources>

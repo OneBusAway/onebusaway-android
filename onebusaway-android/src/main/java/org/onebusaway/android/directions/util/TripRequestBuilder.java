@@ -248,17 +248,15 @@ public class TripRequestBuilder {
         if (!TextUtils.isEmpty(app.getCustomOtpApiUrl())) {
             otpBaseUrl = app.getCustomOtpApiUrl();
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
-            if (!TextUtils.isEmpty(otpBaseUrl)) {
-                try {
-                    // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
-                    URL url = new URL(otpBaseUrl);
-                } catch (MalformedURLException e) {
-                    // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                    otpBaseUrl = activity.getString(R.string.http_prefix) + otpBaseUrl;
-                }
-            }
         } else {
             otpBaseUrl = app.getCurrentRegion().getOtpBaseUrl();
+        }
+        try {
+            // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+            URL url = new URL(otpBaseUrl);
+        } catch (MalformedURLException e) {
+            // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+            otpBaseUrl = activity.getString(R.string.http_prefix) + otpBaseUrl;
         }
         String fmtOtpBaseUrl = otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
 

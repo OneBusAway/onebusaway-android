@@ -814,18 +814,24 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public Location getSouthWest() {
-        Location southWest = new Location("");
-        southWest.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.latitude);
-        southWest.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.longitude);
-        return southWest;
+        if (mMap != null) {
+            Location southWest = new Location("");
+            southWest.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.latitude);
+            southWest.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.southwest.longitude);
+            return southWest;
+        }
+        return null;
     }
 
     @Override
     public Location getNorthEast() {
-        Location northEast = new Location("");
-        northEast.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.latitude);
-        northEast.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.longitude);
-        return northEast;
+        if (mMap != null) {
+            Location northEast = new Location("");
+            northEast.setLatitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.latitude);
+            northEast.setLongitude(mMap.getProjection().getVisibleRegion().latLngBounds.northeast.longitude);
+            return northEast;
+        }
+        return null;
     }
 
     /**

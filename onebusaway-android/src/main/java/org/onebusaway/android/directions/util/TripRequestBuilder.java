@@ -36,7 +36,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -155,7 +154,7 @@ public class TripRequestBuilder {
 
         switch (id) {
             case R.string.transit_mode_transit:
-                if (LayerUtils.isBikeshareLayerActive()) {
+                if (LayerUtils.isBikeshareEnabled()) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
                             Application.get().getString(R.string.traverse_mode_bicycle_rent));

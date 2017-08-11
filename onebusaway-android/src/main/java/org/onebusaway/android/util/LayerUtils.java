@@ -21,7 +21,6 @@ import android.text.TextUtils;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.map.googlemapsv2.bike.BikeStationOverlay;
 
 /**
  * Utility methods related to creating layers. Currently only methods related to the bikeshare layer
@@ -71,12 +70,12 @@ public class LayerUtils {
     };
 
     /**
-     * Method to check whether bikeshare layer is active or not.
+     * Method to check whether bikeshare layer is enabled or not.
      *
      * @return true if the bikeshare layer is an option that can be toggled on/off
      */
-    public static boolean isBikeshareLayerActive() {
-        // Bike layer is active if either the current region
+    public static boolean isBikeshareEnabled() {
+        // Bike layer is enabled if either the current region
         // supports it or a custom otp url is set. The custom otp url is used to make the testing
         // process easier
         return ((Application.get().getCurrentRegion() != null
@@ -88,7 +87,7 @@ public class LayerUtils {
     * @return true if the bikeshare layer is active and visible
      */
     public static boolean isBikeshareLayerVisible() {
-        return isBikeshareLayerActive() && Application.getPrefs().getBoolean(
+        return isBikeshareEnabled() && Application.getPrefs().getBoolean(
                 Application.get().getString(R.string.preference_key_layer_bikeshare_visible), true);
     }
 }

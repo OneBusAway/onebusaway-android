@@ -1474,7 +1474,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
 
-        if (LayerUtils.isBikeshareLayerActive()) {
+        if (LayerUtils.isBikeshareEnabled()) {
 
             mLayersFab.setVisibility(View.VISIBLE);
 

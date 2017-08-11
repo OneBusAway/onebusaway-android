@@ -456,7 +456,7 @@ public class TripPlanFragment extends Fragment {
 
         ArrayList<String> travelByOptions = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.transit_mode_array)));
 
-        if (!LayerUtils.isBikeshareLayerActive()) {
+        if (!LayerUtils.isBikeshareEnabled()) {
             travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
         }
 

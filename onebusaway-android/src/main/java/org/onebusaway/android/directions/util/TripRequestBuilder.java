@@ -154,7 +154,7 @@ public class TripRequestBuilder {
 
         switch (id) {
             case R.string.transit_mode_transit:
-                if (LayerUtils.isBikeshareEnabled()) {
+                if (Application.isBikeshareEnabled()) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
                             Application.get().getString(R.string.traverse_mode_bicycle_rent));

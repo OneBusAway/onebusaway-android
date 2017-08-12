@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.map.bike;
 
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.map.BaseMapController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.util.LayerUtils;
@@ -101,7 +102,7 @@ public class BikeshareMapController extends BaseMapController {
 
     @Override
     protected void updateData() {
-        boolean isBikeActivated = LayerUtils.isBikeshareEnabled();
+        boolean isBikeActivated = Application.isBikeshareEnabled();
         if (isBikeActivated) {
             if (mapMode != null) {
                 if (mapMode.equals(MapParams.MODE_DIRECTIONS) &&

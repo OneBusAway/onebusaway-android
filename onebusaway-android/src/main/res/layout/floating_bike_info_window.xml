@@ -19,11 +19,6 @@
     android:orientation="vertical">
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/floating_bike_title"/>
-
-    <TextView
         android:id="@+id/bikeStationName"
         style="@style/StopInfoDestination"
         android:layout_width="wrap_content"
@@ -32,5 +27,28 @@
         android:textAppearance="@style/TextAppearance.Design.Tab"
         android:ellipsize="end">
     </TextView>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/floating_bike_title"/>
+
+        <ImageView
+            android:id="@+id/trip_more_info"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_navigation_chevron_right"
+            android:maxHeight="24dp"
+            android:maxWidth="24dp"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"/>
+
+    </LinearLayout>
 
 </LinearLayout>

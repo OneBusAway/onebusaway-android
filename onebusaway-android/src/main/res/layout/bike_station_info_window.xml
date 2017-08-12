@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 Rodrigo Carvalho (carvalhorr@gmail.com)
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2017 Rodrigo Carvalho (carvalhorr@gmail.com)
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,15 +12,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:minWidth="100dp"
     android:orientation="vertical">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/bike_station_title"/>
 
 
     <TextView
@@ -30,12 +25,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:ellipsize="end">
-    </TextView>
+        android:layout_alignParentStart="true"
+        android:ellipsize="end"
+        android:text="Test" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/bikeStationInfo"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/bikeStationName"
+        android:layout_alignLeft="@id/bikeStationName"
+        android:layout_alignRight="@id/bikeStationName"
         android:orientation="horizontal">
 
         <LinearLayout
@@ -64,9 +64,9 @@
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
-            android:background="@color/material_gray"/>
+            android:layout_marginTop="5dp"
+            android:background="@color/material_gray" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -93,5 +93,26 @@
 
     </LinearLayout>
 
+    <TextView
+        android:layout_below="@id/bikeStationInfo"
+        android:layout_alignRight="@id/bikeStationName"
+        android:id="@+id/rentBikeLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginRight="24dp"
+        android:text="@string/bike_station_title" />
 
-</LinearLayout>
+    <ImageView
+        android:id="@+id/trip_more_info"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_below="@id/bikeStationInfo"
+        android:layout_alignRight="@id/bikeStationName"
+        android:adjustViewBounds="true"
+        android:maxHeight="24dp"
+        android:maxWidth="24dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_navigation_chevron_right" />
+
+</RelativeLayout>

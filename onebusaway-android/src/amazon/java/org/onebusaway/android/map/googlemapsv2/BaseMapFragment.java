@@ -1328,22 +1328,16 @@ public class BaseMapFragment extends SupportMapFragment
             if (mStopOverlay != null) {
                 if (mStopOverlay.markerClicked(marker)) {
                     return true;
-                } else {
-                    mStopOverlay.removeMarkerClicked(marker.getPosition());
                 }
             }
             if (mBikeStationOverlay != null) {
                 if (mBikeStationOverlay.markerClicked(marker)) {
                     return true;
-                } else {
-                    mBikeStationOverlay.removeMarkerClicked(marker.getPosition());
                 }
             }
             if (mVehicleOverlay != null) {
                 if (mVehicleOverlay.markerClicked(marker)) {
                     return true;
-                } else {
-                    mVehicleOverlay.removeMarkerClicked(marker.getPosition());
                 }
             }
             return false;

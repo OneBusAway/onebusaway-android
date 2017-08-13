@@ -185,8 +185,6 @@ public class StopOverlay implements MarkerListeners {
         mActivity = activity;
         mMap = map;
         loadIcons();
-        //mMap.setOnMarkerClickListener(this);
-        //mMap.setOnMapClickListener(this);
     }
 
     public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {

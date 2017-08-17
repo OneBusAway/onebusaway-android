@@ -113,6 +113,7 @@
         android:maxHeight="24dp"
         android:maxWidth="24dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_navigation_chevron_right" />
+        android:src="@drawable/ic_navigation_chevron_right"
+        android:tint="@color/switch_thumb_normal_material_dark"/>
 
 </RelativeLayout>

@@ -47,7 +47,8 @@
             android:maxHeight="24dp"
             android:maxWidth="24dp"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"/>
+            android:adjustViewBounds="true"
+            android:tint="@color/switch_thumb_normal_material_dark"/>
 
     </LinearLayout>
 

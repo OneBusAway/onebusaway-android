@@ -96,11 +96,12 @@
     <TextView
         android:layout_below="@id/bikeStationInfo"
         android:layout_alignRight="@id/bikeStationName"
+        android:layout_alignLeft="@id/bikeStationName"
+        android:gravity="center"
         android:id="@+id/rentBikeLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:layout_marginRight="24dp"
         android:text="@string/bike_station_title" />
 
     <ImageView
@@ -112,6 +113,7 @@
         android:adjustViewBounds="true"
         android:maxHeight="24dp"
         android:maxWidth="24dp"
+        android:layout_marginRight="-9dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_navigation_chevron_right"
         android:tint="@color/switch_thumb_normal_material_dark"/>

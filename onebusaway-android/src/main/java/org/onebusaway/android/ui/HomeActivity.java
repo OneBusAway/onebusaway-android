@@ -378,7 +378,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         checkLeftHandMode();
-        setupLayersSpeedDial();
+        adjustLayersSpeedDial();
         mFabMyLocation.requestLayout();
     }
 
@@ -1263,7 +1263,7 @@ public class HomeActivity extends AppCompatActivity
                     Toast.LENGTH_LONG
             ).show();
         }
-        setupLayersSpeedDial();
+        adjustLayersSpeedDial();
     }
 
     private void setupMyLocationButton() {
@@ -1477,7 +1477,9 @@ public class HomeActivity extends AppCompatActivity
                 .getLayoutParams();
 
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
+    }
 
+    private void adjustLayersSpeedDial() {
 
         if (Application.isBikeshareEnabled()) {
 

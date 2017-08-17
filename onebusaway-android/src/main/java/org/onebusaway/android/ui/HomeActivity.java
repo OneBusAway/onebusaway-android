@@ -76,7 +76,6 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -520,7 +519,7 @@ public class HomeActivity extends AppCompatActivity
 
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
 
-        showMyLocationButton();
+        showFloatingActionButtons();
         if (mLastMapProgressBarState) {
             showMapProgressBar();
         }
@@ -537,7 +536,7 @@ public class HomeActivity extends AppCompatActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        hideMyLocationButton();
+        hideFloatingActionButtons();
         hideMapProgressBar();
         hideMapFragment();
         hideReminderFragment();
@@ -569,7 +568,7 @@ public class HomeActivity extends AppCompatActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        hideMyLocationButton();
+        hideFloatingActionButtons();
         hideMapProgressBar();
         hideStarredStopsFragment();
         hideMapFragment();
@@ -1290,10 +1289,10 @@ public class HomeActivity extends AppCompatActivity
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
         checkLeftHandMode();
         if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
-            showMyLocationButton();
+            showFloatingActionButtons();
             showMapProgressBar();
         } else {
-            hideMyLocationButton();
+            hideFloatingActionButtons();
             hideMapProgressBar();
         }
     }
@@ -1398,21 +1397,27 @@ public class HomeActivity extends AppCompatActivity
         }, 100);
     }
 
-    private void showMyLocationButton() {
-        if (mFabMyLocation == null) {
+    private void showFloatingActionButtons() {
+        if (mFabMyLocation == null && mLayersFab == null) {
             return;
         }
-        if (mFabMyLocation.getVisibility() != View.VISIBLE) {
+        if (mFabMyLocation != null && mFabMyLocation.getVisibility() != View.VISIBLE) {
             mFabMyLocation.setVisibility(View.VISIBLE);
+        }
+        if (mLayersFab != null && mLayersFab.getVisibility() != View.VISIBLE) {
+            mLayersFab.setVisibility(View.VISIBLE);
         }
     }
 
-    private void hideMyLocationButton() {
-        if (mFabMyLocation == null) {
+    private void hideFloatingActionButtons() {
+        if (mFabMyLocation == null && mLayersFab == null) {
             return;
         }
-        if (mFabMyLocation.getVisibility() != View.GONE) {
+        if (mFabMyLocation != null && mFabMyLocation.getVisibility() != View.GONE) {
             mFabMyLocation.setVisibility(View.GONE);
+        }
+        if (mLayersFab != null && mLayersFab.getVisibility() != View.GONE) {
+            mLayersFab.setVisibility(View.GONE);
         }
     }
 

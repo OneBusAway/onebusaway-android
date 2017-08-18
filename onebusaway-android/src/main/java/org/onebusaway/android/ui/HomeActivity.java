@@ -394,6 +394,7 @@ public class HomeActivity extends AppCompatActivity
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
+        mLayersFab.closeSpeedDialMenu();
         super.onStop();
     }
 

@@ -172,7 +172,7 @@ public class BikeStationOverlay
     }
 
     private Bitmap createBitmapFromShape() {
-        int px = Application.get().getResources().getDimensionPixelSize(R.dimen.map_stop_shadow_size_6);
+        int px = Application.get().getResources().getDimensionPixelSize(R.dimen.bikeshare_small_marker_size);
 
         Bitmap bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
 

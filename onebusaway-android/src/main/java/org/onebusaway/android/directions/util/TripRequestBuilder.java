@@ -19,7 +19,6 @@ package org.onebusaway.android.directions.util;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.api.ws.Request;
 import org.opentripplanner.routing.core.OptimizeType;
@@ -153,7 +152,8 @@ public class TripRequestBuilder {
         List<String> modes;
 
         switch (id) {
-            case R.string.transit_mode_transit:
+            case R.string.transit_mode_transit_only:
+            case R.string.transit_mode_transit_and_bikeshare:
                 if (Application.isBikeshareEnabled()) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
@@ -193,7 +193,7 @@ public class TripRequestBuilder {
             return  R.string.transit_mode_bikeshare;
         }
         if (modes.contains(TraverseMode.TRANSIT.toString())) {
-            return R.string.transit_mode_transit;
+            return R.string.transit_mode_transit_only;
         }
         return -1;
     }

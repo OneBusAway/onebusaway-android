@@ -1049,7 +1049,7 @@
     <string name="wheelchair_accessible">Evitar las escaleras</string>
 
     <string name="travel_by_label">Viajar por: </string>
-    <string name="transit_mode_transit">Tránsito</string>
+    <string name="transit_mode_transit_only">Tránsito</string>
     <string name="transit_mode_bus">Solamente en Bus</string>
     <string name="transit_mode_rail">Solamente en Tren</string>
 

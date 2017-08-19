@@ -456,8 +456,12 @@ public class TripPlanFragment extends Fragment {
 
         ArrayList<String> travelByOptions = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.transit_mode_array)));
 
+        // Remove opttions based on support of bikeshare enabled or not
         if (!Application.isBikeshareEnabled()) {
             travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
+            travelByOptions.remove(getString(R.string.transit_mode_transit_and_bikeshare));
+        } else {
+            travelByOptions.remove(getString(R.string.transit_mode_transit_only));
         }
 
         ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, travelByOptions);
@@ -468,8 +472,8 @@ public class TripPlanFragment extends Fragment {
 
         int modeSetId = mBuilder.getModeSetId();
         if (modeSetId != -1) {
-            for (int i = 0; i < transitModeResource.length(); i++) {
-                if (transitModeResource.getResourceId(i, -1) == modeSetId) {
+            for (int i = 0; i < travelByOptions.size(); i++) {
+                if (travelByOptions.get(i) == getString(modeSetId)) {
                     spinnerTravelBy.setSelection(i);
                     break;
                 }

@@ -1053,7 +1053,8 @@
     <string name="wheelchair_accessible">Avoid stairs</string>
 
     <string name="travel_by_label">Travel by: </string>
-    <string name="transit_mode_transit">Transit</string>
+    <string name="transit_mode_transit_only">Transit only</string>
+    <string name="transit_mode_transit_and_bikeshare">Transit &amp; bikeshare</string>
     <string name="transit_mode_bus">Bus only</string>
     <string name="transit_mode_rail">Rail only</string>
     <string name="transit_mode_bikeshare">Bikeshare only</string>

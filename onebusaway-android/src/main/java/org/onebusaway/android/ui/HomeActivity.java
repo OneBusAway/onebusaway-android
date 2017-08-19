@@ -1484,8 +1484,6 @@ public class HomeActivity extends AppCompatActivity
 
         if (Application.isBikeshareEnabled()) {
 
-            mLayersFab.setVisibility(View.VISIBLE);
-
             mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
             // make the cover transparent as it is not covering the entire screen
             mLayersFab.setContentCoverColour(0x00000000);

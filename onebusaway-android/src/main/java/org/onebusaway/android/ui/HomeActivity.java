@@ -76,6 +76,7 @@ import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
@@ -1406,7 +1407,9 @@ public class HomeActivity extends AppCompatActivity
             mFabMyLocation.setVisibility(View.VISIBLE);
         }
         if (mLayersFab != null && mLayersFab.getVisibility() != View.VISIBLE) {
-            mLayersFab.setVisibility(View.VISIBLE);
+            if (LayerUtils.isBikeshareLayerVisible()) {
+                mLayersFab.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -1483,7 +1486,9 @@ public class HomeActivity extends AppCompatActivity
     private void adjustLayersSpeedDial() {
 
         if (Application.isBikeshareEnabled()) {
-            mLayersFab.setVisibility(View.VISIBLE);
+            if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+                mLayersFab.setVisibility(View.VISIBLE);
+            }
 
             mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
             // make the cover transparent as it is not covering the entire screen

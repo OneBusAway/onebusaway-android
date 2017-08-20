@@ -1483,6 +1483,7 @@ public class HomeActivity extends AppCompatActivity
     private void adjustLayersSpeedDial() {
 
         if (Application.isBikeshareEnabled()) {
+            mLayersFab.setVisibility(View.VISIBLE);
 
             mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
             // make the cover transparent as it is not covering the entire screen

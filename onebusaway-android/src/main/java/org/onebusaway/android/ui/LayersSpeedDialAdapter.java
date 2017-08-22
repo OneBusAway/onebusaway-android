@@ -129,7 +129,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
             }
             activatedLayers[position] = !activatedLayers[position];
             persistSelection(position);
-            return true;
+            return false;
         } else {
             return super.onMenuItemClick(position);
         }

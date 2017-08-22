@@ -46,3 +46,6 @@
 
 # Below is required to do a release build as of Play Services 8.1 - see #342
 -dontwarn com.google.android.gms.ads.**
+
+# Necessary because of library uk.co.markormesher:android-fab:1.3.3
+-dontwarn java.lang.invoke.*

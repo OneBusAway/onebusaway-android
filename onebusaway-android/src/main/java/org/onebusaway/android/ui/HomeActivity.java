@@ -231,9 +231,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static void start(Context context,
-                                   String focusId,
-                                   double lat,
-                                   double lon) {
+                             String focusId,
+                             double lat,
+                             double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -269,9 +269,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static Intent makeIntent(Context context,
-                                          String focusId,
-                                          double lat,
-                                          double lon) {
+                                    String focusId,
+                                    double lat,
+                                    double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -1121,7 +1121,7 @@ public class HomeActivity extends AppCompatActivity
      *                 null if we don't have this yet.
      */
     private void updateArrivalListFragment(@NonNull String stopId, @NonNull String stopName,
-            @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
+                                           @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -1323,7 +1323,7 @@ public class HomeActivity extends AppCompatActivity
 
     /**
      * Moves both Floating Action Buttons as response to sliding panel height changes.
-     *
+     * <p>
      * Currently there are two FAB that can be moved, the My location button and the Layers button.
      */
     synchronized private void moveFabsLocation() {
@@ -1538,6 +1538,7 @@ public class HomeActivity extends AppCompatActivity
                     mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
                 }
             });
+            mLayersFab.setContentCoverEnabled(false);
         } else {
             mLayersFab.setVisibility(View.GONE);
         }
@@ -1562,7 +1563,7 @@ public class HomeActivity extends AppCompatActivity
                     return;
                 }
 
-                switch(newState) {
+                switch (newState) {
                     case EXPANDED:
                         onPanelExpanded(panel);
                         break;

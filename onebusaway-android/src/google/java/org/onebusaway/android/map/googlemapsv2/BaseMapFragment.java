@@ -468,10 +468,10 @@ public class BaseMapFragment extends SupportMapFragment
         }
     }
 
-    public void setupBikeStationOverlay() {
+    public void setupBikeStationOverlay(boolean isInDirectionsMode) {
         Activity activity = getActivity();
         if (mBikeStationOverlay == null && activity != null) {
-            mBikeStationOverlay = new BikeStationOverlay(activity, mMap);
+            mBikeStationOverlay = new BikeStationOverlay(activity, mMap, isInDirectionsMode);
             mBikeStationOverlay.setOnFocusChangeListener(mOnFocusChangedListener);
         }
     }
@@ -523,7 +523,7 @@ public class BaseMapFragment extends SupportMapFragment
             mStopOverlay.clear(false);
         }
         BikeshareMapController bikeshareMapController = new BikeshareMapController(this);
-        setupBikeStationOverlay();
+        setupBikeStationOverlay(MapParams.MODE_DIRECTIONS.equals(mode));
         if (MapParams.MODE_ROUTE.equals(mode)) {
             RouteMapController controller = new RouteMapController(this);
             mControllers.add(controller);
@@ -631,7 +631,7 @@ public class BaseMapFragment extends SupportMapFragment
 
     @Override
     public void showBikeStations(List<BikeRentalStation> bikeStations) {
-        setupBikeStationOverlay();
+        setupBikeStationOverlay(MapParams.MODE_DIRECTIONS.equals(mMapMode));
         mBikeStationOverlay.addBikeStations(bikeStations);
     }
 

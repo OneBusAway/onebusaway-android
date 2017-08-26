@@ -68,9 +68,16 @@ public class BikeStationOverlay
 
     private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
-    public BikeStationOverlay(Activity activity, GoogleMap map) {
+    /**
+     * Indicates if the map is in DIRECTIONS_MODE. When in directions mode, the bike markers
+     * should be displayed regardless of the bikeshare layer being active or not in the main map.
+     */
+    private boolean mIsInDirectionsMode = false;
+
+    public BikeStationOverlay(Activity activity, GoogleMap map, boolean isInDirectionsMode) {
         context = activity;
         mMap = map;
+        mIsInDirectionsMode = isInDirectionsMode;
         mBikeStationData = new BikeStationData();
         mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(activity, this);
         setupInfoWindow();
@@ -257,7 +264,7 @@ public class BikeStationOverlay
             if (mMarkers.size() > FUZZY_MAX_MARKER_COUNT) {
                 clearBikeStationMarkers();
             }
-            boolean showBikeMarkers = LayerUtils.isBikeshareLayerVisible();
+            boolean showBikeMarkers = mIsInDirectionsMode || LayerUtils.isBikeshareLayerVisible();
             if (hasZoomLevelChangedBands()) {
                 // Update existing markers according to new zoom band and bike station type
                 for (Map.Entry<Marker, BikeRentalStation> entry : mMarkers.entrySet()) {

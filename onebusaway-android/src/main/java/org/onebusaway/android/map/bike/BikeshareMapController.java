@@ -56,6 +56,7 @@ public class BikeshareMapController extends BaseMapController {
     }
 
     public void showBikes(boolean showBikes) {
+
         if (showBikes) {
             // Bike stations should be loaded if map mode is not DIRECTIONS OR if map mode is
             // DIRECTIONS and there are bike stations to display

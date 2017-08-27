@@ -60,9 +60,17 @@ public class TripRequestBuilder {
     private static final String MODE_SET = ".MODE_SET";
     private static final String DATE_TIME = ".DATE_TIME";
 
+    private static final int TRANSIT_MODE = 0;
+    private static final int BUS_ONLY_MODE = 1;
+    private static final int RAIL_ONLY_MODE = 2;
+    private static final int BIKESHARE_MODE = 3;
+
+
     private TripRequest.Callback mListener;
 
     private Bundle mBundle;
+
+    private int mModeId;
 
     public TripRequestBuilder(Bundle bundle) {
         this.mBundle = bundle;
@@ -151,9 +159,12 @@ public class TripRequestBuilder {
     public TripRequestBuilder setModeSetById(int id) {
         List<String> modes;
 
+        mModeId = id;
+
         switch (id) {
-            case R.string.transit_mode_transit_only:
-            case R.string.transit_mode_transit_and_bikeshare:
+            // Transit only
+            // Transit & bikeshare
+            case TRANSIT_MODE:
                 if (Application.isBikeshareEnabled()) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
@@ -162,18 +173,19 @@ public class TripRequestBuilder {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
                 }
                 break;
-            case R.string.transit_mode_bus:
+            case BUS_ONLY_MODE:
                 modes = Arrays.asList(TraverseMode.BUSISH.toString(), TraverseMode.WALK.toString());
                 break;
-            case R.string.transit_mode_rail:
+            case RAIL_ONLY_MODE:
                 modes = Arrays.asList(TraverseMode.TRAINISH.toString(), TraverseMode.WALK.toString());
                 break;
-            case R.string.transit_mode_bikeshare:
+            case BIKESHARE_MODE:
                 modes = Arrays.asList(Application.get().getString(R.string.traverse_mode_bicycle_rent));
                 break;
             default:
                 Log.e(TAG, "Invalid mode set ID");
                 modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                mModeId = -1;
         }
 
         String modeString = TextUtils.join(",", modes);
@@ -182,20 +194,11 @@ public class TripRequestBuilder {
     }
 
     public int getModeSetId() {
-        List<String> modes = getModes();
-        if (modes.contains(TraverseMode.BUSISH.toString())) {
-            return R.string.transit_mode_bus;
+        // IF bike mode is selected in the trip plan additional preferences but bikeshare is not enabled use the default mode (TRANSTI)
+        if (BIKESHARE_MODE == mModeId && !Application.isBikeshareEnabled()) {
+            return TRANSIT_MODE;
         }
-        if (modes.contains(TraverseMode.TRAINISH.toString())) {
-            return R.string.transit_mode_rail;
-        }
-        if (modes.contains(("BICYCLE_RENT"))) {
-            return  R.string.transit_mode_bikeshare;
-        }
-        if (modes.contains(TraverseMode.TRANSIT.toString())) {
-            return R.string.transit_mode_transit_only;
-        }
-        return -1;
+        return mModeId;
     }
 
     private List<String> getModes() {

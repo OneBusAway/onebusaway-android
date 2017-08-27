@@ -392,7 +392,6 @@ public class TripPlanFragment extends Fragment {
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
 
-        final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
         final boolean unitsAreImperial = !PreferenceUtils.getUnitsAreMetricFromPreferences(getContext());
 
         dialogBuilder.setTitle(R.string.trip_plan_advanced_settings)
@@ -409,7 +408,7 @@ public class TripPlanFragment extends Fragment {
 
                 Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
 
-                int modeId = transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0);
+                int modeId = spinnerTravelBy.getSelectedItemPosition();
 
                 boolean wheelchair = ((CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible))
                         .isChecked();
@@ -471,13 +470,8 @@ public class TripPlanFragment extends Fragment {
         spinnerTravelBy.setAdapter(adapter);
 
         int modeSetId = mBuilder.getModeSetId();
-        if (modeSetId != -1) {
-            for (int i = 0; i < travelByOptions.size(); i++) {
-                if (travelByOptions.get(i) == getString(modeSetId)) {
-                    spinnerTravelBy.setSelection(i);
-                    break;
-                }
-            }
+        if (modeSetId != -1 && modeSetId < travelByOptions.size()) {
+            spinnerTravelBy.setSelection(modeSetId);
         }
 
         Double maxWalk = mBuilder.getMaxWalkDistance();

@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import android.graphics.Color;
-
 /**
  * Interface to hold information about a layer that can be activated on the map.
  *
@@ -25,6 +23,7 @@ import android.graphics.Color;
  */
 
 public interface LayerInfo {
+
     /**
      * @return Label of the layer
      */
@@ -37,19 +36,20 @@ public interface LayerInfo {
     int getLabelBackgroundDrawableId();
 
     /**
-     *
      * @return Icon drawable to display in the speed dial option.
      */
     int getIconDrawableId();
 
     /**
      * Color of the speed dial option background and label text.
+     *
      * @return color
      */
     int getLayerColor();
 
     /**
      * Key to store the activation in shared preferences.
+     *
      * @return unique shared preferences key
      */
     String getSharedPreferenceKey();

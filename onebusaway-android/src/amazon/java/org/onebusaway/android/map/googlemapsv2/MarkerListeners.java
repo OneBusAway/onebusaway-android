@@ -30,12 +30,27 @@ import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.Marker;
 
 /**
- *
- * Interface that each Overlayy needs to impement in order to be notified when a marker is clicked
+ * Interface that each Overlay needs to impement in order to be notified when a marker is clicked
  * or the map is clicked.
  */
 
 public interface MarkerListeners {
-    boolean  markerClicked(Marker marker);
+
+    /**
+     * Triggered when the user taps on a marker
+     *
+     * @param marker the marker the user tapped on
+     * @return true if the listener has consumed the event (i.e., the default behavior should not
+     * occur); false otherwise (i.e., the default behavior should occur). The default behavior is
+     * for the camera to move to the marker and an info window to appear.  See
+     * https://developers.google.com/android/reference/com/google/android/gms/maps/AmazonMap.OnMarkerClickListener
+     */
+    boolean markerClicked(Marker marker);
+
+    /**
+     * Triggered when the user taps on the map to hide a marker
+     *
+     * @param latLng the location on the map where the user tapped
+     */
     void removeMarkerClicked(LatLng latLng);
 }

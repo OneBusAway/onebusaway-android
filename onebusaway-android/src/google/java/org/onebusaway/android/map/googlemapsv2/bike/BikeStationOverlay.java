@@ -15,15 +15,6 @@
 */
 package org.onebusaway.android.map.googlemapsv2.bike;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.support.v4.content.ContextCompat;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -40,6 +31,15 @@ import org.onebusaway.android.map.googlemapsv2.MarkerListeners;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +61,9 @@ public class BikeStationOverlay
     private BaseMapFragment.OnFocusChangedListener mOnFocusChangedListener;
 
     private BitmapDescriptor mSmallBikeStationIcon;
+
     private BitmapDescriptor mBigBikeStationIcon;
+
     private BitmapDescriptor mBigFloatingBikeIcon;
 
     private Context context;
@@ -83,8 +85,10 @@ public class BikeStationOverlay
         setupInfoWindow();
 
         mSmallBikeStationIcon = BitmapDescriptorFactory.fromBitmap(createBitmapFromShape());
-        mBigBikeStationIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_station_marker_big);
-        mBigFloatingBikeIcon = BitmapDescriptorFactory.fromResource(R.drawable.bike_floating_marker_big);
+        mBigBikeStationIcon = BitmapDescriptorFactory
+                .fromResource(R.drawable.bike_station_marker_big);
+        mBigFloatingBikeIcon = BitmapDescriptorFactory
+                .fromResource(R.drawable.bike_floating_marker_big);
     }
 
     private void setupInfoWindow() {
@@ -92,7 +96,8 @@ public class BikeStationOverlay
         mMap.setOnInfoWindowClickListener(this);
     }
 
-    public void setOnFocusChangeListener(BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
+    public void setOnFocusChangeListener(
+            BaseMapFragment.OnFocusChangedListener onFocusChangedListener) {
         mOnFocusChangedListener = onFocusChangedListener;
     }
 
@@ -115,7 +120,8 @@ public class BikeStationOverlay
             // it with a new one and it its info window needs to be displayed and also added as
             // selected in the bikeStationData.
             Marker selectedMarker = mBikeStationData.addMarker(selectedBikeStation);
-            mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation, LayerUtils.isBikeshareLayerVisible());
+            mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation,
+                    LayerUtils.isBikeshareLayerVisible());
             if (selectedMarker != null) {
                 if (selectedMarker.isVisible()) {
                     selectedMarker.showInfoWindow();
@@ -179,7 +185,8 @@ public class BikeStationOverlay
     }
 
     private Bitmap createBitmapFromShape() {
-        int px = Application.get().getResources().getDimensionPixelSize(R.dimen.bikeshare_small_marker_size);
+        int px = Application.get().getResources()
+                .getDimensionPixelSize(R.dimen.bikeshare_small_marker_size);
 
         Bitmap bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
 
@@ -207,12 +214,15 @@ public class BikeStationOverlay
                 String url;
 
                 // Trim SoBi IDs - See https://github.com/OneBusAway/onebusaway-android/issues/402#issuecomment-321369719
-                String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "").replace("\"", "");
+                String bikeStationId = bikeStation.id.replace("bike_", "").replace("hub_", "")
+                        .replace("\"", "");
 
                 if (bikeStation.isFloatingBike) {
-                    url = context.getString(R.string.sobi_deep_link_floating_bike_url) + bikeStationId;
+                    url = context.getString(R.string.sobi_deep_link_floating_bike_url)
+                            + bikeStationId;
                 } else {
-                    url = context.getString(R.string.sobi_deep_link_bike_station_url) + bikeStationId;
+                    url = context.getString(R.string.sobi_deep_link_bike_station_url)
+                            + bikeStationId;
                 }
 
                 ObaAnalytics.reportEventWithCategory(
@@ -287,7 +297,8 @@ public class BikeStationOverlay
             return (mCurrentMapZoomLevel <= 12 && mMap.getCameraPosition().zoom > 12) ||
                     (mCurrentMapZoomLevel > 15 && mMap.getCameraPosition().zoom <= 15) ||
                     (mCurrentMapZoomLevel > 12 && mCurrentMapZoomLevel <= 15 &&
-                            (mMap.getCameraPosition().zoom <= 12 || mMap.getCameraPosition().zoom > 15));
+                            (mMap.getCameraPosition().zoom <= 12
+                                    || mMap.getCameraPosition().zoom > 15));
         }
 
         /**
@@ -295,10 +306,10 @@ public class BikeStationOverlay
          * updateMarkerView needs to be called to update it's appearance.
          *
          * @param bikeStation bike station to be added to the map
-         * @return
          */
         private synchronized Marker addMarker(BikeRentalStation bikeStation) {
-            MarkerOptions options = new MarkerOptions().position(MapHelpV2.makeLatLng(bikeStation.y, bikeStation.x));
+            MarkerOptions options = new MarkerOptions()
+                    .position(MapHelpV2.makeLatLng(bikeStation.y, bikeStation.x));
             Marker m = mMap.addMarker(options);
             mMarkers.put(m, bikeStation);
             mBikeStationKeys.add(bikeStation.id);
@@ -306,7 +317,8 @@ public class BikeStationOverlay
         }
 
         /**
-         * Change marker appearance according to the zoom level and type of bike station is represents
+         * Change marker appearance according to the zoom level and type of bike station is
+         * represents
          *
          * @param marker         the marker to update its display
          * @param station        the bike station/floating bike associated with the marker
@@ -315,7 +327,8 @@ public class BikeStationOverlay
          *                       while the bike data was loading (it was deactivated between the
          *                       request has been sent to the server and the results have arrived)
          */
-        private synchronized void updateMarkerView(Marker marker, BikeRentalStation station, boolean showBikeMarker) {
+        private synchronized void updateMarkerView(Marker marker, BikeRentalStation station,
+                boolean showBikeMarker) {
             if (mMap.getCameraPosition().zoom > 12 && showBikeMarker) {
                 marker.setVisible(true);
                 if (mMap.getCameraPosition().zoom > 15) {

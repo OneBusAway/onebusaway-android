@@ -26,32 +26,33 @@
  */
 package org.onebusaway.android.map.googlemapsv2.bike;
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
-
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.Marker;
 
 import org.onebusaway.android.R;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+
 /**
  * InfoWindow displayed when a floating bike or a bike station is clicked on the map.
- *
- * Created by carvalhorr on 6/16/17.
  */
 public class BikeInfoWindowAdapter implements AmazonMap.InfoWindowAdapter {
 
     private View bikeStationInfoWindowView;
+
     private View floatingBikeInfoWindowView;
 
     private BikeStationsInfo bikeStationsInfo;
 
     public BikeInfoWindowAdapter(Context content, BikeStationsInfo bikeStationsInfo) {
-        bikeStationInfoWindowView = LayoutInflater.from(content).inflate(R.layout.bike_station_info_window, null);
-        floatingBikeInfoWindowView = LayoutInflater.from(content).inflate(R.layout.floating_bike_info_window, null);
+        bikeStationInfoWindowView = LayoutInflater.from(content)
+                .inflate(R.layout.bike_station_info_window, null);
+        floatingBikeInfoWindowView = LayoutInflater.from(content)
+                .inflate(R.layout.floating_bike_info_window, null);
         this.bikeStationsInfo = bikeStationsInfo;
     }
 
@@ -82,6 +83,7 @@ public class BikeInfoWindowAdapter implements AmazonMap.InfoWindowAdapter {
 
     /**
      * Set the bike name in the corresponding view.
+     *
      * @param name Name of the bike station/floating ike
      */
     private void setBikeName(View parentView, String name) {
@@ -91,19 +93,23 @@ public class BikeInfoWindowAdapter implements AmazonMap.InfoWindowAdapter {
 
     /**
      * Set the  number of available bikes in the corresponding view
+     *
      * @param numberBikes number of bikes available
      */
     private void setNumberBikesAvailable(int numberBikes) {
-        TextView bikesAvailable = (TextView) bikeStationInfoWindowView.findViewById(R.id.numberBikes);
+        TextView bikesAvailable = (TextView) bikeStationInfoWindowView
+                .findViewById(R.id.numberBikes);
         bikesAvailable.setText(String.valueOf(numberBikes));
     }
 
     /**
      * Set the number of spaces available to dropoff bikes
+     *
      * @param numberSpaces number of spaces available
      */
     private void setNumberSpacesAvailable(int numberSpaces) {
-        TextView spacesAvailable = (TextView) bikeStationInfoWindowView.findViewById(R.id.numberRacks);
+        TextView spacesAvailable = (TextView) bikeStationInfoWindowView
+                .findViewById(R.id.numberRacks);
         spacesAvailable.setText(String.valueOf(numberSpaces));
     }
 
@@ -111,6 +117,7 @@ public class BikeInfoWindowAdapter implements AmazonMap.InfoWindowAdapter {
      * Interface to allow get the BikeRentalStation associated with a marker.
      */
     public interface BikeStationsInfo {
+
         BikeRentalStation getBikeStationOnMarker(Marker marker);
     }
 

@@ -1,0 +1,1866 @@
+{
+  "stations": [
+    {
+      "id": "\"bike_3566\"",
+      "name": "B-1165",
+      "x": -82.40730666666667,
+      "y": 28.066505,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_854\"",
+      "name": "TPA - Madison and Meridian",
+      "x": -82.4485652057228,
+      "y": 27.9514051371272,
+      "bikesAvailable": 11,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2853\"",
+      "name": "MUS - Music - South",
+      "x": -82.41816826164722,
+      "y": 28.064242208092843,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2841\"",
+      "name": "MAB - Magnolia Housing",
+      "x": -82.41812199354172,
+      "y": 28.058463184333437,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3514\"",
+      "name": "B-1118",
+      "x": -82.40972166666667,
+      "y": 28.06161833333333,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_256\"",
+      "name": "TPA - 15th St and 7th Ave",
+      "x": -82.4430826321256,
+      "y": 27.9604880627085,
+      "bikesAvailable": 1,
+      "spacesAvailable": 10,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_268\"",
+      "name": "TPA - Madison St and N Franklin St",
+      "x": -82.4576712302482,
+      "y": 27.9486487468182,
+      "bikesAvailable": 7,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_1813\"",
+      "name": "C- 1276",
+      "x": -82.45250333333334,
+      "y": 27.94149833333333,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_283\"",
+      "name": "TPA - Bayshore & Rome",
+      "x": -82.4765097355042,
+      "y": 27.9291962234777,
+      "bikesAvailable": 6,
+      "spacesAvailable": 0,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2174\"",
+      "name": "SP - MLK Jr St & 3rd Ave S",
+      "x": -82.6467776298523,
+      "y": 27.768136786785796,
+      "bikesAvailable": 13,
+      "spacesAvailable": 9,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3608\"",
+      "name": "B-1193",
+      "x": -82.406425,
+      "y": 28.068053333333335,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2279\"",
+      "name": "SP - Mirror Lake Dr and 7th St",
+      "x": -82.64220982789993,
+      "y": 27.775594472518314,
+      "bikesAvailable": 6,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2837\"",
+      "name": " ISA - Interdisciplinary Sciences - North",
+      "x": -82.41426028311253,
+      "y": 28.06176457484662,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2849\"",
+      "name": "FAD - Fine Arts - Dance",
+      "x": -82.41486880928278,
+      "y": 28.06386907562615,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2825\"",
+      "name": "Magnolia Fields",
+      "x": -82.42018461227417,
+      "y": 28.059133033037497,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2842\"",
+      "name": "ALN - John and Grace Allen Welcome Building - North",
+      "x": -82.41324573755264,
+      "y": 28.061878659041227,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3600\"",
+      "name": "B-1199",
+      "x": -82.40967333333333,
+      "y": 28.06112,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2854\"",
+      "name": "MRC - Moffitt Research Center - South East ",
+      "x": -82.41932697594166,
+      "y": 28.065462778762914,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3543\"",
+      "name": "B-1147",
+      "x": -82.41974333333333,
+      "y": 28.065281666666667,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2830\"",
+      "name": "ENA - Lawn (Engineering Teaching Auditorium)",
+      "x": -82.41553902626038,
+      "y": 28.060167384906116,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3527\"",
+      "name": "B-1133",
+      "x": -82.40894,
+      "y": 28.058593333333334,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3579\"",
+      "name": "B-1178",
+      "x": -82.40969666666666,
+      "y": 28.061053333333334,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_451\"",
+      "name": "TPA - Ray Charles Blvd and Governor St",
+      "x": -82.4536264456511,
+      "y": 27.955286642701,
+      "bikesAvailable": 4,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1079\"",
+      "name": "TPA - Harbor Place dr and Harbour post dr",
+      "x": -82.45107159018517,
+      "y": 27.93933334127054,
+      "bikesAvailable": 4,
+      "spacesAvailable": 10,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3595\"",
+      "name": "B-1194",
+      "x": -82.40969833333334,
+      "y": 28.060486666666666,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_257\"",
+      "name": "TPA - 13th St and 8th Ave",
+      "x": -82.4456547254871,
+      "y": 27.9613658481865,
+      "bikesAvailable": 9,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_4317\"",
+      "name": "B-1191",
+      "x": -82.42362,
+      "y": 28.063858333333332,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1333\"",
+      "name": "TPA - City Bike Tampa Park and Go Rack",
+      "x": -82.46007442474365,
+      "y": 27.951297883048035,
+      "bikesAvailable": 0,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2066\"",
+      "name": "SP - Bay Shore Dr & 5th Ave N",
+      "x": -82.63009697198868,
+      "y": 27.777247605368732,
+      "bikesAvailable": 10,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2175\"",
+      "name": "SP - Central Ave & 14th Street",
+      "x": -82.65289843082428,
+      "y": 27.7712339342232,
+      "bikesAvailable": 11,
+      "spacesAvailable": 12,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_272\"",
+      "name": "TPA - E Whiting St and Riverwalk",
+      "x": -82.4586076071121,
+      "y": 27.9449311118153,
+      "bikesAvailable": 6,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_284\"",
+      "name": "TPA - S Franklin St and Channelside",
+      "x": -82.45587676763535,
+      "y": 27.942493131949256,
+      "bikesAvailable": 15,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_450\"",
+      "name": "TPA - Grand Central Ave and S Hyde Park Ave Sponsored By Oxford Exchange",
+      "x": -82.4640155437695,
+      "y": 27.9446846157316,
+      "bikesAvailable": 9,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2826\"",
+      "name": "BDG - Beard Drive Parking",
+      "x": -82.41678759455681,
+      "y": 28.05908285376859,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2838\"",
+      "name": " ISA - Interdisciplinary Sciences - South",
+      "x": -82.41431526839732,
+      "y": 28.06100959317974,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2855\"",
+      "name": "MHA - CBCS West Side Conference Center - North",
+      "x": -82.42365136742592,
+      "y": 28.067456087428134,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2831\"",
+      "name": "CMC - CAS Multidisciplinary Complex",
+      "x": -82.41468608379364,
+      "y": 28.05987506910396,
+      "bikesAvailable": 1,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2601\"",
+      "name": "SP - 22nd st & 5th ave S",
+      "x": -82.66278102993965,
+      "y": 27.766752610078612,
+      "bikesAvailable": 9,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2843\"",
+      "name": "SVC - Student Services",
+      "x": -82.41273008286953,
+      "y": 28.06268890106829,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3504\"",
+      "name": "B-1108",
+      "x": -82.40894333333334,
+      "y": 28.05863,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3516\"",
+      "name": "B-1120",
+      "x": -82.41541,
+      "y": 28.057105,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1508\"",
+      "name": "TPA - Cass St and Rome Ave",
+      "x": -82.47639834880829,
+      "y": 27.949753075611753,
+      "bikesAvailable": 10,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_266\"",
+      "name": "TPA - N Franklin St and E Twiggs St",
+      "x": -82.4588299730942,
+      "y": 27.9495321599275,
+      "bikesAvailable": 6,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_278\"",
+      "name": "TPA - E Tyler St and Ashley Dr",
+      "x": -82.46202774345875,
+      "y": 27.951300844725672,
+      "bikesAvailable": 12,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2070\"",
+      "name": "SP - 2nd Street & 1st Ave N",
+      "x": -82.63547614216805,
+      "y": 27.772243751108235,
+      "bikesAvailable": 10,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_957\"",
+      "name": "TPA - Coppertail Brewing Co Park and Go Rack",
+      "x": -82.43033677339554,
+      "y": 27.95621647799642,
+      "bikesAvailable": 0,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2191\"",
+      "name": "SP - Central Ave & 24th St",
+      "x": -82.66518831253052,
+      "y": 27.771283772678725,
+      "bikesAvailable": 8,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2192\"",
+      "name": "SP - Beach Dr & 5th Ave N",
+      "x": -82.63156145811081,
+      "y": 27.77687146430557,
+      "bikesAvailable": 10,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2071\"",
+      "name": "SP - 1st Ave S & 3rd Street",
+      "x": -82.63742208480835,
+      "y": 27.770208681585906,
+      "bikesAvailable": 10,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2067\"",
+      "name": "SP - 2nd Ave NE @ Museum of History",
+      "x": -82.62913405895233,
+      "y": 27.774245557995513,
+      "bikesAvailable": 8,
+      "spacesAvailable": 9,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2176\"",
+      "name": "SP - Central Ave & 31st Street",
+      "x": -82.67603784799576,
+      "y": 27.770882691345165,
+      "bikesAvailable": 6,
+      "spacesAvailable": 1,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2839\"",
+      "name": "BSF - Bio-Science - South West",
+      "x": -82.41479873657227,
+      "y": 28.06067982323196,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2827\"",
+      "name": "ENB - Engineering Building II",
+      "x": -82.41548169404268,
+      "y": 28.059172265283646,
+      "bikesAvailable": 0,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2217\"",
+      "name": "SP - 1st St N & 5th Ave N",
+      "x": -82.63413101434708,
+      "y": 27.77739422052099,
+      "bikesAvailable": 7,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2844\"",
+      "name": "BKS - Bookstore",
+      "x": -82.41277433931828,
+      "y": 28.063124404486327,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3533\"",
+      "name": "B-1137",
+      "x": -82.409595,
+      "y": 28.058831666666666,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2856\"",
+      "name": "CPH - College of Public Health",
+      "x": -82.42500185966492,
+      "y": 28.067073617247345,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2832\"",
+      "name": "ENC - Engineering III",
+      "x": -82.4142649769783,
+      "y": 28.058435964308956,
+      "bikesAvailable": 1,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_1138\"",
+      "name": "C-1089 Crawford",
+      "x": -82.46074333333334,
+      "y": 27.950175,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2860\"",
+      "name": "MDH - Morasani Center for Advanced Health Care",
+      "x": -82.41917341947556,
+      "y": 28.0669886501241,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_255\"",
+      "name": "TPA - 9th Ave and 16th St",
+      "x": -82.4415005780512,
+      "y": 27.9618561214264,
+      "bikesAvailable": 19,
+      "spacesAvailable": 1,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_267\"",
+      "name": "TPA - N Jefferson St and Twiggs",
+      "x": -82.4542584509825,
+      "y": 27.9500718099433,
+      "bikesAvailable": 9,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_279\"",
+      "name": "TPA - E Davis Blvd and Chesapeake Ave",
+      "x": -82.4529797232004,
+      "y": 27.9257835077301,
+      "bikesAvailable": 7,
+      "spacesAvailable": 9,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3561\"",
+      "name": "B-1160",
+      "x": -82.40945166666667,
+      "y": 28.05884,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2193\"",
+      "name": "SP - 7th St S & Central Ave",
+      "x": -82.64318749308586,
+      "y": 27.771017967409612,
+      "bikesAvailable": 12,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_270\"",
+      "name": "TPA - N Franklin St and E Jackson St  Sponsored By Sam Schwartz Engineering D.P.C.",
+      "x": -82.4577408065186,
+      "y": 27.9473813272224,
+      "bikesAvailable": 1,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2072\"",
+      "name": "SP - 1st Ave s & 8th Street",
+      "x": -82.64439851045609,
+      "y": 27.770144602957636,
+      "bikesAvailable": 9,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2177\"",
+      "name": "SP - 9th Ave S & 22nd Street",
+      "x": -82.66281589865685,
+      "y": 27.761156610694368,
+      "bikesAvailable": 6,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2286\"",
+      "name": "SP - Demen's Landing",
+      "x": -82.6308211684227,
+      "y": 27.770638244657178,
+      "bikesAvailable": 10,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2828\"",
+      "name": "ENG - Engineering I (Edgar W. Kopp)",
+      "x": -82.41572141647339,
+      "y": 28.059620623476828,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2068\"",
+      "name": "SP - 1st Street S & 1st Ave S",
+      "x": -82.63374209403992,
+      "y": 27.769859808720867,
+      "bikesAvailable": 11,
+      "spacesAvailable": 8,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1270\"",
+      "name": "Shop",
+      "x": -82.4076198041439,
+      "y": 28.060548696070995,
+      "bikesAvailable": 0,
+      "spacesAvailable": 85,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2833\"",
+      "name": "MAG - Magnolia Housing",
+      "x": -82.41896957159042,
+      "y": 28.05894604390233,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2845\"",
+      "name": "MSC - Marshall Student Center - South",
+      "x": -82.41384118795395,
+      "y": 28.063213575969996,
+      "bikesAvailable": 0,
+      "spacesAvailable": 10,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2219\"",
+      "name": "SP - 7th Ave N & Dartmoor St",
+      "x": -82.6394672691822,
+      "y": 27.779506280776832,
+      "bikesAvailable": 5,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3586\"",
+      "name": "B-1185",
+      "x": -82.410555,
+      "y": 28.067955,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3598\"",
+      "name": "B-1197",
+      "x": -82.41135166666666,
+      "y": 28.05901666666667,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2861\"",
+      "name": "LDG - Laurel Drive Parking Facility - North West",
+      "x": -82.4186423420906,
+      "y": 28.067104622103553,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3603\"",
+      "name": "B-1144",
+      "x": -82.40641666666667,
+      "y": 28.06795,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_264\"",
+      "name": "TPA - Curtis Hixon Park",
+      "x": -82.4609377282072,
+      "y": 27.9495104473449,
+      "bikesAvailable": 27,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3590\"",
+      "name": "B-1189",
+      "x": -82.40791833333333,
+      "y": 28.061028333333333,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_1832\"",
+      "name": "C-1101 - Jackson",
+      "x": -82.44683333333333,
+      "y": 27.948048333333332,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1825\"",
+      "name": "Lot 43",
+      "x": -82.41713359951973,
+      "y": 28.067902458566493,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2073\"",
+      "name": "SP - 11th Street N & Central Ave",
+      "x": -82.64963954687119,
+      "y": 27.771288519143972,
+      "bikesAvailable": 8,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1530\"",
+      "name": "TPA - Platt and Parker",
+      "x": -82.4608039855957,
+      "y": 27.941678017295615,
+      "bikesAvailable": 5,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_251\"",
+      "name": "TPA - 19th St and E Palm Ave",
+      "x": -82.438056400783,
+      "y": 27.9627193250593,
+      "bikesAvailable": 4,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_263\"",
+      "name": "TPA - N Franklin St and E Cass St",
+      "x": -82.45933949947357,
+      "y": 27.95096617783814,
+      "bikesAvailable": 13,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3519\"",
+      "name": "B-1123",
+      "x": -82.40587666666667,
+      "y": 28.067968333333333,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2477\"",
+      "name": "SP - 2nd Ave S and 3rd Street",
+      "x": -82.63687491416931,
+      "y": 27.76936616351732,
+      "bikesAvailable": 9,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2829\"",
+      "name": "ENA - Engineering Teaching Auditorium ",
+      "x": -82.41580791771412,
+      "y": 28.05988885648339,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2857\"",
+      "name": "NEC - Northwest Educational Complex",
+      "x": -82.42479667067528,
+      "y": 28.067772286916036,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2822\"",
+      "name": "MAA - Magnolia Housing",
+      "x": -82.41895079612732,
+      "y": 28.058453953265747,
+      "bikesAvailable": 1,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3599\"",
+      "name": "B-1198",
+      "x": -82.40616666666666,
+      "y": 28.067285,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2834\"",
+      "name": "LSA - Life Science Annex",
+      "x": -82.41715505719185,
+      "y": 28.061253976137962,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3575\"",
+      "name": "B-1174",
+      "x": -82.40612833333333,
+      "y": 28.067216666666667,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2862\"",
+      "name": "CRU - USF Federal Credit Union",
+      "x": -82.41355016827582,
+      "y": 28.066943681456088,
+      "bikesAvailable": 3,
+      "spacesAvailable": 1,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3559\"",
+      "name": "B-1158",
+      "x": -82.41229166666666,
+      "y": 28.064978333333332,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2599\"",
+      "name": "SP - N Shore & 9th ave N- hub",
+      "x": -82.62752071022987,
+      "y": 27.781293193987466,
+      "bikesAvailable": 9,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2850\"",
+      "name": "FAH - Fine Arts - South East",
+      "x": -82.4161747097969,
+      "y": 28.062695232471732,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3563\"",
+      "name": "B-1162",
+      "x": -82.40847,
+      "y": 28.055558333333334,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1826\"",
+      "name": "lot 18 north",
+      "x": -82.4027019739151,
+      "y": 28.065609047393192,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2074\"",
+      "name": "SP - Central Ave & 21st Street",
+      "x": -82.66139566898346,
+      "y": 27.771117644500215,
+      "bikesAvailable": 7,
+      "spacesAvailable": 7,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2195\"",
+      "name": "SP - 1st St N & 3rd Ave N",
+      "x": -82.63406503190708,
+      "y": 27.77467747845229,
+      "bikesAvailable": 10,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1531\"",
+      "name": "TPA - Platt and Rome",
+      "x": -82.47638761997223,
+      "y": 27.941768059477553,
+      "bikesAvailable": 8,
+      "spacesAvailable": 7,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2846\"",
+      "name": "MSC - Marshall Student Center - East",
+      "x": -82.41282194852829,
+      "y": 28.063993453216405,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2858\"",
+      "name": "CMS - Childrens Medical Services",
+      "x": -82.42524325847626,
+      "y": 28.066478845409936,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2823\"",
+      "name": "JPH - Juniper-Poplar Hall - South",
+      "x": -82.41856187582016,
+      "y": 28.059543697973687,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2851\"",
+      "name": "FAH - Fine Arts - North East",
+      "x": -82.41619348526001,
+      "y": 28.063488131244085,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2863\"",
+      "name": "PPA - US Post Office",
+      "x": -82.41459891200066,
+      "y": 28.065391064448526,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_452\"",
+      "name": "TPA - Cumberland and 11th",
+      "x": -82.4475920457454,
+      "y": 27.9449469177581,
+      "bikesAvailable": 17,
+      "spacesAvailable": 0,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1827\"",
+      "name": "lot 18 south",
+      "x": -82.40271538496017,
+      "y": 28.060037736433053,
+      "bikesAvailable": 0,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3580\"",
+      "name": "B-1179",
+      "x": -82.40904666666667,
+      "y": 28.066263333333332,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2172\"",
+      "name": "SP - 2nd Ave N & 5th Street",
+      "x": -82.6395571231842,
+      "y": 27.773423243463956,
+      "bikesAvailable": 7,
+      "spacesAvailable": 8,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2196\"",
+      "name": "SP - 3rd Ave N & 3rd St N",
+      "x": -82.63668447732925,
+      "y": 27.775069052904577,
+      "bikesAvailable": 9,
+      "spacesAvailable": 9,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_273\"",
+      "name": "TPA - S Franklin St and E Whiting St",
+      "x": -82.4568860897568,
+      "y": 27.9450375505472,
+      "bikesAvailable": 3,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_1532\"",
+      "name": "TPA - Platt and Moody",
+      "x": -82.48368591070175,
+      "y": 27.941817819605127,
+      "bikesAvailable": 10,
+      "spacesAvailable": 0,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2075\"",
+      "name": "SP - 2nd Street & 6th Ave S.",
+      "x": -82.63556331396103,
+      "y": 27.76446518948289,
+      "bikesAvailable": 13,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"bike_3509\"",
+      "name": "B-1135",
+      "x": -82.41625166666667,
+      "y": 28.058108333333333,
+      "bikesAvailable": 1,
+      "spacesAvailable": 0,
+      "allowDropoff": false,
+      "isFloatingBike": true,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2277\"",
+      "name": "Sp - central ave and 27th st",
+      "x": -82.66975611448288,
+      "y": 27.77109457935473,
+      "bikesAvailable": 9,
+      "spacesAvailable": 6,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2859\"",
+      "name": "MDN - USF Health and Nursing - North",
+      "x": -82.42373049259186,
+      "y": 28.064958765462656,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2835\"",
+      "name": "NES - Natural and Environmental Sciences - West",
+      "x": -82.41553299129009,
+      "y": 28.061804220330984,
+      "bikesAvailable": 0,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2847\"",
+      "name": "MSC - Marshall Student Center - North",
+      "x": -82.41371780633926,
+      "y": 28.064301142260874,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2840\"",
+      "name": "MAH - Magnolia Housing",
+      "x": -82.41814076900482,
+      "y": 28.058962375895476,
+      "bikesAvailable": 1,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2852\"",
+      "name": "PCD - Psych / Comm Science Building ",
+      "x": -82.41785377264023,
+      "y": 28.063793454853105,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_453\"",
+      "name": "TPA - Marion Transit Center",
+      "x": -82.4584196437688,
+      "y": 27.9554328870259,
+      "bikesAvailable": 5,
+      "spacesAvailable": 7,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2173\"",
+      "name": "SP - 5th St N & Central Ave ",
+      "x": -82.63999298214912,
+      "y": 27.77113425732845,
+      "bikesAvailable": 10,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2197\"",
+      "name": "SP - 3rd Ave S & 5th Street",
+      "x": -82.64028333127499,
+      "y": 27.768539658819932,
+      "bikesAvailable": 7,
+      "spacesAvailable": 3,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_274\"",
+      "name": "TPA - S Franklin St and Old Waters St Sponsored By Sam Schwartz Engineering D.P.C.",
+      "x": -82.4548257935946,
+      "y": 27.9412114253873,
+      "bikesAvailable": 3,
+      "spacesAvailable": 11,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2278\"",
+      "name": "SP - North Shore Dr and 12th Ave NE",
+      "x": -82.62541651725768,
+      "y": 27.78416315454539,
+      "bikesAvailable": 9,
+      "spacesAvailable": 4,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_480\"",
+      "name": "TPA - Waterworks Park",
+      "x": -82.4624992346234,
+      "y": 27.9593143906181,
+      "bikesAvailable": 8,
+      "spacesAvailable": 7,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2848\"",
+      "name": "TAR - Theater Centre",
+      "x": -82.41431258618832,
+      "y": 28.06379540757007,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2824\"",
+      "name": "JPH - Juniper-Poplar Hall - North",
+      "x": -82.41848945617676,
+      "y": 28.06002891953059,
+      "bikesAvailable": 2,
+      "spacesAvailable": 2,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    },
+    {
+      "id": "\"hub_2836\"",
+      "name": "ISA - Interdisciplinary Sciences - West",
+      "x": -82.4149489402771,
+      "y": 28.061349658085593,
+      "bikesAvailable": 0,
+      "spacesAvailable": 5,
+      "allowDropoff": true,
+      "isFloatingBike": false,
+      "networks": [
+        "default"
+      ],
+      "realTimeData": true
+    }
+  ]
+}

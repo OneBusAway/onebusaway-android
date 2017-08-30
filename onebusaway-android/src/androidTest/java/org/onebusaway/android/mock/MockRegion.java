@@ -13,17 +13,10 @@ import java.util.ArrayList;
  */
 public class MockRegion {
 
-    // Production region IDs shouldn't change, so these values should match the regions-v3.json API response
-    public static final int TAMPA_REGION_ID = 0;
-
-    public static final int PUGET_SOUND_REGION_ID = 1;
-
-    public static final int ATLANTA_REGION_ID = 3;
-
     public static ObaRegion getTampa(Context context) {
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
         for (ObaRegion r : regions) {
-            if (r.getId() == TAMPA_REGION_ID) {
+            if (r.getId() == RegionUtils.TAMPA_REGION_ID) {
                 return r;
             }
         }
@@ -33,7 +26,7 @@ public class MockRegion {
     public static ObaRegion getPugetSound(Context context) {
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
         for (ObaRegion r : regions) {
-            if (r.getId() == PUGET_SOUND_REGION_ID) {
+            if (r.getId() == RegionUtils.PUGET_SOUND_REGION_ID) {
                 return r;
             }
         }
@@ -43,7 +36,7 @@ public class MockRegion {
     public static ObaRegion getAtlanta(Context context) {
         ArrayList<ObaRegion> regions = RegionUtils.getRegionsFromResources(context);
         for (ObaRegion r : regions) {
-            if (r.getId() == ATLANTA_REGION_ID) {
+            if (r.getId() == RegionUtils.ATLANTA_REGION_ID) {
                 return r;
             }
         }
@@ -80,7 +73,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -113,7 +107,8 @@ public class MockRegion {
                 false,
                 "http://stopinfo.pugetsound.onebusaway.org",
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -146,7 +141,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -179,7 +175,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -212,7 +209,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -245,7 +243,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -276,7 +275,8 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 
     /**
@@ -307,6 +307,7 @@ public class MockRegion {
                 false,
                 null,
                 null,
-                null);
+                null,
+                false);
     }
 }

@@ -44,9 +44,14 @@
     <string name="preference_key_trip_plan_notifications">preference_key_trip_plan_notifications</string>
     <string name="preference_key_left_hand_mode">preference_key_left_hand_mode</string>
     <string name="preference_key_never_show_location_dialog">never_show_location_dialog</string>
+    <string name="preference_key_layer_bikeshare_visible">layer_bike_selected</string>
+    <string name="preference_key_trip_plan_travel_by">preference_trip_plan_travel_by</string>
+    <string name="preference_key_trip_plan_maximum_walking_distance">preference_trip_plan_maximum_walking_distance</string>
+    <string name="preference_key_trip_plan_minimize_transfers">preference_trip_plan_minimize_transfers</string>
+    <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
 
     <!-- Regions API URL -->
-    <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
+    <string name="regions_api_url">https://raw.githubusercontent.com/OneBusAway/onebusaway-multiregion-support/bikeshare-staging/staging/regions-v3.json</string>
 
     <!-- Donate URL -->
     <string name="donate_url">http://onebusaway.org/donate/</string>
@@ -73,6 +78,8 @@
     <string name="analytics_action_touch_exploration">touch_exploration_on</string>
     <string name="analytics_action_customer_service">customer_service</string>
     <string name="analytics_action_service_alerts">service_alerts</string>
+    <string name="analytics_action_layer_bikeshare">layer_bikeshare</string>
+    <string name="analytics_action_bike_marker_clicked">bike_marker_clicked</string>
 
     <string name="analytics_label_region">API Region:\u0020</string>
     <string name="analytics_label_region_auto">Set Region Automatically:\u0020</string>
@@ -147,7 +154,12 @@
     <string name="analytics_label_show_departed_bus_preference">Show Departed Buses:\u0020</string>
     <string name="analytics_label_arrival_info_style">Set Arrival info style:\u0020</string>
     <string name="analytics_label_service_alerts">Clicked Service Alerts from:\u0020</string>
-
+    <string name="analytics_label_bikeshare_activated">Bikeshare layer activated</string>
+    <string name="analytics_label_bikeshare_deactivated">Bikeshare layer deactivated</string>
+    <string name="analytics_label_bike_station_marker_clicked">Pressed bike station marker</string>
+    <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
+    <string name="analytics_label_bike_station_balloon_clicked">Pressed bike station balloon</string>
+    <string name="analytics_label_floating_bike_balloon_clicked">Pressed floating bike balloon</string>
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 
@@ -179,4 +191,9 @@
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
     <string name="arrival_list_stop_directions">\u0020(%1$s)</string>
+    <string name="sobi_deep_link_floating_bike_url">http://app.socialbicycles.com/map?bike_id=</string>
+    <string name="sobi_deep_link_bike_station_url">https://app.socialbicycles.com/map?hub_id=</string>
+
+    <string name="traverse_mode_bicycle_rent">BICYCLE_RENT</string>
+
 </resources>

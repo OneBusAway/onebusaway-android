@@ -29,6 +29,7 @@ package org.onebusaway.android.map.googlemapsv2;
 import com.amazon.geo.mapsv2.AmazonMap;
 import com.amazon.geo.mapsv2.model.BitmapDescriptor;
 import com.amazon.geo.mapsv2.model.BitmapDescriptorFactory;
+import com.amazon.geo.mapsv2.model.LatLng;
 import com.amazon.geo.mapsv2.model.Marker;
 import com.amazon.geo.mapsv2.model.MarkerOptions;
 
@@ -70,7 +71,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A map overlay that shows vehicle positions on the map
  */
-public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
+public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener, MarkerListeners  {
 
     interface Controller {
         String getFocusedStopId();
@@ -133,10 +134,14 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
         mActivity = activity;
         mMap = map;
         loadIcons();
-        mMap.setOnInfoWindowClickListener(this);
         // Set adapter for custom info window that appears when tapping on vehicle markers
         mCustomInfoWindowAdapter = new CustomInfoWindowAdapter(mActivity);
+        setupInfoWindow();
+    }
+
+    private void setupInfoWindow() {
         mMap.setInfoWindowAdapter(mCustomInfoWindowAdapter);
+        mMap.setOnInfoWindowClickListener(this);
     }
 
     public void setController(Controller controller) {
@@ -530,18 +535,23 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
 
     @Override
     public void onInfoWindowClick(Marker marker) {
-        // Stop any callbacks to refresh the vehicle marker popup balloons
-        mCustomInfoWindowAdapter.cancelUpdates();
+        if (mMarkerData != null) {
+            // Show trip details screen for the vehicle associated with this marker
+            ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
+            if (status != null) {
+                // Stop any callbacks to refresh the vehicle marker popup balloons
+                mCustomInfoWindowAdapter.cancelUpdates();
 
-        // Show trip details screen for the vehicle associated with this marker
-        ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
-
-        if (mController != null && mController.getFocusedStopId() != null) {
-            TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                    mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
-        } else {
-            TripDetailsActivity.start(mActivity, status.getActiveTripId(),
-                    TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                if (status != null) {
+                    if (mController != null && mController.getFocusedStopId() != null) {
+                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                                mController.getFocusedStopId(), TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    } else {
+                        TripDetailsActivity.start(mActivity, status.getActiveTripId(),
+                                TripDetailsListFragment.SCROLL_MODE_VEHICLE);
+                    }
+                }
+            }
         }
     }
 
@@ -549,6 +559,23 @@ public class VehicleOverlay implements AmazonMap.OnInfoWindowClickListener {
         if (mMarkerData == null) {
             mMarkerData = new MarkerData();
         }
+    }
+
+
+    @Override
+    public boolean markerClicked(Marker marker) {
+        ObaTripStatus status = mMarkerData.getStatusFromMarker(marker);
+        if (status != null) {
+            setupInfoWindow();
+            marker.showInfoWindow();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void removeMarkerClicked(LatLng latLng) {
+
     }
 
     /**

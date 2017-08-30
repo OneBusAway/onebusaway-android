@@ -13,3 +13,4 @@ We'd like to thank the following developers who have contributed to OneBusAway A
 * Charles Bond
 * Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge Systematics)
 * Bridgette Eichelberger (bridgette@outlook.com)
+* Rodrigo Carvalho (carvalhorr@gmail.com)

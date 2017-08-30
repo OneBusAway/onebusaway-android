@@ -100,4 +100,7 @@
     <dimen name="trip_results_tab_text_size">14sp</dimen>
     <dimen name="trip_results_icon_size">24dp</dimen>
 
+    <!-- Bikeshare markers -->
+    <dimen name="bikeshare_small_marker_size">15dp</dimen>
+
 </resources>

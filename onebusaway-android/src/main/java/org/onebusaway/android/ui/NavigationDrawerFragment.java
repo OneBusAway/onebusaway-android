@@ -164,7 +164,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         mDrawerItemsListContainer = inflater
                 .inflate(R.layout.navdrawer_list, container, false);
 

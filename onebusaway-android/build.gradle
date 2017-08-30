@@ -48,7 +48,7 @@ android {
     buildToolsVersion "25.0.2"
 
     defaultConfig {
-        minSdkVersion 9
+        minSdkVersion 12
         targetSdkVersion 21
         versionCode 76
         versionName "2.1.9"
@@ -113,6 +113,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
         }
 
         /**
@@ -151,6 +152,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
         }
 
         agencyY {
@@ -182,6 +184,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "\"http://test.seeclickfix.com/open311/v2/\""
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
+            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OTP_BIKESHARE", "false"
         }
 
         /**
@@ -351,6 +354,10 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     // Bottom sliding panel
     compile 'com.sothree.slidinguppanel:library:3.3.0'
+    // For floating action button speed dial
+    compile ('uk.co.markormesher:android-fab:1.3.4') {
+        exclude group: 'com.android.support'
+    }
     // For sorting alphanumeric route names
     compile 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library

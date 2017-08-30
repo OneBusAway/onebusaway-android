@@ -15,6 +15,15 @@
  */
 package org.onebusaway.android.directions.realtime;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.directions.model.ItineraryDescription;
+import org.onebusaway.android.directions.tasks.TripRequest;
+import org.onebusaway.android.directions.util.OTPConstants;
+import org.onebusaway.android.directions.util.TripRequestBuilder;
+import org.opentripplanner.api.model.Itinerary;
+import org.opentripplanner.api.model.Leg;
+
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -27,15 +36,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.directions.model.ItineraryDescription;
-import org.onebusaway.android.directions.tasks.TripRequest;
-import org.onebusaway.android.directions.util.OTPConstants;
-import org.onebusaway.android.directions.util.TripRequestBuilder;
-import org.opentripplanner.api.model.Itinerary;
-import org.opentripplanner.api.model.Leg;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +79,7 @@ public class RealtimeService extends IntentService {
 
         if (intent.getAction().equals(OTPConstants.INTENT_START_CHECKS)) {
             disableListenForTripUpdates();
-            if (!possibleReschedule(bundle)) {
+            if (!rescheduleRealtimeUpdates(bundle)) {
                 Itinerary itinerary = getItinerary(bundle);
                 startRealtimeUpdates(bundle, itinerary);
             }
@@ -115,12 +115,22 @@ public class RealtimeService extends IntentService {
 
     }
 
-    // Reschedule the start of checks, if necessary
-    // Return true if rescheduled
-    private boolean possibleReschedule(Bundle bundle) {
-
+    /**
+     * Check to see if the start of real-time trip updates should be rescheduled, and if necessary
+     * reschedule it
+     *
+     * @param bundle trip details to be passed to TripRequestBuilder constructor
+     * @return true if the start of trip real-time updates has been rescheduled, false if updates
+     * should begin immediately
+     */
+    private boolean rescheduleRealtimeUpdates(Bundle bundle) {
         // Delay if this trip doesn't start for at least an hour
         Date start = new TripRequestBuilder(bundle).getDateTime();
+        if (start == null) {
+            // To avoid NPE, return true to say that it's been rescheduled, but don't actually reschedule it
+            // FIXME - Figure out why sometimes the bundle is empty - see #790 and #791
+            return true;
+        }
         Date queryStart = new Date(start.getTime() - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW);
         boolean reschedule = new Date().before(queryStart);
 

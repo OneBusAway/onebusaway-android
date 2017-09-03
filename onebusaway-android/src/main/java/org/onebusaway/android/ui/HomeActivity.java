@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -70,15 +71,18 @@ import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapModeController;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
 import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,7 +102,8 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawe
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
         BaseMapFragment.OnProgressBarChangedListener,
-        ArrivalsListFragment.Listener, NavigationDrawerCallbacks, ObaRegionsTask.Callback {
+        ArrivalsListFragment.Listener, NavigationDrawerCallbacks,
+        ObaRegionsTask.Callback {
 
     interface SlidingPanelController {
 
@@ -148,7 +153,11 @@ public class HomeActivity extends AppCompatActivity
 
     private FloatingActionButton mFabMyLocation;
 
+    uk.co.markormesher.android_fab.FloatingActionButton mLayersFab;
+
     private static int MY_LOC_DEFAULT_BOTTOM_MARGIN;
+
+    private static int LAYERS_FAB_DEFAULT_BOTTOM_MARGIN;
 
     private static final int MY_LOC_BTN_ANIM_DURATION = 100;  // ms
 
@@ -199,6 +208,11 @@ public class HomeActivity extends AppCompatActivity
      */
     String mFocusedStopId = null;
 
+    /**
+     * Bike rental station ID that has the focus currently.
+     */
+    String mBikeRentalStationId = null;
+
     ObaStop mFocusedStop = null;
 
     ImageView mExpandCollapse = null;
@@ -217,9 +231,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static void start(Context context,
-                                   String focusId,
-                                   double lat,
-                                   double lon) {
+                             String focusId,
+                             double lat,
+                             double lon) {
         context.startActivity(makeIntent(context, focusId, lat, lon));
     }
 
@@ -255,9 +269,9 @@ public class HomeActivity extends AppCompatActivity
      * @param lon     The longitude of the map center.
      */
     public static Intent makeIntent(Context context,
-                                          String focusId,
-                                          double lat,
-                                          double lon) {
+                                    String focusId,
+                                    double lat,
+                                    double lon) {
         Intent myIntent = new Intent(context, HomeActivity.class);
         myIntent.putExtra(MapParams.STOP_ID, focusId);
         myIntent.putExtra(MapParams.CENTER_LAT, lat);
@@ -317,6 +331,8 @@ public class HomeActivity extends AppCompatActivity
 
         setupGooglePlayServices();
 
+        setupLayersSpeedDial();
+
         UIUtils.setupActionBar(this);
 
         checkRegionStatus();
@@ -363,6 +379,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         checkLeftHandMode();
+        updateLayersFab();
         mFabMyLocation.requestLayout();
     }
 
@@ -378,6 +395,7 @@ public class HomeActivity extends AppCompatActivity
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
+        mLayersFab.closeSpeedDialMenu();
         super.onStop();
     }
 
@@ -391,6 +409,9 @@ public class HomeActivity extends AppCompatActivity
                 outState.putString(MapParams.STOP_CODE, mFocusedStop.getStopCode());
                 outState.putString(MapParams.STOP_NAME, mFocusedStop.getName());
             }
+        }
+        if (mBikeRentalStationId != null) {
+            outState.putString(MapParams.BIKE_STATION_ID, mBikeRentalStationId);
         }
     }
 
@@ -415,7 +436,7 @@ public class HomeActivity extends AppCompatActivity
             case NAVDRAWER_ITEM_NEARBY:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_NEARBY) {
                     showMapFragment();
-                    mCurrentNavDrawerPosition = item;
+                    mCurrentNavDrawerPosition = NAVDRAWER_ITEM_NEARBY;
                     ObaAnalytics.reportEventWithCategory(
                             ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                             getString(R.string.analytics_action_button_press),
@@ -465,6 +486,10 @@ public class HomeActivity extends AppCompatActivity
         invalidateOptionsMenu();
     }
 
+
+    private void handleNearbySelection() {
+    }
+
     private void showMapFragment() {
         FragmentManager fm = getSupportFragmentManager();
         /**
@@ -496,7 +521,7 @@ public class HomeActivity extends AppCompatActivity
 
         getSupportFragmentManager().beginTransaction().show(mMapFragment).commit();
 
-        showMyLocationButton();
+        showFloatingActionButtons();
         if (mLastMapProgressBarState) {
             showMapProgressBar();
         }
@@ -513,7 +538,7 @@ public class HomeActivity extends AppCompatActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        hideMyLocationButton();
+        hideFloatingActionButtons();
         hideMapProgressBar();
         hideMapFragment();
         hideReminderFragment();
@@ -545,7 +570,7 @@ public class HomeActivity extends AppCompatActivity
         /**
          * Hide everything that shouldn't be shown
          */
-        hideMyLocationButton();
+        hideFloatingActionButtons();
         hideMapProgressBar();
         hideStarredStopsFragment();
         hideMapFragment();
@@ -864,6 +889,7 @@ public class HomeActivity extends AppCompatActivity
         mFocusedStop = stop;
 
         if (stop != null) {
+            mBikeRentalStationId = null;
             mFocusedStopId = stop.getId();
             // A stop on the map was just tapped, show it in the sliding panel
             updateArrivalListFragment(stop.getId(), stop.getName(), stop.getStopCode(), stop,
@@ -874,16 +900,43 @@ public class HomeActivity extends AppCompatActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_map_icon));
         } else {
-            // No stop is in focus (e.g., user tapped on the map), so hide the panel
-            // and clear the currently focused stopId
-            mFocusedStopId = null;
-            moveMyLocationButton();
-            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-            if (mArrivalsListFragment != null) {
-                FragmentManager fm = getSupportFragmentManager();
-                fm.beginTransaction().remove(mArrivalsListFragment).commit();
-            }
-            mShowArrivalsMenu = false;
+            hideBusStopFragment();
+        }
+    }
+
+    private void hideBusStopFragment() {
+        // No stop is in focus (e.g., user tapped on the map), so hide the panel
+        // and clear the currently focused stopId
+        mFocusedStopId = null;
+        moveFabsLocation();
+        mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        if (mArrivalsListFragment != null) {
+            FragmentManager fm = getSupportFragmentManager();
+            fm.beginTransaction().remove(mArrivalsListFragment).commit();
+        }
+        mShowArrivalsMenu = false;
+    }
+
+    /**
+     * Called from the BaseMapFragment when a BikeRentalStation is clicked.
+     *
+     * @param bikeRentalStation the bike rental station that was clicked.
+     */
+    @Override
+    public void onFocusChanged(BikeRentalStation bikeRentalStation) {
+        Log.d(TAG, "Bike Station Clicked on map");
+
+        // Check to see if we're already focused on this same bike rental station - if so, we shouldn't do anything
+        if (mBikeRentalStationId != null && bikeRentalStation != null &&
+                mBikeRentalStationId.equalsIgnoreCase(bikeRentalStation.id)) {
+            return;
+        }
+
+        if (bikeRentalStation == null) {
+            mBikeRentalStationId = null;
+        } else {
+            mBikeRentalStationId = bikeRentalStation.id;
+            //hideBusStopFragment();
         }
     }
 
@@ -939,7 +992,7 @@ public class HomeActivity extends AppCompatActivity
         }
 
         // Header might have changed height, so make sure my location button is set above the header
-        moveMyLocationButton();
+        moveFabsLocation();
 
         // Show arrival info related tutorials
         showArrivalInfoTutorials(response);
@@ -1068,7 +1121,7 @@ public class HomeActivity extends AppCompatActivity
      *                 null if we don't have this yet.
      */
     private void updateArrivalListFragment(@NonNull String stopId, @NonNull String stopName,
-            @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
+                                           @NonNull String stopCode, ObaStop stop, HashMap<String, ObaRoute> routes) {
         FragmentManager fm = getSupportFragmentManager();
         Intent intent;
 
@@ -1099,10 +1152,15 @@ public class HomeActivity extends AppCompatActivity
 
         mArrivalsListFragment.setArguments(FragmentUtils.getIntentArgs(intent));
         fm.beginTransaction().replace(R.id.slidingFragment, mArrivalsListFragment).commit();
+        showSlidingPanel();
+        moveFabsLocation();
+    }
+
+    private void showSlidingPanel() {
         if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
             mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
         }
-        moveMyLocationButton();
+
     }
 
     private void goToSendFeedBack() {
@@ -1207,6 +1265,7 @@ public class HomeActivity extends AppCompatActivity
                     Toast.LENGTH_LONG
             ).show();
         }
+        updateLayersFab();
     }
 
     private void setupMyLocationButton() {
@@ -1232,10 +1291,10 @@ public class HomeActivity extends AppCompatActivity
         MY_LOC_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
         checkLeftHandMode();
         if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
-            showMyLocationButton();
+            showFloatingActionButtons();
             showMapProgressBar();
         } else {
-            hideMyLocationButton();
+            hideFloatingActionButtons();
             hideMapProgressBar();
         }
     }
@@ -1262,14 +1321,25 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    synchronized private void moveMyLocationButton() {
-        if (mFabMyLocation == null) {
+    /**
+     * Moves both Floating Action Buttons as response to sliding panel height changes.
+     * <p>
+     * Currently there are two FAB that can be moved, the My location button and the Layers button.
+     */
+    synchronized private void moveFabsLocation() {
+        moveFabLocation(mFabMyLocation, MY_LOC_DEFAULT_BOTTOM_MARGIN);
+        moveFabLocation(mLayersFab, LAYERS_FAB_DEFAULT_BOTTOM_MARGIN);
+    }
+
+    private void moveFabLocation(final View fab, final int initialMargin) {
+        if (fab == null) {
             return;
         }
         if (mMyLocationAnimation != null &&
                 (mMyLocationAnimation.hasStarted() && !mMyLocationAnimation.hasEnded())) {
             // We're already animating - do nothing
-            return;
+
+            //return;
         }
 
         if (mMyLocationAnimation != null) {
@@ -1281,10 +1351,10 @@ public class HomeActivity extends AppCompatActivity
         h.postDelayed(new Runnable() {
             @Override
             public void run() {
-                final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mFabMyLocation
+                final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) fab
                         .getLayoutParams();
 
-                int tempMargin = MY_LOC_DEFAULT_BOTTOM_MARGIN;
+                int tempMargin = initialMargin;
 
                 if (mSlidingPanel.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED) {
                     tempMargin += mSlidingPanel.getPanelHeight();
@@ -1316,7 +1386,7 @@ public class HomeActivity extends AppCompatActivity
                             bottom = currentMargin - (int) (Math.abs(currentMargin - goalMargin)
                                     * interpolatedTime);
                         }
-                        UIUtils.setMargins(mFabMyLocation,
+                        UIUtils.setMargins(fab,
                                 p.leftMargin,
                                 p.topMargin,
                                 p.rightMargin,
@@ -1324,26 +1394,34 @@ public class HomeActivity extends AppCompatActivity
                     }
                 };
                 mMyLocationAnimation.setDuration(MY_LOC_BTN_ANIM_DURATION);
-                mFabMyLocation.startAnimation(mMyLocationAnimation);
+                fab.startAnimation(mMyLocationAnimation);
             }
         }, 100);
     }
 
-    private void showMyLocationButton() {
-        if (mFabMyLocation == null) {
+    private void showFloatingActionButtons() {
+        if (mFabMyLocation == null && mLayersFab == null) {
             return;
         }
-        if (mFabMyLocation.getVisibility() != View.VISIBLE) {
+        if (mFabMyLocation != null && mFabMyLocation.getVisibility() != View.VISIBLE) {
             mFabMyLocation.setVisibility(View.VISIBLE);
+        }
+        if (mLayersFab != null && mLayersFab.getVisibility() != View.VISIBLE) {
+            if (LayerUtils.isBikeshareLayerVisible()) {
+                mLayersFab.setVisibility(View.VISIBLE);
+            }
         }
     }
 
-    private void hideMyLocationButton() {
-        if (mFabMyLocation == null) {
+    private void hideFloatingActionButtons() {
+        if (mFabMyLocation == null && mLayersFab == null) {
             return;
         }
-        if (mFabMyLocation.getVisibility() != View.GONE) {
+        if (mFabMyLocation != null && mFabMyLocation.getVisibility() != View.GONE) {
             mFabMyLocation.setVisibility(View.GONE);
+        }
+        if (mLayersFab != null && mLayersFab.getVisibility() != View.GONE) {
+            mLayersFab.setVisibility(View.GONE);
         }
     }
 
@@ -1395,6 +1473,80 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
+    private void setupLayersSpeedDial() {
+
+        mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
+
+        ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
+                .getLayoutParams();
+
+        LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
+
+    }
+
+    /**
+     * Method used to (re)display the layers FAB button when the activity restarts or regions data
+     * is updated
+     */
+    private void updateLayersFab() {
+        if (Application.isBikeshareEnabled()) {
+            if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+                mLayersFab.setVisibility(View.VISIBLE);
+
+                mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+
+                LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
+                // Add the BaseMapFragment listener to activate the layer on the map
+                adapter.addLayerActivationListener(mMapFragment);
+
+                // Add another listener to rebuild the menu options after selection. This other listener
+                // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
+                // reference to it only in the main activity.
+                adapter.addLayerActivationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
+                    @Override
+                    public void onActivateLayer(LayerInfo layer) {
+                        Handler h = new Handler(getMainLooper());
+                        h.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mLayersFab.rebuildSpeedDialMenu();
+                            }
+                        }, 100);
+                    }
+
+                    @Override
+                    public void onDeactivateLayer(LayerInfo layer) {
+                        Handler h = new Handler(getMainLooper());
+                        h.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mLayersFab.rebuildSpeedDialMenu();
+                            }
+                        }, 100);
+                    }
+                });
+                mLayersFab.setMenuAdapter(adapter);
+                mLayersFab.setOnSpeedDialOpenListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+                    @Override
+                    public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                    }
+                });
+                mLayersFab.setOnSpeedDialCloseListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+                    @Override
+                    public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                    }
+                });
+                mLayersFab.setContentCoverEnabled(false);
+            }
+        } else {
+            mLayersFab.setVisibility(View.GONE);
+        }
+    }
+
+
     private void setupSlidingPanel() {
         mSlidingPanel = (SlidingUpPanelLayout) findViewById(R.id.bottom_sliding_layout);
         mArrivalsListHeaderView = findViewById(R.id.arrivals_list_header);
@@ -1413,7 +1565,7 @@ public class HomeActivity extends AppCompatActivity
                     return;
                 }
 
-                switch(newState) {
+                switch (newState) {
                     case EXPANDED:
                         onPanelExpanded(panel);
                         break;
@@ -1461,7 +1613,7 @@ public class HomeActivity extends AppCompatActivity
                     mArrivalsListHeader.setSlidingPanelCollapsed(true);
                     mArrivalsListHeader.refresh();
                 }
-                moveMyLocationButton();
+                moveFabsLocation();
 
                 // Accessibility
                 if (mExpandCollapse != null) {

@@ -49,6 +49,12 @@ public class RegionUtils {
 
     private static final String TAG = "RegionUtils";
 
+    public static final int TAMPA_REGION_ID = 0;
+
+    public static final int PUGET_SOUND_REGION_ID = 1;
+
+    public static final int ATLANTA_REGION_ID = 3;
+
     public static final double METERS_TO_MILES = 0.000621371;
 
     private static final int DISTANCE_LIMITER = 100;  // miles
@@ -403,7 +409,8 @@ public class RegionUtils {
                     ObaContract.Regions.EXPERIMENTAL,
                     ObaContract.Regions.STOP_INFO_URL,
                     ObaContract.Regions.OTP_BASE_URL,
-                    ObaContract.Regions.OTP_CONTACT_EMAIL
+                    ObaContract.Regions.OTP_CONTACT_EMAIL,
+                    ObaContract.Regions.SUPPORTS_OTP_BIKESHARE
             };
 
             ContentResolver cr = context.getContentResolver();
@@ -448,7 +455,8 @@ public class RegionUtils {
                         c.getInt(10) > 0,            // Experimental
                         c.getString(11),             // StopInfoUrl
                         c.getString(12),             // OTP Base URL
-                        c.getString(13)              // OTP Contact Email
+                        c.getString(13),              // OTP Contact Email
+                        c.getInt(14) > 0            // Supports Otp Bikeshare
                 ));
 
             } while (c.moveToNext());
@@ -630,7 +638,8 @@ public class RegionUtils {
                 BuildConfig.FIXED_REGION_TWITTER_URL, false,
                 BuildConfig.FIXED_REGION_STOP_INFO_URL,
                 BuildConfig.FIXED_REGION_OTP_BASE_URL,
-                BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL);
+                BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
+                BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE);
         return region;
     }
 
@@ -698,6 +707,8 @@ public class RegionUtils {
         values.put(ObaContract.Regions.STOP_INFO_URL, region.getStopInfoUrl());
         values.put(ObaContract.Regions.OTP_BASE_URL, region.getOtpBaseUrl());
         values.put(ObaContract.Regions.OTP_CONTACT_EMAIL, region.getOtpContactEmail());
+        values.put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE,
+                region.getSupportsOtpBikeshare() ? 1 : 0);
         return values;
     }
 

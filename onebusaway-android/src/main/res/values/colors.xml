@@ -96,5 +96,9 @@
     <color name="trip_option_selected">@android:color/white</color>
     <color name="trip_option_icon_tint">#888</color>
 
+    <!-- Layers -->
+    <color name="layer_disabled">#FF777777</color>
+    <color name="layer_bikeshare_color">#3a4677</color>
+
 
 </resources>

@@ -93,36 +93,8 @@ public class ObaContext {
         String serverName = Application.get().getCustomApiUrl();
 
         if (!TextUtils.isEmpty(serverName) || mRegion != null) {
-            Uri baseUrl = null;
-            if (!TextUtils.isEmpty(serverName)) {
-                Log.d(TAG, "Using custom API URL set by user '" + serverName + "'.");
-
-                try {
-                    // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
-                    URL url = new URL(serverName);
-                } catch (MalformedURLException e) {
-                    // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                    serverName = context.getString(R.string.http_prefix) + serverName;
-                }
-
-                baseUrl = Uri.parse(serverName);
-            } else if (mRegion != null) {
-                Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
-
-                baseUrl = Uri.parse(mRegion.getObaBaseUrl());
-            }
-
-            // Copy partial path (if one exists) from the base URL
-            Uri.Builder path = new Uri.Builder();
-            path.encodedPath(baseUrl.getEncodedPath());
-
-            // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
-            path.appendEncodedPath(builder.build().getPath());
-
-            // Finally, overwrite builder that was passed in with the full URL
-            builder.scheme(baseUrl.getScheme());
-            builder.encodedAuthority(baseUrl.getEncodedAuthority());
-            builder.encodedPath(path.build().getEncodedPath());
+            Log.d(TAG, "Using custom OBA API URL set by user '" + serverName + "'.");
+            setUrl(context, builder, serverName);
         } else {
             String fallBack = "api.pugetsound.onebusaway.org";
             Log.e(TAG, "Accessing default fallback '" + fallBack + "' ...this is wrong!!");
@@ -130,6 +102,59 @@ public class ObaContext {
             builder.scheme("http");
             builder.authority(fallBack);
         }
+    }
+
+    public void setBaseOtpUrl(Context context, Uri.Builder builder) {
+        // Use the custom OTP url if vailable
+        String otpBaseUrl = Application.get().getCustomOtpApiUrl();
+        if (TextUtils.isEmpty(otpBaseUrl)) {
+            // Otherwise use the current region OTP url
+            otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
+            Log.d(TAG, "Using default region OTP API URL set by user '" + otpBaseUrl + "'.");
+        } else {
+            Log.d(TAG, "Using custom region OTP API URL set by user '" + otpBaseUrl + "'.");
+        }
+        setUrl(context, builder, otpBaseUrl);
+    }
+
+    /**
+     * Set a URL to the Uri.Builder. This method was created to avoid repeating the same logic for
+     * 'setBasetOtpUrl' and 'setBaseUrl' methods.
+     *
+     * @param context used to get android resources
+     * @param builder the Uri.Builder to set the url
+     * @param serverName the url to be used.
+     */
+    private void setUrl(Context context, Uri.Builder builder, String serverName) {
+        Uri baseUrl = null;
+        if (!TextUtils.isEmpty(serverName)) {
+
+            try {
+                // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+                URL url = new URL(serverName);
+            } catch (MalformedURLException e) {
+                // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+                serverName = context.getString(R.string.http_prefix) + serverName;
+            }
+
+            baseUrl = Uri.parse(serverName);
+        } else if (mRegion != null) {
+            Log.d(TAG, "Using region base URL '" + mRegion.getObaBaseUrl() + "'.");
+
+            baseUrl = Uri.parse(mRegion.getObaBaseUrl());
+        }
+
+        // Copy partial path (if one exists) from the base URL
+        Uri.Builder path = new Uri.Builder();
+        path.encodedPath(baseUrl.getEncodedPath());
+
+        // Then, tack on the rest of the REST API method path from the Uri.Builder that was passed in
+        path.appendEncodedPath(builder.build().getPath());
+
+        // Finally, overwrite builder that was passed in with the full URL
+        builder.scheme(baseUrl.getScheme());
+        builder.encodedAuthority(baseUrl.getEncodedAuthority());
+        builder.encodedPath(path.build().getEncodedPath());
     }
 
     @Override

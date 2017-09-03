@@ -35,7 +35,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -61,9 +60,17 @@ public class TripRequestBuilder {
     private static final String MODE_SET = ".MODE_SET";
     private static final String DATE_TIME = ".DATE_TIME";
 
+    private static final int TRANSIT_MODE = 0;
+    private static final int BUS_ONLY_MODE = 1;
+    private static final int RAIL_ONLY_MODE = 2;
+    private static final int BIKESHARE_MODE = 3;
+
+
     private TripRequest.Callback mListener;
 
     private Bundle mBundle;
+
+    private int mModeId;
 
     public TripRequestBuilder(Bundle bundle) {
         this.mBundle = bundle;
@@ -150,21 +157,35 @@ public class TripRequestBuilder {
     // bus only -> BUSISH,WALK
     // rail only -> TRAINISH,WALK
     public TripRequestBuilder setModeSetById(int id) {
-        List<TraverseMode> modes;
+        List<String> modes;
+
+        mModeId = id;
 
         switch (id) {
-            case R.string.transit_mode_transit:
-                modes = Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+            // Transit only
+            // Transit & bikeshare
+            case TRANSIT_MODE:
+                if (Application.isBikeshareEnabled()) {
+                    modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
+                            TraverseMode.WALK.toString(),
+                            Application.get().getString(R.string.traverse_mode_bicycle_rent));
+                } else {
+                    modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                }
                 break;
-            case R.string.transit_mode_bus:
-                modes = Arrays.asList(TraverseMode.BUSISH, TraverseMode.WALK);
+            case BUS_ONLY_MODE:
+                modes = Arrays.asList(TraverseMode.BUSISH.toString(), TraverseMode.WALK.toString());
                 break;
-            case R.string.transit_mode_rail:
-                modes = Arrays.asList(TraverseMode.TRAINISH, TraverseMode.WALK);
+            case RAIL_ONLY_MODE:
+                modes = Arrays.asList(TraverseMode.TRAINISH.toString(), TraverseMode.WALK.toString());
+                break;
+            case BIKESHARE_MODE:
+                modes = Arrays.asList(Application.get().getString(R.string.traverse_mode_bicycle_rent));
                 break;
             default:
                 Log.e(TAG, "Invalid mode set ID");
-                modes = Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+                modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                mModeId = -1;
         }
 
         String modeString = TextUtils.join(",", modes);
@@ -173,34 +194,21 @@ public class TripRequestBuilder {
     }
 
     public int getModeSetId() {
-        List<TraverseMode> modes = getModes();
-        if (modes.contains(TraverseMode.BUSISH)) {
-            return R.string.transit_mode_bus;
+        // IF bike mode is selected in the trip plan additional preferences but bikeshare is not enabled use the default mode (TRANSTI)
+        if (BIKESHARE_MODE == mModeId && !Application.isBikeshareEnabled()) {
+            return TRANSIT_MODE;
         }
-        if (modes.contains(TraverseMode.TRAINISH)) {
-            return R.string.transit_mode_rail;
-        }
-        if (modes.contains(TraverseMode.TRANSIT)) {
-            return R.string.transit_mode_transit;
-        }
-        return -1;
+        return mModeId;
     }
 
-    private List<TraverseMode> getModes() {
-        List<TraverseMode> modes = new ArrayList<>();
-
+    private List<String> getModes() {
         String modeString = mBundle.getString(MODE_SET);
 
-        if (modeString == null) {
-            return Arrays.asList(TraverseMode.TRANSIT, TraverseMode.WALK);
+        if (TextUtils.isEmpty(modeString)) {
+            return Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
         }
 
-        String[] tokens = modeString.split(",");
-        for (String tok : tokens) {
-            TraverseMode mode = TraverseMode.valueOf(tok);
-            modes.add(mode);
-        }
-        return modes;
+        return Arrays.asList(TextUtils.split(modeString, ","));
     }
 
     private String getModeString() {
@@ -249,17 +257,15 @@ public class TripRequestBuilder {
         if (!TextUtils.isEmpty(app.getCustomOtpApiUrl())) {
             otpBaseUrl = app.getCustomOtpApiUrl();
             Log.d(TAG, "Using custom OTP API URL set by user '" + otpBaseUrl + "'.");
-            if (!TextUtils.isEmpty(otpBaseUrl)) {
-                try {
-                    // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
-                    URL url = new URL(otpBaseUrl);
-                } catch (MalformedURLException e) {
-                    // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
-                    otpBaseUrl = activity.getString(R.string.http_prefix) + otpBaseUrl;
-                }
-            }
         } else {
             otpBaseUrl = app.getCurrentRegion().getOtpBaseUrl();
+        }
+        try {
+            // URI.parse() doesn't tell us if the scheme is missing, so use URL() instead (#126)
+            URL url = new URL(otpBaseUrl);
+        } catch (MalformedURLException e) {
+            // Assume HTTP scheme, since without a scheme the Uri won't parse the authority
+            otpBaseUrl = activity.getString(R.string.http_prefix) + otpBaseUrl;
         }
         String fmtOtpBaseUrl = otpBaseUrl != null ? RegionUtils.formatOtpBaseUrl(otpBaseUrl) : null;
 

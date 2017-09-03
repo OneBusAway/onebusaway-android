@@ -21,11 +21,6 @@
         <item name="android:shape">oval</item>
     </style>
 
-    <!-- Floating Action Button (FAB) style is only applied on Android 5.0 and greater-->
-    <style name="OneBusAway.FloatingActionButton" parent="android:style/Widget.Material.Button">
-        <item name="android:background">@drawable/fab_background</item>
-    </style>
-
     <!-- General styles -->
     <style name="HeaderItem">
         <item name="android:background">@color/theme_primary</item>

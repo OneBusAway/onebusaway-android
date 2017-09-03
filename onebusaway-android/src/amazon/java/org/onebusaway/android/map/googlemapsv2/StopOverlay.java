@@ -72,7 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.OnMapClickListener {
+public class StopOverlay implements MarkerListeners {
 
     private static final String TAG = "StopOverlay";
 
@@ -121,6 +121,48 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
     OnFocusChangedListener mOnFocusChangedListener;
 
+    @Override
+    public boolean markerClicked(Marker marker) {
+        long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            startTime = SystemClock.elapsedRealtimeNanos();
+        }
+
+        ObaStop stop = mMarkerData.getStopFromMarker(marker);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            endTime = SystemClock.elapsedRealtimeNanos();
+            Log.d(TAG, "Stop HashMap read time: " + TimeUnit.MILLISECONDS
+                    .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
+        }
+
+        if (stop == null) {
+            // The marker isn't a stop that is contained in this StopOverlay - return unhandled
+            return false;
+        }
+
+        if (BuildConfig.DEBUG) {
+            // Show the stop_id in a toast for debug purposes
+            Toast.makeText(mActivity, stop.getId(), Toast.LENGTH_SHORT).show();
+        }
+
+        doFocusChange(stop);
+
+        // Report Stop distance metric
+        Location stopLocation = stop.getLocation();
+        Location myLocation = Application.getLastKnownLocation(mActivity, null);
+        // Track the users distance to bus stop
+        ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
+        return true;
+    }
+
+    @Override
+    public void removeMarkerClicked(LatLng location) {
+        Log.d(TAG, "Map clicked");
+        removeFocus(location);
+    }
+
+
     public interface OnFocusChangedListener {
 
         /**
@@ -143,8 +185,6 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         mActivity = activity;
         mMap = map;
         loadIcons();
-        mMap.setOnMarkerClickListener(this);
-        mMap.setOnMapClickListener(this);
     }
 
     public void setOnFocusChangeListener(OnFocusChangedListener onFocusChangedListener) {
@@ -600,40 +640,6 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         doFocusChange(stop);
     }
 
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        long startTime = Long.MAX_VALUE, endTime = Long.MAX_VALUE;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            startTime = SystemClock.elapsedRealtimeNanos();
-        }
-
-        ObaStop stop = mMarkerData.getStopFromMarker(marker);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            endTime = SystemClock.elapsedRealtimeNanos();
-            Log.d(TAG, "Stop HashMap read time: " + TimeUnit.MILLISECONDS
-                    .convert(endTime - startTime, TimeUnit.NANOSECONDS) + "ms");
-        }
-
-        if (stop == null) {
-            // The marker isn't a stop that is contained in this StopOverlay - return unhandled
-            return false;
-        }
-
-        if (BuildConfig.DEBUG) {
-            // Show the stop_id in a toast for debug purposes
-            Toast.makeText(mActivity, stop.getId(), Toast.LENGTH_SHORT).show();
-        }
-
-        doFocusChange(stop);
-
-        // Report Stop distance metric
-        Location stopLocation = stop.getLocation();
-        Location myLocation = Application.getLastKnownLocation(mActivity, null);
-        // Track the users distance to bus stop
-        ObaAnalytics.trackBusStopDistance(stop.getId(), myLocation, stopLocation);
-        return true;
-    }
 
     private void doFocusChange(ObaStop stop) {
         mMarkerData.setFocus(stop);
@@ -641,12 +647,6 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
 
         // Notify listener
         mOnFocusChangedListener.onFocusChanged(stop, routes, stop.getLocation());
-    }
-
-    @Override
-    public void onMapClick(LatLng latLng) {
-        Log.d(TAG, "Map clicked");
-        removeFocus(latLng);
     }
 
     /**
@@ -661,13 +661,14 @@ public class StopOverlay implements AmazonMap.OnMarkerClickListener, AmazonMap.O
         if (mMarkerData.getFocus() != null) {
             mMarkerData.removeFocus();
         }
-        // Set map clicked location, if it exists
-        Location location = null;
-        if (latLng != null) {
-            location = MapHelpV2.makeLocation(latLng);
-        }
-        // Notify focus changed every time the map is clicked away from a stop marker
-        mOnFocusChangedListener.onFocusChanged(null, null, location);
+
+         // Set map clicked location, if it exists
+         Location location = null;
+         if (latLng != null) {
+             location = MapHelpV2.makeLocation(latLng);
+         }
+         // Notify focus changed every time the map is clicked away from a stop marker
+         mOnFocusChangedListener.onFocusChanged(null, null, location);
     }
 
     private void setupMarkerData() {

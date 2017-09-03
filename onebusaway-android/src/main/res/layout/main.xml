@@ -58,12 +58,23 @@
                         android:layout_alignParentBottom="true"
                         android:layout_alignParentRight="true"
                         android:layout_marginRight="@dimen/fab_margin"
-                    android:layout_marginLeft="@dimen/fab_margin"
+                        android:layout_marginLeft="@dimen/fab_margin"
                         android:layout_marginBottom="@dimen/fab_margin"
                         android:src="@drawable/ic_maps_my_location"
                         android:contentDescription="@string/map_option_mylocation"
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
+
+                <uk.co.markormesher.android_fab.FloatingActionButton
+                    android:id="@+id/layersSpeedDial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginBottom="64dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentRight="true"
+                    android:drawable="@drawable/ic_layers_white_24dp" />
+
                 <!-- ROUTE MODE HEADER -->
                 <include android:id="@+id/route_info"
                          layout="@layout/route_info_head"

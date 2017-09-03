@@ -126,4 +126,9 @@ public interface ObaRegion {
      * @return The email of the party responsible for this region's OTP server.
      */
     public String getOtpContactEmail();
+
+    /**
+     * @return true if the region includes support for displaying bikeshare information from OTP.
+     */
+    public boolean getSupportsOtpBikeshare();
 }

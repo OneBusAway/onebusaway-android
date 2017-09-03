@@ -26,6 +26,7 @@
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
+    <string name="navdrawer_item_bike">Bicicleta</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">Iniciar el servicio del viaje</string>
@@ -492,7 +493,7 @@
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\n
     </string>
     <string name="bug_report_error">No se puede enviar el informe de error: no se encontro una aplicación adecuada.
-    </string>>
+    </string>
     <string name="bug_report_body_trip_plan_fail">Quejas, felicitaciones, o reporte de errores son bienvenidos!\n\n\nApp
         Version:
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\nGoogle Play Services App: %5$s\n
@@ -1046,8 +1047,15 @@
     <string name="wheelchair_accessible">Evitar las escaleras</string>
 
     <string name="travel_by_label">Viajar por: </string>
-    <string name="transit_mode_transit">Tránsito</string>
+    <string name="transit_mode_transit_only">Tránsito</string>
     <string name="transit_mode_bus">Solamente en Bus</string>
     <string name="transit_mode_rail">Solamente en Tren</string>
+
+    <!-- Bikeshare info window -->
+    <string name="bike_info_window_bikes_title">Bicicletas</string>
+
+    <!-- Bikeshare preference option -->
+    <string name="bike_info_window_spaces_title">Lugares</string>
+    <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
 
 </resources>

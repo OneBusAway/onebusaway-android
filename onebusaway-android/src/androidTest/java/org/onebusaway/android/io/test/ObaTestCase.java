@@ -19,6 +19,7 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.request.ObaResponse;
+import org.onebusaway.android.mock.MockRegion;
 import org.onebusaway.android.mock.ObaMock;
 
 import android.test.AndroidTestCase;

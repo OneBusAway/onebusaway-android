@@ -60,10 +60,11 @@ public class TripRequestBuilder {
     private static final String MODE_SET = ".MODE_SET";
     private static final String DATE_TIME = ".DATE_TIME";
 
-    private static final int TRANSIT_MODE = 0;
+    private static final int TRANSIT_AND_BIKE_MODE = 0;
     private static final int BUS_ONLY_MODE = 1;
     private static final int RAIL_ONLY_MODE = 2;
     private static final int BIKESHARE_MODE = 3;
+    private static final int TRANSIT_ONLY_MODE = 4;
 
 
     private TripRequest.Callback mListener;
@@ -160,11 +161,13 @@ public class TripRequestBuilder {
         List<String> modes;
 
         mModeId = id;
-
         switch (id) {
             // Transit only
+            case TRANSIT_ONLY_MODE:
+                modes = Arrays.asList(TraverseMode.TRANSIT.toString(), TraverseMode.WALK.toString());
+                break;
             // Transit & bikeshare
-            case TRANSIT_MODE:
+            case TRANSIT_AND_BIKE_MODE:
                 if (Application.isBikeshareEnabled()) {
                     modes = Arrays.asList(TraverseMode.TRANSIT.toString(),
                             TraverseMode.WALK.toString(),
@@ -196,7 +199,7 @@ public class TripRequestBuilder {
     public int getModeSetId() {
         // IF bike mode is selected in the trip plan additional preferences but bikeshare is not enabled use the default mode (TRANSTI)
         if (BIKESHARE_MODE == mModeId && !Application.isBikeshareEnabled()) {
-            return TRANSIT_MODE;
+            return TRANSIT_AND_BIKE_MODE;
         }
         return mModeId;
     }

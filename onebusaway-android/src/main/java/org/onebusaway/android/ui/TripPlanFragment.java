@@ -71,7 +71,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class TripPlanFragment extends Fragment {
@@ -272,7 +274,7 @@ public class TripPlanFragment extends Fragment {
         int modeId = PreferenceUtils.getInt(getString(R.string.preference_key_trip_plan_travel_by), 0);
         double maxWalkDistance = PreferenceUtils.getDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), 0);
         boolean optimizeTransfers = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), false);
-        boolean wheelchair  = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), false);
+        boolean wheelchair = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), false);
 
         mBuilder.setOptimizeTransfers(optimizeTransfers)
                 .setModeSetById(modeId)
@@ -408,7 +410,9 @@ public class TripPlanFragment extends Fragment {
 
                 Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
 
-                int modeId = spinnerTravelBy.getSelectedItemPosition();
+                final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
+
+                int modeId = TripModes.getTripModeCodeFromSelection(transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0));
 
                 boolean wheelchair = ((CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible))
                         .isChecked();
@@ -459,8 +463,6 @@ public class TripPlanFragment extends Fragment {
         if (!Application.isBikeshareEnabled()) {
             travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
             travelByOptions.remove(getString(R.string.transit_mode_transit_and_bikeshare));
-        } else {
-            travelByOptions.remove(getString(R.string.transit_mode_transit_only));
         }
 
         ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, travelByOptions);
@@ -471,7 +473,7 @@ public class TripPlanFragment extends Fragment {
 
         int modeSetId = mBuilder.getModeSetId();
         if (modeSetId != -1 && modeSetId < travelByOptions.size()) {
-            spinnerTravelBy.setSelection(modeSetId);
+            spinnerTravelBy.setSelection(TripModes.getSpinnerPositionFromSeledctedCode(modeSetId));
         }
 
         Double maxWalk = mBuilder.getMaxWalkDistance();
@@ -603,5 +605,6 @@ public class TripPlanFragment extends Fragment {
             }
         });
     }
+
 }
 

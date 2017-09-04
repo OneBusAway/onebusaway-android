@@ -206,8 +206,8 @@
     </string-array>
 
     <string-array name="transit_mode_array">
-        <item>@string/transit_mode_transit_only</item>
         <item>@string/transit_mode_transit_and_bikeshare</item>
+        <item>@string/transit_mode_transit_only</item>
         <item>@string/transit_mode_bus</item>
         <item>@string/transit_mode_rail</item>
         <item>@string/transit_mode_bikeshare</item>

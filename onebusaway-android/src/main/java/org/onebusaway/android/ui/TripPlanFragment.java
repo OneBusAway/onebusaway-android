@@ -30,7 +30,6 @@ import org.onebusaway.android.directions.util.TripRequestBuilder;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.map.googlemapsv2.ProprietaryMapHelpV2;
-import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
@@ -71,9 +70,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 
 public class TripPlanFragment extends Fragment {

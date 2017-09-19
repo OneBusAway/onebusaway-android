@@ -66,8 +66,6 @@ public final class NotifierTask implements Runnable {
 
     private String mNotifyTitle;
 
-    private SharedPreferences mSettings;
-
     public NotifierTask(Context context,
                         TaskContext taskContext,
                         Uri uri,
@@ -79,8 +77,6 @@ public final class NotifierTask implements Runnable {
         mUri = uri;
         mNotifyTitle = notifyTitle;
         mNotifyText = notifyText;
-
-        mSettings = Application.getPrefs();
     }
 
     @Override
@@ -150,12 +146,14 @@ public final class NotifierTask implements Runnable {
                 .setContentTitle(notifyTitle)
                 .setContentText(notifyText);
 
-        boolean vibratePreference = mSettings.getBoolean("preference_vibrate_allowed", true);
+        SharedPreferences appPrefs = Application.getPrefs();
+
+        boolean vibratePreference = appPrefs.getBoolean("preference_vibrate_allowed", true);
         if (vibratePreference) {
             notifyBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
         }
 
-        String soundPreference = mSettings.getString("preference_notification_sound", "");
+        String soundPreference = appPrefs.getString("preference_notification_sound", "");
         if (soundPreference.isEmpty()) {
             notifyBuilder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI);
         } else {

@@ -17,6 +17,7 @@
 package org.onebusaway.android.tripservice;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.ui.ArrivalsListActivity;
 
@@ -25,8 +26,10 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 
 /**
@@ -121,17 +124,6 @@ public final class NotifierTask implements Runnable {
         mTaskContext.setNotification(id, notification);
     }
 
-    /*
-    private static final long[] VIBRATE_PATTERN = {
-        0,    // on
-        1000, // off
-        1000, // on
-        1000, // off
-        1000, // on
-        1000, // off
-    };
-    */
-
     /**
      * Create a notification and populate it with our latest data.  This method replaces
      * an implementation using Notification.setLatestEventInfo((), which was deprecated (see #290).
@@ -145,17 +137,29 @@ public final class NotifierTask implements Runnable {
                                             String notifyText,
                                             PendingIntent contentIntent,
                                             PendingIntent deleteIntent) {
-        return new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.ic_stat_notification)
-                .setDefaults(Notification.DEFAULT_ALL)
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext);
+
+        notifyBuilder.setSmallIcon(R.drawable.ic_stat_notification)
                 .setOnlyAlertOnce(true)
-                //.setLights(0xFF00FF00, 1000, 1000)
-                //.setVibrate(VIBRATE_PATTERN)
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(deleteIntent)
                 .setContentTitle(notifyTitle)
-                .setContentText(notifyText)
-                .build();
+                .setContentText(notifyText);
 
+        SharedPreferences appPrefs = Application.getPrefs();
+
+        boolean vibratePreference = appPrefs.getBoolean("preference_vibrate_allowed", true);
+        if (vibratePreference) {
+            notifyBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
+        }
+
+        String soundPreference = appPrefs.getString("preference_notification_sound", "");
+        if (soundPreference.isEmpty()) {
+            notifyBuilder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI);
+        } else {
+            notifyBuilder.setSound(Uri.parse(soundPreference));
+        }
+
+        return notifyBuilder.build();
     }
 }

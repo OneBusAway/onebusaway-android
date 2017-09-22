@@ -620,6 +620,12 @@
     <string name="minutes_abbreviation">min</string>
     <string name="minutes_full">minutes</string>
 
+    <string name="preferences_preferred_vibration_title">Vibrate</string>
+    <string name="preferences_preferred_vibration_summary">Let OneBusAway notifications vibrate</string>
+
+    <string name="preferences_preferred_sound_title">Reminder sound</string>
+    <string name="preferences_preferred_sound_summary">Select the OneBusAway notification tone</string>
+
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

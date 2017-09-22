@@ -49,6 +49,8 @@
     <string name="preference_key_trip_plan_maximum_walking_distance">preference_trip_plan_maximum_walking_distance</string>
     <string name="preference_key_trip_plan_minimize_transfers">preference_trip_plan_minimize_transfers</string>
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
+    <string name="preference_key_notification_sound">preference_notification_sound</string>
+    <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">https://raw.githubusercontent.com/OneBusAway/onebusaway-multiregion-support/bikeshare-staging/staging/regions-v3.json</string>

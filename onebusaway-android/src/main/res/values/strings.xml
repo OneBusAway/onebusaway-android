@@ -107,8 +107,8 @@
     <string name="main_help_whatsnew">&#8226;\u0020
         <b>Bike share (Tampa only)</b>
         - See bikes and stations on the map and in trip plans!\n&#8226;\u0020
-        <b>Named reminder notifications</b>
-        - So you can better tell them apart!\n&#8226;\u0020
+        <b>Custom reminder notifications</b>
+        - Change the name, sound, and if it vibrates (see Settings)!\n&#8226;\u0020
         <b>Bug fixes</b>
         - See http://bit.ly/oba-android-releases
     </string>

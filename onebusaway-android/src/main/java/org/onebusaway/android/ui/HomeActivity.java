@@ -901,21 +901,17 @@ public class HomeActivity extends AppCompatActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_map_icon));
         } else {
-            hideBusStopFragment();
+            // No stop is in focus (e.g., user tapped on the map), so hide the panel
+            // and clear the currently focused stopId
+            mFocusedStopId = null;
+            moveFabsLocation();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+            if (mArrivalsListFragment != null) {
+                FragmentManager fm = getSupportFragmentManager();
+                fm.beginTransaction().remove(mArrivalsListFragment).commit();
+            }
+            mShowArrivalsMenu = false;
         }
-    }
-
-    private void hideBusStopFragment() {
-        // No stop is in focus (e.g., user tapped on the map), so hide the panel
-        // and clear the currently focused stopId
-        mFocusedStopId = null;
-        moveFabsLocation();
-        mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        if (mArrivalsListFragment != null) {
-            FragmentManager fm = getSupportFragmentManager();
-            fm.beginTransaction().remove(mArrivalsListFragment).commit();
-        }
-        mShowArrivalsMenu = false;
     }
 
     /**
@@ -937,7 +933,6 @@ public class HomeActivity extends AppCompatActivity
             mBikeRentalStationId = null;
         } else {
             mBikeRentalStationId = bikeRentalStation.id;
-            //hideBusStopFragment();
         }
     }
 

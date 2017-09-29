@@ -59,6 +59,18 @@
     <PreferenceCategory
             android:key="@string/preference_key_notifications"
             android:title="@string/preferences_category_notifications">
+        <RingtonePreference
+                android:showDefault="true"
+                android:showSilent="true"
+                android:key="@string/preference_key_notification_sound"
+                android:title="@string/preferences_preferred_sound_title"
+                android:summary="@string/preferences_preferred_sound_summary"
+                android:ringtoneType="notification" />
+        <CheckBoxPreference
+                android:key="@string/preference_key_preference_vibrate_allowed"
+                android:title="@string/preferences_preferred_vibration_title"
+                android:summary="@string/preferences_preferred_vibration_summary"
+                android:defaultValue="true"/>
         <CheckBoxPreference
             android:key="@string/preference_key_trip_plan_notifications"
             android:title="@string/preferences_trip_plan_notifications_title"

@@ -66,6 +66,8 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -150,6 +152,7 @@ public class TripPlanFragment extends Fragment {
 
         Bundle bundle = getArguments();
         mBuilder = new TripRequestBuilder(bundle);
+        loadAndSetAdditionalTripPreferences();
 
         final View view = inflater.inflate(R.layout.fragment_trip_plan, container, false);
         setHasOptionsMenu(true);
@@ -264,6 +267,19 @@ public class TripPlanFragment extends Fragment {
         return view;
     }
 
+    private void loadAndSetAdditionalTripPreferences() {
+        int modeId = PreferenceUtils.getInt(getString(R.string.preference_key_trip_plan_travel_by), 0);
+        double maxWalkDistance = PreferenceUtils.getDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), 0);
+        boolean optimizeTransfers = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), false);
+        boolean wheelchair = PreferenceUtils.getBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), false);
+
+        mBuilder.setOptimizeTransfers(optimizeTransfers)
+                .setModeSetById(modeId)
+                .setWheelchairAccessible(wheelchair)
+                .setMaxWalkDistance(maxWalkDistance);
+
+    }
+
     private void checkRequestAndSubmit() {
         if (mBuilder.ready() && mListener != null) {
             mListener.onTripRequestReady();
@@ -375,7 +391,6 @@ public class TripPlanFragment extends Fragment {
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
 
-        final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
         final boolean unitsAreImperial = !PreferenceUtils.getUnitsAreMetricFromPreferences(getContext());
 
         dialogBuilder.setTitle(R.string.trip_plan_advanced_settings)
@@ -392,7 +407,9 @@ public class TripPlanFragment extends Fragment {
 
                 Spinner spinnerTravelBy = (Spinner) dialog.findViewById(R.id.spinner_travel_by);
 
-                int modeId = transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0);
+                final TypedArray transitModeResource = getContext().getResources().obtainTypedArray(R.array.transit_mode_array);
+
+                int modeId = TripModes.getTripModeCodeFromSelection(transitModeResource.getResourceId(spinnerTravelBy.getSelectedItemPosition(), 0));
 
                 boolean wheelchair = ((CheckBox) dialog.findViewById(R.id.checkbox_wheelchair_acccesible))
                         .isChecked();
@@ -412,6 +429,13 @@ public class TripPlanFragment extends Fragment {
                         .setWheelchairAccessible(wheelchair)
                         .setMaxWalkDistance(maxWalkDistance);
 
+                // Save the additional trip preferences in SharePreferences so it is remembered
+                // after app is closed
+                PreferenceUtils.saveInt(getString(R.string.preference_key_trip_plan_travel_by), modeId);
+                PreferenceUtils.saveDouble(getString(R.string.preference_key_trip_plan_maximum_walking_distance), maxWalkDistance);
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_minimize_transfers), optimizeTransfers);
+                PreferenceUtils.saveBoolean(getString(R.string.preference_key_trip_plan_avoid_stairs), wheelchair);
+
                 checkRequestAndSubmit();
             }
         });
@@ -430,20 +454,23 @@ public class TripPlanFragment extends Fragment {
 
         wheelchairCheckbox.setChecked(mBuilder.getWheelchairAccessible());
 
-        ArrayAdapter adapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.transit_mode_array, android.R.layout.simple_spinner_item);
+        ArrayList<String> travelByOptions = new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.transit_mode_array)));
+
+        // Remove opttions based on support of bikeshare enabled or not
+        if (!Application.isBikeshareEnabled()) {
+            travelByOptions.remove(getString(R.string.transit_mode_bikeshare));
+            travelByOptions.remove(getString(R.string.transit_mode_transit_and_bikeshare));
+        }
+
+        ArrayAdapter adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, travelByOptions);
+
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTravelBy.setAdapter(adapter);
 
         int modeSetId = mBuilder.getModeSetId();
-        if (modeSetId != -1) {
-            for (int i = 0; i < transitModeResource.length(); i++) {
-                if (transitModeResource.getResourceId(i, -1) == modeSetId) {
-                    spinnerTravelBy.setSelection(i);
-                    break;
-                }
-            }
+        if (modeSetId != -1 && modeSetId < travelByOptions.size()) {
+            spinnerTravelBy.setSelection(TripModes.getSpinnerPositionFromSeledctedCode(modeSetId));
         }
 
         Double maxWalk = mBuilder.getMaxWalkDistance();
@@ -575,5 +602,6 @@ public class TripPlanFragment extends Fragment {
             }
         });
     }
+
 }
 

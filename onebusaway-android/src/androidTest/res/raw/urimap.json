@@ -61,6 +61,7 @@
 
     "/api/where/stop/404test.json": "test_404_1",
     "/api/where/foo/1_29261.json": "__404__",
-    "/api/where/stop/1_29261.xml": "test_badjson"
+    "/api/where/stop/1_29261.xml": "test_badjson",
+    "/otp/routers/default/bike_rental": "bike_rental_tampa_all"
   }
 }

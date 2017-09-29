@@ -22,9 +22,12 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
@@ -46,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 26;
+        private static final int DATABASE_VERSION = 27;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -245,7 +248,66 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 25) {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Regions.PATH +
-                                " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
+                                " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
+                ++oldVersion;
+            }
+            if (oldVersion == 26) {
+                /**
+                 * Bike share and Embedded Social both added columns in version 26;
+                 * Bike share in Beta, Embedded Social in alpha
+                 * We are adding extra logic here to prevent either group from breaking on update
+                 */
+                PackageManager pm = getContext().getPackageManager();
+                PackageInfo appInfo = null;
+                try {
+                    appInfo = pm.getPackageInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
+                } catch (Exception e) {
+                    Log.w(TAG, "Could not retrieve app info - " + e);
+
+                    addBikeShareAndSocial(db);
+                }
+
+                final int newVersionCode = appInfo.versionCode;
+
+                // Compare version codes against alpha releases which already have Embedded Social
+                // and beta releases which already have bike share
+                // The minimum version code for Embedded Social builds is 82
+                if (newVersionCode < 82) {
+                    // Bike share is already present
+                    addSocial(db);
+                } else {
+                    // Social is already present
+                    addBikeShare(db);
+                }
+
+            }
+        }
+
+        private void addBikeShare(SQLiteDatabase db) {
+            db.execSQL(
+                    "ALTER TABLE " + ObaContract.Regions.PATH +
+                            " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
+        }
+
+        private void addSocial(SQLiteDatabase db) {
+            db.execSQL(
+                    "ALTER TABLE " + ObaContract.Regions.PATH +
+                            " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
+        }
+
+        /**
+         * Try to add both columns and catch any errors if the column already exists
+         */
+        private void addBikeShareAndSocial(SQLiteDatabase db) {
+            try {
+                addBikeShare(db);
+            } catch (SQLiteException e) {
+                Log.w(TAG, "Database already has bike share column - " + e);
+            }
+            try {
+                addSocial(db);
+            } catch (SQLiteException e) {
+                Log.w(TAG, "Database already has embedded social column - " + e);
             }
         }
 
@@ -498,6 +560,8 @@ public class ObaProvider extends ContentProvider {
                 .put(ObaContract.Regions.OTP_BASE_URL, ObaContract.Regions.OTP_BASE_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.OTP_CONTACT_EMAIL, ObaContract.Regions.OTP_CONTACT_EMAIL);
+        sRegionsProjectionMap
+                .put(ObaContract.Regions.SUPPORTS_OTP_BIKESHARE, ObaContract.Regions.SUPPORTS_OTP_BIKESHARE);
 
         sRegionBoundsProjectionMap = new HashMap<String, String>();
         sRegionBoundsProjectionMap.put(ObaContract.RegionBounds._ID, ObaContract.RegionBounds._ID);

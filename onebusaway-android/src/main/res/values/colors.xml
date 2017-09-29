@@ -96,6 +96,10 @@
     <color name="trip_option_selected">@android:color/white</color>
     <color name="trip_option_icon_tint">#888</color>
 
+    <!-- Layers -->
+    <color name="layer_disabled">#FF777777</color>
+    <color name="layer_bikeshare_color">#3a4677</color>
+
     <!-- Social -->
     <color name="es_button_base_gray">#ff999999</color>
     <color name="es_progressbar">@color/theme_primary</color>
@@ -104,4 +108,5 @@
     <color name="es_tab_text_active">@color/header_text_color</color>
     <color name="es_tab_text_not_active">@color/header_text_faded_color</color>
     <color name="es_tab_bottom_line">@color/header_text_color</color>
+
 </resources>

@@ -63,6 +63,8 @@ public class RequestBase {
 
         protected Context mContext;
 
+        protected boolean mIsOtp = false;
+
         protected BuilderBase(Context context, String path) {
             this(context, null, path);
         }
@@ -84,10 +86,14 @@ public class RequestBase {
 
         protected Uri buildUri() {
             ObaContext context = (mObaContext != null) ? mObaContext : ObaApi.getDefaultContext();
-            context.setBaseUrl(mContext, mBuilder);
-            context.setAppInfo(mBuilder);
-            mBuilder.appendQueryParameter("version", "2");
-            mBuilder.appendQueryParameter("key", context.getApiKey());
+            if (mIsOtp) {
+                context.setBaseOtpUrl(mContext, mBuilder);
+            } else {
+                context.setBaseUrl(mContext, mBuilder);
+                context.setAppInfo(mBuilder);
+                mBuilder.appendQueryParameter("version", "2");
+                mBuilder.appendQueryParameter("key", context.getApiKey());
+            }
             return mBuilder.build();
         }
 
@@ -96,6 +102,10 @@ public class RequestBase {
                 mObaContext = ObaApi.getDefaultContext().clone();
             }
             return mObaContext;
+        }
+
+        protected void setIsOtp(Boolean isOtp) {
+            mIsOtp = isOtp;
         }
     }
 

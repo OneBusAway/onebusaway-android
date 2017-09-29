@@ -10,6 +10,10 @@
 
 Location information comes directly from your mobile device.  The best way to try and fix this is to go to your Android system settings and then "Location,", and make sure that "Mode" is set to "High accuracy (GPS and networks)".  After checking/changing this, you might also want to turn your device off and back on again.
 
+### All the arrival times in the app are an hour off - why are they all wrong?
+
+Usually this happens when your device clock or timezone are wrong, or the daylight savings time setting is incorrect.  You can check your system clock setting in your Android setting "General ->Date and time", and make sure "Auto time" and "Auto timezone" are checked.
+
 ### I'm tapping on the star next to the route but I don't see anything in the Starred Stops list
 
 Please be sure to tap on the star next to the stop name, not the route name (see below screenshot).  Right now tapping on the star next to the route name (or via the menu after tapping on the arrival time) stars the route, and pins it to the top of the sliding panel.  This allows you to quickly tap on stops on the map and see the arrival time for routes you care about.  I plan to add a separate “Starred routes” list, although I don’t have a specific timeline for this yet.  You can follow progress at https://github.com/OneBusAway/onebusaway-android/issues/354.

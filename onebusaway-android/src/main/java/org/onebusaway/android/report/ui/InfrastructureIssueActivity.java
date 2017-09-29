@@ -37,6 +37,7 @@ import org.onebusaway.android.report.ui.util.ServiceUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import android.app.Activity;
 import android.content.Context;
@@ -709,6 +710,11 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
 
         // Set action bar title based on the selected issue
         setActionBarTitle("");
+    }
+
+    @Override
+    public void onFocusChanged(BikeRentalStation bikeRentalStation) {
+
     }
 
     @Override

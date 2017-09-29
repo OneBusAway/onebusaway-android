@@ -573,4 +573,19 @@ public class Application extends android.app.Application {
         EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
         EmbeddedSocial.setAppProfile(new SocialAppProfile());
     }
+
+    /**
+     * Method to check whether bikeshare layer is enabled or not.
+     *
+     * @return true if the bikeshare layer is an option that can be toggled on/off
+     */
+    public static boolean isBikeshareEnabled() {
+        // Bike layer is enabled if either the current region
+        // supports it or a custom otp url is set. The custom otp url is used to make the testing
+        // process easier
+        return ((Application.get().getCurrentRegion() != null
+                && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
+                || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
+    }
+
 }

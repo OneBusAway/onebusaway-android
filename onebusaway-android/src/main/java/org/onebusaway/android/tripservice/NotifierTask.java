@@ -16,18 +16,21 @@
  */
 package org.onebusaway.android.tripservice;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.ArrivalsListActivity;
 
 /**
  * A task (thread) that is responsible for generating a Notification to remind the user of an
@@ -61,14 +64,18 @@ public final class NotifierTask implements Runnable {
 
     private String mNotifyText;
 
+    private String mNotifyTitle;
+
     public NotifierTask(Context context,
                         TaskContext taskContext,
                         Uri uri,
+                        String notifyTitle,
                         String notifyText) {
         mContext = context;
         mTaskContext = taskContext;
         mCR = mContext.getContentResolver();
         mUri = uri;
+        mNotifyTitle = notifyTitle;
         mNotifyText = notifyText;
     }
 
@@ -111,45 +118,48 @@ public final class NotifierTask implements Runnable {
                 new ArrivalsListActivity.Builder(mContext, stopId).getIntent(),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification notification = createNotification(mNotifyText,
+        Notification notification = createNotification(mNotifyTitle, mNotifyText,
                 pendingContentIntent, pendingDeleteIntent);
 
         mTaskContext.setNotification(id, notification);
     }
 
-    /*
-    private static final long[] VIBRATE_PATTERN = {
-        0,    // on
-        1000, // off
-        1000, // on
-        1000, // off
-        1000, // on
-        1000, // off
-    };
-    */
-
     /**
      * Create a notification and populate it with our latest data.  This method replaces
      * an implementation using Notification.setLatestEventInfo((), which was deprecated (see #290).
      *
+     * @param notifyTitle   notification title
+     * @param notifyText    notification text
      * @param contentIntent intent to fire on click
      * @param deleteIntent  intent to remove/delete
      */
-    private Notification createNotification(String notifyText,
+    private Notification createNotification(String notifyTitle,
+                                            String notifyText,
                                             PendingIntent contentIntent,
                                             PendingIntent deleteIntent) {
-        final String title = mContext.getString(R.string.app_name);
-        return new NotificationCompat.Builder(mContext)
-                .setSmallIcon(R.drawable.ic_stat_notification)
-                .setDefaults(Notification.DEFAULT_ALL)
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat.Builder(mContext);
+
+        notifyBuilder.setSmallIcon(R.drawable.ic_stat_notification)
                 .setOnlyAlertOnce(true)
-                //.setLights(0xFF00FF00, 1000, 1000)
-                //.setVibrate(VIBRATE_PATTERN)
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(deleteIntent)
-                .setContentTitle(title)
-                .setContentText(notifyText)
-                .build();
+                .setContentTitle(notifyTitle)
+                .setContentText(notifyText);
 
+        SharedPreferences appPrefs = Application.getPrefs();
+
+        boolean vibratePreference = appPrefs.getBoolean("preference_vibrate_allowed", true);
+        if (vibratePreference) {
+            notifyBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
+        }
+
+        String soundPreference = appPrefs.getString("preference_notification_sound", "");
+        if (soundPreference.isEmpty()) {
+            notifyBuilder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI);
+        } else {
+            notifyBuilder.setSound(Uri.parse(soundPreference));
+        }
+
+        return notifyBuilder.build();
     }
 }

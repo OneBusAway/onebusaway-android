@@ -1217,7 +1217,9 @@ public class BaseMapFragment extends SupportMapFragment
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    mMapFragment.zoomToRegion();
+                                    if (mMapFragment != null && mMapFragment.isAdded()) {
+                                        mMapFragment.zoomToRegion();
+                                    }
                                 }
                             }
                     )
@@ -1225,7 +1227,9 @@ public class BaseMapFragment extends SupportMapFragment
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    mMapFragment.mWarnOutOfRange = false;
+                                    if (mMapFragment != null && mMapFragment.isAdded()) {
+                                        mMapFragment.mWarnOutOfRange = false;
+                                    }
                                 }
                             }
                     );

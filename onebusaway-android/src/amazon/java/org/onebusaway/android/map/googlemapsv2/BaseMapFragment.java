@@ -27,28 +27,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.Settings;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.Toast;
-
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.amazon.geo.mapsv2.CameraUpdateFactory;
 import com.amazon.geo.mapsv2.AmazonMap;
@@ -89,6 +67,28 @@ import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1228,7 +1228,9 @@ public class BaseMapFragment extends SupportMapFragment
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    mMapFragment.zoomToRegion();
+                                    if (mMapFragment != null && mMapFragment.isAdded()) {
+                                        mMapFragment.zoomToRegion();
+                                    }
                                 }
                             }
                     )
@@ -1236,7 +1238,9 @@ public class BaseMapFragment extends SupportMapFragment
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    mMapFragment.mWarnOutOfRange = false;
+                                    if (mMapFragment != null && mMapFragment.isAdded()) {
+                                        mMapFragment.mWarnOutOfRange = false;
+                                    }
                                 }
                             }
                     );

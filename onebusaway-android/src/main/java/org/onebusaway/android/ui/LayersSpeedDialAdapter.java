@@ -119,12 +119,16 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     protected boolean onMenuItemClick(int position) {
         if (position < activatedLayers.length) {
             if (activatedLayers[position]) {
-                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
-                    layerActivationListener.onDeactivateLayer(layers[position]);
+                for (LayerActivationListener listener : layerActivationListeners) {
+                    if (listener != null) {
+                        listener.onDeactivateLayer(layers[position]);
+                    }
                 }
             } else {
-                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
-                    layerActivationListener.onActivateLayer(layers[position]);
+                for (LayerActivationListener listener : layerActivationListeners) {
+                    if (listener != null) {
+                        listener.onActivateLayer(layers[position]);
+                    }
                 }
             }
             activatedLayers[position] = !activatedLayers[position];

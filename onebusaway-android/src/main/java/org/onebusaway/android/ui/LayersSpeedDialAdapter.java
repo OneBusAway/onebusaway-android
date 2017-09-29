@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.util.LayerUtils;
 
@@ -60,7 +59,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     public LayersSpeedDialAdapter(Context context) {
         this.context = context;
         setupLayers();
-        setupActivated();
+        activatedLayers = new Boolean[1];
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
     }
 
     public void addLayerActivationListener(LayerActivationListener listener) {
@@ -68,14 +68,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     }
 
     private void setupLayers() {
-        BaseMapFragment f;
         layers = new LayerInfo[1];
         layers[0] = LayerUtils.bikeshareLayerInfo;
-    }
-
-    private void setupActivated() {
-        activatedLayers = new Boolean[1];
-        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
     }
 
     @Override
@@ -98,7 +92,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         TextView label = new TextView(context);
         label.setText(layer.getLayerlabel());
         label.setTextColor(Color.WHITE);
-        int labelDrawableId = 0;
+        int labelDrawableId;
         if (activatedLayers[position]) {
             labelDrawableId = layer.getLabelBackgroundDrawableId();
         } else {

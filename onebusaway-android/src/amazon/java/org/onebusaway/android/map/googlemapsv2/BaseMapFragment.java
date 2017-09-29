@@ -491,17 +491,6 @@ public class BaseMapFragment extends SupportMapFragment
         MapDialogFragment.newInstance(id, this).show(getFragmentManager(), MapDialogFragment.TAG);
     }
 
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        switch (requestCode) {
-//            case REQUEST_NO_LOCATION:
-//                // Clear the map center so we can get the user's location again
-//                setMyLocation();
-//                break;
-//        }
-//    }
-
     //
     // Fragment Controller
     //

@@ -15,17 +15,17 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.util.LayerUtils;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.util.LayerUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,9 +75,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
     private void setupActivated() {
         activatedLayers = new Boolean[1];
-
-        boolean isBikeLayerActivated = LayerUtils.isBikeshareLayerVisible();
-        activatedLayers[0] = isBikeLayerActivated;
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
     }
 
     @Override
@@ -88,6 +86,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     @SuppressWarnings("deprecation")
     @Override
     protected MenuItem getViews(Context context, int position) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
 
         LayerInfo layer = layers[position];
         MenuItem menuItem = new MenuItem();
@@ -148,6 +148,9 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     @SuppressWarnings("deprecation")
     @Override
     protected int getBackgroundColour(int position) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
+
         int activatedColor = layers[position].getLayerColor();
         int deactivatedColor = context.getResources().getColor(R.color.layer_disabled);
         return activatedLayers[position] ?

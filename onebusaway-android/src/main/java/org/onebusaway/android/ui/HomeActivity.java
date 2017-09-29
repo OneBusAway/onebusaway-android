@@ -1538,7 +1538,7 @@ public class HomeActivity extends AppCompatActivity
         } else {
             mLayersFab.setVisibility(View.GONE);
         }
-        mLayersFab.requestLayout();
+        mLayersFab.rebuildSpeedDialMenu();
     }
 
 

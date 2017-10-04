@@ -105,12 +105,12 @@
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Planeación de Viajes (Puget Sound)</b>
-        - ¡Compruebalo en el menú de navegación!\n&#8226;\u0020
-        <b>Removido aviso de \"No hay ubicación\"</b>
-        - ¡Ahora puedes deshacerte de él para siempre!\n&#8226;\u0020
+        <b>Bicicleta compartida (solo en Tampa)</b>
+        - ¡Mirá bicicletas y estaciones en el mapa y en el planeador de viajes!\n&#8226;\u0020
+        <b>Notificación de recordatorios personalizados</b>
+        - ¡Cambia el nombre, sonido y si debe vibrar (mira en Configuración)!\n&#8226;\u0020
         <b>Arregló de errores</b>
-        - Vee http://bit.ly/oba-android-releases
+        - Mirá en http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
@@ -619,6 +619,12 @@
     <string name="kilometers_abbreviation">km</string>
     <string name="minutes_abbreviation">min</string>
     <string name="minutes_full">minutos</string>
+
+    <string name="preferences_preferred_vibration_title">Vibrar</string>
+    <string name="preferences_preferred_vibration_summary">Dejar que las notificaciones de OneBusAway vibren</string>
+
+    <string name="preferences_preferred_sound_title">Sonido de Recordatorio</string>
+    <string name="preferences_preferred_sound_summary">Selecciona los tonos de notificación de OneBusAway</string>
 
     <!-- Navigation Drawer -->
     <string name="navigation_drawer_open">Abra la bandeja de navegación</string>

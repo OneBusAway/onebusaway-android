@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.io;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.elements.ObaRegion;
-
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.elements.ObaRegion;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -108,9 +108,9 @@ public class ObaContext {
         // Use the custom OTP url if vailable
         String otpBaseUrl = Application.get().getCustomOtpApiUrl();
         if (TextUtils.isEmpty(otpBaseUrl)) {
-            // Otherwise use the current region OTP url
+            // Use the current region OTP base URL
             otpBaseUrl = Application.get().getCurrentRegion().getOtpBaseUrl();
-            Log.d(TAG, "Using default region OTP API URL set by user '" + otpBaseUrl + "'.");
+            Log.d(TAG, "Using default region OTP API URL '" + otpBaseUrl + "'.");
         } else {
             Log.d(TAG, "Using custom region OTP API URL set by user '" + otpBaseUrl + "'.");
         }

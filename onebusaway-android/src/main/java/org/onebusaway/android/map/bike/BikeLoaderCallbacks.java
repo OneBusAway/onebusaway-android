@@ -15,12 +15,12 @@
 */
 package org.onebusaway.android.map.bike;
 
+import org.onebusaway.android.map.MapModeController.Callback;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-
-import org.onebusaway.android.map.MapModeController.Callback;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,49 +32,45 @@ import java.util.List;
 public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<BikeRentalStation>>,
         Loader.OnLoadCompleteListener<List<BikeRentalStation>> {
 
-    public static final int BIKE_STATION_LOADER_ID = 6523;
+    private Callback mMapFragment;
 
-    private static final String TAG = "BikeLoaderCallback";
-    private Callback mapFragment;
-
-    private List<String> bikeStationIds;
+    private List<String> mBikeStationIds;
 
     public BikeLoaderCallbacks(Callback mapFragment) {
-        this.mapFragment = mapFragment;
+        mMapFragment = mapFragment;
     }
 
     @Override
     public BikeStationLoader onCreateLoader(int id, Bundle args) {
-        return new BikeStationLoader(mapFragment.getActivity(),
-                mapFragment.getSouthWest(),
-                mapFragment.getNorthEast());
+        return new BikeStationLoader(mMapFragment.getActivity(),
+                mMapFragment.getSouthWest(),
+                mMapFragment.getNorthEast());
     }
 
     @Override
     public void onLoadFinished(Loader<List<BikeRentalStation>> loader,
                                List<BikeRentalStation> response) {
         if (response != null) {
-
-            if (bikeStationIds != null) {
-                if (bikeStationIds.size() > 0) {
+            if (mBikeStationIds != null) {
+                if (mBikeStationIds.size() > 0) {
                     List<BikeRentalStation> selectedBikeStations = new ArrayList<>();
                     for (BikeRentalStation station : response) {
-                        if (bikeStationIds.contains(station.id)) {
+                        if (mBikeStationIds.contains(station.id)) {
                             selectedBikeStations.add(station);
                         }
                     }
-                    mapFragment.showBikeStations(selectedBikeStations);
+                    mMapFragment.showBikeStations(selectedBikeStations);
                 }
             } else {
-                mapFragment.showBikeStations(response);
+                mMapFragment.showBikeStations(response);
             }
         }
     }
 
     @Override
     public void onLoaderReset(Loader<List<BikeRentalStation>> loader) {
-        mapFragment.getMapView().removeRouteOverlay();
-        mapFragment.getMapView().removeVehicleOverlay();
+        mMapFragment.getMapView().removeRouteOverlay();
+        mMapFragment.getMapView().removeVehicleOverlay();
     }
 
     @Override
@@ -91,6 +87,6 @@ public class BikeLoaderCallbacks implements LoaderManager.LoaderCallbacks<List<B
      * @param ids list of bike stations id to display
      */
     public void setBikeStationFilter(List<String> ids) {
-        this.bikeStationIds = ids;
+        mBikeStationIds = ids;
     }
 }

@@ -16,6 +16,17 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -41,17 +52,6 @@ import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
-
-import com.google.android.gms.analytics.GoogleAnalytics;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.util.BuildFlavorUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -178,15 +178,11 @@ public class PreferencesActivity extends PreferenceActivity
         if (obaRegion != null && TextUtils.isEmpty(obaRegion.getOtpBaseUrl())) {
             PreferenceCategory notifications = (PreferenceCategory)
                     findPreference(getString(R.string.preference_key_notifications));
-
             Preference tripPlan = findPreference(
                     getString(R.string.preference_key_trip_plan_notifications));
-            if (notifications != null) {
-                notifications.removePreference(tripPlan);
 
-                if (notifications.getPreferenceCount() == 0) {
-                    getPreferenceScreen().removePreference(notifications);
-                }
+            if (notifications != null && tripPlan != null) {
+                notifications.removePreference(tripPlan);
             }
         }
     }

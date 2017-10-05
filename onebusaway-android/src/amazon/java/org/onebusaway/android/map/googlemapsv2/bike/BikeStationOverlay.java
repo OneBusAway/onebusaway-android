@@ -77,7 +77,7 @@ public class BikeStationOverlay
 
     private BitmapDescriptor mBigFloatingBikeIcon;
 
-    private Context context;
+    private Context mContext;
 
     private BikeInfoWindowAdapter mBikeInfoWindowAdapter = null;
 
@@ -88,7 +88,7 @@ public class BikeStationOverlay
     private boolean mIsInDirectionsMode = false;
 
     public BikeStationOverlay(Activity activity, AmazonMap map, boolean isInDirectionsMode) {
-        context = activity;
+        mContext = activity;
         mMap = map;
         mIsInDirectionsMode = isInDirectionsMode;
         mBikeStationData = new BikeStationData();
@@ -119,17 +119,19 @@ public class BikeStationOverlay
      * @param bikeStations list of bikeStations to display on the map
      */
     public void addBikeStations(List<BikeRentalStation> bikeStations) {
-        mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(context, this);
+        mBikeInfoWindowAdapter = new BikeInfoWindowAdapter(mContext, this);
 
         // bike station associated with the selected marker (if any)
         BikeRentalStation selectedBikeStation = getBikeStationForSelectedMarker();
         mBikeStationData.addBikeStations(bikeStations);
         // show the info window again if a marker was previously selected
         if (selectedBikeStation != null) {
-            // Add the selected marker to the map. Since the method to add the markers has already
-            // been called, there is already a marker in the position. But addMarker will replace
-            // it with a new one and it its info window needs to be displayed and also added as
-            // selected in the bikeStationData.
+            /**
+             * Add the selected marker to the map. Since the method to add the markers has already
+             * been called, there is already a marker in the position. But addMarker will replace
+             * it with a new one and it its info window needs to be displayed and also added as
+             * selected in the bikeStationData.
+             */
             Marker selectedMarker = mBikeStationData.addMarker(selectedBikeStation);
             mBikeStationData.updateMarkerView(selectedMarker, selectedBikeStation,
                     LayerUtils.isBikeshareLayerVisible());
@@ -175,11 +177,10 @@ public class BikeStationOverlay
 
             ObaAnalytics.reportEventWithCategory(
                     ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                    context.getString(R.string.analytics_action_button_press),
-                    context.getString(bikeRentalStation.isFloatingBike ?
+                    mContext.getString(R.string.analytics_action_button_press),
+                    mContext.getString(bikeRentalStation.isFloatingBike ?
                             R.string.analytics_label_bike_station_marker_clicked :
                             R.string.analytics_label_floating_bike_marker_clicked));
-
             return true;
         } else {
             mBikeStationData.removeMarkerSelection();
@@ -204,7 +205,6 @@ public class BikeStationOverlay
         Canvas c = new Canvas(bitmap);
         Drawable shape = ContextCompat.getDrawable(Application.get(), R.drawable.bike_marker_small);
         shape.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
-
         shape.draw(c);
 
         return bitmap;
@@ -229,28 +229,28 @@ public class BikeStationOverlay
                         .replace("\"", "");
 
                 if (bikeStation.isFloatingBike) {
-                    url = context.getString(R.string.sobi_deep_link_floating_bike_url)
+                    url = mContext.getString(R.string.sobi_deep_link_floating_bike_url)
                             + bikeStationId;
                 } else {
-                    url = context.getString(R.string.sobi_deep_link_bike_station_url)
+                    url = mContext.getString(R.string.sobi_deep_link_bike_station_url)
                             + bikeStationId;
                 }
 
                 ObaAnalytics.reportEventWithCategory(
                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        context.getString(R.string.analytics_action_button_press),
-                        context.getString(bikeStation.isFloatingBike ?
+                        mContext.getString(R.string.analytics_action_button_press),
+                        mContext.getString(bikeStation.isFloatingBike ?
                                 R.string.analytics_label_bike_station_balloon_clicked :
                                 R.string.analytics_label_floating_bike_balloon_clicked));
 
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));
-                context.startActivity(i);
+                mContext.startActivity(i);
             }
         }
     }
 
-    class BikeStationData {
+    private class BikeStationData {
 
         /*
         Store the current map zoom level to detect zoom level band changes. The bands are used to
@@ -281,7 +281,7 @@ public class BikeStationOverlay
         }
 
         public synchronized void addBikeStations(List<BikeRentalStation> bikeStations) {
-            // clear cache of markers if maximum number has been reached
+            // Clear cache of markers if maximum number has been reached
             if (mMarkers.size() > FUZZY_MAX_MARKER_COUNT) {
                 clearBikeStationMarkers();
             }
@@ -292,7 +292,7 @@ public class BikeStationOverlay
                     updateMarkerView(entry.getKey(), entry.getValue(), showBikeMarkers);
                 }
             }
-            //Add markers for the bike stations that are not already visible on the map
+            // Add markers for the bike stations that are not already visible on the map
             for (BikeRentalStation bikeStation : bikeStations) {
                 if (!mBikeStationKeys.contains(bikeStation.id)) {
                     Marker marker = addMarker(bikeStation);
@@ -303,7 +303,7 @@ public class BikeStationOverlay
             mCurrentMapZoomLevel = mMap.getCameraPosition().zoom;
         }
 
-        // detect map zoom level changes between bands <= 12 | 12 - 15 | > 15
+        // Detect map zoom level changes between bands <= 12 | 12 - 15 | > 15
         private boolean hasZoomLevelChangedBands() {
             return (mCurrentMapZoomLevel <= 12 && mMap.getCameraPosition().zoom > 12) ||
                     (mCurrentMapZoomLevel > 15 && mMap.getCameraPosition().zoom <= 15) ||

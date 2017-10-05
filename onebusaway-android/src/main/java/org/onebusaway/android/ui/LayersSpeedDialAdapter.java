@@ -15,17 +15,16 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.util.LayerUtils;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.util.LayerUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +59,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     public LayersSpeedDialAdapter(Context context) {
         this.context = context;
         setupLayers();
-        setupActivated();
+        activatedLayers = new Boolean[1];
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
     }
 
     public void addLayerActivationListener(LayerActivationListener listener) {
@@ -68,16 +68,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     }
 
     private void setupLayers() {
-        BaseMapFragment f;
         layers = new LayerInfo[1];
         layers[0] = LayerUtils.bikeshareLayerInfo;
-    }
-
-    private void setupActivated() {
-        activatedLayers = new Boolean[1];
-
-        boolean isBikeLayerActivated = LayerUtils.isBikeshareLayerVisible();
-        activatedLayers[0] = isBikeLayerActivated;
     }
 
     @Override
@@ -88,6 +80,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     @SuppressWarnings("deprecation")
     @Override
     protected MenuItem getViews(Context context, int position) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
 
         LayerInfo layer = layers[position];
         MenuItem menuItem = new MenuItem();
@@ -98,7 +92,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         TextView label = new TextView(context);
         label.setText(layer.getLayerlabel());
         label.setTextColor(Color.WHITE);
-        int labelDrawableId = 0;
+        int labelDrawableId;
         if (activatedLayers[position]) {
             labelDrawableId = layer.getLabelBackgroundDrawableId();
         } else {
@@ -119,12 +113,16 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     protected boolean onMenuItemClick(int position) {
         if (position < activatedLayers.length) {
             if (activatedLayers[position]) {
-                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
-                    layerActivationListener.onDeactivateLayer(layers[position]);
+                for (LayerActivationListener listener : layerActivationListeners) {
+                    if (listener != null) {
+                        listener.onDeactivateLayer(layers[position]);
+                    }
                 }
             } else {
-                for(LayerActivationListener layerActivationListener: layerActivationListeners) {
-                    layerActivationListener.onActivateLayer(layers[position]);
+                for (LayerActivationListener listener : layerActivationListeners) {
+                    if (listener != null) {
+                        listener.onActivateLayer(layers[position]);
+                    }
                 }
             }
             activatedLayers[position] = !activatedLayers[position];
@@ -148,6 +146,9 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     @SuppressWarnings("deprecation")
     @Override
     protected int getBackgroundColour(int position) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
+
         int activatedColor = layers[position].getLayerColor();
         int deactivatedColor = context.getResources().getColor(R.color.layer_disabled);
         return activatedLayers[position] ?

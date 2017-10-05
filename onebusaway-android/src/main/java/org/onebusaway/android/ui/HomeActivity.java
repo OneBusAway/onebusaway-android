@@ -16,45 +16,6 @@
  */
 package org.onebusaway.android.ui;
 
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.Resources;
-import android.graphics.drawable.GradientDrawable;
-import android.location.Location;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.UserManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.accessibility.AccessibilityManager;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -78,7 +39,6 @@ import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;
@@ -87,6 +47,44 @@ import org.onebusaway.android.util.RegionUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.accessibility.AccessibilityManager;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -340,11 +338,11 @@ public class HomeActivity extends EmbeddedSocialActivity
 
         setupMapState(savedInstanceState);
 
+        setupLayersSpeedDial();
+
         setupMyLocationButton();
 
         setupGooglePlayServices();
-
-        setupLayersSpeedDial();
 
         UIUtils.setupActionBar(this);
 
@@ -970,21 +968,17 @@ public class HomeActivity extends EmbeddedSocialActivity
                     getString(R.string.analytics_action_button_press),
                     getString(R.string.analytics_label_button_press_map_icon));
         } else {
-            hideBusStopFragment();
+            // No stop is in focus (e.g., user tapped on the map), so hide the panel
+            // and clear the currently focused stopId
+            mFocusedStopId = null;
+            moveFabsLocation();
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+            if (mArrivalsListFragment != null) {
+                FragmentManager fm = getSupportFragmentManager();
+                fm.beginTransaction().remove(mArrivalsListFragment).commit();
+            }
+            mShowArrivalsMenu = false;
         }
-    }
-
-    private void hideBusStopFragment() {
-        // No stop is in focus (e.g., user tapped on the map), so hide the panel
-        // and clear the currently focused stopId
-        mFocusedStopId = null;
-        moveFabsLocation();
-        mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-        if (mArrivalsListFragment != null) {
-            FragmentManager fm = getSupportFragmentManager();
-            fm.beginTransaction().remove(mArrivalsListFragment).commit();
-        }
-        mShowArrivalsMenu = false;
     }
 
     /**
@@ -1006,7 +1000,6 @@ public class HomeActivity extends EmbeddedSocialActivity
             mBikeRentalStationId = null;
         } else {
             mBikeRentalStationId = bikeRentalStation.id;
-            //hideBusStopFragment();
         }
     }
 
@@ -1544,14 +1537,61 @@ public class HomeActivity extends EmbeddedSocialActivity
     }
 
     private void setupLayersSpeedDial() {
-
         mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
 
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
                 .getLayoutParams();
-
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
+        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+        mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+
+        LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
+        // Add the BaseMapFragment listener to activate the layer on the map
+        adapter.addLayerActivationListener(mMapFragment);
+
+        // Add another listener to rebuild the menu options after selection. This other listener
+        // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
+        // reference to it only in the main activity.
+        adapter.addLayerActivationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
+            @Override
+            public void onActivateLayer(LayerInfo layer) {
+                Handler h = new Handler(getMainLooper());
+                h.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLayersFab.rebuildSpeedDialMenu();
+                    }
+                }, 100);
+            }
+
+            @Override
+            public void onDeactivateLayer(LayerInfo layer) {
+                Handler h = new Handler(getMainLooper());
+                h.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLayersFab.rebuildSpeedDialMenu();
+                    }
+                }, 100);
+            }
+        });
+        mLayersFab.setMenuAdapter(adapter);
+        mLayersFab.setOnSpeedDialOpenListener(
+                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+                    @Override
+                    public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                    }
+                });
+        mLayersFab.setOnSpeedDialCloseListener(
+                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+                    @Override
+                    public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
+                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                    }
+                });
+        mLayersFab.setContentCoverEnabled(false);
     }
 
     /**
@@ -1559,61 +1599,13 @@ public class HomeActivity extends EmbeddedSocialActivity
      * is updated
      */
     private void updateLayersFab() {
-        if (Application.isBikeshareEnabled()) {
-            if (mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
-                mLayersFab.setVisibility(View.VISIBLE);
-
-                mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-                mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
-
-                LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
-                // Add the BaseMapFragment listener to activate the layer on the map
-                adapter.addLayerActivationListener(mMapFragment);
-
-                // Add another listener to rebuild the menu options after selection. This other listener
-                // was added here because the call to rebuildSpeedDialMenu exists on the FAB and we have a
-                // reference to it only in the main activity.
-                adapter.addLayerActivationListener(new LayersSpeedDialAdapter.LayerActivationListener() {
-                    @Override
-                    public void onActivateLayer(LayerInfo layer) {
-                        Handler h = new Handler(getMainLooper());
-                        h.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mLayersFab.rebuildSpeedDialMenu();
-                            }
-                        }, 100);
-                    }
-
-                    @Override
-                    public void onDeactivateLayer(LayerInfo layer) {
-                        Handler h = new Handler(getMainLooper());
-                        h.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mLayersFab.rebuildSpeedDialMenu();
-                            }
-                        }, 100);
-                    }
-                });
-                mLayersFab.setMenuAdapter(adapter);
-                mLayersFab.setOnSpeedDialOpenListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
-                    @Override
-                    public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
-                    }
-                });
-                mLayersFab.setOnSpeedDialCloseListener(new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
-                    @Override
-                    public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-                    }
-                });
-                mLayersFab.setContentCoverEnabled(false);
-            }
+        if (Application.isBikeshareEnabled()
+                && mCurrentNavDrawerPosition == NAVDRAWER_ITEM_NEARBY) {
+            mLayersFab.setVisibility(View.VISIBLE);
         } else {
             mLayersFab.setVisibility(View.GONE);
         }
+        mLayersFab.rebuildSpeedDialMenu();
     }
 
 

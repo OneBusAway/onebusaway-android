@@ -39,7 +39,6 @@ import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.report.ui.ReportActivity;
 import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.LayerUtils;
 import org.onebusaway.android.util.LocationUtils;

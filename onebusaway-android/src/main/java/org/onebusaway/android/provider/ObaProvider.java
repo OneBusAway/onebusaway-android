@@ -257,57 +257,21 @@ public class ObaProvider extends ContentProvider {
                  * Bike share in Beta, Embedded Social in alpha
                  * We are adding extra logic here to prevent either group from breaking on update
                  */
-                PackageManager pm = getContext().getPackageManager();
-                PackageInfo appInfo = null;
                 try {
-                    appInfo = pm.getPackageInfo(getContext().getPackageName(), PackageManager.GET_META_DATA);
-                } catch (Exception e) {
-                    Log.w(TAG, "Could not retrieve app info - " + e);
-
-                    addBikeShareAndSocial(db);
+                    db.execSQL(
+                            "ALTER TABLE " + ObaContract.Regions.PATH +
+                                    " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
+                } catch (SQLiteException e) {
+                    Log.w(TAG, "Database already has bike share column - " + e);
                 }
 
-                final int newVersionCode = appInfo.versionCode;
-
-                // Compare version codes against alpha releases which already have Embedded Social
-                // and beta releases which already have bike share
-                // The minimum version code for Embedded Social builds is 82
-                if (newVersionCode < 82) {
-                    // Bike share is already present
-                    addSocial(db);
-                } else {
-                    // Social is already present
-                    addBikeShare(db);
+                try {
+                    db.execSQL(
+                            "ALTER TABLE " + ObaContract.Regions.PATH +
+                                    " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
+                } catch (SQLiteException e) {
+                    Log.w(TAG, "Database already has embedded social column - " + e);
                 }
-
-            }
-        }
-
-        private void addBikeShare(SQLiteDatabase db) {
-            db.execSQL(
-                    "ALTER TABLE " + ObaContract.Regions.PATH +
-                            " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
-        }
-
-        private void addSocial(SQLiteDatabase db) {
-            db.execSQL(
-                    "ALTER TABLE " + ObaContract.Regions.PATH +
-                            " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
-        }
-
-        /**
-         * Try to add both columns and catch any errors if the column already exists
-         */
-        private void addBikeShareAndSocial(SQLiteDatabase db) {
-            try {
-                addBikeShare(db);
-            } catch (SQLiteException e) {
-                Log.w(TAG, "Database already has bike share column - " + e);
-            }
-            try {
-                addSocial(db);
-            } catch (SQLiteException e) {
-                Log.w(TAG, "Database already has embedded social column - " + e);
             }
         }
 

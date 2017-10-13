@@ -79,3 +79,18 @@
 
 -keep interface java.lang.Method { *; }
 -keep class org.codehaus.mojo.** { *; }
+
+# for parcelables for reflection
+-keep public class com.google.android.gms.common.internal.safeparcel.SafeParcelable {
+    public static final *** NULL;
+}
+
+# prevent renaming of Parcelable/SafeParcelable classes
+-keep class com.google.android.gms.common.internal.ReflectedParcelable
+-keepnames class * implements com.google.android.gms.common.internal.ReflectedParcelable
+-keepclassmembers class * implements android.os.Parcelable {
+  public static final *** CREATOR;
+}
+
+# for Google auth scopes
+-keep class com.google.android.gms.common.api.Scope

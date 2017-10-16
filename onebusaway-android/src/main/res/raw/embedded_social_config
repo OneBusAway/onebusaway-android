@@ -6,7 +6,8 @@
     "numberOfRepliesToShow" : 20,
     "searchEnabled" : "false",
     "showGalleryView" : "false",
-    "userTopicsEnabled" : "false"
+    "userTopicsEnabled" : "false",
+    "userRelationsEnabled" : "false"
   },
   "socialNetworks" : {
     "facebook" : {

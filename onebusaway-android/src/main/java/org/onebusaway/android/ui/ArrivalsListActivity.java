@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
-
-import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -32,12 +29,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.Window;
 
 import java.util.HashMap;
 
-public class ArrivalsListActivity extends BaseActivity {
+public class ArrivalsListActivity extends AppCompatActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
     public static class Builder {
@@ -144,10 +142,10 @@ public class ArrivalsListActivity extends BaseActivity {
         FragmentManager fm = getSupportFragmentManager();
 
         // Create the list fragment and add it as our sole content.
-        if (fm.findFragmentById(R.id.es_content) == null) {
+        if (fm.findFragmentById(android.R.id.content) == null) {
             ArrivalsListFragment list = new ArrivalsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
-            fm.beginTransaction().add( R.id.es_content, list).commit();
+            fm.beginTransaction().add(android.R.id.content, list).commit();
         }
     }
 
@@ -175,7 +173,7 @@ public class ArrivalsListActivity extends BaseActivity {
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
             FragmentTransaction ft = fm.beginTransaction();
-            ft.replace(R.id.es_content, list);
+            ft.replace(android.R.id.content, list);
             // This is a bit of a hack, but if there's a backstack
             // it means people navigated away from this activity while
             // in a report problem fragment.

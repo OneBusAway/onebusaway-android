@@ -147,8 +147,6 @@ public class HomeActivity extends AppCompatActivity
 
     private static final String TAG = "HomeActivity";
 
-    public static final String IS_STUB = "IsStub";
-
     Context mContext;
 
     ArrivalsListFragment mArrivalsListFragment;
@@ -394,12 +392,6 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     protected void onPause() {
-        if (isStub()) {
-            // This activity is a stub, only created to usher in a social activity
-            // Finish the current activity rather than show a blank home page
-            finish();
-        }
-
         ShowcaseViewUtils.hideShowcaseView();
         super.onPause();
     }
@@ -527,9 +519,8 @@ public class HomeActivity extends AppCompatActivity
                                 getString(R.string.analytics_label_button_press_settings));
                 break;
             case NAVDRAWER_ITEM_HELP:
-                if (isStub()) {
+                if (noActiveFragments()) {
                     showMapFragment();
-                    mCurrentNavDrawerPosition = item;
                 }
                 showDialog(HELP_DIALOG);
                 ObaAnalytics
@@ -547,8 +538,9 @@ public class HomeActivity extends AppCompatActivity
         invalidateOptionsMenu();
     }
 
-    private boolean isStub() {
-        return getIntent().getBooleanExtra(IS_STUB, false);
+    // Return true if this HomeActivity has no active content fragments
+    private boolean noActiveFragments() {
+        return mMapFragment == null && mMyStarredStopsFragment == null && mMyRemindersFragment == null;
     }
 
     private void handleNearbySelection() {

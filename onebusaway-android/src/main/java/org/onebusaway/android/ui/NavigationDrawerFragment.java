@@ -111,9 +111,6 @@ public class NavigationDrawerFragment extends Fragment {
     // Currently selected navigation drawer item (must be value of one of the constants above)
     private int mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
 
-    // Previously selected navigation drawer item
-    private int mPreviousSelectedPosition = NAVDRAWER_ITEM_INVALID;
-
     // titles for navdrawer items (indices must correspond to the above)
     private static final int[] NAVDRAWER_TITLE_RES_ID = new int[]{
             R.string.navdrawer_item_nearby,
@@ -176,11 +173,10 @@ public class NavigationDrawerFragment extends Fragment {
     private LinearLayout socialOverflowContainer;
 
     private boolean isSignedIn;
+    static boolean firstStart = true;
 
     public NavigationDrawerFragment() {
     }
-
-    static boolean firstStart = true;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -199,14 +195,15 @@ public class NavigationDrawerFragment extends Fragment {
         }
 
         if (firstStart) {
-            // force app start to open the map view
             firstStart = false;
-            setSelectedNavDrawerItem(NAVDRAWER_ITEM_INVALID);
-            selectItem(NAVDRAWER_ITEM_NEARBY);
-        } else {
-            // Select either the default item (0) or the last selected item.
-            selectItem(mCurrentSelectedPosition);
+            if (isNewActivityItem(mCurrentSelectedPosition) || isSocialActivityItem(mCurrentSelectedPosition)) {
+                // force app start to open the Home Activity
+                mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
+            }
         }
+
+        // Select either the default item (0) or the last selected item.
+        selectItem(mCurrentSelectedPosition);
     }
 
     @Override
@@ -331,16 +328,17 @@ public class NavigationDrawerFragment extends Fragment {
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
     private void setSelectedNavDrawerItem(int itemId) {
-        if (!isNewActivityItem(itemId) || isSocialActivityItem(mPreviousSelectedPosition)) {
-            mPreviousSelectedPosition = mCurrentSelectedPosition;
-            // We only change the selected item if it doesn't launch a new OBA activity
+        if (isSocialActivityItem(itemId) || isSocialActivityItem(mCurrentSelectedPosition)) {
+            // We are transitioning to or from a social activity
+            setSavedPosition(itemId);
+        } else if (!isNewActivityItem(itemId)) {
+            // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
 
             setSavedPosition(mCurrentSelectedPosition);
         }
 
-        if (mNavDrawerItemViews != null &&
-                !isSocialActivityItem(mPreviousSelectedPosition) && !isSocialActivityItem(itemId)) {
+        if (mNavDrawerItemViews != null && !isSocialActivityItem(itemId)) {
             // reformat the nav drawer items only if the same instance is reused
             // transitioning to or from a new social activity creates a new nav drawer instance
             // which is properly formatted on creation
@@ -365,15 +363,13 @@ public class NavigationDrawerFragment extends Fragment {
                     @Override
                     public void onNavigationDrawerItemSelected(int position) {
                         // don't start a new activity if the current item is pressed again
-                        if (position != mPreviousSelectedPosition) {
-                            // revert the local copy of mCurrentSelectedPosition
-                            // in case the user hits the back button
-                            mCurrentSelectedPosition = mPreviousSelectedPosition;
+                        if (position != mCurrentSelectedPosition) {
                             Intent intent = new Intent(context, HomeActivity.class);
 
-                            // Notify the new instance that it is a stub used to launch a new activity
                             if (isNewActivityItem(position) || isSocialActivityItem(position)) {
-                                intent.putExtra(HomeActivity.IS_STUB, true);
+                                // The HomeActivity is only being used to handle the navigation drawer change
+                                // there should be no visible UI
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                             }
 
                             // the value of mCurrentSelectedPosition saved in SharedPreferences will

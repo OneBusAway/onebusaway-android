@@ -96,9 +96,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_PROFILE = 10;
 
-    protected static final int NAVDRAWER_ITEM_OPTIONS = 11;
-
-    protected static final int NAVDRAWER_ITEM_SIGN_IN = 12;
+    protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
 
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
@@ -124,7 +122,6 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_pin,
             R.string.navdrawer_item_activity_feed,
             R.string.navdrawer_item_profile,
-            R.string.navdrawer_item_options,
             R.string.navdrawer_item_sign_in
     };
 
@@ -141,7 +138,6 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_pin, // Pinned discussions
             R.drawable.ic_drawer_activity_feed, // Social activity feed
             R.drawable.ic_username, // My profile
-            R.drawable.ic_drawer_options, // Options
             R.drawable.ic_username // Sign in
     };
 
@@ -461,7 +457,6 @@ public class NavigationDrawerFragment extends Fragment {
                     mNavDrawerItems.add(NAVDRAWER_ITEM_PINS);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_ACTIVITY_FEED);
                     mNavDrawerItems.add(NAVDRAWER_ITEM_PROFILE);
-                    mNavDrawerItems.add(NAVDRAWER_ITEM_OPTIONS);
                 } else {
                     // user is not signed in
                     mNavDrawerItems.add(NAVDRAWER_ITEM_POPULAR);
@@ -677,14 +672,12 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_POPULAR ||
                 itemId == NAVDRAWER_ITEM_PINS ||
                 itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
-                itemId == NAVDRAWER_ITEM_OPTIONS ||
                 itemId == NAVDRAWER_ITEM_SIGN_IN;
     }
 
     private boolean isSocialOverflow(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
-                itemId == NAVDRAWER_ITEM_OPTIONS;
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED;
     }
 }
 

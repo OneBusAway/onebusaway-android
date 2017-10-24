@@ -18,6 +18,8 @@ package org.onebusaway.android.ui;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -125,6 +127,20 @@ public class PreferencesActivity extends PreferenceActivity
 
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
+
+        Preference socialPref = findPreference(getString(R.string.preference_key_social));
+        socialPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                ObaAnalytics.reportEventWithCategory(
+                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_social_settings));
+
+                EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
+                return true;
+            }
+        });
 
         SharedPreferences settings = Application.getPrefs();
         mAutoSelectInitialValue = settings

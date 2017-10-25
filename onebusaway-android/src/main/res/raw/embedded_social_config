@@ -7,7 +7,8 @@
     "searchEnabled" : "false",
     "showGalleryView" : "false",
     "userTopicsEnabled" : "false",
-    "userRelationsEnabled" : "false"
+    "userRelationsEnabled" : "false",
+    "disableNavigationDrawerForActivities" : ["Options"]
   },
   "socialNetworks" : {
     "facebook" : {

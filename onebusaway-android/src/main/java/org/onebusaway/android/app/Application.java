@@ -33,6 +33,7 @@ import org.onebusaway.android.report.ui.util.SocialReportHandler;
 import org.onebusaway.android.ui.social.SocialAppProfile;
 import org.onebusaway.android.ui.social.SocialNavigationDrawerHandler;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
 
@@ -568,10 +569,13 @@ public class Application extends android.app.Application {
     }
 
     private void setUpSocial() {
-        EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
-        EmbeddedSocial.setReportHandler(new SocialReportHandler());
-        EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
-        EmbeddedSocial.setAppProfile(new SocialAppProfile());
+        if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
+                EmbeddedSocialUtils.isSocialAppKeyDefined()) {
+            EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
+            EmbeddedSocial.setReportHandler(new SocialReportHandler());
+            EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());
+            EmbeddedSocial.setAppProfile(new SocialAppProfile());
+        }
     }
 
     /**

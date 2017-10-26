@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.util;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaRegion;
 
@@ -80,11 +81,28 @@ public class EmbeddedSocialUtils {
     }
 
     /**
+     * Returns true if the build version meets min sdk level for Embedded Social
+     */
+    public static boolean isBuildVersionSupportedBySocial() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1;
+    }
+
+    /**
+     * Returns true if the Embedded Social app key is non-empty
+     */
+    public static boolean isSocialAppKeyDefined() {
+        return !BuildConfig.EMBEDDED_SOCIAL_API_KEY.isEmpty();
+    }
+
+    /**
      * Returns true if social features are enabled
      */
     public static boolean isSocialEnabled(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-            // ensure build version meets min sdk level for Embedded Social
+        if (!isSocialAppKeyDefined()) {
+            return false;
+        }
+
+        if (isBuildVersionSupportedBySocial()) {
             ObaRegion currentRegion = Application.get().getCurrentRegion();
             if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
                 return !isSocialRestricted(context);

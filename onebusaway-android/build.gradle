@@ -27,7 +27,6 @@ buildscript {
 }
 apply plugin: 'com.android.application'
 
-def EMBEDDED_SOCIAL_API_KEY = '"' + EmbeddedSocialApiKey + '"' ?: '"EmbeddedSocialApiKey"'
 repositories {
     jcenter()
     maven {
@@ -99,7 +98,7 @@ android {
             manifestPlaceholders = [databaseAuthority: "com.joulespersecond.oba"]
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey() + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -140,7 +139,7 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey() + "\""
             // Below fields need to be defined so flavor builds, but will not be used by app
             buildConfigField "String", "FIXED_REGION_NAME", "null"
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
@@ -172,7 +171,7 @@ android {
             manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
             buildConfigField "int", "ARRIVAL_INFO_STYLE", "1" // Defined in BuildFlavorConstants
             buildConfigField "boolean", "USE_FIXED_REGION", "true" // Does not support multi-region
-            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", EMBEDDED_SOCIAL_API_KEY
+            buildConfigField "String", "EMBEDDED_SOCIAL_API_KEY", "\"" + getEmbeddedSocialApiKey() + "\""
             // Fixed region info that the app will use
             buildConfigField "String", "FIXED_REGION_NAME", "\"Agency Y\""
             buildConfigField "String", "FIXED_REGION_OBA_BASE_URL",
@@ -286,6 +285,14 @@ android {
                         file.name.replace(".apk", "-v" + versionName + ".apk"))
             }
         }
+    }
+}
+
+def getEmbeddedSocialApiKey() {
+    if (project.hasProperty("EmbeddedSocialApiKey")) {
+        return project.property("EmbeddedSocialApiKey")
+    } else {
+        return ""
     }
 }
 

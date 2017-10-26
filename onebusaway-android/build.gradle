@@ -288,6 +288,9 @@ android {
     }
 }
 
+/**
+ * Returns the Embedded Social API key. Returns the empty string if the key is not found
+ */
 def getEmbeddedSocialApiKey() {
     if (project.hasProperty("EmbeddedSocialApiKey")) {
         return project.property("EmbeddedSocialApiKey")

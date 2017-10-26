@@ -88,9 +88,9 @@ public class EmbeddedSocialUtils {
     }
 
     /**
-     * Returns true if the Embedded Social app key is non-empty
+     * Returns true if the Embedded Social api key is non-empty
      */
-    public static boolean isSocialAppKeyDefined() {
+    public static boolean isSocialApiKeyDefined() {
         return !BuildConfig.EMBEDDED_SOCIAL_API_KEY.isEmpty();
     }
 
@@ -98,7 +98,7 @@ public class EmbeddedSocialUtils {
      * Returns true if social features are enabled
      */
     public static boolean isSocialEnabled(Context context) {
-        if (!isSocialAppKeyDefined()) {
+        if (!isSocialApiKeyDefined()) {
             return false;
         }
 

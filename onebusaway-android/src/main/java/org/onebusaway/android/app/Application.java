@@ -568,9 +568,12 @@ public class Application extends android.app.Application {
                         + (autoRegion ? "YES" : "NO"));
     }
 
+    /**
+     * Initializes Embedded Social if the device and current build support social functionality
+     */
     private void setUpSocial() {
         if (EmbeddedSocialUtils.isBuildVersionSupportedBySocial() &&
-                EmbeddedSocialUtils.isSocialAppKeyDefined()) {
+                EmbeddedSocialUtils.isSocialApiKeyDefined()) {
             EmbeddedSocial.init(this, R.raw.embedded_social_config, BuildConfig.EMBEDDED_SOCIAL_API_KEY);
             EmbeddedSocial.setReportHandler(new SocialReportHandler());
             EmbeddedSocial.setNavigationDrawerHandler(new SocialNavigationDrawerHandler());

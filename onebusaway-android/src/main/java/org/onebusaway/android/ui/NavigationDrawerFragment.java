@@ -327,6 +327,12 @@ public class NavigationDrawerFragment extends Fragment {
         if (isSocialActivityItem(itemId) || isSocialActivityItem(mCurrentSelectedPosition)) {
             // We are transitioning to or from a social activity
             setSavedPosition(itemId);
+        } else if (mCurrentSelectedPosition == itemId && itemId == NAVDRAWER_ITEM_HELP) {
+            // Special case where 'Help' was selected from an Embedded Social Activity
+            // Format the drawer so 'Nearby' is persisted once the Help page is closed
+            mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
+            setSavedPosition(mCurrentSelectedPosition);
+
         } else if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;

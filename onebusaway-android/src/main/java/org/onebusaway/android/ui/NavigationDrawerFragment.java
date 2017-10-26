@@ -403,7 +403,9 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        isSignedIn = EmbeddedSocial.isSignedIn();
+        if (EmbeddedSocialUtils.isSocialEnabled(getContext())) {
+            isSignedIn = EmbeddedSocial.isSignedIn();
+        }
         populateNavDrawer();
     }
 

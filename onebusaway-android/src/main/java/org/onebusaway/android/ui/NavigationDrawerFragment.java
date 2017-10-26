@@ -362,7 +362,8 @@ public class NavigationDrawerFragment extends Fragment {
                         if (position != mCurrentSelectedPosition) {
                             Intent intent = new Intent(context, HomeActivity.class);
 
-                            if (isNewActivityItem(position) || isSocialActivityItem(position)) {
+                            if (position != NAVDRAWER_ITEM_HELP &&
+                                    (isNewActivityItem(position) || isSocialActivityItem(position))) {
                                 // The HomeActivity is only being used to handle the navigation drawer change
                                 // there should be no visible UI
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);

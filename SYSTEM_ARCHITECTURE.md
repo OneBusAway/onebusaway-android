@@ -19,13 +19,13 @@ The simplest way to get started is to deploy a OneBusAway server, which will giv
 
 ![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png)
 
-## Add trip planning and/or bike share **(Optional)**
+## Add trip planning and/or bike share *(Optional)*
 
 If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Tampa Bay):
 
 ![onebusaway system architecture-otp](https://user-images.githubusercontent.com/928045/32296042-69aa4726-bf21-11e7-8123-1f80c17fee4c.png)
 
-## Add issue reporting via Open311-compliant system **(Optional)**
+## Add issue reporting via Open311-compliant system *(Optional)*
 
 If you use an issue management system that supports the Open311 standard, you can have OneBusAway Android submit problem reports to this system, including metadata from the stop/trip they are reporting the problem about as well as an attached picture.  See [this presentation](https://www.slideshare.net/sjbarbeau/2017-seeclickfix-workshop-closing-the-loop-improving-transit-through-crowdsourced-information) for details about the enhanced issue reporting feature.  Here's the system architecture for a region that's added issue reporting via Open311 (e.g., Tampa Bay):
 

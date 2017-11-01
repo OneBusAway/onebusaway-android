@@ -43,7 +43,7 @@ After you have the OneBusAway server set up, see the [Custom Servers](CUSTOM_SER
 
 After you've tested arrival information, if you want to add trip planning and/or bike share information, see the [Basic Usage](http://docs.opentripplanner.org/en/latest/Basic-Usage/) documentation for setting up an OpenTripPlanner server.
 
-When you have this set up, see the [Custom Servers](CUSTOM_SERVERS.md) documentation again to point your OBA Android app to your new OTP server.
+When you have this set up, see the [Custom Servers](CUSTOM_SERVERS.md#opentripplanner-api-server) documentation again to point your OBA Android app to your new OTP server.
 
 #### Open311
 

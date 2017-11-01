@@ -4,7 +4,9 @@ OneBusAway Android is a client application that requires real-time server access
 
 OneBusAway uses a [multi-region architecture](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) where each region (e.g., Tampa, Seattle) is responsible for running their own open-source OneBusAway server (the [onebusaway-application-modules project](https://github.com/OneBusAway/onebusaway-application-modules)). 
 
-The following sections present three different regional deployment architecture examples:
+The OBA Android app uses the [Regions API](http://regions.onebusaway.org/regions-v3.json) to discover regions and their server API endpoints, based on the real-time location of the device and the region geographic boundaries available in the Regions API response.
+
+Each region can run one or more servers (details in next section) to add features to the OneBusAway Android app.  The following sections present three different regional deployment examples:
 1. A simple deployment that uses only the OneBusAway server
 2. A deployment that adds trip planning and bike share information
 3. A deployment that adds issue reporting via an Open311 server

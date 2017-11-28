@@ -2,6 +2,8 @@
 
 We support testing custom [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and [OpenTripPlanner](http://www.opentripplanner.org/) servers in OneBusAway Android.  You can use
 this feature to try out a new test server that you've set up, but aren't ready to publicize in the [Regions API](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) yet.
+
+Before doing anything, check out the [system architecture diagrams](SYSTEM_ARCHITECTURE.md) to understand how OBA Android communicates with other servers. and what features they provide.
  
 ## Configuration
 

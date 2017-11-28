@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), Sean J. Barbeau (sjbarbeau@gmail.com),
  * York Region Transit / VIVA
+ * Copyright (c) 2017, Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

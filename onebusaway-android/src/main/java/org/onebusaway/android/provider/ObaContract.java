@@ -2,6 +2,7 @@
  * Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com),
  * University of South Florida (sjbarbeau@gmail.com),
  * Benjamin Du (bendu@me.com)
+ * Copyright (c) 2017, Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

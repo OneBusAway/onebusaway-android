@@ -17,10 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.microsoft.embeddedsocial.autorest.models.PublisherType;
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.server.exception.NotFoundException;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
@@ -350,7 +346,7 @@ public class ArrivalsListFragment extends ListFragment
                 Bundle extras = getActivity().getIntent().getExtras();
                 if (extras != null && extras.containsKey(DISCUSSION)) {
                     String discussionTitle = extras.getString(DISCUSSION);
-                    openDiscussion(discussionTitle);
+                    displaySocialFragment(discussionTitle, false);
                 }
             }
         }
@@ -808,21 +804,54 @@ public class ArrivalsListFragment extends ListFragment
         dialog.show();
     }
 
+    /**
+     * Opens the discussion item related to this route ID
+     * @param routeId route ID to use
+     */
     public void openRouteDiscussion(String routeId) {
         long regionId = Application.get().getCurrentRegion().getId();
         String discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(regionId, routeId);
-        ArrivalsListActivity.start(getContext(), getStopId(), getStopName(), getStopDirection(), discussionTitle);
+        openDiscussion(discussionTitle);
     }
 
-    public void openDiscussion(String discussionTitle) {
-        HashMap<Integer, Integer> errorStrings = new HashMap<>();
-        errorStrings.put(NotFoundException.STATUS_CODE, discussionTitle.contains("route") ?
-                R.string.es_missing_route_conversation : R.string.es_missing_stop_conversation);
+    /**
+     * Opens the discussion item related to the currently selected stop
+     */
+    public void openStopDiscussion() {
+        long regionId = Application.get().getCurrentRegion().getId();
+        String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, getStopId());
+        openDiscussion(discussionTitle);
+    }
 
-        Fragment discussionFragment = EmbeddedSocial.getCommentFeedFragmentByName(discussionTitle,
-                PublisherType.APP, errorStrings);
+    /**
+     * Opens a discussion item in an ArrivalsListActivity
+     * @param discussionTitle title of the Embedded Social topic
+     */
+    private void openDiscussion(String discussionTitle) {
+        if (getActivity() instanceof ArrivalsListActivity) {
+            // do not create a new instance of ArrivalsListActivity
+            if (getFragmentManager().findFragmentByTag(discussionTitle) == null) {
+                // only fetch this fragment if it is not already displayed
+                displaySocialFragment(discussionTitle, true);
+            }
+        } else {
+            ArrivalsListActivity.start(getContext(), getStopId(), getStopName(), getStopDirection(), discussionTitle);
+        }
+    }
+
+    /**
+     * Displays a social fragment
+     * @param discussionTitle title of the Embedded Social topic
+     * @param addToBackStack true if this transaction should be added to the back stack
+     */
+    public void displaySocialFragment(String discussionTitle, boolean addToBackStack) {
+        Fragment discussionFragment = EmbeddedSocialUtils.getDiscussionFragment(discussionTitle);
+
         final FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        transaction.add(R.id.listContainer, discussionFragment);
+        transaction.add(R.id.listContainer, discussionFragment, discussionTitle);
+        if (addToBackStack) {
+            transaction.addToBackStack(null);
+        }
         transaction.commit();
     }
 

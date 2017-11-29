@@ -70,7 +70,6 @@ import java.util.List;
 class ArrivalsListHeader {
 
     interface Controller {
-
         Location getStopLocation();
 
         String getStopName();
@@ -129,6 +128,11 @@ class ArrivalsListHeader {
          * Triggers a full refresh of arrivals from the OBA server
          */
         void refresh();
+
+        /**
+         * Opens the discussion item related to the currently selected stop
+         */
+        void openStopDiscussion();
     }
 
     private static final String TAG = "ArrivalsListHeader";
@@ -448,12 +452,7 @@ class ArrivalsListHeader {
                 ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         mContext.getString(R.string.analytics_action_button_press),
                         mContext.getString(R.string.analytics_label_button_press_social_stop));
-                String stopId = mController.getStopId();
-                String stopName = mController.getStopName();
-                String stopDirection = mController.getStopDirection();
-                long regionId = obaRegion.getId();
-                String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, stopId);
-                ArrivalsListActivity.start(mContext, stopId, stopName, stopDirection, discussionTitle);
+                mController.openStopDiscussion();
             }
         });
 

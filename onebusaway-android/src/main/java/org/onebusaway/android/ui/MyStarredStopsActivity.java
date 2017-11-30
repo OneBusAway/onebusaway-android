@@ -44,10 +44,10 @@ public class MyStarredStopsActivity extends AppCompatActivity {
 
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyStarredStopsFragment.TAB_NAME);
-        return UIUtils.makeShortcut(this,
+        return UIUtils.makeShortcutInfo(this,
                 getString(R.string.starred_stops_shortcut),
-                new Intent(this, MyStopsActivity.class)
-                        .setData(uri)
-        );
+                new Intent(this, MyStopsActivity.class).setData(uri),
+                R.drawable.ic_drawer_star)
+                .getIntent();
     }
 }

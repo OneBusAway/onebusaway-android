@@ -256,9 +256,12 @@ public class NightLightActivity extends AppCompatActivity {
      */
     private void createShortcut() {
         final Intent shortcutIntent =
-                UIUtils.makeShortcut(this,
+                UIUtils.makeShortcutInfo(this,
                         getString(R.string.stop_info_option_night_light),
-                        new Intent(this, NightLightActivity.class));
+                        new Intent(this,
+                                NightLightActivity.class),
+                        R.drawable.ic_night_light)
+                        .getIntent();
         shortcutIntent.setAction(INSTALL_SHORTCUT);
         shortcutIntent.setFlags(0);
         sendBroadcast(shortcutIntent);

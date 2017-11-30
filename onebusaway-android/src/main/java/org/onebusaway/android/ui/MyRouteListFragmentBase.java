@@ -58,8 +58,11 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
         final String routeName = c.getString(COL_SHORTNAME);
 
         if (isShortcutMode()) {
-            final Intent shortcut = UIUtils.makeShortcut(getActivity(), routeName,
-                    RouteInfoActivity.makeIntent(getActivity(), routeId));
+            final Intent shortcut = UIUtils.makeShortcutInfo(getActivity(),
+                    routeName,
+                    RouteInfoActivity.makeIntent(getActivity(), routeId),
+                    R.drawable.ic_trip_details)
+                    .getIntent();
 
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut);

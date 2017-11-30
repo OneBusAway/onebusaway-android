@@ -193,7 +193,11 @@ abstract class MySearchFragmentBase extends ListFragment
      * @param destIntent The destination intent.
      */
     protected final void makeShortcut(String name, Intent destIntent) {
-        final Intent shortcut = UIUtils.makeShortcut(getActivity(), name, destIntent);
+        final Intent shortcut = UIUtils.makeShortcutInfo(getActivity(),
+                name,
+                destIntent,
+                R.drawable.ic_action_search)
+                .getIntent();
 
         Activity activity = getActivity();
         activity.setResult(Activity.RESULT_OK, shortcut);

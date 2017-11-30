@@ -901,7 +901,7 @@ public class Open311ProblemFragment extends BaseReportFragment implements
                 && ServiceUtils.isStopIdField(open311Attribute.getDescription())) {
 
             icon.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-                    R.drawable.ri_flag_triangle));
+                    R.drawable.ic_stop_flag_triangle));
 
             ObaStop obaStop = getIssueLocationHelper().getObaStop();
             if (obaStop != null) {

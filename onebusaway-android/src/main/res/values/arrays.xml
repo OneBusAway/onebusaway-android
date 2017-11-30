@@ -151,7 +151,7 @@
 
     <array name="report_types_icons">
         <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
         <item>@drawable/ic_light_bulb</item>
@@ -175,7 +175,7 @@
 
     <array name="report_types_icons_without_open311">
         <item>@drawable/ic_customer_service</item>
-        <item>@drawable/ri_flag_triangle</item>
+        <item>@drawable/ic_stop_flag_triangle</item>
         <item>@drawable/ic_arrival_time</item>
         <item>@drawable/ic_app_feedback</item>
         <item>@drawable/ic_light_bulb</item>

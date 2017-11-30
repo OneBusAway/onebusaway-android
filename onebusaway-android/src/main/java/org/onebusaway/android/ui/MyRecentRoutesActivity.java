@@ -42,10 +42,10 @@ public class MyRecentRoutesActivity extends AppCompatActivity {
 
     private Intent getShortcutIntent() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentRoutesFragment.TAB_NAME);
-        return UIUtils.makeShortcut(this,
+        return UIUtils.makeShortcutInfo(this,
                 getString(R.string.recent_routes_shortcut),
-                new Intent(this, MyRoutesActivity.class)
-                        .setData(uri)
-        );
+                new Intent(this, MyRoutesActivity.class).setData(uri),
+                R.drawable.ic_recent)
+                .getIntent();
     }
 }

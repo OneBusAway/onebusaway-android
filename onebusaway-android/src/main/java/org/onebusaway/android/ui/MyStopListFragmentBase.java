@@ -24,6 +24,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -55,7 +57,11 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         if (isShortcutMode()) {
             final Intent shortcut =
-                    UIUtils.makeShortcut(getActivity(), stopData.getUiName(), b.getIntent());
+                    UIUtils.makeShortcutInfo(getActivity(),
+                            stopData.getUiName(),
+                            b.getIntent(),
+                            R.drawable.ic_stop_flag_triangle)
+                            .getIntent();
 
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut);
@@ -106,12 +112,13 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                         .doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT);
 
                 StopData stopData = getStopData(getListView(), info.position);
-                final Intent shortcutIntent =
-                        UIUtils.makeShortcut(getActivity(), stopData.uiName,
-                                stopData.getArrivalsList().getIntent());
-                shortcutIntent.setAction(INSTALL_SHORTCUT);
-                shortcutIntent.setFlags(0);
-                getActivity().sendBroadcast(shortcutIntent);
+
+                final ShortcutInfoCompat shortcutInfo =
+                        UIUtils.makeShortcutInfo(getActivity(),
+                                stopData.uiName,
+                                stopData.getArrivalsList().getIntent(),
+                                R.drawable.ic_stop_flag_triangle);
+                ShortcutManagerCompat.requestPinShortcut(getActivity(), shortcutInfo, null);
                 return true;
             default:
                 return super.onContextItemSelected(item);

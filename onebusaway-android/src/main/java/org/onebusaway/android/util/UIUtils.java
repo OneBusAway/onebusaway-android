@@ -52,9 +52,13 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.location.Location;
 import android.media.ExifInterface;
 import android.net.ConnectivityManager;
@@ -63,10 +67,14 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.support.annotation.DrawableRes;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.IconCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
@@ -476,19 +484,41 @@ public final class UIUtils {
      *
      * @param name       The name of the shortcut.
      * @param destIntent The destination intent.
+     * @param icon       Resource ID for the shortcut icon - should be black so it can be tinted and
+     *                   60dp (2dp of asset padding) for high resolution on launcher screens
+     * @return ShortcutInfoCompat that can be used to request pinning the shortcut
      */
-    public static Intent makeShortcut(Context context, String name, Intent destIntent) {
+    public static ShortcutInfoCompat makeShortcutInfo(Context context, String name,
+            Intent destIntent, @DrawableRes int icon) {
         // Make sure the shortcut Activity always launches on top (#626)
         destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        // Needed for Android 8 and above (#81)
+        destIntent.setAction(Intent.ACTION_CREATE_SHORTCUT);
 
-        // Set up the container intent
-        Intent intent = new Intent();
-        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
-        Parcelable iconResource = Intent.ShortcutIconResource
-                .fromContext(context, R.mipmap.ic_launcher);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
-        return intent;
+        Drawable drawableIcon = ResourcesCompat
+                .getDrawable(context.getResources(), icon, context.getTheme());
+        drawableIcon.setColorFilter(ContextCompat.getColor(context, R.color.shortcut_icon),
+                PorterDuff.Mode.SRC_IN);
+        Drawable drawableBackground = ResourcesCompat
+                .getDrawable(context.getResources(), R.drawable.stop_launcher, context.getTheme());
+
+        final LayerDrawable layerDrawable = new LayerDrawable(
+                new Drawable[]{drawableBackground, drawableIcon});
+        int i = UIUtils.dpToPixels(context, 2.0f); // 2dp
+        layerDrawable.setLayerInset(1, i, i, i, i);
+
+        final Bitmap b = Bitmap
+                .createBitmap(layerDrawable.getIntrinsicWidth(), layerDrawable.getIntrinsicHeight(),
+                        Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(b);
+        layerDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        layerDrawable.draw(canvas);
+
+        return new ShortcutInfoCompat.Builder(context, name)
+                .setShortLabel(name)
+                .setIcon(IconCompat.createWithBitmap(b))
+                .setIntent(destIntent)
+                .build();
     }
 
     public static void goToUrl(Context context, String url) {

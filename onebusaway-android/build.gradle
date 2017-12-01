@@ -111,7 +111,7 @@ android {
             buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "TAD_GPS_LOGGING", "false"
+            buildConfigField "boolean", "TAD_GPS_LOGGING", "true"
         }
 
         /**
@@ -183,36 +183,6 @@ android {
             buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
             buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
             buildConfigField "boolean", "TAD_GPS_LOGGING", "false"
-        }
-
-        tad {
-            // "TAD" app - see src/tad/res for branded resources
-            dimension "brand"
-            applicationId "edu.usf.cutr.tad.android" // Unique listing of this brand on app store
-            manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
-            buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"  // Defined in BuildFlavorConstants
-            buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
-            // Below fields need to be defined so flavor builds, but will not be used by app
-            buildConfigField "String", "FIXED_REGION_NAME", "null"
-            buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_SIRI_BASE_URL", "null"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LAT_SPAN", "0"
-            buildConfigField "double", "FIXED_REGION_BOUNDS_LON_SPAN", "0"
-            buildConfigField "String", "FIXED_REGION_LANG", "null"
-            buildConfigField "String", "FIXED_REGION_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_DISCOVERY_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_OBA_REALTIME_APIS", "true"
-            buildConfigField "boolean", "FIXED_REGION_SUPPORTS_SIRI_REALTIME_APIS", "false"
-            buildConfigField "String", "FIXED_REGION_TWITTER_URL", "null"
-            buildConfigField "String", "FIXED_REGION_STOP_INFO_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_JURISDICTION_ID", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_API_KEY", "null"
-            buildConfigField "String", "FIXED_REGION_OPEN311_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_BASE_URL", "null"
-            buildConfigField "String", "FIXED_REGION_OTP_CONTACT_EMAIL", "null"
-            buildConfigField "boolean", "TAD_GPS_LOGGING", "true"
         }
 
         /**

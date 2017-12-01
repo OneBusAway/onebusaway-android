@@ -51,6 +51,7 @@
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
     <string name="preference_key_notification_sound">preference_notification_sound</string>
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
+    <string name="preference_key_tad_test_id">preference_key_tad_test_id</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>

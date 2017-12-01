@@ -23,12 +23,16 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.tad.Segment;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.format.Time;
@@ -524,6 +528,58 @@ public final class ObaContract {
         public static final String EXCLUDE = "exclude";
     }
 
+    protected interface NavigationColumns {
+
+        /**
+         * The TAD Navigation ID
+         * <P>
+         * Type: INTEGER
+         * </P>
+         */
+        public static final String NAV_ID = "nav_id";
+
+        /**
+         * The Trip Id
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String TRIP_ID = "trip_id";
+
+        /**
+         * The Stop ID of the destination.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String DESTINATION_ID = "destination_id";
+
+        /**
+         * The Stop ID of the stop before the user's destination.
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String BEFORE_ID = "before_id";
+
+        /**
+         * Sequence Number of the Segment.
+         * <P>
+         * Type: Integer
+         * </P>
+         */
+        public static final String SEQUENCE = "seq_num";
+
+        /**
+         * Whether this leg of the trip is still active.
+         * <P>
+         * Type: Integer (1 or 0)
+         * </P>
+         */
+        public static final String ACTIVE = "is_active";
+
+    }
+
     public static class Stops implements BaseColumns, StopsColumns, UserColumns {
 
         // Cannot be instantiated
@@ -578,6 +634,29 @@ public final class ObaContract {
             return result;
         }
 
+        public static boolean isFavorite(Context context, String stopId)
+        {
+            final String[] PROJECTION = {
+                    FAVORITE
+            };
+
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,_ID + "=?", new String[] {stopId}, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return false;
+                    }
+                    c.moveToFirst();
+                    return c.getInt(0) == 1;
+
+                } finally {
+                    c.close();
+                }
+            }
+            return false;
+        }
+
         public static boolean markAsFavorite(Context context,
                 Uri uri,
                 boolean favorite) {
@@ -593,6 +672,35 @@ public final class ObaContract {
             values.put(ObaContract.Stops.USE_COUNT, 0);
             values.putNull(ObaContract.Stops.ACCESS_TIME);
             return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static Location getLocation(Context context, String id) {
+            return getLocation(context.getContentResolver(), id);
+        }
+
+        private static Location getLocation(ContentResolver cr, String id) {
+            final String[] PROJECTION = {
+                    LATITUDE,
+                    LONGITUDE
+            };
+
+            Cursor c = cr.query(CONTENT_URI, PROJECTION,_ID + "=?", new String[] {id}, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    Location l = new Location(LocationManager.GPS_PROVIDER);
+                    l.setLatitude(c.getDouble(0));
+                    l.setLongitude(c.getDouble(1));
+                    return l;
+
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
     }
 
@@ -1571,6 +1679,138 @@ public final class ObaContract {
                 c.close();
             }
             return favorite;
+        }
+    }
+
+
+    public static class NavStops implements BaseColumns, NavigationColumns {
+
+        // Cannot be instantiated
+        private NavStops() {
+        }
+
+        /** The URI path portion for this table */
+        public static final String PATH = "nav_stops";
+
+        /** The content:// style URI for this table */
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(
+                AUTHORITY_URI, PATH);
+
+        public static final String CONTENT_DIR_TYPE
+                = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
+
+        public static Uri insert(Context context, Integer navId, Integer seqNum, String tripId, String destId, String beforeId)
+        {
+            // TODO: Delete there since there's only one active trip.
+            ContentResolver cr = context.getContentResolver();
+            cr.delete(CONTENT_URI, null, null);
+            ContentValues values = new ContentValues();
+            values.put(NAV_ID, navId);
+            values.put(TRIP_ID, tripId);
+            values.put(DESTINATION_ID, destId);
+            values.put(BEFORE_ID, beforeId);
+            values.put(SEQUENCE, seqNum);
+            values.put(ACTIVE, 1);
+            return cr.insert(CONTENT_URI, values);
+        }
+
+        /**
+         * Inserts multi-leg trip into database.
+         * @param context Context.
+         * @param navId   Navigation ID of TAD Trip.
+         * @param tripId  Trip ID of route.
+         * @param legs    Array of 2-string arrays, first element being stopId of second-to-last
+         *                stop and second element being stopid of destination stop of leg.
+         * @return
+         */
+        public static boolean insert(Context context, Integer navId, String tripId, String[][] legs)
+        {
+            ContentResolver cr = context.getContentResolver();
+            // TODO: Delete there since there's only one active trip atm.
+            cr.delete(CONTENT_URI, null, null);
+
+            // If inner array doesn't contain 2 values, can't insert.
+            if (legs.length > 1 && legs[0].length < 2) {
+                return false;
+            }
+
+            for (int i = 0; i < legs.length;i++) {
+                ContentValues values = new ContentValues();
+                values.put(NAV_ID, navId);
+                values.put(TRIP_ID, tripId);
+                values.put(BEFORE_ID, legs[i][0]);
+                values.put(DESTINATION_ID, legs[i][1]);
+                values.put(SEQUENCE, i+1);
+                values.put(ACTIVE, 1);
+            }
+            return true;
+        }
+
+        public static boolean update(Context context, Uri uri, boolean active)
+        {
+            ContentResolver cr = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(ACTIVE, active ? 1 : 0);
+            return cr.update(uri, values, null, null) > 0;
+        }
+
+        public static String[] getDetails(Context context, String id) {
+            final String[] PROJECTION = {
+                    TRIP_ID,
+                    DESTINATION_ID,
+                    BEFORE_ID
+            };
+
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?",new String[] { id }, null);
+            if (c != null) {
+                try {
+                    if (c.getCount() == 0) {
+                        return null;
+                    }
+                    c.moveToFirst();
+                    return new String[] { c.getString(0), c.getString(1), c.getString(2) };
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
+        }
+
+        public static Segment[] get(Context context, String navId)
+        {
+            final String[] PROJECTION = {
+                    TRIP_ID,
+                    DESTINATION_ID,
+                    BEFORE_ID
+            };
+            ContentResolver cr = context.getContentResolver();
+            Cursor c = cr.query(CONTENT_URI, PROJECTION, NAV_ID + "=?", new String[]{navId}, SEQUENCE + " ASC");
+            if (c != null) {
+                try {
+                    Segment[] results = new Segment[c.getCount()];
+                    if (c.getCount() == 0) {
+                        return results;
+                    }
+
+                    int i = 0;
+                    c.moveToFirst();
+                    do {
+                        results[i] = new Segment(
+                                Stops.getLocation(context, c.getString(2)),
+                                Stops.getLocation(context, c.getString(1)),
+                                null
+                        );
+                        results[i].setTripId(c.getString(0));
+                        i++;
+                    } while (c.moveToNext());
+
+                    return results;
+                } finally {
+                    c.close();
+                }
+            }
+            return null;
         }
     }
 }

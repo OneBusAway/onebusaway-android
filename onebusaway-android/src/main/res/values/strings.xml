@@ -295,6 +295,20 @@
         show detailed arrivals list, or press Back button to hide.
     </string>
 
+    <!-- Stop Notification -->
+    <string name="stop_notify_dialog_title">Destination Alert</string>
+    <string name="stop_notify_dialog_msg">Would you like to be notified when you are approaching this stop?</string>
+    <string name="stop_notify_confirm">Yes</string>
+    <string name="stop_notify_cancel">Cancel</string>
+    <string name="stop_notify_confirmation">Will notify!</string>
+    <string name="stop_notify_title">Stop Reminder</string>
+    <string name="stop_notify_cancel_trip">Cancel Trip</string>
+    <string name="stop_notify_test_id">Test %1$s</string>
+    <string name="tad_expiration_title">TAD has expired</string>
+    <string name="tad_expiration_message">Please contact USF at barbeau@cutr.usf.edu to obtain a new
+        version of the application
+    </string>
+
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>
 
@@ -698,6 +712,7 @@
     </string>
     <string name="trip_details_current_stop">Current stop</string>
     <string name="trip_details_current_bus_position">Bus is currently at</string>
+    <string name="trip_details_dest_stop">Destination stop</string>
 
     <!-- Vehicles on Map -->
     <string name="vehicle_last_updated_sec">Data updated %1$d sec ago</string>
@@ -765,6 +780,13 @@
         If you\'d like to re-enable location permissions, go to your Android system settings, choose
         \"OneBusAway\" and then \"Permissions\", and re-enable \"Location\".
     </string>
+
+    <!-- Voice Commands -->
+    <string name="voice_get_ready">Get ready!</string>
+    <string name="voice_starting_trip">Starting trip now!</string>
+    <string name="voice_exit_bus">Get off the bus now!</string>
+    <string name="voice_pull_cord">Pull the cord!</string>
+    <string name="voice_arriving_destination">Arriving at destination!</string>
 
     <!-- About -->
     <string name="title_activity_about">About</string>

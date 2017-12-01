@@ -46,7 +46,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 26;
+        private static final int DATABASE_VERSION = 27;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -248,6 +248,20 @@ public class ObaProvider extends ContentProvider {
                                 " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
 
             }
+            if (oldVersion == 26) {
+                db.execSQL(
+                        "CREATE TABLE " +
+                                ObaContract.NavStops.PATH + " (" +
+                                ObaContract.NavStops._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                + ObaContract.NavStops.NAV_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.TRIP_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.DESTINATION_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.BEFORE_ID + " VARCHAR NOT NULL, "
+                                + ObaContract.NavStops.SEQUENCE + " INTEGER NOT NULL, "
+                                + ObaContract.NavStops.ACTIVE + " INTEGER NOT NULL " +
+                                ");"
+                );
+            }
         }
 
         @Override
@@ -308,6 +322,7 @@ public class ObaProvider extends ContentProvider {
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionBounds.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RegionOpen311Servers.PATH);
             db.execSQL("DROP TABLE IF EXISTS " + ObaContract.RouteHeadsignFavorites.PATH);
+            db.execSQL("DROP TABLE IF EXISTS " + ObaContract.NavStops.PATH);
         }
     }
 
@@ -346,6 +361,8 @@ public class ObaProvider extends ContentProvider {
     private static final int REGION_OPEN311_SERVERS = 17;
 
     private static final int REGION_OPEN311_SERVERS_ID = 18;
+
+    private static final int NAV_STOPS = 19;
 
     private static final UriMatcher sUriMatcher;
 
@@ -386,6 +403,8 @@ public class ObaProvider extends ContentProvider {
 
     private DatabaseUtils.InsertHelper mRouteHeadsignFavoritesInserter;
 
+    private DatabaseUtils.InsertHelper mNavStopsInserter;
+
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.Stops.PATH, STOPS);
@@ -412,6 +431,7 @@ public class ObaProvider extends ContentProvider {
                 REGION_OPEN311_SERVERS_ID);
         sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.RouteHeadsignFavorites.PATH,
                 ROUTE_HEADSIGN_FAVORITES);
+        sUriMatcher.addURI(ObaContract.AUTHORITY, ObaContract.NavStops.PATH, NAV_STOPS);
 
         sStopsProjectionMap = new HashMap<String, String>();
         sStopsProjectionMap.put(ObaContract.Stops._ID, ObaContract.Stops._ID);
@@ -580,6 +600,8 @@ public class ObaProvider extends ContentProvider {
                 return ObaContract.RegionOpen311Servers.CONTENT_TYPE;
             case ROUTE_HEADSIGN_FAVORITES:
                 return ObaContract.RouteHeadsignFavorites.CONTENT_DIR_TYPE;
+            case NAV_STOPS:
+                return ObaContract.NavStops.CONTENT_DIR_TYPE;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -732,6 +754,11 @@ public class ObaProvider extends ContentProvider {
                 mRouteHeadsignFavoritesInserter.insert(values);
                 return result;
 
+            case NAV_STOPS:
+                longId = mNavStopsInserter.insert(values);
+                result = ContentUris.withAppendedId(ObaContract.NavStops.CONTENT_URI, longId);
+                return result;
+
             // What would these mean, anyway??
             case STOPS_ID:
             case ROUTES_ID:
@@ -882,6 +909,10 @@ public class ObaProvider extends ContentProvider {
                 qb.setTables(ObaContract.RouteHeadsignFavorites.PATH);
                 return qb.query(mDb, projection, selection, selectionArgs,
                         null, null, sortOrder, limit);
+            case NAV_STOPS:
+                qb.setTables(ObaContract.NavStops.PATH);
+                return qb.query(mDb, projection, selection, selectionArgs,
+                        null, null, sortOrder, limit);
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -954,6 +985,10 @@ public class ObaProvider extends ContentProvider {
             case ROUTE_HEADSIGN_FAVORITES:
                 return 0;
 
+            case NAV_STOPS:
+                return db.update(ObaContract.NavStops.PATH, values,
+                        where(ObaContract.NavStops._ID, uri), selectionArgs);
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -1024,6 +1059,9 @@ public class ObaProvider extends ContentProvider {
             case ROUTE_HEADSIGN_FAVORITES:
                 return db.delete(ObaContract.RouteHeadsignFavorites.PATH, selection, selectionArgs);
 
+            case NAV_STOPS:
+                return db.delete(ObaContract.NavStops.PATH, selection, selectionArgs);
+
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -1079,6 +1117,7 @@ public class ObaProvider extends ContentProvider {
                     ObaContract.RegionOpen311Servers.PATH);
             mRouteHeadsignFavoritesInserter = new DatabaseUtils.InsertHelper(mDb,
                     ObaContract.RouteHeadsignFavorites.PATH);
+            mNavStopsInserter = new DatabaseUtils.InsertHelper(mDb, ObaContract.NavStops.PATH);
         }
         return mDb;
     }

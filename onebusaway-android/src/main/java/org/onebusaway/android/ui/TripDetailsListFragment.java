@@ -17,6 +17,7 @@
 package org.onebusaway.android.ui;
 
 import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaReferences;
 import org.onebusaway.android.io.elements.ObaRoute;
@@ -27,14 +28,19 @@ import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.util.ArrivalInfoUtils;
+import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
@@ -51,10 +57,13 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
+
+import org.onebusaway.android.tad.TADService;
 
 public class TripDetailsListFragment extends ListFragment {
 
@@ -72,6 +81,10 @@ public class TripDetailsListFragment extends ListFragment {
 
     public static final String SCROLL_MODE_STOP = "stop";
 
+    public static final String TRIP_ACTIVE = ".TripActive";
+
+    public static final String DEST_ID = ".DestinationId";
+
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
@@ -84,7 +97,13 @@ public class TripDetailsListFragment extends ListFragment {
 
     private String mScrollMode;
 
+    private String mDestinationId;
+
     private Integer mStopIndex;
+
+    private Integer mDestinationIndex;
+
+    private boolean mActiveTrip;
 
     private ObaTripDetailsResponse mTripInfo;
 
@@ -126,6 +145,7 @@ public class TripDetailsListFragment extends ListFragment {
         setHasOptionsMenu(true);
 
         getListView().setOnItemClickListener(mClickListener);
+        getListView().setOnItemLongClickListener(mLongClickListener);
 
         // Get saved routeId if it exists - avoids potential NPE in onOptionsItemSelected() (#515)
         if (savedInstanceState != null) {
@@ -140,7 +160,12 @@ public class TripDetailsListFragment extends ListFragment {
         }
 
         mStopId = args.getString(STOP_ID);
+
         mScrollMode = args.getString(SCROLL_MODE);
+
+        mActiveTrip = args.getBoolean(TRIP_ACTIVE);
+
+        mDestinationId = args.getString(DEST_ID);
 
         getLoaderManager().initLoader(TRIP_DETAILS_LOADER, null, mTripDetailsCallback);
     }
@@ -238,6 +263,44 @@ public class TripDetailsListFragment extends ListFragment {
             getListView().setDivider(null);
             setListAdapter(mAdapter);
             setScroller(listView);
+
+            // Scroll to stop if we have the stopId available
+            if (mStopId != null) {
+                mStopIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mStopId);
+                if (mStopIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mStopIndex);
+                        }
+                    });
+                }
+            } else {
+                // If we don't have a stop, then scroll to the current position of the bus
+                final Integer nextStop = mAdapter.getNextStopIndex();
+                if (nextStop != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(nextStop - 1);
+                        }
+                    });
+                }
+            }
+
+            if (mDestinationId != null) {
+                mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+                if (mDestinationIndex != null) {
+                    listView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listView.setSelection(mDestinationIndex);
+                        }
+                    });
+                }
+            }
+
+            mAdapter.notifyDataSetChanged();
         } else {  // refresh, keep scroll position
             int index = listView.getFirstVisiblePosition();
             View v = listView.getChildAt(0);
@@ -388,6 +451,75 @@ public class TripDetailsListFragment extends ListFragment {
             String stopId = time.getStopId();
             ObaStop stop = refs.getStop(stopId);
             showArrivals(stopId, stop.getName(), stop.getDirection());
+        }
+    };
+
+    private final AdapterView.OnItemLongClickListener mLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            final int pId = position;
+            if (pId > 1) {
+                // Build AlertDialog
+                AlertDialog.Builder bldr = new AlertDialog.Builder(getActivity());
+                bldr.setMessage(R.string.stop_notify_dialog_msg).setTitle(R.string.stop_notify_dialog_title);
+
+                // Confirmation button
+                bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // TODO: Handle trips with only two stops.
+                        ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
+                        ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
+                        ObaReferences refs = mTripInfo.getRefs();
+                        String destStopId = timeDest.getStopId();
+                        String lastStopId = timeLast.getStopId();
+                        ObaStop destStop = refs.getStop(destStopId);
+                        ObaStop lastStop = refs.getStop(lastStopId);
+
+
+                        DBUtil.addToDB(lastStop);
+                        DBUtil.addToDB(destStop);
+
+                        Intent serviceIntent = new Intent(getContext(), TADService.class);
+
+                        mDestinationId = destStop.getId();
+                        serviceIntent.putExtra(TADService.DESTINATION_ID, mDestinationId);
+                        serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
+                        serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
+
+                        // update UI
+                        final ListView listView = getListView();
+                        if (mDestinationId != null) {
+                            mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+                            /*if (mDestinationIndex != null) {
+                                listView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        listView.setSelection(mDestinationIndex);
+                                    }
+                                });
+                            }*/
+                        }
+
+                        mAdapter.notifyDataSetChanged();
+                        Application.get().getApplicationContext().startService(serviceIntent);
+                    }
+                });
+
+                // Cancellation Button
+                bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+                // Display
+                AlertDialog dialog = bldr.create();
+                dialog.setOwnerActivity(getActivity());
+                dialog.show();
+            }
+            return true;
         }
     };
 
@@ -606,6 +738,7 @@ public class TripDetailsListFragment extends ListFragment {
 
             ImageView bus = (ImageView) convertView.findViewById(R.id.bus_icon);
             ImageView stopIcon = (ImageView) convertView.findViewById(R.id.stop_icon);
+            ImageView flagIcon = (ImageView) convertView.findViewById(R.id.destination_icon);
             ImageView topLine = (ImageView) convertView.findViewById(R.id.top_line);
             ImageView bottomLine = (ImageView) convertView.findViewById(R.id.bottom_line);
             ImageView transitStop = (ImageView) convertView.findViewById(R.id.transit_stop);
@@ -628,6 +761,7 @@ public class TripDetailsListFragment extends ListFragment {
             topLine.setColorFilter(routeColor);
             bottomLine.setColorFilter(routeColor);
             transitStop.setColorFilter(routeColor);
+            flagIcon.setColorFilter(routeColor);
 
             if (position == 0) {
                 // First stop in trip - hide the top half of the transit line
@@ -643,10 +777,14 @@ public class TripDetailsListFragment extends ListFragment {
                 bottomLine.setVisibility(View.VISIBLE);
             }
 
-            if (mStopIndex != null && mStopIndex == position) {
-                // Show the selected stop
+            if (mDestinationIndex != null && mDestinationIndex == position) {
+                stopIcon.setVisibility(View.GONE);
+                flagIcon.setVisibility(View.VISIBLE);
+            } else if (mStopIndex != null && mStopIndex == position) {
                 stopIcon.setVisibility(View.VISIBLE);
+                flagIcon.setVisibility(View.GONE);
             } else {
+                flagIcon.setVisibility(View.GONE);
                 stopIcon.setVisibility(View.GONE);
             }
 

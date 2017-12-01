@@ -42,22 +42,25 @@ repositories {
         // CUTR Releases
         url "https://github.com/CUTR-at-USF/cutr-mvn-repo/raw/master/snapshots"
     }
-
     maven {
         // for testlib
-        url  "http://dl.bintray.com/acrowntest/test"
+        url "http://dl.bintray.com/acrowntest/test"
+    }
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
     }
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 26
+    buildToolsVersion "26.0.2"
 
     defaultConfig {
-        minSdkVersion 12
+        minSdkVersion 14
         targetSdkVersion 21
-        versionCode 85
-        versionName "2.3.0"
+        versionCode 78
+        versionName "2.2.5"
     }
 
     /**
@@ -376,8 +379,8 @@ dependencies {
     // Google Play Services Location (we need this on Amazon flavor too)
     compile 'com.google.android.gms:play-services-location:9.4.0'
     // Support libraries
-    compile 'com.android.support:cardview-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
+    compile 'com.android.support:cardview-v7:26.1.0'
+    compile 'com.android.support:design:26.1.0'
     compile 'commons-io:commons-io:2.4'
     // Open311 client library
     compile 'edu.usf.cutr:open311client:1.0.9'
@@ -404,7 +407,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
 
-    compile('com.acrowntest.test:sdk:0.0.35:release@aar') {
+    compile('com.acrowntest.test:sdk:0.0.36:release@aar') {
         transitive = true;
     }
 }

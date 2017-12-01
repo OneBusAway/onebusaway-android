@@ -500,7 +500,7 @@ public final class UIUtils {
         drawableIcon.setColorFilter(ContextCompat.getColor(context, R.color.shortcut_icon),
                 PorterDuff.Mode.SRC_IN);
         Drawable drawableBackground = ResourcesCompat
-                .getDrawable(context.getResources(), R.drawable.stop_launcher, context.getTheme());
+                .getDrawable(context.getResources(), R.drawable.launcher_background, context.getTheme());
 
         final LayerDrawable layerDrawable = new LayerDrawable(
                 new Drawable[]{drawableBackground, drawableIcon});

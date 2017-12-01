@@ -8,6 +8,11 @@
  */
 package org.onebusaway.android.tad;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.ui.TripDetailsActivity;
+import org.onebusaway.android.util.RegionUtils;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -18,11 +23,6 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.ui.TripDetailsActivity;
-import org.onebusaway.android.util.RegionUtils;
 
 import java.text.DecimalFormat;
 import java.util.Locale;

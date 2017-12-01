@@ -246,7 +246,7 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
-
+                ++oldVersion;
             }
             if (oldVersion == 26) {
                 db.execSQL(

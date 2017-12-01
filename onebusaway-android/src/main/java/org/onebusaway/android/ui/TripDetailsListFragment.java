@@ -27,12 +27,12 @@ import org.onebusaway.android.io.elements.ObaTripSchedule;
 import org.onebusaway.android.io.elements.ObaTripStatus;
 import org.onebusaway.android.io.request.ObaTripDetailsRequest;
 import org.onebusaway.android.io.request.ObaTripDetailsResponse;
+import org.onebusaway.android.tad.TADService;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,7 +40,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
@@ -57,13 +56,10 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
-
-import org.onebusaway.android.tad.TADService;
 
 public class TripDetailsListFragment extends ListFragment {
 

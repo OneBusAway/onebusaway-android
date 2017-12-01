@@ -1,10 +1,10 @@
 package org.onebusaway.android.util;
 
-import android.content.ContentValues;
-
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.provider.ObaContract;
+
+import android.content.ContentValues;
 
 /**
  * Created by azizmb9494 on 2/20/16.

@@ -4,10 +4,10 @@
 package org.onebusaway.android.tad;
 
 
+import org.onebusaway.android.io.elements.ObaStop;
+
 import android.location.Location;
 import android.location.LocationManager;
-
-import org.onebusaway.android.io.elements.ObaStop;
 
 public class Segment {
 

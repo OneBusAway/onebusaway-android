@@ -1,11 +1,11 @@
 package org.onebusaway.android.tad;
 
+import org.onebusaway.android.app.Application;
+
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
-import org.onebusaway.android.app.Application;
 
 /**
  * Created by azizmb9494 on 3/16/16.

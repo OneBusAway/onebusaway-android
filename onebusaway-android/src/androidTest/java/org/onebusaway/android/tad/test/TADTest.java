@@ -1,17 +1,15 @@
 package org.onebusaway.android.tad.test;
 
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
-import android.util.Log;
-
 import org.apache.commons.io.IOUtils;
 import org.onebusaway.android.io.test.ObaTestCase;
 import org.onebusaway.android.mock.Resources;
 import org.onebusaway.android.tad.Segment;
 import org.onebusaway.android.tad.TADNavigationServiceProvider;
-import org.onebusaway.android.tad.TADService;
 
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
+import android.util.Log;
 
 import java.io.Reader;
 

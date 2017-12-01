@@ -23,7 +23,6 @@ import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRegionElement;
-import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.tad.Segment;
 
 import android.content.ContentResolver;
@@ -1699,8 +1698,7 @@ public final class ObaContract {
         public static final String CONTENT_DIR_TYPE
                 = "vnd.android.dir/" + BuildConfig.DATABASE_AUTHORITY + ".navstops";
 
-        public static Uri insert(Context context, Integer navId, Integer seqNum, String tripId, String destId, String beforeId)
-        {
+        public static Uri insert(Context context, Integer navId, Integer seqNum, String tripId, String destId, String beforeId) {
             // TODO: Delete there since there's only one active trip.
             ContentResolver cr = context.getContentResolver();
             cr.delete(CONTENT_URI, null, null);

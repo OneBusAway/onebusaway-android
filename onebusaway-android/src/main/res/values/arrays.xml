@@ -38,6 +38,10 @@
         <item>Name</item>
         <item>Most frequently used</item>
     </string-array>
+    <string-array name="sort_reminders">
+        <item>Name</item>
+        <item>Time</item>
+    </string-array>
     <string-array name="sort_arrivals">
         <item>Estimated arrival</item>
         <item>Route</item>

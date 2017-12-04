@@ -15,14 +15,11 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
-
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.ContextMenu;
@@ -32,6 +29,10 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
 
 abstract class MyRouteListFragmentBase extends MyListFragmentBase
         implements QueryUtils.RouteList.Columns {
@@ -58,14 +59,14 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
         final String routeName = c.getString(COL_SHORTNAME);
 
         if (isShortcutMode()) {
-            final Intent shortcut = UIUtils.makeShortcutInfo(getActivity(),
+            final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
                     routeName,
                     RouteInfoActivity.makeIntent(getActivity(), routeId),
-                    R.drawable.ic_trip_details)
-                    .getIntent();
+                    R.drawable.ic_trip_details);
 
+            ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
             Activity activity = getActivity();
-            activity.setResult(Activity.RESULT_OK, shortcut);
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
 
         } else {

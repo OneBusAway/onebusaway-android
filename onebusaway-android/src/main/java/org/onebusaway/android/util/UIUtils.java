@@ -492,8 +492,7 @@ public final class UIUtils {
             Intent destIntent, @DrawableRes int icon) {
         // Make sure the shortcut Activity always launches on top (#626)
         destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        // Needed for Android 8 and above (#81)
-        destIntent.setAction(Intent.ACTION_CREATE_SHORTCUT);
+        destIntent.setAction(Intent.ACTION_VIEW);
 
         Drawable drawableIcon = ResourcesCompat
                 .getDrawable(context.getResources(), icon, context.getTheme());

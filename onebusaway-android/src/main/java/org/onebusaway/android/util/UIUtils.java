@@ -504,7 +504,7 @@ public final class UIUtils {
 
         final LayerDrawable layerDrawable = new LayerDrawable(
                 new Drawable[]{drawableBackground, drawableIcon});
-        int i = UIUtils.dpToPixels(context, 2.0f); // 2dp
+        int i = UIUtils.dpToPixels(context, 5.0f);
         layerDrawable.setLayerInset(1, i, i, i, i);
 
         final Bitmap b = Bitmap

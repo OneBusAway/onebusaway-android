@@ -15,15 +15,15 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v7.app.AppCompatActivity;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 public class MyRecentRoutesActivity extends AppCompatActivity {
 
@@ -49,6 +49,6 @@ public class MyRecentRoutesActivity extends AppCompatActivity {
         return UIUtils.makeShortcutInfo(this,
                 getString(R.string.recent_routes_shortcut),
                 new Intent(this, MyRoutesActivity.class).setData(uri),
-                R.drawable.ic_recent);
+                R.drawable.ic_history);
     }
 }

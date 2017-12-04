@@ -68,7 +68,6 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
-
         } else {
             RouteInfoActivity.start(getActivity(), routeId);
         }

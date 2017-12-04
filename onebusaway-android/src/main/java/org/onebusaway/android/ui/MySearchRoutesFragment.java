@@ -16,22 +16,15 @@
 
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
-import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
-import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.UIUtils;
-
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -42,6 +35,15 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
+import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
+import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
 
 import java.util.Arrays;
 
@@ -142,9 +144,15 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         final String routeName = UIUtils.getRouteDisplayName(route);
 
         if (isShortcutMode()) {
-            Intent intent = RouteInfoActivity.makeIntent(getActivity(), routeId);
-            makeShortcut(routeName, intent);
+            final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
+                    routeName,
+                    RouteInfoActivity.makeIntent(getActivity(), routeId),
+                    R.drawable.ic_trip_details);
 
+            ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
+            Activity activity = getActivity();
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
+            activity.finish();
         } else {
             RouteInfoActivity.start(getActivity(), routeId);
         }

@@ -21,7 +21,6 @@ import org.onebusaway.android.util.ShowcaseViewUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.pm.ShortcutInfoCompat;
@@ -56,15 +55,15 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
         ArrivalsListActivity.Builder b = stopData.getArrivalsList();
 
         if (isShortcutMode()) {
-            final Intent shortcut =
+            final ShortcutInfoCompat shortcut =
                     UIUtils.makeShortcutInfo(getActivity(),
                             stopData.getUiName(),
                             b.getIntent(),
-                            R.drawable.ic_stop_flag_triangle)
-                            .getIntent();
+                            R.drawable.ic_stop_flag_triangle);
 
+            ShortcutManagerCompat.requestPinShortcut(getActivity(), shortcut, null);
             Activity activity = getActivity();
-            activity.setResult(Activity.RESULT_OK, shortcut);
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
         } else {
             b.setUpMode(NavHelp.UP_MODE_BACK);

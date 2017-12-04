@@ -21,6 +21,8 @@ import org.onebusaway.android.util.UIUtils;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 
 public class MyRecentRoutesActivity extends AppCompatActivity {
@@ -35,17 +37,18 @@ public class MyRecentRoutesActivity extends AppCompatActivity {
 
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
-            setResult(RESULT_OK, getShortcutIntent());
+            ShortcutInfoCompat shortcut = getShortcut();
+            ShortcutManagerCompat.requestPinShortcut(this, shortcut, null);
+            setResult(RESULT_OK, shortcut.getIntent());
         }
         finish();
     }
 
-    private Intent getShortcutIntent() {
+    private ShortcutInfoCompat getShortcut() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyRecentRoutesFragment.TAB_NAME);
         return UIUtils.makeShortcutInfo(this,
                 getString(R.string.recent_routes_shortcut),
                 new Intent(this, MyRoutesActivity.class).setData(uri),
-                R.drawable.ic_recent)
-                .getIntent();
+                R.drawable.ic_recent);
     }
 }

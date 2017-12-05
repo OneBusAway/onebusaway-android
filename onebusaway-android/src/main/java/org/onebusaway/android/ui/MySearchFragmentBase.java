@@ -15,18 +15,7 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.onebusaway.android.view.SearchViewV1;
-
 import android.app.Activity;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,6 +25,16 @@ import android.view.View.OnFocusChangeListener;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.onebusaway.android.view.SearchViewV1;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -185,20 +184,6 @@ abstract class MySearchFragmentBase extends ListFragment
         imm.hideSoftInputFromWindow(mSearchText.getWindowToken(), 0);
     }
     */
-
-    /**
-     * Default implementation for creating a shortcut when in shortcut mode.
-     *
-     * @param name       The name of the shortcut.
-     * @param destIntent The destination intent.
-     */
-    protected final void makeShortcut(String name, Intent destIntent) {
-        final Intent shortcut = UIUtils.makeShortcut(getActivity(), name, destIntent);
-
-        Activity activity = getActivity();
-        activity.setResult(Activity.RESULT_OK, shortcut);
-        activity.finish();
-    }
 
     protected boolean isShortcutMode() {
         Activity act = getActivity();

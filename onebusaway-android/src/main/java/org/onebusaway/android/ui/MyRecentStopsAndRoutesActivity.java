@@ -16,17 +16,20 @@
  */
 package org.onebusaway.android.ui;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
+import android.support.v7.app.ActionBar;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
-
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 
 public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
     //private static final String TAG = "RecentRoutesStopsActivity";
@@ -34,6 +37,14 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent myIntent = getIntent();
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
+            ShortcutInfoCompat shortcut = getShortcut();
+            ShortcutManagerCompat.requestPinShortcut(this, shortcut, null);
+            setResult(RESULT_OK, shortcut.getIntent());
+            finish();
+        }
 
         final Resources res = getResources();
         final ActionBar bar = getSupportActionBar();
@@ -129,5 +140,12 @@ public class MyRecentStopsAndRoutesActivity extends MyTabActivityBase {
         }
 
         super.onDestroy();
+    }
+
+    private ShortcutInfoCompat getShortcut() {
+        return UIUtils.makeShortcutInfo(this,
+                getString(R.string.my_recent_title),
+                new Intent(this, MyRecentStopsAndRoutesActivity.class),
+                R.drawable.ic_history);
     }
 }

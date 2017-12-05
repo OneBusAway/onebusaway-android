@@ -374,8 +374,8 @@
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
 
-    <string name="route_shortcut">OneBusAway Route</string>
-    <string name="stop_shortcut">OneBusAway Stop</string>
+    <string name="route_shortcut">Route</string>
+    <string name="stop_shortcut">Stop</string>
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>

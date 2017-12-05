@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010-2013 Paul Watts (paulcwatts@gmail.com)
- * and individual contributors.
+ * Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South  Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
 import org.onebusaway.android.map.MapParams;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
 import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.ui.RouteInfoActivity;
 import org.onebusaway.android.view.RealtimeIndicatorView;
 import org.onebusaway.util.comparators.AlphanumComparator;
 
@@ -52,9 +54,13 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.location.Location;
 import android.media.ExifInterface;
 import android.net.ConnectivityManager;
@@ -63,10 +69,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.support.annotation.DrawableRes;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.IconCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
@@ -472,23 +483,82 @@ public final class UIUtils {
     }
 
     /**
-     * Default implementation for creating a shortcut when in shortcut mode.
-     *
-     * @param name       The name of the shortcut.
-     * @param destIntent The destination intent.
+     * Creates a new shortcut for the provided stop, and returns the ShortcutInfo for that shortcut
+     * @param context Context used to create the shortcut
+     * @param shortcutName the shortcutName for the stop shortcut
+     * @param builder Instance of ArrivalsListActivity.Builder for the provided stop
+     * @return the ShortcutInfo for the created shortcut
      */
-    public static Intent makeShortcut(Context context, String name, Intent destIntent) {
+    public static ShortcutInfoCompat createStopShortcut(Context context, String shortcutName, ArrivalsListActivity.Builder builder) {
+        final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(context,
+                shortcutName,
+                builder.getIntent(),
+                R.drawable.ic_stop_flag_triangle);
+        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null);
+        return shortcut;
+    }
+
+    /**
+     * Creates a new shortcut for the provided route, and returns the ShortcutInfo for that shortcut
+     * @param context Context used to create the shortcut
+     * @param routeId ID of the route
+     * @param routeName short name of the route
+     * @return the ShortcutInfo for the created shortcut
+     */
+    public static ShortcutInfoCompat createRouteShortcut(Context context, String routeId, String routeName) {
+        final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(context,
+                routeName,
+                RouteInfoActivity.makeIntent(context, routeId),
+                R.drawable.ic_trip_details);
+        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null);
+        return shortcut;
+    }
+
+    /**
+     * Default implementation for making a ShortcutInfoCompat object.  Note that this method doesn't
+     * create the actual shortcut on the launcher - ShortcutManagerCompat.requestPinShortcut() must
+     * be called with the ShortcutInfoCompat returned from this method to create the shortcut
+     * on the launcher.
+     *
+     * @param name       The name of the shortcut
+     * @param destIntent The destination intent
+     * @param icon       Resource ID for the shortcut icon - should be black so it can be tinted and
+     *                   60dp (2dp of asset padding) for high resolution on launcher screens
+     * @return ShortcutInfoCompat that can be used to request pinning the shortcut
+     */
+    public static ShortcutInfoCompat makeShortcutInfo(Context context, String name,
+            Intent destIntent, @DrawableRes int icon) {
         // Make sure the shortcut Activity always launches on top (#626)
         destIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        destIntent.setAction(Intent.ACTION_VIEW);
 
-        // Set up the container intent
-        Intent intent = new Intent();
-        intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, destIntent);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
-        Parcelable iconResource = Intent.ShortcutIconResource
-                .fromContext(context, R.mipmap.ic_launcher);
-        intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconResource);
-        return intent;
+        Drawable drawableIcon = ResourcesCompat
+                .getDrawable(context.getResources(), icon, context.getTheme());
+        drawableIcon.setColorFilter(ContextCompat.getColor(context, R.color.shortcut_icon),
+                PorterDuff.Mode.SRC_IN);
+        Drawable drawableBackground = ResourcesCompat
+                .getDrawable(context.getResources(), R.drawable.launcher_background, context.getTheme());
+
+        final LayerDrawable layerDrawable = new LayerDrawable(
+                new Drawable[]{drawableBackground, drawableIcon});
+
+        int backgroundInset = UIUtils.dpToPixels(context, 2.0f);
+        layerDrawable.setLayerInset(0, backgroundInset, backgroundInset, backgroundInset, backgroundInset);
+        int iconInset = UIUtils.dpToPixels(context, 7.0f);
+        layerDrawable.setLayerInset(1, iconInset, iconInset, iconInset, iconInset);
+
+        final Bitmap b = Bitmap
+                .createBitmap(layerDrawable.getIntrinsicWidth(), layerDrawable.getIntrinsicHeight(),
+                        Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(b);
+        layerDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        layerDrawable.draw(canvas);
+
+        return new ShortcutInfoCompat.Builder(context, name)
+                .setShortLabel(name)
+                .setIcon(IconCompat.createWithBitmap(b))
+                .setIntent(destIntent)
+                .build();
     }
 
     public static void goToUrl(Context context, String url) {

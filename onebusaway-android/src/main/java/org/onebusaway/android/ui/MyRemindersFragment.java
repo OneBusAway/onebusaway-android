@@ -144,7 +144,7 @@ public final class MyRemindersFragment extends ListFragment
     private void setReminderOrder() {
         mCurrentSortOrder = PreferenceUtils.getReminderSortOrderFromPreferences();
         switch (mCurrentSortOrder) {
-            case 0: //sort by name
+            case 0: // Sort by name
                 sortBy = ObaContract.Trips.NAME + " asc";
                 break;
             case 1:
@@ -348,12 +348,11 @@ public final class MyRemindersFragment extends ListFragment
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //if selected option is different, change option
-
+                        // If selected option is different, change option
                         if (mCurrentSortOrder != which) {
                             setSortByClause(which);
 
-                            //restart with new order
+                            // Restart with new order
                             getLoaderManager().restartLoader(0, null, MyRemindersFragment.this);
                         }
                         dialog.dismiss();

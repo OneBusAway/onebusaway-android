@@ -541,8 +541,11 @@ public final class UIUtils {
 
         final LayerDrawable layerDrawable = new LayerDrawable(
                 new Drawable[]{drawableBackground, drawableIcon});
-        int i = UIUtils.dpToPixels(context, 5.0f);
-        layerDrawable.setLayerInset(1, i, i, i, i);
+
+        int backgroundInset = UIUtils.dpToPixels(context, 2.0f);
+        layerDrawable.setLayerInset(0, backgroundInset, backgroundInset, backgroundInset, backgroundInset);
+        int iconInset = UIUtils.dpToPixels(context, 7.0f);
+        layerDrawable.setLayerInset(1, iconInset, iconInset, iconInset, iconInset);
 
         final Bitmap b = Bitmap
                 .createBitmap(layerDrawable.getIntrinsicWidth(), layerDrawable.getIntrinsicHeight(),

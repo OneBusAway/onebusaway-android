@@ -490,7 +490,6 @@ public final class UIUtils {
      * @return the ShortcutInfo for the created shortcut
      */
     public static ShortcutInfoCompat createStopShortcut(Context context, String shortcutName, ArrivalsListActivity.Builder builder) {
-
         final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(context,
                 shortcutName,
                 builder.getIntent(),

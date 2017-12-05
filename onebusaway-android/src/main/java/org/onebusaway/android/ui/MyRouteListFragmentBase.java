@@ -16,11 +16,14 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.Activity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.ContextMenu;
@@ -30,10 +33,6 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.util.UIUtils;
 
 abstract class MyRouteListFragmentBase extends MyListFragmentBase
         implements QueryUtils.RouteList.Columns {
@@ -60,12 +59,7 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
         final String routeName = c.getString(COL_SHORTNAME);
 
         if (isShortcutMode()) {
-            final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
-                    routeName,
-                    RouteInfoActivity.makeIntent(getActivity(), routeId),
-                    R.drawable.ic_trip_details);
-
-            ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
+            ShortcutInfoCompat shortcut = UIUtils.createRouteShortcut(getContext(), routeId, routeName);
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
@@ -96,6 +90,8 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0,
                     R.string.my_context_show_schedule);
         }
+        menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0,
+                R.string.my_context_create_shortcut);
     }
 
     @Override
@@ -115,6 +111,11 @@ abstract class MyRouteListFragmentBase extends MyListFragmentBase
             case CONTEXT_MENU_SHOW_URL:
                 UIUtils.goToUrl(getActivity(),
                         QueryUtils.RouteList.getUrl(getListView(), info.position));
+                return true;
+            case CONTEXT_MENU_CREATE_SHORTCUT:
+                String id = QueryUtils.RouteList.getId(getListView(), info.position);
+                String shortName = QueryUtils.RouteList.getShortName(getListView(), info.position);
+                UIUtils.createRouteShortcut(getContext(), id, shortName);
                 return true;
             default:
                 return super.onContextItemSelected(item);

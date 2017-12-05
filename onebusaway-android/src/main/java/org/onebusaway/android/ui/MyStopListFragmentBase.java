@@ -24,7 +24,6 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -56,12 +55,7 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
 
         if (isShortcutMode()) {
             final ShortcutInfoCompat shortcut =
-                    UIUtils.makeShortcutInfo(getActivity(),
-                            stopData.getUiName(),
-                            b.getIntent(),
-                            R.drawable.ic_stop_flag_triangle);
-
-            ShortcutManagerCompat.requestPinShortcut(getActivity(), shortcut, null);
+                    UIUtils.createStopShortcut(getContext(), stopData.getUiName(), b);
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
@@ -111,13 +105,9 @@ abstract class MyStopListFragmentBase extends MyListFragmentBase
                         .doNotShowTutorial(ShowcaseViewUtils.TUTORIAL_STARRED_STOPS_SHORTCUT);
 
                 StopData stopData = getStopData(getListView(), info.position);
-
-                final ShortcutInfoCompat shortcutInfo =
-                        UIUtils.makeShortcutInfo(getActivity(),
-                                stopData.uiName,
-                                stopData.getArrivalsList().getIntent(),
-                                R.drawable.ic_stop_flag_triangle);
-                ShortcutManagerCompat.requestPinShortcut(getActivity(), shortcutInfo, null);
+                UIUtils.createStopShortcut(getContext(),
+                        stopData.uiName,
+                        stopData.getArrivalsList());
                 return true;
             default:
                 return super.onContextItemSelected(item);

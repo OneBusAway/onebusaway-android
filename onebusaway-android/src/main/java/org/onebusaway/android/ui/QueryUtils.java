@@ -102,15 +102,23 @@ public final class QueryUtils {
         }
 
         static protected String getId(ListView l, int position) {
-            // Get the cursor and fetch the stop ID from that.
+            // Get the cursor and fetch the route ID from that.
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());
             return c.getString(Columns.COL_ID);
         }
 
+        static protected String getShortName(ListView l, int position) {
+            // Get the cursor and fetch the route short name from that.
+            SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
+            Cursor c = cursorAdapter.getCursor();
+            c.moveToPosition(position - l.getHeaderViewsCount());
+            return c.getString(Columns.COL_SHORTNAME);
+        }
+
         static protected String getUrl(ListView l, int position) {
-            // Get the cursor and fetch the stop ID from that.
+            // Get the cursor and fetch the route URL from that.
             SimpleCursorAdapter cursorAdapter = (SimpleCursorAdapter) l.getAdapter();
             Cursor c = cursorAdapter.getCursor();
             c.moveToPosition(position - l.getHeaderViewsCount());

@@ -17,6 +17,25 @@
 
 package org.onebusaway.android.util;
 
+import com.google.android.gms.common.GoogleApiAvailability;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaArrivalInfo;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaSituation;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.ArrivalsListActivity;
+import org.onebusaway.android.ui.HomeActivity;
+import org.onebusaway.android.ui.RouteInfoActivity;
+import org.onebusaway.android.view.RealtimeIndicatorView;
+import org.onebusaway.util.comparators.AlphanumComparator;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -56,6 +75,7 @@ import android.support.annotation.DrawableRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.IconCompat;
 import android.support.v4.util.Pair;
@@ -78,23 +98,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.GoogleApiAvailability;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaArrivalInfo;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaSituation;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.provider.ObaContract;
-import org.onebusaway.android.ui.HomeActivity;
-import org.onebusaway.android.view.RealtimeIndicatorView;
-import org.onebusaway.util.comparators.AlphanumComparator;
 
 import java.io.File;
 import java.io.IOException;
@@ -480,10 +483,46 @@ public final class UIUtils {
     }
 
     /**
-     * Default implementation for creating a shortcut when in shortcut mode.
+     * Creates a new shortcut for the provided stop, and returns the ShortcutInfo for that shortcut
+     * @param context Context used to create the shortcut
+     * @param shortcutName the shortcutName for the stop shortcut
+     * @param builder Instance of ArrivalsListActivity.Builder for the provided stop
+     * @return the ShortcutInfo for the created shortcut
+     */
+    public static ShortcutInfoCompat createStopShortcut(Context context, String shortcutName, ArrivalsListActivity.Builder builder) {
+
+        final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(context,
+                shortcutName,
+                builder.getIntent(),
+                R.drawable.ic_stop_flag_triangle);
+        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null);
+        return shortcut;
+    }
+
+    /**
+     * Creates a new shortcut for the provided route, and returns the ShortcutInfo for that shortcut
+     * @param context Context used to create the shortcut
+     * @param routeId ID of the route
+     * @param routeName short name of the route
+     * @return the ShortcutInfo for the created shortcut
+     */
+    public static ShortcutInfoCompat createRouteShortcut(Context context, String routeId, String routeName) {
+        final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(context,
+                routeName,
+                RouteInfoActivity.makeIntent(context, routeId),
+                R.drawable.ic_trip_details);
+        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null);
+        return shortcut;
+    }
+
+    /**
+     * Default implementation for making a ShortcutInfoCompat object.  Note that this method doesn't
+     * create the actual shortcut on the launcher - ShortcutManagerCompat.requestPinShortcut() must
+     * be called with the ShortcutInfoCompat returned from this method to create the shortcut
+     * on the launcher.
      *
-     * @param name       The name of the shortcut.
-     * @param destIntent The destination intent.
+     * @param name       The name of the shortcut
+     * @param destIntent The destination intent
      * @param icon       Resource ID for the shortcut icon - should be black so it can be tinted and
      *                   60dp (2dp of asset padding) for high resolution on launcher screens
      * @return ShortcutInfoCompat that can be used to request pinning the shortcut

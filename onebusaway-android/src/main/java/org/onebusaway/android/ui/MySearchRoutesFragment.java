@@ -17,6 +17,15 @@
 
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
+import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
+import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
@@ -25,7 +34,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -36,15 +44,6 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.request.ObaRoutesForLocationRequest;
-import org.onebusaway.android.io.request.ObaRoutesForLocationResponse;
-import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.Arrays;
 
@@ -145,12 +144,7 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         final String routeName = UIUtils.getRouteDisplayName(route);
 
         if (isShortcutMode()) {
-            final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
-                    routeName,
-                    RouteInfoActivity.makeIntent(getActivity(), routeId),
-                    R.drawable.ic_trip_details);
-
-            ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
+            final ShortcutInfoCompat shortcut = UIUtils.createRouteShortcut(getContext(), routeId, routeName);
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();
@@ -175,6 +169,8 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         if (url != null) {
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
         }
+        menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0,
+                R.string.my_context_create_shortcut);
     }
 
     @Override
@@ -190,6 +186,11 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 return true;
             case CONTEXT_MENU_SHOW_URL:
                 UIUtils.goToUrl(getActivity(), getUrl(getListView(), info.position));
+                return true;
+            case CONTEXT_MENU_CREATE_SHORTCUT:
+                String id = QueryUtils.RouteList.getId(getListView(), info.position);
+                String shortName = QueryUtils.RouteList.getShortName(getListView(), info.position);
+                UIUtils.createRouteShortcut(getContext(), id, shortName);
                 return true;
             default:
                 return super.onContextItemSelected(item);

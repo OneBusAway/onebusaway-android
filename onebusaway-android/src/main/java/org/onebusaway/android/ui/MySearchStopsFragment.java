@@ -32,7 +32,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.content.pm.ShortcutInfoCompat;
-import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -147,18 +146,15 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         ObaStop stop = (ObaStop) l.getAdapter().getItem(position - l.getHeaderViewsCount());
-        final String shortcutName = stop.getName();
-
-        // TODO - Pass in a route mapping?  Can we get away with just a stopId here?
         ArrivalsListActivity.Builder b = new ArrivalsListActivity.Builder(getActivity(),
                 stop.getId());
-        if (isShortcutMode()) {
-            final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
-                    shortcutName,
-                    b.getIntent(),
-                    R.drawable.ic_stop_flag_triangle);
+        b.setStopName(stop.getName());
+        b.setStopDirection(stop.getDirection());
 
-            ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
+        if (isShortcutMode()) {
+            final ShortcutInfoCompat shortcut = UIUtils.createStopShortcut(getContext(),
+                    stop.getName(),
+                    b);
             Activity activity = getActivity();
             activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
             activity.finish();

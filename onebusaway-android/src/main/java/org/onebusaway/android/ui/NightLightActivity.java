@@ -17,9 +17,6 @@
 
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +24,8 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -34,6 +33,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 /**
  * A flashing light that riders can show at night to flag bus drivers
@@ -80,6 +82,14 @@ public class NightLightActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UIUtils.setupActionBar(this);
+
+        Intent intent = getIntent();
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(intent.getAction())) {
+            ShortcutInfoCompat shortcut = createShortcut();
+            setResult(RESULT_OK, shortcut.getIntent());
+            finish();
+        }
+
         setContentView(R.layout.night_light);
         screen = findViewById(R.id.screen);
         disableScreenSleep();
@@ -253,14 +263,16 @@ public class NightLightActivity extends AppCompatActivity {
 
     /**
      * Create a shortcut on the home screen
+     * @return shortcut info that was created
      */
-    private void createShortcut() {
-        final Intent shortcutIntent =
-                UIUtils.makeShortcut(this,
+    private ShortcutInfoCompat createShortcut() {
+        final ShortcutInfoCompat shortcut =
+                UIUtils.makeShortcutInfo(this,
                         getString(R.string.stop_info_option_night_light),
-                        new Intent(this, NightLightActivity.class));
-        shortcutIntent.setAction(INSTALL_SHORTCUT);
-        shortcutIntent.setFlags(0);
-        sendBroadcast(shortcutIntent);
+                        new Intent(this,
+                                NightLightActivity.class),
+                        R.drawable.ic_night_light);
+        ShortcutManagerCompat.requestPinShortcut(this, shortcut, null);
+        return shortcut;
     }
 }

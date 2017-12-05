@@ -111,4 +111,7 @@
     <color name="es_tab_bottom_line">@color/header_text_color</color>
     <color name="es_status_bar">@color/theme_primary_dark</color>
 
+    <!-- Shortcuts -->
+    <color name="shortcut_icon">@color/material_gray</color>
+    <color name="shortcut_background">#dfffffff</color>
 </resources>

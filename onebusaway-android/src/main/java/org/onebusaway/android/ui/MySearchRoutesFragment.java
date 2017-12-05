@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South  Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +26,14 @@ import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -142,9 +144,10 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         final String routeName = UIUtils.getRouteDisplayName(route);
 
         if (isShortcutMode()) {
-            Intent intent = RouteInfoActivity.makeIntent(getActivity(), routeId);
-            makeShortcut(routeName, intent);
-
+            final ShortcutInfoCompat shortcut = UIUtils.createRouteShortcut(getContext(), routeId, routeName);
+            Activity activity = getActivity();
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
+            activity.finish();
         } else {
             RouteInfoActivity.start(getActivity(), routeId);
         }
@@ -166,6 +169,8 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
         if (url != null) {
             menu.add(0, CONTEXT_MENU_SHOW_URL, 0, R.string.my_context_show_schedule);
         }
+        menu.add(0, CONTEXT_MENU_CREATE_SHORTCUT, 0,
+                R.string.my_context_create_shortcut);
     }
 
     @Override
@@ -181,6 +186,11 @@ public class MySearchRoutesFragment extends MySearchFragmentBase
                 return true;
             case CONTEXT_MENU_SHOW_URL:
                 UIUtils.goToUrl(getActivity(), getUrl(getListView(), info.position));
+                return true;
+            case CONTEXT_MENU_CREATE_SHORTCUT:
+                String id = QueryUtils.RouteList.getId(getListView(), info.position);
+                String shortName = QueryUtils.RouteList.getShortName(getListView(), info.position);
+                UIUtils.createRouteShortcut(getContext(), id, shortName);
                 return true;
             default:
                 return super.onContextItemSelected(item);

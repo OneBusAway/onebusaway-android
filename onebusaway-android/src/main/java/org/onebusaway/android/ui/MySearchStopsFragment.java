@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South  Florida (sjbarbeau@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +24,14 @@ import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.util.ArrayAdapter;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.pm.ShortcutInfoCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -143,13 +146,18 @@ public class MySearchStopsFragment extends MySearchFragmentBase
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         ObaStop stop = (ObaStop) l.getAdapter().getItem(position - l.getHeaderViewsCount());
-        final String shortcutName = stop.getName();
-
-        // TODO - Pass in a route mapping?  Can we get away with just a stopId here?
         ArrivalsListActivity.Builder b = new ArrivalsListActivity.Builder(getActivity(),
                 stop.getId());
+        b.setStopName(stop.getName());
+        b.setStopDirection(stop.getDirection());
+
         if (isShortcutMode()) {
-            makeShortcut(shortcutName, b.getIntent());
+            final ShortcutInfoCompat shortcut = UIUtils.createStopShortcut(getContext(),
+                    stop.getName(),
+                    b);
+            Activity activity = getActivity();
+            activity.setResult(Activity.RESULT_OK, shortcut.getIntent());
+            activity.finish();
         } else {
             b.setUpMode(NavHelp.UP_MODE_BACK);
             b.start();

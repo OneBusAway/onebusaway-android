@@ -16,6 +16,14 @@
  */
 package org.onebusaway.android.ui;
 
+import org.onebusaway.android.R;
+import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
+import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
+import org.onebusaway.android.util.ArrayAdapter;
+import org.onebusaway.android.util.UIUtils;
+
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
@@ -34,14 +42,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.onebusaway.android.R;
-import org.onebusaway.android.io.ObaApi;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
-import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
-import org.onebusaway.android.util.ArrayAdapter;
-import org.onebusaway.android.util.UIUtils;
 
 import java.util.Arrays;
 
@@ -156,7 +156,7 @@ public class MySearchStopsFragment extends MySearchFragmentBase
             final ShortcutInfoCompat shortcut = UIUtils.makeShortcutInfo(getActivity(),
                     shortcutName,
                     b.getIntent(),
-                    R.drawable.ic_trip_details);
+                    R.drawable.ic_stop_flag_triangle);
 
             ShortcutManagerCompat.requestPinShortcut(getContext(), shortcut, null);
             Activity activity = getActivity();

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
- * Copyright (c) 2017, Microsoft Corporation.
+ * Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

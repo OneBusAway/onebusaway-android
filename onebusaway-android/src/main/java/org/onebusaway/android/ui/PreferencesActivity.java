@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2010-2015 Brian Ferris (bdferris@onebusaway.org), University of South Florida
- * and individual contributors
- * Copyright (c) 2017, Microsoft Corporation.
+ * Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

@@ -407,7 +407,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
 
-    compile('com.acrowntest.test:sdk:0.0.36:release@aar') {
+    compile('com.acrowntest.test:sdk:0.0.37:release@aar') {
         transitive = true;
     }
 }

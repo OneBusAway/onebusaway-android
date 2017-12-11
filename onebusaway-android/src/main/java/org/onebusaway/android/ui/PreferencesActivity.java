@@ -28,6 +28,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import android.content.DialogInterface;
@@ -129,19 +130,29 @@ public class PreferencesActivity extends PreferenceActivity
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
 
-        Preference socialPref = findPreference(getString(R.string.preference_key_social));
-        socialPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_settings));
+        if (EmbeddedSocialUtils.isSocialEnabled(this)) {
+            Preference socialPref = findPreference(getString(R.string.preference_key_social));
 
-                EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
-                return true;
+            if (EmbeddedSocial.isSignedIn()) {
+                socialPref.setSummary(R.string.preferences_screen_social_summary_signed_in);
             }
-        });
+
+            socialPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_settings));
+
+                    EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
+                    return true;
+                }
+            });
+        } else {
+            // Social is not enabled so don't show related preferences
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_social_category)));
+        }
 
         SharedPreferences settings = Application.getPrefs();
         mAutoSelectInitialValue = settings

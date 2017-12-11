@@ -601,7 +601,8 @@
     <string name="preferences_restore_title">Restore from storage</string>
     <string name="preferences_restore_summary">Restores from previous save</string>
     <string name="preferences_screen_social_title">Embedded Social</string>
-    <string name="preferences_screen_social_summary">Embedded Social settings</string>
+    <string name="preferences_screen_social_summary_signed_in">Sign out, privacy policy, terms and conditions, linked accounts, delete account</string>
+    <string name="preferences_screen_social_summary_signed_out">Sign in, privacy policy, terms and conditions</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
@@ -1094,4 +1095,9 @@
     <string name="embedded_social_restriction">Enable social features</string>
     <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
     <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>
+    <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
+    <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
+    <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
+
+
 </resources>

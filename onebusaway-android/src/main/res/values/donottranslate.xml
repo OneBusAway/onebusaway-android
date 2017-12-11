@@ -52,6 +52,7 @@
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
     <string name="preference_key_notification_sound">preference_notification_sound</string>
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
+    <string name="preference_key_social_category">preference_category_social</string>
     <string name="preference_key_social">preference_social</string>
 
     <!-- Regions API URL -->

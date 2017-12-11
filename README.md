@@ -132,7 +132,9 @@ In order to support certain features in OneBusAway, we need to request various p
 
 You're most likely trying to run the `obaAmazon` build variant on an Google Android device, or the `obaGoogle` build flavor on an Amazon device.
 
-Please be sure to select the correct build flavor for your device/emulator when running the project:
+To build the version of OneBusAway on Google Play, you'll want to select the `obaGoogleDebug` build variant.
+
+Steps to set the build variant:
 
 * In Android Studio, you'll see a "Build Variant" button on the very left side of the screen, collapsed in the dock.  Click on this, and select either `obaGoogleDebug` for Google devices, or `obaAmazonDebug` for Amazon devices:
 * From the command line, run `gradlew installObaGoogleDebug` for Google devices, or `gradlew installObaAmazonDebug` for Amazon devices.

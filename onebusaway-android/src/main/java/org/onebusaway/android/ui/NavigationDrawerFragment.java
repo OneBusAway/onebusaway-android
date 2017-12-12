@@ -328,16 +328,16 @@ public class NavigationDrawerFragment extends Fragment {
         if (isSocialActivityItem(itemId) || isSocialActivityItem(mCurrentSelectedPosition)) {
             // We are transitioning to or from a social activity
             setSavedPosition(itemId);
-        } else if (mCurrentSelectedPosition == itemId && itemId == NAVDRAWER_ITEM_HELP) {
-            // Special case where 'Help' was selected from an Embedded Social Activity
-            // Format the drawer so 'Nearby' is persisted once the Help page is closed
+        } else if (mCurrentSelectedPosition == itemId &&
+                (itemId == NAVDRAWER_ITEM_HELP || mCurrentSelectedPosition == NAVDRAWER_ITEM_SETTINGS)) {
+            // Special case where 'Help' or 'Settings' was selected from an Embedded Social Activity
+            // Format the drawer so 'Nearby' is persisted once the page is closed
             mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
             setSavedPosition(mCurrentSelectedPosition);
 
         } else if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
-
             setSavedPosition(mCurrentSelectedPosition);
         }
 
@@ -369,8 +369,10 @@ public class NavigationDrawerFragment extends Fragment {
                         if (position != mCurrentSelectedPosition) {
                             Intent intent = new Intent(context, HomeActivity.class);
 
-                            if (position != NAVDRAWER_ITEM_HELP &&
-                                    (isNewActivityItem(position) || isSocialActivityItem(position))) {
+                            if (isHomeActivity(position) || position == NAVDRAWER_ITEM_HELP) {
+                                // Reuse the HomeActivity
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            } else if (isNewActivityItem(position) || isSocialActivityItem(position)) {
                                 // The HomeActivity is only being used to handle the navigation drawer change
                                 // there should be no visible UI
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
@@ -379,6 +381,11 @@ public class NavigationDrawerFragment extends Fragment {
                             // the value of mCurrentSelectedPosition saved in SharedPreferences will
                             // be used when HomeActivity creates a new instance of NavigationDrawerFragment
                             context.startActivity(intent);
+
+                            if (isSocialActivityItem(position)) {
+                                // Maintain only 1 degree of separation from the HomeActivity
+                                getActivity().finish();
+                            }
                         }
                     }
                 };
@@ -408,6 +415,8 @@ public class NavigationDrawerFragment extends Fragment {
             isSignedIn = EmbeddedSocial.isSignedIn();
         }
         populateNavDrawer();
+        // remember that this is the last viewed page (for back button)
+        setSavedPosition(mCurrentSelectedPosition);
     }
 
     @Override
@@ -688,6 +697,12 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean isSocialOverflow(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
                 itemId == NAVDRAWER_ITEM_ACTIVITY_FEED;
+    }
+
+    private boolean isHomeActivity(int itemId) {
+        return itemId == NAVDRAWER_ITEM_NEARBY ||
+                itemId == NAVDRAWER_ITEM_STARRED_STOPS ||
+                itemId == NAVDRAWER_ITEM_MY_REMINDERS;
     }
 }
 

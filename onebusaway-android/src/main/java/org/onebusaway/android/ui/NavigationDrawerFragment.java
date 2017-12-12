@@ -358,40 +358,15 @@ public class NavigationDrawerFragment extends Fragment {
     public void onAttach(final Context context) {
         super.onAttach(context);
         try {
-            mCallbacks = (NavigationDrawerCallbacks) context;
-        } catch (ClassCastException e) {
             if (context instanceof BaseActivity) {
                 // Embedded Social activity
-                mCallbacks = new NavigationDrawerCallbacks() {
-                    @Override
-                    public void onNavigationDrawerItemSelected(int position) {
-                        // don't start a new activity if the current item is pressed again
-                        if (position != mCurrentSelectedPosition) {
-                            Intent intent = new Intent(context, HomeActivity.class);
-
-                            if (isHomeActivity(position) || position == NAVDRAWER_ITEM_HELP) {
-                                // Reuse the HomeActivity
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            } else if (isNewActivityItem(position) || isSocialActivityItem(position)) {
-                                // The HomeActivity is only being used to handle the navigation drawer change
-                                // there should be no visible UI
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                            }
-
-                            // the value of mCurrentSelectedPosition saved in SharedPreferences will
-                            // be used when HomeActivity creates a new instance of NavigationDrawerFragment
-                            context.startActivity(intent);
-
-                            if (isSocialActivityItem(position)) {
-                                // Maintain only 1 degree of separation from the HomeActivity
-                                getActivity().finish();
-                            }
-                        }
-                    }
-                };
+                mCallbacks = new EmbeddedSocialNavigationCallbacks(context);
             } else {
-                throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+                // OBA activity
+                mCallbacks = (NavigationDrawerCallbacks) context;
             }
+        } catch (ClassCastException e) {
+            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
         }
     }
 
@@ -703,6 +678,44 @@ public class NavigationDrawerFragment extends Fragment {
         return itemId == NAVDRAWER_ITEM_NEARBY ||
                 itemId == NAVDRAWER_ITEM_STARRED_STOPS ||
                 itemId == NAVDRAWER_ITEM_MY_REMINDERS;
+    }
+
+
+    /**
+     * Navigation callback handler used for Embedded Social activities
+     */
+    private class EmbeddedSocialNavigationCallbacks implements NavigationDrawerCallbacks {
+        private Context context;
+
+        public EmbeddedSocialNavigationCallbacks(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public void onNavigationDrawerItemSelected(int position) {
+            // don't start a new activity if the current item is pressed again
+            if (position != mCurrentSelectedPosition) {
+                Intent intent = new Intent(context, HomeActivity.class);
+
+                if (isHomeActivity(position) || position == NAVDRAWER_ITEM_HELP) {
+                    // Reuse the HomeActivity
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                } else if (isNewActivityItem(position) || isSocialActivityItem(position)) {
+                    // The HomeActivity is only being used to handle the navigation drawer change
+                    // there should be no visible UI
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                }
+
+                // the value of mCurrentSelectedPosition saved in SharedPreferences will
+                // be used when HomeActivity creates a new instance of NavigationDrawerFragment
+                context.startActivity(intent);
+
+                if (isSocialActivityItem(position)) {
+                    // Maintain only 1 degree of separation from the HomeActivity
+                    getActivity().finish();
+                }
+            }
+        }
     }
 }
 

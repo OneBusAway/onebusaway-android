@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
-    and individual contributors.
-    Copyright (c) 2017, Microsoft Corporation.
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -385,8 +386,8 @@
     <string name="search_stop_hint">Enter a stop number</string>
     <string name="search_route_hint">Enter a route name/number</string>
 
-    <string name="route_shortcut">OneBusAway Route</string>
-    <string name="stop_shortcut">OneBusAway Stop</string>
+    <string name="route_shortcut">Route</string>
+    <string name="stop_shortcut">Stop</string>
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>
@@ -807,7 +808,8 @@
         "* Charles Bond\n"
         "* Hillsborough Area Regional Transit (via Simon Jacobs at Cambridge Systematics)\n"
         "* Bridgette Eichelberger\n"
-        "* Rodrigo Carvalho (Google Summer of Code 2017)\n\n"
+        "* Rodrigo Carvalho (Google Summer of Code 2017)\n"
+        "* Steve Moritani\n\n"
 
         "Want to contribute to this app? Check it out on Github at
         https://github.com/OneBusAway/onebusaway-android.\n\n"

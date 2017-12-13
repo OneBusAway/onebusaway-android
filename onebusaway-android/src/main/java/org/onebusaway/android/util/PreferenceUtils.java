@@ -165,6 +165,25 @@ public class PreferenceUtils {
     }
 
     /**
+     * Returns current reminder sort order from the SharedPreferences
+     *
+     * @return the currently selected reminder sort order as the index in R.array.sort_stops
+     */
+    public static int getReminderSortOrderFromPreferences(){
+        Resources resources = Application.get().getResources();
+        SharedPreferences preferences = Application.getPrefs();
+        String[] sortOptions = resources.getStringArray(R.array.sort_reminders);
+        String sortPref = preferences.getString(resources.getString(
+                R.string.preference_key_default_reminder_sort), sortOptions[0]);
+        if (sortPref.equalsIgnoreCase(sortOptions[0])){
+            return 0;
+        } else if (sortPref.equalsIgnoreCase(sortOptions[1])){
+            return 1;
+        }
+        return 0;  //Default to the first option
+    }
+
+    /**
      * Saves provided MapView center location and zoom level to preferences
      *
      * @param lat  latitude of map center

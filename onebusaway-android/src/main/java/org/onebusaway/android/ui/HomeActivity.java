@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com),
- * University of South Florida (sjbarbeau@gmail.com)
- * Copyright (c) 2017, Microsoft Corporation.
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,36 @@
  * limitations under the License.
  */
 package org.onebusaway.android.ui;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -55,35 +85,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapModeController;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.report.ui.ReportActivity;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 
 import java.util.ArrayList;
 import java.util.Collections;

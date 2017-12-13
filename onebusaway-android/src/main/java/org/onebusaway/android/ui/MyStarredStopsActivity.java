@@ -15,13 +15,15 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.util.UIUtils;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.pm.ShortcutInfoCompat;
+import android.support.v4.content.pm.ShortcutManagerCompat;
 import android.support.v7.app.AppCompatActivity;
+
+import org.onebusaway.android.R;
+import org.onebusaway.android.util.UIUtils;
 
 public class MyStarredStopsActivity extends AppCompatActivity {
 
@@ -37,17 +39,18 @@ public class MyStarredStopsActivity extends AppCompatActivity {
 
         Intent myIntent = getIntent();
         if (Intent.ACTION_CREATE_SHORTCUT.equals(myIntent.getAction())) {
-            setResult(RESULT_OK, getShortcutIntent());
+            ShortcutInfoCompat shortcut = getShortcut();
+            ShortcutManagerCompat.requestPinShortcut(this, shortcut, null);
+            setResult(RESULT_OK, shortcut.getIntent());
         }
         finish();
     }
 
-    private Intent getShortcutIntent() {
+    private ShortcutInfoCompat getShortcut() {
         final Uri uri = MyTabActivityBase.getDefaultTabUri(MyStarredStopsFragment.TAB_NAME);
-        return UIUtils.makeShortcut(this,
+        return UIUtils.makeShortcutInfo(this,
                 getString(R.string.starred_stops_shortcut),
-                new Intent(this, MyStopsActivity.class)
-                        .setData(uri)
-        );
+                new Intent(this, MyStopsActivity.class).setData(uri),
+                R.drawable.ic_drawer_star);
     }
 }

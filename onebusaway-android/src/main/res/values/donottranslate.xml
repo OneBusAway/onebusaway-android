@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
     and individual contributors.
-    Copyright (c) 2017, Microsoft Corporation.
+    Copyright (c) 2017 Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@
     <string name="preference_key_arrival_info_style">preference_arrival_info_style</string>
     <string name="preference_key_show_negative_arrivals">preference_show_negative_arrivals</string>
     <string name="preference_key_default_stop_sort">preference_default_stop_sort</string>
+    <string name="preference_key_default_reminder_sort">preference_default_reminder_sort</string>
     <string name="preference_key_tutorial">preference_key_tutorial</string>
     <string name="preference_key_show_header_arrivals">preference_key_show_header_arrivals</string>
     <string name="preference_key_tutorial_counter">preference_key_tutorial_counter</string>
@@ -100,6 +101,12 @@
     </string>
     <string name="analytics_label_sort_by_mfu_stops">Clicked sort by most frequently used from
         MyStarredStopsFragment
+    </string>
+    <string name="analytics_label_sort_by_name_reminder">Clicked sort by name from
+        MyRemindersFragment
+    </string>
+    <string name="analytics_label_sort_by_departure_time_reminder">Clicked sort by departure time from
+        MyRemindersFragment
     </string>
     <string name="analytics_label_show_arrivals_in_header">Clicked show arrivals in header
     </string>

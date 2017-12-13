@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2011-2013 Paul Watts (paulcwatts@gmail.com) and individual contributors.
-     Copyright (c) 2017, Microsoft Corporation.
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
+     University of South Florida (sjbarbeau@gmail.com), 
+     Microsoft Corporation.
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -40,8 +42,6 @@
     <uses-permission android:name="${applicationId}.permission.TRIP_SERVICE"/>
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
     <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE"/>
-
-
 
     <uses-sdk tools:overrideLibrary="net.openid.appauth,
         android.support.customtabs,

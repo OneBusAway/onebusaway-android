@@ -20,9 +20,12 @@ import org.onebusaway.android.R;
 import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import android.app.AlertDialog;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -31,7 +34,11 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -91,6 +98,8 @@ public final class MyRemindersFragment extends ListFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        setHasOptionsMenu(true);
+        setReminderOrder();
         // Set empty text
         setEmptyText(getString(R.string.trip_list_notrips));
         registerForContextMenu(getListView());
@@ -129,6 +138,21 @@ public final class MyRemindersFragment extends ListFragment
         super.onDestroy();
     }
 
+    private int mCurrentSortOrder;
+    private static String sortBy;
+
+    private void setReminderOrder() {
+        mCurrentSortOrder = PreferenceUtils.getReminderSortOrderFromPreferences();
+        switch (mCurrentSortOrder) {
+            case 0: // Sort by name
+                sortBy = ObaContract.Trips.NAME + " asc";
+                break;
+            case 1:
+                sortBy = ObaContract.Trips.DEPARTURE + " asc";
+                break;
+        }
+    }
+
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(),
@@ -136,7 +160,7 @@ public final class MyRemindersFragment extends ListFragment
                 PROJECTION,
                 null,
                 null,
-                ObaContract.Trips.NAME + " asc");
+                sortBy);
     }
 
     @Override
@@ -169,8 +193,8 @@ public final class MyRemindersFragment extends ListFragment
 
         simpleAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view,
-                    Cursor cursor,
-                    int columnIndex) {
+                                        Cursor cursor,
+                                        int columnIndex) {
                 if (columnIndex == COL_NAME) {
                     TextView text = (TextView) view;
                     String name = cursor.getString(columnIndex);
@@ -230,8 +254,8 @@ public final class MyRemindersFragment extends ListFragment
 
     @Override
     public void onCreateContextMenu(ContextMenu menu,
-            View v,
-            ContextMenu.ContextMenuInfo menuInfo) {
+                                    View v,
+                                    ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         final TextView text = (TextView) info.targetView.findViewById(R.id.name);
@@ -300,5 +324,69 @@ public final class MyRemindersFragment extends ListFragment
                 c.getString(COL_ROUTE_ID)
         };
         return result;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.add(R.string.menu_option_sort_by).setIcon(R.drawable.ic_action_content_sort).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        final CharSequence menuId = item.getTitle();
+        if (menuId.equals(getResources().getString(R.string.menu_option_sort_by))) {
+            showSortByDialog();
+        }
+        return false;
+    }
+
+    private void showSortByDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.menu_option_sort_by);
+        mCurrentSortOrder = PreferenceUtils.getReminderSortOrderFromPreferences();
+        builder.setSingleChoiceItems(R.array.sort_reminders, mCurrentSortOrder,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // If selected option is different, change option
+                        if (mCurrentSortOrder != which) {
+                            setSortByClause(which);
+
+                            // Restart with new order
+                            getLoaderManager().restartLoader(0, null, MyRemindersFragment.this);
+                        }
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.setOwnerActivity(getActivity());
+        dialog.show();
+    }
+
+    /**
+     * Sets the sortBy string for the loader and save it to preference
+     *
+     * @param index the index of R.array.sort_reminder that should be set
+     */
+    private void setSortByClause(int index) {
+        switch (index) {
+            case 0:
+                Log.d(TAG, "setSortByClause: sort by name");
+                sortBy = ObaContract.Trips.NAME + " asc";
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getActivity().getString(R.string.analytics_action_button_press),
+                        getActivity().getString(R.string.analytics_label_sort_by_name_reminder));
+                break;
+            case 1:
+                Log.d(TAG, "setSortByClause: sort by time");
+                sortBy = ObaContract.Trips.DEPARTURE + " asc";
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getActivity().getString(R.string.analytics_action_button_press),
+                        getActivity().getString(R.string.analytics_label_sort_by_departure_time_reminder));
+                break;
+        }
+        final String[] sortOptions = getResources().getStringArray(R.array.sort_reminders);
+        PreferenceUtils.saveString(getString(R.string.preference_key_default_reminder_sort)
+                , sortOptions[index]);
     }
 }

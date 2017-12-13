@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2012-2016 Paul Watts (paulcwatts@gmail.com), University of South Florida,
- * Benjamin Du (bendu@me.com), and individual contributors.
- * Copyright (c) 2017, Microsoft Corporation.
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida,
+ * Benjamin Du (bendu@me.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

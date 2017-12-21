@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2013-2017 Paul Watts (paulcwatts@gmail.com), 
+ * University of South Florida (sjbarbeau@gmail.com), 
+ * Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +103,11 @@ public interface ObaRegion {
      * @return true if this server supports SIRI real-time APIs, false otherwise.
      */
     public boolean getSupportsSiriRealtimeApis();
+
+    /**
+     * @return true if this server supports Embedded Social, false otherwise.
+     */
+    public boolean getSupportsEmbeddedSocial();
 
     /**
      * @return The Twitter URL for the region

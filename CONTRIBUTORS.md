@@ -15,3 +15,4 @@ We'd like to thank the following developers who have contributed to OneBusAway A
 * Bridgette Eichelberger (bridgette@outlook.com)
 * Rodrigo Carvalho (carvalhorr@gmail.com)
 * Steve Moritani (steve.hayato.m@gmail.com)
+* Microsoft Corporation (via Alex Crown)

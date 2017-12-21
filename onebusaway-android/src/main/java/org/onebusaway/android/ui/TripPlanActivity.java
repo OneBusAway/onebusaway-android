@@ -1,5 +1,7 @@
 /**
- * Copyright (C) 2016 Cambridge Systematics, Inc.
+ * Copyright (C) 2016-2017 Cambridge Systematics, Inc.,
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +40,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -243,6 +246,16 @@ public class TripPlanActivity extends AppCompatActivity implements TripRequest.C
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            // Ensure the software and hardware back buttons have the same behavior
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

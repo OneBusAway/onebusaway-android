@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2010-2012 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +27,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
@@ -46,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 26;
+        private static final int DATABASE_VERSION = 27;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -246,7 +249,29 @@ public class ObaProvider extends ContentProvider {
                 db.execSQL(
                         "ALTER TABLE " + ObaContract.Regions.PATH +
                                 " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
+                ++oldVersion;
+            }
+            if (oldVersion == 26) {
+                /**
+                 * Bike share and Embedded Social both added columns in version 26;
+                 * Bike share in Beta, Embedded Social in alpha
+                 * We are adding extra logic here to prevent either group from breaking on update
+                 */
+                try {
+                    db.execSQL(
+                            "ALTER TABLE " + ObaContract.Regions.PATH +
+                                    " ADD COLUMN " + ObaContract.Regions.SUPPORTS_OTP_BIKESHARE + " INTEGER");
+                } catch (SQLiteException e) {
+                    Log.w(TAG, "Database already has bike share column - " + e);
+                }
 
+                try {
+                    db.execSQL(
+                            "ALTER TABLE " + ObaContract.Regions.PATH +
+                                    " ADD COLUMN " + ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL + " INTEGER");
+                } catch (SQLiteException e) {
+                    Log.w(TAG, "Database already has embedded social column - " + e);
+                }
             }
         }
 
@@ -488,6 +513,8 @@ public class ObaProvider extends ContentProvider {
                 ObaContract.Regions.SUPPORTS_OBA_REALTIME);
         sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_SIRI_REALTIME,
                 ObaContract.Regions.SUPPORTS_SIRI_REALTIME);
+        sRegionsProjectionMap.put(ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL,
+                ObaContract.Regions.SUPPORTS_EMBEDDED_SOCIAL);
         sRegionsProjectionMap.put(ObaContract.Regions.TWITTER_URL, ObaContract.Regions.TWITTER_URL);
         sRegionsProjectionMap
                 .put(ObaContract.Regions.EXPERIMENTAL, ObaContract.Regions.EXPERIMENTAL);

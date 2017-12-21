@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
-    and individual contributors.
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,11 +24,21 @@
     <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>
+    <string name="navdrawer_item_profile">My profile</string>
+    <string name="navdrawer_item_sign_in">Sign in</string>
+    <string name="navdrawer_item_your_feed">My feed</string>
+    <string name="navdrawer_item_search">Search</string>
+    <string name="navdrawer_item_popular">Popular</string>
+    <string name="navdrawer_item_pin">My pins</string>
+    <string name="navdrawer_item_activity_feed">Activity feed</string>
+    <string name="navdrawer_item_options">Options</string>
     <string name="navdrawer_item_settings">Settings</string>
     <string name="navdrawer_item_help">Help</string>
     <string name="navdrawer_item_send_feedback">Send feedback</string>
     <string name="navdrawer_item_plan_trip">Plan a trip (beta)</string>
     <string name="navdrawer_item_bike">Bike</string>
+    <string name="navdrawer_item_social_overflow_closed">More ...</string>
+    <string name="navdrawer_item_social_overflow_open">Less ...</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">start the trip service</string>
@@ -422,6 +434,10 @@
     <string name="trip_stat_arriving">Route %1$s is arriving in %2$d min!</string>
     <string name="trip_stat_departing">Route %1$s is departing in %2$d min!</string>
 
+    <!-- Embedded Social -->
+    <string name="social">Social</string>
+    <string name="join_discussion">Join discussion</string>
+
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Problem description (optional)</string>
     <string name="report_problem_send">Send</string>
@@ -528,6 +544,7 @@
     <string name="preferences_category_display">Display</string>
     <string name="preferences_category_backup">Backup</string>
     <string name="preferences_category_notifications">Notifications</string>
+    <string name="preferences_category_social">Social</string>
     <string name="preferences_category_advanced">Advanced</string>
     <string name="preferences_screen_advanced_summary">Dig deeper into the nuts and bolts</string>
     <string name="preferences_category_about">About</string>
@@ -584,6 +601,9 @@
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
     <string name="preferences_restore_summary">Restores from previous save</string>
+    <string name="preferences_screen_social_title">Embedded Social</string>
+    <string name="preferences_screen_social_summary_signed_in">Sign out, privacy policy, terms and conditions, linked accounts, delete account</string>
+    <string name="preferences_screen_social_summary_signed_out">Sign in, privacy policy, terms and conditions</string>
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
     <string name="preferences_db_restore_warning">This will wipe out any existing data! Go ahead?
@@ -1072,5 +1092,15 @@
     <string name="layers_speedial_bikeshare_label">Bikeshare</string>
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
+
+    <!-- Social -->
+    <string name="embedded_social_restriction">Enable social features</string>
+    <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
+    <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>
+    <string name="es_msg_general_create_user_success">Created Embedded Social account</string>
+    <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
+    <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
+    <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
+
 
 </resources>

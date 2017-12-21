@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2011-2014 Paul Watts (paulcwatts@gmail.com),
-    University of South Florida (sjbarbeau@gmail.com)
+<!-- Copyright (C) 2011-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -214,6 +215,25 @@
                         android:adjustViewBounds="true"
                         android:padding="5dp"/>
             </LinearLayout>
+
+            <ImageButton
+                    android:id="@+id/stop_discussion"
+                    android:src="@drawable/es_ic_comment"
+                    android:contentDescription="@string/join_discussion"
+                    android:background="?attr/selectableItemBackground"
+                    android:maxHeight="14dp"
+                    android:maxWidth="14dp"
+                    android:minHeight="14dp"
+                    android:minWidth="14dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:layout_marginLeft="2dp"
+                    android:layout_toRightOf="@+id/stop_name_and_info_container"
+                    android:layout_gravity="center_vertical"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    android:gravity="center"
+                    android:padding="5dp"/>
 
         </RelativeLayout>
 

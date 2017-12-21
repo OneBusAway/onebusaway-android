@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2012-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +37,6 @@ import android.view.Window;
 
 import java.util.HashMap;
 
-
 public class ArrivalsListActivity extends AppCompatActivity {
     //private static final String TAG = "ArrivalInfoActivity";
 
@@ -46,9 +47,16 @@ public class ArrivalsListActivity extends AppCompatActivity {
         private Intent mIntent;
 
         public Builder(Context context, String stopId) {
+            this(context, stopId, null);
+        }
+
+        public Builder(Context context, String stopId, String discussionTitle) {
             mContext = context;
             mIntent = new Intent(context, ArrivalsListActivity.class);
             mIntent.setData(Uri.withAppendedPath(ObaContract.Stops.CONTENT_URI, stopId));
+            if (discussionTitle != null) {
+                mIntent.putExtra(ArrivalsListFragment.DISCUSSION, discussionTitle);
+            }
         }
 
         /**
@@ -108,6 +116,14 @@ public class ArrivalsListActivity extends AppCompatActivity {
         new Builder(context, stopId).start();
     }
 
+    public static void start(Context context, String stopId, String stopName, String stopDirection,
+                             String discussionTitle) {
+        new Builder(context, stopId, discussionTitle)
+                .setStopName(stopName)
+                .setStopDirection(stopDirection)
+                .start();
+    }
+
     /**
      * @param stop   the ObaStop to be used
      * @param routes a HashMap of all route display names that serve this stop - key is routeId
@@ -123,6 +139,7 @@ public class ArrivalsListActivity extends AppCompatActivity {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
         UIUtils.setupActionBar(this);
+
 
         FragmentManager fm = getSupportFragmentManager();
 

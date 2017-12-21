@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2010-2014 Paul Watts (paulcwatts@gmail.com)
     and individual contributors.
+    Copyright (c) 2017 Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,6 +53,8 @@
     <string name="preference_key_trip_plan_avoid_stairs">preference_trip_plan_avoid_stairs</string>
     <string name="preference_key_notification_sound">preference_notification_sound</string>
     <string name="preference_key_preference_vibrate_allowed">preference_vibrate_allowed</string>
+    <string name="preference_key_social_category">preference_category_social</string>
+    <string name="preference_key_social">preference_social</string>
 
     <!-- Regions API URL -->
     <string name="regions_api_url">http://regions.onebusaway.org/regions-v3.json</string>
@@ -169,6 +172,18 @@
     <string name="analytics_label_floating_bike_marker_clicked">Pressed floating bike marker</string>
     <string name="analytics_label_bike_station_balloon_clicked">Pressed bike station balloon</string>
     <string name="analytics_label_floating_bike_balloon_clicked">Pressed floating bike balloon</string>
+
+    <!-- Analytics for social -->
+    <string name="analytics_label_button_press_social_sign_in">Clicked Social Sign In</string>
+    <string name="analytics_label_button_press_social_profile">Clicked Social Profile</string>
+    <string name="analytics_label_button_press_social_popular">Clicked Social Popular Feed</string>
+    <string name="analytics_label_button_press_social_pins">Clicked Social Pins</string>
+    <string name="analytics_label_button_press_social_activity_feed">Clicked Social Activity Feed</string>
+    <string name="analytics_label_button_press_social_settings">Clicked Social Settings</string>
+    <string name="analytics_label_button_press_social_stop">Clicked Social Stop Arrivals Header</string>
+    <string name="analytics_label_button_press_social_route_options">Clicked Social Route Options</string>
+    <string name="analytics_label_button_press_social_route_style_b">Clicked Social Route Style B Card</string>
+
     <!-- General strings -->
     <string name="http_prefix">http://</string>
 

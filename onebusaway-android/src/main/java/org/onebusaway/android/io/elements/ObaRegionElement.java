@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2012-2013 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +16,6 @@
  * limitations under the License.
  */
 package org.onebusaway.android.io.elements;
-
 
 import java.util.Arrays;
 
@@ -170,6 +171,8 @@ public class ObaRegionElement implements ObaRegion {
 
     private final boolean supportsOtpBikeshare;
 
+    private final boolean supportsEmbeddedSocial;
+
     ObaRegionElement() {
         id = 0;
         regionName = "";
@@ -189,6 +192,7 @@ public class ObaRegionElement implements ObaRegion {
         otpBaseUrl = "";
         otpContactEmail = "";
         supportsOtpBikeshare = false;
+        supportsEmbeddedSocial = false;
     }
 
     public ObaRegionElement(long id,
@@ -208,7 +212,8 @@ public class ObaRegionElement implements ObaRegion {
                             String stopInfoUrl,
                             String otpBaseUrl,
                             String otpContactEmail,
-                            boolean supportsOtpBikeshare ) {
+                            boolean supportsOtpBikeshare,
+                            boolean supportsEmbeddedSocial) {
         this.id = id;
         this.regionName = name;
         this.active = active;
@@ -227,6 +232,7 @@ public class ObaRegionElement implements ObaRegion {
         this.otpBaseUrl = otpBaseUrl;
         this.otpContactEmail = otpContactEmail;
         this.supportsOtpBikeshare = supportsOtpBikeshare;
+        this.supportsEmbeddedSocial = supportsEmbeddedSocial;
     }
 
     @Override
@@ -320,6 +326,11 @@ public class ObaRegionElement implements ObaRegion {
     }
 
     @Override
+    public boolean getSupportsEmbeddedSocial() {
+        return supportsEmbeddedSocial;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -370,6 +381,7 @@ public class ObaRegionElement implements ObaRegion {
                 ", otpBaseUrl='" + otpBaseUrl + '\'' +
                 ", otpContactEmail='" + otpContactEmail + '\'' +
                 ", supportsOtpBikeshare='" + supportsOtpBikeshare + '\'' +
+                ", supportsEmbeddedSocial=" + supportsEmbeddedSocial + '\'' +
                 '}';
     }
 }

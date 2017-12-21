@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2010-2015 Brian Ferris (bdferris@onebusaway.org), University of South Florida
- * and individual contributors
+ * Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+ * University of South Florida (sjbarbeau@gmail.com),
+ * Microsoft Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,8 @@ package org.onebusaway.android.ui;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -25,6 +28,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.region.ObaRegionsTask;
 import org.onebusaway.android.util.BuildFlavorUtils;
+import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.ShowcaseViewUtils;
 
 import android.content.DialogInterface;
@@ -125,6 +129,30 @@ public class PreferencesActivity extends PreferenceActivity
 
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
+
+        if (EmbeddedSocialUtils.isSocialEnabled(this)) {
+            Preference socialPref = findPreference(getString(R.string.preference_key_social));
+
+            if (EmbeddedSocial.isSignedIn()) {
+                socialPref.setSummary(R.string.preferences_screen_social_summary_signed_in);
+            }
+
+            socialPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_settings));
+
+                    EmbeddedSocial.launchOptionsActivity(PreferencesActivity.this);
+                    return true;
+                }
+            });
+        } else {
+            // Social is not enabled so don't show related preferences
+            getPreferenceScreen().removePreference(findPreference(getString(R.string.preference_key_social_category)));
+        }
 
         SharedPreferences settings = Application.getPrefs();
         mAutoSelectInitialValue = settings

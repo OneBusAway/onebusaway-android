@@ -196,6 +196,7 @@
         <item>\u0020bus\u0020</item> <!-- Include spaces to not match as part of another word -->
         <item>stop</item>
         <item>route/trip is missing</item>
+        <item>passenger</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">

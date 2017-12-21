@@ -122,7 +122,9 @@
         <b>Improved shortcuts</b>
         - New home screen icons for stop/route/recents, Android 8.0 compatibility\n&#8226;\u0020
         <b>Sort reminders</b>
-        - Order your reminders by departure time or name
+        - Order your reminders by departure time or name\n&#8226;\u0020
+        <b>Bug fixes</b>
+        - See http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>

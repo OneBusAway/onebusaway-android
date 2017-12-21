@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2013-2017 The Android Open Source Project,
+ * Microsoft Corporation
  *
  * https://github.com/googlesamples/android-AppRestrictions/blob/master/Application/src/main/java/com/example/android/apprestrictions/GetRestrictionsReceiver.java
  *

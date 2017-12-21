@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
  *
+ * https://github.com/googlesamples/android-AppRestrictions/blob/master/Application/src/main/java/com/example/android/apprestrictions/GetRestrictionsReceiver.java
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at

@@ -18,18 +18,9 @@
 import groovy.swing.SwingBuilder
 import org.apache.tools.ant.filters.ConcatFilter
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
-    }
-}
 apply plugin: 'com.android.application'
 
 repositories {
-    jcenter()
     maven {
         // OBA Releases - for comparator to sort alphanumeric routes
         url "http://nexus.onebusaway.org/nexus/content/repositories/releases"
@@ -46,10 +37,14 @@ repositories {
         // for testlib
         url "http://dl.bintray.com/acrowntest/test"
     }
-    maven {
-        url 'https://maven.google.com/'
-        name 'Google'
-    }
+}
+
+ext {
+    /**
+     * Define Android support library version here for all components.  The major version number
+     * should also always match android.compileSdkVersion below.
+     */
+    supportLibVersion = "26.1.0"
 }
 
 android {
@@ -61,6 +56,8 @@ android {
         targetSdkVersion 21
         versionCode 86
         versionName "2.3.1"
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     /**
@@ -283,10 +280,9 @@ android {
         }
         // Append the version name to the end of aligned APKs
         android.applicationVariants.all { variant ->
-            variant.outputs.each { output ->
+            variant.outputs.all { output ->
                 def file = output.outputFile
-                output.outputFile = new File(file.parent,
-                        file.name.replace(".apk", "-v" + versionName + ".apk"))
+                outputFileName = "${variant.name}-v${variant.versionName}.apk"
             }
         }
     }
@@ -373,41 +369,41 @@ tasks.whenTaskAdded { theTask ->
 
 dependencies {
     // Google Play Services Analytics (we need this on Amazon flavor too)
-    compile('com.google.android.gms:play-services-analytics:9.4.0') {
+    implementation('com.google.android.gms:play-services-analytics:9.4.0') {
         exclude module: 'play-services-ads' // See #342
     }
     // Google Play Services Location (we need this on Amazon flavor too)
-    compile 'com.google.android.gms:play-services-location:9.4.0'
+    implementation 'com.google.android.gms:play-services-location:9.4.0'
     // Support libraries
-    compile 'com.android.support:cardview-v7:26.1.0'
-    compile 'com.android.support:design:26.1.0'
-    compile 'commons-io:commons-io:2.4'
+    implementation "com.android.support:cardview-v7:${supportLibVersion}"
+    implementation "com.android.support:design:${supportLibVersion}"
+    implementation 'commons-io:commons-io:2.4'
     // Open311 client library
-    compile 'edu.usf.cutr:open311client:1.0.9'
+    implementation 'edu.usf.cutr:open311client:1.0.9'
     // JSON data binding for OBA REST API responses
-    compile 'com.fasterxml.jackson.core:jackson-core:2.6.2'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     // Bottom sliding panel
-    compile 'com.sothree.slidinguppanel:library:3.3.0'
+    implementation 'com.sothree.slidinguppanel:library:3.3.0'
     // For floating action button speed dial
-    compile ('uk.co.markormesher:android-fab:1.3.4') {
+    implementation ('uk.co.markormesher:android-fab:1.3.4') {
         exclude group: 'com.android.support'
     }
     // For sorting alphanumeric route names
-    compile 'org.onebusaway.util:comparators:1.0.0'
+    implementation 'org.onebusaway.util:comparators:1.0.0'
     // For tutorial (ShowcaseView) library
-    compile 'com.github.amlcurran.showcaseview:library:5.4.3'
+    implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     // POJOs used for full data-binding via Jackson
-    compile 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
+    implementation 'edu.usf.cutr.opentripplanner.android:opentripplanner-pojos:1.0.0-SNAPSHOT'
     // Google Play Services Maps (only for Google flavor)
-    googleCompile 'com.google.android.gms:play-services-maps:9.4.0'
+    googleImplementation 'com.google.android.gms:play-services-maps:9.4.0'
     // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
-    googleCompile 'com.google.android.gms:play-services-places:9.4.0'
+    googleImplementation 'com.google.android.gms:play-services-places:9.4.0'
     // Amazon Maps (only for Amazon flavor)
-    amazonCompile 'com.amazon.android:amazon-maps-api:2.0'
-
-    compile('com.acrowntest.test:sdk:0.0.37:release@aar') {
+    amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
+    // Embedded Social
+    implementation('com.acrowntest.test:sdk:0.0.37:release@aar') {
         transitive = true;
     }
 }

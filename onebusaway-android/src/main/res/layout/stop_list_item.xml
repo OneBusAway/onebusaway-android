@@ -63,7 +63,7 @@
 
     <ImageButton
             android:id="@+id/stop_discussion"
-            android:src="@drawable/es_ic_comment"
+            android:src="@drawable/es_oba_ic_comment"
             android:contentDescription="@string/join_discussion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

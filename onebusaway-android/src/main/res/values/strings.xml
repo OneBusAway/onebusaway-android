@@ -1096,13 +1096,13 @@
     <string name="floating_bike_title">Tap to reserve this bike</string>
 
     <!-- Social -->
-    <string name="embedded_social_restriction">Enable social features</string>
-    <string name="es_missing_stop_conversation">Social discussion not yet available for this stop</string>
-    <string name="es_missing_route_conversation">Social discussion not yet available for this route</string>
-    <string name="es_msg_general_create_user_success">Created Embedded Social account</string>
-    <string name="es_msg_general_signin_success">Signed into Embedded Social</string>
-    <string name="es_msg_general_signout_success">Signed out of Embedded Social</string>
-    <string name="es_msg_general_account_deleted">Embedded Social account deleted</string>
+    <string name="embedded_social_restriction">Habilitar funciones sociales</string>
+    <string name="es_missing_stop_conversation">No hay discusiones sociales aún disponibles para esta parada</string>
+    <string name="es_missing_route_conversation">No hay discusiones sociales aún disponibles para esta ruta</string>
+    <string name="es_msg_general_create_user_success">Cuenta Social Integrada creada</string>
+    <string name="es_msg_general_signin_success">Sesión Iniciada en Social Integrada</string>
+    <string name="es_msg_general_signout_success">Sesión Cerrada en Social Integrada</string>
+    <string name="es_msg_general_account_deleted">Cuenta Social Integrada eliminada</string>
 
 
 </resources>

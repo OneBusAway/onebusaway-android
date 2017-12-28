@@ -35,6 +35,7 @@
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
+    <string name="navdrawer_item_open_source">Visitanos en GitHub</string>
     <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
     <string name="navdrawer_item_bike">Bicicleta</string>
     <string name="navdrawer_item_social_overflow_closed">Más ...</string>
@@ -1103,6 +1104,4 @@
     <string name="es_msg_general_signin_success">Sesión Iniciada en Social Integrada</string>
     <string name="es_msg_general_signout_success">Sesión Cerrada en Social Integrada</string>
     <string name="es_msg_general_account_deleted">Cuenta Social Integrada eliminada</string>
-
-
 </resources>

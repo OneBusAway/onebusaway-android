@@ -16,7 +16,7 @@
      limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                style="@style/ListItem"
+                xmlns:app="http://schemas.android.com/apk/res-auto" style="@style/ListItem"
                 android:id="@+id/stop_list_container"
                 android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
@@ -63,7 +63,7 @@
 
     <ImageButton
             android:id="@+id/stop_discussion"
-            android:src="@drawable/es_oba_ic_comment"
+            app:srcCompat="@drawable/es_oba_ic_comment"
             android:contentDescription="@string/join_discussion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

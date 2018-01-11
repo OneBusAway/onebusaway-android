@@ -24,7 +24,6 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
-import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -736,8 +735,7 @@ public class ArrivalsListFragment extends ListFragment
         List<Integer> icons = UIUtils.buildTripOptionsIcons(getContext(), isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        final boolean isSocialEnabled = currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(getContext());
+        final boolean isSocialEnabled = EmbeddedSocialUtils.isSocialEnabled(getContext());
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {

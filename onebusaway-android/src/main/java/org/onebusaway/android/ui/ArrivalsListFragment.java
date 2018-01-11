@@ -24,6 +24,7 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.io.ObaApi;
 import org.onebusaway.android.io.elements.ObaArrivalInfo;
 import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRegion;
 import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaSituation;
 import org.onebusaway.android.io.elements.ObaStop;
@@ -808,8 +809,11 @@ public class ArrivalsListFragment extends ListFragment
      * @param routeId route ID to use
      */
     public void openRouteDiscussion(String routeId) {
-        long regionId = Application.get().getCurrentRegion().getId();
-        String discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(regionId, routeId);
+        String discussionTitle = "";
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(region.getId(), routeId);
+        }
         openDiscussion(discussionTitle);
     }
 
@@ -817,8 +821,11 @@ public class ArrivalsListFragment extends ListFragment
      * Opens the discussion item related to the currently selected stop
      */
     public void openStopDiscussion() {
-        long regionId = Application.get().getCurrentRegion().getId();
-        String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, getStopId());
+        String discussionTitle = "";
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(region.getId(), getStopId());
+        }
         openDiscussion(discussionTitle);
     }
 

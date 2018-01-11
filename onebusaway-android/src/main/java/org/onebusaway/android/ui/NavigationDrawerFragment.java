@@ -664,9 +664,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     private boolean isSocialActivityItem(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_POPULAR ||
-                itemId == NAVDRAWER_ITEM_PINS ||
-                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
                 itemId == NAVDRAWER_ITEM_SIGN_IN;
     }
 
@@ -678,7 +675,10 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean isHomeActivity(int itemId) {
         return itemId == NAVDRAWER_ITEM_NEARBY ||
                 itemId == NAVDRAWER_ITEM_STARRED_STOPS ||
-                itemId == NAVDRAWER_ITEM_MY_REMINDERS;
+                itemId == NAVDRAWER_ITEM_MY_REMINDERS ||
+                itemId == NAVDRAWER_ITEM_POPULAR ||
+                itemId == NAVDRAWER_ITEM_PINS ||
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED;
     }
 
 

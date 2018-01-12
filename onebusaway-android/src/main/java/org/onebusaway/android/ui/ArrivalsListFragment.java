@@ -736,8 +736,7 @@ public class ArrivalsListFragment extends ListFragment
         List<Integer> icons = UIUtils.buildTripOptionsIcons(getContext(), isRouteFavorite, hasUrl);
 
         ListAdapter adapter = new ArrayAdapterWithIcon(getActivity(), items, icons);
-        ObaRegion currentRegion = Application.get().getCurrentRegion();
-        final boolean isSocialEnabled = currentRegion != null && EmbeddedSocialUtils.isSocialEnabled(getContext());
+        final boolean isSocialEnabled = EmbeddedSocialUtils.isSocialEnabled(getContext());
 
         builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -810,8 +809,11 @@ public class ArrivalsListFragment extends ListFragment
      * @param routeId route ID to use
      */
     public void openRouteDiscussion(String routeId) {
-        long regionId = Application.get().getCurrentRegion().getId();
-        String discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(regionId, routeId);
+        String discussionTitle = "";
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            discussionTitle = EmbeddedSocialUtils.createRouteDiscussionTitle(region.getId(), routeId);
+        }
         openDiscussion(discussionTitle);
     }
 
@@ -819,8 +821,11 @@ public class ArrivalsListFragment extends ListFragment
      * Opens the discussion item related to the currently selected stop
      */
     public void openStopDiscussion() {
-        long regionId = Application.get().getCurrentRegion().getId();
-        String discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(regionId, getStopId());
+        String discussionTitle = "";
+        ObaRegion region = Application.get().getCurrentRegion();
+        if (region != null) {
+            discussionTitle = EmbeddedSocialUtils.createStopDiscussionTitle(region.getId(), getStopId());
+        }
         openDiscussion(discussionTitle);
     }
 

@@ -39,14 +39,6 @@ repositories {
     }
 }
 
-ext {
-    /**
-     * Define Android support library version here for all components.  The major version number
-     * should also always match android.compileSdkVersion below.
-     */
-    supportLibVersion = "26.1.0"
-}
-
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
@@ -375,8 +367,8 @@ dependencies {
     // Google Play Services Location (we need this on Amazon flavor too)
     implementation 'com.google.android.gms:play-services-location:9.4.0'
     // Support libraries
-    implementation "com.android.support:cardview-v7:${supportLibVersion}"
-    implementation "com.android.support:design:${supportLibVersion}"
+    implementation "com.android.support:cardview-v7:26.1.0"
+    implementation "com.android.support:design:26.1.0"
     implementation 'commons-io:commons-io:2.4'
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'

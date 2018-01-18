@@ -27,6 +27,9 @@ android:
     - extra-google-m2repository
     - extra-android-m2repository
 
+before_install:
+  - yes | sdkmanager "platforms;android-27"
+
 # Only run tests on the main two OneBusAway brand flavors
 script:
   - ./gradlew assembleObaGoogleDebug assembleObaAmazonDebug -PdisablePreDex

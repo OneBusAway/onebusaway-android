@@ -218,7 +218,7 @@
 
             <ImageButton
                     android:id="@+id/stop_discussion"
-                    app:srcCompat="@drawable/es_oba_ic_comment"
+                    app:srcCompat="@drawable/es_ic_comment"
                     android:contentDescription="@string/join_discussion"
                     android:background="?attr/selectableItemBackground"
                     android:maxHeight="14dp"

@@ -29,6 +29,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Base64;
 
 import java.util.HashMap;
@@ -145,6 +146,10 @@ public class EmbeddedSocialUtils {
         }
 
         if (isBuildVersionSupportedBySocial()) {
+            if (!TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
+                // User has entered a custom OBA server API, which overrides the region (see #840)
+                return false;
+            }
             ObaRegion currentRegion = Application.get().getCurrentRegion();
             if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
                 return !isSocialRestricted(context);

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), Benjamin Du (bendu@me.com)
-    and individual contributors.
+<!-- Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com)
+    Benjamin Du (bendu@me.com),
+    Microsoft Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,11 +24,21 @@
     <string name="navdrawer_item_nearby">Cerca</string>
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>
+    <string name="navdrawer_item_profile">Mi Perfil</string>
+    <string name="navdrawer_item_sign_in">Iniciar Sesión</string>
+    <string name="navdrawer_item_your_feed">Mis Publicaciones</string>
+    <string name="navdrawer_item_search">Buscar</string>
+    <string name="navdrawer_item_popular">Popular</string>
+    <string name="navdrawer_item_pin">Mis Guardados</string>
+    <string name="navdrawer_item_activity_feed">Actividad Reciente</string>
+    <string name="navdrawer_item_options">Opciones</string>
     <string name="navdrawer_item_settings">Configuración</string>
     <string name="navdrawer_item_help">Ayuda</string>
     <string name="navdrawer_item_send_feedback">Enviar comentarios</string>
     <string name="navdrawer_item_plan_trip">Planea un Viaje (beta)</string>
     <string name="navdrawer_item_bike">Bicicleta</string>
+    <string name="navdrawer_item_social_overflow_closed">Más ...</string>
+    <string name="navdrawer_item_social_overflow_open">Menos ...</string>
 
     <!-- Permissions -->
     <string name="trip_service_perm_label">Iniciar el servicio del viaje</string>
@@ -105,12 +117,14 @@
     <string name="main_help_title">Ayuda</string>
     <string name="main_help_whatsnew_title">Novedades en esta versión</string>
     <string name="main_help_whatsnew">&#8226;\u0020
-        <b>Bicicleta compartida (solo en Tampa)</b>
-        - ¡Mirá bicicletas y estaciones en el mapa y en el planeador de viajes!\n&#8226;\u0020
-        <b>Notificación de recordatorios personalizados</b>
-        - ¡Cambia el nombre, sonido y si debe vibrar (mira en Configuración)!\n&#8226;\u0020
-        <b>Arregló de errores</b>
-        - Mirá en http://bit.ly/oba-android-releases
+        <b>Discusiones Sociales</b>
+        - Chatea con otros usuarios de OneBusAway sobre paradas y rutas\n&#8226;\u0020
+        <b>Mejoras en los Atajos</b>
+        - Nuevos iconos de la pantalla de inicio para paradas/rutas/recientes, compatibilidad Android 8.0\n&#8226;\u0020
+        <b>Ordenar Recordatorias</b>
+        - Ordena tus recordatorios por tiempo de salida o nombre\n&#8226;\u0020
+        <b>Arreglo de errores</b>
+        - Mirá http://bit.ly/oba-android-releases
     </string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
@@ -374,8 +388,8 @@
     <string name="search_stop_hint">Ingrese un número de parada</string>
     <string name="search_route_hint">Ingrese un número/nombre de ruta</string>
 
-    <string name="route_shortcut">Ruta de OneBusAway</string>
-    <string name="stop_shortcut">Parada de OneBusAway</string>
+    <string name="route_shortcut">Ruta</string>
+    <string name="stop_shortcut">Parada</string>
     <string name="recent_stops_shortcut">Paradas recientes</string>
     <string name="recent_routes_shortcut">Rutas recientes</string>
     <string name="starred_stops_shortcut">Paradas favoritas</string>
@@ -421,6 +435,10 @@
     <string name="trip_stat_lessthanone_departing">¡La ruta %s está saliendo ahora!</string>
     <string name="trip_stat_arriving">¡La ruta %1$s está llegando en %2$d min!</string>
     <string name="trip_stat_departing">¡La ruta %1$s está saliendo en %2$d min!</string>
+
+    <!-- Embedded Social -->
+    <string name="social">Social</string>
+    <string name="join_discussion">Ingresa a la discución</string>
 
     <!-- Report problem -->
     <string name="report_problem_comment_hint">Descripción del problema (opcional)</string>
@@ -528,6 +546,7 @@
     <string name="preferences_category_display">Pantalla</string>
     <string name="preferences_category_backup">Respaldar</string>
     <string name="preferences_category_notifications">Notificaciones</string>
+    <string name="preferences_category_social">Social</string>
     <string name="preferences_category_advanced">Avanzado</string>
     <string name="preferences_screen_advanced_summary">Profundizar en aspectos prácticos</string>
     <string name="preferences_category_about">Acerca de</string>
@@ -584,6 +603,9 @@
     <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
     <string name="preferences_restore_summary">Restaurar del respaldo anterior</string>
+    <string name="preferences_screen_social_title">Social Integrado</string>
+    <string name="preferences_screen_social_summary_signed_in">Salir, Políticas de Privacidad, Términos y Condiciones, cuentas vinculadas, eliminar cuenta</string>
+    <string name="preferences_screen_social_summary_signed_out">Iniciar sesión, Políticas de Privacidad, Términos y Condiciones</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
@@ -788,7 +810,8 @@
         "* Charles Bond\n"
         "* Hillsborough Area Regional Transit (por Simon Jacobs de Cambridge Systematics)\n"
         "* Bridgette Eichelberger\n"
-        "* Rodrigo Carvalho (Google Summer of Code 2017)\n\n"
+        "* Rodrigo Carvalho (Google Summer of Code 2017)\n"
+        "* Steve Moritani\n\n"
 
         "¿Quieres contribuir a esta aplicación? Revísalo tú mismo en Github en
         https://github.com/OneBusAway/onebusaway-android.\n\n"
@@ -1071,5 +1094,15 @@
     <string name="layers_speedial_bikeshare_label">Bicicleta Compartida</string>
     <string name="bike_station_title">Toca para reservar una bicicleta</string>
     <string name="floating_bike_title">Toca para reservar esta bicicleta</string>
+
+    <!-- Social -->
+    <string name="embedded_social_restriction">Habilitar funciones sociales</string>
+    <string name="es_missing_stop_conversation">No hay discusiones sociales aún disponibles para esta parada</string>
+    <string name="es_missing_route_conversation">No hay discusiones sociales aún disponibles para esta ruta</string>
+    <string name="es_msg_general_create_user_success">Cuenta Social Integrada creada</string>
+    <string name="es_msg_general_signin_success">Sesión Iniciada en Social Integrada</string>
+    <string name="es_msg_general_signout_success">Sesión Cerrada en Social Integrada</string>
+    <string name="es_msg_general_account_deleted">Cuenta Social Integrada eliminada</string>
+
 
 </resources>

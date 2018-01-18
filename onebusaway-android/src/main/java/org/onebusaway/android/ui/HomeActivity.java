@@ -22,6 +22,9 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import org.onebusaway.android.BuildConfig;
@@ -198,6 +201,12 @@ public class HomeActivity extends AppCompatActivity
     BaseMapFragment mMapFragment;
 
     MyRemindersFragment mMyRemindersFragment;
+
+    PopularFeedFragment mMyPopularFeedFragment;
+
+    PinsFragment mMyPinsFragment;
+
+    ActivityFeedFragment mActivityFeedFragment;
 
     /**
      * Control which menu options are shown per fragment menu groups
@@ -484,25 +493,34 @@ public class HomeActivity extends AppCompatActivity
                 EmbeddedSocial.launchProfileActivity(this);
                 break;
             case NAVDRAWER_ITEM_POPULAR:
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_popular));
-                EmbeddedSocial.launchPopularActivity(this);
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
+                    showPopularFeedFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_popular));
+                }
                 break;
             case NAVDRAWER_ITEM_PINS:
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_pins));
-                EmbeddedSocial.launchPinsActivity(this);
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PINS) {
+                    showPinsFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_pins));
+                }
                 break;
             case NAVDRAWER_ITEM_ACTIVITY_FEED:
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_activity_feed));
-                EmbeddedSocial.launchActivityFeedActivity(this);
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_ACTIVITY_FEED) {
+                    showActivityFeedFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_activity_feed));
+                }
                 break;
             case NAVDRAWER_ITEM_SETTINGS:
                 Intent preferences = new Intent(HomeActivity.this, PreferencesActivity.class);
@@ -547,6 +565,9 @@ public class HomeActivity extends AppCompatActivity
          */
         hideStarredStopsFragment();
         hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -593,6 +614,9 @@ public class HomeActivity extends AppCompatActivity
         hideMapFragment();
         hideReminderFragment();
         hideSlidingPanel();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
         mShowArrivalsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -625,6 +649,9 @@ public class HomeActivity extends AppCompatActivity
         hideStarredStopsFragment();
         hideMapFragment();
         hideSlidingPanel();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
         /**
@@ -645,6 +672,111 @@ public class HomeActivity extends AppCompatActivity
         }
         fm.beginTransaction().show(mMyRemindersFragment).commit();
         setTitle(getResources().getString(R.string.navdrawer_item_my_reminders));
+    }
+
+    private void showPopularFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyPopularFeedFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyPopularFeedFragment = (PopularFeedFragment) fm
+                    .findFragmentByTag(PopularFeedFragment.TAG);
+
+            if (mMyPopularFeedFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new PopularFeedFragment");
+                mMyPopularFeedFragment = new PopularFeedFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyPopularFeedFragment,
+                        PopularFeedFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyPopularFeedFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_popular));
+    }
+
+    private void showPinsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hideActivityFeedFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyPinsFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyPinsFragment = (PinsFragment) fm
+                    .findFragmentByTag(PinsFragment.TAG);
+
+            if (mMyPinsFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new PinsFragment");
+                mMyPinsFragment = new PinsFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyPinsFragment,
+                        PinsFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyPinsFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_pin));
+    }
+
+    private void showActivityFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mActivityFeedFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mActivityFeedFragment = (ActivityFeedFragment) fm
+                    .findFragmentByTag(ActivityFeedFragment.TAG);
+
+            if (mActivityFeedFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new ActivityFeedFragment");
+                mActivityFeedFragment = new ActivityFeedFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mActivityFeedFragment,
+                        ActivityFeedFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mActivityFeedFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_activity_feed));
     }
 
     private void hideMapFragment() {
@@ -670,6 +802,33 @@ public class HomeActivity extends AppCompatActivity
                 .findFragmentByTag(MyRemindersFragment.TAG);
         if (mMyRemindersFragment != null && !mMyRemindersFragment.isHidden()) {
             fm.beginTransaction().hide(mMyRemindersFragment).commit();
+        }
+    }
+
+    private void hidePopularFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyPopularFeedFragment = (PopularFeedFragment) fm.findFragmentByTag(
+                PopularFeedFragment.TAG);
+        if (mMyPopularFeedFragment != null && !mMyPopularFeedFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyPopularFeedFragment).commit();
+        }
+    }
+
+    private void hidePinsFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyPinsFragment = (PinsFragment) fm.findFragmentByTag(
+                PinsFragment.TAG);
+        if (mMyPinsFragment != null && !mMyPinsFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyPinsFragment).commit();
+        }
+    }
+
+    private void hideActivityFeedFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mActivityFeedFragment = (ActivityFeedFragment) fm.findFragmentByTag(
+                ActivityFeedFragment.TAG);
+        if (mActivityFeedFragment != null && !mActivityFeedFragment.isHidden()) {
+            fm.beginTransaction().hide(mActivityFeedFragment).commit();
         }
     }
 

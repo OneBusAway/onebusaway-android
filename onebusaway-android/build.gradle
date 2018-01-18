@@ -46,8 +46,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 86
-        versionName "2.3.1"
+        versionCode 87
+        versionName "2.3.2"
 
         vectorDrawables.useSupportLibrary = true
     }
@@ -395,7 +395,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social
-    implementation('com.acrowntest.test:sdk:0.0.37:release@aar') {
+    implementation('com.acrowntest.test:sdk:0.0.39:release@aar') {
         transitive = true;
     }
 }

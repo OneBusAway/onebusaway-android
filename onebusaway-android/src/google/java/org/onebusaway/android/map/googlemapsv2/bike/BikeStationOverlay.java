@@ -39,7 +39,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.support.v4.content.ContextCompat;
+import android.support.graphics.drawable.VectorDrawableCompat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -192,7 +192,7 @@ public class BikeStationOverlay
         Bitmap bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888);
 
         Canvas c = new Canvas(bitmap);
-        Drawable shape = ContextCompat.getDrawable(Application.get(), R.drawable.bike_marker_small);
+        Drawable shape = VectorDrawableCompat.create(Application.get().getResources(), R.drawable.bike_marker_small, Application.get().getTheme());
         shape.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
         shape.draw(c);
 

@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
@@ -233,7 +234,12 @@ public class TripService extends Service {
 
         AlarmManager alarm =
                 (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Try to cut through Doze so alarm still triggers - See #558
+            alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+        } else {
+            alarm.set(AlarmManager.RTC_WAKEUP, triggerTime, alarmIntent);
+        }
     }
 
     public static void notifyTrip(Context context, Uri alertUri, String notifyTitle, String notifyText) {

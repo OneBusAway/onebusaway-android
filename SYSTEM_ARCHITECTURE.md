@@ -17,7 +17,7 @@ The below system architecture diagrams come from [this Google Drawing](https://d
 
 ## Simple deployment
 
-The simplest way to get started is to deploy a OneBusAway server, which will give you estimated arrival times and server alerts in the app.  Here's the basic system architecture diagram for this configuration:
+The simplest way to get started is to deploy a OneBusAway server, which will give you estimated arrival times and service alerts in the app.  Here's the basic system architecture diagram for this configuration:
 
 ![onebusaway system architecture-basic](https://user-images.githubusercontent.com/928045/32296017-5dd339e4-bf21-11e7-962c-327cf071b5ba.png)
 

@@ -16,7 +16,7 @@
      limitations under the License.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent"
+              android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="@color/stop_info_arrival_list_background"
               android:paddingBottom="2dp"
@@ -109,7 +109,7 @@
 
                     <ImageButton
                             android:id="@+id/route_discussion"
-                            app:srcCompat="@drawable/es_ic_comment"
+                            android:src="@drawable/es_ic_comment"
                             android:contentDescription="@string/join_discussion"
                             android:background="?attr/selectableItemBackground"
                             android:maxHeight="25dp"

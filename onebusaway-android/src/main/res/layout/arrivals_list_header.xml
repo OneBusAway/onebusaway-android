@@ -16,7 +16,7 @@
     limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/arrivals_list_header"
+                android:id="@+id/arrivals_list_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/arrival_header_height_two_arrivals"
                 android:orientation="vertical">
@@ -218,7 +218,7 @@
 
             <ImageButton
                     android:id="@+id/stop_discussion"
-                    app:srcCompat="@drawable/es_ic_comment"
+                    android:src="@drawable/es_ic_comment"
                     android:contentDescription="@string/join_discussion"
                     android:background="?attr/selectableItemBackground"
                     android:maxHeight="14dp"

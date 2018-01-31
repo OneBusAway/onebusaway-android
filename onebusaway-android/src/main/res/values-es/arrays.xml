@@ -193,6 +193,7 @@
         <item>parada</item>
         <item>falta la ruta/viaje</item>
         <item>pasajero</item>
+        <item>onebusaway</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">

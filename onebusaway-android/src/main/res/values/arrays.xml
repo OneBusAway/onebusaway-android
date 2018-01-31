@@ -197,6 +197,7 @@
         <item>stop</item>
         <item>route/trip is missing</item>
         <item>passenger</item>
+        <item>onebusaway</item>
     </string-array>
 
     <string-array name="report_trip_transit_category_keywords">

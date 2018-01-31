@@ -104,6 +104,7 @@
 
     <!-- Social -->
     <color name="es_button_base_gray">#ff999999</color>
+    <color name="es_accent_color">@color/theme_primary</color>
     <color name="es_progressbar">@color/theme_primary</color>
     <color name="es_toolbar_background">@color/theme_primary</color>
     <color name="es_text_primary_dark">@color/header_text_color</color>

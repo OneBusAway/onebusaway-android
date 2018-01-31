@@ -26,8 +26,5 @@
     "twitter" : {
       "loginEnabled" : "false"
     }
-  },
-  "theme" : {
-    "accentColor" : "FF4CAF50"
   }
 }

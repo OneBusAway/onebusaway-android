@@ -395,7 +395,7 @@ dependencies {
     // Amazon Maps (only for Amazon flavor)
     amazonImplementation 'com.amazon.android:amazon-maps-api:2.0'
     // Embedded Social
-    implementation('com.acrowntest.test:sdk:0.0.41:release@aar') {
+    implementation('com.acrowntest.test:sdk:0.0.42:release@aar') {
         transitive = true;
     }
 }

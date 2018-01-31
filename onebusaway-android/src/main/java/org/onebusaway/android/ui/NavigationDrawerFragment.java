@@ -36,7 +36,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -67,11 +66,6 @@ public class NavigationDrawerFragment extends Fragment {
      * Remember the position of the selected item.
      */
     private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
-
-    /**
-     * Remember the visibility of the extra social items.
-     */
-    private static final String IS_OVERFLOW_SHOWN = "is_overflow_shown";
 
     // symbols for navdrawer items (indices must correspond to array below). This is
     // not a list of items that are necessarily *present* in the Nav Drawer; rather,
@@ -105,8 +99,6 @@ public class NavigationDrawerFragment extends Fragment {
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR_SPECIAL = -3;
-
-    private static final int OVERFLOW_INDEX = 6;
 
     // Currently selected navigation drawer item (must be value of one of the constants above)
     private int mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
@@ -165,10 +157,6 @@ public class NavigationDrawerFragment extends Fragment {
     private View mDrawerItemsListContainer;
 
     private View mFragmentContainerView;
-
-    private LinearLayout socialOverflowButton;
-
-    private LinearLayout socialOverflowContainer;
 
     private boolean isSignedIn;
     static boolean firstStart = true;
@@ -483,27 +471,11 @@ public class NavigationDrawerFragment extends Fragment {
 
         if (EmbeddedSocialUtils.isSocialEnabled(getContext()) && isSignedIn) {
             // user is signed in to Embedded Social
-            createSocialOverflow(containerLayout);
             for (int itemId : mNavDrawerItems) {
                 mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);
-                if (isSocialOverflow(itemId)) {
-                    // add to the overflow section
-                    socialOverflowContainer.addView(mNavDrawerItemViews[i]);
-                } else {
-                    containerLayout.addView(mNavDrawerItemViews[i]);
-                }
+                containerLayout.addView(mNavDrawerItemViews[i]);
                 ++i;
             }
-
-            int overflowIndex = OVERFLOW_INDEX;
-            if (mNavDrawerItems.contains(NAVDRAWER_ITEM_PLAN_TRIP)) {
-                // move the overflow menu down if the plan trip option is displayed
-                overflowIndex += 1;
-            }
-
-            // add the overflow menu
-            containerLayout.addView(socialOverflowButton, overflowIndex);
-            containerLayout.addView(socialOverflowContainer, overflowIndex + 1);
         } else {
             // user is not signed in
             for (int itemId : mNavDrawerItems) {
@@ -512,55 +484,6 @@ public class NavigationDrawerFragment extends Fragment {
                 ++i;
             }
         }
-    }
-
-    private void createSocialOverflow(ViewGroup parent) {
-        SharedPreferences sp = Application.getPrefs();
-
-        socialOverflowButton = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.navdrawer_overflow_button, parent, false);
-
-        setSocialOverflowButtonListener();
-        socialOverflowContainer = new LinearLayout(getContext());
-        socialOverflowContainer.setOrientation(LinearLayout.VERTICAL);
-        socialOverflowContainer.setVisibility(View.GONE);
-
-
-        boolean overflowIsShown = sp.getBoolean(IS_OVERFLOW_SHOWN, false);
-        if (overflowIsShown) {
-            openOverflow();
-        } else {
-            closeOverflow();
-        }
-    }
-
-    private void setSocialOverflowButtonListener() {
-        socialOverflowButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SharedPreferences sp = Application.getPrefs();
-                boolean isShown = socialOverflowContainer.isShown();
-                if (isShown) {
-                    closeOverflow();
-                } else {
-                    openOverflow();
-                }
-                sp.edit().putBoolean(IS_OVERFLOW_SHOWN, !isShown).commit();
-            }
-        });
-    }
-
-    private void openOverflow() {
-        ImageView image = (ImageView)socialOverflowButton.findViewById(R.id.es_navigationOverflowButtonImage);
-        image.setImageDrawable(
-                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_less, null));
-        socialOverflowContainer.setVisibility(View.VISIBLE);
-    }
-
-    private void closeOverflow() {
-        ImageView image = (ImageView)socialOverflowButton.findViewById(R.id.es_navigationOverflowButtonImage);
-        image.setImageDrawable(
-                ResourcesCompat.getDrawable(getResources(), R.drawable.ic_expand_more, null));
-        socialOverflowContainer.setVisibility(View.GONE);
     }
 
     private View makeNavDrawerItem(final int itemId, ViewGroup container) {
@@ -665,11 +588,6 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean isSocialActivityItem(int itemId) {
         return itemId == NAVDRAWER_ITEM_PROFILE ||
                 itemId == NAVDRAWER_ITEM_SIGN_IN;
-    }
-
-    private boolean isSocialOverflow(int itemId) {
-        return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED;
     }
 
     private boolean isHomeActivity(int itemId) {

@@ -359,6 +359,13 @@ tasks.whenTaskAdded { theTask ->
     }
 }
 
+// Exclude all classes from dependencies that conflict with Android platform classes (#849)
+configurations {
+    all {
+        exclude group: 'org.json', module: 'json'
+    }
+}
+
 dependencies {
     // Google Play Services Analytics (we need this on Amazon flavor too)
     implementation('com.google.android.gms:play-services-analytics:9.4.0') {

@@ -128,6 +128,14 @@ In order to support certain features in OneBusAway, we need to request various p
 
 ## Troubleshooting
 
+### Building the project takes forever (like, 4 minutes) - what's up?
+
+In your `gradle.properties` file in the root of the project, add:
+
+`org.gradle.jvmargs=-Xmx2048m`
+
+This must be at least 2 Gb to take advantage of Dex In Process.  See [this post](https://medium.com/google-developers/faster-android-studio-builds-with-dex-in-process-5988ed8aa37e) for more info.
+
 ### When running the project, I get a NullPointerException in `BaseMapFragment`, related to `mMap`
 
 You're most likely trying to run the `obaAmazon` build variant on an Google Android device, or the `obaGoogle` build flavor on an Amazon device.

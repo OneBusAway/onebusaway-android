@@ -259,11 +259,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            minifyEnabled true
-            useProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
-        }
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
@@ -272,9 +267,11 @@ android {
         }
         // Append the version name to the end of aligned APKs
         android.applicationVariants.all { variant ->
-            variant.outputs.all { output ->
-                def file = output.outputFile
-                outputFileName = "${variant.name}-v${variant.versionName}.apk"
+            if (variant.buildType.name == "release") {
+                variant.outputs.all { output ->
+                    def file = output.outputFile
+                    outputFileName = "${variant.name}-v${variant.versionName}.apk"
+                }
             }
         }
     }

@@ -44,7 +44,7 @@ ext {
     compileSdkVersion = 27
     // supportLibVersion must have the same major version number as compileSdkVersion
     supportLibVersion = "27.0.2"
-    playServicesVersion = "11.6.2"
+    playServicesVersion = "11.8.0"
 }
 
 android {

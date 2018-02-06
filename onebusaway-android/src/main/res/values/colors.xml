@@ -116,4 +116,8 @@
     <!-- Shortcuts -->
     <color name="shortcut_icon">@color/material_gray</color>
     <color name="shortcut_background">#dfffffff</color>
+
+    <!-- Bikeshare marker -->
+    <color name="bikeshare_small_marker_dark">#3a4677</color>
+    <color name="bikeshare_small_marker_light">#46558f</color>
 </resources>

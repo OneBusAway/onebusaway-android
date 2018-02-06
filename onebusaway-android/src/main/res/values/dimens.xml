@@ -102,5 +102,14 @@
 
     <!-- Bikeshare markers -->
     <dimen name="bikeshare_small_marker_size">15dp</dimen>
-
+    <dimen name="map_small_bike_icon_size">19dp</dimen>
+    <dimen name="map_small_bike_icon_size_fill">15dp</dimen>
+    <!-- Shadows -->
+    <dimen name="map_small_bike_shadow_size_1">@dimen/map_stop_icon_size</dimen>
+    <dimen name="map_small_bike_shadow_size_2">@dimen/map_stop_icon_size</dimen>
+    <!-- Below shadow sizes should each increment map_small_bike_icon_size by 1, to form incremental shadows -->
+    <dimen name="map_small_bike_shadow_size_3">19dp</dimen>
+    <dimen name="map_small_bike_shadow_size_4">20dp</dimen>
+    <dimen name="map_small_bike_shadow_size_5">21dp</dimen>
+    <dimen name="map_small_bike_shadow_size_6">22dp</dimen>
 </resources>

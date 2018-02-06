@@ -127,7 +127,7 @@
     <string name="analytics_label_button_press_about">Clicked About</string>
     <string name="analytics_label_button_press_help">Clicked Help Link</string>
     <string name="analytics_label_button_press_feedback">Clicked Send Feedback</string>
-    <string name="analytics_label_button_press_open_source">Open-source</string>
+    <string name="analytics_label_button_press_open_source">Visit us on GitHub</string>
     <string name="analytics_label_button_press_stopinfo">Loaded StopInfo from\u0020</string>
     <string name="analytics_label_button_press_stop_details">Clicked Stop Details</string>
     <string name="analytics_label_button_press_map_icon">Clicked MapStopIcon</string>

@@ -48,6 +48,9 @@ ext {
 }
 
 android {
+    dexOptions {
+        preDexLibraries true
+    }
     compileSdkVersion this.ext.compileSdkVersion
     buildToolsVersion "26.0.2"
 
@@ -57,6 +60,7 @@ android {
         versionCode 87
         versionName "2.3.2"
 
+        multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -267,11 +271,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            minifyEnabled true
-            useProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
-        }
         release {
             signingConfig signingConfigs.release
             minifyEnabled true

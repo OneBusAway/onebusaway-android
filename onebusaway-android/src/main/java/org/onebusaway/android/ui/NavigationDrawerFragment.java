@@ -94,6 +94,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
 
+    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -116,7 +118,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_pin,
             R.string.navdrawer_item_activity_feed,
             R.string.navdrawer_item_profile,
-            R.string.navdrawer_item_sign_in
+            R.string.navdrawer_item_sign_in,
+            R.string.navdrawer_item_open_source
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -132,7 +135,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_pin, // Pinned discussions
             R.drawable.ic_drawer_activity_feed, // Social activity feed
             R.drawable.ic_username, // My profile
-            R.drawable.ic_username // Sign in
+            R.drawable.ic_username, // Sign in
+            R.drawable.ic_drawer_github // Open-source
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -450,6 +454,10 @@ public class NavigationDrawerFragment extends Fragment {
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
 
+        mNavDrawerItems.add(NAVDRAWER_ITEM_OPEN_SOURCE);
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
+
         mNavDrawerItems.add(NAVDRAWER_ITEM_SETTINGS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_HELP);
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEND_FEEDBACK);
@@ -582,7 +590,8 @@ public class NavigationDrawerFragment extends Fragment {
         return itemId == NAVDRAWER_ITEM_SETTINGS ||
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
-                itemId == NAVDRAWER_ITEM_PLAN_TRIP;
+                itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
+                itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
     }
 
     private boolean isSocialActivityItem(int itemId) {

@@ -61,6 +61,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -99,6 +100,7 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_NEARBY;
+import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_OPEN_SOURCE;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PINS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_PLAN_TRIP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_POPULAR;
@@ -545,6 +547,14 @@ public class HomeActivity extends AppCompatActivity
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_feedback));
                 goToSendFeedBack();
+                break;
+            case NAVDRAWER_ITEM_OPEN_SOURCE:
+                ObaAnalytics.reportEventWithCategory(ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                        getString(R.string.analytics_action_button_press),
+                        getString(R.string.analytics_label_button_press_open_source));
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(getString(R.string.open_source_github)));
+                startActivity(i);
                 break;
         }
         invalidateOptionsMenu();

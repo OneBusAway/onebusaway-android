@@ -416,6 +416,8 @@ dependencies {
     implementation('com.acrowntest.test:sdk:0.0.42:release@aar') {
         transitive = true;
     }
+    // Required to support multidex for minSdkVersion <= 20
+    implementation 'com.android.support:multidex:1.0.1'
 }
 
 // Dependencies not directly used in this project, but used by dependencies that we are using

@@ -47,6 +47,7 @@ import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationManager;
 import android.preference.PreferenceManager;
+import android.support.multidex.MultiDexApplication;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -62,7 +63,7 @@ import edu.usf.cutr.open311client.models.Open311Option;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
-public class Application extends android.app.Application {
+public class Application extends MultiDexApplication {
 
     public static final String APP_UID = "app_uid";
 

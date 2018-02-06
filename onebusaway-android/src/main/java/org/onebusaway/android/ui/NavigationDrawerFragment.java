@@ -94,6 +94,8 @@ public class NavigationDrawerFragment extends Fragment {
 
     protected static final int NAVDRAWER_ITEM_SIGN_IN = 11;
 
+    protected static final int NAVDRAWER_ITEM_OPEN_SOURCE = 12;
+
     protected static final int NAVDRAWER_ITEM_INVALID = -1;
 
     protected static final int NAVDRAWER_ITEM_SEPARATOR = -2;
@@ -116,7 +118,8 @@ public class NavigationDrawerFragment extends Fragment {
             R.string.navdrawer_item_pin,
             R.string.navdrawer_item_activity_feed,
             R.string.navdrawer_item_profile,
-            R.string.navdrawer_item_sign_in
+            R.string.navdrawer_item_sign_in,
+            R.string.navdrawer_item_open_source
     };
 
     // icons for navdrawer items (indices must correspond to above array)
@@ -132,7 +135,25 @@ public class NavigationDrawerFragment extends Fragment {
             R.drawable.ic_drawer_pin, // Pinned discussions
             R.drawable.ic_drawer_activity_feed, // Social activity feed
             R.drawable.ic_username, // My profile
-            R.drawable.ic_username // Sign in
+            R.drawable.ic_username, // Sign in
+            R.drawable.ic_drawer_github // Open-source
+    };
+
+    // Secondary navdrawer item icons that appear align to right of list item layout
+    private static final int[] NAVDRAWER_ICON_SECONDARY_RES_ID = new int[]{
+            0,  // Nearby
+            0, // Starred Stops
+            0, // My reminders
+            0, // Settings
+            0, // Help
+            0, // Send feedback
+            0, // Plan a trip
+            0, // Popular discussions
+            0, // Pinned discussions
+            0, // Social activity feed
+            0, // My profile
+            0, // Sign in
+            R.drawable.ic_drawer_link // Open-source
     };
 
     // list of navdrawer items that were actually added to the navdrawer, in order
@@ -450,6 +471,10 @@ public class NavigationDrawerFragment extends Fragment {
 
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
 
+        mNavDrawerItems.add(NAVDRAWER_ITEM_OPEN_SOURCE);
+
+        mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR);
+
         mNavDrawerItems.add(NAVDRAWER_ITEM_SETTINGS);
         mNavDrawerItems.add(NAVDRAWER_ITEM_HELP);
         mNavDrawerItems.add(NAVDRAWER_ITEM_SEND_FEEDBACK);
@@ -506,10 +531,13 @@ public class NavigationDrawerFragment extends Fragment {
 
         ImageView iconView = (ImageView) view.findViewById(R.id.icon);
         TextView titleView = (TextView) view.findViewById(R.id.title);
+        ImageView secondaryIconView = view.findViewById(R.id.secondary_icon);
         int iconId = itemId >= 0 && itemId < NAVDRAWER_ICON_RES_ID.length ?
                 NAVDRAWER_ICON_RES_ID[itemId] : 0;
         int titleId = itemId >= 0 && itemId < NAVDRAWER_TITLE_RES_ID.length ?
                 NAVDRAWER_TITLE_RES_ID[itemId] : 0;
+        int secondaryIconId = itemId >= 0 && itemId < NAVDRAWER_ICON_SECONDARY_RES_ID.length ?
+                NAVDRAWER_ICON_SECONDARY_RES_ID[itemId] : 0;
 
         // set icon and text
         iconView.setVisibility(iconId > 0 ? View.VISIBLE : View.GONE);
@@ -517,6 +545,12 @@ public class NavigationDrawerFragment extends Fragment {
             iconView.setImageResource(iconId);
         }
         titleView.setText(getString(titleId));
+
+        // Secondary icon
+        secondaryIconView.setVisibility(secondaryIconId > 0 ? View.VISIBLE : View.GONE);
+        if (secondaryIconId > 0) {
+            secondaryIconView.setImageResource(secondaryIconId);
+        }
 
         formatNavDrawerItem(view, itemId, selected);
 
@@ -538,6 +572,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         ImageView iconView = (ImageView) view.findViewById(R.id.icon);
         TextView titleView = (TextView) view.findViewById(R.id.title);
+        ImageView secondaryIconView = (ImageView) view.findViewById(R.id.secondary_icon);
 
         /**
          * Configure its appearance according to whether or not it's selected.  Certain items
@@ -554,6 +589,8 @@ public class NavigationDrawerFragment extends Fragment {
                         getResources().getColor(R.color.navdrawer_text_color_selected));
                 iconView.setColorFilter(
                         getResources().getColor(R.color.navdrawer_icon_tint_selected));
+                secondaryIconView.setColorFilter(
+                        getResources().getColor(R.color.navdrawer_icon_tint_selected));
             }
         } else {
             // Show the category as not highlighted, if its not currently selected
@@ -561,6 +598,7 @@ public class NavigationDrawerFragment extends Fragment {
                 view.setSelected(false);
                 titleView.setTextColor(getResources().getColor(R.color.navdrawer_text_color));
                 iconView.setColorFilter(getResources().getColor(R.color.navdrawer_icon_tint));
+                secondaryIconView.setColorFilter(getResources().getColor(R.color.navdrawer_icon_tint));
             }
         }
     }
@@ -582,7 +620,8 @@ public class NavigationDrawerFragment extends Fragment {
         return itemId == NAVDRAWER_ITEM_SETTINGS ||
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
-                itemId == NAVDRAWER_ITEM_PLAN_TRIP;
+                itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
+                itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
     }
 
     private boolean isSocialActivityItem(int itemId) {

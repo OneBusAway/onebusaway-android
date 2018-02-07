@@ -96,6 +96,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener;
+import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener;
+
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_MY_REMINDERS;
@@ -1690,14 +1693,14 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
+        mLayersFab = findViewById(R.id.layersSpeedDial);
 
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
                 .getLayoutParams();
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
-        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-        mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
+        mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
@@ -1729,19 +1732,19 @@ public class HomeActivity extends AppCompatActivity
                 }, 100);
             }
         });
-        mLayersFab.setMenuAdapter(adapter);
-        mLayersFab.setOnSpeedDialOpenListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+        mLayersFab.setSpeedDialMenuAdapter(adapter);
+        mLayersFab.setOnSpeedMenuDialOpenListener(
+                new SpeedDialMenuOpenListener() {
                     @Override
                     public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
                     }
                 });
-        mLayersFab.setOnSpeedDialCloseListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+        mLayersFab.setOnSpeedDialMenuCloseListener(
+                new SpeedDialMenuCloseListener() {
                     @Override
                     public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
                     }
                 });
         mLayersFab.setContentCoverEnabled(false);

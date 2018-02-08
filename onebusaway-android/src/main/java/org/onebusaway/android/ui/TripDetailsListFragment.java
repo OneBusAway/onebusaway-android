@@ -30,18 +30,29 @@ import org.onebusaway.android.io.request.ObaTripDetailsResponse;
 import org.onebusaway.android.tad.TADService;
 import org.onebusaway.android.util.ArrivalInfoUtils;
 import org.onebusaway.android.util.DBUtil;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
 import org.onebusaway.android.util.UIUtils;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -53,6 +64,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -61,9 +74,19 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
 public class TripDetailsListFragment extends ListFragment {
 
-    private static final String TAG = "TripDetailsListFragment";
+    public static final String TAG = "TripDetailsListFragment";
 
     public static final String TRIP_ID = ".TripId";
 
@@ -84,6 +107,8 @@ public class TripDetailsListFragment extends ListFragment {
     private static final long REFRESH_PERIOD = 60 * 1000;
 
     private static final int TRIP_DETAILS_LOADER = 0;
+    
+    public static final int REQUEST_ENABLE_LOCATION = 1;
 
     private String mTripId;
 
@@ -106,6 +131,9 @@ public class TripDetailsListFragment extends ListFragment {
     private TripDetailsAdapter mAdapter;
 
     private final TripDetailsLoaderCallback mTripDetailsCallback = new TripDetailsLoaderCallback();
+    
+    private LocationRequest mLocationRequest;
+    private Task<LocationSettingsResponse> mResult;
 
     /**
      * Builds an intent used to set the trip and stop for the TripDetailsListFragment directly
@@ -463,42 +491,27 @@ public class TripDetailsListFragment extends ListFragment {
                 bldr.setPositiveButton(R.string.stop_notify_confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // TODO: Handle trips with only two stops.
-                        ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
-                        ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
-                        ObaReferences refs = mTripInfo.getRefs();
-                        String destStopId = timeDest.getStopId();
-                        String lastStopId = timeLast.getStopId();
-                        ObaStop destStop = refs.getStop(destStopId);
-                        ObaStop lastStop = refs.getStop(lastStopId);
+                        //Location should be turned on at this point
 
+                        if(!LocationUtils.isLocationEnabled(getContext())) {
+                            setUpForStartingTADService(pId);
+                            askUserToTurnLocationOn();
+                            return;
+                            // If we don't do it then "Trip gets started" even when user doesn't turn on location, so return from here
+                        }
+                        int locMode = LocationUtils.getLocationMode(getContext());
 
-                        DBUtil.addToDB(lastStop);
-                        DBUtil.addToDB(destStop);
-
-                        Intent serviceIntent = new Intent(getContext(), TADService.class);
-
-                        mDestinationId = destStop.getId();
-                        serviceIntent.putExtra(TADService.DESTINATION_ID, mDestinationId);
-                        serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
-                        serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
-
-                        // update UI
-                        final ListView listView = getListView();
-                        if (mDestinationId != null) {
-                            mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
-                            /*if (mDestinationIndex != null) {
-                                listView.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        listView.setSelection(mDestinationIndex);
-                                    }
-                                });
-                            }*/
+                       /*  If location is already on but not on "High Accuracy" mode, ask user to do so!
+                            If the user hasn't opted out of "Change Location Mode" dialog, show it to them
+                        */
+                        SharedPreferences prefs = Application.getPrefs();
+                        if ( !(prefs.getBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), false))  &&
+                                        locMode != Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
+                            getDialogForLocationModeChanges().show();
                         }
 
-                        mAdapter.notifyDataSetChanged();
-                        Application.get().getApplicationContext().startService(serviceIntent);
+                        // Utility to start service
+                        startTADService(setUpForStartingTADService(pId));
                     }
                 });
 
@@ -506,7 +519,7 @@ public class TripDetailsListFragment extends ListFragment {
                 bldr.setNegativeButton(R.string.stop_notify_cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        // TODO Have to see what to do here?
                     }
                 });
 
@@ -515,7 +528,132 @@ public class TripDetailsListFragment extends ListFragment {
                 dialog.setOwnerActivity(getActivity());
                 dialog.show();
             }
+
             return true;
+        }
+
+        /**
+         * @param pId Position of a stop for which we started Destination alert
+         * @return Intent object to be used for starting TAD service
+         */
+        private Intent setUpForStartingTADService(int pId) {
+            // TODO: Handle trips with only two stops.
+            ObaTripSchedule.StopTime timeLast = mTripInfo.getSchedule().getStopTimes()[pId-1];
+            ObaTripSchedule.StopTime timeDest = mTripInfo.getSchedule().getStopTimes()[pId];
+            ObaReferences refs = mTripInfo.getRefs();
+            String destStopId = timeDest.getStopId();
+            String lastStopId = timeLast.getStopId();
+            ObaStop destStop = refs.getStop(destStopId);
+            ObaStop lastStop = refs.getStop(lastStopId);
+
+            DBUtil.addToDB(lastStop);
+            DBUtil.addToDB(destStop);
+
+            Intent serviceIntent = new Intent(getContext(), TADService.class);
+
+            mDestinationId = destStop.getId();
+            serviceIntent.putExtra(TADService.DESTINATION_ID, mDestinationId);
+            serviceIntent.putExtra(TADService.BEFORE_STOP_ID, lastStop.getId());
+            serviceIntent.putExtra(TADService.TRIP_ID, mTripId);
+
+            // update UI
+            if (mDestinationId != null) {
+                mDestinationIndex = findIndexForStop(mTripInfo.getSchedule().getStopTimes(), mDestinationId);
+            }
+            mAdapter.notifyDataSetChanged();
+            // Save Intent so that we can call up startTADService() from onActivityResult() later
+            getActivity().setIntent(serviceIntent);
+            return serviceIntent;
+        }
+
+        /**
+         * This will allow user to turn on location within application context
+         */
+        private void askUserToTurnLocationOn() {
+            mLocationRequest = LocationRequest.create();
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+            // Specifies the types of location services the client is interested in using.
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+            builder.addLocationRequest(mLocationRequest);
+
+            mResult = LocationServices.getSettingsClient(getActivity()).checkLocationSettings(builder.build());
+
+            //When the Task(mResult is of type Task) completes, the client can check the location settings
+            //by looking at the status code from the LocationSettingsResponse object.
+            mResult.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+                @Override
+                public void onComplete(Task<LocationSettingsResponse> task) {
+                    try {
+                        LocationSettingsResponse response = task.getResult(ApiException.class);
+                        // All loc settings are satisfied if we are at this line. Code flow never comes here!
+                    } catch (ApiException APIexc) {
+                        switch (APIexc.getStatusCode()) {
+                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                // Location settings are not satisfied. But could be fixed by showing the
+                                // user a dialog.
+                                try {
+                                    ResolvableApiException resolvable = (ResolvableApiException) APIexc;
+                                    // Show the dialog by calling startResolutionForResult(),
+                                    // and check the result in onActivityResult()
+                                    Log.d(TAG, "Showing dialog to user for desired location settings...");
+                                    resolvable.startResolutionForResult(getActivity(), REQUEST_ENABLE_LOCATION);
+                                } catch (IntentSender.SendIntentException sendIntExc) {
+                                    // Ignore the error.
+                                } catch (ClassCastException classCastExc) {
+                                    // Ignore, should be an impossible error.
+                                }
+                                break;
+                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                // Location settings are not satisfied. However, we have no way to fix the
+                                // settings so we won't show the dialog.
+                                Log.d(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
+                                break;
+                        }
+                    }
+                }
+            });
+        }
+
+        //A method for "High Accuracy GPS needed alert"
+        private Dialog getDialogForLocationModeChanges()
+        {
+            View view = getActivity().getLayoutInflater().inflate(R.layout.change_locationmode_dialog , null);
+            CheckBox neverShowDialog = (CheckBox) view.findViewById(R.id.change_locationmode_never_ask_again);
+
+            neverShowDialog.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    // Save the preference
+                    PreferenceUtils.saveBoolean(getString(R.string.preference_key_never_show_change_location_mode_dialog), isChecked);
+                }
+            });
+
+            Drawable icon = getResources().getDrawable(android.R.drawable.ic_dialog_map);
+            DrawableCompat.setTint(icon, getResources().getColor(R.color.theme_primary));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.main_changelocationmode_title)
+                    .setIcon(icon)
+                    .setCancelable(false)
+                    .setView(view)
+                    .setPositiveButton(R.string.rt_yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                }
+                            }
+                    )
+                    .setNegativeButton(R.string.rt_no,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // No code required..
+                                }
+                            }
+                    );
+            return builder.create();
         }
     };
 
@@ -889,5 +1027,32 @@ public class TripDetailsListFragment extends ListFragment {
             }
         }
         mAdapter.notifyDataSetChanged();
+    }
+    
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == REQUEST_ENABLE_LOCATION) {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
+                    // All required changes were successfully made
+                    Log.d(TAG, "Location enabled");
+                    startTADService(getActivity().getIntent());
+                    break;
+                case Activity.RESULT_CANCELED:
+                    // The user was asked to change settings but chose not to
+                    Log.d(TAG, "Location not enabled");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @param serviceIntent
+     */
+    private void startTADService(Intent serviceIntent) {
+        Application.get().getApplicationContext().startService(serviceIntent);
     }
 }

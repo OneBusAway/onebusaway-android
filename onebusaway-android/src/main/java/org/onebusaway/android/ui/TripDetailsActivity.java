@@ -20,14 +20,18 @@ import org.onebusaway.android.io.ObaAnalytics;
 import org.onebusaway.android.util.FragmentUtils;
 import org.onebusaway.android.util.UIUtils;
 
+import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 
 public class TripDetailsActivity extends AppCompatActivity {
+    
+    private static final String TAG = "TripDetailsActivity";
 
     public static class Builder {
 
@@ -95,11 +99,11 @@ public class TripDetailsActivity extends AppCompatActivity {
 
         FragmentManager fm = getSupportFragmentManager();
 
-        if (fm.findFragmentById(android.R.id.content) == null) {
+        if (findFragmentByTag() == null) {
             TripDetailsListFragment list = new TripDetailsListFragment();
             list.setArguments(FragmentUtils.getIntentArgs(getIntent()));
 
-            fm.beginTransaction().add(android.R.id.content, list).commit();
+            fm.beginTransaction().add(android.R.id.content, list, TripDetailsListFragment.TAG).commit();
         }
     }
 
@@ -116,5 +120,30 @@ public class TripDetailsActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == TripDetailsListFragment.REQUEST_ENABLE_LOCATION) {
+            TripDetailsListFragment tripDetListFrag = (TripDetailsListFragment)findFragmentByTag();
+            if(tripDetListFrag == null) {
+                tripDetListFrag = new TripDetailsListFragment();
+
+                // setting arguments if we could
+                tripDetListFrag.setArguments(FragmentUtils.getIntentArgs(getIntent()));
+                getSupportFragmentManager().beginTransaction().
+                        add(android.R.id.content, tripDetListFrag, TripDetailsListFragment.TAG).commit();
+            }
+            tripDetListFrag.onActivityResult(requestCode, resultCode, data);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+    
+    /**
+     * @return Fragment {@link TripDetailsListFragment object}
+     */
+    private Fragment findFragmentByTag() {
+        return getSupportFragmentManager().findFragmentByTag(TripDetailsListFragment.TAG);
     }
 }

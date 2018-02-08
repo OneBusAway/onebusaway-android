@@ -125,6 +125,13 @@
         now?
     </string>
     <string name="main_never_ask_again">Never ask again</string>
+    
+    <string name="main_changelocationmode_title">High accuracy location not enabled</string>
+    <string name="main_changelocationmode">Your current device "Location method" setting may fail to
+        notify you when approaching your destination due to inaccurate position information.
+        Would you like to change your device "Location method" to "High accuracy" now?
+    </string>
+    
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="main_location_unavailable">Unable to get your location.</string>
     <string name="main_outofrange_title">Out of range</string>

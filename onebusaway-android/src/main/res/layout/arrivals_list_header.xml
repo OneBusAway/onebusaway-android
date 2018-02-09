@@ -134,14 +134,16 @@
         </TableLayout>
 
         <!-- Stop name, star, and stopinfo button  -->
-        <RelativeLayout
+        <LinearLayout
                 android:id="@+id/stop_details_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_alignParentBottom="true"
                 android:layout_centerInParent="true"
                 android:layout_marginLeft="@dimen/keyline_1"
                 android:layout_marginRight="@dimen/keyline_1"
+                android:paddingRight="@dimen/keyline_1"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="@dimen/arrival_header_bottom_margin">
 
@@ -169,7 +171,11 @@
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_toRightOf="@+id/stop_favorite"
-                    android:weightSum="1">
+                    android:weightSum="1"
+                    android:layout_weight="1">
+                    <!-- The layout_weight on this container indicates that this layout can fill
+                    any space not consumed by the stop_favorite and stop_discussion images -->
+
                 <TextView
                         android:id="@+id/stop_name"
                         android:textSize="17sp"
@@ -228,14 +234,13 @@
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:layout_marginLeft="2dp"
-                    android:layout_toRightOf="@+id/stop_name_and_info_container"
                     android:layout_gravity="center_vertical"
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
                     android:gravity="center"
                     android:padding="5dp"/>
 
-        </RelativeLayout>
+        </LinearLayout>
 
         <ProgressBar
                 android:id="@+id/header_loading_spinner"

@@ -15,10 +15,6 @@
  */
 package org.onebusaway.android.ui;
 
-import org.onebusaway.android.R;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.util.LayerUtils;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -26,10 +22,16 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.widget.TextView;
 
+import org.jetbrains.annotations.NotNull;
+import org.onebusaway.android.R;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.util.LayerUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import uk.co.markormesher.android_fab.SpeedDialMenuAdapter;
+import uk.co.markormesher.android_fab.SpeedDialMenuItem;
 
 /**
  * Control the display of the available layers options in a speed dial when the layers Floating
@@ -73,23 +75,45 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     }
 
     @Override
-    protected int getCount() {
+    public int getCount() {
         return 1;
     }
 
+    /**
+     * Gets the menu item to display at the specified position in the range 0 to `getCount() - 1`.
+     * See `SpeedDialMenuItem` for more details.
+     * Note: positions start at zero closest to the FAB and increase for items further away.
+     * @return the menu item to display at the specified position
+     */
     @SuppressWarnings("deprecation")
     @Override
-    protected MenuItem getViews(Context context, int position) {
+    public SpeedDialMenuItem getMenuItem(Context context, int position) {
         // Refresh active layer info
         activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
 
         LayerInfo layer = layers[position];
-        MenuItem menuItem = new MenuItem();
 
-        menuItem.iconDrawableId = layer.getIconDrawableId();
+        // Just set the icon and label text for now, until we can fix the above
+        SpeedDialMenuItem menuItem = new SpeedDialMenuItem(context, layer.getIconDrawableId(), layer.getLayerlabel());
+        return menuItem;
+    }
 
-        // Adding a view so the color of the text match the color of the speed dial disc
-        TextView label = new TextView(context);
+    /**
+     * Apply formatting to the `TextView` used for the label of the menu item at the given position.
+     * Note: positions start at zero closest to the FAB and increase for items further away.
+     *
+     * @param context
+     * @param position
+     * @param label
+     */
+    @Override
+    public void onPrepareItemLabel(@NotNull Context context, int position, @NotNull TextView label) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
+
+        LayerInfo layer = layers[position];
+
+        // Set a solid background for the speed dial item label so you can see the text over the map
         label.setText(layer.getLayerlabel());
         label.setTextColor(Color.WHITE);
         int labelDrawableId;
@@ -103,14 +127,15 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
         } else {
             label.setBackgroundDrawable(context.getResources().getDrawable(labelDrawableId));
         }
-
-        menuItem.labelView = label;
-
-        return menuItem;
     }
 
+    /**
+     * Handler for click events on menu items.
+     * The position passed corresponds to positions passed to `getMenuItem()`.
+     * @return `true` to close the menu after the click; `false` to leave it open
+     */
     @Override
-    protected boolean onMenuItemClick(int position) {
+    public boolean onMenuItemClick(int position) {
         if (position < activatedLayers.length) {
             if (activatedLayers[position]) {
                 for (LayerActivationListener listener : layerActivationListeners) {
@@ -145,7 +170,7 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
     @SuppressWarnings("deprecation")
     @Override
-    protected int getBackgroundColour(int position) {
+    public int getBackgroundColour(int position) {
         // Refresh active layer info
         activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
 
@@ -156,8 +181,8 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
     }
 
     @Override
-    protected boolean rotateFab() {
-        return true;
+    public float fabRotationDegrees() {
+        return 45.0f;
     }
 
     /**

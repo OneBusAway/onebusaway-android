@@ -17,39 +17,6 @@
  */
 package org.onebusaway.android.ui;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapModeController;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.report.ui.ReportActivity;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -90,11 +57,46 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
+import uk.co.markormesher.android_fab.SpeedDialMenuCloseListener;
+import uk.co.markormesher.android_fab.SpeedDialMenuOpenListener;
 
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_ACTIVITY_FEED;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_HELP;
@@ -1690,14 +1692,14 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupLayersSpeedDial() {
-        mLayersFab = (uk.co.markormesher.android_fab.FloatingActionButton) findViewById(R.id.layersSpeedDial);
+        mLayersFab = findViewById(R.id.layersSpeedDial);
 
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) mLayersFab
                 .getLayoutParams();
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
-        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
-        mLayersFab.setBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
+        mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
@@ -1729,19 +1731,19 @@ public class HomeActivity extends AppCompatActivity
                 }, 100);
             }
         });
-        mLayersFab.setMenuAdapter(adapter);
-        mLayersFab.setOnSpeedDialOpenListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialOpenListener() {
+        mLayersFab.setSpeedDialMenuAdapter(adapter);
+        mLayersFab.setOnSpeedDialMenuOpenListener(
+                new SpeedDialMenuOpenListener() {
                     @Override
                     public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_add_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_add_white_24dp);
                     }
                 });
-        mLayersFab.setOnSpeedDialCloseListener(
-                new uk.co.markormesher.android_fab.FloatingActionButton.OnSpeedDialCloseListener() {
+        mLayersFab.setOnSpeedDialMenuCloseListener(
+                new SpeedDialMenuCloseListener() {
                     @Override
                     public void onClose(uk.co.markormesher.android_fab.FloatingActionButton v) {
-                        mLayersFab.setIcon(R.drawable.ic_layers_white_24dp);
+                        mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
                     }
                 });
         mLayersFab.setContentCoverEnabled(false);

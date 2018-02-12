@@ -93,7 +93,6 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
         LayerInfo layer = layers[position];
 
-        // Just set the icon and label text for now, until we can fix the above
         SpeedDialMenuItem menuItem = new SpeedDialMenuItem(context, layer.getIconDrawableId(), layer.getLayerlabel());
         return menuItem;
     }

@@ -21,7 +21,6 @@
 package org.onebusaway.android.ui;
 
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.ui.activity.base.BaseActivity;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
@@ -31,7 +30,6 @@ import org.onebusaway.android.util.UIUtils;
 import org.onebusaway.android.view.ScrimInsetsScrollView;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -180,7 +178,6 @@ public class NavigationDrawerFragment extends Fragment {
     private View mFragmentContainerView;
 
     private boolean isSignedIn;
-    static boolean firstStart = true;
 
     public NavigationDrawerFragment() {
     }
@@ -199,14 +196,6 @@ public class NavigationDrawerFragment extends Fragment {
             // Try to get the saved position from preferences
             mCurrentSelectedPosition = sp.getInt(STATE_SELECTED_POSITION, NAVDRAWER_ITEM_NEARBY);
             Log.d(TAG, "Using position from preferences = " + mCurrentSelectedPosition);
-        }
-
-        if (firstStart) {
-            firstStart = false;
-            if (isNewActivityItem(mCurrentSelectedPosition) || isSocialActivityItem(mCurrentSelectedPosition)) {
-                // force app start to open the Home Activity
-                mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
-            }
         }
 
         // Select either the default item (0) or the last selected item.
@@ -335,26 +324,13 @@ public class NavigationDrawerFragment extends Fragment {
      * also be accomplished (perhaps more cleanly) with state-based layouts.
      */
     private void setSelectedNavDrawerItem(int itemId) {
-        if (isSocialActivityItem(itemId) || isSocialActivityItem(mCurrentSelectedPosition)) {
-            // We are transitioning to or from a social activity
-            setSavedPosition(itemId);
-        } else if (mCurrentSelectedPosition == itemId &&
-                (itemId == NAVDRAWER_ITEM_HELP || mCurrentSelectedPosition == NAVDRAWER_ITEM_SETTINGS)) {
-            // Special case where 'Help' or 'Settings' was selected from an Embedded Social Activity
-            // Format the drawer so 'Nearby' is persisted once the page is closed
-            mCurrentSelectedPosition = NAVDRAWER_ITEM_NEARBY;
-            setSavedPosition(mCurrentSelectedPosition);
-
-        } else if (!isNewActivityItem(itemId)) {
+        if (!isNewActivityItem(itemId)) {
             // We only change the selected item if it doesn't launch a new activity
             mCurrentSelectedPosition = itemId;
             setSavedPosition(mCurrentSelectedPosition);
         }
 
-        if (mNavDrawerItemViews != null && !isSocialActivityItem(itemId)) {
-            // reformat the nav drawer items only if the same instance is reused
-            // transitioning to or from a new social activity creates a new nav drawer instance
-            // which is properly formatted on creation
+        if (mNavDrawerItemViews != null) {
             for (int i = 0; i < mNavDrawerItemViews.length; i++) {
                 if (i < mNavDrawerItems.size()) {
                     int thisItemId = mNavDrawerItems.get(i);
@@ -368,13 +344,7 @@ public class NavigationDrawerFragment extends Fragment {
     public void onAttach(final Context context) {
         super.onAttach(context);
         try {
-            if (context instanceof BaseActivity) {
-                // Embedded Social activity
-                mCallbacks = new EmbeddedSocialNavigationCallbacks(context);
-            } else {
-                // OBA activity
-                mCallbacks = (NavigationDrawerCallbacks) context;
-            }
+            mCallbacks = (NavigationDrawerCallbacks) context;
         } catch (ClassCastException e) {
             throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
         }
@@ -398,10 +368,14 @@ public class NavigationDrawerFragment extends Fragment {
         super.onResume();
         if (EmbeddedSocialUtils.isSocialEnabled(getContext())) {
             isSignedIn = EmbeddedSocial.isSignedIn();
+
+            // Do not allow unauthenticated users access fragments which require
+            // authentication via the back button
+            if(!isSignedIn && requiresSocialSignIn(mCurrentSelectedPosition)) {
+                selectItem(NAVDRAWER_ITEM_NEARBY);
+            }
         }
         populateNavDrawer();
-        // remember that this is the last viewed page (for back button)
-        setSavedPosition(mCurrentSelectedPosition);
     }
 
     @Override
@@ -621,59 +595,19 @@ public class NavigationDrawerFragment extends Fragment {
                 itemId == NAVDRAWER_ITEM_HELP ||
                 itemId == NAVDRAWER_ITEM_SEND_FEEDBACK ||
                 itemId == NAVDRAWER_ITEM_PLAN_TRIP ||
+                itemId == NAVDRAWER_ITEM_SIGN_IN ||
                 itemId == NAVDRAWER_ITEM_OPEN_SOURCE;
     }
 
-    private boolean isSocialActivityItem(int itemId) {
-        return itemId == NAVDRAWER_ITEM_PROFILE ||
-                itemId == NAVDRAWER_ITEM_SIGN_IN;
-    }
-
-    private boolean isHomeActivity(int itemId) {
-        return itemId == NAVDRAWER_ITEM_NEARBY ||
-                itemId == NAVDRAWER_ITEM_STARRED_STOPS ||
-                itemId == NAVDRAWER_ITEM_MY_REMINDERS ||
-                itemId == NAVDRAWER_ITEM_POPULAR ||
-                itemId == NAVDRAWER_ITEM_PINS ||
-                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED;
-    }
-
-
     /**
-     * Navigation callback handler used for Embedded Social activities
+     * Returns true is this is an item that requires the user to be signed in to Embedded Social
+     *
+     * @return true if this is an item that requires the user to be signed in to Embedded Social,
+     * false otherwise
      */
-    private class EmbeddedSocialNavigationCallbacks implements NavigationDrawerCallbacks {
-        private Context context;
-
-        public EmbeddedSocialNavigationCallbacks(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        public void onNavigationDrawerItemSelected(int position) {
-            // don't start a new activity if the current item is pressed again
-            if (position != mCurrentSelectedPosition) {
-                Intent intent = new Intent(context, HomeActivity.class);
-
-                if (isHomeActivity(position) || position == NAVDRAWER_ITEM_HELP) {
-                    // Reuse the HomeActivity
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                } else if (isNewActivityItem(position) || isSocialActivityItem(position)) {
-                    // The HomeActivity is only being used to handle the navigation drawer change
-                    // there should be no visible UI
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                }
-
-                // the value of mCurrentSelectedPosition saved in SharedPreferences will
-                // be used when HomeActivity creates a new instance of NavigationDrawerFragment
-                context.startActivity(intent);
-
-                if (isSocialActivityItem(position)) {
-                    // Maintain only 1 degree of separation from the HomeActivity
-                    getActivity().finish();
-                }
-            }
-        }
+    private boolean requiresSocialSignIn(int itemId) {
+        return itemId == NAVDRAWER_ITEM_PINS ||
+                itemId == NAVDRAWER_ITEM_ACTIVITY_FEED ||
+                itemId == NAVDRAWER_ITEM_PROFILE;
     }
 }
-

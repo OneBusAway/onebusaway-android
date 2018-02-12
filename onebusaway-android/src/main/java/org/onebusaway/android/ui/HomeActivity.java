@@ -1700,7 +1700,7 @@ public class HomeActivity extends AppCompatActivity
         LAYERS_FAB_DEFAULT_BOTTOM_MARGIN = p.bottomMargin;
 
         mLayersFab.setButtonIconResource(R.drawable.ic_layers_white_24dp);
-        mLayersFab.setButtonBackgroundColour(ContextCompat.getColor(this, R.color.theme_accent));
+        mLayersFab.setBackgroundColor(ContextCompat.getColor(this, R.color.theme_accent));
 
         LayersSpeedDialAdapter adapter = new LayersSpeedDialAdapter(this);
         // Add the BaseMapFragment listener to activate the layer on the map
@@ -1733,7 +1733,7 @@ public class HomeActivity extends AppCompatActivity
             }
         });
         mLayersFab.setSpeedDialMenuAdapter(adapter);
-        mLayersFab.setOnSpeedMenuDialOpenListener(
+        mLayersFab.setOnSpeedDialMenuOpenListener(
                 new SpeedDialMenuOpenListener() {
                     @Override
                     public void onOpen(uk.co.markormesher.android_fab.FloatingActionButton v) {

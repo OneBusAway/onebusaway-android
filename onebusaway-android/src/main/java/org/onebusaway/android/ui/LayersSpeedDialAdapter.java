@@ -15,13 +15,17 @@
  */
 package org.onebusaway.android.ui;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Build;
+import android.preference.PreferenceManager;
+import android.widget.TextView;
+
+import org.jetbrains.annotations.NotNull;
 import org.onebusaway.android.R;
 import org.onebusaway.android.map.googlemapsv2.LayerInfo;
 import org.onebusaway.android.util.LayerUtils;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,26 +93,40 @@ public class LayersSpeedDialAdapter extends SpeedDialMenuAdapter {
 
         LayerInfo layer = layers[position];
 
-        // Adding a view so the color of the text match the color of the speed dial disc
-        // FIX ME - Doesn't seem like the below commented code is possible any more with v2 of android-fab library
-//        TextView label = new TextView(context);
-//        label.setText(layer.getLayerlabel());
-//        label.setTextColor(Color.WHITE);
-//        int labelDrawableId;
-//        if (activatedLayers[position]) {
-//            labelDrawableId = layer.getLabelBackgroundDrawableId();
-//        } else {
-//            labelDrawableId = R.drawable.speed_dial_disabled_item_label;
-//        }
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//            label.setBackground(context.getResources().getDrawable(labelDrawableId));
-//        } else {
-//            label.setBackgroundDrawable(context.getResources().getDrawable(labelDrawableId));
-//        }
-
         // Just set the icon and label text for now, until we can fix the above
         SpeedDialMenuItem menuItem = new SpeedDialMenuItem(context, layer.getIconDrawableId(), layer.getLayerlabel());
         return menuItem;
+    }
+
+    /**
+     * Apply formatting to the `TextView` used for the label of the menu item at the given position.
+     * Note: positions start at zero closest to the FAB and increase for items further away.
+     *
+     * @param context
+     * @param position
+     * @param label
+     */
+    @Override
+    public void onPrepareItemLabel(@NotNull Context context, int position, @NotNull TextView label) {
+        // Refresh active layer info
+        activatedLayers[0] = LayerUtils.isBikeshareLayerVisible();
+
+        LayerInfo layer = layers[position];
+
+        // Set a solid background for the speed dial item label so you can see the text over the map
+        label.setText(layer.getLayerlabel());
+        label.setTextColor(Color.WHITE);
+        int labelDrawableId;
+        if (activatedLayers[position]) {
+            labelDrawableId = layer.getLabelBackgroundDrawableId();
+        } else {
+            labelDrawableId = R.drawable.speed_dial_disabled_item_label;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            label.setBackground(context.getResources().getDrawable(labelDrawableId));
+        } else {
+            label.setBackgroundDrawable(context.getResources().getDrawable(labelDrawableId));
+        }
     }
 
     /**

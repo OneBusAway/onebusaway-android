@@ -62,6 +62,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
 import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
 import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
@@ -211,6 +212,8 @@ public class HomeActivity extends AppCompatActivity
     PinsFragment mMyPinsFragment;
 
     ActivityFeedFragment mActivityFeedFragment;
+
+    MyProfileFragment mMyProfileFragment;
 
     /**
      * Control which menu options are shown per fragment menu groups
@@ -490,12 +493,15 @@ public class HomeActivity extends AppCompatActivity
                 EmbeddedSocial.launchSignInActivity(this);
                 break;
             case NAVDRAWER_ITEM_PROFILE:
+            if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
+                showMyProfileFragment();
+                mCurrentNavDrawerPosition = item;
                 ObaAnalytics.reportEventWithCategory(
                         ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
                         getString(R.string.analytics_action_button_press),
                         getString(R.string.analytics_label_button_press_social_profile));
-                EmbeddedSocial.launchProfileActivity(this);
-                break;
+            }
+            break;
             case NAVDRAWER_ITEM_POPULAR:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
                     showPopularFeedFragment();
@@ -580,6 +586,7 @@ public class HomeActivity extends AppCompatActivity
         hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowStarredStopsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -629,6 +636,7 @@ public class HomeActivity extends AppCompatActivity
         hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         /**
          * Show fragment (we use show instead of replace to keep the map state)
@@ -664,6 +672,7 @@ public class HomeActivity extends AppCompatActivity
         hidePopularFeedFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
+        hideMyProfileFragment();
         mShowArrivalsMenu = false;
         mShowStarredStopsMenu = false;
         /**
@@ -698,6 +707,7 @@ public class HomeActivity extends AppCompatActivity
         hideReminderFragment();
         hidePinsFragment();
         hideActivityFeedFragment();
+        hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
         /**
@@ -733,6 +743,7 @@ public class HomeActivity extends AppCompatActivity
         hideReminderFragment();
         hidePopularFeedFragment();
         hideActivityFeedFragment();
+        hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
         /**
@@ -768,6 +779,7 @@ public class HomeActivity extends AppCompatActivity
         hideReminderFragment();
         hidePopularFeedFragment();
         hidePinsFragment();
+        hideMyProfileFragment();
         hideSlidingPanel();
         mShowArrivalsMenu = false;
         /**
@@ -789,6 +801,42 @@ public class HomeActivity extends AppCompatActivity
         }
         fm.beginTransaction().show(mActivityFeedFragment).commit();
         setTitle(getResources().getString(R.string.navdrawer_item_activity_feed));
+    }
+
+    private void showMyProfileFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        /**
+         * Hide everything that shouldn't be shown
+         */
+        hideFloatingActionButtons();
+        hideMapProgressBar();
+        hideMapFragment();
+        hideStarredStopsFragment();
+        hideReminderFragment();
+        hidePopularFeedFragment();
+        hidePinsFragment();
+        hideActivityFeedFragment();
+        hideSlidingPanel();
+        mShowArrivalsMenu = false;
+        /**
+         * Show fragment (we use show instead of replace to keep the map state)
+         */
+        mShowStarredStopsMenu = false;
+        if (mMyProfileFragment == null) {
+            // First check to see if an instance of PinsFragment already exists (see #356)
+            mMyProfileFragment = (MyProfileFragment) fm
+                    .findFragmentByTag(MyProfileFragment.TAG);
+
+            if (mMyProfileFragment == null) {
+                // No existing fragment was found, so create a new one
+                Log.d(TAG, "Creating new MyProfileFragment");
+                mMyProfileFragment = new MyProfileFragment();
+                fm.beginTransaction().add(R.id.main_fragment_container, mMyProfileFragment,
+                        MyProfileFragment.TAG).commit();
+            }
+        }
+        fm.beginTransaction().show(mMyProfileFragment).commit();
+        setTitle(getResources().getString(R.string.navdrawer_item_profile));
     }
 
     private void hideMapFragment() {
@@ -841,6 +889,15 @@ public class HomeActivity extends AppCompatActivity
                 ActivityFeedFragment.TAG);
         if (mActivityFeedFragment != null && !mActivityFeedFragment.isHidden()) {
             fm.beginTransaction().hide(mActivityFeedFragment).commit();
+        }
+    }
+
+    private void hideMyProfileFragment() {
+        FragmentManager fm = getSupportFragmentManager();
+        mMyProfileFragment = (MyProfileFragment) fm.findFragmentByTag(
+                MyProfileFragment.TAG);
+        if (mMyProfileFragment != null && !mMyProfileFragment.isHidden()) {
+            fm.beginTransaction().hide(mMyProfileFragment).commit();
         }
     }
 

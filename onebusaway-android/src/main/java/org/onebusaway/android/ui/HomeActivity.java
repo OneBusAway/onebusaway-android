@@ -17,6 +17,40 @@
  */
 package org.onebusaway.android.ui;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
+import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
+import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
+import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.Application;
+import org.onebusaway.android.io.ObaAnalytics;
+import org.onebusaway.android.io.elements.ObaRegion;
+import org.onebusaway.android.io.elements.ObaRoute;
+import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
+import org.onebusaway.android.map.MapModeController;
+import org.onebusaway.android.map.MapParams;
+import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.map.googlemapsv2.LayerInfo;
+import org.onebusaway.android.region.ObaRegionsTask;
+import org.onebusaway.android.report.ui.ReportActivity;
+import org.onebusaway.android.tripservice.TripService;
+import org.onebusaway.android.util.FragmentUtils;
+import org.onebusaway.android.util.LocationUtils;
+import org.onebusaway.android.util.PreferenceUtils;
+import org.onebusaway.android.util.RegionUtils;
+import org.onebusaway.android.util.ShowcaseViewUtils;
+import org.onebusaway.android.util.UIUtils;
+import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -57,39 +91,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
-import com.microsoft.embeddedsocial.ui.fragment.ActivityFeedFragment;
-import com.microsoft.embeddedsocial.ui.fragment.MyProfileFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PinsFragment;
-import com.microsoft.embeddedsocial.ui.fragment.PopularFeedFragment;
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.Application;
-import org.onebusaway.android.io.ObaAnalytics;
-import org.onebusaway.android.io.elements.ObaRegion;
-import org.onebusaway.android.io.elements.ObaRoute;
-import org.onebusaway.android.io.elements.ObaStop;
-import org.onebusaway.android.io.request.ObaArrivalInfoResponse;
-import org.onebusaway.android.map.MapModeController;
-import org.onebusaway.android.map.MapParams;
-import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
-import org.onebusaway.android.map.googlemapsv2.LayerInfo;
-import org.onebusaway.android.region.ObaRegionsTask;
-import org.onebusaway.android.report.ui.ReportActivity;
-import org.onebusaway.android.tripservice.TripService;
-import org.onebusaway.android.util.FragmentUtils;
-import org.onebusaway.android.util.LocationUtils;
-import org.onebusaway.android.util.PreferenceUtils;
-import org.onebusaway.android.util.RegionUtils;
-import org.onebusaway.android.util.ShowcaseViewUtils;
-import org.onebusaway.android.util.UIUtils;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -113,6 +114,9 @@ import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_SIGN_IN;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NAVDRAWER_ITEM_STARRED_STOPS;
 import static org.onebusaway.android.ui.NavigationDrawerFragment.NavigationDrawerCallbacks;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_BOTTOM;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_END;
+import static uk.co.markormesher.android_fab.FloatingActionButton.POSITION_START;
 
 public class HomeActivity extends AppCompatActivity
         implements BaseMapFragment.OnFocusChangedListener,
@@ -1575,23 +1579,28 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void checkLeftHandMode() {
-        if (mFabMyLocation == null) {
-            return;
-        }
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
-                .getLayoutParams();
-
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
-        if (leftHandMode) {
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        if (mFabMyLocation != null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
+                    .getLayoutParams();
+            if (leftHandMode) {
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                }
+            } else {
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                }
             }
-        } else {
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        }
+        if (mLayersFab != null) {
+            if (leftHandMode) {
+                mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_START);
+            } else {
+                mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_END);
             }
         }
     }

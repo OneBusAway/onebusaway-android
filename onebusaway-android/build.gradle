@@ -395,9 +395,9 @@ dependencies {
     // Open311 client library
     implementation 'edu.usf.cutr:open311client:1.0.9'
     // JSON data binding for OBA REST API responses
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.6.2'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.4'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.9.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
     // Bottom sliding panel
     implementation 'com.sothree.slidinguppanel:library:3.3.0'
     // For floating action button speed dial

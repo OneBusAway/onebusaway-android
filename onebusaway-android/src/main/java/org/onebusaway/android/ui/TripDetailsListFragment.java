@@ -41,6 +41,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -48,7 +49,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -103,6 +103,8 @@ public class TripDetailsListFragment extends ListFragment {
     public static final String TRIP_ACTIVE = ".TripActive";
 
     public static final String DEST_ID = ".DestinationId";
+
+    public static final String ACTION_SERVICE_DESTROYED = "TADServiceDestroyed";
 
     private static final long REFRESH_PERIOD = 60 * 1000;
 
@@ -1054,5 +1056,45 @@ public class TripDetailsListFragment extends ListFragment {
      */
     private void startTADService(Intent serviceIntent) {
         Application.get().getApplicationContext().startService(serviceIntent);
+
+        // Register receiver
+        registerReceiver();
+    }
+
+    /**
+     * Register receiver so that when trip is cancelled by user then flag will be removed from screen
+     */
+    private void registerReceiver() {
+        // filter specifies which event Receiver should listen to
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_SERVICE_DESTROYED);
+        getActivity().registerReceiver(new TripEndReceiver(), filter);
+    }
+
+    /**
+     * When user cancels trip from "Notification menu" then destination flag in trip details screen
+     * should be removed.
+     *
+     * From {@link TADService 's} onDestroy(), we send broadcast action
+     */
+    class TripEndReceiver extends BroadcastReceiver {
+        private static final String TAG = "TripEndReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(ACTION_SERVICE_DESTROYED)) {
+                Log.d(TAG,"Action received in BroadcastReceiver, trip is destroyed");
+
+                // This is used to set flagIcon on trip details screen so setting it to null
+                mDestinationId = null;
+                mDestinationIndex = null;
+
+                // It will call up getView() so that flag icon gets unset
+                mAdapter.notifyDataSetChanged();
+
+                // Unregister this receiver now.
+                getActivity().unregisterReceiver(this);
+            }
+        }
     }
 }

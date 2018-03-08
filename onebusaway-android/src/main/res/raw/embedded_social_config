@@ -8,9 +8,10 @@
     "showGalleryView" : "false",
     "userTopicsEnabled" : "false",
     "userRelationsEnabled" : "false",
+    "checkDeviceAccounts" : "true",
     "disableNavigationDrawerForActivities" : ["Options", "SignIn", "MyProfile"]
   },
-  "socialNetworks" : {
+  "idProviders" : {
     "facebook" : {
       "loginEnabled" : "true",
       "clientId" : "112374949346978"

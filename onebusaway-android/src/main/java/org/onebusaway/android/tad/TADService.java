@@ -5,6 +5,7 @@ import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.ui.TripDetailsListFragment;
 import org.onebusaway.android.util.LocationHelper;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
@@ -119,6 +120,17 @@ public class TADService extends Service
         Log.d(TAG, "Destroying Service.");
         mLocationHelper.unregisterListener(this);
         super.onDestroy();
+
+        // Send Broadcast
+        sendBroadcast();
+    }
+
+    /**
+     * Sends broadcast so that flag of destination alert is removed from trip detail screen
+     */
+    private void sendBroadcast() {
+        Intent intent = new Intent(TripDetailsListFragment.ACTION_SERVICE_DESTROYED);
+        sendBroadcast(intent);
     }
 
     @Override

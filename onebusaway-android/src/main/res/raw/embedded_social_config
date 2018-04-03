@@ -8,7 +8,6 @@
     "showGalleryView" : "false",
     "userTopicsEnabled" : "false",
     "userRelationsEnabled" : "false",
-    "checkDeviceAccounts" : "true",
     "disableNavigationDrawerForActivities" : ["Options", "SignIn", "MyProfile"]
   },
   "idProviders" : {

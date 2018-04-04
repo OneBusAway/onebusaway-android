@@ -568,6 +568,12 @@
         negative arrival times
     </string>
 
+    <string name="preferences_show_zoom_controls_title">Show zoom controls</string>
+    <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
+    </string>
+
+
+
     <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
     <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
         show arrival info in the header at the top of the screen (doesn\'t affect map view)

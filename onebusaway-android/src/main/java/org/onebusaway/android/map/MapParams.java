@@ -63,4 +63,7 @@ public class MapParams {
     public static final int DEFAULT_ZOOM = 18;
 
     public static final int DEFAULT_MAP_PADDING = 0;
+
+    // Padding for zoom control buttons
+    public static final int DEFAULT_MAP_PADDING_RIGHT = 200;
 }

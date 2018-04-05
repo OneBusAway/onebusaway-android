@@ -406,6 +406,7 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
+        checkDisplayZoomControls();
         checkLeftHandMode();
         updateLayersFab();
         mFabMyLocation.requestLayout();
@@ -1576,6 +1577,13 @@ public class HomeActivity extends AppCompatActivity
             hideFloatingActionButtons();
             hideMapProgressBar();
         }
+    }
+
+    private void checkDisplayZoomControls() {
+        boolean displayZoom = Application.getPrefs().getBoolean(
+                getString(R.string.preference_key_show_zoom_controls), false);
+
+        mMapFragment.displayZoomControl(displayZoom);
     }
 
     private void checkLeftHandMode() {

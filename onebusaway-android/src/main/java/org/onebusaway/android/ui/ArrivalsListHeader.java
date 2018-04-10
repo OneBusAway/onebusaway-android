@@ -339,7 +339,7 @@ class ArrivalsListHeader {
         mStopFavorite.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
         mStopDiscussion = (ImageButton) mView.findViewById(R.id.stop_discussion);
         mStopDiscussion.setColorFilter(mView.getResources().getColor(R.color.header_text_color));
-        if (!EmbeddedSocialUtils.isSocialEnabled(mContext)) {
+        if (!EmbeddedSocialUtils.isSocialEnabled()) {
             mStopDiscussion.setVisibility(View.GONE);
         }
 

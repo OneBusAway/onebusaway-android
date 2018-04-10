@@ -208,7 +208,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
         });
 
         ObaRegion currentRegion = Application.get().getCurrentRegion();
-        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled(context)) {
+        if (currentRegion != null && !EmbeddedSocialUtils.isSocialEnabled()) {
             discussBtn.setVisibility(View.GONE);
         }
 

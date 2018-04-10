@@ -366,7 +366,7 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (EmbeddedSocialUtils.isSocialEnabled(getContext())) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             isSignedIn = EmbeddedSocial.isSignedIn();
 
             // Do not allow unauthenticated users access fragments which require
@@ -426,7 +426,7 @@ public class NavigationDrawerFragment extends Fragment {
                 mNavDrawerItems.add(NAVDRAWER_ITEM_PLAN_TRIP);
             }
 
-            if (EmbeddedSocialUtils.isSocialEnabled(getContext())) {
+            if (EmbeddedSocialUtils.isSocialEnabled()) {
                 // Social items
                 mNavDrawerItems.add(NAVDRAWER_ITEM_SEPARATOR_SPECIAL);
                 if (isSignedIn) {
@@ -468,7 +468,7 @@ public class NavigationDrawerFragment extends Fragment {
                 findViewById(R.id.navdrawer_items_list);
         containerLayout.removeAllViews();
 
-        if (EmbeddedSocialUtils.isSocialEnabled(getContext()) && isSignedIn) {
+        if (EmbeddedSocialUtils.isSocialEnabled() && isSignedIn) {
             // user is signed in to Embedded Social
             for (int itemId : mNavDrawerItems) {
                 mNavDrawerItemViews[i] = makeNavDrawerItem(itemId, containerLayout);

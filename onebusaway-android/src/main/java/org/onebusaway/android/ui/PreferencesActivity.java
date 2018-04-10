@@ -130,7 +130,7 @@ public class PreferencesActivity extends PreferenceActivity
         mAboutPref = findPreference(getString(R.string.preferences_key_about));
         mAboutPref.setOnPreferenceClickListener(this);
 
-        if (EmbeddedSocialUtils.isSocialEnabled(this)) {
+        if (EmbeddedSocialUtils.isSocialEnabled()) {
             Preference socialPref = findPreference(getString(R.string.preference_key_social));
 
             if (EmbeddedSocial.isSignedIn()) {

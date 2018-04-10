@@ -106,9 +106,10 @@ public class EmbeddedSocialUtils {
     /**
      * Returns true if social features are restricted
      */
-    private static boolean isSocialRestricted(Context context) {
+    private static boolean isSocialRestricted() {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
             // min sdk version for user restrictions
+            Context context = Application.get().getApplicationContext();
             Bundle restrictionsBundle = ((UserManager)context.getSystemService(Context.USER_SERVICE))
                     .getApplicationRestrictions(context.getPackageName());
             if (restrictionsBundle == null) {
@@ -140,7 +141,7 @@ public class EmbeddedSocialUtils {
     /**
      * Returns true if social features are enabled
      */
-    public static boolean isSocialEnabled(Context context) {
+    public static boolean isSocialEnabled() {
         if (!isSocialApiKeyDefined()) {
             return false;
         }
@@ -152,7 +153,7 @@ public class EmbeddedSocialUtils {
             }
             ObaRegion currentRegion = Application.get().getCurrentRegion();
             if (currentRegion != null && currentRegion.getSupportsEmbeddedSocial()) {
-                return !isSocialRestricted(context);
+                return !isSocialRestricted();
             }
         }
         return false;

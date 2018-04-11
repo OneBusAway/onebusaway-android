@@ -65,6 +65,35 @@
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
 
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/btnMyLocation"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginEnd="@dimen/zoom_btn_layout_marginRight"
+                    android:layout_marginRight="@dimen/zoom_btn_layout_marginRight"
+                    android:orientation="vertical">
+
+                    <ImageButton
+
+                        android:id="@+id/btnZoomIn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:src="@drawable/zoom_in_button" />
+
+                    <ImageButton
+
+                        android:id="@+id/btnZoomOut"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:src="@drawable/zoom_out_button" />
+
+                </LinearLayout>
+
                 <uk.co.markormesher.android_fab.FloatingActionButton
                     android:id="@+id/layersSpeedDial"
                     android:layout_width="wrap_content"

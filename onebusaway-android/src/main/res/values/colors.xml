@@ -120,4 +120,10 @@
     <!-- Bikeshare marker -->
     <color name="bikeshare_small_marker_dark">#3a4677</color>
     <color name="bikeshare_small_marker_light">#46558f</color>
+
+    <!-- Custom Zoom Button -->
+    <color name="zoom_btn_color_default">#C0FFFFFF</color>
+    <color name="zoom_btn_color_pressed">#40FFFFFF</color>
+    <color name="zoom_btn_color">#7FCCCCCC</color>
+
 </resources>

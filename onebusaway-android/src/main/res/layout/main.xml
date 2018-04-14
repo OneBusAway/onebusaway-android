@@ -67,13 +67,10 @@
 
 
                 <LinearLayout
+                    android:id="@+id/zoom_buttons_layout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignBottom="@+id/btnMyLocation"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_marginEnd="@dimen/zoom_btn_layout_marginRight"
-                    android:layout_marginRight="@dimen/zoom_btn_layout_marginRight"
                     android:orientation="vertical">
 
                     <ImageButton
@@ -81,7 +78,7 @@
                         android:id="@+id/btnZoomIn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@null"
+                        android:background="@drawable/zoom_btn_drop_shadow_top"
                         android:src="@drawable/zoom_in_button" />
 
                     <ImageButton
@@ -89,7 +86,7 @@
                         android:id="@+id/btnZoomOut"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@null"
+                        android:background="@drawable/zoom_btn_drop_shadow_bottom"
                         android:src="@drawable/zoom_out_button" />
 
                 </LinearLayout>

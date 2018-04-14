@@ -114,10 +114,13 @@
     <dimen name="map_small_bike_shadow_size_6">22dp</dimen>
 
     <!-- Zoom buttons-->
-    <dimen name="zoom_btn_layout_marginRight">83dp</dimen>
-    <dimen name="zoom_btn_border">3dp</dimen>
-    <dimen name="zoom_btn_bottom_offset">5dp</dimen>
-    <dimen name="zoom_btn_left_offset">3dp</dimen>
+    <dimen name="zoom_btn_radius">1dp</dimen>
+    <dimen name="zoom_btn_shadow_corner_radius">4dp</dimen>
+    <dimen name="zoom_btn_shadow_padding">0.75dp</dimen>
+    <dimen name="zoom_btn_layout_margin">83dp</dimen>
+    <dimen name="zoom_btn_border">1.5dp</dimen>
+    <dimen name="zoom_btn_bottom_offset">4dp</dimen>
+    <dimen name="zoom_btn_left_offset">2dp</dimen>
     <dimen name="zoom_btn_top_offset">@dimen/zoom_btn_bottom_offset</dimen>
     <dimen name="zoom_btn_right_offset">@dimen/zoom_btn_left_offset</dimen>
 

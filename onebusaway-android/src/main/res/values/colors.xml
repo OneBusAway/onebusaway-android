@@ -122,8 +122,14 @@
     <color name="bikeshare_small_marker_light">#46558f</color>
 
     <!-- Custom Zoom Button -->
-    <color name="zoom_btn_color_default">#C0FFFFFF</color>
-    <color name="zoom_btn_color_pressed">#40FFFFFF</color>
-    <color name="zoom_btn_color">#7FCCCCCC</color>
+    <color name="zoom_btn_drop_shadow_layer1">#20C9C9C9</color>
+
+    <color name="zoom_btn_drop_shadow_layer2">#30BCBCBC</color>
+
+    <color name="zoom_btn_drop_shadow_layer3">#40BCBCBC</color>
+
+    <color name="zoom_btn_color_default">#BEFFFFFF</color>
+    <color name="zoom_btn_color_pressed">#82CCCCCC</color>
+    <color name="zoom_btn_color">#82CCCCCC</color>
 
 </resources>

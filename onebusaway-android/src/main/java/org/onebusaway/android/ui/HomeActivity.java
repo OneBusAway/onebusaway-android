@@ -85,6 +85,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -406,8 +407,10 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
-        checkDisplayZoomControls();
-        checkLeftHandMode();
+
+        boolean leftHandMode = checkLeftHandMode();
+
+        checkDisplayZoomControls(leftHandMode);
         updateLayersFab();
         mFabMyLocation.requestLayout();
     }
@@ -1579,14 +1582,54 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    private void checkDisplayZoomControls() {
+    private void checkDisplayZoomControls(boolean leftHandMode) {
         boolean displayZoom = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_show_zoom_controls), false);
 
-        mMapFragment.displayZoomControl(displayZoom);
+        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
+
+        if(displayZoom) {
+            zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
+        } else {
+            zoomButtonsLayout.setVisibility(LinearLayout.GONE);
+        }
+
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) zoomButtonsLayout
+                .getLayoutParams();
+
+
+        int marginDp = (int) getResources().getDimension(R.dimen.zoom_btn_layout_margin);
+
+        if(leftHandMode) {
+
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_END);
+            }
+
+            layoutParams.setMarginStart(marginDp);
+            layoutParams.setMargins(marginDp, 0, 0, 0);
+
+        } else /*not left hand mode*/ {
+
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_START);
+            }
+
+            layoutParams.setMarginEnd(marginDp);
+            layoutParams.setMargins(0, 0, marginDp, 0);
+
+        }
     }
 
-    private void checkLeftHandMode() {
+    private boolean checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
         if (mFabMyLocation != null) {
@@ -1611,6 +1654,8 @@ public class HomeActivity extends AppCompatActivity
                 mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_END);
             }
         }
+
+        return leftHandMode;
     }
 
     /**

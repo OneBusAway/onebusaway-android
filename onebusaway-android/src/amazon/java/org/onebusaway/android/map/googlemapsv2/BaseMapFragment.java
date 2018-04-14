@@ -319,11 +319,6 @@ public class BaseMapFragment extends SupportMapFragment
         // Instantiate class that holds generic markers to be added by outside classes
         mSimpleMarkerOverlay = new SimpleMarkerOverlay(mMap);
 
-        // Show zoom controls based on user settings
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-        boolean isZoomControlsEnabled = preferences.getBoolean(getString(R.string.preference_key_show_zoom_controls), false);
-        displayZoomControl(isZoomControlsEnabled);
-
         if (savedInstanceState != null) {
             initMapState(savedInstanceState);
         } else {
@@ -347,7 +342,7 @@ public class BaseMapFragment extends SupportMapFragment
 
         mMapPaddingLeft = args.getInt(MapParams.MAP_PADDING_LEFT, MapParams.DEFAULT_MAP_PADDING);
         mMapPaddingTop = args.getInt(MapParams.MAP_PADDING_TOP, MapParams.DEFAULT_MAP_PADDING);
-        mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING_RIGHT);
+        mMapPaddingRight = args.getInt(MapParams.MAP_PADDING_RIGHT, MapParams.DEFAULT_MAP_PADDING);
 
         mMapPaddingBottom = args
                 .getInt(MapParams.MAP_PADDING_BOTTOM, MapParams.DEFAULT_MAP_PADDING);
@@ -818,13 +813,6 @@ public class BaseMapFragment extends SupportMapFragment
         }
         return null;
     }
-
-    public void displayZoomControl(boolean displayZoom) {
-        if (mMap != null) {
-            mMap.getUiSettings().setZoomControlsEnabled(displayZoom);
-        }
-    }
-
     @Override
     public Location getNorthEast() {
         if (mMap != null) {

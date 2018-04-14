@@ -5,6 +5,8 @@
 
     <item >
         <shape android:shape="rectangle">
+
+            <corners android:radius="@dimen/zoom_btn_radius"/>
             <solid android:color="@color/zoom_btn_color"/>
         </shape>
     </item>
@@ -12,6 +14,7 @@
 
     <item android:bottom="@dimen/zoom_btn_border">
         <shape android:shape="rectangle">
+            <corners android:radius="@dimen/zoom_btn_radius"/>
             <solid android:color="@color/zoom_btn_color_pressed"/>
         </shape>
     </item>

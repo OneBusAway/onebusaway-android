@@ -17,6 +17,7 @@
 package org.onebusaway.android.map.googlemapsv2;
 
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
@@ -278,6 +279,14 @@ public class BaseMapFragment extends SupportMapFragment
         }
 
         return v;
+    }
+
+    public void zoomIn() {
+        mMap.animateCamera(CameraUpdateFactory.zoomIn());
+    }
+
+    public void zoomOut() {
+        mMap.animateCamera(CameraUpdateFactory.zoomOut());
     }
 
     @Override

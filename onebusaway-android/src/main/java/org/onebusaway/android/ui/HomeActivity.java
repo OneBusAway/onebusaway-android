@@ -84,6 +84,8 @@ import android.view.Window;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -170,6 +172,11 @@ public class HomeActivity extends AppCompatActivity
     View mArrivalsListHeaderView;
 
     View mArrivalsListHeaderSubView;
+
+    private ImageButton mZoomInBtn;
+
+    private ImageButton mZoomOutBtn;
+
 
     private FloatingActionButton mFabMyLocation;
 
@@ -359,6 +366,8 @@ public class HomeActivity extends AppCompatActivity
         setupLayersSpeedDial();
 
         setupMyLocationButton();
+
+        setupZoomButtons();
 
         setupGooglePlayServices();
 
@@ -1549,6 +1558,27 @@ public class HomeActivity extends AppCompatActivity
             ).show();
         }
         updateLayersFab();
+    }
+
+    private void setupZoomButtons() {
+
+        mZoomInBtn = (ImageButton) findViewById(R.id.btnZoomIn);
+
+        mZoomOutBtn = (ImageButton) findViewById(R.id.btnZoomOut);
+
+        mZoomInBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomIn();
+            }
+        });
+
+        mZoomOutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMapFragment.zoomOut();
+            }
+        });
     }
 
     private void setupMyLocationButton() {

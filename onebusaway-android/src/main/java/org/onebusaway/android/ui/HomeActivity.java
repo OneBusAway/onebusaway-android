@@ -416,10 +416,11 @@ public class HomeActivity extends AppCompatActivity
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
         }
 
+        checkDisplayZoomControls();
 
-        boolean leftHandMode = checkLeftHandMode();
+        checkLeftHandMode();
 
-        checkDisplayZoomControls(leftHandMode);
+
         updateLayersFab();
         mFabMyLocation.requestLayout();
     }
@@ -510,15 +511,15 @@ public class HomeActivity extends AppCompatActivity
                 EmbeddedSocial.launchSignInActivity(this);
                 break;
             case NAVDRAWER_ITEM_PROFILE:
-            if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
-                showMyProfileFragment();
-                mCurrentNavDrawerPosition = item;
-                ObaAnalytics.reportEventWithCategory(
-                        ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
-                        getString(R.string.analytics_action_button_press),
-                        getString(R.string.analytics_label_button_press_social_profile));
-            }
-            break;
+                if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_PROFILE) {
+                    showMyProfileFragment();
+                    mCurrentNavDrawerPosition = item;
+                    ObaAnalytics.reportEventWithCategory(
+                            ObaAnalytics.ObaEventCategory.UI_ACTION.toString(),
+                            getString(R.string.analytics_action_button_press),
+                            getString(R.string.analytics_label_button_press_social_profile));
+                }
+                break;
             case NAVDRAWER_ITEM_POPULAR:
                 if (mCurrentNavDrawerPosition != NAVDRAWER_ITEM_POPULAR) {
                     showPopularFeedFragment();
@@ -1612,56 +1613,32 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
-    private void checkDisplayZoomControls(boolean leftHandMode) {
+    private void checkDisplayZoomControls() {
         boolean displayZoom = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_show_zoom_controls), false);
 
         LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
 
-        if(displayZoom) {
+        if (displayZoom) {
             zoomButtonsLayout.setVisibility(LinearLayout.VISIBLE);
         } else {
             zoomButtonsLayout.setVisibility(LinearLayout.GONE);
         }
 
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) zoomButtonsLayout
-                .getLayoutParams();
-
-
-        int marginDp = (int) getResources().getDimension(R.dimen.zoom_btn_layout_margin);
-
-        if(leftHandMode) {
-
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_END);
-            }
-
-            layoutParams.setMarginStart(marginDp);
-            layoutParams.setMargins(marginDp, 0, 0, 0);
-
-        } else /*not left hand mode*/ {
-
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_START);
-            }
-
-            layoutParams.setMarginEnd(marginDp);
-            layoutParams.setMargins(0, 0, marginDp, 0);
-
-        }
     }
 
-    private boolean checkLeftHandMode() {
+    private void checkLeftHandMode() {
         boolean leftHandMode = Application.getPrefs().getBoolean(
                 getString(R.string.preference_key_left_hand_mode), false);
+
+        setFABLocation(leftHandMode);
+
+        setZoomControlLocation(leftHandMode);
+
+    }
+
+
+    private void setFABLocation(boolean leftHandMode) {
         if (mFabMyLocation != null) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) mFabMyLocation
                     .getLayoutParams();
@@ -1684,8 +1661,45 @@ public class HomeActivity extends AppCompatActivity
                 mLayersFab.setButtonPosition(POSITION_BOTTOM | POSITION_END);
             }
         }
+    }
 
-        return leftHandMode;
+    private void setZoomControlLocation(boolean leftHandMode) {
+
+        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
+
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) zoomButtonsLayout
+                .getLayoutParams();
+
+        int marginDp = (int) getResources().getDimension(R.dimen.zoom_btn_layout_margin);
+
+        if (leftHandMode) {
+
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_END);
+            }
+
+            layoutParams.setMarginStart(marginDp);
+            layoutParams.setMargins(marginDp, 0, 0, 0);
+
+        } else {
+
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_START);
+            }
+
+            layoutParams.setMarginEnd(marginDp);
+            layoutParams.setMargins(0, 0, marginDp, 0);
+
+        }
+
     }
 
     /**

@@ -67,39 +67,39 @@
 
 
                 <LinearLayout
-                    android:id="@+id/zoom_buttons_layout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/btnMyLocation"
-                    android:orientation="vertical">
+                        android:id="@+id/zoom_buttons_layout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/btnMyLocation"
+                        android:orientation="vertical">
 
                     <ImageButton
 
-                        android:id="@+id/btnZoomIn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/zoom_btn_drop_shadow_top"
-                        android:src="@drawable/zoom_in_button" />
+                            android:id="@+id/btnZoomIn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/zoom_btn_drop_shadow_top"
+                            android:src="@drawable/zoom_in_button"/>
 
                     <ImageButton
 
-                        android:id="@+id/btnZoomOut"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/zoom_btn_drop_shadow_bottom"
-                        android:src="@drawable/zoom_out_button" />
+                            android:id="@+id/btnZoomOut"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/zoom_btn_drop_shadow_bottom"
+                            android:src="@drawable/zoom_out_button"/>
 
                 </LinearLayout>
 
                 <uk.co.markormesher.android_fab.FloatingActionButton
-                    android:id="@+id/layersSpeedDial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_marginBottom="72dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentRight="true"
-                    android:drawable="@drawable/ic_layers_white_24dp" />
+                        android:id="@+id/layersSpeedDial"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_marginBottom="72dp"
+                        android:layout_alignParentBottom="true"
+                        android:layout_alignParentRight="true"
+                        android:drawable="@drawable/ic_layers_white_24dp"/>
 
                 <!-- ROUTE MODE HEADER -->
                 <include android:id="@+id/route_info"

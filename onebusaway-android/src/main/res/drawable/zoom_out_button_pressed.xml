@@ -3,7 +3,7 @@
 
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item >
+    <item>
         <shape android:shape="rectangle">
             <corners android:radius="@dimen/zoom_btn_radius"/>
             <solid android:color="@color/zoom_btn_color_pressed"/>
@@ -12,9 +12,9 @@
 
 
     <item
-        android:drawable="@drawable/ic_zoom_out"
-        android:bottom="@dimen/zoom_btn_bottom_offset"
-        android:left="@dimen/zoom_btn_left_offset"
-        android:right="@dimen/zoom_btn_right_offset"
-        android:top="@dimen/zoom_btn_top_offset"/>
+            android:drawable="@drawable/ic_zoom_out"
+            android:bottom="@dimen/zoom_btn_bottom_offset"
+            android:left="@dimen/zoom_btn_left_offset"
+            android:right="@dimen/zoom_btn_right_offset"
+            android:top="@dimen/zoom_btn_top_offset"/>
 </layer-list>

@@ -6,23 +6,23 @@
 
     <item>
         <shape>
-            <solid android:color="@color/zoom_btn_drop_shadow_layer1" />
+            <solid android:color="@color/zoom_btn_drop_shadow_layer1"/>
             <padding
-                android:left="@dimen/zoom_btn_shadow_padding"
-                android:right="@dimen/zoom_btn_shadow_padding"
-                android:top="@dimen/zoom_btn_shadow_padding" />
-            <corners android:radius="@dimen/zoom_btn_shadow_corner_radius" />
+                    android:left="@dimen/zoom_btn_shadow_padding"
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"/>
+            <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>
     </item>
 
 
     <item>
         <shape>
-            <solid android:color="@color/zoom_btn_drop_shadow_layer2" />
+            <solid android:color="@color/zoom_btn_drop_shadow_layer2"/>
             <padding
-                android:left="@dimen/zoom_btn_shadow_padding"
-                android:right="@dimen/zoom_btn_shadow_padding"
-                android:top="@dimen/zoom_btn_shadow_padding" />
+                    android:left="@dimen/zoom_btn_shadow_padding"
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"/>
 
             <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>
@@ -30,11 +30,11 @@
 
     <item>
         <shape>
-            <solid android:color="@color/zoom_btn_drop_shadow_layer3" />
+            <solid android:color="@color/zoom_btn_drop_shadow_layer3"/>
             <padding
-                android:left="@dimen/zoom_btn_shadow_padding"
-                android:right="@dimen/zoom_btn_shadow_padding"
-                android:top="@dimen/zoom_btn_shadow_padding" />
+                    android:left="@dimen/zoom_btn_shadow_padding"
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"/>
 
             <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>

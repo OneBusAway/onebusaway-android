@@ -811,6 +811,7 @@ public class BaseMapFragment extends SupportMapFragment
         }
         return null;
     }
+
     @Override
     public Location getNorthEast() {
         if (mMap != null) {

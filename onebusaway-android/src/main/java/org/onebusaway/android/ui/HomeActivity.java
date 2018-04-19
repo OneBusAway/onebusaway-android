@@ -1633,7 +1633,7 @@ public class HomeActivity extends AppCompatActivity
 
         setFABLocation(leftHandMode);
 
-        setZoomControlLocation(leftHandMode);
+        //setZoomControlLocation(leftHandMode);
 
     }
 

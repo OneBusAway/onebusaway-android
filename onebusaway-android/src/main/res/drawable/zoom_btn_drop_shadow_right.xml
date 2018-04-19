@@ -9,8 +9,9 @@
             <solid android:color="@color/zoom_btn_drop_shadow_layer1"/>
             <padding
                     android:bottom="@dimen/zoom_btn_shadow_padding"
-                    android:left="@dimen/zoom_btn_shadow_padding"
-                    android:right="@dimen/zoom_btn_shadow_padding"/>
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"
+            />
             <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>
     </item>
@@ -21,8 +22,8 @@
             <solid android:color="@color/zoom_btn_drop_shadow_layer2"/>
             <padding
                     android:bottom="@dimen/zoom_btn_shadow_padding"
-                    android:left="@dimen/zoom_btn_shadow_padding"
-                    android:right="@dimen/zoom_btn_shadow_padding"/>
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"/>
 
             <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>
@@ -33,8 +34,8 @@
             <solid android:color="@color/zoom_btn_drop_shadow_layer3"/>
             <padding
                     android:bottom="@dimen/zoom_btn_shadow_padding"
-                    android:left="@dimen/zoom_btn_shadow_padding"
-                    android:right="@dimen/zoom_btn_shadow_padding"/>
+                    android:right="@dimen/zoom_btn_shadow_padding"
+                    android:top="@dimen/zoom_btn_shadow_padding"/>
 
             <corners android:radius="@dimen/zoom_btn_shadow_corner_radius"/>
         </shape>

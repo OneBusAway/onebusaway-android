@@ -70,24 +70,24 @@
                         android:id="@+id/zoom_buttons_layout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignBottom="@+id/btnMyLocation"
-                        android:orientation="vertical">
-
-                    <ImageButton
-
-                            android:id="@+id/btnZoomIn"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/zoom_btn_drop_shadow_top"
-                            android:src="@drawable/zoom_in_button"/>
+                        android:orientation="horizontal" android:layout_centerHorizontal="true"
+                        android:layout_alignBottom="@+id/btnMyLocation">
 
                     <ImageButton
 
                             android:id="@+id/btnZoomOut"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/zoom_btn_drop_shadow_bottom"
+                            android:background="@drawable/zoom_btn_drop_shadow_left"
                             android:src="@drawable/zoom_out_button"/>
+
+                    <ImageButton
+
+                            android:id="@+id/btnZoomIn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/zoom_btn_drop_shadow_right"
+                            android:src="@drawable/zoom_in_button"/>
 
                 </LinearLayout>
 

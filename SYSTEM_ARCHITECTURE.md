@@ -23,7 +23,7 @@ The simplest way to get started is to deploy a OneBusAway server, which will giv
 
 ## Add trip planning and/or bike share *(Optional)*
 
-If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Tampa Bay):
+If you want to add trip planning and/or bike share information, you'll need to set up an OpenTripPlanner server.  See [this article](https://medium.com/@sjbarbeau/bike-share-launches-in-onebusaway-3452c08c0ed) for details about the bike share features.  Here's the system architecture for a region that's added trip planning and bike share information (e.g., Tampa Bay, FL and Puget Sound, Washington):
 
 ![onebusaway system architecture-otp](https://user-images.githubusercontent.com/928045/32296042-69aa4726-bf21-11e7-8123-1f80c17fee4c.png)
 

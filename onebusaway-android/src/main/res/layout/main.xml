@@ -65,7 +65,7 @@
                         app:elevation="6dp"
                         app:pressedTranslationZ="12dp"/>
 
-
+                <!-- Zoom Buttons, overlaid on map -->
                 <LinearLayout
                         android:id="@+id/zoom_buttons_layout"
                         android:layout_width="wrap_content"
@@ -74,7 +74,6 @@
                         android:layout_alignBottom="@+id/btnMyLocation">
 
                     <ImageButton
-
                             android:id="@+id/btnZoomOut"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -82,7 +81,6 @@
                             android:src="@drawable/zoom_out_button"/>
 
                     <ImageButton
-
                             android:id="@+id/btnZoomIn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

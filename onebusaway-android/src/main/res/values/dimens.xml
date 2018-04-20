@@ -126,5 +126,4 @@
     <dimen name="zoom_in_btn_left_offset">4.5dp</dimen>
     <dimen name="zoom_in_btn_right_offset">@dimen/zoom_in_btn_left_offset</dimen>
 
-
 </resources>

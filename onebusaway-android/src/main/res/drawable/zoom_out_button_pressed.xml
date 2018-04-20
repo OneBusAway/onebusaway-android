@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item>
@@ -9,7 +8,6 @@
             <solid android:color="@color/zoom_btn_color_pressed"/>
         </shape>
     </item>
-
 
     <item
             android:drawable="@drawable/ic_zoom_out"

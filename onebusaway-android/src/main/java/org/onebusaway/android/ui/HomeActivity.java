@@ -1633,8 +1633,6 @@ public class HomeActivity extends AppCompatActivity
 
         setFABLocation(leftHandMode);
 
-        //setZoomControlLocation(leftHandMode);
-
     }
 
 
@@ -1662,46 +1660,7 @@ public class HomeActivity extends AppCompatActivity
             }
         }
     }
-
-    private void setZoomControlLocation(boolean leftHandMode) {
-
-        LinearLayout zoomButtonsLayout = (LinearLayout) findViewById(R.id.zoom_buttons_layout);
-
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) zoomButtonsLayout
-                .getLayoutParams();
-
-        int marginDp = (int) getResources().getDimension(R.dimen.zoom_btn_layout_margin);
-
-        if (leftHandMode) {
-
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_END);
-            }
-
-            layoutParams.setMarginStart(marginDp);
-            layoutParams.setMargins(marginDp, 0, 0, 0);
-
-        } else {
-
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
-            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_LEFT);
-                layoutParams.removeRule(RelativeLayout.ALIGN_PARENT_START);
-            }
-
-            layoutParams.setMarginEnd(marginDp);
-            layoutParams.setMargins(0, 0, marginDp, 0);
-
-        }
-
-    }
-
+    
     /**
      * Moves both Floating Action Buttons as response to sliding panel height changes.
      * <p>

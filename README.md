@@ -1,6 +1,6 @@
 # OneBusAway for Android [![Build Status](https://travis-ci.org/OneBusAway/onebusaway-android.svg?branch=master)](https://travis-ci.org/OneBusAway/onebusaway-android) [![Join the OneBusAway chat](https://onebusaway.herokuapp.com/badge.svg)](https://onebusaway.herokuapp.com/)
 
-This is the official Android / Fire Phone app for OneBusAway!
+This is the official Android / Fire Phone app for [OneBusAway](https://onebusaway.org/)!
 
 [![Google Play logo](http://www.android.com/images/brand/android_app_on_play_logo_large.png)](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
 
